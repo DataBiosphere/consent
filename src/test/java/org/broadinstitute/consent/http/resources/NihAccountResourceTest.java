@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
@@ -9,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +40,8 @@ public class NihAccountResourceTest {
     @Before
     public void setUp() {
         openMocks(this);
+        when(nihAccount.getStatus()).thenReturn(true);
+        when(nihAccount.getEraExpiration()).thenReturn("test");
     }
 
     @Test
@@ -63,6 +67,14 @@ public class NihAccountResourceTest {
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(nihAccount, authUser);
         assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testRegisterResearcherNullAccountError() {
+        doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
+        resource = new NihAccountResource(nihService, userService);
+        Response response = resource.registerResearcher(null, authUser);
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test

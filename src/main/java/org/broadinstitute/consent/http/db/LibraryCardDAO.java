@@ -101,8 +101,10 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
           "WHERE user_email = :email")
   List<LibraryCard> findAllLibraryCardsByUserEmail(@Bind("email") String email);
 
-  @SqlUpdate("UPDATE library_card SET " +
-          " era_commons_id = :eraCommonsId " +
-          " WHERE user_id = :userId")
+  @SqlUpdate("""
+          UPDATE library_card
+          SET era_commons_id = :eraCommonsId
+          WHERE user_id = :userId
+          """)
   void updateEraCommonsForUser(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
 }

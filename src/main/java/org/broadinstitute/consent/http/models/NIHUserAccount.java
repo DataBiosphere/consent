@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 
 import java.util.ArrayList;
@@ -10,16 +9,14 @@ import java.util.Map;
 
 public class NIHUserAccount {
 
-    @JsonProperty("linkedNihUsername")
+    @SerializedName("linkedNihUsername")
     private String nihUsername;
 
-    @JsonProperty("datasetPermissions")
     private ArrayList datasetPermissions;
 
-    @JsonProperty("linkExpireTime")
+    @SerializedName("linkExpireTime")
     private String eraExpiration;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Boolean status;
 
     public NIHUserAccount() {}

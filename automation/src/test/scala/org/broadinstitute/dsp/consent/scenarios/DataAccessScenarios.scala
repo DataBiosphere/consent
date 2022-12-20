@@ -44,36 +44,6 @@ class DataAccessScenarios extends Simulation with TestRunner {
                         }
                     }
                 )
-                .andThen(
-                    defaultPopulation(
-                        GroupedScenario("Member Voting") {
-                            exitBlockOnFail {
-                                exec(
-                                    MemberChains.loginToConsole(TestConfig.memberHeader)
-                                )
-                                  .pause(TestConfig.defaultPause)
-                                  .exec(
-                                      AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, AccessReviewChains.submitVote(AccessReviewChains.electionDacVotes, TestConfig.memberHeader))
-                                  )
-                            }
-                        }
-                    )
-                    .andThen(
-                        defaultPopulation(
-                            GroupedScenario("Chair Voting") {
-                                exitBlockOnFail {
-                                    exec(
-                                        ChairChains.loginToConsole(TestConfig.chairHeader)
-                                    )
-                                      .pause(TestConfig.defaultPause)
-                                      .exec(
-                                          AccessReviewChains.voteOnPendingDars(TestConfig.memberHeader, ChairChains.submitVote(TestConfig.chairHeader))
-                                      )
-                                }
-                            }
-                        )
-                    )
-                )
             )
         )
     )

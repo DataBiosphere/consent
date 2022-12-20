@@ -64,6 +64,7 @@ import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -163,7 +164,7 @@ public class ConsentModule extends AbstractModule {
         container.setElectionDAO(providesElectionDAO());
         container.setMailMessageDAO(providesMailMessageDAO());
         container.setMatchDAO(providesMatchDAO());
-        container.setResearcherPropertyDAO(providesResearcherPropertyDAO());
+        container.setUserPropertyDAO(providesUserPropertyDAO());
         container.setUserDAO(providesUserDAO());
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
@@ -496,7 +497,7 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    UserPropertyDAO providesResearcherPropertyDAO() {
+    UserPropertyDAO providesUserPropertyDAO() {
         return userPropertyDAO;
     }
 
@@ -552,7 +553,7 @@ public class ConsentModule extends AbstractModule {
     UserService providesUserService() {
         return new UserService(
                 providesUserDAO(),
-                providesResearcherPropertyDAO(),
+                providesUserPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO(),
                 providesInstitutionDAO(),
@@ -564,14 +565,22 @@ public class ConsentModule extends AbstractModule {
     @Provides
     ResearcherService providesResearcherService() {
         return new ResearcherService(
-                providesResearcherPropertyDAO(),
+                providesUserPropertyDAO(),
                 providesUserDAO()
         );
     }
 
     @Provides
     NihService providesNihService() {
-        return new NihService(providesResearcherService(), providesLibraryCardDAO(), providesUserDAO());
+        return new NihService(
+            providesResearcherService(),
+            providesUserDAO(),
+            providesNIHServiceDAO());
+    }
+
+    @Provides
+    NihServiceDAO providesNIHServiceDAO() {
+        return new NihServiceDAO(jdbi);
     }
 
     @Provides

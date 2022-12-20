@@ -252,7 +252,7 @@ public class UserService {
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
-        return userPropertyDAO.findResearcherPropertiesByUser(userId, UserFields.getValues());
+        return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId, UserFields.getValues());
     }
 
     public List<User> describeAdminUsersThatWantToReceiveMails() {
