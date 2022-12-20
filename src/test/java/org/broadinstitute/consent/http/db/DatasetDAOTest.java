@@ -41,35 +41,6 @@ import static org.junit.Assert.assertTrue;
 public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
-    public void testInsertWithSharingPlan() {
-        User user = createUser();
-        DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-        Dac dac = createDac();
-        String doc = "Sharing Plan Document";
-        String docName = "Sharing Plan Document Name";
-
-        Integer id = datasetDAO.insertDataset(
-            "Name",
-            new Timestamp(new Date().getTime()),
-            user.getUserId(),
-            "Object Id",
-            true,
-            dataUse.toString(),
-            dac.getDacId(),
-            doc,
-            docName
-        );
-
-        Dataset dataset = datasetDAO.findDatasetById(id);
-        assertNotNull(dataset);
-        assertEquals(user.getUserId(), dataset.getCreateUserId());
-        assertEquals(dac.getDacId(), dataset.getDacId());
-        assertEquals(doc, dataset.getSharingPlanDocument());
-        assertEquals(docName, dataset.getSharingPlanDocumentName());
-        assertFalse(dataset.getNeedsApproval());
-    }
-
-    @Test
     public void testFindDatasetByIdWithDacAndConsent() {
         Dataset dataset = createDataset();
         Dac dac = createDac();
@@ -296,6 +267,102 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
 
         assertNull(found.getNihInstitutionalCertificationFile());
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingFile() {
+        Dataset dataset = createDataset();
+
+        // create unrelated file with the same id as dataset id but different category, timestamp before
+        createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        FileStorageObject altFile = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
+        );
+
+        // create unrelated files with timestamp later than the ADSP file: one attached to dataset, one
+        // completely separate from the dataset. ensures that the Mapper is selecting only the right file.
+        createFileStorageObject();
+        createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.DATA_USE_LETTER
+        );
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        assertEquals(altFile, found.getAlternativeDataSharingPlanFile());
+        assertEquals(altFile.getBlobId(), found.getAlternativeDataSharingPlanFile().getBlobId());
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated() throws InterruptedException {
+        Dataset dataset = createDataset();
+
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+        User createUser = createUser();
+
+        Integer altFileIdCreatedFirst = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+                bucketName,
+                gcsFileUri,
+                dataset.getDataSetId().toString(),
+                createUser.getUserId(),
+                Instant.ofEpochMilli(100)
+        );
+
+        User updateUser = createUser();
+
+        fileStorageObjectDAO.updateFileById(
+                altFileIdCreatedFirst,
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20),
+                updateUser.getUserId(),
+                Instant.ofEpochMilli(120));
+
+        Integer altFileIdCreatedSecond = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+                bucketName,
+                gcsFileUri,
+                dataset.getDataSetId().toString(),
+                createUser.getUserId(),
+                Instant.ofEpochMilli(130)
+        );
+
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        // returns last updated file
+        assertEquals(altFileIdCreatedSecond, found.getAlternativeDataSharingPlanFile().getFileStorageObjectId());
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingPlanFile_NotDeleted() {
+        Dataset dataset = createDataset();
+
+        FileStorageObject altFile = createFileStorageObject(
+                dataset.getDataSetId().toString(),
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
+        );
+
+        User deleteUser = createUser();
+
+        fileStorageObjectDAO.deleteFileById(
+                altFile.getFileStorageObjectId(),
+                deleteUser.getUserId(),
+                Instant.now()
+        );
+
+        Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
+
+        assertNull(found.getAlternativeDataSharingPlanFile());
     }
 
     @Test
