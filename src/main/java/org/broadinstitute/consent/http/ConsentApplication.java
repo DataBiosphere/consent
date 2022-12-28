@@ -228,7 +228,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(ErrorResource.class);
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
-        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService, consentService));
+        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
