@@ -805,10 +805,12 @@ public class UserResourceTest {
   @Test
   public void testDeleteSORoleFromSOInOtherOrgSOShouldFail() {
     User user = createUserWithRole();
+    user.setUserId(1);
     UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     user.addRole(so);
     user.setInstitutionId(1);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     activeUser.addRole(so);
     activeUser.setInstitutionId(2);
     assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
