@@ -16,7 +16,7 @@ properties:
     description: eraCommonsId of associated User
   userName:
     type: string
-    decription: Name of associated user
+    description: Name of associated user
   userEmail:
     type: string
     description: Email of associated user

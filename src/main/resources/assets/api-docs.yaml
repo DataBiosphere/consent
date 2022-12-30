@@ -47,6 +47,8 @@ paths:
     $ref: './paths/createCollectionElectionsByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
+  /api/mail/type/{type}:
+    $ref: './paths/mail.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -2111,6 +2113,8 @@ components:
       $ref: './schemas/Institution.yaml'
     LibraryCard:
       $ref: './schemas/LibraryCard.yaml'
+    MailMessage:
+      $ref: './schemas/MailMessage.yaml'
     PaginationResponse:
       $ref: './schemas/PaginationResponse.yaml'
     User:

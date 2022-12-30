@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.db.mapper.MailMessageMapper;
+import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -10,6 +11,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import javax.annotation.Nullable;
 import java.time.Instant;
+import java.util.List;
 
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
@@ -32,4 +34,13 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
                 @Nullable @Bind("sendGridResponse") String sendGridResponse,
                 @Nullable @Bind("sendGridStatus") Integer sendGridStatus,
                 @Bind("createDate") Instant createDate);
+
+    @SqlQuery("""
+             SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+             WHERE email_type = :emailType
+             ORDER BY create_date DESC
+             OFFSET :offset
+             LIMIT :limit
+             """)
+    List<MailMessage> fetchMessagesByType(@Bind("emailType") Integer emailType, @Bind("limit") Integer limit, @Bind("offset") Integer offset);
 }
