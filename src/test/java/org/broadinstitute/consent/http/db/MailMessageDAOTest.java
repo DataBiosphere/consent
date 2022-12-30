@@ -8,6 +8,8 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.Test;
 
 import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -248,10 +250,10 @@ public class MailMessageDAOTest extends DAOTestHelper {
         );
 
         List<MailMessage> mailMessageList = mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 0);
-        assertEquals(mailMessageList.size(),1);
+        assertEquals(1, mailMessageList.size());
 
         List<MailMessage> mailMessageList2 = mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
-        assertEquals(mailMessageList2.size(),0);
+        assertEquals(0, mailMessageList2.size());
 
         Integer mailId2 = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
@@ -266,10 +268,49 @@ public class MailMessageDAOTest extends DAOTestHelper {
         );
 
         List<MailMessage> mailMessageList3 = mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
-        assertEquals(mailMessageList3.size(),1);
+        assertEquals(1, mailMessageList3.size());
         assertEquals(mailId2, mailMessageList3.get(0).getEmailId());
 
         List<MailMessage> mailMessageList4 = mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 20, 0);
-        assertEquals(mailMessageList4.size(),2);
+        assertEquals(2, mailMessageList4.size());
+    }
+
+    @Test
+    public void testFetchByCreateDate_with_limit_and_offset(){
+        Date start = new Date();
+        generateMessagesInTime(2, 1);
+        Date end = new Date();
+        List<MailMessage> mailMessageList = mailMessageDAO.fetchMessagesByCreateDate(start, end, 1, 0);
+        assertEquals(1, mailMessageList.size());
+
+        Calendar startCalendar = Calendar.getInstance();
+        startCalendar.add(Calendar.DAY_OF_MONTH, -1*2*2);
+        List<MailMessage> mailMessageList2 = mailMessageDAO.fetchMessagesByCreateDate(startCalendar.getTime(), end, 2, 0);
+        assertEquals(2, mailMessageList2.size());
+
+        List<MailMessage> mailMessageList3 = mailMessageDAO.fetchMessagesByCreateDate(startCalendar.getTime(), end, 2, 1);
+        assertEquals(1, mailMessageList3.size());
+
+        List<MailMessage> mailMessageList4 = mailMessageDAO.fetchMessagesByCreateDate(startCalendar.getTime(), end, 1, 0);
+        assertEquals(1, mailMessageList4.size());
+    }
+
+    private void generateMessagesInTime(int number, int daysApart) {
+        Calendar calendar = Calendar.getInstance();
+        for (int x=0; x < number; x++){
+            mailMessageDAO.insert(
+                    RandomStringUtils.randomAlphanumeric(10),
+                    RandomUtils.nextInt(1, 1000),
+                    RandomUtils.nextInt(1, 1000),
+                    EmailType.COLLECT.getTypeInt(),
+                    calendar.toInstant(),
+                    RandomStringUtils.randomAlphanumeric(10),
+                    RandomStringUtils.randomAlphanumeric(10),
+                    RandomUtils.nextInt(200, 399),
+                    calendar.toInstant()
+            );
+            calendar.add(Calendar.DAY_OF_MONTH, -1*daysApart);
+        }
+
     }
 }
