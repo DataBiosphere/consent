@@ -63,14 +63,14 @@ public class EmailServiceTest {
     private SendGridAPI sendGridAPI;
 
 
-    private final String defaultAccount = "duos-dev@broadinstitute.org";
+    private final static String defaultAccount = "duos-dev@broadinstitute.org";
+    private final static String serverUrl = "http://localhost:8000/#/";
 
     @Before
     public void setUp() {
     }
 
     private void initRealService() {
-        String serverUrl =  "http://localhost:8000/#/";
         boolean serviceActive = false;
 
         openMocks(this);
@@ -146,15 +146,16 @@ public class EmailServiceTest {
                 eq(1234),
                 eq(EmailType.NEW_RESEARCHER.getTypeInt()),
                 any(),
-                eq("""
+                eq(
+                """
                 <!DOCTYPE html>
                 <html xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Roboto', sans-serif ;">
                 <head>
                     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>Broad Data Use Oversight System - Admin - Dataset Approved Notification</title>
+                    <title>Broad Data Use Oversight System - New Researcher</title>
                 </head>
-
+                                
                 <body style="font-family: 'Roboto', sans-serif ; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% ; height: 100%; color: #777777; margin: 0;">
                 <center style="font-family: 'Roboto', sans-serif ;">
                     <table width="600" bgcolor="#eeeeee" style="border-collapse: collapse ; font-family: 'Roboto', sans-serif ; box-shadow: 3px 3px 0 #cccccc ; border-radius: 5px ; -moz-border-radius: 5px ; margin-top: 20px; background-color: #eeeeee;">
@@ -171,7 +172,7 @@ public class EmailServiceTest {
                         </tr>
                         <tr width="600" style="font-family: 'Roboto', sans-serif ;">
                             <td align="left" style="border-collapse: collapse; font-family: 'Roboto', sans-serif ; font-size: 16px; color: #777777; text-align: left; line-height: 25px; padding: 0px 30px 20px 30px;">
-                                <p>A researcher from your institution, John Doe, has registered in DUOS and listed you as their Signing Official. In order to request access to data, they will need to be issued a Library Card. Please log in to DUOS here: Broad Data Use Oversight System and review the terms of the Library Card Agreements for this researcher in your Signing Official Console. If you have any questions, please contact <a href="mailto:duos-support@broadinstitute.zendesk.com">duos-support@broadinstitute.zendesk.com</a>.</p>
+                                <p>A researcher from your institution, John Doe, has registered in DUOS and listed you as their Signing Official. In order to request access to data, they will need to be issued a Library Card. Please log in to DUOS <a href="http://localhost:8000/#/" align="center" style="text-decoration: none; font-family: 'Roboto', sans-serif; color: #00609F;">here</a> and review the terms of the Library Card Agreements for this researcher in your Signing Official Console. If you have any questions, please contact <a href="mailto:duos-support@broadinstitute.zendesk.com">duos-support@broadinstitute.zendesk.com</a>.</p>
                                 <p style="line-height: 10px !important; margin-bottom: 5px;">Kind regards,</p>
                                 <p style="margin-top: 0;">The DUOS team</p>
                             </td>

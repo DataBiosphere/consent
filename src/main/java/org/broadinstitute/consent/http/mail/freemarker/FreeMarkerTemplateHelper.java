@@ -90,9 +90,9 @@ public class FreeMarkerTemplateHelper {
         return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, temp);
     }
 
-    public Writer getNewResearcherTemplate(String researcherName) throws IOException, TemplateException {
+    public Writer getNewResearcherTemplate(String researcherName, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-researcher.html");
-        return generateNewResearcherTemplate(researcherName, temp);
+        return generateNewResearcherTemplate(researcherName, serverUrl, temp);
     }
 
 
@@ -120,8 +120,8 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateNewResearcherTemplate(String researcherName, Template temp) throws IOException, TemplateException {
-        NewResearcherModel model = new NewResearcherModel(researcherName);
+    private Writer generateNewResearcherTemplate(String researcherName, String serverUrl, Template temp) throws IOException, TemplateException {
+        NewResearcherModel model = new NewResearcherModel(researcherName, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

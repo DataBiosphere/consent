@@ -111,7 +111,6 @@ public class EmailService {
             Writer template) {
         Instant now = Instant.now();
         Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400) ? now : null;
-        System.out.println(template.toString());
         emailDAO.insert(
                 entityReferenceId,
                 voteId,
@@ -328,7 +327,7 @@ public class EmailService {
 
     public void sendNewResearcherMessage(User researcher,
                                          User signingOfficial) throws Exception {
-        Writer template = templateHelper.getNewResearcherTemplate(researcher.getDisplayName());
+        Writer template = templateHelper.getNewResearcherTemplate(researcher.getDisplayName(), this.SERVER_URL);
         Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(signingOfficial.getEmail(), template);
         saveEmailAndResponse(
                 response.orElse(null),
