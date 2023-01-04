@@ -43,7 +43,7 @@ public class SamDAO {
 
   public SamDAO(ServicesConfiguration configuration) {
     this.executorService = Executors.newCachedThreadPool();
-    this.clientUtil = new HttpClientUtil();
+    this.clientUtil = new HttpClientUtil(configuration);
         this.configuration = configuration;
   }
 

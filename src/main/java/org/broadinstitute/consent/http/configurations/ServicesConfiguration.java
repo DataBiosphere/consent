@@ -1,17 +1,21 @@
 package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
 
-  @NotNull private String ontologyURL;
+  @NotNull
+  private String ontologyURL;
 
-  @NotNull private String localURL;
+  @NotNull
+  private String localURL;
 
-  @NotNull private String samUrl;
+  @NotNull
+  private String samUrl;
+
+  private Integer timeout = 10;
 
   private boolean activateSupportNotifications = false;
 
@@ -94,5 +98,13 @@ public class ServicesConfiguration {
 
   public void setActivateSupportNotifications(boolean activateSupportNotifications) {
     this.activateSupportNotifications = activateSupportNotifications;
+  }
+
+  public Integer getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(Integer timeout) {
+    this.timeout = timeout;
   }
 }

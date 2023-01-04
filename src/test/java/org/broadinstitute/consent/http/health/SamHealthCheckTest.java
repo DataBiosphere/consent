@@ -1,16 +1,5 @@
 package org.broadinstitute.consent.http.health;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.api.client.http.HttpStatusCodes;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.StringEntity;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.util.HttpClientUtil;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -18,6 +7,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.google.api.client.http.HttpStatusCodes;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.StatusLine;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 public class SamHealthCheckTest {
 
@@ -55,7 +55,6 @@ public class SamHealthCheckTest {
   @Test
   public void testCheckSuccess() throws Exception {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -65,7 +64,6 @@ public class SamHealthCheckTest {
   @Test
   public void testCheckFailure() throws Exception {
     when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-    when(response.getStatusLine()).thenReturn(statusLine);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -74,7 +72,6 @@ public class SamHealthCheckTest {
 
   @Test
   public void testCheckException() throws Exception {
-    doThrow(new RuntimeException()).when(response).getStatusLine();
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
