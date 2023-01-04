@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 
@@ -49,12 +50,14 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Path("api/dataset")
 public class DatasetResource extends Resource {
@@ -152,7 +155,7 @@ public class DatasetResource extends Resource {
      */
     public Response createDatasetRegistration(
             @Auth AuthUser authUser,
-            @FormDataParam("file") FormDataBodyPart formDataBodyPart,
+            FormDataMultiPart multipart,
             @FormDataParam("dataset") String json) {
         try {
             try {
@@ -162,23 +165,53 @@ public class DatasetResource extends Resource {
             } catch (Exception e) {
                 throw new BadRequestException("Invalid schema");
             }
+
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
-            // validate file names if they exist.
-            if (Objects.nonNull(formDataBodyPart)) {
-                for (BodyPart part : formDataBodyPart.getParent().getBodyParts()) {
-                    if (Objects.nonNull(part.getContentDisposition().getFileName())) {
-                        validateFileDetails(part.getContentDisposition());
-                    }
-                }
-            }
+
+//            FormDataBodyPart alternativeDataSharingPlan = findFile(multipart, "alternativeDataSharingPlan");
+
+            Map<String, FormDataBodyPart> files = extractFiles(multipart);
+
+//            Map<Integer, FormDataBodyPart> nihCertificationFiles = new HashMap<>();
+//            IntStream.range(0, registration.getConsentGroups().size())
+//                    .forEach((idx) -> {
+//                        FormDataBodyPart file = findFile(multipart, "nihCertificationFile-" + idx);
+//                        if (Objects.nonNull(file)) {
+//                            nihCertificationFiles.put(idx, file);
+//                        }
+//                    });
+
+
             // Generate datasets from registration
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(registration, user, formDataBodyPart);
+            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(
+                    registration,
+                    user,
+                    files);
+
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
             return Response.created(uri).entity(unmarshal(datasets)).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
+    }
+
+    private Map<String, FormDataBodyPart> extractFiles(FormDataMultiPart multipart) {
+        if (Objects.isNull(multipart)) {
+            return Map.of();
+        }
+
+        Map<String, FormDataBodyPart> files = new HashMap<>();
+        for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
+            for (FormDataBodyPart part : parts) {
+                if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+                    validateFileDetails(part.getContentDisposition());
+                    files.put(part.getName(),part);
+                }
+            }
+        }
+
+        return files;
     }
 
     @PUT

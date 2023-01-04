@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.junit.Before;
 import org.junit.Test;
@@ -748,7 +749,6 @@ public class DatasetResourceTest {
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
 
-
         when(datasetService.getDatasets(List.of(1,2,3,4))).thenReturn(List.of(
                 ds1,
                 ds3
@@ -841,18 +841,18 @@ public class DatasetResourceTest {
             .fileName("sharing_plan.txt")
             .build();
         FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-        MultiPart multiPart = mock(MultiPart.class);
-        BodyPart bodyPart = mock(BodyPart.class);
-        when(formDataBodyPart.getParent()).thenReturn(multiPart);
-        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
-        when(bodyPart.getContentDisposition()).thenReturn(content);
+        when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
@@ -863,17 +863,17 @@ public class DatasetResourceTest {
             .fileName("file/with&$invalid*^chars\\.txt")
             .build();
         FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-        MultiPart multiPart = mock(MultiPart.class);
-        BodyPart bodyPart = mock(BodyPart.class);
-        when(formDataBodyPart.getParent()).thenReturn(multiPart);
-        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
-        when(bodyPart.getContentDisposition()).thenReturn(content);
+        when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
         when(userService.findUserByEmail(any())).thenReturn(user);
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
