@@ -10,9 +10,8 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.message.StatusLine;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.Before;
@@ -23,9 +22,7 @@ public class SamHealthCheckTest {
 
   @Mock private HttpClientUtil clientUtil;
 
-  @Mock private CloseableHttpResponse response;
-
-  @Mock private StatusLine statusLine;
+  @Mock private ClassicHttpResponse response;
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
@@ -54,7 +51,7 @@ public class SamHealthCheckTest {
 
   @Test
   public void testCheckSuccess() throws Exception {
-    when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -63,7 +60,7 @@ public class SamHealthCheckTest {
 
   @Test
   public void testCheckFailure() throws Exception {
-    when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();

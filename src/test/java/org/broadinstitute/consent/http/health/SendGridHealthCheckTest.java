@@ -11,9 +11,8 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.message.StatusLine;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.Before;
@@ -25,10 +24,7 @@ public class SendGridHealthCheckTest {
     private HttpClientUtil clientUtil;
 
     @Mock
-    private CloseableHttpResponse response;
-
-    @Mock
-    private StatusLine statusLine;
+    private ClassicHttpResponse response;
 
     @Mock
     private MailConfiguration mailConfiguration;
@@ -65,7 +61,7 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckSuccess() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+        when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
@@ -74,7 +70,7 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckFailure() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
@@ -83,7 +79,7 @@ public class SendGridHealthCheckTest {
 
     @Test
     public void testCheckExternalFailure() throws Exception {
-        when(statusLine.getStatusCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+        when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
         initHealthCheck(badStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
