@@ -1,0 +1,41 @@
+type: object
+properties:
+  emailId:
+    type: integer
+    description: ID of the email that was sent
+  voteId:
+    type: integer
+    description: ID of associated vote
+  dacUserId:
+    type: integer
+    description: ID of the user the message was sent to
+  emailType:
+    type: string
+    description: The type of email message that was sent
+  dateSent:
+    type: string
+    format: date
+    description: Date the email was sent
+  emailText:
+    type: string
+    description: The email message that was sent
+  sendgridResponse:
+    type: string
+    description: The sendgrid response message
+  sendgridStatus:
+    type: integer
+    description: The sendgrid response status code
+  createDate:
+    type: string
+    format: date
+    description: Date the email was created
+example:
+  emailId: 1
+  voteId: 2
+  dacUserId: 3
+  emailType: 8
+  dateSent: May 19, 2021
+  emailText: An email message body.
+  sendgridResponse: Ok
+  sendgridStatus: 0
+  createDate: May 19, 2021

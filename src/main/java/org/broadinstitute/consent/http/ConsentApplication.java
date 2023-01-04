@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.LivenessResource;
+import org.broadinstitute.consent.http.resources.MailResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
@@ -258,6 +259,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new VoteResource(userService, voteService, electionService));
         env.jersey().register(new LivenessResource());
         env.jersey().register(new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
+        env.jersey().register(new MailResource(emailService));
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
