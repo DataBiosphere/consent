@@ -58,27 +58,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         @Bind("dataUse") String dataUse,
         @Bind("dacId") Integer dacId);
 
-    @SqlUpdate(
-            "INSERT INTO dataset "
-            + "(name, create_date, create_user_id, update_date, "
-                + "update_user_id, object_id, active, dac_id, alias, data_use, sharing_plan_document, "
-                + " sharing_plan_document_name) "
-            + "(SELECT :name, :createDate, :createUserId, :createDate, "
-                + ":createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse, "
-                + ":sharingPlanDocument, :sharingPlanDocumentName "
-                + " FROM dataset)")
-    @GetGeneratedKeys
-    Integer insertDataset(
-        @Bind("name") String name,
-        @Bind("createDate") Timestamp createDate,
-        @Bind("createUserId") Integer createUserId,
-        @Bind("objectId") String objectId,
-        @Bind("active") Boolean active,
-        @Bind("dataUse") String dataUse,
-        @Bind("dacId") Integer dacId,
-        @Bind("sharingPlanDocument") String sharingPlanDocument,
-        @Bind("sharingPlanDocumentName") String sharingPlanDocumentName);
-
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(
         "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, " +

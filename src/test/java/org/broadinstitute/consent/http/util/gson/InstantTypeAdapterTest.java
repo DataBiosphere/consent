@@ -13,12 +13,12 @@ public class InstantTypeAdapterTest {
     @Test
     public void testInstantTypeAdapter() {
         Instant randomTime = Instant.ofEpochMilli(new Random().nextLong());
-        String randomTimeAsIsoString = randomTime.toString();
+        long randomTimeMilli = randomTime.toEpochMilli();
 
         InstantTypeAdapter adapter = new InstantTypeAdapter();
 
         JsonElement elem = adapter.serialize(randomTime, null, null);
-        assertEquals(randomTimeAsIsoString, elem.getAsString());
+        assertEquals(randomTimeMilli, elem.getAsLong());
 
         Instant returnedInstant = adapter.deserialize(elem, null, null);
 

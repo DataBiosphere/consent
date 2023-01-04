@@ -49,11 +49,8 @@ public class Dataset {
 
     private Boolean deletable;
 
-    private String sharingPlanDocument;
-
-    private String sharingPlanDocumentName;
-
     private FileStorageObject nihInstitutionalCertificationFile;
+    private FileStorageObject alternativeDataSharingPlanFile;
 
     private Set<DatasetProperty> properties;
 
@@ -290,21 +287,6 @@ public class Dataset {
         this.deletable = deletable;
     }
 
-    public String getSharingPlanDocument() {
-        return sharingPlanDocument;
-    }
-
-    public void setSharingPlanDocument(String sharingPlanDocument) {
-        this.sharingPlanDocument = sharingPlanDocument;
-    }
-
-    public String getSharingPlanDocumentName() {
-        return sharingPlanDocumentName;
-    }
-
-    public void setSharingPlanDocumentName(String sharingPlanDocumentName) {
-        this.sharingPlanDocumentName = sharingPlanDocumentName;
-    }
 
     /**
      * Checks if the Dataset matches a raw search query. Searches on all dataset properties
@@ -380,5 +362,13 @@ public class Dataset {
 
     public void setNihInstitutionalCertificationFile(FileStorageObject nihInstitutionalCertificationFile) {
         this.nihInstitutionalCertificationFile = nihInstitutionalCertificationFile;
+    }
+
+    public FileStorageObject getAlternativeDataSharingPlanFile() {
+        return alternativeDataSharingPlanFile;
+    }
+
+    public void setAlternativeDataSharingPlanFile(FileStorageObject alternativeDataSharingPlanFile) {
+        this.alternativeDataSharingPlanFile = alternativeDataSharingPlanFile;
     }
 }

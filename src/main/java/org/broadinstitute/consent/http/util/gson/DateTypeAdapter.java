@@ -11,19 +11,20 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 
-public class InstantTypeAdapter
-        implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
+public class DateTypeAdapter
+        implements JsonSerializer<Date>, JsonDeserializer<Date> {
     @Override
-    public JsonElement serialize(Instant src, Type srcType, JsonSerializationContext context) {
-        return new JsonPrimitive(src.toEpochMilli());
+    public JsonElement serialize(Date src, Type srcType, JsonSerializationContext context) {
+        return new JsonPrimitive(src.getTime());
     }
 
     @Override
-    public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context)
+    public Date deserialize(JsonElement json, Type type, JsonDeserializationContext context)
             throws JsonParseException {
         try {
-            return Instant.ofEpochMilli(json.getAsLong());
+            return new Date(json.getAsLong());
         } catch (DateTimeParseException e) {
             throw new JsonParseException(e.getMessage());
         }

@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.LivenessResource;
+import org.broadinstitute.consent.http.resources.MailResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
@@ -100,6 +101,7 @@ import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
 import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
@@ -199,6 +201,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
 
+        env.jersey().register(JerseyGsonProvider.class);
+
         // Health Checks
         env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
         env.healthChecks().register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
@@ -221,11 +225,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         errorHandler.addErrorPage(404, "/error/404");
         env.getApplicationContext().setErrorHandler(errorHandler);
         env.jersey().register(ResponseServerFilter.class);
-        env.jersey().register(ErrorResource.class);
 
+        env.jersey().register(ErrorResource.class);
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
-        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService, consentService));
+        env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
@@ -255,6 +259,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new VoteResource(userService, voteService, electionService));
         env.jersey().register(new LivenessResource());
         env.jersey().register(new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
+        env.jersey().register(new MailResource(emailService));
 
         // Authentication filters
         final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

@@ -45,12 +45,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     if (hasColumn(rowView, "dac_approval", Boolean.class)) {
       dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
     }
-    if (hasColumn(rowView, "sharing_plan_document", String.class)) {
-        dataset.setSharingPlanDocument(rowView.getColumn("sharing_plan_document", String.class));
-    }
-    if (hasColumn(rowView, "sharing_plan_document_name", String.class)) {
-        dataset.setSharingPlanDocumentName(rowView.getColumn("sharing_plan_document_name", String.class));
-    }
     if (hasColumn(rowView, "key", String.class)
         && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
@@ -84,9 +78,13 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
 
       switch (fileStorageObject.getCategory()) {
         case NIH_INSTITUTIONAL_CERTIFICATION -> {
-          if (Objects.isNull(dataset.getNihInstitutionalCertificationFile())
-                  || fileStorageObject.getLatestUpdateDate().isAfter(dataset.getNihInstitutionalCertificationFile().getLatestUpdateDate())) {
+          if (isFileNewer(fileStorageObject, dataset.getNihInstitutionalCertificationFile())) {
             dataset.setNihInstitutionalCertificationFile(fileStorageObject);
+          }
+        }
+        case ALTERNATIVE_DATA_SHARING_PLAN -> {
+          if (isFileNewer(fileStorageObject, dataset.getAlternativeDataSharingPlanFile())) {
+            dataset.setAlternativeDataSharingPlanFile(fileStorageObject);
           }
         }
         default -> {
@@ -114,5 +112,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     }
     dataset.setDatasetName(dataset.getName());
     dataset.setDatasetIdentifier();
+  }
+
+  private boolean isFileNewer(FileStorageObject incomingFile, FileStorageObject existingFile) {
+    return Objects.isNull(existingFile) || incomingFile.getLatestUpdateDate().isAfter(existingFile.getLatestUpdateDate());
   }
 }

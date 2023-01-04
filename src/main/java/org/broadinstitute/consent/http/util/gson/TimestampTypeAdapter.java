@@ -9,21 +9,22 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
-import java.time.Instant;
+import java.sql.Timestamp;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 
-public class InstantTypeAdapter
-        implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
+public class TimestampTypeAdapter
+        implements JsonSerializer<Timestamp>, JsonDeserializer<Timestamp> {
     @Override
-    public JsonElement serialize(Instant src, Type srcType, JsonSerializationContext context) {
-        return new JsonPrimitive(src.toEpochMilli());
+    public JsonElement serialize(Timestamp src, Type srcType, JsonSerializationContext context) {
+        return new JsonPrimitive(src.getTime());
     }
 
     @Override
-    public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context)
+    public Timestamp deserialize(JsonElement json, Type type, JsonDeserializationContext context)
             throws JsonParseException {
         try {
-            return Instant.ofEpochMilli(json.getAsLong());
+            return new Timestamp(json.getAsLong());
         } catch (DateTimeParseException e) {
             throw new JsonParseException(e.getMessage());
         }

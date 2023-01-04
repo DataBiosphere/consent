@@ -47,6 +47,8 @@ paths:
     $ref: './paths/createCollectionElectionsByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
+  /api/mail/type/{type}:
+    $ref: './paths/mail.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files
@@ -798,29 +800,6 @@ paths:
           description: Unable to find the Data Access Request with the provided id
         500:
           description: Internal error
-  /api/dar/find/{id}/consent:
-    get:
-      summary: describeConsentForDAR
-      description: Returns the consent related to this DAR.
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-        - Consent
-      responses:
-        200:
-          description: Returns the Consent.
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: The requested couldn't be found or the DAR doesn't exist.
   /api/dar/manage/v2:
     get:
       summary: Manage Data Access Requests V2
@@ -2134,6 +2113,8 @@ components:
       $ref: './schemas/Institution.yaml'
     LibraryCard:
       $ref: './schemas/LibraryCard.yaml'
+    MailMessage:
+      $ref: './schemas/MailMessage.yaml'
     PaginationResponse:
       $ref: './schemas/PaginationResponse.yaml'
     User:

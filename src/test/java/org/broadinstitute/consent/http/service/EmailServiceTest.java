@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -13,6 +15,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -25,10 +28,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
@@ -122,7 +131,6 @@ public class EmailServiceTest {
         }
     }
 
-
     @Test
     public void testSendNewResearcherEmail() throws MessagingException {
         initFakeService();
@@ -194,4 +202,28 @@ public class EmailServiceTest {
 
     }
 
+    @Test
+    public void testFetchEmails(){
+        List<MailMessage>  mailMessages = generateMailMessageList();
+        initFakeService();
+        when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
+        assertEquals(2, service.fetchEmailMessages(EmailType.COLLECT, 20, 0).size());
+    }
+
+    private List<MailMessage> generateMailMessageList() {
+        return Collections.nCopies(2, generateMailMessage());
+    }
+    private MailMessage generateMailMessage() {
+        return new MailMessage(
+                RandomUtils.nextInt(),
+                RandomUtils.nextInt(),
+                RandomUtils.nextInt(),
+                RandomStringUtils.randomAlphanumeric(10),
+                new Date(),
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomStringUtils.randomAlphanumeric(10),
+                RandomUtils.nextInt(),
+                new Date()
+        );
+    }
 }

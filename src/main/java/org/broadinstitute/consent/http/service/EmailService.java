@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.models.mail.MailMessage;
 
 import javax.annotation.Nullable;
 import javax.mail.MessagingException;
@@ -121,6 +122,10 @@ public class EmailService {
                 Objects.nonNull(response) ? response.getBody() : null,
                 Objects.nonNull(response) ? response.getStatusCode() : null,
                 now);
+    }
+
+    public List<MailMessage> fetchEmailMessages(EmailType emailType, Integer limit, Integer offset) {
+        return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
     }
 
     public void sendNewDARCollectionMessage(Integer collectionId) throws IOException, TemplateException {
