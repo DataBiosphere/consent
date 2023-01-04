@@ -30,7 +30,7 @@ public class HttpClientUtilTest implements WithMockServer {
 
   private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-  private final String statusUrl = "http://" + container.getHost() + ":" + container.getServerPort() + "/";
+  private final String statusUrl = String.format("http://%s:%s/", container.getHost(), container.getServerPort());
 
   @BeforeClass
   public static void setUp() {
@@ -53,7 +53,7 @@ public class HttpClientUtilTest implements WithMockServer {
   }
 
   @Test
-  public void testGetHttpResponseWithinTimeout() throws Exception {
+  public void testGetHttpResponseUnderTimeout() throws Exception {
     mockServerClient.when(request())
       .respond(response()
       .withStatusCode(200));
