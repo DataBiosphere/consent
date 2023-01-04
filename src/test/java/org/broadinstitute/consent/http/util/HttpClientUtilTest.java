@@ -48,7 +48,7 @@ public class HttpClientUtilTest implements WithMockServer {
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
     ServicesConfiguration configuration = new ServicesConfiguration();
-    configuration.setTimeout(1);
+    configuration.setTimeoutSeconds(1);
     clientUtil = new HttpClientUtil(configuration);
   }
 

@@ -46,7 +46,7 @@ public class HttpClientUtil implements ConsentLogger {
   public ClassicHttpResponse getHttpResponse(HttpGet request) throws IOException {
     try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
       final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-      executor.schedule(request::cancel, configuration.getTimeout(), TimeUnit.SECONDS);
+      executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
       return httpclient.execute(request, httpResponse -> httpResponse);
     }
   }

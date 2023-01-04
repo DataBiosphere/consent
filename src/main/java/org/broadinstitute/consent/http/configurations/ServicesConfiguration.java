@@ -15,7 +15,7 @@ public class ServicesConfiguration {
   @NotNull
   private String samUrl;
 
-  private Integer timeout = 10;
+  private Integer timeoutSeconds = 10;
 
   private boolean activateSupportNotifications = false;
 
@@ -100,11 +100,11 @@ public class ServicesConfiguration {
     this.activateSupportNotifications = activateSupportNotifications;
   }
 
-  public Integer getTimeout() {
-    return timeout;
+  public Integer getTimeoutSeconds() {
+    return timeoutSeconds;
   }
 
-  public void setTimeout(Integer timeout) {
-    this.timeout = timeout;
+  public void setTimeoutSeconds(Integer timeoutSeconds) {
+    this.timeoutSeconds = timeoutSeconds;
   }
 }
