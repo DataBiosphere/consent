@@ -701,7 +701,9 @@ public class UserResourceTest {
   @Test
   public void testDeleteRoleFromUser() {
     User user = createUserWithRole();
+    user.setUserId(1);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
@@ -732,6 +734,7 @@ public class UserResourceTest {
   @Test
   public void testDeleteDeniedRoleBySoShouldFail() {
     User user = createUserWithRole();
+    user.setUserId(1);
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     user.addRole(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
     user.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
@@ -739,6 +742,7 @@ public class UserResourceTest {
     user.addRole(new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName()));
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     activeUser.addRole(so);
     activeUser.setInstitutionId(10);
@@ -762,11 +766,13 @@ public class UserResourceTest {
   @Test
   public void testDeletePermittedRolesBySoShouldSucceedForUserWithSameInstitution() {
     User user = createUserWithRole();
+    user.setUserId(1);
     user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
     user.addRole(new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
     user.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     activeUser.addRole(so);
     activeUser.setInstitutionId(10);
@@ -784,10 +790,12 @@ public class UserResourceTest {
   @Test
   public void testDeletePermittedRolesBySoShouldFailForUserWitNullInstitution() {
     User user = createUserWithRole();
+    user.setUserId(1);
     user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
     user.addRole(new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
     user.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     activeUser.addRole(so);
     activeUser.setInstitutionId(10);
@@ -805,10 +813,12 @@ public class UserResourceTest {
   @Test
   public void testDeleteSORoleFromSOInOtherOrgSOShouldFail() {
     User user = createUserWithRole();
+    user.setUserId(1);
     UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     user.addRole(so);
     user.setInstitutionId(1);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     activeUser.addRole(so);
     activeUser.setInstitutionId(2);
     assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
@@ -834,7 +844,9 @@ public class UserResourceTest {
   @Test
   public void testDeleteRoleFromUser_UserWithoutRole() {
     User user = createUserWithRole();
+    user.setUserId(1);
     User activeUser = createUserWithRole();
+    activeUser.setUserId(2);
     UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     activeUser.addRole(admin);
     when(userService.findUserById(any())).thenReturn(user);
