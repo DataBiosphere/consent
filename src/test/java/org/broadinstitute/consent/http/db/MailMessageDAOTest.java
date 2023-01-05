@@ -309,7 +309,9 @@ public class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
     assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
 
-    // Find messages from beginning of yesterday to tomorrow, offset by 1. Should return yesterday's message.
+    // Find messages from beginning of yesterday to tomorrow, offset by 1. Since messages are
+    // ordered by create date descending, offset should trim today's message and only return
+    // yesterday's message.
     List<MailMessage> messages3 = mailMessageDAO
         .fetchMessagesByCreateDate(new Date(yesterdayStart.toEpochMilli()),
             new Date(tomorrowStart.toEpochMilli()), 2, 1);
