@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.broadinstitute.consent.http.resources.Resource.ADMIN;
+
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.service.EmailService;
-
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DefaultValue;
@@ -15,12 +17,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import static org.broadinstitute.consent.http.resources.Resource.ADMIN;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/mail")
 public class MailResource {
