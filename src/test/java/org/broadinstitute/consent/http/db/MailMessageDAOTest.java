@@ -295,14 +295,14 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
     // Find messages from beginning of today to the beginning of tomorrow. Should return `messageToday`
     List<MailMessage> messages = mailMessageDAO
-        .fetchMessagesByCreateDate(getDate(todayStart), getDate(tomorrowStart), 1, 0);
+        .fetchMessagesByCreateDate(Date.from(todayStart), Date.from(tomorrowStart), 1, 0);
     assertEquals(1, messages.size());
     assertEquals(messageToday.getEmailId(), messages.get(0).getEmailId());
 
     // Find messages from beginning of yesterday to tomorrow. Should return both messages.
     // Order is create date descending, so today is first, yesterday second.
     List<MailMessage> messages2 = mailMessageDAO
-        .fetchMessagesByCreateDate(getDate(yesterdayStart), getDate(tomorrowStart), 2, 0);
+        .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 0);
     assertEquals(2, messages2.size());
     assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
     assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
@@ -311,19 +311,15 @@ public class MailMessageDAOTest extends DAOTestHelper {
     // ordered by create date descending, offset should trim today's message and only return
     // yesterday's message.
     List<MailMessage> messages3 = mailMessageDAO
-        .fetchMessagesByCreateDate(getDate(yesterdayStart), getDate(tomorrowStart), 2, 1);
+        .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 1);
     assertEquals(1, messages3.size());
     assertEquals(messageYesterday.getEmailId(), messages3.get(0).getEmailId());
 
     // Find messages from beginning of yesterday to beginning today. Should return yesterday's message.
     List<MailMessage> messages4 = mailMessageDAO
-        .fetchMessagesByCreateDate(getDate(yesterdayStart), getDate(todayStart), 2, 0);
+        .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(todayStart), 2, 0);
     assertEquals(1, messages4.size());
     assertEquals(messageYesterday.getEmailId(), messages4.get(0).getEmailId());
-  }
-
-  private Date getDate(Instant instant) {
-    return new Date(instant.toEpochMilli());
   }
 
   private MailMessage generateMessage(Instant instant) {
