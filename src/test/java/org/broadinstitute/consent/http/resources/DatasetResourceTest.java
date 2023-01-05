@@ -51,8 +51,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -854,6 +858,58 @@ public class DatasetResourceTest {
 
         Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_multipleFiles() {
+
+        spy(datasetService);
+
+        FormDataContentDisposition contentFile = FormDataContentDisposition
+                .name("file")
+                .fileName("sharing_plan.txt")
+                .build();
+        FormDataBodyPart formDataBodyPartFile = mock(FormDataBodyPart.class);
+        when(formDataBodyPartFile.getName()).thenReturn("file");
+        when(formDataBodyPartFile.getContentDisposition()).thenReturn(contentFile);
+
+        FormDataContentDisposition contentOther = FormDataContentDisposition
+                .name("other")
+                .fileName("other.txt")
+                .build();
+        FormDataBodyPart formDataBodyPartOther = mock(FormDataBodyPart.class);
+        when(formDataBodyPartOther.getName()).thenReturn("other");
+        when(formDataBodyPartOther.getContentDisposition()).thenReturn(contentOther);
+
+
+        FormDataContentDisposition contentNotFile = FormDataContentDisposition
+                .name("notFile")
+                .build();
+        FormDataBodyPart formDataBodyPartNotFile = mock(FormDataBodyPart.class);
+        when(formDataBodyPartNotFile.getName()).thenReturn("notFile");
+        when(formDataBodyPartNotFile.getContentDisposition()).thenReturn(contentNotFile);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(
+                Map.of(
+                        "file", List.of(formDataBodyPartFile),
+                        "other", List.of(formDataBodyPartOther),
+                        "notFile", List.of(formDataBodyPartNotFile)));
+
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String instance = new Gson().toJson(schemaV1);
+        initResource();
+
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
+
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        verify(datasetService, times(1)).createDatasetsFromRegistration(
+                schemaV1,
+                user,
+                Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther));
+
     }
 
     @Test

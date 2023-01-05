@@ -169,19 +169,8 @@ public class DatasetResource extends Resource {
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
 
-//            FormDataBodyPart alternativeDataSharingPlan = findFile(multipart, "alternativeDataSharingPlan");
-
-            Map<String, FormDataBodyPart> files = extractFiles(multipart);
-
-//            Map<Integer, FormDataBodyPart> nihCertificationFiles = new HashMap<>();
-//            IntStream.range(0, registration.getConsentGroups().size())
-//                    .forEach((idx) -> {
-//                        FormDataBodyPart file = findFile(multipart, "nihCertificationFile-" + idx);
-//                        if (Objects.nonNull(file)) {
-//                            nihCertificationFiles.put(idx, file);
-//                        }
-//                    });
-
+            // key: field name (not file name), value: file body part
+            Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
             // Generate datasets from registration
             List<Dataset> datasets = datasetService.createDatasetsFromRegistration(
@@ -196,7 +185,13 @@ public class DatasetResource extends Resource {
         }
     }
 
-    private Map<String, FormDataBodyPart> extractFiles(FormDataMultiPart multipart) {
+    /**
+     * Finds and validates all the files uploaded to the multipart.
+     *
+     * @param multipart Form data
+     * @return Map of file body parts, where the key is the name of the field and the value is the body part including the file(s).
+     */
+    private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
         if (Objects.isNull(multipart)) {
             return Map.of();
         }
