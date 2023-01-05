@@ -17,7 +17,9 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -566,5 +568,53 @@ public class DatasetService {
         User user,
         Map<String, FormDataBodyPart> files) {
         return List.of();
+    }
+
+    private Dataset createDataset(DatasetRegistrationSchemaV1 registration,
+                                  User user,
+                                  Map<String, FormDataBodyPart> formDataFileParts,
+                                  Integer consentGroupIdx) {
+        ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
+
+        List<DatasetProperty> props = generatePropertiesFromRegistration(registration, consentGroupIdx);
+        DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
+        List<FileStorageObject> files = generateFileStorageObjects(registration, formDataFileParts, consentGroupIdx);
+
+        return datasetServiceDAO.insertDatasetWithFiles(
+                consentGroup.getConsentGroupName(),
+                registration.getDataAccessCommitteeId(),
+                dataUse,
+                user.getUserId(),
+                props,
+                files
+        );
+
+    }
+
+    private List<DatasetProperty> generatePropertiesFromRegistration(
+            DatasetRegistrationSchemaV1 registration,
+            Integer consentGroupIdx) {
+        return List.of();
+    }
+
+    private DataUse generateDataUseFromConsentGroup(ConsentGroup group) {
+        return new DataUse();
+    }
+
+    private List<FileStorageObject> generateFileStorageObjects(DatasetRegistrationSchemaV1 registration,
+                                                               Map<String, FormDataBodyPart> files,
+                                                               Integer consentGroupIdx) {
+        return List.of();
+    }
+
+    private FileStorageObject 
+
+    private FormDataBodyPart findAlternativeDataSharingPlan(Map<String, FormDataBodyPart> files) {
+        return files.get("alternativeDataSharingPlan");
+    }
+
+    private FormDataBodyPart findNihInstitutionalCertificationFile(Map<String, FormDataBodyPart> files,
+                                                                   Integer consentGroupIdx) {
+        return files.get("consentGroups["+consentGroupIdx.toString()+"].nihInstitutionalCertificationFile");
     }
 }
