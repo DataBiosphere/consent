@@ -36,6 +36,7 @@ get:
       schema:
         type: integer
   tags:
+    - Admin
     - Mail
   responses:
     200:

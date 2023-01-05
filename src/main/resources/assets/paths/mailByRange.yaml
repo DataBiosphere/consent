@@ -5,14 +5,16 @@ get:
   parameters:
     - name: start
       in: query
-      description: Earliest Date to search in MM/dd/yyyy format. (e.g. 05/19/2019)
+      description: | 
+        Earliest Date to search in MM/dd/yyyy format. (e.g. 05/19/2019)
       required: true
       schema:
         type: string
     - name: end
       in: query
-      description: Latest Date to search in MM/dd/yyyy format. (e.g. 05/20/2022)
-      required: true
+      description: |
+        Latest Date to search in MM/dd/yyyy format. (e.g. 05/20/2022). Defaults to the future if empty.
+      required: false
       schema:
         type: string
     - name: limit
@@ -28,6 +30,7 @@ get:
       schema:
         type: integer
   tags:
+    - Admin
     - Mail
   responses:
     200:

@@ -7,6 +7,8 @@ import io.dropwizard.auth.Auth;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Date;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -17,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -59,7 +62,9 @@ public class MailResource {
     df.setLenient(false);
     try {
       Date startDate = df.parse(start);
-      Date endDate = df.parse(end);
+      Date endDate = StringUtils.isNotBlank(end) ?
+        df.parse(end) :
+        Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
       return Response.ok()
           .entity(emailService.fetchEmailMessagesByCreateDate(startDate, endDate, limit, offset))
           .build();
