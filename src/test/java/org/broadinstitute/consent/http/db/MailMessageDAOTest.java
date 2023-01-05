@@ -5,7 +5,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.time.Instant;
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -280,43 +282,60 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
   @Test
   public void testFetchByCreateDate_with_limit_and_offset() {
-    Date start = new Date();
-    generateMessagesInTime(2, 1);
-    Date end = new Date();
-    List<MailMessage> mailMessageList = mailMessageDAO.fetchMessagesByCreateDate(start, end, 1, 0);
-    assertEquals(1, mailMessageList.size());
+    // To fully test mail messages, we'll need a minimum of two to test limits and offsets.
+    Instant now = Instant.now();
+    Instant yesterday = now.minus(1, ChronoUnit.DAYS);
+    MailMessage messageToday = generateMessage(now);
+    MailMessage messageYesterday = generateMessage(yesterday);
 
-    Calendar startCalendar = Calendar.getInstance();
-    startCalendar.add(Calendar.DAY_OF_MONTH, -1 * 2 * 2);
-    List<MailMessage> mailMessageList2 = mailMessageDAO.fetchMessagesByCreateDate(
-        startCalendar.getTime(), end, 2, 0);
-    assertEquals(2, mailMessageList2.size());
+    // We'll use these times to search with
+    Instant yesterdayStart = LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant todayStart = LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant tomorrowStart = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
 
-    List<MailMessage> mailMessageList3 = mailMessageDAO.fetchMessagesByCreateDate(
-        startCalendar.getTime(), end, 2, 1);
-    assertEquals(1, mailMessageList3.size());
+    // Find messages from beginning of today to the beginning of tomorrow. Should return `messageToday`
+    List<MailMessage> messages = mailMessageDAO
+        .fetchMessagesByCreateDate(new Date(todayStart.toEpochMilli()),
+            new Date(tomorrowStart.toEpochMilli()), 1, 0);
+    assertEquals(1, messages.size());
+    assertEquals(messageToday.getEmailId(), messages.get(0).getEmailId());
 
-    List<MailMessage> mailMessageList4 = mailMessageDAO.fetchMessagesByCreateDate(
-        startCalendar.getTime(), end, 1, 0);
-    assertEquals(1, mailMessageList4.size());
+    // Find messages from beginning of yesterday to tomorrow. Should return both messages.
+    // Order is create date descending, so today is first, yesterday second.
+    List<MailMessage> messages2 = mailMessageDAO
+        .fetchMessagesByCreateDate(new Date(yesterdayStart.toEpochMilli()),
+            new Date(tomorrowStart.toEpochMilli()), 2, 0);
+    assertEquals(2, messages2.size());
+    assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
+    assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
+
+    // Find messages from beginning of yesterday to tomorrow, offset by 1. Should return yesterday's message.
+    List<MailMessage> messages3 = mailMessageDAO
+        .fetchMessagesByCreateDate(new Date(yesterdayStart.toEpochMilli()),
+            new Date(tomorrowStart.toEpochMilli()), 2, 1);
+    assertEquals(1, messages3.size());
+    assertEquals(messageYesterday.getEmailId(), messages3.get(0).getEmailId());
+
+    // Find messages from beginning of yesterday to beginning today. Should return yesterday's message.
+    List<MailMessage> messages4 = mailMessageDAO
+        .fetchMessagesByCreateDate(new Date(yesterdayStart.toEpochMilli()),
+            new Date(todayStart.toEpochMilli()), 2, 0);
+    assertEquals(1, messages4.size());
+    assertEquals(messageYesterday.getEmailId(), messages4.get(0).getEmailId());
   }
 
-  private void generateMessagesInTime(int number, int daysApart) {
-    Calendar calendar = Calendar.getInstance();
-    for (int x = 0; x < number; x++) {
-      mailMessageDAO.insert(
-          RandomStringUtils.randomAlphanumeric(10),
-          RandomUtils.nextInt(1, 1000),
-          RandomUtils.nextInt(1, 1000),
-          EmailType.COLLECT.getTypeInt(),
-          calendar.toInstant(),
-          RandomStringUtils.randomAlphanumeric(10),
-          RandomStringUtils.randomAlphanumeric(10),
-          RandomUtils.nextInt(200, 399),
-          calendar.toInstant()
-      );
-      calendar.add(Calendar.DAY_OF_MONTH, -1 * daysApart);
-    }
-
+  private MailMessage generateMessage(Instant instant) {
+    Integer messageId = mailMessageDAO.insert(
+        RandomStringUtils.randomAlphanumeric(10),
+        RandomUtils.nextInt(1, 1000),
+        RandomUtils.nextInt(1, 1000),
+        EmailType.COLLECT.getTypeInt(),
+        instant,
+        RandomStringUtils.randomAlphanumeric(10),
+        RandomStringUtils.randomAlphanumeric(10),
+        RandomUtils.nextInt(200, 399),
+        instant
+    );
+    return mailMessageDAO.fetchMessageById(messageId);
   }
 }
