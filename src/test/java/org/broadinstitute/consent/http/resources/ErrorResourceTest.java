@@ -25,8 +25,9 @@ public class ErrorResourceTest {
   public void testNotFound() {
     ErrorResource resource = new ErrorResource();
     when(request.getOriginalURI()).thenReturn("not_found");
-    Response response = resource.notFound(request);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (Response response = resource.notFound(request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
 }
