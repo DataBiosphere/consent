@@ -6,7 +6,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import org.eclipse.jetty.server.Request;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -14,7 +14,7 @@ import org.mockito.Mock;
 public class ErrorResourceTest {
 
   @Mock
-  private UriInfo uriInfo;
+  private Request request;
 
   @Before
   public void setUp() {
@@ -24,8 +24,8 @@ public class ErrorResourceTest {
   @Test
   public void testNotFound() {
     ErrorResource resource = new ErrorResource();
-    when(uriInfo.getPath()).thenReturn("not_found");
-    Response response = resource.notFound(uriInfo);
+    when(request.getOriginalURI()).thenReturn("not_found");
+    Response response = resource.notFound(request);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
