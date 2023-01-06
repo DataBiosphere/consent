@@ -1,13 +1,9 @@
 package org.broadinstitute.consent.http.models.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Error {
 
-    @JsonProperty
     private String message;
 
-    @JsonProperty
     private Integer code;
 
     public Error() {
