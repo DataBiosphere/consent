@@ -15,15 +15,8 @@ public class ErrorResource {
   @Path("404")
   @Produces("application/json")
   public Response notFound(@Context UriInfo info) {
-    Error error = buildNotFoundError(info);
+    String msg = String.format("Unable to find requested path: '%s'", info.getPath());
+    Error error = new Error(msg, 404);
     return Response.status(error.getCode()).entity(error).build();
-  }
-
-  private Error buildNotFoundError(UriInfo info) {
-    String msg =
-        String.format(
-            "Unable to find requested path: \"%s\" Link to swagger documentation: %s",
-            info.getPath(), info.getBaseUri());
-    return new Error(msg, 404);
   }
 }
