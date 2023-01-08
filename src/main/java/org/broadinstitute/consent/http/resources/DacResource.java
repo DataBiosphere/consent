@@ -71,7 +71,12 @@ public class DacResource extends Resource {
         if (dac.getDescription() == null) {
             throw new BadRequestException("DAC Description is required");
         }
-        Integer dacId = dacService.createDac(dac.getName(), dac.getDescription());
+        Integer dacId;
+        if (Objects.isNull(dac.getEmail())) {
+            dacId = dacService.createDac(dac.getName(), dac.getDescription());
+        } else {
+            dacId = dacService.createDac(dac.getName(), dac.getDescription(), dac.getEmail());
+        }
         if (dacId == null) {
             throw new Exception("Unable to create DAC with name: " + dac.getName() + " and description: " + dac.getDescription());
         }
@@ -96,7 +101,11 @@ public class DacResource extends Resource {
         if (dac.getDescription() == null) {
             throw new BadRequestException("DAC Description is required");
         }
-        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
+        if (Objects.isNull(dac.getEmail())) {
+            dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
+        } else {
+            dacService.updateDac(dac.getName(), dac.getDescription(), dac.getEmail(), dac.getDacId());
+        }
         Dac savedDac = dacService.findById(dac.getDacId());
         return Response.ok().entity(unmarshal(savedDac)).build();
     }
@@ -220,7 +229,7 @@ public class DacResource extends Resource {
         try{
             User user = userService.findUserByEmail(authUser.getEmail());
             Dataset dataset = datasetService.findDatasetById(datasetId);
-            if(Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) { 
+            if(Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
                 //Vague message is intentional, don't want to reveal too much info
                 throw new NotFoundException("Dataset not found");
             }

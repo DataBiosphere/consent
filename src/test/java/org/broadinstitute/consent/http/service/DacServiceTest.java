@@ -137,8 +137,29 @@ public class DacServiceTest {
     }
 
     @Test
+    public void testCreateDacWithEmail() {
+        when(dacDAO.createDac(anyString(), anyString(), anyString(), any())).thenReturn(getDacs().get(0).getDacId());
+        initService();
+
+        Integer dacId = service.createDac("name", "description", "email@test.com");
+        Assert.assertEquals(getDacs().get(0).getDacId(), dacId);
+    }
+
+    @Test
     public void testUpdateDac() {
         doNothing().when(dacDAO).updateDac(anyString(), anyString(), any(), any());
+        initService();
+
+        try {
+            service.updateDac("name", "description", 1);
+        } catch (Exception e) {
+            Assert.fail("Update should not fail");
+        }
+    }
+
+    @Test
+    public void testUpdateDacWithEmail() {
+        doNothing().when(dacDAO).updateDac(anyString(), anyString(), anyString(), any(), any());
         initService();
 
         try {

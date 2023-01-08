@@ -30,6 +30,8 @@ public class Dac {
 
     private final List<Integer> datasetIds = new ArrayList<>();
 
+    private String email;
+
     public Dac() {
     }
 
@@ -103,6 +105,15 @@ public class Dac {
 
     public void addDatasetId(Integer datasetId) {
         this.datasetIds.add(datasetId);
+    }
+
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void addDataset(Dataset dataset) {
