@@ -5,7 +5,7 @@
       <sql>
         UPDATE election
         SET archived = true
-        WHERE LOWER(status) in ('final', 'closed', 'canceled')
+        WHERE LOWER(status) IN ('final', 'closed', 'canceled')
       </sql>
     </changeSet>
 </databaseChangeLog>
