@@ -228,49 +228,6 @@ public class DarCollectionDAOTest extends DAOTestHelper  {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionIdWithOrder_ASC_NegativeDatasetElectionTest() {
-    DarCollection collection = createDarCollection();
-    generateDatasetElectionForCollection(collection);
-    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(List.of(collection.getDarCollectionId()),
-        "dar_code", "ASC");
-    assertEquals(1, returnedCollections.size());
-    DarCollection targetCollection = returnedCollections.get(0);
-    List<Election> elections = getElectionsFromCollection(targetCollection);
-    List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-    assertTrue(datasetElections.isEmpty());
-  }
-
-  @Test
-  public void testFindDARCollectionByCollectionIdWithOrder_ASC() {
-    DarCollection collectionOne = createDarCollection();
-    DarCollection collectionTwo = createDarCollection();
-    List<Integer> collectionIds = List.of(
-      collectionOne.getDarCollectionId(),
-      collectionTwo.getDarCollectionId()
-    );
-    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds, "dar_code", "ASC");
-    for(int i = 0; i < returnedCollections.size() - 1; i++) {
-      String firstCode = returnedCollections.get(i).getDarCode();
-      String secondCode = returnedCollections.get(i+1).getDarCode();
-      assertTrue(firstCode.compareTo(secondCode) < 0);
-    }
-  }
-
-  @Test
-  public void testFindDARCollectionByCollectionIdWithOrder_DESC() {
-    DarCollection collectionOne = createDarCollection();
-    DarCollection collectionTwo = createDarCollection();
-    List<Integer> collectionIds = List.of(collectionOne.getDarCollectionId(), collectionTwo.getDarCollectionId());
-    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds,
-        "dar_code", "DESC");
-    for (int i = 0; i < returnedCollections.size() - 1; i++) {
-      String firstCode = returnedCollections.get(i).getDarCode();
-      String secondCode = returnedCollections.get(i + 1).getDarCode();
-      assertTrue(firstCode.compareTo(secondCode) > 0);
-    }
-  }
-
-  @Test
   public void testInsertDARCollection() {
     List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
     assertTrue(allBefore.isEmpty());
@@ -856,25 +813,6 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     return List.of(user, now, dataset, collectionId, testDar, dac, testDarCollection);
   }
 
-  // findAllDARCollectionsWithFiltersByUser should exclude archived collections
-  @Test
-  public void testFindAllDARCollectionsWithFiltersByUserArchived() {
-    User user = createUserWithInstitution();
-    List<Object> newDarCollection = createDarCollectionWithDataset(user);
-
-    DataAccessRequest testDar = (DataAccessRequest) newDarCollection.get(4);
-    DarCollection testDarCollection = (DarCollection) newDarCollection.get(6);
-
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-
-    String filterTerm = testDarCollection.getDarCode();
-    String testTerm = generateTestTerm(filterTerm);
-    List<DarCollection> collections = darCollectionDAO.findAllDARCollectionsWithFiltersByUser(testTerm, user.getUserId(), "dar_code","ASC");
-
-    assertTrue(collections.isEmpty());
-    assertFalse(collections.contains(testDarCollection));
-  }
-
   // findDARCollectionIdsByDacIds should exclude archived collections
   @Test
   public void testFindDARCollectionIdsByDacIdsArchived() {
@@ -934,32 +872,6 @@ public void testGetFilteredListForResearcher_InstitutionTerm() {
     assertFalse(returnedCollections.contains(testDarCollection1));
     assertTrue(returnedCollections.contains(testDarCollection2));
   }
-
-  // findDARCollectionByCollectionIdsWithOrder should exclude archived collections
-  @Test
-  public void testFindDARCollectionIdsByCollectionIdsWithOrderArchived() {
-    User user = createUserWithInstitution();
-    List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
-    List<Object> newDarCollection2 = createDarCollectionWithDataset(user);
-
-    DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
-    DarCollection testDarCollection1 = (DarCollection) newDarCollection1.get(6);
-    DarCollection testDarCollection2 = (DarCollection) newDarCollection2.get(6);
-
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
-
-    List<Integer> collectionIds = List.of(
-            testDarCollection1.getDarCollectionId(),
-            testDarCollection2.getDarCollectionId()
-    );
-
-    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(collectionIds, "dar_code","ASC");
-
-    assertEquals(1, returnedCollections.size());
-    assertFalse(returnedCollections.contains(testDarCollection1));
-    assertTrue(returnedCollections.contains(testDarCollection2));
-  }
-
 
   // findAllDARCollections should exclude archived collections
   @Test
