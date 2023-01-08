@@ -335,7 +335,6 @@ public class DacDAOTest extends DAOTestHelper {
     }
 
     private Dac insertDac() {
-        String testEmail = "test@email.com";
         Integer id = dacDAO.createDac(
                 "Test_" + RandomStringUtils.random(20, true, true),
                 "Test_" + RandomStringUtils.random(20, true, true),

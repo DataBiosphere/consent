@@ -108,7 +108,7 @@ public class DacServiceTest {
                 stream().
                 filter(d -> !d.getChairpersons().isEmpty()).
                 filter(d -> !d.getMembers().isEmpty()).
-                collect(Collectors.toList());
+                toList();
         Assert.assertFalse(dacsWithMembers.isEmpty());
         Assert.assertEquals(1, dacsWithMembers.size());
     }
@@ -163,7 +163,7 @@ public class DacServiceTest {
         initService();
 
         try {
-            service.updateDac("name", "description", 1);
+            service.updateDac("name", "description", "test@email.com",1);
         } catch (Exception e) {
             Assert.fail("Update should not fail");
         }
