@@ -33,6 +33,11 @@ public class DacBuilder {
         return this;
     }
 
+    public DacBuilder setEmail(String email) {
+        this.dac.setEmail(email);
+        return this;
+    }
+
     public DacBuilder setCreateDate(Date createDate) {
         this.dac.setCreateDate(createDate);
         return this;
