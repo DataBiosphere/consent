@@ -47,12 +47,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) " +
       " LEFT JOIN vote v ON v.electionid = e.election_id ";
 
-  String filterQuery =
-    " WHERE c.create_user_id = :userId " +
-      " AND (" +
-      DarCollection.FILTER_TERMS_QUERY +
-      " )";
-
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
   String orderStatement = " ORDER BY <sortField> <sortOrder>";
