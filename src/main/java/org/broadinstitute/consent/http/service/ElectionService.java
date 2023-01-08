@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import java.util.EnumSet;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -101,11 +102,27 @@ public class ElectionService {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
-        if(rec.getArchived() != null && rec.getArchived()) {
-            electionDAO.archiveElectionById(electionId, lastUpdate);
-        }
+        archiveElectionByIdAndStatus(electionId, rec.getStatus());
         updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
+    }
+
+    /**
+     * Utility method to consolidate archiving elections by status.
+     *
+     * @param electionId Election Id
+     * @param status Election Status String
+     */
+    private void archiveElectionByIdAndStatus(Integer electionId, String status) {
+        Date update = new Date();
+        ElectionStatus electionStatus = ElectionStatus.getStatusFromString(status);
+        EnumSet<ElectionStatus> archiveStatuses = EnumSet.of(
+            ElectionStatus.CANCELED,
+            ElectionStatus.CLOSED,
+            ElectionStatus.FINAL);
+        if (Objects.nonNull(electionStatus) && archiveStatuses.contains(electionStatus)) {
+            electionDAO.archiveElectionById(electionId, update);
+        }
     }
 
     public Election submitFinalAccessVoteDataRequestElection(Integer electionId, Boolean voteValue) throws Exception {
@@ -136,6 +153,7 @@ public class ElectionService {
                 election.getStatus(),
                 new Date(),
                 voteValue);
+        archiveElectionByIdAndStatus(electionId, election.getStatus());
         if (voteValue) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());
@@ -232,6 +250,7 @@ public class ElectionService {
         election.setFinalAccessVote(CollectionUtils.isEmpty(rejectedVotes) ? true : false);
         election.setStatus(ElectionStatus.CLOSED.getValue());
         electionDAO.updateElectionById(electionId, election.getStatus(), new Date(), election.getFinalAccessVote());
+        archiveElectionByIdAndStatus(electionId, election.getStatus());
         try {
             List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
             if(validateAllDatasetElectionsAreClosed(dsElections)){
