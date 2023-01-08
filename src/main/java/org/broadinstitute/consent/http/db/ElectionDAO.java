@@ -52,25 +52,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                            @Bind("referenceId") String referenceId,
                            @Bind("datasetId") Integer dataSetId);
 
-    @SqlUpdate(
-            " INSERT INTO election " +
-                "(election_type, status, create_date, reference_id, final_access_vote, data_use_letter, dul_name, dataset_id, version) VALUES " +
-                "(:electionType, :status, :createDate,:referenceId, :finalAccessVote, :dataUseLetter, :dulName, :datasetId, " +
-                    "(SELECT COALESCE (MAX(version), 0) + 1 " +
-                    "FROM election " +
-                    "WHERE reference_id = :referenceId " +
-                    "AND election_type = :electionType " +
-                    "AND dataset_id = :datasetId)) ")
-    @GetGeneratedKeys
-    Integer insertElection(@Bind("electionType") String electionType,
-                           @Bind("status") String status,
-                           @Bind("createDate") Date createDate,
-                           @Bind("referenceId") String referenceId,
-                           @Bind("finalAccessVote") Boolean finalAccessVote,
-                           @Bind("dataUseLetter") String dataUseLetter,
-                           @Bind("dulName") String dulName,
-                           @Bind("datasetId") Integer datasetId);
-
     @SqlUpdate("DELETE FROM election WHERE election_id = :electionId")
     void deleteElectionById(@Bind("electionId") Integer electionId);
 

@@ -395,9 +395,6 @@ public class ElectionDAOTest extends DAOTestHelper {
       ElectionStatus.OPEN.getValue(),
       new Date(),
       c.getConsentId(),
-      Boolean.TRUE,
-      "dataUseLetter",
-      "dulName",
       d.getDataSetId());
     Election e = electionDAO.findElectionById(electionId);
     createFinalVote(u.getUserId(), e.getElectionId());
@@ -415,9 +412,6 @@ public class ElectionDAOTest extends DAOTestHelper {
       ElectionStatus.OPEN.getValue(),
       new Date(),
       dar.getReferenceId(),
-      Boolean.TRUE,
-      "dataUseLetter",
-      "dulName",
       d.getDataSetId());
     List<Election> elections =
         electionDAO.findLastElectionsByReferenceIdsAndType(
