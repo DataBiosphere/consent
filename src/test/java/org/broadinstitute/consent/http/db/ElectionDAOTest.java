@@ -219,6 +219,21 @@ public class ElectionDAOTest extends DAOTestHelper {
     return List.of(accessElection.getElectionId(), rpElection.getElectionId());
   }
 
+  @Test
+  public void testFindElectionsByReferenceIdAndDatasetId() {
+    User user = createUser();
+    String darCode = "DAR-1234567890";
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    Dataset d1 = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+    Election accessElection = createDataAccessElection(dar.getReferenceId(), d1.getDataSetId());
+    Election rpElection = createRPElection(dar.getReferenceId(), d1.getDataSetId());
+    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+
+    List<Election> elections = electionDAO.findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), d1.getDataSetId());
+    assertEquals(2, elections.size());
+  }
 
   @Test
   public void testDeleteElectionFromAccessRP() {
@@ -1598,6 +1613,25 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(true, e.getArchived());
     assertNotNull(e.getLastUpdate());
+  }
+
+  @Test
+  public void testArchiveElectionByIds() {
+    User user = createUser();
+    String darCode = "DAR-1234567890";
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    Dataset d1 = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+    Election accessElection = createDataAccessElection(dar.getReferenceId(), d1.getDataSetId());
+    Election rpElection = createRPElection(dar.getReferenceId(), d1.getDataSetId());
+    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
+    List<Election> elections = electionDAO.findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), d1.getDataSetId());
+    List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
+
+    electionDAO.archiveElectionByIds(electionIds, new Date());
+    List<Election> archivedElections = electionDAO.findElectionsByIds(electionIds);
+    archivedElections.forEach(e -> assertTrue(e.getArchived()));
   }
 
   @Test

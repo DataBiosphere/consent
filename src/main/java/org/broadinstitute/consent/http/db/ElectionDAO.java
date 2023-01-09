@@ -352,6 +352,15 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdDatasetIdAndType(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId, @Bind("type") String type);
 
+    @SqlQuery("""
+        SELECT e.*
+        FROM election e
+        WHERE e.reference_id = :referenceId
+        AND e.dataset_id = :datasetId
+        """)
+    @UseRowMapper(SimpleElectionMapper.class)
+    List<Election> findElectionsByReferenceIdAndDatasetId(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
+
     @SqlQuery("SELECT election_rp_id FROM access_rp arp WHERE arp.election_access_id = :electionAccessId ")
     Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
 
@@ -407,6 +416,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("UPDATE election SET archived = true, last_update = :lastUpdate WHERE election_id = :electionId ")
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
+
+    @SqlUpdate("""
+        UPDATE election
+        SET archived = true, last_update = :lastUpdate
+        WHERE election_id IN (<electionIds>)
+        """)
+    void archiveElectionByIds(@BindList("electionIds") List<Integer> electionIds, @Bind("lastUpdate") Date lastUpdate);
 
     @SqlQuery(
         "SELECT DISTINCT " +
