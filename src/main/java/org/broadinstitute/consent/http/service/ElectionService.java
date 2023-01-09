@@ -102,7 +102,7 @@ public class ElectionService {
         }
         Date lastUpdate = new Date();
         electionDAO.updateElectionById(electionId, rec.getStatus(), lastUpdate);
-        archiveElectionByIdAndStatus(electionId, rec.getStatus());
+        verifyElectionArchiveState(electionId, rec.getStatus());
         updateSortDate(electionDAO.findElectionWithFinalVoteById(electionId).getReferenceId(), lastUpdate);
         return electionDAO.findElectionWithFinalVoteById(electionId);
     }
@@ -113,7 +113,7 @@ public class ElectionService {
      * @param electionId Election Id
      * @param status Election Status String
      */
-    private void archiveElectionByIdAndStatus(Integer electionId, String status) {
+    private void verifyElectionArchiveState(Integer electionId, String status) {
         Date update = new Date();
         ElectionStatus electionStatus = ElectionStatus.getStatusFromString(status);
         EnumSet<ElectionStatus> archiveStatuses = EnumSet.of(
@@ -153,7 +153,7 @@ public class ElectionService {
                 election.getStatus(),
                 new Date(),
                 voteValue);
-        archiveElectionByIdAndStatus(electionId, election.getStatus());
+        verifyElectionArchiveState(electionId, election.getStatus());
         if (voteValue) {
             sendResearcherNotification(election.getReferenceId());
             sendDataCustodianNotification(election.getReferenceId());
@@ -250,7 +250,7 @@ public class ElectionService {
         election.setFinalAccessVote(CollectionUtils.isEmpty(rejectedVotes) ? true : false);
         election.setStatus(ElectionStatus.CLOSED.getValue());
         electionDAO.updateElectionById(electionId, election.getStatus(), new Date(), election.getFinalAccessVote());
-        archiveElectionByIdAndStatus(electionId, election.getStatus());
+        verifyElectionArchiveState(electionId, election.getStatus());
         try {
             List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
             if(validateAllDatasetElectionsAreClosed(dsElections)){
