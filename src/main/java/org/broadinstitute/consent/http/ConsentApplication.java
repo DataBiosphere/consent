@@ -169,7 +169,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
         // Clients
-        final HttpClientUtil clientUtil = new HttpClientUtil();
+        final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
         // Services

@@ -27,10 +27,12 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -556,13 +558,13 @@ public class DatasetService {
      *
      * @param registration The DatasetRegistrationSchemaV1.yaml
      * @param user The User creating these datasets
-     * @param formDataBodyPart Nullable FormDataBodyPart
+     * @param files Map of files, where the key is the name of the field
      * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(
         DatasetRegistrationSchemaV1 registration,
         User user,
-        @Nullable FormDataBodyPart formDataBodyPart) {
+        Map<String, FormDataBodyPart> files) {
         return List.of();
     }
 }
