@@ -52,6 +52,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ElectionServiceTest {
@@ -276,7 +279,7 @@ public class ElectionServiceTest {
                 .thenReturn(sampleElection1);
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(sampleElection2.getReferenceId(), sampleElection1.getElectionType()))
                 .thenReturn(sampleElection2);
-        when(electionDAO.insertElection(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.OPEN.getValue()))
                 .thenReturn(Arrays.asList(sampleElection1));
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()))
@@ -308,6 +311,58 @@ public class ElectionServiceTest {
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+    }
+
+    @Test
+    public void testUpdateElectionByIdWithArchival_Closed() {
+        when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
+        spy(electionDAO);
+        sampleElection1.setStatus(ElectionStatus.CLOSED.getValue());
+        initService();
+
+        Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
+        assertNotNull(election);
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        verify(electionDAO, times(1)).archiveElectionById(any(), any());
+    }
+
+    @Test
+    public void testUpdateElectionByIdWithArchival_Canceled() {
+        when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
+        spy(electionDAO);
+        sampleElection1.setStatus(ElectionStatus.CANCELED.getValue());
+        initService();
+
+        Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
+        assertNotNull(election);
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        verify(electionDAO, times(1)).archiveElectionById(any(), any());
+    }
+
+    @Test
+    public void testUpdateElectionByIdWithArchival_Final() {
+        when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
+        spy(electionDAO);
+        sampleElection1.setStatus(ElectionStatus.FINAL.getValue());
+        initService();
+
+        Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
+        assertNotNull(election);
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        verify(electionDAO, times(1)).archiveElectionById(any(), any());
+    }
+
+    @Test
+    public void testUpdateElectionByIdWithArchival_Open() {
+        when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
+        spy(electionDAO);
+        sampleElection1.setStatus(ElectionStatus.OPEN.getValue());
+        initService();
+
+        Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
+        assertNotNull(election);
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        verify(electionDAO, times(0)).archiveElectionById(any(), any());
     }
 
     @Test

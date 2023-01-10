@@ -4,14 +4,13 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import io.dropwizard.lifecycle.Managed;
+import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-
-import java.nio.charset.Charset;
 
 public class SamHealthCheck extends HealthCheck implements Managed {
 
@@ -28,8 +27,8 @@ public class SamHealthCheck extends HealthCheck implements Managed {
     try {
       String statusUrl = configuration.getSamUrl() + "status";
       HttpGet httpGet = new HttpGet(statusUrl);
-      try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
-        if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
+      try (ClassicHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
+        if (response.getCode() == HttpStatusCodes.STATUS_CODE_OK) {
           String content =
               IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
           SamStatus samStatus = new Gson().fromJson(content, SamStatus.class);
@@ -39,7 +38,7 @@ public class SamHealthCheck extends HealthCheck implements Managed {
               .healthy()
               .build();
         } else {
-          return Result.unhealthy("Sam status is unhealthy: " + response.getStatusLine());
+          return Result.unhealthy("Sam status is unhealthy: " + response.getCode());
         }
       } catch (Exception e) {
         return Result.unhealthy(e);

@@ -36,7 +36,7 @@ public class SupportRequestService {
     @Inject
     public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO, UserDAO userDAO) {
         this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
-        this.clientUtil = new HttpClientUtil();
+        this.clientUtil = new HttpClientUtil(configuration);
         this.configuration = configuration;
     }
 

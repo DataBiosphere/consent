@@ -254,6 +254,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    *  - Elections have been created for a Collection
    *  - Elections are then canceled
    *  - Elections re-created correctly
+   *  - Previous canceled elections are correctly archived
    */
   @Test
   public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin() throws Exception {
@@ -267,8 +268,12 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
 
     // cancel those elections:
-    electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).forEach(e ->
-        electionDAO.updateElectionById(e.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date()));
+    List<Integer> canceledElectionIds = electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()))
+      .stream()
+      .map(Election::getElectionId)
+      .toList();
+    canceledElectionIds.forEach(id ->
+        electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date()));
 
     // re-create elections & new votes:
     referenceIds.addAll(serviceDAO.createElectionsForDarCollection(user, collection));
@@ -283,6 +288,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertEquals(2, createdElections.size());
     assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())).count());
     assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
+
+    // Check that the canceled elections are archived
+    List<Election> canceledElections = electionDAO.findElectionsByIds(canceledElectionIds);
+    canceledElections.forEach(e -> assertTrue(e.getArchived()));
   }
 
   /**
