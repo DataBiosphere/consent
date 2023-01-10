@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.service.UserService;
 
 import javax.annotation.security.RolesAllowed;

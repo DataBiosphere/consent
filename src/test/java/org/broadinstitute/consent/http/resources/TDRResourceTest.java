@@ -1,14 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
@@ -17,21 +27,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Spy;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class TDRResourceTest {
 
@@ -46,9 +41,6 @@ public class TDRResourceTest {
 
     @Mock
     private DataAccessRequestService darService;
-
-    @Spy
-    private DataAccessRequestDAO dataAccessRequestDAO;
 
     private final AuthUser authUser = new AuthUser("test@test.com");
     private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
@@ -199,7 +191,7 @@ public class TDRResourceTest {
         Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), r.getStatus());
         Error notFoundError = (Error) r.getEntity();
-        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]", notFoundError.getMessage());
+        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]", notFoundError.message());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
