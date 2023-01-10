@@ -17,6 +17,8 @@ public class ServicesConfiguration {
 
   private Integer timeoutSeconds = 10;
 
+  private Integer poolSize = 10;
+
   private boolean activateSupportNotifications = false;
 
 
@@ -106,5 +108,13 @@ public class ServicesConfiguration {
 
   public void setTimeoutSeconds(Integer timeoutSeconds) {
     this.timeoutSeconds = timeoutSeconds;
+  }
+
+  public Integer getPoolSize() {
+    return poolSize;
+  }
+
+  public void setPoolSize(Integer poolSize) {
+    this.poolSize = poolSize;
   }
 }
