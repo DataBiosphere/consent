@@ -276,7 +276,7 @@ public class ElectionServiceTest {
                 .thenReturn(sampleElection1);
         when(electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(sampleElection2.getReferenceId(), sampleElection1.getElectionType()))
                 .thenReturn(sampleElection2);
-        when(electionDAO.insertElection(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.OPEN.getValue()))
                 .thenReturn(Arrays.asList(sampleElection1));
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()))

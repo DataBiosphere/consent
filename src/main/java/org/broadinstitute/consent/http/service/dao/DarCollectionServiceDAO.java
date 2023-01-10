@@ -1,6 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -15,13 +20,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class DarCollectionServiceDAO {
 
@@ -42,7 +40,7 @@ public class DarCollectionServiceDAO {
    * Find all Dar Collection + Dataset combinations that are available to the user.
    *    - Admins have all available to them
    *    - Chairs can only create elections for datasets in their DACs
-   *
+   * <p>
    * DarCollections with no elections, or with previously canceled elections, are valid
    * for initiating a new set of elections. Any DAR elections in open state should be ignored.
    *
@@ -61,7 +59,7 @@ public class DarCollectionServiceDAO {
             .findDatasetsByAuthUserEmail(user.getEmail())
             .stream()
             .map(Dataset::getDataSetId)
-            .collect(Collectors.toList());
+            .toList();
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -69,15 +67,16 @@ public class DarCollectionServiceDAO {
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
           List<Update> inserts = new ArrayList<>();
-          // For each Dataset in each DAR, create:
-          //    1. Access Election
-          //    2. Member votes for access election
-          //        2a. Chair Vote for chair
-          //        2b. Final Vote for chair
-          //        2c. Agreement Vote for chair if not manual review
-          //    3. RP Election
-          //    4. Member votes for rp election
-          //        4a. Chair Vote for chair
+          // For each Dataset in each DAR, :
+          //    1. Archive existing, non-open, Elections
+          //    2. Create an Access Election
+          //    3. Create member votes for access election
+          //        3a. Chair Vote for chair
+          //        3b. Final Vote for chair
+          //        3c. Agreement Vote for chair if not manual review
+          //    4. Create an RP Election
+          //    5. Create member votes for rp election
+          //        5a. Chair Vote for chair
           collection.getDars().values().forEach(dar -> {
                 dar.getDatasetIds().forEach(datasetId -> {
                     // If there is an existing open election for this DAR+Dataset, we can ignore it
@@ -90,6 +89,14 @@ public class DarCollectionServiceDAO {
                         ignore = true;
                     }
                     if (!ignore) {
+                        // Archive all old elections for this DAR + Dataset
+                        List<Integer> oldElectionIds = electionDAO
+                            .findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), datasetId)
+                            .stream().map(Election::getElectionId)
+                            .toList();
+                        if (!oldElectionIds.isEmpty()) {
+                          electionDAO.archiveElectionByIds(oldElectionIds, now);
+                        }
                         List<User> voteUsers = findVoteUsersForDataset(datasetId);
                         inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), now, datasetId));
                         inserts.addAll(createVoteInsertsForUsers(handle, voteUsers, ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId, now, dar.requiresManualReview()));
