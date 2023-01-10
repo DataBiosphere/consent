@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import com.google.cloud.storage.BlobInfo;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -35,9 +36,11 @@ public class DatasetServiceDAO {
                                           DataUse dataUse,
                                           Integer userId,
                                           List<DatasetProperty> properties,
-                                          List<FileStorageObject> files) {
+                                          List<FileStorageObject> uploadedFiles) throws SQLException {
         jdbi.useHandle(
             handle -> {
+                handle.getConnection().setAutoCommit(false);
+
                 // insert dataset
                 Integer datasetId = datasetDAO.insertDataset(
                         name,
@@ -48,9 +51,13 @@ public class DatasetServiceDAO {
                         dataUse.toString(),
                         dacId
                 );
+
                 // insert properties
                 executeSynchronizeDatasetProperties(handle, datasetId, properties);
+
                 // files
+
+                handle.commit();
             }
         );
 

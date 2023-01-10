@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -9,6 +13,7 @@ import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -34,6 +39,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -66,11 +72,12 @@ public class DatasetService {
     private final DacDAO dacDAO;
     private final UseRestrictionConverter converter;
     private final EmailService emailService;
+    private final GCSService gcsService;
 
     @Inject
     public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
                           DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO, UseRestrictionConverter converter,
-                          EmailService emailService) {
+                          EmailService emailService, GCSService gcsService) {
         this.consentDAO = consentDAO;
         this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.datasetDAO = dataSetDAO;
@@ -79,6 +86,7 @@ public class DatasetService {
         this.dacDAO = dacDAO;
         this.converter = converter;
         this.emailService = emailService;
+        this.gcsService = gcsService;
     }
 
     public List<Dataset> getDataSetsForConsent(String consentId) {
@@ -570,15 +578,35 @@ public class DatasetService {
         return List.of();
     }
 
+    private Map<String, Pair<BlobId, FormDataBodyPart>> uploadFiles(Map<String, FormDataBodyPart> files) throws IOException {
+        Map<String, Pair<BlobId, FormDataBodyPart>> uploaded = new HashMap<>();
+
+        for (String name : files.keySet()) {
+            FormDataBodyPart bodyPart = files.get(name);
+
+            String mediaType = bodyPart.getContentDisposition().getType();
+
+            BlobId id = gcsService.storeDocument(
+                    bodyPart.getValueAs(InputStream.class),
+                    mediaType,
+                    UUID.randomUUID()
+            );
+
+            uploaded.put(name, Pair.of(id, bodyPart));
+        }
+
+        return uploaded;
+    }
+
     private Dataset createDataset(DatasetRegistrationSchemaV1 registration,
                                   User user,
-                                  Map<String, FormDataBodyPart> formDataFileParts,
-                                  Integer consentGroupIdx) {
+                                  Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles,
+                                  Integer consentGroupIdx) throws SQLException {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
         List<DatasetProperty> props = generatePropertiesFromRegistration(registration, consentGroupIdx);
         DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
-        List<FileStorageObject> files = generateFileStorageObjects(registration, formDataFileParts, consentGroupIdx);
+        List<FileStorageObject> files = generateFileStorageObjects(uploadedFiles, consentGroupIdx);
 
         return datasetServiceDAO.insertDatasetWithFiles(
                 consentGroup.getConsentGroupName(),
@@ -598,16 +626,61 @@ public class DatasetService {
     }
 
     private DataUse generateDataUseFromConsentGroup(ConsentGroup group) {
-        return new DataUse();
+        DataUse dataUse = new DataUse();
+
+        dataUse.setCollaboratorRequired(group.getCol());
+        dataUse.setDiseaseRestrictions(group.getDiseaseSpecificUse());
+        dataUse.setEthicsApprovalRequired(group.getIrb());
+        dataUse.setGeneralUse(group.getGeneralResearchUse());
+        dataUse.setGeographicalRestrictions(group.getGs());
+        dataUse.setGeneticStudiesOnly(group.getGso());
+        dataUse.setHmbResearch(group.getHmb());
+        dataUse.setPublicationMoratorium(group.getMor() ? group.getMorDate() : null);
+
+        dataUse.setMethodsResearch(!group.getNmds()); // TODO: is this right?
+        dataUse.setCommercialUse(!group.getNpu());
+        dataUse.setOther(group.getOtherPrimary());
+        dataUse.setSecondaryOther(group.getOtherSecondary());
+        dataUse.setPopulationOriginsAncestry(group.getPoa());
+        dataUse.setPublicationResults(group.getPub());
+
+        return dataUse;
     }
 
-    private List<FileStorageObject> generateFileStorageObjects(DatasetRegistrationSchemaV1 registration,
-                                                               Map<String, FormDataBodyPart> files,
+    private List<FileStorageObject> generateFileStorageObjects(Map<String, Pair<BlobId, FormDataBodyPart>> allUploadedFiles,
                                                                Integer consentGroupIdx) {
-        return List.of();
+        List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
+
+        addFileIfExists(
+                consentGroupFSOs, allUploadedFiles,
+                "alternativeDataSharingPlan",
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+
+        addFileIfExists(
+                consentGroupFSOs, allUploadedFiles,
+                "consentGroups["+consentGroupIdx.toString()+"].nihInstitutionalCertificationFile",
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+
+        return consentGroupFSOs;
+
     }
 
-    private FileStorageObject 
+    private void addFileIfExists(List<FileStorageObject> list, Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles, String name, FileCategory category) {
+        if (!uploadedFiles.containsKey(name)) {
+            return;
+        }
+
+        BlobId id = uploadedFiles.get(name).getLeft();
+        FormDataBodyPart bodyPart = uploadedFiles.get(name).getRight();
+
+        FileStorageObject fso = new FileStorageObject();
+        fso.setCategory(category);
+        fso.setFileName(bodyPart.getContentDisposition().getFileName());
+        fso.setMediaType(bodyPart.getMediaType().toString());
+        fso.setBlobId(id);
+
+        list.add(fso);
+    }
 
     private FormDataBodyPart findAlternativeDataSharingPlan(Map<String, FormDataBodyPart> files) {
         return files.get("alternativeDataSharingPlan");
