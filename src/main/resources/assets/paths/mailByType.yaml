@@ -1,5 +1,5 @@
 get:
-  summary: Get Mail Messages
+  summary: Get Mail Messages by EmailType.
   description: |
     Admin only feature returns MailMessage list filtered by EmailType.
   parameters:
@@ -25,13 +25,13 @@ get:
          - RESEARCHER_APPROVED
     - name: limit
       in: query
-      description: Number of results to return.  Defaults to 20 if unset.
+      description: Number of results to return.  Defaults to 20 if unset. May not be negative.
       required: false
       schema:
         type: integer
     - name: offset
       in: query
-      description: Offset value to page results.  Defaults to 0 if unset.
+      description: Offset value to page results.  Defaults to 0 if unset. May not be negative.
       required: false
       schema:
         type: integer
@@ -47,6 +47,8 @@ get:
             type: array
             items:
               $ref: '../schemas/MailMessage.yaml'
+    400:
+      description: Bad Request.  Make sure limit and offset are not negative numbers.
     401:
       description: Unauthorized.
     500:
