@@ -332,8 +332,8 @@ public class EmailService {
 
     public void sendNewResearcherMessage(User researcher,
                                          User signingOfficial) throws Exception {
-        Writer template = templateHelper.getNewResearcherTemplate(researcher.getDisplayName(), this.SERVER_URL);
-        Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(signingOfficial.getEmail(), template);
+        Writer template = templateHelper.getNewResearcherLibraryRequestTemplate(researcher.getDisplayName(), this.SERVER_URL);
+        Optional<Response> response = sendGridAPI.sendNewResearcherLibraryRequestMessage(signingOfficial.getEmail(), template);
         saveEmailAndResponse(
                 response.orElse(null),
                 researcher.getUserId().toString(),

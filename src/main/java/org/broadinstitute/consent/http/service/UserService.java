@@ -92,7 +92,7 @@ public class UserService {
                 userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
             }
 
-            Integer soIdBeforeUpdate = this.getSigningOfficialForUser(userId);
+            Optional<Integer> soIdBeforeUpdate = getSigningOfficialForUser(userId);
 
             // Update User Properties
             List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
@@ -101,15 +101,15 @@ public class UserService {
                 userPropertyDAO.insertAll(userProps);
             }
 
-            Integer soIdAfterUpdate = this.getSigningOfficialForUser(userId);
+            Optional<Integer> soIdAfterUpdate = getSigningOfficialForUser(userId);
 
             // if SO went from not specified to specified (i.e. set for the first time)
             // then send an email
-            if (Objects.isNull(soIdBeforeUpdate) && Objects.nonNull(soIdAfterUpdate)) {
+            if (soIdBeforeUpdate.isEmpty() && soIdAfterUpdate.isPresent()) {
                 try {
                     emailService.sendNewResearcherMessage(
                             userDAO.findUserById(userId),
-                            userDAO.findUserById(soIdAfterUpdate)
+                            userDAO.findUserById(soIdAfterUpdate.get())
                     );
                 } catch (Exception e) {
                     logger.warn("Could not send new researcher notification to SO: " + e.getMessage());
@@ -368,7 +368,7 @@ public class UserService {
         userRoleDAO.insertUserRoles(roles, userId);
     }
 
-    private Integer getSigningOfficialForUser(Integer userId) {
+    private Optional<Integer> getSigningOfficialForUser(Integer userId) {
         List<UserProperty> props =
                 userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
                         userId,
@@ -376,7 +376,7 @@ public class UserService {
                 );
 
         if (props.size() == 0) {
-            return null;
+            return Optional.empty();
         }
 
         UserProperty soIdProp = props.get(0);
@@ -385,10 +385,10 @@ public class UserService {
         try {
             soId = Integer.parseInt(soIdProp.getPropertyValue());
         } catch (NumberFormatException e) {
-            return null;
+            return Optional.empty();
         }
 
-        return soId;
+        return Optional.of(soId);
     }
 
     private void addExistingLibraryCards(User user) {
