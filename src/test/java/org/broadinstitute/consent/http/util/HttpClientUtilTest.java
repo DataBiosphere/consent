@@ -9,6 +9,7 @@ import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
 import org.broadinstitute.consent.http.WithMockServer;
@@ -20,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
+import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
 public class HttpClientUtilTest implements WithMockServer {
@@ -50,6 +52,21 @@ public class HttpClientUtilTest implements WithMockServer {
     ServicesConfiguration configuration = new ServicesConfiguration();
     configuration.setTimeoutSeconds(1);
     clientUtil = new HttpClientUtil(configuration);
+  }
+
+  @Test
+  public void testGetCachedResponse() {
+    mockServerClient.when(request())
+      .respond(response()
+      .withStatusCode(200));
+    IntStream.range(3, 10).forEach(i -> {
+      try {
+        clientUtil.getCachedResponse(new HttpGet(statusUrl));
+      } catch (Exception e) {
+        fail(e.getMessage());
+      }
+    });
+    mockServerClient.verify(request(), VerificationTimes.exactly(1));
   }
 
   @Test
