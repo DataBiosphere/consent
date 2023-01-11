@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,8 +125,12 @@ public class EmailService {
                 now);
     }
 
-    public List<MailMessage> fetchEmailMessages(EmailType emailType, Integer limit, Integer offset) {
+    public List<MailMessage> fetchEmailMessagesByType(EmailType emailType, Integer limit, Integer offset) {
         return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
+    }
+
+    public List<MailMessage> fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
+        return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
     }
 
     public void sendNewDARCollectionMessage(Integer collectionId) throws IOException, TemplateException {

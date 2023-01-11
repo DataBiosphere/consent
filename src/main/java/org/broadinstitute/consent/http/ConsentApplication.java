@@ -225,8 +225,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         errorHandler.addErrorPage(404, "/error/404");
         env.getApplicationContext().setErrorHandler(errorHandler);
         env.jersey().register(ResponseServerFilter.class);
-
         env.jersey().register(ErrorResource.class);
+
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
