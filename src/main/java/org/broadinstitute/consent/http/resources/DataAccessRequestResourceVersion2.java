@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.Error;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;

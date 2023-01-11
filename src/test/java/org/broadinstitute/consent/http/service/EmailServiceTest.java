@@ -171,7 +171,17 @@ public class EmailServiceTest {
         List<MailMessage>  mailMessages = generateMailMessageList();
         initFakeService();
         when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        assertEquals(2, service.fetchEmailMessages(EmailType.COLLECT, 20, 0).size());
+        assertEquals(2, service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
+    }
+
+    @Test
+    public void testFetchEmailsByCreateDate(){
+        List<MailMessage>  mailMessages = generateMailMessageList();
+        initService();
+        Date startDate = new Date();
+        Date endDate = new Date();
+        when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);
+        assertEquals(2, service.fetchEmailMessagesByCreateDate(startDate, endDate,20, 0).size());
     }
 
     private List<MailMessage> generateMailMessageList() {

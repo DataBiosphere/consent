@@ -1,49 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Dictionary;
-import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.models.dto.Error;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.glassfish.jersey.media.multipart.BodyPart;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.MultiPart;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -52,8 +8,53 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
 
 public class DatasetResourceTest {
 
@@ -735,9 +736,9 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
         assertEquals(404, response.getStatus());
-        assertTrue(((Error)response.getEntity()).getMessage().contains("3"));
-        assertFalse(((Error)response.getEntity()).getMessage().contains("2"));
-        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
+        assertTrue(((Error)response.getEntity()).message().contains("3"));
+        assertFalse(((Error)response.getEntity()).message().contains("2"));
+        assertFalse(((Error)response.getEntity()).message().contains("1"));
 
     }
 
@@ -748,7 +749,6 @@ public class DatasetResourceTest {
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
 
-
         when(datasetService.getDatasets(List.of(1,2,3,4))).thenReturn(List.of(
                 ds1,
                 ds3
@@ -757,10 +757,10 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3,4));
         assertEquals(404, response.getStatus());
-        assertTrue(((Error)response.getEntity()).getMessage().contains("4"));
-        assertFalse(((Error)response.getEntity()).getMessage().contains("3"));
-        assertTrue(((Error)response.getEntity()).getMessage().contains("2"));
-        assertFalse(((Error)response.getEntity()).getMessage().contains("1"));
+        assertTrue(((Error)response.getEntity()).message().contains("4"));
+        assertFalse(((Error)response.getEntity()).message().contains("3"));
+        assertTrue(((Error)response.getEntity()).message().contains("2"));
+        assertFalse(((Error)response.getEntity()).message().contains("1"));
     }
 
 
@@ -841,19 +841,71 @@ public class DatasetResourceTest {
             .fileName("sharing_plan.txt")
             .build();
         FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-        MultiPart multiPart = mock(MultiPart.class);
-        BodyPart bodyPart = mock(BodyPart.class);
-        when(formDataBodyPart.getParent()).thenReturn(multiPart);
-        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
-        when(bodyPart.getContentDisposition()).thenReturn(content);
+        when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+
+    @Test
+    public void testCreateDatasetRegistration_multipleFiles() {
+
+        spy(datasetService);
+
+        FormDataContentDisposition contentFile = FormDataContentDisposition
+                .name("file")
+                .fileName("sharing_plan.txt")
+                .build();
+        FormDataBodyPart formDataBodyPartFile = mock(FormDataBodyPart.class);
+        when(formDataBodyPartFile.getName()).thenReturn("file");
+        when(formDataBodyPartFile.getContentDisposition()).thenReturn(contentFile);
+
+        FormDataContentDisposition contentOther = FormDataContentDisposition
+                .name("other")
+                .fileName("other.txt")
+                .build();
+        FormDataBodyPart formDataBodyPartOther = mock(FormDataBodyPart.class);
+        when(formDataBodyPartOther.getName()).thenReturn("other");
+        when(formDataBodyPartOther.getContentDisposition()).thenReturn(contentOther);
+
+
+        FormDataContentDisposition contentNotFile = FormDataContentDisposition
+                .name("notFile")
+                .build();
+        FormDataBodyPart formDataBodyPartNotFile = mock(FormDataBodyPart.class);
+        when(formDataBodyPartNotFile.getName()).thenReturn("notFile");
+        when(formDataBodyPartNotFile.getContentDisposition()).thenReturn(contentNotFile);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(
+                Map.of(
+                        "file", List.of(formDataBodyPartFile),
+                        "other", List.of(formDataBodyPartOther),
+                        "notFile", List.of(formDataBodyPartNotFile)));
+
+        when(userService.findUserByEmail(any())).thenReturn(user);
+        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
+        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
+        String instance = new Gson().toJson(schemaV1);
+        initResource();
+
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
+
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        verify(datasetService, times(1)).createDatasetsFromRegistration(
+                schemaV1,
+                user,
+                Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther));
+
     }
 
     @Test
@@ -863,17 +915,17 @@ public class DatasetResourceTest {
             .fileName("file/with&$invalid*^chars\\.txt")
             .build();
         FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-        MultiPart multiPart = mock(MultiPart.class);
-        BodyPart bodyPart = mock(BodyPart.class);
-        when(formDataBodyPart.getParent()).thenReturn(multiPart);
-        when(multiPart.getBodyParts()).thenReturn(List.of(bodyPart));
-        when(bodyPart.getContentDisposition()).thenReturn(content);
+        when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+        FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+        when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
         when(userService.findUserByEmail(any())).thenReturn(user);
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataBodyPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 

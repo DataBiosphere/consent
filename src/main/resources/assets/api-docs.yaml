@@ -48,7 +48,9 @@ paths:
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/mail/type/{type}:
-    $ref: './paths/mail.yaml'
+    $ref: './paths/mailByType.yaml'
+  /api/mail/range:
+    $ref: './paths/mailByRange.yaml'
   /api/ontology:
     get:
       summary: List Ontology Files

@@ -169,7 +169,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
         // Clients
-        final HttpClientUtil clientUtil = new HttpClientUtil();
+        final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
         final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
         // Services
@@ -225,8 +225,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         errorHandler.addErrorPage(404, "/error/404");
         env.getApplicationContext().setErrorHandler(errorHandler);
         env.jersey().register(ResponseServerFilter.class);
-
         env.jersey().register(ErrorResource.class);
+
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));

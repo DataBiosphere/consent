@@ -259,7 +259,7 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>7.4.1</version>
+        <version>7.4.4</version>
         <configuration>
           <skipProvidedScope>true</skipProvidedScope>
           <skipRuntimeScope>true</skipRuntimeScope>
@@ -283,7 +283,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.35.0</version>
+        <version>3.36.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -370,15 +370,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5.14</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-codec</groupId>
-          <artifactId>commons-codec</artifactId>
-        </exclusion>
-      </exclusions>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+        <version>5.2.1</version>
     </dependency>
 
     <!-- SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 -->
@@ -403,7 +397,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.9.2</version>
+      <version>6.11.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
