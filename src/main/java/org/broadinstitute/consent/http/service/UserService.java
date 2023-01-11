@@ -92,7 +92,7 @@ public class UserService {
                 userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
             }
 
-            Optional<Integer> soIdBeforeUpdate = getSigningOfficialForUser(userId);
+            Optional<User> soBeforeUpdate = getSigningOfficialForUser(userId);
 
             // Update User Properties
             List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
@@ -101,15 +101,15 @@ public class UserService {
                 userPropertyDAO.insertAll(userProps);
             }
 
-            Optional<Integer> soIdAfterUpdate = getSigningOfficialForUser(userId);
+            Optional<User> soAfterUpdate = getSigningOfficialForUser(userId);
 
             // if SO went from not specified to specified (i.e. set for the first time)
             // then send an email
-            if (soIdBeforeUpdate.isEmpty() && soIdAfterUpdate.isPresent()) {
+            if (soBeforeUpdate.isEmpty() && soAfterUpdate.isPresent()) {
                 try {
                     emailService.sendNewResearcherMessage(
                             userDAO.findUserById(userId),
-                            userDAO.findUserById(soIdAfterUpdate.get())
+                            soAfterUpdate.get()
                     );
                 } catch (Exception e) {
                     logger.warn("Could not send new researcher notification to SO: " + e.getMessage());
@@ -137,10 +137,6 @@ public class UserService {
 
         }
         return findUserById(userId);
-    }
-
-    public void notifySigningOfficial(UserUpdateFields update, Integer userId) {
-
     }
 
     public void insertRoleAndInstitutionForUser(UserRole role, Integer institutionId, Integer userId) {
@@ -368,7 +364,7 @@ public class UserService {
         userRoleDAO.insertUserRoles(roles, userId);
     }
 
-    private Optional<Integer> getSigningOfficialForUser(Integer userId) {
+    private Optional<User> getSigningOfficialForUser(Integer userId) {
         List<UserProperty> props =
                 userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
                         userId,
@@ -388,7 +384,9 @@ public class UserService {
             return Optional.empty();
         }
 
-        return Optional.of(soId);
+
+
+        return Optional.ofNullable(userDAO.findUserById(soId));
     }
 
     private void addExistingLibraryCards(User user) {
