@@ -11,9 +11,9 @@ import com.google.api.client.http.HttpStatusCodes;
 import java.util.concurrent.TimeUnit;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
-import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -57,8 +57,8 @@ public class HttpClientUtilTest implements WithMockServer {
     mockServerClient.when(request())
       .respond(response()
       .withStatusCode(200));
-    ClassicHttpResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
+    SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
   @Test
