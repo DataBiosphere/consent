@@ -48,7 +48,7 @@ public class SendGridHealthCheckTest {
         try {
             String statusJson = new Gson().toJson(status);
             when(response.entity()).thenReturn(statusJson);
-            when(clientUtil.getHttpResponse(any())).thenReturn(response);
+            when(clientUtil.getCachedResponse(any())).thenReturn(response);
             if (configOk) {
                 when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
             }

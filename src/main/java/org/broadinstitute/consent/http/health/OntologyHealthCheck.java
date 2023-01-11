@@ -27,7 +27,7 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
       String statusUrl = servicesConfiguration.getOntologyURL() + "status";
       HttpGet httpGet = new HttpGet(statusUrl);
       try {
-        SimpleResponse response = clientUtil.getHttpResponse(httpGet);
+        SimpleResponse response = clientUtil.getCachedResponse(httpGet);
         if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
           String content = response.entity();
           Object ontologyStatus = new Gson().fromJson(content, Object.class);

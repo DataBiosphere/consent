@@ -19,6 +19,8 @@ public class ServicesConfiguration {
 
   private Integer poolSize = 10;
 
+  private Integer cacheExpireMinutes = 1;
+
   private boolean activateSupportNotifications = false;
 
 
@@ -116,5 +118,13 @@ public class ServicesConfiguration {
 
   public void setPoolSize(Integer poolSize) {
     this.poolSize = poolSize;
+  }
+
+  public Integer getCacheExpireMinutes() {
+    return cacheExpireMinutes;
+  }
+
+  public void setCacheExpireMinutes(Integer cacheExpireMinutes) {
+    this.cacheExpireMinutes = cacheExpireMinutes;
   }
 }
