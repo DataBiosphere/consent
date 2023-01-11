@@ -163,7 +163,6 @@ public class EmailServiceTest {
                 any(),
                 any()
         );
-
     }
 
     @Test
@@ -177,7 +176,7 @@ public class EmailServiceTest {
     @Test
     public void testFetchEmailsByCreateDate(){
         List<MailMessage>  mailMessages = generateMailMessageList();
-        initService();
+        initFakeService();
         Date startDate = new Date();
         Date endDate = new Date();
         when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);
