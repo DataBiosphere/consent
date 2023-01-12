@@ -15,10 +15,25 @@ public class ServicesConfiguration {
   @NotNull
   private String samUrl;
 
+  /**
+   * This represents the max time we'll wait for an external status check to return. If it does not
+   * return, we assume a degradation in the overall service. This can be overridden in local configs.
+   */
   private Integer timeoutSeconds = 10;
 
+  /**
+   * This represents the thread pool size for making external status checks. This can be overridden
+   * in local configs.
+   */
   private Integer poolSize = 10;
 
+  /**
+   * This represents the time we maintain a cache of the response of an external status check.
+   * In practice, status checks hit the server every second, sometimes more often. None of
+   * our external status checks are critical for minimal system operation which gives us the
+   * flexibility to rely on a cached version of the response for a short period of time. This can be
+   * overridden in local configs.
+   */
   private Integer cacheExpireMinutes = 1;
 
   private boolean activateSupportNotifications = false;
