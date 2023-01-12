@@ -384,8 +384,6 @@ public class UserService {
             return Optional.empty();
         }
 
-
-
         return Optional.ofNullable(userDAO.findUserById(soId));
     }
 

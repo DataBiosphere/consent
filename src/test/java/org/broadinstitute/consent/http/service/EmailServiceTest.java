@@ -20,8 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.mail.MessagingException;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -36,7 +34,6 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -68,8 +65,6 @@ public class EmailServiceTest {
 
     @Mock
     private MailMessageDAO emailDAO;
-
-    @Mock
     private SendGridAPI sendGridAPI;
 
     FreeMarkerTemplateHelper templateHelper;
@@ -83,7 +78,7 @@ public class EmailServiceTest {
     public void setUp() {
     }
 
-    private void initRealService() {
+    private void initService() {
         boolean serviceActive = false;
 
         openMocks(this);
@@ -91,20 +86,7 @@ public class EmailServiceTest {
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
         mConfig.setSendGridApiKey("");
-        SendGridAPI sendGridAPI = new SendGridAPI(mConfig, userDAO);
-
-        FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
-        fmConfig.setDefaultEncoding("UTF-8");
-        fmConfig.setTemplateDirectory("/freemarker");
-        templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
-        service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendGridAPI, templateHelper, serverUrl);
-    }
-
-    private void initFakeService() {
-        String serverUrl =  "http://localhost:8000/#/";
-
-        openMocks(this);
+        sendGridAPI = spy(new SendGridAPI(mConfig, userDAO));
 
         FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
         fmConfig.setDefaultEncoding("UTF-8");
@@ -116,7 +98,7 @@ public class EmailServiceTest {
 
     @Test
     public void testSendDataCustodianApprovalMessage() {
-        initRealService();
+        initService();
         String darCode = "DAR-123456789";
         List<DatasetMailDTO> datasets = new ArrayList<>();
         datasets.add(new DatasetMailDTO("DS-1 Name", "DS-1 Alias"));
@@ -137,7 +119,7 @@ public class EmailServiceTest {
 
     @Test
     public void testSendNewResearcherEmail() throws Exception {
-        initFakeService();
+        initService();
         User user = new User();
         user.setUserId(1234);
         user.setDisplayName("John Doe");
@@ -168,7 +150,7 @@ public class EmailServiceTest {
     @Test
     public void testFetchEmails(){
         List<MailMessage>  mailMessages = generateMailMessageList();
-        initFakeService();
+        initService();
         when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
         assertEquals(2, service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
     }
@@ -176,7 +158,7 @@ public class EmailServiceTest {
     @Test
     public void testFetchEmailsByCreateDate(){
         List<MailMessage>  mailMessages = generateMailMessageList();
-        initFakeService();
+        initService();
         Date startDate = new Date();
         Date endDate = new Date();
         when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);

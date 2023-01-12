@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -172,10 +173,10 @@ public class UserServiceTest {
             fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
-        verify(userDAO, times(0)).updateDisplayName(any(), any());
-        verify(userDAO, times(0)).updateInstitutionId(any(), any());
-        verify(userDAO, times(0)).updateEmailPreference(any(), any());
-        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userDAO, never()).updateDisplayName(any(), any());
+        verify(userDAO, never()).updateInstitutionId(any(), any());
+        verify(userDAO, never()).updateEmailPreference(any(), any());
+        verify(userDAO, never()).updateEraCommonsId(any(), any());
         verify(userPropertyDAO, times(1)).insertAll(any());
 
         verify(emailService, times(1)).sendNewResearcherMessage(any(), any());
@@ -213,13 +214,13 @@ public class UserServiceTest {
             fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
-        verify(userDAO, times(0)).updateDisplayName(any(), any());
-        verify(userDAO, times(0)).updateInstitutionId(any(), any());
-        verify(userDAO, times(0)).updateEmailPreference(any(), any());
-        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userDAO, never()).updateDisplayName(any(), any());
+        verify(userDAO, never()).updateInstitutionId(any(), any());
+        verify(userDAO, never()).updateEmailPreference(any(), any());
+        verify(userDAO, never()).updateEraCommonsId(any(), any());
         verify(userPropertyDAO, times(1)).insertAll(any());
 
-        verify(emailService, times(0)).sendNewResearcherMessage(any(), any());
+        verify(emailService, never()).sendNewResearcherMessage(any(), any());
     }
 
     @Test
@@ -252,13 +253,13 @@ public class UserServiceTest {
             fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
-        verify(userDAO, times(0)).updateDisplayName(any(), any());
-        verify(userDAO, times(0)).updateInstitutionId(any(), any());
-        verify(userDAO, times(0)).updateEmailPreference(any(), any());
-        verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+        verify(userDAO, never()).updateDisplayName(any(), any());
+        verify(userDAO, never()).updateInstitutionId(any(), any());
+        verify(userDAO, never()).updateEmailPreference(any(), any());
+        verify(userDAO, never()).updateEraCommonsId(any(), any());
         verify(userPropertyDAO, times(1)).insertAll(any());
 
-        verify(emailService, times(0)).sendNewResearcherMessage(any(), any());
+        verify(emailService, never()).sendNewResearcherMessage(any(), any());
     }
 
     @Test
