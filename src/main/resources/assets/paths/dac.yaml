@@ -1,0 +1,72 @@
+post:
+  summary: Create a DAC
+  operationId: createDac
+  description: Create a Data Access Committee
+  requestBody:
+    description: Data Access Committee
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/Dac.yaml'
+  tags:
+    - DAC
+  responses:
+    200:
+      description: Successfully created a DAC
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dac.yaml'
+    400:
+      description: Bad Request. DAC Name and Description are required.
+    403:
+      description: User not authorized to request all dacs.
+    500:
+      description: Internal Server Error
+put:
+  summary: Update a DAC
+  operationId: updateDac
+  description: Update a Data Access Committee
+  requestBody:
+    description: Updated Data Access Committee
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/Dac.yaml'
+  tags:
+    - DAC
+  responses:
+    200:
+      description: Successfully upated a DAC
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dac.yaml'
+    400:
+      description: Bad Request. DAC ID, Name, and Description are required.
+    500:
+      description: Internal Server Error
+get:
+  summary: Get all DACs
+  description: All Data Access Committees with a list of chairpersons and members
+  parameters:
+    - name: withUsers
+      in: query
+      required: false
+      schema:
+        type: boolean
+  tags:
+    - DAC
+  responses:
+    200:
+      description: All Data Access Committees with chairpersons and members
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dac.yaml'
+    500:
+      description: Internal Server Error

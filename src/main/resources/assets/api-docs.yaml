@@ -256,125 +256,9 @@ paths:
         404:
           description: The consent for the id couldn't be found.
   /api/dac:
-    post:
-      summary: Create a DAC
-      operationId: createDac
-      description: Create a Data Access Committee
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/components/schemas/Dac'
-      tags:
-        - DAC
-      responses:
-        200:
-          description: Successfully created a DAC
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dac'
-        400:
-          description: Bad Request. DAC Name and Description are required.
-        403:
-          description: User not authorized to request all dacs.
-        500:
-          description: Internal Server Error
-    put:
-      summary: Update a DAC
-      operationId: updateDac
-      description: Update a Data Access Committee
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/components/schemas/Dac'
-      tags:
-        - DAC
-      responses:
-        200:
-          description: Successfully upated a DAC
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dac'
-        400:
-          description: Bad Request. DAC ID, Name, and Description are required.
-        500:
-          description: Internal Server Error
-    get:
-      summary: Get all DACs
-      description: All Data Access Committees with a list of chairpersons and members
-      parameters:
-        - name: withUsers
-          in: query
-          required: false
-          schema:
-            type: boolean
-      tags:
-        - DAC
-      responses:
-        200:
-          description: All Data Access Committees with chairpersons and members
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Dac'
-        500:
-          description: Internal Server Error
+    $ref: 'paths/dac.yaml'
   /api/dac/{dacId}:
-    get:
-      summary: Get DAC by ID
-      operationId: getDacById
-      description: Get Data Access Committee by Id
-      parameters:
-        - name: dacId
-          in: path
-          description: The DAC ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - DAC
-      responses:
-        200:
-          description: The Data Access Committee matching the provided ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dac'
-        404:
-          description: No DAC found with the given ID
-        500:
-          description: Internal Server Error
-    delete:
-      summary: Delete DAC by ID
-      operationId: deleteDac
-      description: Delete Data Access Committee by Id
-      parameters:
-        - name: dacId
-          in: path
-          description: The DAC ID
-          required: true
-          schema:
-            type: integer
-      tags:
-        - DAC
-      responses:
-        200:
-          description: The Data Access Committee matching the provided ID was deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dac'
-        404:
-          description: No DAC found with the given ID
-        500:
-          description: Internal Server Error
+    $ref: 'paths/dacById.yaml'
   /api/dac/{dacId}/dataset/{datasetId}:
     $ref: 'paths/approveDataset.yaml'
   /api/dac/{dacId}/member/{userId}:
@@ -2099,6 +1983,8 @@ components:
       $ref: './schemas/ConsentAssociation.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
+    Data Access Committee:
+      $ref: './schemas/Dac.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
@@ -2376,36 +2262,6 @@ components:
           type: integer
           format: int32
           description: The display order of the properties.
-    Dac:
-      type: object
-      properties:
-        dacId:
-          type: integer
-          description: The DAC Id
-        name:
-          type: string
-          description: The DAC Name
-        description:
-          type: string
-          description: The DAC Description
-        createDate:
-          type: string
-          format: date
-          description: Date created
-        updateDate:
-          type: string
-          format: date
-          description: Date last updated
-        chairpersons:
-          description: List of Chairpersons
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-        members:
-          description: List of Members
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:

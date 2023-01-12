@@ -141,9 +141,19 @@ public class DacService {
         return dacDAO.createDac(name, description, createDate);
     }
 
+    public Integer createDac(String name, String description, String email) {
+        Date createDate = new Date();
+        return dacDAO.createDac(name, description, email, createDate);
+    }
+
     public void updateDac(String name, String description, Integer dacId) {
         Date updateDate = new Date();
         dacDAO.updateDac(name, description, updateDate, dacId);
+    }
+
+    public void updateDac(String name, String description, String email, Integer dacId) {
+        Date updateDate = new Date();
+        dacDAO.updateDac(name, description, email, updateDate, dacId);
     }
 
     public void deleteDac(Integer dacId) {

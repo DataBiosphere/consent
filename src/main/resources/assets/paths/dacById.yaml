@@ -1,0 +1,48 @@
+get:
+  summary: Get DAC by ID
+  operationId: getDacById
+  description: Get Data Access Committee by Id
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The Data Access Committee matching the provided ID
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dac.yaml'
+    404:
+      description: No DAC found with the given ID
+    500:
+      description: Internal Server Error
+delete:
+  summary: Delete DAC by ID
+  operationId: deleteDac
+  description: Delete Data Access Committee by Id
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The Data Access Committee matching the provided ID was deleted
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dac.yaml'
+    404:
+      description: No DAC found with the given ID
+    500:
+      description: Internal Server Error
