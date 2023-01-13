@@ -35,7 +35,7 @@ public class OntologyHealthCheckTest {
   private void initHealthCheck(boolean configOk) {
     try {
       when(response.entity()).thenReturn("{}");
-      when(clientUtil.getHttpResponse(any())).thenReturn(response);
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
       if (configOk) {
         when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
       }

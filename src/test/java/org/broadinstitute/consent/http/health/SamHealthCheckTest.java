@@ -48,7 +48,7 @@ public class SamHealthCheckTest {
     try {
       when(response.entity())
           .thenReturn(okResponse);
-      when(clientUtil.getHttpResponse(any())).thenReturn(response);
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
       if (configOk) {
         when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
       }
