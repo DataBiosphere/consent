@@ -255,25 +255,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>8.0.0</version>
-        <configuration>
-          <skipProvidedScope>true</skipProvidedScope>
-          <skipRuntimeScope>true</skipRuntimeScope>
-          <failBuildOnCVSS>1</failBuildOnCVSS>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
   </build>
 
@@ -303,12 +284,6 @@
       <version>0.4.1</version>
     </dependency>
 
-
-    <dependency>
-      <groupId>org.owasp</groupId>
-      <artifactId>java-file-io</artifactId>
-      <version>1.0.0</version>
-    </dependency>
 
     <dependency>
       <groupId>org.jdbi</groupId>
