@@ -13,14 +13,23 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-      - name: Run Report
-        env:
-          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
+      - name: Build project
         run: |
           mvn -v
-          mvn dependency-check:check --batch-mode
-      - name: Archive Report
-        uses: actions/upload-artifact@v3
+          mvn clean install
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
         with:
-          name: owasp-report
-          path: target/dependency-check-report.html
+          project: 'test'
+          path: '.'
+          format: 'HTML'
+          out: 'reports' # this is the default, no need to specify unless you wish to override it
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
