@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes><![CDATA[
+      file name: snakeyaml-1.33.jar
+      ]]></notes>
+        <sha1>2cd0a87ff7df953f810c344bdf2fe3340b954c69</sha1>
+        <cpe>cpe:2.3:a:snakeyaml_project:snakeyaml:1.33:*:*:*:*:*:*:*)</cpe>
+    </suppress>
+</suppressions>
