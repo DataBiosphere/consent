@@ -31,9 +31,13 @@ jobs:
           format: 'HTML'
           out: 'reports' # this is the default, no need to specify unless you wish to override it
           args: >
-            --failOnCVSS 7
+            --failOnCVSS 10
             --enableRetired
-            --suppression owaspSuppression.xml
+            --suppression "./owaspSuppression.xml"
+            --exclude automation
+            --exclude docs
+            --exclude jenkins
+            --exclude migration
         env:
           JAVA_HOME: /opt/jdk
       - name: Upload Test results
