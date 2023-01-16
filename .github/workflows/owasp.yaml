@@ -21,7 +21,7 @@ jobs:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
         run: |
           mvn -v
-          mvn clean install --batch-mode -DskipTests
+          mvn clean compile --batch-mode -DskipTests
       - name: Depcheck
         uses: dependency-check/Dependency-Check_Action@main
         id: Depcheck
@@ -31,13 +31,13 @@ jobs:
           format: 'HTML'
           out: 'reports' # this is the default, no need to specify unless you wish to override it
           args: >
-            --failOnCVSS 10
+            --failOnCVSS 7
             --enableRetired
             --suppression "./owaspSuppression.xml"
-            --exclude automation/**
-            --exclude docs/**
-            --exclude jenkins/**
-            --exclude migration/**
+            --exclude **/automation/**
+            --exclude **/docs/**
+            --exclude **/jenkins/**
+            --exclude **/migration/**
         env:
           JAVA_HOME: /opt/jdk
       - name: Upload Test results
