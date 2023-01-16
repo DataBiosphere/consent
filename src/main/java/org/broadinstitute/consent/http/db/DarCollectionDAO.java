@@ -47,44 +47,9 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) " +
       " LEFT JOIN vote v ON v.electionid = e.election_id ";
 
-  String filterQuery =
-    " WHERE c.create_user_id = :userId " +
-      " AND (" +
-      DarCollection.FILTER_TERMS_QUERY +
-      " )";
-
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
-  String getCollectionsAndDarsViaIds =
-  getCollectionAndDars
-  + filterQuery + archiveFilterQuery +
-    "ORDER BY <sortField> <sortOrder>";
-
   String orderStatement = " ORDER BY <sortField> <sortOrder>";
-
-  /**
-   * Find all DARCollections with their DataAccessRequests that match the given filter
-   *
-   * <p>FilterTerms filter on dar project title, datasetNames, collection dar code, collection
-   * update date, and DAC SortField can be projectTitle, datasetNames, dar code, update date, or DAC
-   * SortDirection can be ASC or DESC
-   *
-   * @return List<DarCollection>
-   */
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionsAndDarsViaIds)
-  List<DarCollection> findAllDARCollectionsWithFiltersByUser(
-          @Bind("filterTerm") String filterTerm,
-          @Bind("userId") Integer userId,
-          @Define("sortField") String sortField,
-          @Define("sortOrder") String sortOrder);
 
   /**
    * DAC -> Consent -> Consent Association -> Dataset -> DAR -> DAR Collection
@@ -123,24 +88,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
     getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)" + archiveFilterQuery)
   List<DarCollection> findDARCollectionByCollectionIds(
           @BindList("collectionIds") List<Integer> collectionIds);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(
-    getCollectionAndDars
-    + " WHERE c.collection_id in (<collectionIds>)"
-    + archiveFilterQuery
-    +  " ORDER BY <sortField> <sortOrder>")
-  List<DarCollection> findDARCollectionByCollectionIdsWithOrder(
-          @BindList("collectionIds") List<Integer> collectionIds,
-          @Define("sortField") String sortField,
-          @Define("sortOrder") String sortOrder);
 
   /**
    * Find all DARCollections with their DataAccessRequests

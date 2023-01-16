@@ -108,4 +108,7 @@
     <include file="changesets/changelog-consent-103.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-104.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-105.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-2022-12-29-email.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-2023-01-08-election-archive.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-2023-01-09-dac-email.0.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

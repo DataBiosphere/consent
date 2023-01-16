@@ -186,6 +186,20 @@ public class DacResourceTest {
         assertEquals(200, response.getStatus());
     }
 
+    @Test
+    public void testCreateDacWithEmail_success() throws Exception {
+        Dac dac = new DacBuilder()
+                .setName("name")
+                .setDescription("description")
+                .setEmail("test@email.com")
+                .build();
+        when(dacService.createDac(any(), any(), any())).thenReturn(1);
+        when(dacService.findById(1)).thenReturn(dac);
+
+        Response response = dacResource.createDac(authUser, gson.toJson(dac));
+        assertEquals(200, response.getStatus());
+    }
+
     @Test(expected = BadRequestException.class)
     public void testCreateDac_badRequest_1() throws Exception {
         dacResource.createDac(authUser, null);
@@ -224,6 +238,21 @@ public class DacResourceTest {
                 .setDescription("description")
                 .build();
         doNothing().when(dacService).updateDac(isA(String.class), isA(String.class), isA(Integer.class));
+        when(dacService.findById(1)).thenReturn(dac);
+
+        Response response = dacResource.updateDac(authUser, gson.toJson(dac));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDacWithEmail_success() {
+        Dac dac = new DacBuilder()
+                .setDacId(1)
+                .setName("name")
+                .setEmail("test@email.com")
+                .setDescription("description")
+                .build();
+        doNothing().when(dacService).updateDac(isA(String.class), isA(String.class), isA(String.class), isA(Integer.class));
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.updateDac(authUser, gson.toJson(dac));
@@ -561,7 +590,7 @@ public class DacResourceTest {
         assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
-    
+
 
     private JsonArray getListFromEntityString(String str) {
         return GsonUtil.buildGson().fromJson(str, JsonArray.class);

@@ -40,7 +40,7 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = Dataset.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
     @SqlQuery(
-        "SELECT dac.dac_id, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
+        "SELECT dac.dac_id, dac.email, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
             + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
             + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, d.sharing_plan_document_name, ca.consent_id, c.translated_use_restriction "
             + " FROM dac "
@@ -115,10 +115,31 @@ public interface DacDAO extends Transactional<DacDAO> {
     @GetGeneratedKeys
     Integer createDac(@Bind("name") String name, @Bind("description") String description, @Bind("createDate") Date createDate);
 
+    /**
+     * Create a Dac given name, description, and create date
+     *
+     * @param name The name for the new DAC
+     * @param description The description for the new DAC
+     * @param email The email for the new DAC
+     * @param createDate The date this new DAC was created
+     * @return Integer
+     */
+    @SqlUpdate("INSERT INTO dac (name, description, email, create_date) VALUES (:name, :description, :email, :createDate)")
+    @GetGeneratedKeys
+    Integer createDac(@Bind("name") String name, @Bind("description") String description, @Bind("email") String email, @Bind("createDate") Date createDate);
+
     @SqlUpdate("UPDATE dac SET name = :name, description = :description, update_date = :updateDate WHERE dac_id = :dacId")
     void updateDac(
             @Bind("name") String name,
             @Bind("description") String description,
+            @Bind("updateDate") Date updateDate,
+            @Bind("dacId") Integer dacId);
+
+    @SqlUpdate("UPDATE dac SET name = :name, description = :description, email = :email, update_date = :updateDate WHERE dac_id = :dacId")
+    void updateDac(
+            @Bind("name") String name,
+            @Bind("description") String description,
+            @Bind("email") String email,
             @Bind("updateDate") Date updateDate,
             @Bind("dacId") Integer dacId);
 

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -34,8 +33,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;

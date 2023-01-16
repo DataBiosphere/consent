@@ -31,6 +31,9 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     if (hasColumn(resultSet, "dataset_id")) {
       dac.addDatasetId(resultSet.getInt("dataset_id"));
     }
+    if (hasColumn(resultSet, "email")) {
+      dac.setEmail(resultSet.getString("email"));
+    }
     dacMap.put(dac.getDacId(), dac);
     return dac;
   }

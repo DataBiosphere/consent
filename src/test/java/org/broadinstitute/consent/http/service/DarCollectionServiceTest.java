@@ -1506,8 +1506,6 @@ public class DarCollectionServiceTest {
         collectionIdDars.addAll(filteredDars.subList(token.getStartIndex(), token.getEndIndex()));
     }
     when(darCollectionDAO.findDARCollectionsCreatedByUserId(any())).thenReturn(unfilteredDars);
-    when(darCollectionDAO.findAllDARCollectionsWithFiltersByUser(any(), any(), any(), any())).thenReturn(filteredDars);
-    when(darCollectionDAO.findDARCollectionByCollectionIdsWithOrder(any(), any(), any())).thenReturn(collectionIdDars);
     service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO, electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO, darCollectionSummaryDAO);
   }
 

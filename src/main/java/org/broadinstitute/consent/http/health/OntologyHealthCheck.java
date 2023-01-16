@@ -4,14 +4,11 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-
-import java.nio.charset.Charset;
+import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 
 public class OntologyHealthCheck extends HealthCheck implements Managed {
 
@@ -29,10 +26,10 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
     try {
       String statusUrl = servicesConfiguration.getOntologyURL() + "status";
       HttpGet httpGet = new HttpGet(statusUrl);
-      try (CloseableHttpResponse response = clientUtil.getHttpResponse(httpGet)) {
-        if (response.getStatusLine().getStatusCode() == HttpStatusCodes.STATUS_CODE_OK) {
-          String content =
-              IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
+      try {
+        SimpleResponse response = clientUtil.getCachedResponse(httpGet);
+        if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
+          String content = response.entity();
           Object ontologyStatus = new Gson().fromJson(content, Object.class);
           return Result.builder()
               .withDetail(StatusResource.OK, true)
@@ -40,7 +37,7 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
               .healthy()
               .build();
         } else {
-          return Result.unhealthy("Ontology status is unhealthy: " + response.getStatusLine());
+          return Result.unhealthy("Ontology status is unhealthy: " + response.code());
         }
       } catch (Exception e) {
         return Result.unhealthy(e);
