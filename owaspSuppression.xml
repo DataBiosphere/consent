@@ -20,6 +20,14 @@
   <!-- Test Library -->
   <suppress>
     <notes><![CDATA[
+   file name: mockserver-client-java-5.15.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-client\-java@.*$</packageUrl>
+    <cve>CVE-2021-32827</cve>
+  </suppress>
+  <!-- Test Library -->
+  <suppress>
+    <notes><![CDATA[
    file name: mockserver-core-5.15.0.jar
    ]]></notes>
     <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-core@.*$</packageUrl>
