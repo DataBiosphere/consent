@@ -36,8 +36,8 @@ jobs:
             --enableRetired
             --suppression owaspSuppression.xml
         env:
-          JAVA_HOME: /usr/bin/java
-          JAVA_HOME_17_X64: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java
+          JAVA_HOME: /usr
+          JAVA_HOME_17_X64: /usr/lib/jvm/temurin-17-jdk-amd64
       - name: Upload Test results
         uses: actions/upload-artifact@master
         with:
