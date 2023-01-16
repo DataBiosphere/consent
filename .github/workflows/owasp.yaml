@@ -14,9 +14,11 @@ jobs:
           distribution: 'temurin'
           java-version: 17
       - name: Build project
+        env:
+          MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
         run: |
           mvn -v
-          mvn clean install
+          mvn clean install --batch-mode
       - name: Depcheck
         uses: dependency-check/Dependency-Check_Action@main
         id: Depcheck
