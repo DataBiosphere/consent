@@ -23,6 +23,9 @@ jobs:
           mvn -v
           mvn clean install --batch-mode -DskipTests
           whereis java
+          java --version
+          /usr/bin/java --version
+          /usr/lib/jvm/temurin-17-jdk-amd64/bin/java --version
       - name: Depcheck
         uses: dependency-check/Dependency-Check_Action@main
         id: Depcheck
