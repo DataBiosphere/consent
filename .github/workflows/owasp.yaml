@@ -2,7 +2,6 @@ name: OWASP
 on: [ pull_request ]
 #  schedule:
 #    - cron: "0 0 * * *"
-#
 # Docs
 #  * https://github.com/marketplace/actions/dependency-check
 #  * https://jeremylong.github.io/DependencyCheck/dependency-check-cli/arguments.html
@@ -36,6 +35,9 @@ jobs:
             --failOnCVSS 7
             --enableRetired
             --suppression owaspSuppression.xml
+        env:
+          JAVA_HOME: /usr/bin/java
+          JAVA_HOME_17_X64: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java
       - name: Upload Test results
         uses: actions/upload-artifact@master
         with:
