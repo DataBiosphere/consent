@@ -31,7 +31,7 @@ jobs:
           format: 'HTML'
           out: 'reports' # this is the default, no need to specify unless you wish to override it
           args: >
-            --failOnCVSS 7
+            --failOnCVSS 5
             --enableRetired
             --suppression "./owaspSuppression.xml"
             --exclude **/automation/**
