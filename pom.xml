@@ -20,7 +20,7 @@
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
-    <mockserver.version>5.14.0</mockserver.version>
+    <mockserver.version>5.15.0</mockserver.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
