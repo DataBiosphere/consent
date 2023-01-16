@@ -21,7 +21,7 @@ jobs:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
         run: |
           mvn -v
-          mvn clean compile --batch-mode -DskipTests
+          mvn clean compile --batch-mode
       - name: Depcheck
         uses: dependency-check/Dependency-Check_Action@main
         id: Depcheck
