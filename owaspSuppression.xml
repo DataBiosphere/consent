@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
   <!-- DW Testing Library -->
-<!--  <suppress>-->
-<!--    <notes><![CDATA[-->
-<!--   file name: grizzly-http-client-1.16.jar-->
-<!--   ]]></notes>-->
-<!--    <packageUrl regex="true">^pkg:maven/org\.glassfish\.grizzly/grizzly\-http\-client@.*$-->
-<!--    </packageUrl>-->
-<!--    <cve>CVE-2021-43138</cve>-->
-<!--  </suppress>-->
+  <suppress>
+    <notes><![CDATA[
+   file name: grizzly-http-client-1.16.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.glassfish\.grizzly/grizzly\-http\-client@.*$
+    </packageUrl>
+    <cve>CVE-2021-43138</cve>
+  </suppress>
   <!-- Test Library -->
-<!--  <suppress>-->
-<!--    <notes><![CDATA[-->
-<!--   file name: mockserver-1.17.6.jar-->
-<!--   ]]></notes>-->
-<!--    <packageUrl regex="true">^pkg:maven/org\.testcontainers/mockserver@.*$</packageUrl>-->
-<!--    <cve>CVE-2021-32827</cve>-->
-<!--  </suppress>-->
+  <suppress>
+    <notes><![CDATA[
+   file name: mockserver-1.17.6.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.testcontainers/mockserver@.*$</packageUrl>
+    <cve>CVE-2021-32827</cve>
+  </suppress>
   <!-- Test Library -->
-<!--  <suppress>-->
-<!--    <notes><![CDATA[-->
-<!--   file name: mockserver-client-java-5.15.0.jar-->
-<!--   ]]></notes>-->
-<!--    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-client\-java@.*$</packageUrl>-->
-<!--    <cve>CVE-2021-32827</cve>-->
-<!--  </suppress>-->
+  <suppress>
+    <notes><![CDATA[
+   file name: mockserver-client-java-5.15.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-client\-java@.*$</packageUrl>
+    <cve>CVE-2021-32827</cve>
+  </suppress>
   <!-- Test Library -->
-<!--  <suppress>-->
-<!--    <notes><![CDATA[-->
-<!--   file name: mockserver-core-5.15.0.jar-->
-<!--   ]]></notes>-->
-<!--    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-core@.*$</packageUrl>-->
-<!--    <cve>CVE-2021-32827</cve>-->
-<!--  </suppress>-->
+  <suppress>
+    <notes><![CDATA[
+   file name: mockserver-core-5.15.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-core@.*$</packageUrl>
+    <cve>CVE-2021-32827</cve>
+  </suppress>
   <!-- Dropwizard dependency, cannot address without a DW update -->
   <suppress>
     <notes><![CDATA[
