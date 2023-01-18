@@ -514,6 +514,13 @@ public class DatasetResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             Gson gson = new Gson();
             DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
+            Dataset originalDataset = datasetService.findDatasetById(id);
+            if (Objects.isNull(originalDataset)) {
+                throw new NotFoundException("Dataset not found: " + id);
+            }
+            if (Objects.equals(dataUse, originalDataset.getDataUse())) {
+                return Response.notModified().entity(unmarshal(originalDataset)).build();
+            }
             Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
             return Response.ok().entity(unmarshal(dataset)).build();
         } catch (JsonSyntaxException jse) {

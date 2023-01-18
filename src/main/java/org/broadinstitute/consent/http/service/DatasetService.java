@@ -304,6 +304,10 @@ public class DatasetService {
     }
 
     public Dataset updateDatasetDataUse(User user, Integer datasetId, DataUse dataUse) {
+        Dataset d = datasetDAO.findDatasetById(datasetId);
+        if (Objects.isNull(d)) {
+            throw new NotFoundException("Dataset not found: " + datasetId);
+        }
         if (!user.hasUserRole(UserRoles.ADMIN)) {
             throw new IllegalArgumentException("Admin use only");
         }

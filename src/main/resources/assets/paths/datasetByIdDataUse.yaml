@@ -15,22 +15,22 @@ put:
       schema:
         type: integer
   requestBody:
-    description: Data Use object
+    description: |
+      The Data Use question/answer set for this dataset.
+      See [schema definition](https://consent-ontology.dsde-prod.broadinstitute.org/schemas/data-use)
+      for more information
     required: true
     content:
       application/json:
-      type: object
-      description: |
-        The Data Use question/answer set for this dataset.
-        See [schema definition](https://consent-ontology.dsde-prod.broadinstitute.org/schemas/data-use)
-        for more information
-      example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": ["http://purl.obolibrary.org/obo/DOID_602"] }
+        schema:
+          type: object
+        example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": ["http://purl.obolibrary.org/obo/DOID_602"] }
   tags:
     - Admin
   responses:
     200:
       description: Successfully updated Dataset
-    204:
+    304:
       description: Not modified
     400:
       description: Bad Request (invalid input)

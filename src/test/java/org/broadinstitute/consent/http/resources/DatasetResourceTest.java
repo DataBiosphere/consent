@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -775,9 +776,11 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testUpdateDatasetDataUseOK() {
+    public void testUpdateDatasetDataUse_OK() {
         when(userService.findUserByEmail(any())).thenReturn(new User());
-        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
+        Dataset d = new Dataset();
+        when(datasetService.findDatasetById(any())).thenReturn(d);
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
 
         initResource();
         String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
@@ -786,7 +789,7 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testUpdateDatasetDataUseBadRequestJson() {
+    public void testUpdateDatasetDataUse_BadRequestJson() {
         when(userService.findUserByEmail(any())).thenReturn(new User());
         when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
 
@@ -796,13 +799,42 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testUpdateDatasetDataUseBadRequestService() {
+    public void testUpdateDatasetDataUse_BadRequestService() {
         when(userService.findUserByEmail(any())).thenReturn(new User());
+        Dataset d = new Dataset();
+        when(datasetService.findDatasetById(any())).thenReturn(d);
         when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(new IllegalArgumentException());
 
         initResource();
-        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_NotFound() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.findDatasetById(any())).thenThrow(new NotFoundException());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(new NotFoundException());
+
+        initResource();
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_NotModified() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        Dataset d = new Dataset();
+        DataUse du = new DataUseBuilder().setGeneralUse(true).build();
+        d.setDataUse(du);
+        when(datasetService.findDatasetById(any())).thenReturn(d);
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
+
+        initResource();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
 
     @Test
