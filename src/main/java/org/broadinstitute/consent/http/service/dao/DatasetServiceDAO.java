@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import com.google.cloud.storage.BlobInfo;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -24,43 +23,77 @@ public class DatasetServiceDAO {
 
     private final Jdbi jdbi;
     private final DatasetDAO datasetDAO;
+    private final FileStorageObjectDAO fileStorageObjectDAO;
 
     @Inject
-    public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO) {
+    public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO, FileStorageObjectDAO fileStorageObjectDAO) {
         this.jdbi = jdbi;
         this.datasetDAO = datasetDAO;
+        this.fileStorageObjectDAO = fileStorageObjectDAO;
     }
 
-    public Dataset insertDatasetWithFiles(String name,
-                                          Integer dacId,
-                                          DataUse dataUse,
-                                          Integer userId,
-                                          List<DatasetProperty> properties,
-                                          List<FileStorageObject> uploadedFiles) throws SQLException {
+    public record DatasetInsert(String name,
+                                Integer dacId,
+                                DataUse dataUse,
+                                Integer userId,
+                                List<DatasetProperty> props,
+                                List<FileStorageObject> files) {}
+
+    public List<Integer> insertDatasets(List<DatasetInsert> inserts) throws SQLException {
+        final List<Integer> createdDatasets = new ArrayList<>();
+
         jdbi.useHandle(
             handle -> {
+                // By default, new connections are set to auto-commit which breaks our rollback strategy.
+                // Turn that off for this connection. This will not affect existing or new connections and
+                // only applies to the current one in this handle.
                 handle.getConnection().setAutoCommit(false);
 
-                // insert dataset
-                Integer datasetId = datasetDAO.insertDataset(
-                        name,
-                        new Timestamp(new Date().getTime()),
-                        userId,
-                        null,
-                        false,
-                        dataUse.toString(),
-                        dacId
-                );
+                for (DatasetInsert insert : inserts) {
+                    Integer datasetId = executeInsertDatasetWithFiles(
+                            handle,
+                            insert.name(),
+                            insert.dacId(),
+                            insert.dataUse(),
+                            insert.userId(),
+                            insert.props(),
+                            insert.files());
 
-                // insert properties
-                executeSynchronizeDatasetProperties(handle, datasetId, properties);
-
-                // files
+                    createdDatasets.add(datasetId);
+                }
 
                 handle.commit();
             }
         );
+        return createdDatasets;
+    }
 
+    public Integer executeInsertDatasetWithFiles(Handle handle,
+                                                 String name,
+                                                 Integer dacId,
+                                                 DataUse dataUse,
+                                                 Integer userId,
+                                                 List<DatasetProperty> properties,
+                                                 List<FileStorageObject> uploadedFiles) {
+        // insert dataset
+        Integer datasetId = datasetDAO.insertDataset(
+                name,
+                new Timestamp(new Date().getTime()),
+                userId,
+                null,
+                false,
+                dataUse.toString(),
+                dacId
+        );
+
+
+        // insert properties
+        executeSynchronizeDatasetProperties(handle, datasetId, properties);
+
+        // files
+        executeInsertFilesForDataset(uploadedFiles, datasetId);
+
+        return datasetId;
     }
 
     public List<DatasetProperty> synchronizeDatasetProperties(Integer datasetId, List<DatasetProperty> properties) throws SQLException {
@@ -75,6 +108,20 @@ public class DatasetServiceDAO {
                 }
         );
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
+    }
+
+    private void executeInsertFilesForDataset(List<FileStorageObject> files, Integer datasetId) {
+        for (FileStorageObject file : files) {
+            fileStorageObjectDAO.insertNewFile(
+                    file.getFileName(),
+                    file.getCategory().getValue(),
+                    file.getBlobId().toGsUtilUri(),
+                    file.getMediaType(),
+                    datasetId.toString(),
+                    file.getCreateUserId(),
+                    file.getCreateDate()
+            );
+        }
     }
 
     // Helper methods to generate Dictionary inserts

@@ -16,7 +16,10 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+
+import java.io.IOException;
 import java.net.URI;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -823,7 +826,7 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testCreateDatasetRegistration_validSchema() {
+    public void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
@@ -835,7 +838,7 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testCreateDatasetRegistration_withFile() {
+    public void testCreateDatasetRegistration_withFile() throws SQLException, IOException {
         FormDataContentDisposition content = FormDataContentDisposition
             .name("file")
             .fileName("sharing_plan.txt")
@@ -857,7 +860,7 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testCreateDatasetRegistration_multipleFiles() {
+    public void testCreateDatasetRegistration_multipleFiles() throws SQLException, IOException {
 
         spy(datasetService);
 

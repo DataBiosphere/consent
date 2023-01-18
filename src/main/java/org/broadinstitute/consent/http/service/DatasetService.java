@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.util.DatasetRegistrationPropertyConverter;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -571,8 +572,17 @@ public class DatasetService {
     public List<Dataset> createDatasetsFromRegistration(
         DatasetRegistrationSchemaV1 registration,
         User user,
-        Map<String, FormDataBodyPart> files) {
-        return List.of();
+        Map<String, FormDataBodyPart> files) throws IOException, SQLException {
+
+        Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles = uploadFiles(files);
+
+        List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+        for (int consentGroupIdx = 0; consentGroupIdx < registration.getConsentGroups().size(); consentGroupIdx++) {
+            datasetInserts.add(createDatasetInsert(registration, user, uploadedFiles, consentGroupIdx));
+        }
+
+        List<Integer> createdDatasetIds = datasetServiceDAO.insertDatasets(datasetInserts);
+        return datasetDAO.findDatasetsByIdList(createdDatasetIds);
     }
 
     private Map<String, Pair<BlobId, FormDataBodyPart>> uploadFiles(Map<String, FormDataBodyPart> files) throws IOException {
@@ -595,17 +605,17 @@ public class DatasetService {
         return uploaded;
     }
 
-    private Dataset createDataset(DatasetRegistrationSchemaV1 registration,
+    private DatasetServiceDAO.DatasetInsert createDatasetInsert(DatasetRegistrationSchemaV1 registration,
                                   User user,
                                   Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles,
-                                  Integer consentGroupIdx) throws SQLException {
+                                  Integer consentGroupIdx) {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
-        List<DatasetProperty> props = generatePropertiesFromRegistration(registration, consentGroupIdx);
+        List<DatasetProperty> props = DatasetRegistrationPropertyConverter.convert(registration, consentGroupIdx);
         DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
-        List<FileStorageObject> files = generateFileStorageObjects(uploadedFiles, consentGroupIdx);
+        List<FileStorageObject> files = generateFileStorageObjects(uploadedFiles, consentGroupIdx, user);
 
-        return datasetServiceDAO.insertDatasetWithFiles(
+        return new DatasetServiceDAO.DatasetInsert(
                 consentGroup.getConsentGroupName(),
                 registration.getDataAccessCommitteeId(),
                 dataUse,
@@ -613,13 +623,6 @@ public class DatasetService {
                 props,
                 files
         );
-
-    }
-
-    private List<DatasetProperty> generatePropertiesFromRegistration(
-            DatasetRegistrationSchemaV1 registration,
-            Integer consentGroupIdx) {
-        return List.of();
     }
 
     private DataUse generateDataUseFromConsentGroup(ConsentGroup group) {
@@ -645,16 +648,17 @@ public class DatasetService {
     }
 
     private List<FileStorageObject> generateFileStorageObjects(Map<String, Pair<BlobId, FormDataBodyPart>> allUploadedFiles,
-                                                               Integer consentGroupIdx) {
+                                                               Integer consentGroupIdx,
+                                                               User user) {
         List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
 
         addFileIfExists(
-                consentGroupFSOs, allUploadedFiles,
+                consentGroupFSOs, allUploadedFiles, user,
                 "alternativeDataSharingPlan",
                 FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
         addFileIfExists(
-                consentGroupFSOs, allUploadedFiles,
+                consentGroupFSOs, allUploadedFiles, user,
                 "consentGroups["+consentGroupIdx.toString()+"].nihInstitutionalCertificationFile",
                 FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
@@ -662,7 +666,7 @@ public class DatasetService {
 
     }
 
-    private void addFileIfExists(List<FileStorageObject> list, Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles, String name, FileCategory category) {
+    private void addFileIfExists(List<FileStorageObject> list, Map<String, Pair<BlobId, FormDataBodyPart>> uploadedFiles, User user, String name, FileCategory category) {
         if (!uploadedFiles.containsKey(name)) {
             return;
         }
@@ -675,6 +679,7 @@ public class DatasetService {
         fso.setFileName(bodyPart.getContentDisposition().getFileName());
         fso.setMediaType(bodyPart.getMediaType().toString());
         fso.setBlobId(id);
+        fso.setCreateUserId(user.getUserId());
 
         list.add(fso);
     }

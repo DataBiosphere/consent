@@ -6,12 +6,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 import javax.annotation.processing.Generated;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -1053,6 +1057,79 @@ public class DatasetRegistrationSchemaV1 {
     @JsonProperty("consentGroups")
     public void setConsentGroups(List<ConsentGroup> consentGroups) {
         this.consentGroups = consentGroups;
+    }
+
+    public List<DatasetProperty> toDatasetProperties() {
+        List<DatasetProperty> props = new ArrayList<>();
+
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan",
+                "alternativeDataSharingPlan",
+                DatasetPropertyType.Boolean,
+                getAlternativeDataSharingPlan()
+        );
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan Explanation",
+                "alternativeDataSharingPlanExplanation",
+                DatasetPropertyType.String,
+                getAlternativeDataSharingPlanExplanation()
+        );
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan File Name",
+                "alternativeDataSharingPlanExplanation",
+                DatasetPropertyType.String,
+                getAlternativeDataSharingPlanFileName()
+        );
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan Delivery Date",
+                "alternativeDataSharingPlanDeliveryDate",
+                DatasetPropertyType.Date,
+                getAlternativeDataSharingPlanTargetDeliveryDate()
+        );
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan Target Public Release Date",
+                "alternativeDataSharingPlanTargetPublicReleaseDate",
+                DatasetPropertyType.Date,
+                getAlternativeDataSharingPlanTargetPublicReleaseDate()
+        );
+        addPropertyIfExists(
+                props,
+                "Alternative Data Sharing Plan Reasons",
+                "alternativeDataSharingPlanReasons",
+                DatasetPropertyType.Json,
+                GsonUtil.getInstance().toJson(getAlternativeDataSharingPlanReasons())
+        );
+        addPropertyIfExists(
+                props,
+                "Collaborating Sites",
+                "collaboratingSites",
+                DatasetPropertyType.Json,
+                GsonUtil.getInstance().toJson(getCollaboratingSites())
+        );
+
+
+
+        return props;
+    }
+
+    private void addPropertyIfExists(List<DatasetProperty> props, String name, String schema, DatasetPropertyType type, Object value) {
+        if (Objects.isNull(value) || value.equals("")) {
+            return;
+        }
+
+        DatasetProperty prop = new DatasetProperty();
+
+        prop.setPropertyName(name);
+        prop.setPropertyType(type);
+        prop.setPropertyValue(type.coerce(value.toString()));
+        prop.setSchemaProperty(schema);
+
+        props.add(prop);
     }
 
     @Override

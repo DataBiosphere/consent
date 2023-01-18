@@ -276,7 +276,8 @@ public class ConsentModule extends AbstractModule {
     DatasetServiceDAO providesDatasetServiceDAO() {
         return new DatasetServiceDAO(
                 jdbi,
-                providesDatasetDAO());
+                providesDatasetDAO(),
+                providesFileStorageObjectDAO());
     }
 
     @Provides
@@ -289,7 +290,8 @@ public class ConsentModule extends AbstractModule {
                 providesUserRoleDAO(),
                 providesDacDAO(),
                 providesUseRestrictionConverter(),
-                providesEmailService());
+                providesEmailService(),
+                providesGCSService());
     }
 
     @Provides
