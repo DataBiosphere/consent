@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
@@ -771,6 +772,37 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);
         assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUseOK() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
+
+        initResource();
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUseBadRequestJson() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
+
+        initResource();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUseBadRequestService() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(new IllegalArgumentException());
+
+        initResource();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
