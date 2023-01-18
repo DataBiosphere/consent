@@ -29,7 +29,7 @@ public class InstitutionResource extends Resource {
   private final UserService userService;
   private final InstitutionService institutionService;
   /*
-    NOTE: InstitutionUtil will provide a configured GsonBuilder to help format the JSON response
+    NOTE: InstitutionUtil will provide a configured GsonBuilder to help format the JSON response.
     Response needs to be filtered based on user roles (Admins would see all, non-admins would not)
     As such, any @PermitAll route would require the entity (Institution) to be formatted with the GsonBuilder
     as opposed to being passed into the response directly.
@@ -55,7 +55,7 @@ public class InstitutionResource extends Resource {
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
-  };
+  }
 
   @GET
   @Produces("application/json")
@@ -119,5 +119,5 @@ public class InstitutionResource extends Resource {
     } catch(Exception e) {
       return createExceptionResponse(e);
     }
-  };
+  }
 }

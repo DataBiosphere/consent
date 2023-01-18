@@ -227,17 +227,15 @@ public class UserResource extends Resource {
             if (user.hasUserRole(UserRoles.ADMIN)) {
                 return true; // admins can do everything.
             }
-
             if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
                 // can only update institution if not set.
                 return Objects.isNull(user.getInstitutionId()) && Objects.nonNull(newInstitutionId);
             }
-
-            return false;
+            // User is not restricted based on role
+            return true;
         } else {
             return true; // no op, no change, supports keeping no institution set to no institution.
         }
-
     }
 
     @PUT
