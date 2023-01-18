@@ -89,8 +89,8 @@ public class DataAccessReportsParser {
     public void addReviewedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String darCode, String consentName, String translatedUseRestriction) throws IOException {
         String finalVote = election.getFinalVote() ? "Yes" : "No";
         String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
-        String content2 = electionDate + DEFAULT_SEPARATOR + finalVote;
-        addDARLine(darWriter, dar, darCode, "", content2, consentName, translatedUseRestriction);
+        String customContent2 = electionDate + DEFAULT_SEPARATOR + finalVote;
+        addDARLine(darWriter, dar, darCode, "", customContent2, consentName, translatedUseRestriction);
     }
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {

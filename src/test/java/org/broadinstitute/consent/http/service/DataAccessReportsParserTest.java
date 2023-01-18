@@ -32,7 +32,8 @@ public class DataAccessReportsParserTest {
         Future use of aggregate-level data for general research purposes is prohibited [NPNV]
         Notes:
         Future use for methods research (analytic/software/technology development) is not prohibited
-        Future use as a control set for diseases other than those specified is not prohibited""";
+        Future use as a control set for diseases other than those specified is not prohibited
+        """;
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
