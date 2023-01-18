@@ -1,6 +1,12 @@
 put:
   summary: Admin Only API to update the Dataset's Data Use object from JSON
-  description: Admin Only API to update the Dataset's Data Use object from JSON
+  description: | 
+    Admin Only API to update the Dataset's Data Use object from JSON.
+    ## Note
+    This endpoint is restricted to updating the data use object only and does
+    not perform any logical checks to determine if match results for existing 
+    DAR elections might be impacted. It the administrator's responsibility to
+    ensure appropriate notifications are made.
   parameters:
     - name: id
       in: path
