@@ -1,11 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,27 +13,29 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DatasetDetailEntry;
+import org.broadinstitute.consent.http.models.Election;
+import org.junit.Test;
 
 public class DataAccessReportsParserTest {
 
     DataAccessReportsParser parser;
-    private final String SC_ID = "SC-01253";
     private final String CONSENT_NAME = "ORSP-1903";
     private final String NAME = "Test";
-    private final String REQUESTER = "Wesley";
-    private final String ORGANIZATION = "Broad";
     private final String RUS_SUMMARY = "Purpose";
-    private final String sDUL = "Samples Restricted for use with \"cancer\" [DOID_162(CC)]\n" +
-            "Future use by for-profit entities is prohibited [NPU]\n" +
-            "Future use of aggregate-level data for general research purposes is prohibited [NPNV]\n" +
-            "Notes:\n" +
-            "Future use for methods research (analytic/software/technology development) is not prohibited\n" +
-            "Future use as a control set for diseases other than those specified is not prohibited";
+    private final String sDUL = """
+        Samples Restricted for use with "cancer" [DOID_162(CC)]
+        Future use by for-profit entities is prohibited [NPU]
+        Future use of aggregate-level data for general research purposes is prohibited [NPNV]
+        Notes:
+        Future use for methods research (analytic/software/technology development) is not prohibited
+        Future use as a control set for diseases other than those specified is not prohibited
+        """;
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
-    private final String EMAIL = "vvicario@test.com";
 
     public DataAccessReportsParserTest() {
         this.parser = new DataAccessReportsParser();
@@ -52,6 +49,8 @@ public class DataAccessReportsParserTest {
         DataAccessRequest dar = createDAR(currentDate);
         FileWriter darWriter = new FileWriter(file);
         parser.setApprovedDARHeader(darWriter);
+        String REQUESTER = "Wesley";
+        String ORGANIZATION = "Broad";
         parser.addApprovedDARLine(darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
         darWriter.flush();
         Stream<String> stream = Files.lines(Paths.get(file.getPath()));
@@ -60,35 +59,35 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            assertTrue(columns.length == 12);
+            assertEquals(12, columns.length);
             if(i == 0) {
-                assertTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
-                assertTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
-                assertTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
-                assertTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
-                assertTrue(columns[4].equals(HeaderDAR.DATA_REQUESTER_NAME.getValue()));
-                assertTrue(columns[5].equals(HeaderDAR.ORGANIZATION.getValue()));
-                assertTrue(columns[6].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
-                assertTrue(columns[7].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
-                assertTrue(columns[8].equals(HeaderDAR.RESEARCH_PURPOSE.getValue()));
-                assertTrue(columns[9].equals(HeaderDAR.DATE_REQUEST_SUBMISSION.getValue()));
-                assertTrue(columns[10].equals(HeaderDAR.DATE_REQUEST_APPROVAL.getValue()));
-                assertTrue(columns[11].equals(HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue()));
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.DATA_REQUESTER_NAME.getValue());
+                assertEquals(columns[5], HeaderDAR.ORGANIZATION.getValue());
+                assertEquals(columns[6], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[7], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[8], HeaderDAR.RESEARCH_PURPOSE.getValue());
+                assertEquals(columns[9], HeaderDAR.DATE_REQUEST_SUBMISSION.getValue());
+                assertEquals(columns[10], HeaderDAR.DATE_REQUEST_APPROVAL.getValue());
+                assertEquals(columns[11], HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
             }
             if (i == 1) {
-                assertTrue(columns[0].equals(DAR_CODE));
-                assertTrue(columns[1].equals(NAME));
-                assertTrue(columns[2].equals(""));
-                assertTrue(columns[3].equals(CONSENT_NAME));
-                assertTrue(columns[4].equals(REQUESTER));
-                assertTrue(columns[5].equals(ORGANIZATION));
-                assertTrue(columns[6].equals(sDUL.replace("\n", " ")));
-                assertTrue(columns[7].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
-                assertTrue(columns[8].equals(RUS_SUMMARY));
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals("", columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(REQUESTER, columns[4]);
+                assertEquals(ORGANIZATION, columns[5]);
+                assertEquals(columns[6], sDUL.replace("\n", " "));
+                assertEquals(columns[7], TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
+                assertEquals(RUS_SUMMARY, columns[8]);
             }
             i++;
         }
-        assertTrue(i == 2);
+        assertEquals(2, i);
     }
 
     @Test
@@ -107,29 +106,71 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            assertTrue(columns.length == 8);
+            assertEquals(8, columns.length);
             if(i == 0) {
-                assertTrue(columns[0].equals(HeaderDAR.DAR_ID.getValue()));
-                assertTrue(columns[1].equals(HeaderDAR.DATASET_NAME.getValue()));
-                assertTrue(columns[2].equals(HeaderDAR.DATASET_ID.getValue()));
-                assertTrue(columns[3].equals(HeaderDAR.CONSENT_ID.getValue()));
-                assertTrue(columns[4].equals(HeaderDAR.CODED_VERSION_SDUL.getValue()));
-                assertTrue(columns[5].equals(HeaderDAR.CODED_VERSION_DAR.getValue()));
-                assertTrue(columns[6].equals(HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue()));
-                assertTrue(columns[7].equals(HeaderDAR.APPROVED_DISAPPROVED.getValue()));
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+                assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
             }
             if (i == 1) {
-                assertTrue(columns[0].equals(DAR_CODE));
-                assertTrue(columns[1].equals(NAME));
-                assertTrue(columns[2].equals(""));
-                assertTrue(columns[3].equals(CONSENT_NAME));
-                assertTrue(columns[4].equals(sDUL.replace("\n", " ")));
-                assertTrue(columns[5].equals(TRANSLATED_USE_RESTRICTION.replace("<br>"," ")));
-                assertTrue(columns[7].equals("Yes"));
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals("", columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(columns[4], sDUL.replace("\n", " "));
+                assertEquals(columns[5], TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
+                assertEquals("Yes", columns[7]);
             }
             i++;
         }
-        assertTrue(i == 2);
+        assertEquals(2, i);
+    }
+
+    @Test
+    public void testDataAccessReviewedReportNullElectionDate() throws IOException {
+        File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
+        Date currentDate = new Date();
+        Election election = new Election();
+        election.setFinalVote(true);
+        DataAccessRequest dar = createDAR(currentDate);
+        FileWriter darWriter = new FileWriter(file);
+        parser.setReviewedDARHeader(darWriter);
+        parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
+        darWriter.flush();
+        Stream<String> stream = Files.lines(Paths.get(file.getPath()));
+        Iterator<String> iterator = stream.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+            String line = iterator.next();
+            String[] columns = line.split("\t");
+            assertEquals(8, columns.length);
+            if(i == 0) {
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+                assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
+            }
+            if (i == 1) {
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals("", columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(columns[4], sDUL.replace("\n", " "));
+                assertEquals(columns[5], TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
+                assertEquals("Yes", columns[7]);
+            }
+            i++;
+        }
+        assertEquals(2, i);
     }
 
     private Election createElection(Date currentDate){
@@ -143,12 +184,12 @@ public class DataAccessReportsParserTest {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
         DatasetDetailEntry datasetDetail = new DatasetDetailEntry();
+        String SC_ID = "SC-01253";
         datasetDetail.setObjectId(SC_ID);
         datasetDetail.setName(NAME);
         List<DatasetDetailEntry> detailsList = new ArrayList<>();
         detailsList.add(datasetDetail);
         data.setDatasetDetail(detailsList);
-        data.setDarCode(DAR_CODE);
         data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
         data.setNonTechRus(RUS_SUMMARY);
         dar.setData(data);
