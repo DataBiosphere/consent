@@ -153,6 +153,7 @@ public class DataAccessRequestData {
     private Boolean dsAcknowledgement;
     private Boolean gsoAcknowledgement;
     private Boolean pubAcknowledgement;
+    private String piName;
 
     @Override
     public String toString() {
@@ -861,6 +862,14 @@ public class DataAccessRequestData {
 
     public Boolean getPubAcknowledgement() {
         return pubAcknowledgement;
+    }
+
+    public String getPiName() {
+        return piName;
+    }
+
+    public void setPiName(String piName) {
+        this.piName = piName;
     }
 
     // Validate all ontology entries
