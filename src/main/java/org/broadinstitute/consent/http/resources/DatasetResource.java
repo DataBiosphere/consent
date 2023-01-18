@@ -7,6 +7,7 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
@@ -503,6 +504,22 @@ public class DatasetResource extends Resource {
             Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
             return Response.ok().entity(unmarshal(dataset)).build();
         }catch (Exception e){
+            return createExceptionResponse(e);
+        }
+    }
+
+    @PUT
+    @Produces("application/json")
+    @RolesAllowed(ADMIN)
+    @Path("/{id}/datause")
+    public Response updateDatasetDataUse(@Auth AuthUser authUser, @PathParam("id") Integer id, String dataUseJson) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Gson gson = new Gson();
+            DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
+            Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
+            return Response.ok().entity(unmarshal(dataset)).build();
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

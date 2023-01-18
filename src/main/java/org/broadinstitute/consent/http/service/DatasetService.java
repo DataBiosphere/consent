@@ -1,5 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -26,30 +46,6 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.io.InputStream;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DatasetService {
 
@@ -305,6 +301,14 @@ public class DatasetService {
         datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId, dataset.getNeedsApproval(), dataset.getDacId());
         Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
         return Optional.of(updatedDataset);
+    }
+
+    public Dataset updateDatasetDataUse(User user, Integer datasetId, DataUse dataUse) {
+        if (!user.hasUserRole(UserRoles.ADMIN)) {
+            throw new IllegalArgumentException("Admin use only");
+        }
+        datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
+        return datasetDAO.findDatasetById(datasetId);
     }
 
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
