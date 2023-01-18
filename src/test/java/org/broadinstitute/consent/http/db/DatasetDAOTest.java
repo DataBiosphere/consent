@@ -735,14 +735,18 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateDatasetDataUse() {
         Dataset dataset = insertDataset();
-        DataUse dataUse = new DataUseBuilder()
+        DataUse oldDataUse = dataset.getDataUse();
+        DataUse newDataUse = new DataUseBuilder()
+            .setGeneralUse(false)
+            .setCommercialUse(true)
             .setHmbResearch(true)
             .setDiseaseRestrictions(List.of("DOID_1"))
             .build();
 
-        datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), dataUse.toString());
+        datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), newDataUse.toString());
         Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
-        assertEquals(dataUse, updated.getDataUse());
+        assertEquals(newDataUse, updated.getDataUse());
+        assertNotEquals(oldDataUse, updated.getDataUse());
     }
 
     @Test
