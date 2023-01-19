@@ -2,6 +2,9 @@ name: OWASP
 on:
   schedule:
     - cron: "0 0 * * *"
+# Docs
+#  * https://github.com/marketplace/actions/dependency-check
+#  * https://jeremylong.github.io/DependencyCheck/dependency-check-cli/arguments.html
 jobs:
   package:
     name: OWASP
@@ -13,14 +16,32 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-      - name: Run Report
+      - name: Build project
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn
         run: |
           mvn -v
-          mvn dependency-check:check --batch-mode
-      - name: Archive Report
-        uses: actions/upload-artifact@v3
+          mvn clean compile --batch-mode
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
         with:
-          name: owasp-report
-          path: target/dependency-check-report.html
+          project: 'Consent'
+          path: '.'
+          format: 'HTML'
+          out: 'reports' # this is the default, no need to specify unless you wish to override it
+          args: >
+            --failOnCVSS 1
+            --enableRetired
+            --suppression "./owaspSuppression.xml"
+            --exclude **/automation/**
+            --exclude **/docs/**
+            --exclude **/jenkins/**
+            --exclude **/migration/**
+        env:
+          JAVA_HOME: /opt/jdk
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
