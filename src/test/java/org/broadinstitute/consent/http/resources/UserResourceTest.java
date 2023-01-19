@@ -668,6 +668,68 @@ public class UserResourceTest {
   }
 
   @Test
+  public void testCanUpdateInstitution() {
+    initResource();
+
+    // User with no roles and no institution can update their institution
+    User u1 = new User();
+    boolean canUpdate = userResource.canUpdateInstitution(u1, 1);
+    assertTrue(canUpdate);
+
+    // Researcher user with no institution can update their institution
+    User u2 = new User();
+    u2.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u2, 1);
+    assertTrue(canUpdate);
+
+    // Researcher user with an institution can update their institution
+    User u3 = new User();
+    u3.setInstitutionId(10);
+    u3.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u3, 1);
+    assertTrue(canUpdate);
+
+    // SO user with no institution can update their institution
+    User u4 = new User();
+    u4.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u4, 1);
+    assertTrue(canUpdate);
+
+    // SO user with an institution CANNOT update their institution
+    User u4a = new User();
+    u4a.setInstitutionId(10);
+    u4a.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u4a, 1);
+    assertFalse(canUpdate);
+
+    // IT user with no institution can update their institution
+    User u5 = new User();
+    u5.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u5, 1);
+    assertTrue(canUpdate);
+
+    // IT user with an institution CANNOT update their institution
+    User u5a = new User();
+    u5a.setInstitutionId(10);
+    u5a.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u5a, 1);
+    assertFalse(canUpdate);
+
+    // Admin user with no institution can update their institution
+    User u6 = new User();
+    u6.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u6, 1);
+    assertTrue(canUpdate);
+
+    // Admin user with an institution can update their institution
+    User u7 = new User();
+    u7.setInstitutionId(10);
+    u7.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    canUpdate = userResource.canUpdateInstitution(u7, 1);
+    assertTrue(canUpdate);
+  }
+
+  @Test
   public void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();

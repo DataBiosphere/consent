@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -222,7 +223,8 @@ public class UserResource extends Resource {
         }
     }
 
-    private boolean canUpdateInstitution(User user, Integer newInstitutionId) {
+    @VisibleForTesting
+    protected boolean canUpdateInstitution(User user, Integer newInstitutionId) {
         if ((!Objects.isNull(user.getUserId()) || !Objects.isNull(newInstitutionId)) && !Objects.equals(user.getInstitutionId(), newInstitutionId)) {
             if (user.hasUserRole(UserRoles.ADMIN)) {
                 return true; // admins can do everything.
