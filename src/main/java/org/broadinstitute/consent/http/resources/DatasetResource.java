@@ -177,7 +177,7 @@ public class DatasetResource extends Resource {
                     files);
 
             URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
-            return Response.created(uri).entity(unmarshal(datasets)).build();
+            return Response.created(uri).entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -274,7 +274,7 @@ public class DatasetResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-            return Response.ok(unmarshal(datasets)).build();
+            return Response.ok(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -304,7 +304,7 @@ public class DatasetResource extends Resource {
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
-            return Response.ok(unmarshal(dataset)).build();
+            return Response.ok(dataset).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -328,7 +328,7 @@ public class DatasetResource extends Resource {
                                 + String.join(",", differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
 
             }
-            return Response.ok(unmarshal(datasets)).build();
+            return Response.ok(datasets).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }
@@ -473,7 +473,7 @@ public class DatasetResource extends Resource {
             User dacUser = userService.findUserByEmail(authUser.getEmail());
             Integer dacUserId = dacUser.getUserId();
             List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, dacUserId);
-            return Response.ok(unmarshal(datasets), MediaType.APPLICATION_JSON).build();
+            return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -519,10 +519,10 @@ public class DatasetResource extends Resource {
                 throw new NotFoundException("Dataset not found: " + id);
             }
             if (Objects.equals(dataUse, originalDataset.getDataUse())) {
-                return Response.notModified().entity(unmarshal(originalDataset)).build();
+                return Response.notModified().entity(originalDataset).build();
             }
             Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
-            return Response.ok().entity(unmarshal(dataset)).build();
+            return Response.ok().entity(dataset).build();
         } catch (JsonSyntaxException jse) {
             return createExceptionResponse(new BadRequestException("Invalid JSON Syntax: " + dataUseJson));
         } catch (Exception e) {
