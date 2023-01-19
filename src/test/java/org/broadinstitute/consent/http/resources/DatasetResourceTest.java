@@ -669,7 +669,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(ds), response.getEntity());
+        assertEquals(ds, response.getEntity());
     }
 
     @Test
@@ -689,17 +689,14 @@ public class DatasetResourceTest {
         ds2.setDataSetId(2);
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
+        List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(List.of(
-                ds1,
-                ds2,
-                ds3
-        ));
+        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3));
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
+        assertEquals(datasets, response.getEntity());
     }
 
     @Test
@@ -710,17 +707,14 @@ public class DatasetResourceTest {
         ds2.setDataSetId(2);
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
+        List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
-                ds1,
-                ds2,
-                ds3
-        ));
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
+        assertEquals(datasets, response.getEntity());
     }
 
     @Test
