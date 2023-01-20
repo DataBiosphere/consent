@@ -33,18 +33,6 @@ public class DataAccessRequestData {
     private String projectTitle;
     private Boolean checkCollaborator;
     private Boolean checkNihDataOnly;
-    @Deprecated
-    private String researcher;
-    @Deprecated
-    private String isThePi;
-    @Deprecated
-    private String havePi;
-    @Deprecated
-    private String piEmail;
-    @Deprecated
-    private String pubmedId;
-    @Deprecated
-    private String scientificUrl;
     private Boolean eraExpiration;
     @Deprecated
     private Boolean eraAuthorized;
@@ -175,54 +163,6 @@ public class DataAccessRequestData {
 
     public void setCheckNihDataOnly(Boolean checkNihDataOnly) {
         this.checkNihDataOnly = checkNihDataOnly;
-    }
-
-    public String getResearcher() {
-        return researcher;
-    }
-
-    public void setResearcher(String researcher) {
-        this.researcher = researcher;
-    }
-
-    public String getIsThePi() {
-        return isThePi;
-    }
-
-    public void setIsThePi(String isThePi) {
-        this.isThePi = isThePi;
-    }
-
-    public String getHavePi() {
-        return havePi;
-    }
-
-    public void setHavePi(String havePi) {
-        this.havePi = havePi;
-    }
-
-    public String getPiEmail() {
-        return piEmail;
-    }
-
-    public void setPiEmail(String piEmail) {
-        this.piEmail = piEmail;
-    }
-
-    public String getPubmedId() {
-        return pubmedId;
-    }
-
-    public void setPubmedId(String pubmedId) {
-        this.pubmedId = pubmedId;
-    }
-
-    public String getScientificUrl() {
-        return scientificUrl;
-    }
-
-    public void setScientificUrl(String scientificUrl) {
-        this.scientificUrl = scientificUrl;
     }
 
     public Boolean getEraExpiration() {
