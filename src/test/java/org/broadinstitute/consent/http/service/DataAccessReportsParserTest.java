@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -10,12 +12,15 @@ import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -23,9 +28,10 @@ public class DataAccessReportsParserTest {
 
     @Mock
     private DatasetDAO datasetDAO;
-    DataAccessReportsParser parser;
+    private DataAccessReportsParser parser;
     private final String CONSENT_NAME = "ORSP-1903";
     private final String NAME = "Test";
+    private final String DS_IDENTIFIER = "DUOS-000001";
     private final String RUS_SUMMARY = "Purpose";
     private final String sDUL = """
         Samples Restricted for use with "cancer" [DOID_162(CC)]
@@ -38,7 +44,15 @@ public class DataAccessReportsParserTest {
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
-    public DataAccessReportsParserTest() {
+    @Before
+    public void setUp() {
+        openMocks(this);
+        Dataset d = new Dataset();
+        d.setDataSetId(1); // This translates to an identifier of "DUOS-000001"
+        d.setAlias(1);
+        d.setName(NAME);
+        List<Dataset> datasets = List.of(d);
+        when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(datasets);
         this.parser = new DataAccessReportsParser(datasetDAO);
     }
 
@@ -78,7 +92,7 @@ public class DataAccessReportsParserTest {
             if (i == 1) {
                 assertEquals(DAR_CODE, columns[0]);
                 assertEquals(NAME, columns[1]);
-                assertEquals("", columns[2]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
                 assertEquals(CONSENT_NAME, columns[3]);
                 assertEquals(REQUESTER, columns[4]);
                 assertEquals(ORGANIZATION, columns[5]);
@@ -121,7 +135,7 @@ public class DataAccessReportsParserTest {
             if (i == 1) {
                 assertEquals(DAR_CODE, columns[0]);
                 assertEquals(NAME, columns[1]);
-                assertEquals("", columns[2]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
                 assertEquals(CONSENT_NAME, columns[3]);
                 assertEquals(columns[4], sDUL.replace("\n", " "));
                 assertEquals(columns[5], TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
@@ -163,7 +177,7 @@ public class DataAccessReportsParserTest {
             if (i == 1) {
                 assertEquals(DAR_CODE, columns[0]);
                 assertEquals(NAME, columns[1]);
-                assertEquals("", columns[2]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
                 assertEquals(CONSENT_NAME, columns[3]);
                 assertEquals(columns[4], sDUL.replace("\n", " "));
                 assertEquals(columns[5], TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
@@ -183,6 +197,7 @@ public class DataAccessReportsParserTest {
 
     private DataAccessRequest createDAR(Date currentDate) {
         DataAccessRequest dar = new DataAccessRequest();
+        dar.setDatasetIds(List.of(1));
         DataAccessRequestData data = new DataAccessRequestData();
         data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
         data.setNonTechRus(RUS_SUMMARY);
