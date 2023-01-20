@@ -37,7 +37,6 @@ public class DARModalDetailsDTOTest {
         Integer userId = userDAO.insertUser("email", "name", new Date());
         User user = userDAO.findUserById(userId);
         dar.setUserId(userId);
-        data.setInstitution("");
         data.setDarCode(DAR_CODE);
         data.setProjectTitle(TITLE);
         data.setDiseases(true);

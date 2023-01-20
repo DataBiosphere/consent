@@ -31,14 +31,6 @@ public class DataAccessRequestData {
     @Deprecated
     private String referenceId;
     @Deprecated
-    private String investigator;
-    @Deprecated
-    private String institution;
-    @Deprecated
-    private String department;
-    @Deprecated
-    private String division;
-    @Deprecated
     private String address1;
     @Deprecated
     private String address2;
@@ -172,38 +164,6 @@ public class DataAccessRequestData {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
-    }
-
-    public String getInvestigator() {
-        return investigator;
-    }
-
-    public void setInvestigator(String investigator) {
-        this.investigator = investigator;
-    }
-
-    public String getInstitution() {
-        return institution;
-    }
-
-    public void setInstitution(String institution) {
-        this.institution = institution;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-
-    public String getDivision() {
-        return division;
-    }
-
-    public void setDivision(String division) {
-        this.division = division;
     }
 
     public String getAddress1() {
