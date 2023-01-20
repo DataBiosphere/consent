@@ -16,8 +16,8 @@ public class DataAccessRequestData {
     /**
      * These properties are deprecated and should no longer be used.
      * In many cases, they represent user properties, consent related properties,
-     * or duplicate existing DAR fields.
-     * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
+     * deprecated properties, or duplicate existing DAR fields.
+     * See <a href="https://broadworkbench.atlassian.net/browse/DUOS-728">DUOS-728</a> for more info.
      */
     public static final List<String> DEPRECATED_PROPS = Arrays
         .asList("referenceId", "investigator",
