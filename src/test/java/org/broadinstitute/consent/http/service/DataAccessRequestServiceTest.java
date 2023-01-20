@@ -519,11 +519,8 @@ public class DataAccessRequestServiceTest {
         dar.addDatasetId(1);
         data.setForProfit(false);
         data.setAddiction(false);
-        data.setAddress1("");
-        data.setAddress2("");
         data.setAnvilUse(true);
         data.setCheckCollaborator(false);
-        data.setCity("");
         data.setCloudUse(true);
         data.setCloudProvider("Google Cloud");
         data.setCloudProviderDescription("Google");
@@ -535,9 +532,6 @@ public class DataAccessRequestServiceTest {
         data.setSexualDiseases(false);
         data.setPoa(false);
         data.setIllegalBehavior(false);
-        data.setCountry("United States");
-        data.setState("");
-        data.setZipCode("");
         data.setProjectTitle("Title");
         data.setStigmatizedDiseases(false);
         data.setVulnerablePopulation(false);
