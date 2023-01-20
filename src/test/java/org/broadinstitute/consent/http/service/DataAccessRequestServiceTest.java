@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -219,7 +218,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -230,7 +229,7 @@ public class DataAccessRequestServiceTest {
     public void testUpdateByReferenceIdVersion2_WithCollection() throws Exception {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -378,10 +377,6 @@ public class DataAccessRequestServiceTest {
         Map<String, DataAccessRequest> dars = new HashMap<>();
         dars.put(election.getReferenceId(), dar);
         collection.setDars(dars);
-        User user = new User();
-        user.setUserId(1);
-        user.setDisplayName("displayName");
-        user.setInstitutionId(1);
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
@@ -561,7 +556,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testFindAllDraftDataAccessRequests() {
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(new DataAccessRequest()));
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequests();
         assertEquals(drafts.size(), 1);
@@ -569,7 +564,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testFindAllDraftDataAccessRequestsByUser() {
-        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(new DataAccessRequest()));
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequestsByUser(1);
         assertEquals(drafts.size(), 1);
@@ -577,7 +572,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void getDataAccessRequestsForUser() {
-        List<DataAccessRequest> dars = Arrays.asList(new DataAccessRequest());
+        List<DataAccessRequest> dars = List.of(new DataAccessRequest());
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
         when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
         initService();
@@ -593,7 +588,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.addDatasetId(361);
         dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(dar));
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(dar));
         initService();
         List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(null);
         assertEquals(1, darManages.size());
@@ -607,7 +602,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.addDatasetId(361);
         dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(dar));
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(dar));
         initService();
         List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(1);
         assertEquals(1, darManages.size());
