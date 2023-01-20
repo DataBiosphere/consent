@@ -8,20 +8,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.Test;
+import org.mockito.Mock;
 
 public class DataAccessReportsParserTest {
 
+    @Mock
+    private DatasetDAO datasetDAO;
     DataAccessReportsParser parser;
     private final String CONSENT_NAME = "ORSP-1903";
     private final String NAME = "Test";
@@ -38,7 +39,7 @@ public class DataAccessReportsParserTest {
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
     public DataAccessReportsParserTest() {
-        this.parser = new DataAccessReportsParser();
+        this.parser = new DataAccessReportsParser(datasetDAO);
     }
 
     @Test
@@ -183,13 +184,6 @@ public class DataAccessReportsParserTest {
     private DataAccessRequest createDAR(Date currentDate) {
         DataAccessRequest dar = new DataAccessRequest();
         DataAccessRequestData data = new DataAccessRequestData();
-        DatasetDetailEntry datasetDetail = new DatasetDetailEntry();
-        String SC_ID = "SC-01253";
-        datasetDetail.setObjectId(SC_ID);
-        datasetDetail.setName(NAME);
-        List<DatasetDetailEntry> detailsList = new ArrayList<>();
-        detailsList.add(datasetDetail);
-        data.setDatasetDetail(detailsList);
         data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
         data.setNonTechRus(RUS_SUMMARY);
         dar.setData(data);

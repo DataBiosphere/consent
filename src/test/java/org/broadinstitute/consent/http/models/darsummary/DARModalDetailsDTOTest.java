@@ -1,20 +1,17 @@
 package org.broadinstitute.consent.http.models.darsummary;
 
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 public class DARModalDetailsDTOTest {
 
@@ -59,7 +56,6 @@ public class DARModalDetailsDTOTest {
         data.setPopulationMigration(true);
         data.setPsychiatricTraits(true);
         data.setNotHealth(true);
-        data.setDatasetDetail(getDatasetDetail());
         dar.setData(data);
     }
 
@@ -71,22 +67,5 @@ public class DARModalDetailsDTOTest {
         OntologyEntry ont3 = new OntologyEntry();
         ont3.setLabel("OD-3: Ontology Three");
         return Arrays.asList(ont1, ont2, ont3);
-    }
-
-    private ArrayList<DatasetDetailEntry> getDatasetDetail(){
-        DatasetDetailEntry entry1 = new DatasetDetailEntry();
-        entry1.setName("First:");
-        entry1.setDatasetId("First Sample Detail");
-        DatasetDetailEntry entry2 = new DatasetDetailEntry();
-        entry2.setName("Second:");
-        entry2.setDatasetId("Second Sample Detail");
-        DatasetDetailEntry entry3 = new DatasetDetailEntry();
-        entry3.setName("First:");
-        entry3.setDatasetId("First Sample Detail");
-        ArrayList<DatasetDetailEntry> list = new ArrayList<>();
-        list.add(entry1);
-        list.add(entry2);
-        list.add(entry3);
-        return list;
     }
 }

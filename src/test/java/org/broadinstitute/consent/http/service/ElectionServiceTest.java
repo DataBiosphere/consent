@@ -1,5 +1,23 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -20,7 +38,6 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -37,25 +54,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ElectionServiceTest {
 
@@ -154,12 +152,7 @@ public class ElectionServiceTest {
         DatasetEntry entry = new DatasetEntry();
         entry.setKey(sampleDataset1.getConsentName());
         entry.setValue(sampleDataset1.getName());
-        data.setDatasets(Arrays.asList(entry));
-        DatasetDetailEntry entryDetail = new DatasetDetailEntry();
-        entryDetail.setDatasetId(sampleDataset1.getDataSetId().toString());
-        entryDetail.setName(sampleDataset1.getName());
-        entryDetail.setObjectId(sampleDataset1.getObjectId());
-        data.setDatasetDetail(Arrays.asList(entryDetail));
+        data.setDatasets(List.of(entry));
         sampleDataAccessRequest1.setData(data);
         sampleDataAccessRequest1.addDatasetId(sampleDataset1.getDataSetId());
 
@@ -232,16 +225,17 @@ public class ElectionServiceTest {
         voteStubs();
 
         when(dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()))
-                .thenReturn(Arrays.asList(sampleDataset1));
+                .thenReturn(Collections.singletonList(sampleDataset1));
         when(dataAccessRequestDAO.findByReferenceIds(any()))
-                .thenReturn(Arrays.asList(sampleDataAccessRequest1));
+                .thenReturn(Collections.singletonList(sampleDataAccessRequest1));
         when(consentDAO.findConsentsFromConsentsIDs(any()))
-                .thenReturn(Arrays.asList(sampleConsent1));
+                .thenReturn(Collections.singletonList(sampleConsent1));
         when(dataAccessRequestService.findByReferenceId(any()))
                 .thenReturn(sampleDataAccessRequest1);
         when(dataAccessRequestDAO.findByReferenceId(any()))
                 .thenReturn(sampleDataAccessRequest1);
-        when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(Arrays.asList(sampleDataset1));
+        when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(
+            Collections.singletonList(sampleDataset1));
         when(consentDAO.checkConsentById(sampleConsent1.getConsentId())).thenReturn(sampleConsent1.getConsentId());
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         when(consentDAO.findConsentFromDatasetID(sampleDataset1.getDataSetId())).thenReturn(sampleConsent1);
@@ -256,7 +250,8 @@ public class ElectionServiceTest {
                 .thenReturn(sampleUserChairperson);
         when(userDAO.findUserByEmailAndRoleId("test@test.com", UserRoles.MEMBER.getRoleId()))
                 .thenReturn(sampleUserMember);
-        when(userDAO.findUsersForElectionsByRoles(Arrays.asList(sampleVoteChairpersonApproval.getElectionId()),
+        when(userDAO.findUsersForElectionsByRoles(
+            Collections.singletonList(sampleVoteChairpersonApproval.getElectionId()),
                 Arrays.asList(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
     }
@@ -281,9 +276,9 @@ public class ElectionServiceTest {
                 .thenReturn(sampleElection2);
         when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.OPEN.getValue()))
-                .thenReturn(Arrays.asList(sampleElection1));
+                .thenReturn(Collections.singletonList(sampleElection1));
         when(electionDAO.findLastDataAccessElectionsWithFinalVoteByStatus(ElectionStatus.CLOSED.getValue()))
-                .thenReturn(Arrays.asList(sampleElection2));
+                .thenReturn(Collections.singletonList(sampleElection2));
     }
 
     private void voteStubs() {
@@ -292,11 +287,11 @@ public class ElectionServiceTest {
         when(voteDAO.findPendingVotesByElectionId(sampleElection2.getElectionId()))
                 .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteRP));
+                .thenReturn(Collections.singletonList(sampleVoteRP));
         when(voteDAO.findVotesByElectionId(sampleElection1.getElectionId()))
                 .thenReturn(Arrays.asList(sampleVoteMember, sampleVoteChairpersonApproval));
         when(voteDAO.findVotesByElectionIdAndType(sampleElection1.getElectionId(), VoteType.DATA_OWNER.getValue()))
-                .thenReturn(Arrays.asList(sampleVoteMember));
+                .thenReturn(Collections.singletonList(sampleVoteMember));
     }
 
     private void initService() {
@@ -442,12 +437,16 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of());
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
-        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(Arrays.asList());
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(Collections.singletonList(sampleVoteChairpersonApproval));
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(Collections.singletonList(sampleVoteChairpersonApproval));
+        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
+            List.of());
+        when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(
+            List.of());
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairpersonApproval);
         assertEquals(true, validate);
@@ -462,15 +461,18 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList(new Vote(4, true, sampleUserChairperson.getUserId(), null, null,
-                        sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
-                        false, false)));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList(sampleVoteChairpersonApproval));
-        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList());
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(List.of(new Vote(4, true, sampleUserChairperson.getUserId(), null, null,
+                    sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
+                    false, false)));
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(Collections.singletonList(sampleVoteChairpersonApproval));
+        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
+            List.of());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember));
+                .thenReturn(Collections.singletonList(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
         assertEquals(true, validate);
@@ -485,13 +487,16 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList());
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(), Arrays.asList(sampleUserChairperson.getUserId())))
-                .thenReturn(Arrays.asList());
-        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(Arrays.asList(sampleVoteRP));
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(List.of());
+        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+            Collections.singletonList(sampleUserChairperson.getUserId())))
+                .thenReturn(List.of());
+        when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
+            Collections.singletonList(sampleVoteRP));
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
-                .thenReturn(Arrays.asList(sampleVoteMember));
+                .thenReturn(Collections.singletonList(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
         assertEquals(true, validate);
@@ -512,7 +517,7 @@ public class ElectionServiceTest {
                         ElectionStatus.CLOSED.getValue(), new Date(),
                         "CONS-1", new Date(), true, sampleDataset1.getDataSetId()));
         when(voteDAO.findDataOwnerPendingVotesByElectionId(any(), any()))
-                .thenReturn(Arrays.asList());
+                .thenReturn(List.of());
         initService();
 
         boolean ownerToClose = service.checkDataOwnerToCloseElection(5);
@@ -523,12 +528,14 @@ public class ElectionServiceTest {
     public void testCreateDataSetElections() {
         when(electionDAO.getOpenElectionByReferenceIdAndDataSet(sampleElection1.getReferenceId(), sampleDataset1.getDataSetId()))
                 .thenReturn(null);
-        when(electionDAO.findElectionsByIds(Arrays.asList(sampleDatasetElection.getElectionId())))
-            .thenReturn(Arrays.asList(sampleElection1));
+        when(electionDAO.findElectionsByIds(
+            Collections.singletonList(sampleDatasetElection.getElectionId())))
+            .thenReturn(Collections.singletonList(sampleElection1));
         when(electionDAO.insertElection(any(), any(), any(), any(), any()))
                 .thenReturn(sampleDatasetElection.getElectionId());
         initService();
-        List<Election> elections = service.createDataSetElections(sampleElection1.getReferenceId(), Map.of(sampleUserMember, Arrays.asList(sampleDataset1)));
+        List<Election> elections = service.createDataSetElections(sampleElection1.getReferenceId(), Map.of(sampleUserMember,
+            Collections.singletonList(sampleDataset1)));
         assertNotNull(elections);
         assertEquals(1, elections.size());
         assertEquals(sampleDatasetElection.getReferenceId(), elections.get(0).getReferenceId());

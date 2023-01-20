@@ -125,8 +125,6 @@ public class DataAccessRequestData {
     @Deprecated
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
-    @Deprecated
-    private List<DatasetDetailEntry> datasetDetail;
 
     private Boolean anvilUse;
     private Boolean cloudUse;
@@ -592,17 +590,6 @@ public class DataAccessRequestData {
         }
         return datasetIds;
     }
-    public List<DatasetDetailEntry> getDatasetDetail() {
-        if (Objects.isNull(datasetDetail)) {
-            return Collections.emptyList();
-        }
-        return datasetDetail;
-    }
-
-    public void setDatasetDetail(List<DatasetDetailEntry> datasetDetail) {
-        this.datasetDetail = datasetDetail;
-    }
-
     public String getStatus() {
         return status;
     }
