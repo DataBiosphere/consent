@@ -34,6 +34,8 @@ import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
@@ -667,7 +669,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(ds), response.getEntity());
+        assertEquals(ds, response.getEntity());
     }
 
     @Test
@@ -687,17 +689,14 @@ public class DatasetResourceTest {
         ds2.setDataSetId(2);
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
+        List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(List.of(
-                ds1,
-                ds2,
-                ds3
-        ));
+        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3));
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
+        assertEquals(datasets, response.getEntity());
     }
 
     @Test
@@ -708,17 +707,14 @@ public class DatasetResourceTest {
         ds2.setDataSetId(2);
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
+        List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
-                ds1,
-                ds2,
-                ds3
-        ));
+        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
         assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(List.of(ds1,ds2,ds3)), response.getEntity());
+        assertEquals(datasets, response.getEntity());
     }
 
     @Test
@@ -771,6 +767,68 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);
         assertEquals(500, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_OK() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        Dataset d = new Dataset();
+        when(datasetService.findDatasetById(any())).thenReturn(d);
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
+
+        initResource();
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_BadRequestJson() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
+
+        initResource();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_BadRequestService() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        Dataset d = new Dataset();
+        when(datasetService.findDatasetById(any())).thenReturn(d);
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(new IllegalArgumentException());
+
+        initResource();
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_NotFound() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        when(datasetService.findDatasetById(any())).thenThrow(new NotFoundException());
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(new NotFoundException());
+
+        initResource();
+        String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+
+    @Test
+    public void testUpdateDatasetDataUse_NotModified() {
+        when(userService.findUserByEmail(any())).thenReturn(new User());
+        Dataset d = new Dataset();
+        DataUse du = new DataUseBuilder().setGeneralUse(true).build();
+        d.setDataUse(du);
+        when(datasetService.findDatasetById(any())).thenReturn(d);
+        when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
+
+        initResource();
+        Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
 
     @Test
