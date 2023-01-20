@@ -33,18 +33,6 @@ public class DataAccessRequestData {
     private String projectTitle;
     private Boolean checkCollaborator;
     private Boolean checkNihDataOnly;
-    private Boolean eraExpiration;
-    @Deprecated
-    private Boolean eraAuthorized;
-    @Deprecated
-    private String nihUsername;
-    @Deprecated
-    private String linkedIn;
-    @Deprecated
-    private String orcid;
-    @Deprecated
-    private String researcherGate;
-
     private String rus;
     @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
     private String nonTechRus;
@@ -163,21 +151,6 @@ public class DataAccessRequestData {
 
     public void setCheckNihDataOnly(Boolean checkNihDataOnly) {
         this.checkNihDataOnly = checkNihDataOnly;
-    }
-
-    public Boolean getEraExpiration() {
-        return eraExpiration;
-    }
-
-    public void setEraExpiration(Boolean eraExpiration) {
-        this.eraExpiration = eraExpiration;
-    }
-    public Boolean getEraAuthorized() {
-        return eraAuthorized;
-    }
-
-    public void setEraAuthorized(Boolean eraAuthorized) {
-        this.eraAuthorized = eraAuthorized;
     }
 
     public String getRus() {
@@ -449,38 +422,6 @@ public class DataAccessRequestData {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getNihUsername() {
-        return nihUsername;
-    }
-
-    public void setNihUsername(String nihUsername) {
-        this.nihUsername = nihUsername;
-    }
-
-    public String getLinkedIn() {
-        return linkedIn;
-    }
-
-    public void setLinkedIn(String linkedIn) {
-        this.linkedIn = linkedIn;
-    }
-
-    public String getOrcid() {
-        return orcid;
-    }
-
-    public void setOrcid(String orcid) {
-        this.orcid = orcid;
-    }
-
-    public String getResearcherGate() {
-        return researcherGate;
-    }
-
-    public void setResearcherGate(String researcherGate) {
-        this.researcherGate = researcherGate;
     }
 
     public Boolean getPoa() {
