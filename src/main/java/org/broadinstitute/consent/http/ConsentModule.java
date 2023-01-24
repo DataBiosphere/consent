@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -43,6 +44,7 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -290,8 +292,7 @@ public class ConsentModule extends AbstractModule {
                 providesUserRoleDAO(),
                 providesDacDAO(),
                 providesUseRestrictionConverter(),
-                providesEmailService(),
-                providesGCSService());
+                providesEmailService());
     }
 
     @Provides
@@ -543,6 +544,16 @@ public class ConsentModule extends AbstractModule {
                 providesAcknowledgementDAO()
         );
     }
+
+    @Provides
+    DatasetRegistrationService providesDatasetRegistrationService() {
+        return new DatasetRegistrationService(
+                providesDatasetDAO(),
+                providesDatasetServiceDAO(),
+                providesGCSService()
+        );
+    }
+
     @Provides
     UserServiceDAO providesUserServiceDAO() {
         return new UserServiceDAO(

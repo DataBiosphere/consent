@@ -80,6 +80,7 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -197,6 +198,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
         final TDRService tdrService = injector.getProvider(TDRService.class).get();
         final AcknowledgementService acknowledgementService = injector.getProvider(AcknowledgementService.class).get();
+        final DatasetRegistrationService datasetRegistrationService = injector.getProvider(DatasetRegistrationService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -230,7 +232,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
-        env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
+        env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService, datasetRegistrationService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
         env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));

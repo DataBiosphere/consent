@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeOb
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -66,6 +67,8 @@ public class DatasetResourceTest {
 
     @Mock
     private DatasetService datasetService;
+    @Mock
+    private DatasetRegistrationService datasetRegistrationService;
 
     @Mock
     private UserService userService;
@@ -96,7 +99,7 @@ public class DatasetResourceTest {
     }
 
     private void initResource() {
-        resource = new DatasetResource(datasetService, userService, darService);
+        resource = new DatasetResource(datasetService, userService, darService, datasetRegistrationService);
     }
 
     private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -828,7 +831,7 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
+        when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
@@ -850,7 +853,7 @@ public class DatasetResourceTest {
         when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
 
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
+        when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
@@ -862,7 +865,7 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDatasetRegistration_multipleFiles() throws SQLException, IOException {
 
-        spy(datasetService);
+        spy(datasetRegistrationService);
 
         FormDataContentDisposition contentFile = FormDataContentDisposition
                 .name("file")
@@ -896,7 +899,7 @@ public class DatasetResourceTest {
                         "notFile", List.of(formDataBodyPartNotFile)));
 
         when(userService.findUserByEmail(any())).thenReturn(user);
-        when(datasetService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
+        when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
         DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
         String instance = new Gson().toJson(schemaV1);
         initResource();
@@ -904,7 +907,7 @@ public class DatasetResourceTest {
         Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
 
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-        verify(datasetService, times(1)).createDatasetsFromRegistration(
+        verify(datasetRegistrationService, times(1)).createDatasetsFromRegistration(
                 schemaV1,
                 user,
                 Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther));

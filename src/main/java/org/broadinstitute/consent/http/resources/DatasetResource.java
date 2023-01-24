@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
@@ -64,6 +65,7 @@ public class DatasetResource extends Resource {
 
     private final String END_OF_LINE = System.lineSeparator();
     private final DatasetService datasetService;
+    private final DatasetRegistrationService datasetRegistrationService;
     private final UserService userService;
     private final DataAccessRequestService darService;
 
@@ -85,10 +87,11 @@ public class DatasetResource extends Resource {
     }
 
     @Inject
-    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService) {
+    public DatasetResource(DatasetService datasetService, UserService userService, DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService) {
         this.datasetService = datasetService;
         this.userService = userService;
         this.darService = darService;
+        this.datasetRegistrationService = datasetRegistrationService;
         this.jsonSchemaUtil = new JsonSchemaUtil();
         resetDataSetSampleFileName();
         resetDataSetSampleContent();
@@ -173,7 +176,7 @@ public class DatasetResource extends Resource {
             Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
             // Generate datasets from registration
-            List<Dataset> datasets = datasetService.createDatasetsFromRegistration(
+            List<Dataset> datasets = datasetRegistrationService.createDatasetsFromRegistration(
                     registration,
                     user,
                     files);

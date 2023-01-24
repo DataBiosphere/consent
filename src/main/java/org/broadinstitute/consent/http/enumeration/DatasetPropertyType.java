@@ -1,11 +1,18 @@
 package org.broadinstitute.consent.http.enumeration;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.TimeZone;
 
 public enum DatasetPropertyType {
     String("string"),
@@ -66,7 +73,12 @@ public enum DatasetPropertyType {
 
     public static Instant coerceToDate(String value) throws IllegalArgumentException {
         try {
-            return Instant.parse(value);
+            LocalDate date = LocalDate.parse(value);
+
+            return date
+                    // specify the offset of the system computer
+                    .atStartOfDay(ZoneOffset.systemDefault())
+                    .toInstant();
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Could not parse as Date: " + e.getMessage());
         }
@@ -79,9 +91,9 @@ public enum DatasetPropertyType {
             throw new IllegalArgumentException("Could not parse as Integer: " + e.getMessage());
         }
     }
-    public static JsonObject coerceToJson(String value) throws IllegalArgumentException {
+    public static JsonElement coerceToJson(String value) throws IllegalArgumentException {
         try {
-            return new Gson().fromJson(value, JsonObject.class);
+            return new Gson().fromJson(value, JsonElement.class);
         } catch(JsonSyntaxException e) {
             throw new IllegalArgumentException("Could not parse as Json: " + e.getMessage());
         }

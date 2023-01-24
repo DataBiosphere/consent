@@ -13,6 +13,7 @@ import org.jdbi.v3.core.statement.Update;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -91,7 +92,7 @@ public class DatasetServiceDAO {
         executeSynchronizeDatasetProperties(handle, datasetId, properties);
 
         // files
-        executeInsertFilesForDataset(uploadedFiles, datasetId);
+        executeInsertFilesForDataset(uploadedFiles, userId, datasetId);
 
         return datasetId;
     }
@@ -110,7 +111,7 @@ public class DatasetServiceDAO {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
-    private void executeInsertFilesForDataset(List<FileStorageObject> files, Integer datasetId) {
+    private void executeInsertFilesForDataset(List<FileStorageObject> files, Integer userId, Integer datasetId) {
         for (FileStorageObject file : files) {
             fileStorageObjectDAO.insertNewFile(
                     file.getFileName(),
@@ -118,8 +119,8 @@ public class DatasetServiceDAO {
                     file.getBlobId().toGsUtilUri(),
                     file.getMediaType(),
                     datasetId.toString(),
-                    file.getCreateUserId(),
-                    file.getCreateDate()
+                    userId,
+                    Instant.now()
             );
         }
     }
