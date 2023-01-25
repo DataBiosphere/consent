@@ -114,10 +114,10 @@ public class DatasetRegistrationService {
         dataUse.setGeographicalRestrictions(group.getGs());
         dataUse.setGeneticStudiesOnly(group.getGso());
         dataUse.setHmbResearch(group.getHmb());
-        dataUse.setPublicationMoratorium(group.getMor() ? group.getMorDate() : null);
+        dataUse.setPublicationMoratorium(Objects.nonNull(group.getMor()) && group.getMor() ? group.getMorDate() : null);
 
-        dataUse.setMethodsResearch(!group.getNmds()); // TODO: is this right?
-        dataUse.setCommercialUse(!group.getNpu());
+        dataUse.setMethodsResearch(Objects.nonNull(group.getNmds()) ? !group.getNmds() : null); // TODO: is this right?
+        dataUse.setCommercialUse(Objects.nonNull(group.getNpu()) ? !group.getNpu() : null);
         dataUse.setOther(group.getOtherPrimary());
         dataUse.setSecondaryOther(group.getOtherSecondary());
         dataUse.setPopulationOriginsAncestry(group.getPoa());
@@ -232,7 +232,12 @@ public class DatasetRegistrationService {
                     (registration, idx) -> registration.getStudyType().value()),
             new DatasetPropertyExtractor(
                     "Data Types", "dataTypes", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getDataTypes())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getDataTypes())) {
+                            return GsonUtil.getInstance().toJson(registration.getDataTypes());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Study Description", "studyDescription", DatasetPropertyType.String,
                     (registration, idx) -> registration.getStudyDescription()),
@@ -246,14 +251,25 @@ public class DatasetRegistrationService {
                     "Data Submitter User ID", "dataSubmitterUserId", DatasetPropertyType.Number,
                     (registration, idx) -> registration.getDataSubmitterUserId()),
             new DatasetPropertyExtractor(
-                    "Data Custodian Email", "dataCustodianEmail", DatasetPropertyType.String,
-                    (registration, idx) -> registration.getDataCustodianEmail()),
+                    "Data Custodian Email", "dataCustodianEmail", DatasetPropertyType.Json,
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getDataCustodianEmail())) {
+                            return GsonUtil.getInstance().toJson(registration.getDataCustodianEmail());
+                        }
+                        return null;
+
+                    }),
             new DatasetPropertyExtractor(
                     "Public Visibility", "publicVisibility", DatasetPropertyType.Boolean,
                     (registration, idx) -> registration.getPublicVisibility()),
             new DatasetPropertyExtractor(
                     "NIH Anvil Use", "nihAnvilUse", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getNihAnvilUse().stream().map(NihAnvilUse::value).toList())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getNihAnvilUse())) {
+                            return GsonUtil.getInstance().toJson(registration.getNihAnvilUse().stream().map(NihAnvilUse::value).toList());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Submitting To Anvil", "submittingToAnvil", DatasetPropertyType.Boolean,
                     (registration, idx) -> registration.getSubmittingToAnvil()),
@@ -279,14 +295,24 @@ public class DatasetRegistrationService {
                     "NIH Grant Contract Number", "nihGrantContractNumber", DatasetPropertyType.String,
                     (registration, idx) -> registration.getNihGrantContractNumber()),
             new DatasetPropertyExtractor(
-                    "NIH ICs Supporting Study", "nihICsSupportingStudy", DatasetPropertyType.String,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getNihICsSupportingStudy().stream().map(NihICsSupportingStudy::value).toList())),
+                    "NIH ICs Supporting Study", "nihICsSupportingStudy", DatasetPropertyType.Json,
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getNihICsSupportingStudy())) {
+                            return GsonUtil.getInstance().toJson(registration.getNihICsSupportingStudy().stream().map(NihICsSupportingStudy::value).toList());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "NIH Program Officer Name", "nihProgramOfficerName", DatasetPropertyType.String,
                     (registration, idx) -> registration.getNihProgramOfficerName()),
             new DatasetPropertyExtractor(
                     "NIH Institution Center Submission", "nihInstitutionCenterSubmission", DatasetPropertyType.String,
-                    (registration, idx) -> registration.getNihInstitutionCenterSubmission().value()),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getNihInstitutionCenterSubmission())) {
+                            return registration.getNihInstitutionCenterSubmission().value();
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "NIH Genomic Program Administrator Name", "nihGenomicProgramAdministratorName", DatasetPropertyType.String,
                     (registration, idx) -> registration.getNihGenomicProgramAdministratorName()),
@@ -295,7 +321,12 @@ public class DatasetRegistrationService {
                     (registration, idx) -> registration.getMultiCenterStudy()),
             new DatasetPropertyExtractor(
                     "Collaborating Sites", "collaboratingSites", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getCollaboratingSites())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getCollaboratingSites())) {
+                            return GsonUtil.getInstance().toJson(registration.getCollaboratingSites());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Controlled Access Required For Genomic Summary Results GSR", "controlledAccessRequiredForGenomicSummaryResultsGSR", DatasetPropertyType.Boolean,
                     (registration, idx) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSR()),
@@ -307,7 +338,12 @@ public class DatasetRegistrationService {
                     (registration, idx) -> registration.getAlternativeDataSharingPlan()),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan Reasons", "alternativeDataSharingPlanReasons", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getAlternativeDataSharingPlanReasons().stream().map(AlternativeDataSharingPlanReason::value).toList())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getAlternativeDataSharingPlanReasons())) {
+                            return GsonUtil.getInstance().toJson(registration.getAlternativeDataSharingPlanReasons().stream().map(AlternativeDataSharingPlanReason::value).toList());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan Explanation", "alternativeDataSharingPlanExplanation", DatasetPropertyType.String,
                     (registration, idx) -> registration.getAlternativeDataSharingPlanExplanation()),
@@ -316,7 +352,12 @@ public class DatasetRegistrationService {
                     (registration, idx) -> registration.getAlternativeDataSharingPlanFileName()),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan Data Submitted", "alternativeDataSharingPlanDataSubmitted", DatasetPropertyType.String,
-                    (registration, idx) -> registration.getAlternativeDataSharingPlanDataSubmitted().value()),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getAlternativeDataSharingPlanDataSubmitted())) {
+                            return registration.getAlternativeDataSharingPlanDataSubmitted().value();
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan Data Released", "alternativeDataSharingPlanDataReleased", DatasetPropertyType.Boolean,
                     (registration, idx) -> registration.getAlternativeDataSharingPlanDataReleased()),
@@ -328,16 +369,36 @@ public class DatasetRegistrationService {
                     (registration, idx) -> registration.getAlternativeDataSharingPlanTargetPublicReleaseDate()),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan Controlled Open Access", "alternativeDataSharingPlanControlledOpenAccess", DatasetPropertyType.String,
-                    (registration, idx) -> registration.getAlternativeDataSharingPlanControlledOpenAccess().value()),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getAlternativeDataSharingPlanControlledOpenAccess())) {
+                            return registration.getAlternativeDataSharingPlanControlledOpenAccess().value();
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Data Location", "consentGroup.dataLocation", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getConsentGroups().get(idx).getDataLocation().stream().map(DataLocation::value).toList())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getConsentGroups().get(idx).getDataLocation())) {
+                            return GsonUtil.getInstance().toJson(registration.getConsentGroups().get(idx).getDataLocation().stream().map(DataLocation::value).toList());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "File Types", "consentGroup.fileTypes", DatasetPropertyType.Json,
-                    (registration, idx) -> GsonUtil.getInstance().toJson(registration.getConsentGroups().get(idx).getFileTypes())),
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getConsentGroups().get(idx).getFileTypes())) {
+                            return GsonUtil.getInstance().toJson(registration.getConsentGroups().get(idx).getFileTypes());
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "URL", "consentGroup.url", DatasetPropertyType.String,
-                    (registration, idx) -> registration.getConsentGroups().get(idx).getUrl().toString())
+                    (registration, idx) -> {
+                        if (Objects.nonNull(registration.getConsentGroups().get(idx).getUrl())) {
+                            return registration.getConsentGroups().get(idx).getUrl().toString();
+                        }
+                        return null;
+                    })
     );
 
 

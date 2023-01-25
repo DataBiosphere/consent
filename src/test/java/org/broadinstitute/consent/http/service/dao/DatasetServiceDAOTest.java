@@ -24,6 +24,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DatasetServiceDAOTest extends DAOTestHelper {
@@ -204,7 +205,65 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(file2.getBlobId(), created.getAlternativeDataSharingPlanFile().getBlobId());
     }
 
-    // Helper methods
+    @Test
+    public void testInsertMultipleDatasets() throws Exception {
+
+        Dac dac = createDac();
+        User user = createUser();
+
+        DatasetProperty prop1 = new DatasetProperty();
+        prop1.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+        prop1.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+        prop1.setPropertyValue(new Random().nextInt());
+        prop1.setPropertyType(DatasetPropertyType.Number);
+
+
+        DatasetServiceDAO.DatasetInsert insert1 = new DatasetServiceDAO.DatasetInsert(
+                RandomStringUtils.randomAlphabetic(20),
+                dac.getDacId(),
+                new DataUseBuilder().setGeneralUse(true).build(),
+                user.getUserId(),
+                List.of(),
+                List.of());
+
+        DatasetServiceDAO.DatasetInsert insert2 = new DatasetServiceDAO.DatasetInsert(
+                RandomStringUtils.randomAlphabetic(20),
+                dac.getDacId(),
+                new DataUseBuilder().setIllegalBehavior(true).build(),
+                user.getUserId(),
+                List.of(prop1),
+                List.of());
+
+        List<Integer> createdIds = serviceDAO.insertDatasets(List.of(insert1, insert2));
+
+        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
+
+        assertEquals(2, datasets.size());
+
+        Dataset dataset1 = datasets.get(0);
+
+        assertEquals(insert1.name(), dataset1.getName());
+        assertEquals(insert1.dacId(), dataset1.getDacId());
+        assertEquals(true, dataset1.getDataUse().getGeneralUse());
+        assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
+        assertNull(dataset1.getNihInstitutionalCertificationFile());
+        assertNull(dataset1.getAlternativeDataSharingPlanFile());
+
+
+        Dataset dataset2 = datasets.get(1);
+
+        assertEquals(insert2.name(), dataset2.getName());
+        assertEquals(insert2.dacId(), dataset2.getDacId());
+        assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
+        assertEquals(2, dataset2.getProperties().size());
+        assertNull(dataset2.getNihInstitutionalCertificationFile());
+        assertNull(dataset2.getAlternativeDataSharingPlanFile());
+
+
+    }
+
+
+        // Helper methods
 
     /**
      * Creates a new sample Dataset along with a User and a Dac
