@@ -2,17 +2,10 @@ package org.broadinstitute.consent.http.enumeration;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.TimeZone;
 
 public enum DatasetPropertyType {
     String("string"),
@@ -71,14 +64,9 @@ public enum DatasetPropertyType {
         return java.lang.Boolean.valueOf(value);
     }
 
-    public static Instant coerceToDate(String value) throws IllegalArgumentException {
+    public static LocalDate coerceToDate(String value) throws IllegalArgumentException {
         try {
-            LocalDate date = LocalDate.parse(value);
-
-            return date
-                    // specify the offset of the system computer
-                    .atStartOfDay(ZoneOffset.systemDefault())
-                    .toInstant();
+            return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Could not parse as Date: " + e.getMessage());
         }
