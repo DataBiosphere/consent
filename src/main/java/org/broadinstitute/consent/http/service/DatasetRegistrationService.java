@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -39,11 +40,13 @@ import java.util.function.BiFunction;
  */
 public class DatasetRegistrationService {
     private final DatasetDAO datasetDAO;
+    private final DacDAO dacDAO;
     private final DatasetServiceDAO datasetServiceDAO;
     private final GCSService gcsService;
 
-    public DatasetRegistrationService(DatasetDAO datasetDAO, DatasetServiceDAO datasetServiceDAO, GCSService gcsService) {
+    public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO, DatasetServiceDAO datasetServiceDAO, GCSService gcsService) {
         this.datasetDAO = datasetDAO;
+        this.dacDAO = dacDAO;
         this.datasetServiceDAO = datasetServiceDAO;
         this.gcsService = gcsService;
     }
@@ -61,7 +64,11 @@ public class DatasetRegistrationService {
     public List<Dataset> createDatasetsFromRegistration(
             DatasetRegistrationSchemaV1 registration,
             User user,
-            Map<String, FormDataBodyPart> files) throws IOException, SQLException {
+            Map<String, FormDataBodyPart> files) throws IOException, SQLException, IllegalArgumentException {
+
+        if (Objects.isNull(dacDAO.findById(registration.getDataAccessCommitteeId()))) {
+            throw new IllegalArgumentException("Invalid DAC id");
+        }
 
         Map<String, BlobId> uploadedFileCache = new HashMap<>();
 

@@ -549,6 +549,7 @@ public class ConsentModule extends AbstractModule {
     DatasetRegistrationService providesDatasetRegistrationService() {
         return new DatasetRegistrationService(
                 providesDatasetDAO(),
+                providesDacDAO(),
                 providesDatasetServiceDAO(),
                 providesGCSService()
         );

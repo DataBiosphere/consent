@@ -3,9 +3,11 @@ package org.broadinstitute.consent.http.service;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonElement;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -63,6 +65,9 @@ public class DatasetRegistrationServiceTest {
     private DatasetDAO datasetDAO;
 
     @Mock
+    private DacDAO dacDAO;
+
+    @Mock
     private DatasetServiceDAO datasetServiceDAO;
 
     @Mock
@@ -74,7 +79,7 @@ public class DatasetRegistrationServiceTest {
     }
 
     private void initService() {
-        datasetRegistrationService = new DatasetRegistrationService(datasetDAO, datasetServiceDAO, gcsService);
+        datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO, datasetServiceDAO, gcsService);
     }
 
 
@@ -82,7 +87,7 @@ public class DatasetRegistrationServiceTest {
     @Captor
     ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
 
-    // inserts data registration with complete fields
+    // ------------------------ test multiple dataset insert ----------------------------------- //
     @Test
     public void testInsertCompleteDatasetRegistration() throws SQLException, IOException {
         User user = mock();
@@ -94,7 +99,7 @@ public class DatasetRegistrationServiceTest {
 
         Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile", createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
         when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
-
+        when(dacDAO.findById(any())).thenReturn(new Dac());
 
         datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
 
@@ -174,6 +179,7 @@ public class DatasetRegistrationServiceTest {
         spy(gcsService);
 
         initService();
+        when(dacDAO.findById(any())).thenReturn(new Dac());
 
         datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
@@ -223,6 +229,7 @@ public class DatasetRegistrationServiceTest {
 
         initService();
 
+        when(dacDAO.findById(any())).thenReturn(new Dac());
         Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile", createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
         when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
 
@@ -289,10 +296,20 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props2, "species", schema.getSpecies());
         assertContainsDatasetProperty(props2, "dataSubmitterUserId", schema.getDataSubmitterUserId());
         assertContainsDatasetProperty(props2, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
-
-
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testRegistrationErrorsOnInvalidDacId() throws SQLException, IOException {
+
+        User user = mock();
+        DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+
+        when(dacDAO.findById(any())).thenReturn(null);
+        spy(gcsService);
+
+        initService();
+        datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+    }
 
     private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
         assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());

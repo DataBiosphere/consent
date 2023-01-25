@@ -205,6 +205,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(file2.getBlobId(), created.getAlternativeDataSharingPlanFile().getBlobId());
     }
 
+
     @Test
     public void testInsertMultipleDatasets() throws Exception {
 
@@ -258,7 +259,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(2, dataset2.getProperties().size());
         assertNull(dataset2.getNihInstitutionalCertificationFile());
         assertNull(dataset2.getAlternativeDataSharingPlanFile());
-
 
     }
 
