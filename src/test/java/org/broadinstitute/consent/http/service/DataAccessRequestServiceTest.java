@@ -1,5 +1,32 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -23,7 +50,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -35,35 +61,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestServiceTest {
 
@@ -221,7 +218,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.setCollectionId(RandomUtils.nextInt(0, 100));
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -232,7 +229,7 @@ public class DataAccessRequestServiceTest {
     public void testUpdateByReferenceIdVersion2_WithCollection() throws Exception {
         DataAccessRequest dar = generateDataAccessRequest();
         User user = new User(1, "email@test.org", "Display Name", new Date());
-        dar.addDatasetIds(Arrays.asList(1, 2, 3));
+        dar.addDatasetIds(List.of(1, 2, 3));
         when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -380,10 +377,6 @@ public class DataAccessRequestServiceTest {
         Map<String, DataAccessRequest> dars = new HashMap<>();
         dars.put(election.getReferenceId(), dar);
         collection.setDars(dars);
-        User user = new User();
-        user.setUserId(1);
-        user.setDisplayName("displayName");
-        user.setInstitutionId(1);
         Institution institution = new Institution();
         institution.setName("Institution");
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
@@ -519,11 +512,8 @@ public class DataAccessRequestServiceTest {
         dar.addDatasetId(1);
         data.setForProfit(false);
         data.setAddiction(false);
-        data.setAddress1("");
-        data.setAddress2("");
         data.setAnvilUse(true);
         data.setCheckCollaborator(false);
-        data.setCity("");
         data.setCloudUse(true);
         data.setCloudProvider("Google Cloud");
         data.setCloudProviderDescription("Google");
@@ -535,9 +525,6 @@ public class DataAccessRequestServiceTest {
         data.setSexualDiseases(false);
         data.setPoa(false);
         data.setIllegalBehavior(false);
-        data.setCountry("United States");
-        data.setState("");
-        data.setZipCode("");
         data.setProjectTitle("Title");
         data.setStigmatizedDiseases(false);
         data.setVulnerablePopulation(false);
@@ -548,11 +535,6 @@ public class DataAccessRequestServiceTest {
         data.setOntologies(Collections.emptyList());
         data.setMethods(false);
         data.setOther(false);
-
-        DatasetDetailEntry detailEntry = new DatasetDetailEntry();
-        detailEntry.setDatasetId("DS-1");
-        detailEntry.setName("DS-1");
-        data.setDatasetDetail(Collections.singletonList(detailEntry));
         dar.setData(data);
         return dar;
     }
@@ -568,7 +550,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testFindAllDraftDataAccessRequests() {
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(new DataAccessRequest()));
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequests();
         assertEquals(drafts.size(), 1);
@@ -576,7 +558,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void testFindAllDraftDataAccessRequestsByUser() {
-        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(new DataAccessRequest()));
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequestsByUser(1);
         assertEquals(drafts.size(), 1);
@@ -584,7 +566,7 @@ public class DataAccessRequestServiceTest {
 
     @Test
     public void getDataAccessRequestsForUser() {
-        List<DataAccessRequest> dars = Arrays.asList(new DataAccessRequest());
+        List<DataAccessRequest> dars = List.of(new DataAccessRequest());
         when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
         when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
         initService();
@@ -600,7 +582,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.addDatasetId(361);
         dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(Arrays.asList(dar));
+        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(dar));
         initService();
         List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(null);
         assertEquals(1, darManages.size());
@@ -614,7 +596,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequestData data = new DataAccessRequestData();
         dar.addDatasetId(361);
         dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(Arrays.asList(dar));
+        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(dar));
         initService();
         List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(1);
         assertEquals(1, darManages.size());

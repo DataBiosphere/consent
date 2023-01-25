@@ -1,0 +1,40 @@
+put:
+  summary: Admin Only API to update the Dataset's Data Use object from JSON
+  description: | 
+    Admin Only API to update the Dataset's Data Use object from JSON.
+    ## Note
+    This endpoint is restricted to updating the data use object only and does
+    not perform any logical checks to determine if match results for existing 
+    DAR elections might be impacted. It the administrator's responsibility to
+    ensure appropriate notifications are made.
+  parameters:
+    - name: id
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    description: |
+      The Data Use question/answer set for this dataset.
+      See [schema definition](https://consent-ontology.dsde-prod.broadinstitute.org/schemas/data-use)
+      for more information
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+        example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": ["http://purl.obolibrary.org/obo/DOID_602"] }
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Successfully updated Dataset
+    304:
+      description: Not modified
+    400:
+      description: Bad Request (invalid input)
+    404:
+      description: Not Found
+    500:
+      description: Internal Error

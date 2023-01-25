@@ -1144,6 +1144,8 @@ paths:
           description: Server error.
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
+  /api/dataset/{id}/datause:
+    $ref: './paths/datasetByIdDataUse.yaml'
   /api/dataset/v2/{id}:
     $ref: './paths/datasetByIdV2.yaml'
   /api/dataset/batch:

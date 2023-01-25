@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.google.common.base.Objects;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -378,5 +379,73 @@ public class DataUse {
                 return Optional.empty();
             }
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DataUse dataUse = (DataUse) o;
+        return Objects.equal(getGeneralUse(), dataUse.getGeneralUse())
+            && Objects.equal(getHmbResearch(), dataUse.getHmbResearch())
+            && Objects.equal(getDiseaseRestrictions(), dataUse.getDiseaseRestrictions())
+            && Objects.equal(getPopulationOriginsAncestry(), dataUse.getPopulationOriginsAncestry())
+            && Objects.equal(getPopulationStructure(), dataUse.getPopulationStructure())
+            && Objects.equal(getCommercialUse(), dataUse.getCommercialUse())
+            && Objects.equal(getMethodsResearch(), dataUse.getMethodsResearch())
+            && Objects.equal(getAggregateResearch(), dataUse.getAggregateResearch())
+            && Objects.equal(getControlSetOption(), dataUse.getControlSetOption())
+            && Objects.equal(getGender(), dataUse.getGender())
+            && Objects.equal(getPediatric(), dataUse.getPediatric())
+            && Objects.equal(getPopulationRestrictions(), dataUse.getPopulationRestrictions())
+            && Objects.equal(getOtherRestrictions(), dataUse.getOtherRestrictions())
+            && Objects.equal(getDateRestriction(), dataUse.getDateRestriction())
+            && Objects.equal(getRecontactingDataSubjects(), dataUse.getRecontactingDataSubjects())
+            && Objects.equal(getRecontactMay(), dataUse.getRecontactMay())
+            && Objects.equal(getRecontactMust(), dataUse.getRecontactMust())
+            && Objects.equal(getGenomicPhenotypicData(), dataUse.getGenomicPhenotypicData())
+            && Objects.equal(getCloudStorage(), dataUse.getCloudStorage())
+            && Objects.equal(getEthicsApprovalRequired(), dataUse.getEthicsApprovalRequired())
+            && Objects.equal(getCollaboratorRequired(), dataUse.getCollaboratorRequired())
+            && Objects.equal(getGeographicalRestrictions(), dataUse.getGeographicalRestrictions())
+            && Objects.equal(getOther(), dataUse.getOther())
+            && Objects.equal(getSecondaryOther(), dataUse.getSecondaryOther())
+            && Objects.equal(getIllegalBehavior(), dataUse.getIllegalBehavior())
+            && Objects.equal(getAddiction(), dataUse.getAddiction())
+            && Objects.equal(getSexualDiseases(), dataUse.getSexualDiseases())
+            && Objects.equal(getStigmatizeDiseases(), dataUse.getStigmatizeDiseases())
+            && Objects.equal(getVulnerablePopulations(), dataUse.getVulnerablePopulations())
+            && Objects.equal(getPsychologicalTraits(), dataUse.getPsychologicalTraits())
+            && Objects.equal(getNonBiomedical(), dataUse.getNonBiomedical())
+            && Objects.equal(getManualReview(), dataUse.getManualReview())
+            && Objects.equal(getGeneticStudiesOnly(), dataUse.getGeneticStudiesOnly())
+            && Objects.equal(getPublicationResults(), dataUse.getPublicationResults())
+            && Objects.equal(getGenomicResults(), dataUse.getGenomicResults())
+            && Objects.equal(getGenomicSummaryResults(), dataUse.getGenomicSummaryResults())
+            && Objects.equal(getCollaborationInvestigators(), dataUse.getCollaborationInvestigators())
+            && Objects.equal(getPublicationMoratorium(), dataUse.getPublicationMoratorium());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getGeneralUse(), getHmbResearch(), getDiseaseRestrictions(),
+            getPopulationOriginsAncestry(), getPopulationStructure(), getCommercialUse(),
+            getMethodsResearch(), getAggregateResearch(), getControlSetOption(), getGender(),
+            getPediatric(), getPopulationRestrictions(), getOtherRestrictions(),
+            getDateRestriction(),
+            getRecontactingDataSubjects(), getRecontactMay(), getRecontactMust(),
+            getGenomicPhenotypicData(), getCloudStorage(), getEthicsApprovalRequired(),
+            getCollaboratorRequired(), getGeographicalRestrictions(), getOther(),
+            getSecondaryOther(),
+            getIllegalBehavior(), getAddiction(), getSexualDiseases(), getStigmatizeDiseases(),
+            getVulnerablePopulations(), getPsychologicalTraits(), getNonBiomedical(),
+            getManualReview(),
+            getGeneticStudiesOnly(), getPublicationResults(), getGenomicResults(),
+            getGenomicSummaryResults(), getCollaborationInvestigators(),
+            getPublicationMoratorium());
     }
 }
