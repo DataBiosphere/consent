@@ -846,46 +846,6 @@ paths:
               schema:
                 type: string
                 format: binary
-  /api/consent/{id}/dul:
-    post:
-      deprecated: true
-      summary: createDUL
-      description: Persists the loaded file in the CloudStorage and update the related Consent.
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      parameters:
-        - name: data
-          in: formData
-          description: Data Use Letter file.
-          required: true
-          schema:
-            type: file
-        - name: id
-          in: path
-          description: Id of the consent at which belongs the Data Use Letter.
-          required: true
-          schema:
-            type: string
-        - name: fileName
-          in: query
-          description: File name.
-          required: false
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        200:
-          description: The modified Consent with dataUseLetter field empty
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        404:
-          description: Could not find consent with the specified Id
   /api/dataRequest/{requestId}/vote:
     get:
       summary: Find all Data Access Request votes

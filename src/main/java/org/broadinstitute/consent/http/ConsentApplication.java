@@ -16,6 +16,14 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration.Dynamic;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -50,7 +58,6 @@ import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersio
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
 import org.broadinstitute.consent.http.resources.DataRequestVoteResource;
-import org.broadinstitute.consent.http.resources.DataUseLetterResource;
 import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
@@ -107,15 +114,6 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration.Dynamic;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Top-level entry point to the entire application.
@@ -240,7 +238,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataRequestVoteResource(darCollectionService, datasetAssociationService, emailService, voteService, datasetService, electionService, userService));
         env.jersey().register(new DataRequestCasesResource(summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
-        env.jersey().register(new DataUseLetterResource(auditService, googleStore, userService, consentService));
         env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new EmailNotifierResource(emailService));
         env.jersey().register(new IndexerResource(indexerService, googleStore));
