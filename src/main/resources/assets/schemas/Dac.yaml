@@ -1,0 +1,32 @@
+type: object
+properties:
+  dacId:
+    type: integer
+    description: The DAC Id
+  name:
+    type: string
+    description: The DAC Name
+  description:
+    type: string
+    description: The DAC Description
+  email:
+    type: string
+    description: Optional DAC Email address
+  createDate:
+    type: string
+    format: date
+    description: Date created
+  updateDate:
+    type: string
+    format: date
+    description: Date last updated
+  chairpersons:
+    description: List of Chairpersons
+    type: array
+    items:
+      $ref: './User.yaml'
+  members:
+    description: List of Members
+    type: array
+    items:
+      $ref: './User.yaml'

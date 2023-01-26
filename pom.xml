@@ -20,7 +20,7 @@
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
-    <mockserver.version>5.14.0</mockserver.version>
+    <mockserver.version>5.15.0</mockserver.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -191,7 +191,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -255,25 +255,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>7.4.4</version>
-        <configuration>
-          <skipProvidedScope>true</skipProvidedScope>
-          <skipRuntimeScope>true</skipRuntimeScope>
-          <failBuildOnCVSS>1</failBuildOnCVSS>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
   </build>
 
@@ -342,12 +323,6 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
       <version>2.14.1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>2.12.2</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
@@ -574,7 +549,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>2.1.1</version>
+      <version>2.1.2</version>
     </dependency>
 
     <!-- Deprecated - TODO: Remove this when GCSStore is removed -->

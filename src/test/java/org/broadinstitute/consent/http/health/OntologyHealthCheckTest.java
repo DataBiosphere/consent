@@ -10,10 +10,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -22,7 +21,7 @@ public class OntologyHealthCheckTest {
 
   @Mock private HttpClientUtil clientUtil;
 
-  @Mock private ClassicHttpResponse response;
+  @Mock private SimpleResponse response;
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
@@ -35,8 +34,8 @@ public class OntologyHealthCheckTest {
 
   private void initHealthCheck(boolean configOk) {
     try {
-      when(response.getEntity()).thenReturn(new StringEntity("{}"));
-      when(clientUtil.getHttpResponse(any())).thenReturn(response);
+      when(response.entity()).thenReturn("{}");
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
       if (configOk) {
         when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
       }
@@ -48,7 +47,7 @@ public class OntologyHealthCheckTest {
 
   @Test
   public void testCheckSuccess() {
-    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -57,7 +56,7 @@ public class OntologyHealthCheckTest {
 
   @Test
   public void testCheckFailure() {
-    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -66,7 +65,7 @@ public class OntologyHealthCheckTest {
 
   @Test
   public void testCheckException() {
-    doThrow(new RuntimeException()).when(response).getCode();
+    doThrow(new RuntimeException()).when(response).code();
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();

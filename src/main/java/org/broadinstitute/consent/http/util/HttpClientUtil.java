@@ -8,7 +8,12 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -19,20 +24,52 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.MediaType;
+import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 
 public class HttpClientUtil implements ConsentLogger {
 
+  public record SimpleResponse(int code, String entity) {}
+
   private final ServicesConfiguration configuration;
+
+  private final LoadingCache<URI, SimpleResponse> cache;
 
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
+    CacheLoader<URI, SimpleResponse> loader = new CacheLoader<>() {
+      @Override
+      public SimpleResponse load(URI uri) throws Exception {
+        return getHttpResponse(new HttpGet(uri));
+      }
+    };
+    this.cache = CacheBuilder
+        .newBuilder()
+        .expireAfterWrite(configuration.getCacheExpireMinutes(), TimeUnit.MINUTES)
+        .build(loader);
+  }
+
+  /**
+   * This returns the result of previously executed GET requests from a cache or executes them if
+   * they are not yet cached.
+   *
+   * @param request The HttpGet request
+   * @return SimpleResponse
+   * @throws IOException The exception
+   */
+  public SimpleResponse getCachedResponse(HttpGet request) throws IOException {
+    try {
+      return cache.get(request.getUri());
+    } catch (Exception e) {
+      // Something went wrong with the cached version, log for followup
+      logWarn(e.getMessage());
+      return getHttpResponse(request);
+    }
   }
 
   /**
@@ -40,14 +77,18 @@ public class HttpClientUtil implements ConsentLogger {
    * limiting the request to a configured default number of seconds.
    *
    * @param request The HttpGet request
-   * @return ClassicHttpResponse
+   * @return SimpleResponse
    * @throws IOException The exception
    */
-  public ClassicHttpResponse getHttpResponse(HttpGet request) throws IOException {
+  public SimpleResponse getHttpResponse(HttpGet request) throws IOException {
     try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-      final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+      final ScheduledExecutorService executor = Executors.newScheduledThreadPool(configuration.getPoolSize());
       executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
-      return httpclient.execute(request, httpResponse -> httpResponse);
+      return httpclient.execute(request, httpResponse ->
+        new SimpleResponse(
+          httpResponse.getCode(),
+          IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset()))
+      );
     }
   }
 
@@ -73,7 +114,8 @@ public class HttpClientUtil implements ConsentLogger {
     return request;
   }
 
-  public HttpRequest buildUnAuthedPostRequest(GenericUrl genericUrl, HttpContent content) throws Exception {
+  public HttpRequest buildUnAuthedPostRequest(GenericUrl genericUrl, HttpContent content)
+      throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPostRequest(genericUrl, content);
     request.setHeaders(new HttpHeaders().set("X-App-ID", "DUOS"));

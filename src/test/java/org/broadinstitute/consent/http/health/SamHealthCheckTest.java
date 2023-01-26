@@ -10,10 +10,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -22,7 +21,7 @@ public class SamHealthCheckTest {
 
   @Mock private HttpClientUtil clientUtil;
 
-  @Mock private ClassicHttpResponse response;
+  @Mock private SimpleResponse response;
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
@@ -34,12 +33,22 @@ public class SamHealthCheckTest {
   }
 
   private void initHealthCheck(boolean configOk) {
+    String okResponse = """
+        {
+          "ok": true,
+          "systems": {
+            "GooglePubSub": {"ok": true},
+            "Database": {"ok": true},
+            "GoogleGroups": {"ok": true},
+            "GoogleIam": {"ok": true},
+            "OpenDJ": {"ok": true}
+          }
+        }
+        """;
     try {
-      when(response.getEntity())
-          .thenReturn(
-              new StringEntity(
-                  "{\"ok\":true,\"systems\":{\"GooglePubSub\": {\"ok\": true},\"Database\": {\"ok\": true},\"GoogleGroups\": {\"ok\": true},\"GoogleIam\": {\"ok\": true},\"OpenDJ\": {\"ok\": true}}}"));
-      when(clientUtil.getHttpResponse(any())).thenReturn(response);
+      when(response.entity())
+          .thenReturn(okResponse);
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
       if (configOk) {
         when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
       }
@@ -51,7 +60,7 @@ public class SamHealthCheckTest {
 
   @Test
   public void testCheckSuccess() throws Exception {
-    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
@@ -60,7 +69,7 @@ public class SamHealthCheckTest {
 
   @Test
   public void testCheckFailure() throws Exception {
-    when(response.getCode()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();

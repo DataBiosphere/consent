@@ -1,16 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetDetailEntry;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,16 +8,29 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class DataAccessReportsParser {
+public class DataAccessReportsParser implements ConsentLogger {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final DatasetDAO datasetDAO;
 
     private static final String DEFAULT_SEPARATOR =  "\t";
 
     private static final String END_OF_LINE = System.lineSeparator();
 
-    public void setApprovedDARHeader(FileWriter darWriter) throws IOException {
+  public DataAccessReportsParser(DatasetDAO datasetDAO) {
+    this.datasetDAO = datasetDAO;
+  }
+
+  public void setApprovedDARHeader(FileWriter darWriter) throws IOException {
         darWriter.write(
                 HeaderDAR.DAR_ID.getValue() + DEFAULT_SEPARATOR +
                         HeaderDAR.DATASET_NAME.getValue() + DEFAULT_SEPARATOR +
@@ -88,9 +90,9 @@ public class DataAccessReportsParser {
 
     public void addReviewedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar, String darCode, String consentName, String translatedUseRestriction) throws IOException {
         String finalVote = election.getFinalVote() ? "Yes" : "No";
-        String content2 = formatTimeToDate(election.getFinalVoteDate().getTime()) + DEFAULT_SEPARATOR +
-                          finalVote;
-        addDARLine(darWriter, dar, darCode, "", content2, consentName, translatedUseRestriction);
+        String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(election.getFinalVoteDate().getTime()) : "";
+        String customContent2 = electionDate + DEFAULT_SEPARATOR + finalVote;
+        addDARLine(darWriter, dar, darCode, "", customContent2, consentName, translatedUseRestriction);
     }
 
     public String getDataSetApprovedUsersLine(User user, String email, String name, String institution, String darCode, Date approvalDate) {
@@ -115,34 +117,28 @@ public class DataAccessReportsParser {
     private String formatTimeToDate(long time) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(time);
-        Integer day = cal.get(Calendar.DAY_OF_MONTH);
-        Integer month = cal.get(Calendar.MONTH) + 1;
-        Integer year = cal.get(Calendar.YEAR);
-        return month.toString() + "/" + day.toString() + "/" + year.toString();
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        int month = cal.get(Calendar.MONTH) + 1;
+        int year = cal.get(Calendar.YEAR);
+        return String.format("%s/%s/%s", month, day, year);
     }
 
     private void addDARLine(FileWriter darWriter, DataAccessRequest dar, String darCode, String customContent1, String customContent2, String consentName, String translatedUseRestriction) throws IOException {
         List<String> datasetNames = new ArrayList<>();
-        List<Integer> dataSetIds = new ArrayList<>();
-        List<String> dataSetUUIds = new ArrayList<>();
-        if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
-            List<DatasetDetailEntry> dataSetDetails = dar.getData().getDatasetDetail();
-            for (DatasetDetailEntry detail : dataSetDetails) {
-                try {
-                    Integer id = Integer.parseInt(detail.getDatasetId());
-                    dataSetIds.add(id);
-                    dataSetUUIds.add(Dataset.parseAliasToIdentifier(id));
-                } catch (Exception e) {
-                    logger.warn("Invalid Dataset ID: " + detail.getDatasetId());
-                }
-                datasetNames.add(detail.getName());
+        List<Integer> datasetIds = dar.getDatasetIds();
+        List<Dataset> datasets = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+        List<String> datasetIdentifiers = new ArrayList<>();
+        if (Objects.nonNull(dar.getData())) {
+            for (Dataset dataset : datasets) {
+                datasetIdentifiers.add(dataset.getDatasetIdentifier());
+                datasetNames.add(dataset.getName());
             }
             String sDUL = StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n", " ") : "";
             String translatedRestriction = StringUtils.isNotEmpty(dar.getData().getTranslatedUseRestriction()) ? dar.getData().getTranslatedUseRestriction().replace("<br>", " ") : "";
             darWriter.write(
                darCode + DEFAULT_SEPARATOR +
                 StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
-                StringUtils.join(dataSetUUIds, ",") + DEFAULT_SEPARATOR +
+                StringUtils.join(datasetIdentifiers, ",") + DEFAULT_SEPARATOR +
                 consentName + DEFAULT_SEPARATOR +
                 customContent1 +
                 sDUL + DEFAULT_SEPARATOR +

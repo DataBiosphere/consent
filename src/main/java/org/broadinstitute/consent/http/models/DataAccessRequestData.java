@@ -16,8 +16,8 @@ public class DataAccessRequestData {
     /**
      * These properties are deprecated and should no longer be used.
      * In many cases, they represent user properties, consent related properties,
-     * or duplicate existing DAR fields.
-     * See https://broadinstitute.atlassian.net/browse/DUOS-728 for more info.
+     * deprecated properties, or duplicate existing DAR fields.
+     * See <a href="https://broadworkbench.atlassian.net/browse/DUOS-728">DUOS-728</a> for more info.
      */
     public static final List<String> DEPRECATED_PROPS = Arrays
         .asList("referenceId", "investigator",
@@ -30,54 +30,9 @@ public class DataAccessRequestData {
 
     @Deprecated
     private String referenceId;
-    @Deprecated
-    private String investigator;
-    @Deprecated
-    private String institution;
-    @Deprecated
-    private String department;
-    @Deprecated
-    private String division;
-    @Deprecated
-    private String address1;
-    @Deprecated
-    private String address2;
-    @Deprecated
-    private String city;
-    @SerializedName(value = "zipCode", alternate = "zipcode")
-    @Deprecated
-    private String zipCode;
-    @Deprecated
-    private String state;
-    @Deprecated
-    private String country;
     private String projectTitle;
     private Boolean checkCollaborator;
     private Boolean checkNihDataOnly;
-    @Deprecated
-    private String researcher;
-    @Deprecated
-    private String isThePi;
-    @Deprecated
-    private String havePi;
-    @Deprecated
-    private String piEmail;
-    @Deprecated
-    private String pubmedId;
-    @Deprecated
-    private String scientificUrl;
-    private Boolean eraExpiration;
-    @Deprecated
-    private Boolean eraAuthorized;
-    @Deprecated
-    private String nihUsername;
-    @Deprecated
-    private String linkedIn;
-    @Deprecated
-    private String orcid;
-    @Deprecated
-    private String researcherGate;
-
     private String rus;
     @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
     private String nonTechRus;
@@ -125,8 +80,6 @@ public class DataAccessRequestData {
     @Deprecated
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
-    @Deprecated
-    private List<DatasetDetailEntry> datasetDetail;
 
     private Boolean anvilUse;
     private Boolean cloudUse;
@@ -153,6 +106,7 @@ public class DataAccessRequestData {
     private Boolean dsAcknowledgement;
     private Boolean gsoAcknowledgement;
     private Boolean pubAcknowledgement;
+    private String piName;
 
     @Override
     public String toString() {
@@ -171,86 +125,6 @@ public class DataAccessRequestData {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
-    }
-
-    public String getInvestigator() {
-        return investigator;
-    }
-
-    public void setInvestigator(String investigator) {
-        this.investigator = investigator;
-    }
-
-    public String getInstitution() {
-        return institution;
-    }
-
-    public void setInstitution(String institution) {
-        this.institution = institution;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-
-    public String getDivision() {
-        return division;
-    }
-
-    public void setDivision(String division) {
-        this.division = division;
-    }
-
-    public String getAddress1() {
-        return address1;
-    }
-
-    public void setAddress1(String address1) {
-        this.address1 = address1;
-    }
-
-    public String getAddress2() {
-        return address2;
-    }
-
-    public void setAddress2(String address2) {
-        this.address2 = address2;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getZipCode() {
-        return zipCode;
-    }
-
-    public void setZipCode(String zipCode) {
-        this.zipCode = zipCode;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
     }
 
     public String getProjectTitle() {
@@ -275,69 +149,6 @@ public class DataAccessRequestData {
 
     public void setCheckNihDataOnly(Boolean checkNihDataOnly) {
         this.checkNihDataOnly = checkNihDataOnly;
-    }
-
-    public String getResearcher() {
-        return researcher;
-    }
-
-    public void setResearcher(String researcher) {
-        this.researcher = researcher;
-    }
-
-    public String getIsThePi() {
-        return isThePi;
-    }
-
-    public void setIsThePi(String isThePi) {
-        this.isThePi = isThePi;
-    }
-
-    public String getHavePi() {
-        return havePi;
-    }
-
-    public void setHavePi(String havePi) {
-        this.havePi = havePi;
-    }
-
-    public String getPiEmail() {
-        return piEmail;
-    }
-
-    public void setPiEmail(String piEmail) {
-        this.piEmail = piEmail;
-    }
-
-    public String getPubmedId() {
-        return pubmedId;
-    }
-
-    public void setPubmedId(String pubmedId) {
-        this.pubmedId = pubmedId;
-    }
-
-    public String getScientificUrl() {
-        return scientificUrl;
-    }
-
-    public void setScientificUrl(String scientificUrl) {
-        this.scientificUrl = scientificUrl;
-    }
-
-    public Boolean getEraExpiration() {
-        return eraExpiration;
-    }
-
-    public void setEraExpiration(Boolean eraExpiration) {
-        this.eraExpiration = eraExpiration;
-    }
-    public Boolean getEraAuthorized() {
-        return eraAuthorized;
-    }
-
-    public void setEraAuthorized(Boolean eraAuthorized) {
-        this.eraAuthorized = eraAuthorized;
     }
 
     public String getRus() {
@@ -592,55 +403,12 @@ public class DataAccessRequestData {
         }
         return datasetIds;
     }
-    public List<DatasetDetailEntry> getDatasetDetail() {
-        if (Objects.isNull(datasetDetail)) {
-            return Collections.emptyList();
-        }
-        return datasetDetail;
-    }
-
-    public void setDatasetDetail(List<DatasetDetailEntry> datasetDetail) {
-        this.datasetDetail = datasetDetail;
-    }
-
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getNihUsername() {
-        return nihUsername;
-    }
-
-    public void setNihUsername(String nihUsername) {
-        this.nihUsername = nihUsername;
-    }
-
-    public String getLinkedIn() {
-        return linkedIn;
-    }
-
-    public void setLinkedIn(String linkedIn) {
-        this.linkedIn = linkedIn;
-    }
-
-    public String getOrcid() {
-        return orcid;
-    }
-
-    public void setOrcid(String orcid) {
-        this.orcid = orcid;
-    }
-
-    public String getResearcherGate() {
-        return researcherGate;
-    }
-
-    public void setResearcherGate(String researcherGate) {
-        this.researcherGate = researcherGate;
     }
 
     public Boolean getPoa() {
@@ -861,6 +629,14 @@ public class DataAccessRequestData {
 
     public Boolean getPubAcknowledgement() {
         return pubAcknowledgement;
+    }
+
+    public String getPiName() {
+        return piName;
+    }
+
+    public void setPiName(String piName) {
+        this.piName = piName;
     }
 
     // Validate all ontology entries
