@@ -35,7 +35,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
@@ -65,8 +64,8 @@ import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
+import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -278,8 +277,7 @@ public class ConsentModule extends AbstractModule {
     DatasetServiceDAO providesDatasetServiceDAO() {
         return new DatasetServiceDAO(
                 jdbi,
-                providesDatasetDAO(),
-                providesFileStorageObjectDAO());
+                providesDatasetDAO());
     }
 
     @Provides

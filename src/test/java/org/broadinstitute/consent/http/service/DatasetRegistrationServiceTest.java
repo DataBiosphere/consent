@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.JsonElement;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -9,9 +8,7 @@ import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -24,7 +21,6 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,17 +37,17 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -298,7 +295,7 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props2, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NotFoundException.class)
     public void testRegistrationErrorsOnInvalidDacId() throws SQLException, IOException {
 
         User user = mock();
@@ -320,7 +317,11 @@ public class DatasetRegistrationServiceTest {
         assertEquals(consentGroup.getGso(), dataUse.getGeneticStudiesOnly());
         assertEquals(consentGroup.getHmb(), dataUse.getHmbResearch());
         assertEquals(consentGroup.getMorDate(), dataUse.getPublicationMoratorium());
-        assertEquals(consentGroup.getNmds(), !dataUse.getMethodsResearch());
+        if (Objects.isNull(consentGroup.getNmds()) || !consentGroup.getNmds()) {
+            assertNull(dataUse.getMethodsResearch());
+        } else {
+            assertFalse(dataUse.getMethodsResearch());
+        }
         assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
         assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());
         assertEquals(consentGroup.getOtherSecondary(), dataUse.getSecondaryOther());

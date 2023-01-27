@@ -24,13 +24,11 @@ public class DatasetServiceDAO {
 
     private final Jdbi jdbi;
     private final DatasetDAO datasetDAO;
-    private final FileStorageObjectDAO fileStorageObjectDAO;
 
     @Inject
-    public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO, FileStorageObjectDAO fileStorageObjectDAO) {
+    public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO) {
         this.jdbi = jdbi;
         this.datasetDAO = datasetDAO;
-        this.fileStorageObjectDAO = fileStorageObjectDAO;
     }
 
     public record DatasetInsert(String name,
@@ -92,7 +90,7 @@ public class DatasetServiceDAO {
         executeSynchronizeDatasetProperties(handle, datasetId, properties);
 
         // files
-        executeInsertFilesForDataset(uploadedFiles, userId, datasetId);
+        executeInsertFilesForDataset(handle, uploadedFiles, userId, datasetId);
 
         return datasetId;
     }
@@ -111,7 +109,8 @@ public class DatasetServiceDAO {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
-    private void executeInsertFilesForDataset(List<FileStorageObject> files, Integer userId, Integer datasetId) {
+    private void executeInsertFilesForDataset(Handle handle, List<FileStorageObject> files, Integer userId, Integer datasetId) {
+        FileStorageObjectDAO fileStorageObjectDAO = handle.attach(FileStorageObjectDAO.class);
         for (FileStorageObject file : files) {
             fileStorageObjectDAO.insertNewFile(
                     file.getFileName(),
