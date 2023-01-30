@@ -308,6 +308,56 @@ public class DatasetRegistrationServiceTest {
         datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
     }
 
+    @Test
+    public void testExtractDatasetProperty() {
+        DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                DatasetPropertyType.String,
+                (registration, consentGroup) -> registration.getStudyName()
+        );
+
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+
+        // null value -> empty extraction
+        assertTrue(extractor.extract(schemaV1, new ConsentGroup()).isEmpty());
+
+        schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
+
+        Optional<DatasetProperty> prop = extractor.extract(schemaV1, new ConsentGroup());
+
+        // non-null value -> turn value into dataset prop
+        assertTrue(prop.isPresent());
+
+        assertEquals(schemaV1.getStudyName(), prop.get().getPropertyValue());
+        assertEquals(extractor.name(), prop.get().getPropertyName());
+        assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
+        assertEquals(extractor.type(), prop.get().getPropertyType());
+    }
+
+
+    @Test
+    public void testExtractDatasetPropertyTyped() {
+        DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                DatasetPropertyType.Json,
+                (registration, consentGroup) -> GsonUtil.getInstance().toJson(registration.getDataTypes())
+        );
+
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+
+        schemaV1.setDataTypes(List.of("type1", "type2", "type3"));
+
+        Optional<DatasetProperty> prop = extractor.extract(schemaV1, new ConsentGroup());
+
+        assertTrue(prop.isPresent());
+
+        assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()), prop.get().getPropertyValue());
+        assertEquals(extractor.name(), prop.get().getPropertyName());
+        assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
+        assertEquals(extractor.type(), prop.get().getPropertyType());
+    }
     private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
         assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
         assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
@@ -335,8 +385,6 @@ public class DatasetRegistrationServiceTest {
         assertEquals(value, prop.get().getPropertyValue());
     }
 
-    // test insert minimum properties
-    // test insert multiple consent groups
 
 
     private FormDataBodyPart createFormDataBodyPart() {

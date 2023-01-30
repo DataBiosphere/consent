@@ -206,13 +206,12 @@ public class DatasetRegistrationService {
      * @param type The type of the field, e.g. Boolean, String
      * @param getField Lambda which gets the field's value
      */
-    private record DatasetPropertyExtractor(
+    public record DatasetPropertyExtractor(
             String name,
             String schemaProp,
             DatasetPropertyType type,
-
             /*
-             * Takes in: Dataset registration object and consent group index (as integer)
+             * Takes in: Dataset registration object and consent group
              * Produces: The value of the field, can be null if field not present.
              */
             BiFunction<DatasetRegistrationSchemaV1,ConsentGroup,Object> getField
