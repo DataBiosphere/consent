@@ -32,11 +32,9 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,7 +84,7 @@ public class DatasetRegistrationServiceTest {
 
     // ------------------------ test multiple dataset insert ----------------------------------- //
     @Test
-    public void testInsertCompleteDatasetRegistration() throws SQLException, IOException {
+    public void testInsertCompleteDatasetRegistration() throws Exception {
         User user = mock();
         DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
 
@@ -169,7 +167,7 @@ public class DatasetRegistrationServiceTest {
 
     // inserts only required fields to ensure that null fields are ok
     @Test
-    public void testInsertMinimumDatasetRegistration() throws SQLException, IOException {
+    public void testInsertMinimumDatasetRegistration() throws Exception {
         User user = mock();
         DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
@@ -217,7 +215,7 @@ public class DatasetRegistrationServiceTest {
 
     // test inset multiple consent groups
     @Test
-    public void testInsertMultipleDatasetRegistration() throws SQLException, IOException {
+    public void testInsertMultipleDatasetRegistration() throws Exception {
         User user = mock();
         DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
 
@@ -296,7 +294,7 @@ public class DatasetRegistrationServiceTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void testRegistrationErrorsOnInvalidDacId() throws SQLException, IOException {
+    public void testRegistrationErrorsOnInvalidDacId() throws Exception {
 
         User user = mock();
         DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
