@@ -1616,6 +1616,8 @@ paths:
           description: Server error.
   /api/user/me/dac/datasets:
     $ref: './paths/getDatasetsFromUserDacs.yaml'
+  /api/user/me/dac/datasets/v2:
+    $ref: './paths/getDatasetsFromUserDacsV2.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:

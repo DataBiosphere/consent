@@ -8,22 +8,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Acknowledgement;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.sam.SamService;
-
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -41,16 +35,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
 
 @Path("api/user")
 public class UserResource extends Resource {
@@ -117,6 +117,7 @@ public class UserResource extends Resource {
         }
     }
 
+    @Deprecated // Use getDatasetsFromUserDacsV2
     @GET
     @Path("/me/dac/datasets")
     @Produces("application/json")
@@ -130,6 +131,24 @@ public class UserResource extends Resource {
                 .map(UserRole::getDacId)
                 .collect(Collectors.toList());
             datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
+            return Response.ok().entity(datasets).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
+    }
+
+    @GET
+    @Path("/me/dac/datasets/v2")
+    @Produces("application/json")
+    @RolesAllowed({CHAIRPERSON, MEMBER})
+    public Response getDatasetsFromUserDacsV2(@Auth AuthUser authUser) {
+        try {
+            User user = userService.findUserByEmail(authUser.getEmail());
+            List<Integer> dacIds = user.getRoles().stream()
+                .map(UserRole::getDacId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+            List<Dataset> datasets = dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
             return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
