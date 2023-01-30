@@ -90,6 +90,11 @@ public class FreeMarkerTemplateHelper {
         return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, temp);
     }
 
+    public Writer getNewResearcherLibraryRequestTemplate(String researcherName, String serverUrl) throws IOException, TemplateException {
+        Template temp = freeMarkerConfig.getTemplate("new-researcher-library-request.html");
+        return generateNewResearcherLibraryRequestTemplate(researcherName, serverUrl, temp);
+    }
+
 
     private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
                                                          String dataDepositorName, String darCode,
@@ -110,6 +115,13 @@ public class FreeMarkerTemplateHelper {
 
     private Writer generateDatasetDeniedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
         DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName);
+        Writer out = new StringWriter();
+        temp.process(model, out);
+        return out;
+    }
+
+    private Writer generateNewResearcherLibraryRequestTemplate(String researcherName, String serverUrl, Template temp) throws IOException, TemplateException {
+        NewResearcherLibraryRequestModel model = new NewResearcherLibraryRequestModel(researcherName, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;
