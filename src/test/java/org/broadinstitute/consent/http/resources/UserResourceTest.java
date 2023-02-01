@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -949,14 +950,38 @@ public class UserResourceTest {
   @Test
   public void testGetDatasetsFromUserDacsV2() {
     User user = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(admin);
-    when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of());
+    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chair.setDacId(1);
+    user.addRole(chair);
+    when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of(new Dataset()));
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     initResource();
 
     Response response = userResource.getDatasetsFromUserDacsV2(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testGetDatasetsFromUserDacsV2DatasetsNotFound() {
+    User user = createUserWithRole();
+    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chair.setDacId(1);
+    user.addRole(chair);
+    when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of());
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    initResource();
+
+    Response response = userResource.getDatasetsFromUserDacsV2(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  public void testGetDatasetsFromUserDacsV2UserNotFound() {
+    when(userService.findUserByEmail(anyString())).thenThrow(new NotFoundException("User not found"));
+    initResource();
+
+    Response response = userResource.getDatasetsFromUserDacsV2(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test

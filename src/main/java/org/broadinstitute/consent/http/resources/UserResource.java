@@ -149,6 +149,9 @@ public class UserResource extends Resource {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
             List<Dataset> datasets = dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
+            if (datasets.isEmpty()) {
+                throw new NotFoundException("No datasets found for current user");
+            }
             return Response.ok().entity(datasets).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

@@ -13,6 +13,6 @@ get:
             items:
               $ref: '../schemas/Dataset.yaml'
     404:
-      description: User not found
+      description: User not found or no datasets found for user
     500:
       description: Server error
