@@ -1,5 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -14,17 +24,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ConsentServiceTest {
 
@@ -116,55 +115,6 @@ public class ConsentServiceTest {
         Assert.assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
         Assert.assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
         Assert.assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
-    }
-
-    @Test
-    public void testUpdateConsentDul() {
-        when(consentDAO.checkConsentById("test consent"))
-                .thenReturn("test consent");
-        when(consentDAO.findConsentById("test consent"))
-                .thenReturn(this.getTestConsent());
-        Election mockElection = this.getTestElection();
-        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(mockElection);
-
-        LocalDate localDate = LocalDate.now();
-        ZoneId defaultZoneId = ZoneId.systemDefault();
-        Consent testConsent = this.getTestConsent();
-        Timestamp prevTimestamp = new Timestamp(Date.from(localDate.minusDays(1).atStartOfDay(defaultZoneId).toInstant()).getTime());
-        testConsent.setLastUpdate(prevTimestamp);
-        testConsent.setSortDate(prevTimestamp);
-
-        doNothing().when(consentDAO).updateConsent(any(), any(), any(), any(), any(), any(), any(), any(),
-                any(), any(), any(), any());
-
-        initService();
-
-        Consent consent = null;
-        try {
-            consent = service.updateConsentDul("test consent", "data use letter", "dul name");
-        } catch (UnknownIdentifierException unknownIdentifierException){
-            Assert.fail(unknownIdentifierException.getMessage());
-        }
-
-        Assert.assertNotNull(consent);
-    }
-
-    @Test
-    public void testGetConsentDulUrl() {
-        when(consentDAO.findConsentById("test consent"))
-                .thenReturn(this.getTestConsent());
-        Election mockElection = this.getTestElection();
-        when(electionDAO.findLastElectionByReferenceIdAndType(anyString(), anyString())).thenReturn(mockElection);
-
-        initService();
-
-        String dulUrl = null;
-        try {
-            dulUrl = service.getConsentDulUrl("test consent");
-        } catch (UnknownIdentifierException unknownIdentifierException){
-            Assert.fail(unknownIdentifierException.getMessage());
-        }
-        Assert.assertNotNull(dulUrl);
     }
 
     @Test
