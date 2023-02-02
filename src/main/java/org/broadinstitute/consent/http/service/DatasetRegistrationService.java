@@ -149,6 +149,7 @@ public class DatasetRegistrationService {
     }
 
     private static final String ALTERNATIVE_DATA_SHARING_PLAN_NAME = "alternativeDataSharingPlan";
+    // nosemgrep
     private static final String NIH_INSTITUTIONAL_CERTIFICATION_NAME = "consentGroups[%s].nihInstitutionalCertificationFile";
 
     private List<FileStorageObject> uploadFiles(Map<String, FormDataBodyPart> files,
