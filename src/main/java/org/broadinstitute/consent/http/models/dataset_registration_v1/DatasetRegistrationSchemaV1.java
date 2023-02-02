@@ -6,16 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
-import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 import javax.annotation.processing.Generated;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 
 /**

@@ -148,23 +148,26 @@ public class DatasetRegistrationService {
         return dataUse;
     }
 
+    private static final String ALTERNATIVE_DATA_SHARING_PLAN_NAME = "alternativeDataSharingPlan";
+    private static final String NIH_INSTITUTIONAL_CERTIFICATION_NAME = "consentGroups[%s].nihInstitutionalCertificationFile";
+
     private List<FileStorageObject> uploadFiles(Map<String, FormDataBodyPart> files,
                                                 Map<String, BlobId> uploadedFileCache,
                                                 Integer consentGroupIdx,
                                                 User user) throws IOException {
         List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
 
-        if (files.containsKey("alternativeDataSharingPlan")) {
+        if (files.containsKey(ALTERNATIVE_DATA_SHARING_PLAN_NAME)) {
             consentGroupFSOs.add(uploadFile(
                                  files, uploadedFileCache, user,
-                                 "alternativeDataSharingPlan",
+                                 ALTERNATIVE_DATA_SHARING_PLAN_NAME,
                                  FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
         }
 
-        if (files.containsKey("consentGroups["+consentGroupIdx+"].nihInstitutionalCertificationFile")) {
+        if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx))) {
             consentGroupFSOs.add(uploadFile(
                     files, uploadedFileCache, user,
-                    "consentGroups["+ consentGroupIdx +"].nihInstitutionalCertificationFile",
+                    String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx),
                     FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
         }
 
