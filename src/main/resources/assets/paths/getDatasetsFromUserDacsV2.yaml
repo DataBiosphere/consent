@@ -1,12 +1,11 @@
 get:
   summary: Get datasets from currently authenticated user's DACs
   description: Get datasets from currently authenticated user's DACs
-  deprecated: true
   tags:
     - User
   responses:
     200:
-      description: Set of Datasets that are under the purview of User's dacs
+      description: List of Datasets that are under the purview of User's dacs
       content:
         application/json:
           schema:
@@ -14,6 +13,6 @@ get:
             items:
               $ref: '../schemas/Dataset.yaml'
     404:
-      description: User not found
+      description: User not found or no datasets found for user
     500:
       description: Server error

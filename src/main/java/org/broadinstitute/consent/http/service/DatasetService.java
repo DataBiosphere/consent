@@ -119,6 +119,13 @@ public class DatasetService {
         return datasetDAO.findDatasetsByDacIds(dacIds);
     }
 
+    public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {
+        if(Objects.isNull(dacIds) || dacIds.isEmpty()) {
+            throw new BadRequestException("No dataset IDs provided");
+        }
+        return datasetDAO.findDatasetListByDacIds(dacIds);
+    }
+
     /**
      * Finds a Dataset by a formatted dataset identifier.
      *
