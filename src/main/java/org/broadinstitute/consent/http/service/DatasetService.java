@@ -264,6 +264,10 @@ public class DatasetService {
         Dataset dataset = datasetDAO.findDatasetById(datasetId);
         Set<DatasetProperty> properties = getDatasetProperties(datasetId);
         dataset.setProperties(properties);
+
+
+
+
         return dataset;
     }
 
