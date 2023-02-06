@@ -372,7 +372,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.11.0</version>
+      <version>6.13.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
