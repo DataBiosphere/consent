@@ -11,7 +11,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -160,10 +159,7 @@ public class DatasetResource extends Resource {
         try {
             List<String> errors = jsonSchemaUtil.validateSchema_v1(json);
             if (!errors.isEmpty()) {
-                return Response.status(Status.BAD_REQUEST)
-                        .entity(new Error("Invalid schema:\n" + String.join("\n", errors),
-                                Status.BAD_REQUEST.getStatusCode()))
-                        .build();
+                throw new BadRequestException("Invalid schema:\n" + String.join("\n", errors));
             }
 
 
