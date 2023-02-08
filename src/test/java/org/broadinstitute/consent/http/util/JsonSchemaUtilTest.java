@@ -4,6 +4,9 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -46,14 +49,14 @@ public class JsonSchemaUtilTest {
   @Test
   public void testIsValidDatasetRegistrationObject_v1_case0() {
     String instance = "{}";
-    boolean valid = schemaUtil.isValidSchema_v1(instance);
-    assertFalse(valid);
+    List<String> errors = schemaUtil.validateSchema_v1(instance);
+    assertFalse(errors.isEmpty());
   }
 
   @Test
   public void testIsValidDatasetRegistrationObject_v1_case1() {
-    boolean valid = schemaUtil.isValidSchema_v1(datasetRegistrationInstance);
-    assertTrue(valid);
+    List<String> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
+    assertTrue(errors.isEmpty());
   }
 
   @Test
@@ -102,8 +105,8 @@ public class JsonSchemaUtilTest {
             "embargoReleaseDate": "2018-11-13"
           }
           """;
-    boolean valid = schemaUtil.isValidSchema_v1(instance);
-    assertTrue(valid);
+    List<String> errors = schemaUtil.validateSchema_v1(instance);
+    assertTrue(errors.isEmpty());
   }
 
   @Test
@@ -127,14 +130,19 @@ public class JsonSchemaUtilTest {
             "publicVisibility": true,
             "dataAccessCommitteeId": 1,
             "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
               "consentGroupName": "name",
               "generalResearchUse": true
             }],
             "embargoReleaseDate": "asdf-11-13"
           }
           """;
-    boolean valid = schemaUtil.isValidSchema_v1(instance);
-    assertFalse(valid);
+    List<String> errors = schemaUtil.validateSchema_v1(instance);
+    assertEquals(List.of("#/embargoReleaseDate: The provided value [asdf-11-13] is not in date format: [YYYY-MM-DD]"), errors);
   }  @Test
 
   public void testParseDatasetRegistrationObject_v1_date_case_3() {
@@ -163,7 +171,9 @@ public class JsonSchemaUtilTest {
             "embargoReleaseDate": "12-34-5678"
           }
           """;
-    boolean valid = schemaUtil.isValidSchema_v1(instance);
-    assertFalse(valid);
+    List<String> errors = schemaUtil.validateSchema_v1(instance);
+    assertEquals(
+            List.of("#/embargoReleaseDate: The provided value [12-34-5678] is not in date format: [YYYY-MM-DD]"),
+            errors);
   }
 }

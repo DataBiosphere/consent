@@ -13,7 +13,9 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class JsonSchemaUtil {
@@ -63,17 +65,17 @@ public class JsonSchemaUtil {
    * Compares an instance of a dataset registration object to the dataset registration schema
    *
    * @param datasetRegistrationInstance The string instance of a dataset registration object
-   * @return True if the instance validates, false otherwise
+   * @return List of human-readable validation errors, or an empty list if valid.
    */
-  public boolean isValidSchema_v1(String datasetRegistrationInstance) {
+  public List<String> validateSchema_v1(String datasetRegistrationInstance) {
     try {
       JSONObject jsonSubject = new JSONObject(datasetRegistrationInstance);
       Schema schema = getDatasetRegistrationSchema();
       schema.validate(jsonSubject);
-      return true;
+      return List.of();
     } catch (ExecutionException ee) {
       logger.error("Unable to load the data submitter schema: " + ee.getMessage());
-      return false;
+      return List.of(ee.getMessage());
     } catch (ValidationException ve) {
       if (logger.isDebugEnabled()) {
         logger.debug("Provided instance does not validate: " + ve.getMessage());
@@ -83,7 +85,9 @@ public class JsonSchemaUtil {
           logger.trace("Validation error: " + m);
         }
       }
-      return false;
+      return ve.getAllMessages();
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid schema");
     }
   }
 
