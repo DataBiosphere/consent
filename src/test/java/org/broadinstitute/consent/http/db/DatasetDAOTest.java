@@ -374,22 +374,6 @@ public class DatasetDAOTest extends DAOTestHelper {
             assertNotNull(t.getKey());
         });
     }
-    @Test
-    public void testGetDataSetsForObjectIdList() {
-        Dataset dataset = insertDataset();
-        Dac dac = insertDac();
-        Consent consent = insertConsent();
-        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-
-        List<Dataset> datasets = datasetDAO.getDatasetsForObjectIdList(List.of(dataset.getObjectId()));
-        assertFalse(datasets.isEmpty());
-        assertEquals(1, datasets.size());
-        assertEquals(dac.getDacId(), datasets.get(0).getDacId());
-        assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
-        assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
-        assertFalse(datasets.get(0).getProperties().isEmpty());
-    }
 
     @Test
     public void testFindDatasetsByIdList() {
