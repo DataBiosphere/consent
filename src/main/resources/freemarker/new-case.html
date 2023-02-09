@@ -1,54 +1,38 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" style="" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Broad Data Use Oversight System - New Case Notification</title>
 </head>
 
-<body style="font-family: 'Montserat', sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100%; height: 100%; color: #777777; margin: 0; line-height: 21px; text-align: center; ">
-
-<div style="width: 100%">
-    <table align="center"
-           style="background-color: #eeeeee; min-width: 600px; max-width: 600px; border-collapse: collapse; box-shadow: 3px 3px 0 #cccccc; border-radius: 5px; -moz-border-radius: 5px; margin-top: 20px;">
-        <tr style="">
-            <td style="font-size: 14px; text-align: left; padding: 20px 30px 25px 30px;">
-                <a href="${serverUrl}">
-                    <img src="https://imageshack.com/a/img905/7554/gjprR0.png" alt="Broad Institute Logo"
-                         style=" margin-top: 10px; display: inline-block; ">
+<body style="text-align: center; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100%; height: 100%; margin: 0; padding: 0;">
+<div style="text-align: left; margin: 0 auto; width: 600px;">
+    <table style="width: 600px">
+        <tr>
+            <td style="padding: 15px 15px 0px; text-align: center;">
+                <img src="https://i.imgur.com/d8rv3c8.png" height="100px" width="100px" alt="DUOS Logo">
+            </td>
+        </tr>
+        <tr>
+            <td id="userName" style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 22px; color: #1F3B50; text-align: left; line-height: 25px; display: block; font-weight: 500;">
+                Hello ${userName},
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
+                ${electionType} Review case id ${entityName}, has been created. Please click on the following link to log your vote on it:
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 15px 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: center; line-height: 25px;">
+                <a href="${serverUrl}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F; font-size: 20px; font-weight: bold;">
+                    Login to record your vote
                 </a>
             </td>
         </tr>
-        <tr style="min-width: 600px; max-width: 600px; background-color: #dedede; display: inline-table; margin: 0;">
-            <td style="border-collapse: collapse; font-size: 26px; font-weight: bold; padding: 30px;">
-                Broad Data Use Oversight System
-            </td>
-        </tr>
-        <tr style="padding-top: 20px; margin-top: 20px;">
-            <td id="userName"
-                style="border-collapse: collapse; font-size: 22px; text-align: left; display: block; font-weight: 500; padding: 25px 30px 20px 30px;">
-                Hello ${userName}!
-            </td>
-        </tr>
-        <tr style="">
-            <td style="border-collapse: collapse; font-size: 16px; text-align: left; line-height: 25px; padding: 0 30px 20px 30px;">
-                ${electionType} Review case id ${entityName}, has been created. Please click on the following
-                link to log your vote on it:
-            </td>
-        </tr>
-        <tr style="margin-top: 20px; margin-bottom: 40px;">
-            <td style="border-collapse: collapse; font-size: 20px; text-align: center;">
-                <a href="${serverUrl}"
-                   style="text-decoration: none; color: #00609F; display: inline-block; font-size: 20px; font-weight: bold; padding-bottom: 30px;">Login
-                    to record your vote</a>
-            </td>
-        </tr>
-    </table>
-    <table align="center" style="margin-top: 15px; vertical-align: middle; ">
         <tr>
-            <td style="padding: 0 10px 0 10px; border: 0; font-size: 14px; color: #999999; display: inline-block;">
-                &#169; Broad Institute
-            </td>
+            <td style="padding: 0px 15px; text-align:center; font-family: 'Montserrat', sans-serif; font-size: 14px; color: #1F3B50; line-height: 25px;">&#169; DUOS</td>
         </tr>
     </table>
 </div>
