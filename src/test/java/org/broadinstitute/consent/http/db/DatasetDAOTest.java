@@ -410,21 +410,21 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
     }
 
-    @Test
-    public void testFindNonDACDataSets() {
-        Dataset dataset = insertDataset();
-        Consent consent = insertConsent();
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-
-        List<Dataset> datasets = datasetDAO.findNonDACDatasets();
-        assertFalse(datasets.isEmpty());
-        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
-        assertTrue(datasetIds.contains(dataset.getDataSetId()));
-        // adding this here to ensure mapper does not return a false in place of a null for dacApproval
-        datasets.forEach(d -> {
-            assertTrue(d.getDacApproval() == null);
-        });
-    }
+//    @Test
+//    public void testFindNonDACDataSets() {
+//        Dataset dataset = insertDataset();
+//        Consent consent = insertConsent();
+//        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+//
+//        List<Dataset> datasets = datasetDAO.findNonDACDatasets();
+//        assertFalse(datasets.isEmpty());
+//        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
+//        assertTrue(datasetIds.contains(dataset.getDataSetId()));
+//        // adding this here to ensure mapper does not return a false in place of a null for dacApproval
+//        datasets.forEach(d -> {
+//            assertTrue(d.getDacApproval() == null);
+//        });
+//    }
 
     @Test
     public void testFindDatasetAndDacIds() {

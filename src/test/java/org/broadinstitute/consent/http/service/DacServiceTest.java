@@ -1,6 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -24,28 +45,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DacServiceTest {
 
@@ -347,8 +346,6 @@ public class DacServiceTest {
         List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
         when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
-        // There are no additional unassociated datasets
-        when(dataSetDAO.findNonDACDatasets()).thenReturn(Collections.emptyList());
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -365,9 +362,6 @@ public class DacServiceTest {
         List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
         when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
-        // There are additional unassociated datasets
-        List<Dataset> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDatasets()).thenReturn(unassociatedDataSets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();
@@ -384,9 +378,6 @@ public class DacServiceTest {
         List<Dataset> memberDataSets = Collections.emptyList();
         when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
 
-        // There are additional unassociated datasets
-        List<Dataset> unassociatedDataSets = getDatasets().subList(1, getDatasets().size());
-        when(dataSetDAO.findNonDACDatasets()).thenReturn(unassociatedDataSets);
         initService();
 
         List<DataAccessRequest> dars = getDataAccessRequests();

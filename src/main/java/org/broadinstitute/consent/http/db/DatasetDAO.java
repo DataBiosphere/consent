@@ -465,16 +465,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     /**
      * DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * @return List of datasets that are not owned by a DAC.
-     */
-    @SqlQuery(
-        "SELECT d.* from dataset d " +
-            " WHERE d.dac_id IS NULL ")
-    List<Dataset> findNonDACDatasets();
-
-    /**
-     * DACs -> Consents -> Consent Associations -> Datasets
      * Datasets -> DatasetProperties -> Dictionary
      *
      * @return Set of datasets, with properties, that are associated to a single DAC.
