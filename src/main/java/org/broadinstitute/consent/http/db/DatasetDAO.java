@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
@@ -13,7 +12,6 @@ import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
-import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -531,17 +529,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " INNER JOIN consents c ON c.consent_id = a.consent_id " +
             " WHERE d.dac_id IS NOT NULL ")
     Set<DatasetDTO> findDatasetsWithDacs();
-
-    /**
-     * DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * @return List of dataset id and its associated dac id
-     */
-    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
-    @SqlQuery(
-        "SELECT DISTINCT d.dataset_id, d.dac_id FROM dataset d " +
-            " WHERE d.dac_id IS NOT NULL ")
-    List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
     @SqlUpdate(
         "UPDATE dataset " +

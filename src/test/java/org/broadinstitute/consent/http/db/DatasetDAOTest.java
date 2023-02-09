@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -408,37 +407,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertFalse(datasets.isEmpty());
         List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
         assertTrue(datasetIds.contains(dataset.getDataSetId()));
-    }
-
-//    @Test
-//    public void testFindNonDACDataSets() {
-//        Dataset dataset = insertDataset();
-//        Consent consent = insertConsent();
-//        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-//
-//        List<Dataset> datasets = datasetDAO.findNonDACDatasets();
-//        assertFalse(datasets.isEmpty());
-//        List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
-//        assertTrue(datasetIds.contains(dataset.getDataSetId()));
-//        // adding this here to ensure mapper does not return a false in place of a null for dacApproval
-//        datasets.forEach(d -> {
-//            assertTrue(d.getDacApproval() == null);
-//        });
-//    }
-
-    @Test
-    public void testFindDatasetAndDacIds() {
-        Dataset dataset = insertDataset();
-        Dac dac = insertDac();
-        Consent consent = insertConsent();
-        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
-
-        List<Pair<Integer, Integer>> pairs = datasetDAO.findDatasetAndDacIds();
-        assertFalse(pairs.isEmpty());
-        assertEquals(1, pairs.size());
-        assertEquals(pairs.get(0).getLeft(), dataset.getDataSetId());
-        assertEquals(pairs.get(0).getRight(), dac.getDacId());
     }
 
     @Test
