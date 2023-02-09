@@ -13,9 +13,9 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.18.0</liquibase.version>
+    <liquibase.version>4.19.0</liquibase.version>
     <dropwizard.version>2.1.4</dropwizard.version>
-    <owl.version>5.1.20</owl.version>
+    <owl.version>5.5.0</owl.version>
     <postgres.version>42.5.1</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
@@ -47,7 +47,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -57,7 +57,7 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>3.1.0</version>
+                  <version>3.2.1</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
                   <version>{java.version}</version>
@@ -315,7 +315,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.4.2</version>
+      <version>2.13.5</version>
     </dependency>
 
     <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
@@ -372,7 +372,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.11.0</version>
+      <version>6.13.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -487,7 +487,7 @@
     <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
-      <version>2.3.31</version>
+      <version>2.3.32</version>
     </dependency>
 
     <dependency>
@@ -549,7 +549,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>2.1.2</version>
+      <version>2.2.0</version>
     </dependency>
 
     <!-- Deprecated - TODO: Remove this when GCSStore is removed -->
@@ -562,7 +562,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.16.0</version>
+      <version>2.17.2</version>
     </dependency>
 
     <dependency>
@@ -592,7 +592,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.10</version>
+      <version>2.10.1</version>
     </dependency>
 
     <dependency>
@@ -612,7 +612,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.5.3</version>
+      <version>8.6.1</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->

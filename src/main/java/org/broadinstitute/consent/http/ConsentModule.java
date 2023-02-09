@@ -571,7 +571,8 @@ public class ConsentModule extends AbstractModule {
                 providesInstitutionDAO(),
                 providesLibraryCardDAO(),
                 providesSamDAO(),
-                providesUserServiceDAO());
+                providesUserServiceDAO(),
+                providesEmailService());
     }
 
     @Provides

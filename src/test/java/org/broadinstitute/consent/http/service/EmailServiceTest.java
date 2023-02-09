@@ -20,6 +20,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -27,7 +33,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
+
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -59,15 +65,20 @@ public class EmailServiceTest {
 
     @Mock
     private MailMessageDAO emailDAO;
+    private SendGridAPI sendGridAPI;
 
-    private final String defaultAccount = "duos-dev@broadinstitute.org";
+    FreeMarkerTemplateHelper templateHelper;
+
+
+
+    private final static String defaultAccount = "duos-dev@broadinstitute.org";
+    private final static String serverUrl = "http://localhost:8000/#/";
 
     @Before
     public void setUp() {
     }
 
     private void initService() {
-        String serverUrl =  "http://localhost:8000/#/";
         boolean serviceActive = false;
 
         openMocks(this);
@@ -75,14 +86,14 @@ public class EmailServiceTest {
         mConfig.setActivateEmailNotifications(serviceActive);
         mConfig.setGoogleAccount("");
         mConfig.setSendGridApiKey("");
-        SendGridAPI sendGridAPI = new SendGridAPI(mConfig, userDAO);
+        sendGridAPI = spy(new SendGridAPI(mConfig, userDAO));
 
         FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
         fmConfig.setDefaultEncoding("UTF-8");
         fmConfig.setTemplateDirectory("/freemarker");
-        FreeMarkerTemplateHelper helper = new FreeMarkerTemplateHelper(fmConfig);
+        templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
         service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendGridAPI, helper, serverUrl);
+                emailDAO, sendGridAPI, templateHelper, serverUrl);
     }
 
     @Test
@@ -104,6 +115,36 @@ public class EmailServiceTest {
         } catch (Exception e) {
             fail("Should not fail sending message: " + e);
         }
+    }
+
+    @Test
+    public void testSendNewResearcherEmail() throws Exception {
+        initService();
+        User user = new User();
+        user.setUserId(1234);
+        user.setDisplayName("John Doe");
+
+        User so = new User();
+        user.setEmail("fake_email@asdf.com");
+        try {
+            service.sendNewResearcherMessage(user, so);
+        } catch (Exception e) {
+            fail("Should not fail sending message: " + e);
+        }
+
+        verify(sendGridAPI, times(1)).sendNewResearcherLibraryRequestMessage(any(), any());
+        verify(templateHelper, times(1)).getNewResearcherLibraryRequestTemplate("John Doe", serverUrl);
+        verify(emailDAO, times(1)).insert(
+                eq("1234"),
+                eq(null),
+                eq(1234),
+                eq(EmailType.NEW_RESEARCHER.getTypeInt()),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+        );
     }
 
     @Test

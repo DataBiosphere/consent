@@ -85,7 +85,6 @@ public class DatasetServiceDAO {
                 dacId
         );
 
-
         // insert properties
         executeSynchronizeDatasetProperties(handle, datasetId, properties);
 
@@ -126,15 +125,18 @@ public class DatasetServiceDAO {
 
     // Helper methods to generate Dictionary inserts
     private void executeSynchronizeDatasetProperties(Handle handle, Integer datasetId, List<DatasetProperty> properties) {
-        // 1. Generate inserts for missing dictionary terms
-        // 2. Generate inserts for new dataset properties
-        // 3. Generate updates for existing dataset properties
-        // 4. Generate deletes for outdated dataset properties
         List<Update> updates = new ArrayList<>(generateDictionaryInserts(handle, properties));
         // We need to know existing properties for all property operations
         Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
+
+        // 1. Generate inserts for missing dictionary terms
+        // 2. Generate inserts for new dataset properties
         updates.addAll(generatePropertyInserts(handle, datasetId, properties, existingProps));
+
+        // 3. Generate updates for existing dataset properties
         updates.addAll(generatePropertyUpdates(handle, datasetId, properties, existingProps));
+
+        // 4. Generate deletes for outdated dataset properties
         updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
         updates.forEach(Update::execute);
     }

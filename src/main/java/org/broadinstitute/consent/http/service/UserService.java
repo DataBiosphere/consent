@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,10 +53,11 @@ public class UserService {
     private final LibraryCardDAO libraryCardDAO;
     private final SamDAO samDAO;
     private final UserServiceDAO userServiceDAO;
+    private final EmailService emailService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserServiceDAO userServiceDAO) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserServiceDAO userServiceDAO, EmailService emailService) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
@@ -64,6 +66,7 @@ public class UserService {
         this.libraryCardDAO = libraryCardDAO;
         this.samDAO = samDAO;
         this.userServiceDAO = userServiceDAO;
+        this.emailService = emailService;
     }
 
     /**
@@ -88,11 +91,30 @@ public class UserService {
             if (Objects.nonNull(userUpdateFields.getEraCommonsId())) {
                 userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
             }
+
+            Optional<User> soBeforeUpdate = getSigningOfficialForUser(userId);
+
             // Update User Properties
             List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
             if (!userProps.isEmpty()) {
                 userPropertyDAO.deletePropertiesByUserAndKey(userProps);
                 userPropertyDAO.insertAll(userProps);
+            }
+
+            Optional<User> soAfterUpdate = getSigningOfficialForUser(userId);
+
+            // if SO went from not specified to specified (i.e. set for the first time)
+            // then send an email
+            if (soBeforeUpdate.isEmpty() && soAfterUpdate.isPresent()) {
+                try {
+                    emailService.sendNewResearcherMessage(
+                            userDAO.findUserById(userId),
+                            soAfterUpdate.get()
+                    );
+                } catch (Exception e) {
+                    logger.warn("Could not send new researcher notification to SO: " + e.getMessage());
+                }
+
             }
 
             // Handle Roles
@@ -340,6 +362,29 @@ public class UserService {
             }
         });
         userRoleDAO.insertUserRoles(roles, userId);
+    }
+
+    private Optional<User> getSigningOfficialForUser(Integer userId) {
+        List<UserProperty> props =
+                userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+                        userId,
+                        List.of(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue())
+                );
+
+        if (props.size() == 0) {
+            return Optional.empty();
+        }
+
+        UserProperty soIdProp = props.get(0);
+
+        int soId;
+        try {
+            soId = Integer.parseInt(soIdProp.getPropertyValue());
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(userDAO.findUserById(soId));
     }
 
     private void addExistingLibraryCards(User user) {

@@ -1,5 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -10,14 +17,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Election;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 
 public class ConsentService {
 
@@ -97,19 +96,6 @@ public class ConsentService {
             consentDAO.deleteAllAssociationsForConsent(id);
         } else
             throw new IllegalArgumentException("Consent cannot be deleted because already exist elections associated with it");
-    }
-
-    public Consent updateConsentDul(String consentId, String dataUseLetter, String dulName) throws UnknownIdentifierException {
-        Consent consent = retrieve(consentId);
-        consent.setDulName(dulName);
-        consent.setDataUseLetter(dataUseLetter);
-        update(consentId, updateConsentDates(consent));
-        return retrieve(consentId);
-    }
-
-    public String getConsentDulUrl(String consentId) throws UnknownIdentifierException {
-        Consent consent = retrieve(consentId);
-        return consent.getDataUseLetter();
     }
 
     // Check that the specified Consent resource exists, or throw NotFoundException.

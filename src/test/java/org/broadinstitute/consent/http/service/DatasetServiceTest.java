@@ -189,6 +189,26 @@ public class DatasetServiceTest {
     }
 
     @Test
+    public void testFindDatasetListByDacIds() {
+        when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
+        initService();
+
+        datasetService.findDatasetListByDacIds(List.of(1,2,3));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testFindDatasetListByDacIdsEmptyList() {
+        initService();
+        datasetService.findDatasetListByDacIds(Collections.emptyList());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testFindDatasetListByDacIdsNullList() {
+        initService();
+        datasetService.findDatasetListByDacIds(null);
+    }
+
+    @Test
     public void testUpdateNeedsReviewDataSets(){
         Integer dataSetId = 1;
         when(datasetDAO.findDatasetById(dataSetId))

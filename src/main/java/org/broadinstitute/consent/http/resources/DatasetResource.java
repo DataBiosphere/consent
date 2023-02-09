@@ -7,6 +7,7 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
@@ -24,18 +25,6 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -57,7 +46,18 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.models.DataUse;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Path("api/dataset")
@@ -161,13 +161,11 @@ public class DatasetResource extends Resource {
             FormDataMultiPart multipart,
             @FormDataParam("dataset") String json) {
         try {
-            try {
-                if (!jsonSchemaUtil.isValidSchema_v1(json)) {
-                    throw new BadRequestException("Invalid schema");
-                }
-            } catch (Exception e) {
-                throw new BadRequestException("Invalid schema");
+            List<String> errors = jsonSchemaUtil.validateSchema_v1(json);
+            if (!errors.isEmpty()) {
+                throw new BadRequestException("Invalid schema:\n" + String.join("\n", errors));
             }
+
 
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());

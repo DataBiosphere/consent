@@ -1,5 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
@@ -29,12 +34,6 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 @RegisterRowMapper(DatasetMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
@@ -455,6 +454,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " INNER JOIN consents c ON c.consent_id = a.consent_id " +
             " WHERE d.dac_id IN (<dacIds>) ")
     Set<DatasetDTO> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+            SELECT distinct d.*, k.key, p.property_value, c.consent_id, d.dac_id, c.translated_use_restriction
+            FROM dataset d
+            LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
+            LEFT JOIN dictionary k ON k.key_id = p.property_key
+            LEFT JOIN consent_associations a ON a.dataset_id = d.dataset_id
+            LEFT JOIN consents c ON c.consent_id = a.consent_id
+            WHERE d.dac_id IN (<dacIds>)
+        """)
+    List<Dataset> findDatasetListByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
     /**
      * DACs -> Consents -> Consent Associations -> Datasets

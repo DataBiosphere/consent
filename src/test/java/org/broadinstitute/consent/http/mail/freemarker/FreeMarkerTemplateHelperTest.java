@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -119,6 +120,32 @@ public class FreeMarkerTemplateHelperTest {
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Closed Dataset Elections"));
         assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
+    }
+
+    @Test
+    public void testGetNewResearcherLibraryRequestTemplate() throws Exception {
+        Writer template = helper.getNewResearcherLibraryRequestTemplate("John Doe", "http://localhost:8000/#/");
+        String templateString = template.toString();
+        final Document parsedTemplate = getAsHtmlDoc(templateString);
+
+        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Researcher Library Request"));
+
+        assertTrue(
+                parsedTemplate
+                        .getElementById("content")
+                        .text()
+                        .contains("A researcher from your institution, John Doe, has registered in DUOS"));
+
+        assertTrue(
+                parsedTemplate
+                        .getElementById("serverUrl")
+                        .attr("href")
+                        .equals("http://localhost:8000/#/"));
+
+        // no unspecified values
+        assertFalse(templateString.contains("${"));
+
+
     }
 
     /* Helper methods */
