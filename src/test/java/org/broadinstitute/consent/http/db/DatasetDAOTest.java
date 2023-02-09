@@ -57,6 +57,36 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testGetActiveDatasets_positive_case() {
+        // This inserts a dataset with the active property set to true
+        Dataset ds = insertDataset();
+        Dac dac = insertDac();
+        Consent consent = insertConsent();
+        datasetDAO.updateDatasetDacId(ds.getDataSetId(), dac.getDacId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
+
+        List<Dataset> activeDatasets = datasetDAO.getActiveDatasets();
+        assertFalse(activeDatasets.isEmpty());
+        assertEquals(1, activeDatasets.size());
+        assertTrue(activeDatasets.get(0).getActive());
+    }
+
+    @Test
+    public void testGetActiveDatasets_negative_case() {
+        // This inserts a dataset with the active property set to true
+        Dataset ds = insertDataset();
+        // Update so it is inactive
+        datasetDAO.updateDatasetActive(ds.getDataSetId(), false);
+        Dac dac = insertDac();
+        Consent consent = insertConsent();
+        datasetDAO.updateDatasetDacId(ds.getDataSetId(), dac.getDacId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
+
+        List<Dataset> activeDatasets = datasetDAO.getActiveDatasets();
+        assertTrue(activeDatasets.isEmpty());
+    }
+
+    @Test
     public void testFindDatasetByIdWithDacAndConsentNotDeletable() {
         User user = createUser();
         Dataset d1 = insertDataset();

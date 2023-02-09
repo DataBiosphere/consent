@@ -436,8 +436,7 @@ public class DatasetService {
 
 
     public List<Dataset> searchDatasets(String query, User user) {
-        List<Dataset> datasets = this.findAllDatasetsByUser(user);
-
+        List<Dataset> datasets = findAllDatasetsByUser(user);
         return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
     }
 
@@ -487,7 +486,7 @@ public class DatasetService {
         try {
             // if approval state changed
             if (currentApprovalState != datasetReturn.getDacApproval()) {
-                this.sendDatasetApprovalNotificationEmail(dataset, user, approval);
+                sendDatasetApprovalNotificationEmail(dataset, user, approval);
             }
         } catch (Exception e) {
             logger.error("Unable to notifier Data Submitter of dataset approval status: " + dataset.getDatasetIdentifier());
@@ -496,14 +495,14 @@ public class DatasetService {
     }
 
     private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
-        Dac dac = this.dacDAO.findById(dataset.getDacId());
+        Dac dac = dacDAO.findById(dataset.getDacId());
         if (approval) {
-            this.emailService.sendDatasetApprovedMessage(
+            emailService.sendDatasetApprovedMessage(
                     user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         } else {
-            this.emailService.sendDatasetDeniedMessage(
+            emailService.sendDatasetDeniedMessage(
                     user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
@@ -544,7 +543,7 @@ public class DatasetService {
     }
 
     public List<Dataset> getDatasets(List<Integer> datasetIds) {
-        return this.datasetDAO.findDatasetsByIdList(datasetIds);
+        return datasetDAO.findDatasetsByIdList(datasetIds);
     }
 
     /**
