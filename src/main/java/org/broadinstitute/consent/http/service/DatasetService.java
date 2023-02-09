@@ -252,10 +252,6 @@ public class DatasetService {
         return datasetDAO.findDatasetById(id);
     }
 
-    public Set<Dataset> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
-        return datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
-    }
-
     public Set<DatasetProperty> getDatasetProperties(Integer datasetId) {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }
