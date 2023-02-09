@@ -677,6 +677,24 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAllDatasets() {
+        List<Dataset> datasetList = IntStream.range(1, 5).mapToObj(i -> {
+            Dataset dataset = insertDataset();
+            Consent consent = insertConsent();
+            consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+            return dataset;
+        }).toList();
+
+        List<Dataset> datasets = datasetDAO.findAllDatasets();
+        assertFalse(datasets.isEmpty());
+        assertEquals(datasetList.size(), datasets.size());
+        List<Integer> insertedDatasetIds = datasetList.stream().map(Dataset::getDataSetId).toList();
+        List<Integer> foundDatasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
+        assertTrue(foundDatasetIds.containsAll(insertedDatasetIds));
+        assertTrue(insertedDatasetIds.containsAll(foundDatasetIds));
+    }
+
+    @Test
+    public void testFindAllDatasetDTOs() {
         Dataset dataset = insertDataset();
         Consent consent = insertConsent();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());

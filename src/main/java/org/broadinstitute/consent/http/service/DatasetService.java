@@ -548,7 +548,7 @@ public class DatasetService {
 
     public List<Dataset> findAllDatasetsByUser(User user) {
         if (user.hasUserRole(UserRoles.ADMIN)) {
-            return datasetDAO.getAllDatasets();
+            return datasetDAO.findAllDatasets();
         } else {
             List<Dataset> datasets = datasetDAO.getActiveDatasets();
             if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
