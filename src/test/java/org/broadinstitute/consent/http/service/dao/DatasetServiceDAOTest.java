@@ -262,9 +262,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
     }
 
-
-        // Helper methods
-
     /**
      * Creates a new sample Dataset along with a User and a Dac
      *
