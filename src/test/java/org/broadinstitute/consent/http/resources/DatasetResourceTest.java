@@ -665,7 +665,7 @@ public class DatasetResourceTest {
         Dataset ds = new Dataset();
         ds.setDataSetId(1);
         ds.setName("asdfasdfasdfasdfasdfasdf");
-        when(datasetService.getDataset(1)).thenReturn(ds);
+        when(datasetService.findDatasetById(1)).thenReturn(ds);
         initResource();
         Response response = resource.getDataset(1);
         assertEquals(200, response.getStatus());
@@ -674,7 +674,7 @@ public class DatasetResourceTest {
 
     @Test
     public void testGetDatasetNotFound() {
-        when(datasetService.getDataset(1)).thenReturn(null);
+        when(datasetService.findDatasetById(1)).thenReturn(null);
 
         initResource();
         Response response = resource.getDataset(1);

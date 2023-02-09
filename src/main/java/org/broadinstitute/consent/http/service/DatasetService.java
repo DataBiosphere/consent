@@ -562,10 +562,6 @@ public class DatasetService {
         }
     }
 
-    public Dataset getDataset(Integer datasetId) {
-        return this.datasetDAO.findDatasetById(datasetId);
-    }
-
     public List<Dataset> getDatasets(List<Integer> datasetIds) {
         return this.datasetDAO.findDatasetsByIdList(datasetIds);
     }
