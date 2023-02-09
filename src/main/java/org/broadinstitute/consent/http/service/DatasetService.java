@@ -260,17 +260,6 @@ public class DatasetService {
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
     }
 
-    public Dataset getDatasetWithPropertiesById(Integer datasetId) {
-        Dataset dataset = datasetDAO.findDatasetById(datasetId);
-        Set<DatasetProperty> properties = getDatasetProperties(datasetId);
-        dataset.setProperties(properties);
-
-
-
-
-        return dataset;
-    }
-
     public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
@@ -281,7 +270,7 @@ public class DatasetService {
             throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
         }
 
-        Dataset old = getDatasetWithPropertiesById(datasetId);
+        Dataset old = findDatasetById(datasetId);
         Set<DatasetProperty> oldProperties = old.getProperties();
 
         List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
@@ -310,7 +299,7 @@ public class DatasetService {
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
         datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId, dataset.getNeedsApproval(), dataset.getDacId());
-        Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
+        Dataset updatedDataset = findDatasetById(datasetId);
         return Optional.of(updatedDataset);
     }
 
