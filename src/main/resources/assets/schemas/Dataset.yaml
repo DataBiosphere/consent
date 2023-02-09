@@ -11,6 +11,13 @@ properties:
     type: integer
     format: int32
     description: The dataset id, integer format
+  createUserId:
+    type: integer
+    format: int32
+    description: The create user id, if available
+  createUser:
+    description: The create user, if available
+    $ref: './User.yaml'
   dacId:
     type: string
     description: The id of the DAC this dataset belongs to, if defined.
