@@ -252,10 +252,6 @@ public class DatasetService {
         return datasetDAO.findDatasetById(id);
     }
 
-    public Set<DatasetProperty> getDatasetProperties(Integer datasetId) {
-        return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
-    }
-
     public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 

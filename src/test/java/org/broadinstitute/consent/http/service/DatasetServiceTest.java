@@ -271,24 +271,6 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testGetDatasetProperties() {
-        when(datasetDAO.findDatasetPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
-        initService();
-
-        assertTrue(datasetService.getDatasetProperties(1).isEmpty());
-    }
-
-    @Test
-    public void testGetDatasetWithPropertiesById() {
-        int datasetId = 1;
-        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
-        when(datasetDAO.findDatasetById(datasetId)).thenReturn(getDatasets().get(0));
-        initService();
-
-        assertEquals(datasetService.getDatasetProperties(datasetId), datasetDAO.findDatasetPropertiesByDatasetId(1));
-    }
-
-    @Test
     public void testProcessDatasetProperties() {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
