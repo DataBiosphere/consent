@@ -162,10 +162,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     List<Dataset> findAllDatasets();
 
     /**
-     * Original implementation of dacs -> datasets is via an association through consent
-     * User -> UserRoles -> DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * Subsequent refactoring moves the dataset to a top level field on the DAC
+     * Original implementation of dacs -> datasets is via an association through consent.
+     * Subsequent refactoring moves the dataset to a top level field on the DAC:
      * User -> UserRoles -> DACs -> Datasets
      *
      * @param email User email
