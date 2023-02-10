@@ -884,20 +884,18 @@ public class DatasetDAOTest extends DAOTestHelper {
     protected Consent insertConsent() {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
-                false,
+            false,
             """
-                {"type":"everything"}
-                """,
+            {"type":"everything"}""",
             """
-                {"generalUse":true}
-                """,
-                "dul",
-                consentId,
-                "dulName",
-                new Date(),
-                new Date(),
-                "Everything",
-                "Group");
+            {"generalUse":true}""",
+            "dul",
+            consentId,
+            "dulName",
+            new Date(),
+            new Date(),
+            "Everything",
+            "Group");
         return consentDAO.findConsentById(consentId);
     }
 
