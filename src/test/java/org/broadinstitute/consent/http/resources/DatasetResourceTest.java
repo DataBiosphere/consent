@@ -691,7 +691,7 @@ public class DatasetResourceTest {
         ds3.setDataSetId(3);
         List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,2,3))).thenReturn(datasets);
+        when(datasetService.findDatasetsByIds(List.of(1,2,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,2,3));
@@ -709,7 +709,7 @@ public class DatasetResourceTest {
         ds3.setDataSetId(3);
         List<Dataset> datasets = List.of(ds1,ds2,ds3);
 
-        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(datasets);
+        when(datasetService.findDatasetsByIds(List.of(1,1,2,2,3,3))).thenReturn(datasets);
 
         initResource();
         Response response = resource.getDatasets(List.of(1,1,2,2,3,3));
@@ -724,7 +724,7 @@ public class DatasetResourceTest {
         Dataset ds2 = new Dataset();
         ds2.setDataSetId(2);
 
-        when(datasetService.getDatasets(List.of(1,1,2,2,3,3))).thenReturn(List.of(
+        when(datasetService.findDatasetsByIds(List.of(1,1,2,2,3,3))).thenReturn(List.of(
                 ds1,
                 ds2
         ));
@@ -745,7 +745,7 @@ public class DatasetResourceTest {
         Dataset ds3 = new Dataset();
         ds3.setDataSetId(3);
 
-        when(datasetService.getDatasets(List.of(1,2,3,4))).thenReturn(List.of(
+        when(datasetService.findDatasetsByIds(List.of(1,2,3,4))).thenReturn(List.of(
                 ds1,
                 ds3
         ));

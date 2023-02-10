@@ -542,7 +542,7 @@ public class DatasetService {
         }
     }
 
-    public List<Dataset> getDatasets(List<Integer> datasetIds) {
+    public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
         return datasetDAO.findDatasetsByIdList(datasetIds);
     }
 

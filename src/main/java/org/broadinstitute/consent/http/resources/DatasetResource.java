@@ -314,7 +314,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
         try {
-            List<Dataset> datasets = datasetService.getDatasets(datasetIds);
+            List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
 
             Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toSet());
             if (!foundIds.containsAll(datasetIds)) {
