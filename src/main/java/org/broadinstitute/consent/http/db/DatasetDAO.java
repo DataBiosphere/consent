@@ -35,6 +35,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+@RegisterBeanMapper(value = User.class, prefix = "u")
 @RegisterRowMapper(DatasetMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
@@ -57,7 +58,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         @Bind("dataUse") String dataUse,
         @Bind("dacId") Integer dacId);
 
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -92,7 +92,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
 
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -127,7 +126,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
     List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -169,7 +167,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @param email User email
      * @return List of datasets that are visible to the user via DACs.
      */
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -212,7 +209,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
      * @param dacId id
      * @return all datasets associated with DAC
      */
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -248,7 +244,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
     List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
 
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -283,7 +278,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
     List<Dataset> getActiveDatasets();
 
-    @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
