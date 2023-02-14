@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
 public enum DatasetPropertyType {
@@ -64,11 +64,16 @@ public enum DatasetPropertyType {
         return java.lang.Boolean.valueOf(value);
     }
 
-    public static LocalDate coerceToDate(String value) throws IllegalArgumentException {
+    public static Instant coerceToDate(String value) throws IllegalArgumentException {
         try {
-            return LocalDate.parse(value);
+
+            return Instant.parse(value);
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Could not parse as Date: " + e.getMessage());
+            try {
+                return Instant.parse(value + "T00:00:00Z"); // try adding timezones
+            } catch (DateTimeParseException e2) {
+                throw new IllegalArgumentException("Could not parse as Date: " + e.getMessage());
+            }
         }
     }
 

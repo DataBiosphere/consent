@@ -65,7 +65,7 @@ public class DatasetRegistrationService {
     public List<Dataset> createDatasetsFromRegistration(
             DatasetRegistrationSchemaV1 registration,
             User user,
-            Map<String, FormDataBodyPart> files) throws IOException, SQLException, IllegalArgumentException {
+            Map<String, FormDataBodyPart> files) throws SQLException, IllegalArgumentException {
 
         if (Objects.isNull(dacDAO.findById(registration.getDataAccessCommitteeId()))) {
             throw new NotFoundException("Could not find DAC");
@@ -245,6 +245,7 @@ public class DatasetRegistrationService {
         }
     };
 
+    // TODO: is there some way to do this automatically from, e.g., the schema?
     private static final List<DatasetPropertyExtractor> DATASET_REGISTRATION_V1_PROPERTY_EXTRACTORS = List.of(
             new DatasetPropertyExtractor(
                     "PI Name", "piName", DatasetPropertyType.String,

@@ -1,24 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.temporal.TemporalField;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,8 +18,24 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.joda.time.LocalDate;
 import org.junit.Test;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -527,7 +525,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testCreateDateTypedDatasetProperty() {
         Dataset d = insertDataset();
-        LocalDate date = LocalDate.now();
+        Instant date = Instant.now();
 
         Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
@@ -551,7 +549,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         DatasetProperty prop = props.stream().findFirst().get();
         assertEquals(DatasetPropertyType.Date, prop.getPropertyType());
         assertEquals(date.toString(), prop.getPropertyValueAsString());
-
     }
 
     @Test

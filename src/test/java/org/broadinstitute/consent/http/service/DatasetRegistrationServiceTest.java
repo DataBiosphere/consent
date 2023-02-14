@@ -123,6 +123,7 @@ public class DatasetRegistrationServiceTest {
 
 
         List<DatasetProperty> props = inserts.get(0).props();
+        // TODO: is there a way to ensure we don't miss anything?
         assertContainsDatasetProperty(props, "piName", schema.getPiName());
         assertContainsDatasetProperty(props, "studyName", schema.getStudyName());
         assertContainsDatasetProperty(props, "studyType", schema.getStudyType().value());
@@ -467,6 +468,7 @@ public class DatasetRegistrationServiceTest {
 
 
     private DatasetRegistrationSchemaV1 createRandomCompleteDatasetRegistration(User user) {
+        // TODO: find a better way to initialize this object
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
         schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
         schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
