@@ -252,21 +252,6 @@ public class DatasetService {
         return datasetDAO.findDatasetById(id);
     }
 
-    public Set<Dataset> getDatasetWithDataUseByIds(List<Integer> datasetIds) {
-        return datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
-    }
-
-    public Set<DatasetProperty> getDatasetProperties(Integer datasetId) {
-        return datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
-    }
-
-    public Dataset getDatasetWithPropertiesById(Integer datasetId) {
-        Dataset dataset = datasetDAO.findDatasetById(datasetId);
-        Set<DatasetProperty> properties = getDatasetProperties(datasetId);
-        dataset.setProperties(properties);
-        return dataset;
-    }
-
     public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
         Timestamp now = new Timestamp(new Date().getTime());
 
@@ -277,7 +262,7 @@ public class DatasetService {
             throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
         }
 
-        Dataset old = getDatasetWithPropertiesById(datasetId);
+        Dataset old = findDatasetById(datasetId);
         Set<DatasetProperty> oldProperties = old.getProperties();
 
         List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
@@ -306,7 +291,7 @@ public class DatasetService {
 
         updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
         datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId, dataset.getNeedsApproval(), dataset.getDacId());
-        Dataset updatedDataset = getDatasetWithPropertiesById(datasetId);
+        Dataset updatedDataset = findDatasetById(datasetId);
         return Optional.of(updatedDataset);
     }
 
@@ -451,8 +436,7 @@ public class DatasetService {
 
 
     public List<Dataset> searchDatasets(String query, User user) {
-        List<Dataset> datasets = this.findAllDatasetsByUser(user);
-
+        List<Dataset> datasets = findAllDatasetsByUser(user);
         return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
     }
 
@@ -502,7 +486,7 @@ public class DatasetService {
         try {
             // if approval state changed
             if (currentApprovalState != datasetReturn.getDacApproval()) {
-                this.sendDatasetApprovalNotificationEmail(dataset, user, approval);
+                sendDatasetApprovalNotificationEmail(dataset, user, approval);
             }
         } catch (Exception e) {
             logger.error("Unable to notifier Data Submitter of dataset approval status: " + dataset.getDatasetIdentifier());
@@ -511,14 +495,14 @@ public class DatasetService {
     }
 
     private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval) throws Exception {
-        Dac dac = this.dacDAO.findById(dataset.getDacId());
+        Dac dac = dacDAO.findById(dataset.getDacId());
         if (approval) {
-            this.emailService.sendDatasetApprovedMessage(
+            emailService.sendDatasetApprovedMessage(
                     user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
         } else {
-            this.emailService.sendDatasetDeniedMessage(
+            emailService.sendDatasetDeniedMessage(
                     user,
                     dac.getName(),
                     dataset.getDatasetIdentifier());
@@ -544,7 +528,7 @@ public class DatasetService {
 
     public List<Dataset> findAllDatasetsByUser(User user) {
         if (user.hasUserRole(UserRoles.ADMIN)) {
-            return datasetDAO.getAllDatasets();
+            return datasetDAO.findAllDatasets();
         } else {
             List<Dataset> datasets = datasetDAO.getActiveDatasets();
             if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
@@ -558,12 +542,8 @@ public class DatasetService {
         }
     }
 
-    public Dataset getDataset(Integer datasetId) {
-        return this.datasetDAO.findDatasetById(datasetId);
-    }
-
-    public List<Dataset> getDatasets(List<Integer> datasetIds) {
-        return this.datasetDAO.findDatasetsByIdList(datasetIds);
+    public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
+        return datasetDAO.findDatasetsByIdList(datasetIds);
     }
 
     /**
