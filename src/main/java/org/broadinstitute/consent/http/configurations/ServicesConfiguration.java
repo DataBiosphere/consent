@@ -63,10 +63,6 @@ public class ServicesConfiguration {
     return getOntologyURL() + "match/v2";
   }
 
-  public String getValidateUseRestrictionURL() {
-    return getOntologyURL() + "validate/userestriction";
-  }
-
   public String getDARTranslateUrl() {
     return getOntologyURL() + "schemas/data-use/dar/translate";
   }

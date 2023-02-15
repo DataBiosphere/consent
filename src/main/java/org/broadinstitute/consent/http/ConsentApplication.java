@@ -99,7 +99,6 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
-import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
@@ -187,7 +186,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
-        final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
         final MatchService matchService = injector.getProvider(MatchService.class).get();
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
@@ -230,7 +228,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
+        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
         env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));
         env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
