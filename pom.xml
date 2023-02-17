@@ -17,6 +17,7 @@
     <dropwizard.version>2.1.4</dropwizard.version>
     <owl.version>5.5.0</owl.version>
     <postgres.version>42.5.3</postgres.version>
+    <pact.version>4.4.6</pact.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
@@ -479,31 +480,23 @@
     <dependency>
       <groupId>au.com.dius.pact</groupId>
       <artifactId>consumer</artifactId>
-      <version>4.4.6</version>
+      <version>${pact.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>au.com.dius.pact</groupId>
       <artifactId>provider</artifactId>
-      <version>4.4.6</version>
+      <version>${pact.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>au.com.dius.pact.consumer</groupId>
       <artifactId>junit</artifactId>
-      <version>4.4.6</version>
+      <version>${pact.version}</version>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.apache.httpcomponents.client5</groupId>
-      <artifactId>httpclient5-fluent</artifactId>
-      <version>5.2.1</version>
-      <scope>test</scope>
-    </dependency>
-
 
     <dependency>
       <groupId>io.dropwizard</groupId>
