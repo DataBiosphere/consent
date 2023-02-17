@@ -1,12 +1,17 @@
 # Pact Testing
 
+Pact tests can be run with maven using the `pact-tests` profile:
+```shell
+mvn clean test -Ppact-tests
+```
+
 More details on Contract Testing can be found in our handbook
  * https://broadworkbench.atlassian.net/wiki/spaces/IRT/pages/2660368406/Getting+Started+with+Pact+Contract+Testing
 
 Each party owns a set of tests (aka contract tests). The consumer contract tests (aka consumer tests) 
 are completely independent of the provider contract tests (aka provider tests), and vice versa.
 
-Specifically
+Specifically:
  * Consent runs consumer tests against mock Sam service. 
  * Upon success, publish a consumer-provider pact to DSP's [Pact Broker](https://pact-broker.dsp-eng-tools.broadinstitute.org/).
  * Pact Broker is the  source of truth to forge contractual obligations between consumer and provider.
