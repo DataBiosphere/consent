@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.pact.sam;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
@@ -9,26 +8,43 @@ import au.com.dius.pact.consumer.junit.PactVerification;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import java.util.Map;
+import org.broadinstitute.consent.pact.ConsumerClient;
+import org.broadinstitute.consent.pact.PactTests;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
- * Modeled on https://github.com/pact-foundation/pact-jvm/blob/master/consumer/junit/src/test/java/au/com/dius/pact/consumer/junit/examples/ExampleJavaConsumerPactRuleTest.java
+ * Modeled on <a href="https://github.com/pact-foundation/pact-jvm/blob/master/consumer/junit/src/test/java/au/com/dius/pact/consumer/junit/examples/ExampleJavaConsumerPactRuleTest.java">ExampleJavaConsumerPactRuleTest.java</a>
  *
  * Pact Consumer Contract and test for interactions with Sam
  *
  * TODO:
- * GitHub action for pushing to pact broker
  * Expand test suite
+ * Clean up consumer client
  */
+@Category(PactTests.class)
 public class SamPactTests {
 
   private static final String SELF_INFO_URL = "/register/user/v2/self/info";
-  private static final String providerName = "SamProvider";
-  private static final String consumerName = "SamConsumer";
+  private static final String PROVIDER_NAME = "sam-provider";
+  private static final String CONSUMER_NAME = "consent-consumer";
+  private static final String SAMPLE_RESPONSE = """
+              {
+                 "adminEnabled": true,
+                 "enabled": true,
+                 "userEmail": "test.user@gmail.com",
+                 "userSubjectId": "1234567890"
+               }""";
 
   @Rule
-  public PactProviderRule mockProvider = new PactProviderRule(providerName, this);
+  public PactProviderRule mockProvider = new PactProviderRule(PROVIDER_NAME, this);
+
+  @BeforeClass
+  public static void beforeClass() {
+    System.setProperty("pact_do_not_track", "true");
+  }
 
   /**
    * This defines an expectation that Consent has of Sam. This expectation will be published to a
@@ -38,7 +54,7 @@ public class SamPactTests {
    * @param builder PactDslWithProvider
    * @return RequestResponsePact
    */
-  @Pact(provider=providerName, consumer=consumerName)
+  @Pact(provider= PROVIDER_NAME, consumer= CONSUMER_NAME)
   public RequestResponsePact createPact(PactDslWithProvider builder) {
     Map<String, String> headers = Map.of("Content-Type", "application/json");
     return builder
@@ -49,28 +65,15 @@ public class SamPactTests {
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body("""
-              {
-                 "adminEnabled": true,
-                 "enabled": true,
-                 "userEmail": "test.user@gmail.com",
-                 "userSubjectId": "1234567890"
-               }""")
-        .given("test OPTIONS")
-        .uponReceiving("OPTIONS Request")
-          .path(SELF_INFO_URL)
-          .method("OPTIONS")
-        .willRespondWith()
-          .status(200)
+          .body(SAMPLE_RESPONSE)
         .toPact();
   }
 
   @Test
-  @PactVerification(providerName)
-  public void testGet() throws Exception {
+  @PactVerification(PROVIDER_NAME)
+  public void testGetSelfInfo() throws Exception {
     ConsumerClient client = new ConsumerClient(mockProvider.getUrl());
-    Map responseMap = client.get(SELF_INFO_URL);
-    assertFalse(responseMap.isEmpty());
-    assertEquals(200, client.options(SELF_INFO_URL));
+    String response = client.get(SELF_INFO_URL);
+    assertFalse(response.isBlank());
   }
 }

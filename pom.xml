@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.broadinstitute</groupId>
   <artifactId>consent</artifactId>
@@ -24,7 +24,28 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <test.categories/>
   </properties>
+
+  <profiles>
+    <profile>
+      <id>all-tests</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <build.profile.id>all-tests</build.profile.id>
+        <test.categories/>
+      </properties>
+    </profile>
+    <profile>
+      <id>pact-tests</id>
+      <properties>
+        <build.profile.id>pact-tests</build.profile.id>
+        <test.categories>org.broadinstitute.consent.pact.PactTests</test.categories>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <testResources>
@@ -94,7 +115,8 @@
           <prefix>git</prefix>
           <verbose>false</verbose>
           <generateGitPropertiesFile>true</generateGitPropertiesFile>
-          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
+          </generateGitPropertiesFilename>
           <format>json</format>
           <gitDescribe>
             <skip>true</skip>
@@ -187,6 +209,7 @@
           <systemPropertyVariables>
             <pact.rootDir>target/pacts</pact.rootDir>
           </systemPropertyVariables>
+          <groups>${test.categories}</groups>
         </configuration>
       </plugin>
 
@@ -247,11 +270,11 @@
             <configuration>
               <transformers>
                 <transformer
-                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.broadinstitute.consent.http.ConsentApplication</mainClass>
                 </transformer>
                 <transformer
-                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
             </configuration>
           </execution>
@@ -339,17 +362,17 @@
       <artifactId>sendgrid-java</artifactId>
       <version>4.9.3</version>
       <exclusions>
-          <exclusion>
-              <groupId>com.fasterxml.jackson.core</groupId>
-              <artifactId>jackson-databind</artifactId>
-          </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-        <groupId>org.apache.httpcomponents.client5</groupId>
-        <artifactId>httpclient5</artifactId>
-        <version>5.2.1</version>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <version>5.2.1</version>
     </dependency>
 
     <!-- SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 -->
@@ -474,12 +497,12 @@
       <scope>test</scope>
     </dependency>
 
-  <dependency>
-    <groupId>org.apache.httpcomponents.client5</groupId>
-    <artifactId>httpclient5-fluent</artifactId>
-    <version>5.2.1</version>
-    <scope>test</scope>
-  </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5-fluent</artifactId>
+      <version>5.2.1</version>
+      <scope>test</scope>
+    </dependency>
 
 
     <dependency>
