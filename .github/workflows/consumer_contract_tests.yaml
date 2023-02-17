@@ -13,16 +13,18 @@ name: Consumer contract tests
 #   the provider contract tests (aka provider tests), and vice versa.
 #
 # Specifically
-#   Consent runs consumer tests against mock Sam service. Upon success, publish a consumer-provider pact to
-#   Pact Broker https://pact-broker.dsp-eng-tools.broadinstitute.org/. Pact Broker is the source of truth
-#   to forge contractual obligations between consumer and provider.
+#   Consent runs consumer tests against mock Sam service. Upon success, publish a consumer-provider
+#   pact to Pact Broker https://pact-broker.dsp-eng-tools.broadinstitute.org/. Pact Broker is the
+#   source of truth to forge contractual obligations between consumer and provider.
 #
-#   Sam obtains contract from Pact Broker and runs provider tests to validate its obligations to consumers.
+#   Sam obtains contract from Pact Broker and runs provider tests to validate its obligations to
+#   consumers.
 #
-# The Pact Broker is a 2-way street. The consumer can see in the dashboard if the service is able to honor their consumer expectations
-# (which is also true when those expectations are updated).  The provider can validate that a desired deployment would not break any
-# of the consumers' published expectations.  Both the consumer and the provider can gate deployment on availability/honoring of the published pact
-# (contract expectations) between the two.
+# The Pact Broker is a 2-way street. The consumer can see in the dashboard if the service is able to
+# honor their consumer expectations (which is also true when those expectations are updated).  The
+# provider can validate that a desired deployment would not break any of the consumers' published
+# expectations.  Both the consumer and the provider can gate deployment on availability/honoring of
+# the published pact (contract expectations) between the two.
 #
 on:
   pull_request:
@@ -93,18 +95,18 @@ jobs:
           NON_BREAKING_B64=$(cat target/pacts/consent-consumer-sam-provider.json | base64 -w 0)
           echo "pact-b64=${NON_BREAKING_B64}" >> $GITHUB_OUTPUT
 
-#  publish-pact:
-#    runs-on: ubuntu-latest
-#    needs: [consent-consumer-contract-tests]
-#    permissions:
-#      contents: 'read'
-#      id-token: 'write'
-#    steps:
-#      - name: Dispatch to terra-github-workflows
-#        uses: aurelien-baudet/workflow-dispatch@93e95b157d791ae7f42aef8f8a0d3d723eba1c31 #commit sha for v2.1.1
-#        with:
-#          workflow: publish-pacts.yaml
-#          repo: broadinstitute/terra-github-workflows
-#          ref: refs/heads/main
-#          token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
-#          inputs: '{ "consumer-name": "consent-consumer", "consumer-version": "${{ needs.consent-consumer-contract-tests.outputs.sha-short }}", "provider-name": "sam-provider", "pact-b64": "${{ needs.consent-consumer-contract-tests.outputs.pact-b64 }}" }'
+  publish-pact:
+    runs-on: ubuntu-latest
+    needs: [consent-consumer-contract-tests]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Dispatch to terra-github-workflows
+        uses: aurelien-baudet/workflow-dispatch@93e95b157d791ae7f42aef8f8a0d3d723eba1c31 #commit sha for v2.1.1
+        with:
+          workflow: publish-pacts.yaml
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
+          inputs: '{ "consumer-name": "consent-consumer", "consumer-version": "${{ needs.consent-consumer-contract-tests.outputs.sha-short }}", "provider-name": "sam-provider", "pact-b64": "${{ needs.consent-consumer-contract-tests.outputs.pact-b64 }}" }'
