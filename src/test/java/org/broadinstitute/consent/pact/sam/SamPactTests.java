@@ -17,7 +17,7 @@ import org.junit.Test;
  * Pact Consumer Contract and test for interactions with Sam
  *
  * TODO:
- * Figure out mock server issue
+ * Figure out this error: java.lang.IncompatibleClassChangeError: Expected static method 'java.lang.Object au.com.dius.pact.core.support.expressions.ExpressionParser.parseExpression(java.lang.String, au.com.dius.pact.core.support.expressions.DataType)'
  * GitHub action for pushing to pact broker
  * Expand test suite
  */
