@@ -1,13 +1,16 @@
 package org.broadinstitute.consent.pact.sam;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit.PactProviderRule;
 import au.com.dius.pact.consumer.junit.PactVerification;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
+import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.pact.ConsumerClient;
 import org.broadinstitute.consent.pact.PactTests;
 import org.junit.BeforeClass;
@@ -28,15 +31,25 @@ import org.junit.experimental.categories.Category;
 public class SamPactTests {
 
   private static final String SELF_INFO_URL = "/register/user/v2/self/info";
+  private static final String SELF_DIAGNOSTICS_URL = "/register/user/v2/self/diagnostics";
   private static final String PROVIDER_NAME = "sam-provider";
   private static final String CONSUMER_NAME = "consent-consumer";
-  private static final String SAMPLE_RESPONSE = """
+  private static final String SAMPLE_INFO_RESPONSE = """
               {
                  "adminEnabled": true,
                  "enabled": true,
                  "userEmail": "test.user@gmail.com",
                  "userSubjectId": "1234567890"
                }""";
+
+  private static final String SAMPLE_INFO_DIAGNOSTICS = """
+              {
+                  "adminEnabled": true,
+                  "enabled": true,
+                  "inAllUsersGroup": true,
+                  "inGoogleProxyGroup": true,
+                  "tosAccepted": true
+              }""";
 
   @Rule
   public PactProviderRule mockProvider = new PactProviderRule(PROVIDER_NAME, this);
@@ -58,22 +71,38 @@ public class SamPactTests {
   public RequestResponsePact createPact(PactDslWithProvider builder) {
     Map<String, String> headers = Map.of("Content-Type", "application/json");
     return builder
-        .given("test GET")
-        .uponReceiving("GET Request")
+        // Self Info:
+        .given("GET Sam Self Info")
+        .uponReceiving("GET Request: " + SELF_INFO_URL)
           .path(SELF_INFO_URL)
           .method("GET")
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body(SAMPLE_RESPONSE)
+          .body(SAMPLE_INFO_RESPONSE)
+        // Self Diagnostics:
+        .given("GET Sam Self Diagnostics")
+        .uponReceiving("GET Request: " + SELF_DIAGNOSTICS_URL)
+          .path(SELF_DIAGNOSTICS_URL)
+          .method("GET")
+        .willRespondWith()
+          .status(200)
+          .headers(headers)
+          .body(SAMPLE_INFO_DIAGNOSTICS)
         .toPact();
   }
 
   @Test
   @PactVerification(PROVIDER_NAME)
-  public void testGetSelfInfo() throws Exception {
+  public void testSamContracts() {
     ConsumerClient client = new ConsumerClient(mockProvider.getUrl());
-    String response = client.get(SELF_INFO_URL);
-    assertFalse(response.isBlank());
+    Stream.of(SELF_INFO_URL, SELF_DIAGNOSTICS_URL).forEach(url -> {
+      try {
+        String response = client.get(url);
+        assertFalse(response.isBlank());
+      } catch (IOException e) {
+        fail(e.getMessage());
+      }
+    });
   }
 }
