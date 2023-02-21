@@ -30,9 +30,10 @@ sequenceDiagram
   participant Consent
   participant Broker
   participant Sam
-  Sam->>Broker: Sam publishes intended behaviors
-  Consent->>Consent: Consent generates expected Sam behaviors
-  Consent->>Consent: Consent tests generated contract
-  Consent->>Broker: Consent exports contract to broker
-  Broker->>Broker: Broker validates contracts
+  Sam->>Broker: Publishes intended behaviors
+  Broker->>Broker: Validate contracts
+  Consent->>Consent: Generate expected Sam behaviors
+  Consent->>Consent: Unit test expected behaviors
+  Consent->>Broker: Exports contracts to broker
+  Broker->>Broker: Validate contracts
 ```

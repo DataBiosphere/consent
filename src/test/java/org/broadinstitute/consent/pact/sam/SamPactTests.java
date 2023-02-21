@@ -1,17 +1,19 @@
 package org.broadinstitute.consent.pact.sam;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotNull;
 
+import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit.PactProviderRule;
 import au.com.dius.pact.consumer.junit.PactVerification;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
-import java.io.IOException;
 import java.util.Map;
-import java.util.stream.Stream;
-import org.broadinstitute.consent.pact.ConsumerClient;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.SamDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.pact.PactTests;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,8 +26,8 @@ import org.junit.experimental.categories.Category;
  * Pact Consumer Contract and test for interactions with Sam
  *
  * TODO:
- * Expand test suite
- * Clean up consumer client
+ *    Expand test suite
+ *    Can we split tests up more granularly???
  */
 @Category(PactTests.class)
 public class SamPactTests {
@@ -35,21 +37,23 @@ public class SamPactTests {
   private static final String PROVIDER_NAME = "sam-provider";
   private static final String CONSUMER_NAME = "consent-consumer";
   private static final String SAMPLE_INFO_RESPONSE = """
-              {
-                 "adminEnabled": true,
-                 "enabled": true,
-                 "userEmail": "test.user@gmail.com",
-                 "userSubjectId": "1234567890"
-               }""";
+      {
+         "adminEnabled": true,
+         "enabled": true,
+         "userEmail": "test.user@gmail.com",
+         "userSubjectId": "1234567890"
+       }""";
 
   private static final String SAMPLE_INFO_DIAGNOSTICS = """
-              {
-                  "adminEnabled": true,
-                  "enabled": true,
-                  "inAllUsersGroup": true,
-                  "inGoogleProxyGroup": true,
-                  "tosAccepted": true
-              }""";
+      {
+          "adminEnabled": true,
+          "enabled": true,
+          "inAllUsersGroup": true,
+          "inGoogleProxyGroup": true,
+          "tosAccepted": true
+      }""";
+
+  private SamDAO samDAO;
 
   @Rule
   public PactProviderRule mockProvider = new PactProviderRule(PROVIDER_NAME, this);
@@ -57,6 +61,13 @@ public class SamPactTests {
   @BeforeClass
   public static void beforeClass() {
     System.setProperty("pact_do_not_track", "true");
+    System.setProperty("pact.writer.overwrite", "true");
+  }
+
+  private void initSamDAO(MockServer mockServer) {
+    ServicesConfiguration config = new ServicesConfiguration();
+    config.setSamUrl("http://localhost:" + mockServer.getPort() + "/");
+    samDAO = new SamDAO(config);
   }
 
   /**
@@ -67,13 +78,13 @@ public class SamPactTests {
    * @param builder PactDslWithProvider
    * @return RequestResponsePact
    */
-  @Pact(provider= PROVIDER_NAME, consumer= CONSUMER_NAME)
+  @Pact(provider=PROVIDER_NAME, consumer=CONSUMER_NAME)
   public RequestResponsePact createPact(PactDslWithProvider builder) {
     Map<String, String> headers = Map.of("Content-Type", "application/json");
     return builder
         // Self Info:
-        .given("GET Sam Self Info")
-        .uponReceiving("GET Request: " + SELF_INFO_URL)
+        .given(" GET Sam Self Info")
+        .uponReceiving(" GET Request: " + SELF_INFO_URL)
           .path(SELF_INFO_URL)
           .method("GET")
         .willRespondWith()
@@ -81,8 +92,8 @@ public class SamPactTests {
           .headers(headers)
           .body(SAMPLE_INFO_RESPONSE)
         // Self Diagnostics:
-        .given("GET Sam Self Diagnostics")
-        .uponReceiving("GET Request: " + SELF_DIAGNOSTICS_URL)
+        .given(" GET Sam Self Diagnostics")
+        .uponReceiving(" GET Request: " + SELF_DIAGNOSTICS_URL)
           .path(SELF_DIAGNOSTICS_URL)
           .method("GET")
         .willRespondWith()
@@ -94,15 +105,14 @@ public class SamPactTests {
 
   @Test
   @PactVerification(PROVIDER_NAME)
-  public void testSamContracts() {
-    ConsumerClient client = new ConsumerClient(mockProvider.getUrl());
-    Stream.of(SELF_INFO_URL, SELF_DIAGNOSTICS_URL).forEach(url -> {
-      try {
-        String response = client.get(url);
-        assertFalse(response.isBlank());
-      } catch (IOException e) {
-        fail(e.getMessage());
-      }
-    });
+  public void testSamContracts() throws Exception {
+    initSamDAO(mockProvider.getMockServer());
+    AuthUser authUser = new AuthUser();
+
+    UserStatusInfo info = samDAO.getRegistrationInfo(authUser);
+    assertNotNull(info);
+
+    UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
+    assertNotNull(statusDiagnostics);
   }
 }
