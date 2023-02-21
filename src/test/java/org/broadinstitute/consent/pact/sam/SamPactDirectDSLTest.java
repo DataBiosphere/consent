@@ -10,7 +10,6 @@ import au.com.dius.pact.consumer.PactVerificationResult;
 import au.com.dius.pact.consumer.model.MockProviderConfig;
 import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
-import au.com.dius.pact.core.model.annotations.Pact;
 import java.io.IOException;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -24,7 +23,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- * Modeled on https://github.com/pact-foundation/pact-jvm/blob/ac6a0eae0b18183f6f453eafddb89b90741ace42/consumer/junit/src/test/java/au/com/dius/pact/consumer/junit/examples/DirectDSLConsumerPactTest.java
+ * Modeled on <a href="https://docs.pact.io/implementation_guides/jvm/consumer/junit#using-the-pact-dsl-directly">Using the Pact DSL directly</a>
  *
  * TODO:
  *    This doesn't generate pact files like its companion test class does.
@@ -59,7 +58,6 @@ public class SamPactDirectDSLTest {
     System.setProperty("pact.writer.overwrite", "true");
   }
 
-  @Pact(provider=PROVIDER_NAME, consumer=CONSUMER_NAME)
   public RequestResponsePact createPact() {
     Map<String, String> headers = Map.of("Content-Type", "application/json");
     return ConsumerPactBuilder
