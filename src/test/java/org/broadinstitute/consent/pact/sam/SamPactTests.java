@@ -36,22 +36,20 @@ public class SamPactTests {
   private static final String SELF_DIAGNOSTICS_URL = "/register/user/v2/self/diagnostics";
   private static final String PROVIDER_NAME = "sam-provider";
   private static final String CONSUMER_NAME = "consent-consumer";
-  private static final String SAMPLE_INFO_RESPONSE = """
-      {
-         "adminEnabled": true,
-         "enabled": true,
-         "userEmail": "test.user@gmail.com",
-         "userSubjectId": "1234567890"
-       }""";
+  private static final UserStatusInfo USER_STATUS_INFO =
+    new UserStatusInfo()
+      .setAdminEnabled(true)
+      .setEnabled(true)
+      .setUserEmail("test.user@gmail.com")
+      .setUserSubjectId("1234567890");
 
-  private static final String SAMPLE_INFO_DIAGNOSTICS = """
-      {
-          "adminEnabled": true,
-          "enabled": true,
-          "inAllUsersGroup": true,
-          "inGoogleProxyGroup": true,
-          "tosAccepted": true
-      }""";
+  private static final UserStatusDiagnostics USER_STATUS_DIAGNOSTICS =
+    new UserStatusDiagnostics()
+      .setAdminEnabled(true)
+      .setEnabled(true)
+      .setInAllUsersGroup(true)
+      .setInGoogleProxyGroup(true)
+      .setTosAccepted(true);
 
   private SamDAO samDAO;
 
@@ -90,7 +88,7 @@ public class SamPactTests {
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body(SAMPLE_INFO_RESPONSE)
+          .body(USER_STATUS_INFO.toString())
         // Self Diagnostics:
         .given(" GET Sam Self Diagnostics")
         .uponReceiving(" GET Request: " + SELF_DIAGNOSTICS_URL)
@@ -99,7 +97,7 @@ public class SamPactTests {
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body(SAMPLE_INFO_DIAGNOSTICS)
+          .body(USER_STATUS_DIAGNOSTICS.toString())
         .toPact();
   }
 

@@ -8,7 +8,9 @@ import au.com.dius.pact.consumer.ConsumerPactBuilder;
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.PactVerificationResult;
 import au.com.dius.pact.consumer.model.MockProviderConfig;
+import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.annotations.Pact;
 import java.io.IOException;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -17,7 +19,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.pact.PactTests;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -29,31 +30,26 @@ import org.junit.experimental.categories.Category;
  *    This doesn't generate pact files like its companion test class does.
  */
 @Category(PactTests.class)
-public class SamPactDirectDSLTests {
-
+public class SamPactDirectDSLTest {
 
   private static final String SELF_INFO_URL = "/register/user/v2/self/info";
   private static final String SELF_DIAGNOSTICS_URL = "/register/user/v2/self/diagnostics";
   private static final String PROVIDER_NAME = "sam-provider";
   private static final String CONSUMER_NAME = "consent-consumer";
-  private static final String SAMPLE_INFO_RESPONSE = """
-      {
-         "adminEnabled": true,
-         "enabled": true,
-         "userEmail": "test.user@gmail.com",
-         "userSubjectId": "1234567890"
-       }""";
+  private static final UserStatusInfo USER_STATUS_INFO =
+    new UserStatusInfo()
+      .setAdminEnabled(true)
+      .setEnabled(true)
+      .setUserEmail("test.user@gmail.com")
+      .setUserSubjectId("1234567890");
 
-  private static final String SAMPLE_INFO_DIAGNOSTICS = """
-      {
-          "adminEnabled": true,
-          "enabled": true,
-          "inAllUsersGroup": true,
-          "inGoogleProxyGroup": true,
-          "tosAccepted": true
-      }""";
-
-  private RequestResponsePact pact;
+  private static final UserStatusDiagnostics SAMPLE_INFO_DIAGNOSTICS =
+    new UserStatusDiagnostics()
+      .setAdminEnabled(true)
+      .setEnabled(true)
+      .setInAllUsersGroup(true)
+      .setInGoogleProxyGroup(true)
+      .setTosAccepted(true);
 
   private SamDAO samDAO;
 
@@ -63,10 +59,10 @@ public class SamPactDirectDSLTests {
     System.setProperty("pact.writer.overwrite", "true");
   }
 
-  @Before
-  public void setUp() {
+  @Pact(provider=PROVIDER_NAME, consumer=CONSUMER_NAME)
+  public RequestResponsePact createPact() {
     Map<String, String> headers = Map.of("Content-Type", "application/json");
-    pact = ConsumerPactBuilder
+    return ConsumerPactBuilder
         .consumer(CONSUMER_NAME)
         .hasPactWith(PROVIDER_NAME)
         // Self Info:
@@ -77,7 +73,7 @@ public class SamPactDirectDSLTests {
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body(SAMPLE_INFO_RESPONSE)
+          .body(USER_STATUS_INFO.toString())
         // Self Diagnostics:
         .given(" GET Sam Self Diagnostics")
         .uponReceiving(" GET Request: " + SELF_DIAGNOSTICS_URL)
@@ -86,7 +82,7 @@ public class SamPactDirectDSLTests {
         .willRespondWith()
           .status(200)
           .headers(headers)
-          .body(SAMPLE_INFO_DIAGNOSTICS)
+          .body(SAMPLE_INFO_DIAGNOSTICS.toString())
         .toPact();
   }
 
@@ -98,7 +94,8 @@ public class SamPactDirectDSLTests {
 
   @Test
   public void testSelfInfo() {
-    MockProviderConfig config = MockProviderConfig.createDefault();
+    MockProviderConfig config = MockProviderConfig.createDefault(PactSpecVersion.V3);
+    RequestResponsePact pact = createPact();
     PactVerificationResult result = runConsumerTest(pact, config, (mockServer, context) -> {
       initSamDAO(mockServer);
       AuthUser authUser = new AuthUser();
@@ -118,7 +115,8 @@ public class SamPactDirectDSLTests {
 
   @Test
   public void testSelfDiagnostics() {
-    MockProviderConfig config = MockProviderConfig.createDefault();
+    MockProviderConfig config = MockProviderConfig.createDefault(PactSpecVersion.V3);
+    RequestResponsePact pact = createPact();
     PactVerificationResult result = runConsumerTest(pact, config, (mockServer, context) -> {
       initSamDAO(mockServer);
       AuthUser authUser = new AuthUser();

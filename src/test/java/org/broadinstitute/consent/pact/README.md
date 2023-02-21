@@ -23,8 +23,14 @@ provider can validate that a desired deployment would not break any of the consu
 expectations.  Both the consumer and the provider can gate deployment on availability/honoring of
 the published pact (contract expectations) between the two.
 
-### Sequence Diagram
+### Sequence Diagrams
 
+When developing a consumer test, i.e. a unit test that validates a Consent expectation of some other 
+service, we are operating in a `Consumer` context. When developing a provider test, i.e. a unit test
+that validates an external system's expectation of a Consent-provided behavior, we are operating in
+a `Provider` context
+
+#### Consumer Context
 ```mermaid
 sequenceDiagram
   participant Consent
@@ -35,5 +41,19 @@ sequenceDiagram
   Consent->>Consent: Generate expected Sam behaviors
   Consent->>Consent: Unit test expected behaviors
   Consent->>Broker: Exports contracts to broker
+  Broker->>Broker: Validate contracts
+```
+
+#### Provider Context
+```mermaid
+sequenceDiagram
+  participant Consent
+  participant Broker
+  participant TDR
+  Consent->>Broker: Publishes intended behaviors
+  Broker->>Broker: Validate contracts
+  TDR->>TDR: Generate expected Consent behaviors
+  TDR->>TDR: Unit test expected behaviors
+  TDR->>Broker: Exports contracts to broker
   Broker->>Broker: Validate contracts
 ```
