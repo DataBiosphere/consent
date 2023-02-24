@@ -14,7 +14,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <liquibase.version>4.19.0</liquibase.version>
-    <dropwizard.version>2.1.4</dropwizard.version>
+    <dropwizard.version>2.1.5</dropwizard.version>
     <owl.version>5.5.0</owl.version>
     <postgres.version>42.5.3</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
