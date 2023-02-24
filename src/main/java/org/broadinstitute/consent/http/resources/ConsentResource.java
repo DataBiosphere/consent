@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.net.URI;
@@ -22,16 +21,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.MatchService;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/consent")
@@ -40,14 +38,12 @@ public class ConsentResource extends Resource {
     private final ConsentService consentService;
     private final AuditService auditService;
     private final MatchService matchService;
-    private final UseRestrictionValidator useRestrictionValidator;
     private final UserService userService;
 
     @Inject
-    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService, UseRestrictionValidator useRestrictionValidator) {
+    public ConsentResource(AuditService auditService, UserService userService, ConsentService consentService, MatchService matchService) {
         this.auditService = auditService;
         this.consentService = consentService;
-        this.useRestrictionValidator = useRestrictionValidator;
         this.userService = userService;
         this.matchService = matchService;
     }
@@ -72,9 +68,6 @@ public class ConsentResource extends Resource {
     public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
         try {
             User dacUser = userService.findUserByEmail(user.getEmail());
-            if(rec.getUseRestriction() != null){
-                useRestrictionValidator.validateUseRestriction(new Gson().toJson(rec.getUseRestriction()));
-            }
             if (rec.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");
             }
@@ -99,9 +92,6 @@ public class ConsentResource extends Resource {
     public Response update(@PathParam("id") String id, Consent updated, @Auth AuthUser user) {
         try {
             checkConsentElection(id);
-            if(updated.getUseRestriction() != null) {
-                useRestrictionValidator.validateUseRestriction(new Gson().toJson(updated.getUseRestriction()));
-            }
             if (updated.getDataUse() == null) {
                 throw new IllegalArgumentException("Data Use Object is required.");
             }

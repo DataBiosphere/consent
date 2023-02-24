@@ -7,6 +7,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
+import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -57,14 +58,13 @@ import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
-import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
+import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -73,8 +73,6 @@ import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-
-import javax.ws.rs.client.Client;
 
 public class ConsentModule extends AbstractModule {
 
@@ -192,11 +190,6 @@ public class ConsentModule extends AbstractModule {
     @Provides
     OAuthAuthenticator providesOAuthAuthenticator() {
         return new OAuthAuthenticator(providesClient(), providesSamService());
-    }
-
-    @Provides
-    UseRestrictionValidator providesUseRestrictionValidator() {
-        return new UseRestrictionValidator(providesClient(), config.getServicesConfiguration());
     }
 
     @Provides
