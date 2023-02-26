@@ -271,24 +271,6 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testGetDatasetProperties() {
-        when(datasetDAO.findDatasetPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
-        initService();
-
-        assertTrue(datasetService.getDatasetProperties(1).isEmpty());
-    }
-
-    @Test
-    public void testGetDatasetWithPropertiesById() {
-        int datasetId = 1;
-        when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
-        when(datasetDAO.findDatasetById(datasetId)).thenReturn(getDatasets().get(0));
-        initService();
-
-        assertEquals(datasetService.getDatasetProperties(datasetId), datasetDAO.findDatasetPropertiesByDatasetId(1));
-    }
-
-    @Test
     public void testProcessDatasetProperties() {
         when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
         initService();
@@ -606,7 +588,7 @@ public class DatasetServiceTest {
         User u = new User();
         u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
 
-        when(datasetDAO.getAllDatasets()).thenReturn(List.of(ds1, ds2));
+        when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
 
         initService();
 
@@ -680,7 +662,7 @@ public class DatasetServiceTest {
         user.addRole(admin);
         Dataset dataset = new Dataset();
         dataset.setDataSetId(1);
-        when(datasetDAO.getAllDatasets()).thenReturn(List.of(dataset));
+        when(datasetDAO.findAllDatasets()).thenReturn(List.of(dataset));
         spy(datasetDAO);
         initService();
 
@@ -688,7 +670,7 @@ public class DatasetServiceTest {
         assertFalse(datasets.isEmpty());
         assertEquals(1, datasets.size());
         assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
-        verify(datasetDAO, times(1)).getAllDatasets();
+        verify(datasetDAO, times(1)).findAllDatasets();
         verify(datasetDAO, times(0)).getActiveDatasets();
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }
@@ -716,7 +698,7 @@ public class DatasetServiceTest {
         assertTrue(datasets.contains(d1));
         assertTrue(datasets.contains(d2));
         assertTrue(datasets.contains(d3));
-        verify(datasetDAO, times(0)).getAllDatasets();
+        verify(datasetDAO, times(0)).findAllDatasets();
         verify(datasetDAO, times(1)).getActiveDatasets();
         verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(any());
     }
@@ -739,7 +721,7 @@ public class DatasetServiceTest {
         assertEquals(2, datasets.size());
         assertTrue(datasets.contains(d1));
         assertTrue(datasets.contains(d2));
-        verify(datasetDAO, times(0)).getAllDatasets();
+        verify(datasetDAO, times(0)).findAllDatasets();
         verify(datasetDAO, times(1)).getActiveDatasets();
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
     }

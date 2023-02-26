@@ -303,7 +303,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response getDataset(@PathParam("datasetId") Integer datasetId){
         try {
-            Dataset dataset = datasetService.getDataset(datasetId);
+            Dataset dataset = datasetService.findDatasetById(datasetId);
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
@@ -319,7 +319,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
         try {
-            List<Dataset> datasets = datasetService.getDatasets(datasetIds);
+            List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
 
             Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId).collect(Collectors.toSet());
             if (!foundIds.containsAll(datasetIds)) {

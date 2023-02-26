@@ -49,7 +49,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Disabled Datasets Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello DatasetTemp User!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello DatasetTemp User,"));
         assertTrue(templateString.contains("DS-101"));
         assertTrue(templateString.contains("DS-102"));
         assertTrue(templateString.contains("DS-103"));
@@ -61,7 +61,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Collect Votes Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello CollectTemplate User!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello CollectTemplate User,"));
         assertTrue(templateString.contains("DAR-1"));
     }
 
@@ -71,7 +71,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Case Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello NewCase User!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello NewCase User,"));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Vote Reminder"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Reminder User!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Reminder User,"));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class FreeMarkerTemplateHelperTest {
         Element userNameElement = parsedTemplate.getElementById("userName");
         assertNotNull(userNameElement);
         assertNotNull(userNameElement.text());
-        assertEquals("Hello Admin!", userNameElement.text());
+        assertEquals("Hello Admin,", userNameElement.text());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Cancelled Data Access Request"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
     }
 
     @Test
@@ -110,7 +110,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Admin - DAR Approved Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User,"));
     }
 
     @Test
@@ -119,7 +119,7 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
         assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Closed Dataset Elections"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin!"));
+        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
     }
 
     @Test

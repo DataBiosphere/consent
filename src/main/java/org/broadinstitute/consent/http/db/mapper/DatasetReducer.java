@@ -1,17 +1,17 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>, RowMapperHelper {
 
@@ -92,6 +92,10 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
 
+    if (hasColumn(rowView, "u_user_id", Integer.class)) {
+      User user = rowView.getRow(User.class);
+      dataset.setCreateUser(user);
+    }
 
     // The name property doesn't always come through, add it manually:
     Optional<DatasetProperty> nameProp =

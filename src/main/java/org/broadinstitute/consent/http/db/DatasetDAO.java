@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
@@ -13,15 +12,16 @@ import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
-import org.broadinstitute.consent.http.db.mapper.ImmutablePairOfIntsMapper;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.resources.Resource;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -35,6 +35,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+@RegisterBeanMapper(value = User.class, prefix = "u")
 @RegisterRowMapper(DatasetMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
@@ -58,32 +59,257 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         @Bind("dacId") Integer dacId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, " +
-            " ca.consent_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.dataset_id = :datasetId")
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        WHERE d.dataset_id = :datasetId
+    """)
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
 
     @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.alias = :alias")
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        WHERE d.dataset_id in (<datasetIds>)
+    """)
+    List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
+
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+    """)
+    List<Dataset> findAllDatasets();
+
+    /**
+     * Original implementation of dacs -> datasets is via an association through consent.
+     * Subsequent refactoring moves the dataset to a top level field on the DAC:
+     * User -> UserRoles -> DACs -> Datasets
+     *
+     * @param email User email
+     * @return List of datasets that are visible to the user via DACs.
+     */
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
+        INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.email = :email
+    """)
+    List<Dataset> findDatasetsByAuthUserEmail(@Bind("email") String email);
+
+    /**
+     * Finds all datasets which are assigned to this DAC and which
+     * have been requested for this DAC.
+     *
+     * @param dacId id
+     * @return all datasets associated with DAC
+     */
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        WHERE d.dac_id = :dacId
+        OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)
+    """)
+    List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
+
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        WHERE d.name IS NOT NULL AND d.active = true
+    """)
+    List<Dataset> getActiveDatasets();
+
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery("""
+        SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+            d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.dac_approval,
+            dar_ds_ids.id AS in_use,
+            u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+            u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+            u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+            k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+            ca.consent_id, c.translated_use_restriction,
+            fso.file_storage_object_id AS fso_file_storage_object_id,
+            fso.entity_id AS fso_entity_id,
+            fso.file_name AS fso_file_name,
+            fso.category AS fso_category,
+            fso.gcs_file_uri AS fso_gcs_file_uri,
+            fso.media_type AS fso_media_type,
+            fso.create_date AS fso_create_date,
+            fso.create_user_id AS fso_create_user_id,
+            fso.update_date AS fso_update_date,
+            fso.update_user_id AS fso_update_user_id,
+            fso.deleted AS fso_deleted,
+            fso.delete_user_id AS fso_delete_user_id
+        FROM dataset d
+        LEFT JOIN users u on d.create_user_id = u.user_id
+        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        WHERE d.alias = :alias
+    """)
     Dataset findDatasetByAlias(@Bind("alias") Integer alias);
 
     @UseRowReducer(DatasetReducer.class)
@@ -290,47 +516,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery("SELECT * FROM dictionary d WHERE d.display_order IS NOT NULL ORDER BY display_order")
     List<Dictionary> getMappedFieldsOrderByDisplayOrder();
 
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.object_id IN (<objectIdList>) ")
-    List<Dataset> getDatasetsForObjectIdList(@BindList("objectIdList") List<String> objectIdList);
-
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id ")
-    List<Dataset> getAllDatasets();
-
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.name IS NOT NULL AND d.active = true ")
-    List<Dataset> getActiveDatasets();
-
     @SqlQuery(
         "SELECT ds.* FROM consent_associations ca "
             + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
@@ -346,96 +531,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
     Dataset getDatasetByName(@Bind("name") String name);
 
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.dataset_id in (<datasetIds>) ")
-    List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
-
     @RegisterRowMapper(AssociationMapper.class)
     @SqlQuery(
         "SELECT * FROM consent_associations ca "
             + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
             + "WHERE ds.dataset_id IN (<dataSetIdList>)")
     List<Association> getAssociationsForDatasetIdList(@BindList("dataSetIdList") List<Integer> dataSetIdList);
-
-    /**
-     * User -> UserRoles -> DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * @param email User email
-     * @return List of datasets that are visible to the user via DACs.
-     */
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " INNER JOIN user_role ur ON ur.dac_id = d.dac_id " +
-            " INNER JOIN users u ON ur.user_id = u.user_id AND u.email = :email ")
-    List<Dataset> findDatasetsByAuthUserEmail(@Bind("email") String email);
-
-    /**
-     * DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * @return List of datasets that are not owned by a DAC.
-     */
-    @SqlQuery(
-        "SELECT d.* from dataset d " +
-            " WHERE d.dac_id IS NULL ")
-    List<Dataset> findNonDACDatasets();
-
-    /**
-     * DACs -> Consents -> Consent Associations -> Datasets
-     * Datasets -> DatasetProperties -> Dictionary
-     *
-     * @return Set of datasets, with properties, that are associated to a single DAC.
-     */
-    @Deprecated
-    @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-    @SqlQuery(
-        "SELECT d.*, k.key, p.property_value, c.consent_id, d.dac_id, c.translated_use_restriction " +
-            " FROM dataset d " +
-            " LEFT OUTER JOIN dataset_property p ON p.dataset_id = d.dataset_id " +
-            " LEFT OUTER JOIN dictionary k ON k.key_id = p.property_key " +
-            " INNER JOIN consent_associations a ON a.dataset_id = d.dataset_id " +
-            " INNER JOIN consents c ON c.consent_id = a.consent_id " +
-            " WHERE d.dac_id = :dacId ")
-    Set<DatasetDTO> findDatasetsByDac(@Bind("dacId") Integer dacId);
-
-    /**
-     * Finds all datasets which are assigned to this DAC and which
-     * have been requested for this DAC.
-     *
-     * @param dacId id
-     * @return all datasets associated with DAC
-     */
-    @UseRowReducer(DatasetReducer.class)
-    @SqlQuery("SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.dac_id = :dacId " +
-            " OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)")
-    List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
 
     /**
      * DACs -> Consents -> Consent Associations -> Datasets
@@ -484,17 +585,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             " INNER JOIN consents c ON c.consent_id = a.consent_id " +
             " WHERE d.dac_id IS NOT NULL ")
     Set<DatasetDTO> findDatasetsWithDacs();
-
-    /**
-     * DACs -> Consents -> Consent Associations -> Datasets
-     *
-     * @return List of dataset id and its associated dac id
-     */
-    @RegisterRowMapper(ImmutablePairOfIntsMapper.class)
-    @SqlQuery(
-        "SELECT DISTINCT d.dataset_id, d.dac_id FROM dataset d " +
-            " WHERE d.dac_id IS NOT NULL ")
-    List<Pair<Integer, Integer>> findDatasetAndDacIds();
 
     @SqlUpdate(
         "UPDATE dataset " +
