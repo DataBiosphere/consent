@@ -142,14 +142,14 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         DatasetProperty prop1 = new DatasetProperty();
         prop1.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
         prop1.setPropertyName(RandomStringUtils.randomAlphabetic(10));
-        prop1.setPropertyValue(new Random().nextInt());
         prop1.setPropertyType(DatasetPropertyType.Number);
+        prop1.setPropertyValue(new Random().nextInt());
 
         DatasetProperty prop2 = new DatasetProperty();
         prop2.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
         prop2.setPropertyName(RandomStringUtils.randomAlphabetic(10));
-        prop2.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        prop2.setPropertyType(DatasetPropertyType.String);
+        prop2.setPropertyType(DatasetPropertyType.Date);
+        prop2.setPropertyValueAsString("2000-10-20");
 
         FileStorageObject file1 = new FileStorageObject();
         file1.setMediaType(RandomStringUtils.randomAlphabetic(20));
