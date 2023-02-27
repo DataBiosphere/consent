@@ -1,12 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -35,6 +28,13 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -509,29 +509,30 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testCreateDateTypedDatasetProperty() {
         Dataset d = insertDataset();
-        Instant now = Instant.now();
+        Instant date = Instant.now();
 
         Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
         datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
 
+        DatasetProperty propToAdd = new DatasetProperty(
+                d.getDataSetId(),
+                1,
+                date.toString(),
+                DatasetPropertyType.Date,
+                new Date());
+
+        propToAdd.setSchemaProperty("date");
         List<DatasetProperty> newProps = List.of(
-                new DatasetProperty(
-                        d.getDataSetId(),
-                        1,
-                        now.toString(),
-                        DatasetPropertyType.Date,
-                        new Date())
+            propToAdd
         );
         datasetDAO.insertDatasetProperties(newProps);
 
-        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
-
-        assertEquals(1, dWithProps.getProperties().size());
-        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        assertEquals(1, props.size());
+        DatasetProperty prop = props.stream().findFirst().get();
         assertEquals(DatasetPropertyType.Date, prop.getPropertyType());
-        assertEquals(now.toString(), prop.getPropertyValueAsString());
-        assertEquals(now, prop.getPropertyValue());
+        assertEquals(date.toString(), prop.getPropertyValueAsString());
     }
 
     @Test

@@ -1,25 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -38,14 +19,34 @@ import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class DatasetService {
 
@@ -113,14 +114,14 @@ public class DatasetService {
     }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
-        if(Objects.isNull(dacIds) || dacIds.isEmpty()) {
+        if (CollectionUtils.isEmpty(dacIds)) {
             throw new BadRequestException("No dataset IDs provided");
         }
         return datasetDAO.findDatasetsByDacIds(dacIds);
     }
 
     public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {
-        if(Objects.isNull(dacIds) || dacIds.isEmpty()) {
+        if(CollectionUtils.isEmpty(dacIds)) {
             throw new BadRequestException("No dataset IDs provided");
         }
         return datasetDAO.findDatasetListByDacIds(dacIds);
@@ -157,9 +158,9 @@ public class DatasetService {
     public Consent createConsentForDataset(DatasetDTO dataset) {
         String consentId = UUID.randomUUID().toString();
         Optional<DatasetPropertyDTO> nameProp = dataset.getProperties()
-              .stream()
-              .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
-              .findFirst();
+                .stream()
+                .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
+                .findFirst();
         // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
         // In our world, we'll use that dataset name if provided, or the alias.
         String groupName = nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
@@ -193,23 +194,23 @@ public class DatasetService {
 
     private boolean isConsentDataUseManualReview(DataUse dataUse) {
         return Objects.nonNull(dataUse.getOther()) ||
-              (Objects.nonNull(dataUse.getPopulationRestrictions()) && !dataUse
-                    .getPopulationRestrictions().isEmpty()) ||
-              (Objects.nonNull(dataUse.getAddiction()) && dataUse.getAddiction()) ||
-              (Objects.nonNull(dataUse.getEthicsApprovalRequired()) && dataUse
-                    .getEthicsApprovalRequired()) ||
-              (Objects.nonNull(dataUse.getIllegalBehavior()) && dataUse.getIllegalBehavior()) ||
-              (Objects.nonNull(dataUse.getManualReview()) && dataUse.getManualReview()) ||
-              (Objects.nonNull(dataUse.getOtherRestrictions()) && dataUse.getOtherRestrictions()) ||
-              (Objects.nonNull(dataUse.getPopulationOriginsAncestry()) && dataUse
-                    .getPopulationOriginsAncestry()) ||
-              (Objects.nonNull(dataUse.getPsychologicalTraits()) && dataUse
-                    .getPsychologicalTraits()) ||
-              (Objects.nonNull(dataUse.getSexualDiseases()) && dataUse.getSexualDiseases()) ||
-              (Objects.nonNull(dataUse.getStigmatizeDiseases()) && dataUse.getStigmatizeDiseases())
-              ||
-              (Objects.nonNull(dataUse.getVulnerablePopulations()) && dataUse
-                    .getVulnerablePopulations());
+                (Objects.nonNull(dataUse.getPopulationRestrictions()) && !dataUse
+                        .getPopulationRestrictions().isEmpty()) ||
+                (Objects.nonNull(dataUse.getAddiction()) && dataUse.getAddiction()) ||
+                (Objects.nonNull(dataUse.getEthicsApprovalRequired()) && dataUse
+                        .getEthicsApprovalRequired()) ||
+                (Objects.nonNull(dataUse.getIllegalBehavior()) && dataUse.getIllegalBehavior()) ||
+                (Objects.nonNull(dataUse.getManualReview()) && dataUse.getManualReview()) ||
+                (Objects.nonNull(dataUse.getOtherRestrictions()) && dataUse.getOtherRestrictions()) ||
+                (Objects.nonNull(dataUse.getPopulationOriginsAncestry()) && dataUse
+                        .getPopulationOriginsAncestry()) ||
+                (Objects.nonNull(dataUse.getPsychologicalTraits()) && dataUse
+                        .getPsychologicalTraits()) ||
+                (Objects.nonNull(dataUse.getSexualDiseases()) && dataUse.getSexualDiseases()) ||
+                (Objects.nonNull(dataUse.getStigmatizeDiseases()) && dataUse.getStigmatizeDiseases())
+                ||
+                (Objects.nonNull(dataUse.getVulnerablePopulations()) && dataUse
+                        .getVulnerablePopulations());
     }
 
     public DatasetDTO createDatasetWithConsent(DatasetDTO dataset, String name, Integer userId) throws Exception {
@@ -267,25 +268,25 @@ public class DatasetService {
 
         List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
         List<DatasetProperty> updateDatasetProperties = processDatasetProperties(datasetId,
-              updateDatasetPropertyDTOs);
+                updateDatasetPropertyDTOs);
 
         List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
-              .filter(p -> oldProperties.stream()
-                    .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
-              .collect(Collectors.toList());
+                .filter(p -> oldProperties.stream()
+                        .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
+                .collect(Collectors.toList());
 
         List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
-              .filter(p -> oldProperties.stream()
-                    .noneMatch(p::equals))
-              .collect(Collectors.toList());
+                .filter(p -> oldProperties.stream()
+                        .noneMatch(p::equals))
+                .collect(Collectors.toList());
 
         List<DatasetProperty> propertiesToDelete = oldProperties.stream()
-              .filter(op -> updateDatasetProperties.stream()
-                    .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
-              ).collect(Collectors.toList());
+                .filter(op -> updateDatasetProperties.stream()
+                        .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
+                ).collect(Collectors.toList());
 
         if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-              .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
+                .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
             return Optional.empty();
         }
 
@@ -310,9 +311,9 @@ public class DatasetService {
     private void updateDatasetProperties(List<DatasetProperty> updateProperties,
                                          List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
         updateProperties.forEach(p -> datasetDAO
-              .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue().toString()));
+                .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(), p.getPropertyValue().toString()));
         deleteProperties.forEach(
-              p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
+                p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
         datasetDAO.insertDatasetProperties(addProperties);
     }
 
@@ -333,7 +334,7 @@ public class DatasetService {
      * This method will create new, update existing, and delete unused properties for a dataset.
      * It will also create new Dictionary keys for properties where keys do not exist.
      *
-     * @param datasetId The Dataset ID
+     * @param datasetId  The Dataset ID
      * @param properties List of DatasetProperty objects
      * @return List of updated DatasetProperty objects
      * @throws SQLException The Exception
@@ -348,40 +349,40 @@ public class DatasetService {
         Date now = new Date();
         List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-              .collect(Collectors.toList());
+                .collect(Collectors.toList());
 
         return properties.stream()
-              .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
-              .map(p ->
-                    new DatasetProperty(datasetId,
-                            dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                            p.getPropertyValue(),
-                            DatasetPropertyType.String,
-                            now)
-              )
-              .collect(Collectors.toList());
+                .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName().equals(DATASET_NAME_KEY))
+                .map(p ->
+                        new DatasetProperty(datasetId,
+                                dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
+                                p.getPropertyValue(),
+                                DatasetPropertyType.String,
+                                now)
+                )
+                .collect(Collectors.toList());
     }
 
     public List<DatasetPropertyDTO> findInvalidProperties(List<DatasetPropertyDTO> properties) {
         List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
         List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-              .collect(Collectors.toList());
+                .collect(Collectors.toList());
 
         return properties.stream()
-              .filter(p -> !keys.contains(p.getPropertyName()))
-              .collect(Collectors.toList());
+                .filter(p -> !keys.contains(p.getPropertyName()))
+                .collect(Collectors.toList());
     }
 
     public List<DatasetPropertyDTO> findDuplicateProperties(List<DatasetPropertyDTO> properties) {
         Set<String> uniqueKeys = properties.stream()
-              .map(DatasetPropertyDTO::getPropertyName)
-              .collect(Collectors.toSet());
+                .map(DatasetPropertyDTO::getPropertyName)
+                .collect(Collectors.toSet());
         if (uniqueKeys.size() != properties.size()) {
             List<DatasetPropertyDTO> allDuplicateProperties = new ArrayList<>();
             uniqueKeys.forEach(key -> {
                 List<DatasetPropertyDTO> propertiesPerKey = properties.stream()
-                      .filter(property -> property.getPropertyName().equals(key))
-                      .collect(Collectors.toList());
+                        .filter(property -> property.getPropertyName().equals(key))
+                        .collect(Collectors.toList());
                 if (propertiesPerKey.size() > 1) {
                     allDuplicateProperties.addAll(propertiesPerKey);
                 }
@@ -474,11 +475,11 @@ public class DatasetService {
         Dataset datasetReturn = dataset;
         //Only update and fetch the dataset if it hasn't already been approved
         //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
-        if(Objects.isNull(currentApprovalState) || !currentApprovalState) {
+        if (Objects.isNull(currentApprovalState) || !currentApprovalState) {
             datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
             datasetReturn = datasetDAO.findDatasetById(datasetId);
         } else {
-            if(Objects.isNull(approval) || !approval) {
+            if (Objects.isNull(approval) || !approval) {
                 throw new IllegalArgumentException("Dataset is already approved");
             }
         }
@@ -515,11 +516,11 @@ public class DatasetService {
         String consentId = dataset.getConsentId();
         Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
         return consentIdMatch || dataset.getProperties()
-            .stream()
-            .filter(p -> Objects.nonNull(p.getPropertyValue()))
-            .anyMatch(p -> {
-                return p.getPropertyValue().toLowerCase().contains(term);
-            });
+                .stream()
+                .filter(p -> Objects.nonNull(p.getPropertyValue()))
+                .anyMatch(p -> {
+                    return p.getPropertyValue().toLowerCase().contains(term);
+                });
     }
 
     private boolean userHasRole(String roleName, Integer dacUserId) {
@@ -534,9 +535,9 @@ public class DatasetService {
             if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
                 List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
                 return Stream
-                    .concat(chairDatasets.stream(), datasets.stream())
-                    .distinct()
-                    .collect(Collectors.toList());
+                        .concat(chairDatasets.stream(), datasets.stream())
+                        .distinct()
+                        .collect(Collectors.toList());
             }
             return datasets;
         }
@@ -544,22 +545,5 @@ public class DatasetService {
 
     public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
         return datasetDAO.findDatasetsByIdList(datasetIds);
-    }
-
-    /**
-     * This method takes an instance of a dataset registration schema and creates datasets from it.
-     * There will be one dataset per ConsentGroup in the dataset.
-     * TODO: This is a stub and will be fleshed out in future PRs.
-     *
-     * @param registration The DatasetRegistrationSchemaV1.yaml
-     * @param user The User creating these datasets
-     * @param files Map of files, where the key is the name of the field
-     * @return List of created Datasets from the provided registration schema
-     */
-    public List<Dataset> createDatasetsFromRegistration(
-        DatasetRegistrationSchemaV1 registration,
-        User user,
-        Map<String, FormDataBodyPart> files) {
-        return List.of();
     }
 }

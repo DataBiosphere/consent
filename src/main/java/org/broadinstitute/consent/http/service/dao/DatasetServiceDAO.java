@@ -2,14 +2,18 @@ package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -27,6 +31,69 @@ public class DatasetServiceDAO {
         this.datasetDAO = datasetDAO;
     }
 
+    public record DatasetInsert(String name,
+                                Integer dacId,
+                                DataUse dataUse,
+                                Integer userId,
+                                List<DatasetProperty> props,
+                                List<FileStorageObject> files) {}
+
+    public List<Integer> insertDatasets(List<DatasetInsert> inserts) throws SQLException {
+        final List<Integer> createdDatasets = new ArrayList<>();
+
+        jdbi.useHandle(
+            handle -> {
+                // By default, new connections are set to auto-commit which breaks our rollback strategy.
+                // Turn that off for this connection. This will not affect existing or new connections and
+                // only applies to the current one in this handle.
+                handle.getConnection().setAutoCommit(false);
+
+                for (DatasetInsert insert : inserts) {
+                    Integer datasetId = executeInsertDatasetWithFiles(
+                            handle,
+                            insert.name(),
+                            insert.dacId(),
+                            insert.dataUse(),
+                            insert.userId(),
+                            insert.props(),
+                            insert.files());
+
+                    createdDatasets.add(datasetId);
+                }
+
+                handle.commit();
+            }
+        );
+        return createdDatasets;
+    }
+
+    public Integer executeInsertDatasetWithFiles(Handle handle,
+                                                 String name,
+                                                 Integer dacId,
+                                                 DataUse dataUse,
+                                                 Integer userId,
+                                                 List<DatasetProperty> properties,
+                                                 List<FileStorageObject> uploadedFiles) {
+        // insert dataset
+        Integer datasetId = datasetDAO.insertDataset(
+                name,
+                new Timestamp(new Date().getTime()),
+                userId,
+                null,
+                false,
+                dataUse.toString(),
+                dacId
+        );
+
+        // insert properties
+        executeSynchronizeDatasetProperties(handle, datasetId, properties);
+
+        // files
+        executeInsertFilesForDataset(handle, uploadedFiles, userId, datasetId);
+
+        return datasetId;
+    }
+
     public List<DatasetProperty> synchronizeDatasetProperties(Integer datasetId, List<DatasetProperty> properties) throws SQLException {
         jdbi.useHandle(
                 handle -> {
@@ -34,24 +101,45 @@ public class DatasetServiceDAO {
                     // Turn that off for this connection. This will not affect existing or new connections and
                     // only applies to the current one in this handle.
                     handle.getConnection().setAutoCommit(false);
-                    // 1. Generate inserts for missing dictionary terms
-                    // 2. Generate inserts for new dataset properties
-                    // 3. Generate updates for existing dataset properties
-                    // 4. Generate deletes for outdated dataset properties
-                    List<Update> updates = new ArrayList<>(generateDictionaryInserts(handle, properties));
-                    // We need to know existing properties for all property operations
-                    Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
-                    updates.addAll(generatePropertyInserts(handle, datasetId, properties, existingProps));
-                    updates.addAll(generatePropertyUpdates(handle, datasetId, properties, existingProps));
-                    updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
-                    updates.forEach(Update::execute);
+                    executeSynchronizeDatasetProperties(handle, datasetId, properties);
                     handle.commit();
                 }
         );
         return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
+    private void executeInsertFilesForDataset(Handle handle, List<FileStorageObject> files, Integer userId, Integer datasetId) {
+        FileStorageObjectDAO fileStorageObjectDAO = handle.attach(FileStorageObjectDAO.class);
+        for (FileStorageObject file : files) {
+            fileStorageObjectDAO.insertNewFile(
+                    file.getFileName(),
+                    file.getCategory().getValue(),
+                    file.getBlobId().toGsUtilUri(),
+                    file.getMediaType(),
+                    datasetId.toString(),
+                    userId,
+                    Instant.now()
+            );
+        }
+    }
+
     // Helper methods to generate Dictionary inserts
+    private void executeSynchronizeDatasetProperties(Handle handle, Integer datasetId, List<DatasetProperty> properties) {
+        List<Update> updates = new ArrayList<>(generateDictionaryInserts(handle, properties));
+        // We need to know existing properties for all property operations
+        Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
+
+        // 1. Generate inserts for missing dictionary terms
+        // 2. Generate inserts for new dataset properties
+        updates.addAll(generatePropertyInserts(handle, datasetId, properties, existingProps));
+
+        // 3. Generate updates for existing dataset properties
+        updates.addAll(generatePropertyUpdates(handle, datasetId, properties, existingProps));
+
+        // 4. Generate deletes for outdated dataset properties
+        updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
+        updates.forEach(Update::execute);
+    }
 
     private List<Update> generateDictionaryInserts(Handle handle, List<DatasetProperty> properties) {
         List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();

@@ -120,6 +120,10 @@ public class DatasetProperty {
         this.propertyValue = propertyValue;
     }
 
+    public void setPropertyValueAsString(String propertyValue) {
+        this.propertyValue = propertyType.coerce(propertyValue);
+    }
+
     public Date getCreateDate() {
         return createDate;
     }

@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -534,6 +535,17 @@ public class ConsentModule extends AbstractModule {
                 providesAcknowledgementDAO()
         );
     }
+
+    @Provides
+    DatasetRegistrationService providesDatasetRegistrationService() {
+        return new DatasetRegistrationService(
+                providesDatasetDAO(),
+                providesDacDAO(),
+                providesDatasetServiceDAO(),
+                providesGCSService()
+        );
+    }
+
     @Provides
     UserServiceDAO providesUserServiceDAO() {
         return new UserServiceDAO(
