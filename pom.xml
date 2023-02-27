@@ -16,7 +16,7 @@
     <liquibase.version>4.19.0</liquibase.version>
     <dropwizard.version>2.1.5</dropwizard.version>
     <owl.version>5.5.0</owl.version>
-    <postgres.version>42.5.3</postgres.version>
+    <postgres.version>42.5.4</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
