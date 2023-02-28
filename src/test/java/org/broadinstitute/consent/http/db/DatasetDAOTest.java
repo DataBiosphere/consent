@@ -1,16 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import com.google.gson.JsonObject;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
@@ -22,12 +12,24 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -818,6 +820,19 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dataset.getDataSetId(), updatedDatasetAfterApprovalFalse.getDataSetId());
         assertFalse(updatedDatasetAfterApprovalFalse.getDacApproval());
 
+    }
+
+    @Test
+    public void testInsertDatasetAudit() {
+        Dataset d = createDataset();
+        DatasetAudit audit = new DatasetAudit(
+                d.getDataSetId(),
+                "objectid",
+                "name",
+                new Date(),
+                false, d.getCreateUserId(),
+                "action");
+        datasetDAO.insertDatasetAudit(audit);
     }
 
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
