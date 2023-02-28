@@ -18,6 +18,7 @@
     <owl.version>5.5.0</owl.version>
     <postgres.version>42.5.4</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
+    <surefire.version>3.0.0-M9</surefire.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
@@ -180,12 +181,18 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>${surefire.version}</version>
         <configuration>
-          <!-- @{argLine} is necessary here so that that the jacoco:prepare-agent output is included for tests -->
-          <!-- illegal-access=permit required for java 11 -->
-          <argLine>@{argLine} -Xmx1024m -Xverify:none -XX:TieredStopAtLevel=1 --illegal-access=permit</argLine>
+          <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
+          <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <plugin>
