@@ -1,0 +1,14 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="connorlbark" id="2023-02-28-fix-dataset-audit">
+
+        <renameColumn tableName="dataset_audit"
+                      oldColumnName="datasetid"
+                      newColumnName="dataset_id"/>
+        <renameColumn tableName="dataset_audit"
+                      oldColumnName="objectid"
+                      newColumnName="object_id"/>
+
+    </changeSet>
+</databaseChangeLog>
