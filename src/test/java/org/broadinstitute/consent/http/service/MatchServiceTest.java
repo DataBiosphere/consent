@@ -154,7 +154,7 @@ public class MatchServiceTest {
         when(response.getStatus()).thenReturn(200);
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-        when(clientMock.target(config.getMatchURL())).thenReturn(target);
+        when(clientMock.target(config.getMatchURL_v2())).thenReturn(target);
         spy(datasetDAO);
         initService();
 
