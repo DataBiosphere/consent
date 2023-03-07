@@ -26,15 +26,13 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.matching.DataUseRequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.client.ClientProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class MatchService {
+public class MatchService implements ConsentLogger {
     private final MatchDAO matchDAO;
     private final ConsentDAO consentDAO;
     private final UseRestrictionConverter useRestrictionConverter;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DatasetDAO datasetDAO;
     private final WebTarget matchServiceTargetV2;
@@ -125,7 +123,7 @@ public class MatchService {
                     matches.add(singleEntitiesMatchV2(dataset, dar));
                 } catch (Exception e) {
                     String message = "Error finding single match for purpose: " + dar.getReferenceId();
-                    logger.error(message);
+                    logWarn(message);
                     matches.add(new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of(message)));
                 }
             }
@@ -136,13 +134,17 @@ public class MatchService {
     public List<Match> createMatchesForConsent(String consentId) {
         List<Match> matches = new ArrayList<>();
         List<Dataset> datasets = datasetDAO.getDatasetsForConsent(consentId);
+        if (datasets.isEmpty()) {
+            logWarn("Error finding  datasets for consent: " + consentId);
+            return matches;
+        }
         datasets.forEach(d -> {
             List<DataAccessRequest> dars = findRelatedDars(List.of(d.getDataSetId()));
             dars.forEach(dar -> {
                 try {
                     matches.add(singleEntitiesMatchV2(d, dar));
                 } catch (Exception e) {
-                    logger.error("Error finding  matches for consent: " + consentId);
+                    logWarn("Error finding  matches for consent: " + consentId);
                     matches.add(new Match(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of()));
                 }
             });
@@ -152,11 +154,11 @@ public class MatchService {
 
     private Match singleEntitiesMatchV2(Dataset dataset, DataAccessRequest dar) {
         if (Objects.isNull(dataset)) {
-            logger.error("Dataset is null");
+            logWarn("Dataset is null");
             throw new IllegalArgumentException("Consent cannot be null");
         }
         if (Objects.isNull(dar)) {
-            logger.error("Data Access Request is null");
+            logWarn("Data Access Request is null");
             throw new IllegalArgumentException("Data Access Request cannot be null");
         }
         Match match;
