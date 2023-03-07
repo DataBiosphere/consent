@@ -70,33 +70,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
             );
     }
 
-
-    private void mockDarTranslateSuccess() {
-        client.when(
-            request()
-                .withMethod("POST")
-                .withPath("/schemas/data-use/dar/translate")
-        ).respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("{ \"type\": \"everything\" }")
-        );
-    }
-
-    private void mockDarTranslateFailure() {
-        client.when(
-            request()
-                .withMethod("POST")
-                .withPath("/schemas/data-use/dar/translate")
-        ).respond(
-            response()
-                .withStatusCode(500)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("Exception")
-        );
-    }
-
     public ServicesConfiguration config() {
         ServicesConfiguration config = new ServicesConfiguration();
         config.setLocalURL("http://localhost:8180/");
