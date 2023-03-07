@@ -52,7 +52,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
@@ -530,11 +529,9 @@ public class DatasetServiceTest {
         DatasetDTO dataSetDTO = getDatasetDTO();
         DataUse dataUse = new DataUseBuilder().build();
         dataSetDTO.setDataUse(dataUse);
-        UseRestriction useRestriction = UseRestriction.parse("{\"type\":\"everything\"}");
         Consent consent = new Consent();
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
-        when(useRestrictionConverter.parseUseRestriction(any(), any())).thenReturn(useRestriction);
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
         initService();
 

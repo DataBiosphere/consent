@@ -14,10 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.junit.Test;
 
@@ -47,7 +45,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(Arrays.asList(
                 consent1.getConsentId(),
                 consent2.getConsentId()));
-        Collection<String> ids = consents.stream().map(Consent::getConsentId).collect(Collectors.toList());
+        Collection<String> ids = consents.stream().map(Consent::getConsentId).toList();
         assertNotNull(consents);
         assertFalse(consents.isEmpty());
         assertEquals(2, consents.size());
@@ -108,7 +106,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consentDAO.updateConsent(
                 consent.getConsentId(),
                 false,
-                consent.getUseRestriction().toString(),
                 consent.getDataUse().toString(),
                 consent.getDataUseLetter(),
                 "something else",
@@ -267,7 +264,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consentDAO.updateConsent(
                 consent2.getConsentId(),
                 true,
-                consent2.getUseRestriction().toString(),
                 consent2.getDataUse().toString(),
                 consent2.getDataUseLetter(),
                 consent2.getName(),
@@ -306,7 +302,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consentDAO.updateConsent(
                 consent1.getConsentId(),
                 consent1.getRequiresManualReview(),
-                consent1.getUseRestriction().toString(),
                 consent1.getDataUse().toString(),
                 consent1.getDataUseLetter(),
                 consent1.getName(),
@@ -320,7 +315,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consentDAO.updateConsent(
                 consent2.getConsentId(),
                 consent2.getRequiresManualReview(),
-                consent2.getUseRestriction().toString(),
                 consent2.getDataUse().toString(),
                 consent2.getDataUseLetter(),
                 consent2.getName(),

@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.joda.time.DateTimeField;
 import org.joda.time.Instant;
 import org.junit.Assert;
@@ -56,7 +55,7 @@ public class ConsentServiceTest {
                 .thenReturn(null);
         when(consentDAO.checkConsentById("test consent"))
                 .thenReturn("test consent");
-        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(consentDAO).insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         when(consentDAO.findConsentById(any()))
                 .thenReturn(testConsent);
         initService();
@@ -77,7 +76,7 @@ public class ConsentServiceTest {
         testConsent.setSortDate(prevTimestamp);
 
         doNothing().when(consentDAO).updateConsent("test consent", testConsent.getRequiresManualReview(),
-                testConsent.getUseRestriction().toString(), testConsent.getDataUse().toString(),
+                testConsent.getDataUse().toString(),
                 testConsent.getDataUseLetter(), testConsent.getName(), testConsent.getDulName(), testConsent.getLastUpdate(),
                 testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(), testConsent.getGroupName(), true);
         when(consentDAO.checkConsentById("test consent"))
@@ -134,7 +133,7 @@ public class ConsentServiceTest {
     }
 
     private Consent getTestConsent() {
-        Consent consent = new Consent(false, new Everything(), "data use",
+        Consent consent = new Consent(false, "data use",
                 "test consent", new Timestamp(new Date().getTime()), new Timestamp(new Date().getTime()),
                 new Timestamp(new Date().getTime()), "test consent group");
         consent.setDataUse(new DataUse());

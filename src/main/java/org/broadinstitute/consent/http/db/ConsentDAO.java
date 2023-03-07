@@ -44,13 +44,12 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
 
     @SqlUpdate("INSERT INTO consents " +
-            "(consent_id, requires_manual_review, use_restriction, data_use, data_use_letter, active, name, dul_name," +
+            "(consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name," +
             " create_date, sort_date, translated_use_restriction, group_name)" +
-            " VALUES (:consentId, :requiresManualReview, :useRestriction, :dataUse, :dataUseLetter, true, :name," +
+            " VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name," +
             " :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)")
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
-                       @Bind("useRestriction") String useRestriction,
                        @Bind("dataUse") String dataUse,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,
@@ -65,7 +64,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
     @SqlUpdate("UPDATE consents SET " +
             " requires_manual_review = :requiresManualReview, " +
-            " use_restriction = :useRestriction, " +
             " data_use = :dataUse, " +
             " data_use_letter = :dataUseLetter, " +
             " name = :name, " +
@@ -79,7 +77,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
             " AND active = true ")
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
-                       @Bind("useRestriction") String useRestriction,
                        @Bind("dataUse") String dataUse,
                        @Bind("dataUseLetter") String dataUseLetter,
                        @Bind("name") String name,

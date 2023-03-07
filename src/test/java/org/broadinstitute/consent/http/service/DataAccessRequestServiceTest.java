@@ -420,7 +420,6 @@ public class DataAccessRequestServiceTest {
         Consent consent = new Consent();
         consent.setConsentId("CONS-1");
         consent.setName("Consent 1");
-        consent.setUseRestriction(new Everything());
         consent.setTranslatedUseRestriction(new Everything().toString());
         when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
         initService();

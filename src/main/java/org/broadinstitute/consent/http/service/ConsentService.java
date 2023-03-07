@@ -53,7 +53,7 @@ public class ConsentService {
             rec.setTranslatedUseRestriction(translatedUseRestriction);
         }
         consentDAO.insertConsent(id, rec.getRequiresManualReview(),
-                rec.getUseRestriction().toString(), rec.getDataUse().toString(),
+                rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
                 rec.getTranslatedUseRestriction(), rec.getGroupName());
         return consentDAO.findConsentById(id);
@@ -68,7 +68,7 @@ public class ConsentService {
             rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(), DataUseTranslationType.DATASET));
         }
         consentDAO.updateConsent(id, rec.getRequiresManualReview(),
-                rec.getUseRestriction().toString(), rec.getDataUse().toString(),
+                rec.getDataUse().toString(),
                 rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(),
                 rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true);
         return consentDAO.findConsentById(id);

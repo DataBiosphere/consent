@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-
 import java.sql.Timestamp;
 
 /**
@@ -27,9 +25,6 @@ public class Consent {
 
     @JsonProperty
     public String dataUseLetter;
-
-    @JsonProperty
-    public UseRestriction useRestriction;
 
     @JsonProperty
     public String name;
@@ -61,29 +56,14 @@ public class Consent {
     public Consent() {
     }
 
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
+    public Consent(Boolean requiresManualReview, String dataUseLetter,
                    String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName) {
         this.requiresManualReview = requiresManualReview;
-        this.useRestriction = useRestriction;
         this.dataUseLetter = dataUseLetter;
         this.name = name;
         this.createDate = createDate;
         this.sortDate = sortDate;
         this.lastUpdate = lastUpdate;
-        this.groupName = groupName;
-    }
-
-    public Consent(Boolean requiresManualReview, UseRestriction useRestriction, String dataUseLetter,
-                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName,
-                   String lastElectionStatus) {
-        this.requiresManualReview = requiresManualReview;
-        this.useRestriction = useRestriction;
-        this.dataUseLetter = dataUseLetter;
-        this.name = name;
-        this.createDate = createDate;
-        this.sortDate = sortDate;
-        this.lastUpdate = lastUpdate;
-        this.lastElectionStatus = lastElectionStatus;
         this.groupName = groupName;
     }
 
@@ -135,16 +115,6 @@ public class Consent {
     @JsonProperty
     public void setRequiresManualReview(Boolean requiresManualReview) {
         this.requiresManualReview = requiresManualReview;
-    }
-
-    @JsonProperty
-    public UseRestriction getUseRestriction() {
-        return useRestriction;
-    }
-
-    @JsonProperty
-    public void setUseRestriction(UseRestriction useRestriction) {
-        this.useRestriction = useRestriction;
     }
 
     @JsonProperty

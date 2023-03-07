@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -26,11 +24,6 @@ public class ConsentMapper implements RowMapper<Consent> {
     consent.setRequiresManualReview(r.getBoolean("requires_manual_review"));
     consent.setDataUseLetter(r.getString("data_use_letter"));
     consent.setDulName(r.getString("dul_name"));
-    try {
-      consent.setUseRestriction(UseRestriction.parse(r.getString("use_restriction")));
-    } catch (IOException e) {
-      throw new SQLException(e);
-    }
     consent.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
     consent.setName(r.getString("name"));
     consent.setCreateDate(r.getTimestamp("create_date"));

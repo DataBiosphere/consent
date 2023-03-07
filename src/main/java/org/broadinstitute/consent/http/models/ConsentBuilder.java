@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
-
 import java.sql.Timestamp;
 
 /**
@@ -40,11 +38,6 @@ public class ConsentBuilder {
 
     public ConsentBuilder setRequiresManualReview(Boolean requiresManualReview) {
         this.consent.setRequiresManualReview(requiresManualReview);
-        return this;
-    }
-
-    public ConsentBuilder setUseRestriction(UseRestriction useRestriction) {
-        this.consent.setUseRestriction(useRestriction);
         return this;
     }
 
