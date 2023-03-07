@@ -104,7 +104,8 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlUpdate("""
         UPDATE consents
         SET sort_date = :sortDate
-        WHERE consent_id = :consentId AND active = true
+        WHERE consent_id = :consentId
+        AND active = true
         """)
     void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);
 
