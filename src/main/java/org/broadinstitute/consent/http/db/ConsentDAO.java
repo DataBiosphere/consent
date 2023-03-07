@@ -43,11 +43,13 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     Consent findConsentByName(@Bind("name") String name);
 
 
-    @SqlUpdate("INSERT INTO consents " +
-            "(consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name," +
-            " create_date, sort_date, translated_use_restriction, group_name)" +
-            " VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name," +
-            " :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)")
+    @SqlUpdate("""
+        INSERT INTO consents
+            (consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name,
+            create_date, sort_date, translated_use_restriction, group_name)
+            VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name,
+            :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)
+        """)
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("dataUse") String dataUse,
