@@ -120,8 +120,7 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     @SqlQuery("""
         SELECT ds.object_id
         FROM consent_associations ca
-        INNER JOIN dataset ds
-        ON ds.dataset_id = ca.dataset_id
+        INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id
         WHERE ca.consent_id = :consentId
         AND ca.association_type = :associationType
         AND ds.object_id IS NOT NULL
