@@ -462,7 +462,6 @@ public class ConsentModule extends AbstractModule {
                 config.getServicesConfiguration(),
                 providesConsentDAO(),
                 providesMatchDAO(),
-                providesElectionDAO(),
                 providesDataAccessRequestDAO(),
                 providesDatasetDAO(),
                 providesUseRestrictionConverter());

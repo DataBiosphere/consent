@@ -9,10 +9,6 @@ properties:
   dataUseLetter:
     type: string
     description: The URL of the saved file.
-  useRestriction:
-    type: object
-    description: The UseRestriction of this consent. Used to match against another entities.
-    example: {"type":"everything"}
   dataUse:
     type: object
     description: The Data Use question/answer set for this consent.

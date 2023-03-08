@@ -44,10 +44,6 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.grammar.And;
-import org.broadinstitute.consent.http.models.grammar.Named;
-import org.broadinstitute.consent.http.models.grammar.Not;
-import org.broadinstitute.consent.http.models.grammar.UseRestriction;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -105,11 +101,6 @@ public class ElectionServiceTest {
 
     @BeforeClass
     public static void setUpClass() {
-        UseRestriction sampleUseRestriction1 = new And(
-                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000015")),
-                new Not(new Named("http://purl.obolibrary.org/obo/DUO_0000011")),
-                new Not(new Named("http://www.broadinstitute.org/ontologies/DUOS/control"))
-        );
         String referenceId = "CONS-1";
 
         sampleLibraryCard = new LibraryCard();
@@ -141,7 +132,7 @@ public class ElectionServiceTest {
         sampleUserMember = new User(2, "test@test.com", "Test User", new Date());
         sampleUserMember.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
 
-        sampleConsent1 = new Consent(false, sampleUseRestriction1, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
+        sampleConsent1 = new Consent(false, "A data use letter", "sampleConsent1", null, null, null, "Group Name Test");
         sampleConsent1.setConsentId(sampleDataset1.getConsentName());
 
         sampleDataAccessRequest1 = new DataAccessRequest();

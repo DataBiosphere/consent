@@ -1,6 +1,23 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.google.gson.JsonObject;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
@@ -19,24 +36,6 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -795,7 +794,7 @@ public class DatasetDAOTest extends DAOTestHelper {
             RandomStringUtils.randomAlphabetic(10), true, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
         consentDAO.insertConsent(consentId, false, "", null,
-            null, RandomStringUtils.randomAlphabetic(10), null, new Date(), new Date(),
+            RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
             null, RandomStringUtils.randomAlphabetic(10));
         consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10), datasetId);
 
@@ -901,8 +900,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
             false,
-            """
-            {"type":"everything"}""",
             """
             {"generalUse":true}""",
             "dul",
