@@ -78,12 +78,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
     }
 
     /*
-     * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid restriction
-     */
-    /*
-     * Test that when the UseRestrictionConverter makes a failed call to the ontology service, a null is returned.
-     */
-    /*
      * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
      */
     @Test
