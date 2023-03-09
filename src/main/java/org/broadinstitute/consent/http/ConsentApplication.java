@@ -87,6 +87,7 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -99,7 +100,6 @@ import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
-import org.broadinstitute.consent.http.service.UseRestrictionValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
@@ -187,7 +187,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
         final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
-        final UseRestrictionValidator useRestrictionValidator = injector.getProvider(UseRestrictionValidator.class).get();
         final MatchService matchService = injector.getProvider(MatchService.class).get();
         final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
         final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
@@ -195,6 +194,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
         final TDRService tdrService = injector.getProvider(TDRService.class).get();
         final AcknowledgementService acknowledgementService = injector.getProvider(AcknowledgementService.class).get();
+        final DatasetRegistrationService datasetRegistrationService = injector.getProvider(DatasetRegistrationService.class).get();
 
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
         configureCors(env);
@@ -228,9 +228,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         // Register standard application resources.
         env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
         env.jersey().register(new DataAccessRequestResource(dataAccessRequestService, userService));
-        env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService));
+        env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService, datasetRegistrationService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService, useRestrictionValidator));
+        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
         env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));
         env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));

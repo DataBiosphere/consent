@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -509,29 +510,30 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testCreateDateTypedDatasetProperty() {
         Dataset d = insertDataset();
-        Instant now = Instant.now();
+        Instant date = Instant.now();
 
         Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
         datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
 
+        DatasetProperty propToAdd = new DatasetProperty(
+                d.getDataSetId(),
+                1,
+                date.toString(),
+                DatasetPropertyType.Date,
+                new Date());
+
+        propToAdd.setSchemaProperty("date");
         List<DatasetProperty> newProps = List.of(
-                new DatasetProperty(
-                        d.getDataSetId(),
-                        1,
-                        now.toString(),
-                        DatasetPropertyType.Date,
-                        new Date())
+            propToAdd
         );
         datasetDAO.insertDatasetProperties(newProps);
 
-        Dataset dWithProps = datasetDAO.findDatasetById(d.getDataSetId());
-
-        assertEquals(1, dWithProps.getProperties().size());
-        DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+        Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
+        assertEquals(1, props.size());
+        DatasetProperty prop = props.stream().findFirst().get();
         assertEquals(DatasetPropertyType.Date, prop.getPropertyType());
-        assertEquals(now.toString(), prop.getPropertyValueAsString());
-        assertEquals(now, prop.getPropertyValue());
+        assertEquals(date.toString(), prop.getPropertyValueAsString());
     }
 
     @Test
@@ -792,7 +794,7 @@ public class DatasetDAOTest extends DAOTestHelper {
             RandomStringUtils.randomAlphabetic(10), true, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
         consentDAO.insertConsent(consentId, false, "", null,
-            null, RandomStringUtils.randomAlphabetic(10), null, new Date(), new Date(),
+            RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
             null, RandomStringUtils.randomAlphabetic(10));
         consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10), datasetId);
 
@@ -817,6 +819,19 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(dataset.getDataSetId(), updatedDatasetAfterApprovalFalse.getDataSetId());
         assertFalse(updatedDatasetAfterApprovalFalse.getDacApproval());
 
+    }
+
+    @Test
+    public void testInsertDatasetAudit() {
+        Dataset d = createDataset();
+        DatasetAudit audit = new DatasetAudit(
+                d.getDataSetId(),
+                "objectid",
+                "name",
+                new Date(),
+                false, d.getCreateUserId(),
+                "action");
+        datasetDAO.insertDatasetAudit(audit);
     }
 
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
@@ -885,8 +900,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
             false,
-            """
-            {"type":"everything"}""",
             """
             {"generalUse":true}""",
             "dul",

@@ -49,13 +49,13 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataAccessRequestManage;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
@@ -420,8 +420,7 @@ public class DataAccessRequestServiceTest {
         Consent consent = new Consent();
         consent.setConsentId("CONS-1");
         consent.setName("Consent 1");
-        consent.setUseRestriction(new Everything());
-        consent.setTranslatedUseRestriction(new Everything().toString());
+        consent.setTranslatedUseRestriction(new DataUseBuilder().setGeneralUse(true).build().toString());
         when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
         initService();
 

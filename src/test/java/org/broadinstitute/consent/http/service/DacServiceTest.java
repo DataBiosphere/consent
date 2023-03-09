@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.grammar.Everything;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -222,7 +221,6 @@ public class DacServiceTest {
                 collect(Collectors.toList());
         DataAccessRequest dar = new DataAccessRequest();
         dar.setData(new DataAccessRequestData());
-        dar.getData().setRestriction(new Everything());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
         doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());

@@ -55,24 +55,8 @@ public class ServicesConfiguration {
     this.localURL = localURL;
   }
 
-  public String getMatchURL() {
-    return getOntologyURL() + "match";
-  }
-
   public String getMatchURL_v2() {
     return getOntologyURL() + "match/v2";
-  }
-
-  public String getValidateUseRestrictionURL() {
-    return getOntologyURL() + "validate/userestriction";
-  }
-
-  public String getDARTranslateUrl() {
-    return getOntologyURL() + "schemas/data-use/dar/translate";
-  }
-
-  public String getConsentTranslateUrl() {
-    return getOntologyURL() + "schemas/data-use/consent/translate";
   }
 
   public String getSamUrl() {

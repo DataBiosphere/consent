@@ -36,6 +36,9 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM dataset_property")
   void deleteAllDatasetProperties();
 
+  @SqlUpdate("DELETE FROM dataset_audit")
+  void deleteAllDatasetAudits();
+
   /**
    * This only deletes new keys created through tests
    * Keys 1-11 are existing keys required for many legacy tests.

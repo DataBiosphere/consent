@@ -1,7 +1,21 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
@@ -23,21 +37,6 @@ import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.MediaType;
 import org.testcontainers.containers.MockServerContainer;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 public class SamDAOTest implements WithMockServer {
 
@@ -77,7 +76,10 @@ public class SamDAOTest implements WithMockServer {
             .setReuseIds(RandomUtils.nextBoolean());
     List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
     Gson gson = new Gson();
-    mockServerClient.when(request()).respond(response().withStatusCode(200).withBody(gson.toJson(mockResponseList)));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(gson.toJson(mockResponseList)));
 
     List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
     assertFalse(resourceTypeList.isEmpty());
@@ -91,7 +93,11 @@ public class SamDAOTest implements WithMockServer {
             .setUserEmail("test@test.org")
             .setUserSubjectId(RandomStringUtils.random(10, false, true))
             .setEnabled(RandomUtils.nextBoolean());
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(userInfo.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(userInfo.toString()));
 
     UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
     assertNotNull(authUserUserInfo);
@@ -154,7 +160,11 @@ public class SamDAOTest implements WithMockServer {
             .setInAllUsersGroup(RandomUtils.nextBoolean())
             .setInGoogleProxyGroup(RandomUtils.nextBoolean())
             .setTosAccepted(RandomUtils.nextBoolean());
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(diagnostics.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(diagnostics.toString()));
 
     UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
     assertNotNull(userDiagnostics);
@@ -168,7 +178,11 @@ public class SamDAOTest implements WithMockServer {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                    .withBody(status.toString()));
 
     UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
     assertNotNull(userStatus);
@@ -185,7 +199,11 @@ public class SamDAOTest implements WithMockServer {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(status.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                    .withBody(status.toString()));
 
     try {
       samDAO.asyncPostRegistrationInfo(authUser);
@@ -197,7 +215,11 @@ public class SamDAOTest implements WithMockServer {
   @Test
   public void testGetToSText() {
     String mockText = "Plain Text";
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType())).withStatusCode(200).withBody(mockText));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType()))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(mockText));
 
     try {
       String text = samDAO.getToSText();
@@ -213,7 +235,11 @@ public class SamDAOTest implements WithMockServer {
       .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(tosResponse.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(tosResponse.toString()));
 
     try {
       samDAO.postTosAcceptedStatus(authUser);
@@ -228,7 +254,11 @@ public class SamDAOTest implements WithMockServer {
             .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true).setLdap(true);
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    mockServerClient.when(request()).respond(response().withHeader(Header.header("Content-Type", "application/json")).withStatusCode(200).withBody(tosResponse.toString()));
+    mockServerClient.when(request())
+            .respond(response()
+                    .withHeader(Header.header("Content-Type", "application/json"))
+                    .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(tosResponse.toString()));
 
     try {
       samDAO.removeTosAcceptedStatus(authUser);

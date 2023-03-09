@@ -14,11 +14,12 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <liquibase.version>4.19.0</liquibase.version>
-    <dropwizard.version>2.1.4</dropwizard.version>
+    <dropwizard.version>2.1.5</dropwizard.version>
     <owl.version>5.5.0</owl.version>
-    <postgres.version>42.5.3</postgres.version>
     <pact.version>4.4.6</pact.version>
+    <postgres.version>42.5.4</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
+    <surefire.version>3.0.0-M9</surefire.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
@@ -116,8 +117,7 @@
           <prefix>git</prefix>
           <verbose>false</verbose>
           <generateGitPropertiesFile>true</generateGitPropertiesFile>
-          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
-          </generateGitPropertiesFilename>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
           <format>json</format>
           <gitDescribe>
             <skip>true</skip>
@@ -203,15 +203,22 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>${surefire.version}</version>
         <configuration>
           <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-          <argLine>@{argLine} -Xmx1024m -Xverify:none -XX:TieredStopAtLevel=1</argLine>
+          <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
           <systemPropertyVariables>
             <pact.rootDir>target/pacts</pact.rootDir>
           </systemPropertyVariables>
           <groups>${test.categories}</groups>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit4</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
 
       <plugin>
@@ -271,11 +278,11 @@
             <configuration>
               <transformers>
                 <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.broadinstitute.consent.http.ConsentApplication</mainClass>
                 </transformer>
                 <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
             </configuration>
           </execution>
@@ -398,7 +405,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.13.1</version>
+      <version>6.14.0</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -540,7 +547,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.15.3</version>
+      <version>1.15.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -659,7 +666,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.6.1</version>
+      <version>8.6.2</version>
     </dependency>
 
     <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->
