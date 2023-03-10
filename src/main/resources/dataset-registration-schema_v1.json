@@ -15,8 +15,32 @@
     "dataSubmitterUserId",
     "dataCustodianEmail",
     "publicVisibility",
-    "dataAccessCommitteeId",
     "consentGroups"
+  ],
+  "allOf": [
+    {
+      "$comment": "require GSR explanation if the user selected yes",
+      "if": {
+        "properties": {"controlledAccessRequiredForGenomicSummaryResultsGSR": { "const": true }}
+      },
+      "then": {
+        "required": ["controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation"]
+      }
+    },
+    {
+      "$comment": "require alternative data sharing plan fields if the DS needs one",
+      "if": {
+        "properties": {"alternativeDataSharingPlan": { "const": true }}
+      },
+      "then": {
+        "required": ["alternativeDataSharingPlanExplanation"],
+        "properties": {
+          "alternativeDataSharingPlanReasons": {
+            "minItems": 1
+          }
+        }
+      }
+    }
   ],
   "properties": {
     "studyName": {
@@ -83,7 +107,12 @@
       "description": "NIH Anvil Use",
       "items": {
           "type": "string",
-          "enum": ["I did", "I will", "No"]
+          "enum": [
+            "I am NHGRI funded and I have a dbGaP PHS ID already",
+            "I am NHGRI funded and I do not have a dbGaP PHS ID",
+            "I am not NHGRI funded but I am seeking to submit data to AnVIL",
+            "I am not NHGRI funded and do not plan to store data in AnVIL"
+          ]
       }
     },
     "submittingToAnvil": {
@@ -171,10 +200,10 @@
       "label": "Is controlled access required for genomic summary results (GSR)?",
       "description": "Is controlled access required for genomic summary results (GSR)?"
     },
-    "controlledAccessRequiredForGenomicSummaryResultsGSRNotRequiredExplanation": {
+    "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation": {
       "type": "string",
-      "label": "If no, explain why controlled access is required for GSR",
-      "description": "If no, explain why controlled access is required for GSR"
+      "label": "If yes, explain why controlled access is required for GSR",
+      "description": "If yes, explain why controlled access is required for GSR"
     },
     "alternativeDataSharingPlan": {
       "type": "boolean",
@@ -241,13 +270,9 @@
       "description": "Does the data need to be managed under Controlled or Open Access?",
       "enum": ["Controlled Access", "Open Access"]
     },
-    "dataAccessCommitteeId": {
-      "type": "number",
-      "label": "Please select which DAC should govern requests for this dataset",
-      "description": "Data Access Committee ID"
-    },
     "consentGroups": {
       "type": "array",
+      "minItems": 1,
       "label": "Consent Groups",
       "description": "Consent Groups",
       "items": { "$ref":  "#/$defs/consentGroup"}
@@ -278,14 +303,53 @@
         {
           "required": [
             "consentGroupName",
-            "fileTypes"
+            "fileTypes",
+            "url"
           ]
         },
         {
-          "anyOf": [
-            {"required": ["generalResearchUse"]},
-            {"required": ["hmb"]},
-            {"required": ["diseaseSpecificUse"]}
+          "$comment": "if openAccess is false OR undefined, then require dac id",
+          "if": {
+            "oneOf": [
+              {
+                "properties": {"openAccess":  {"const":  false}}
+              },
+              {
+                "properties": {"openAccess":  { "not": {} }}
+              }
+            ]
+          },
+          "then": {
+            "required": ["dataAccessCommitteeId"]
+          }
+        },
+        {
+          "$comment": "ensure one (and only one) primary consent is selected",
+          "oneOf": [
+            {
+              "properties": {"openAccess": { "const": true }},
+              "required": ["openAccess"]
+            },
+            {
+              "properties": {"generalResearchUse": { "const": true }},
+              "required": ["generalResearchUse"]
+            },
+            {
+              "properties": {"hmb": { "const": true }},
+              "required": ["hmb"]
+            },
+            {
+              "properties": {"poa": { "const": true }},
+              "required": ["poa"]
+            },
+            {
+              "properties": {"diseaseSpecificUse": { "minItems": 1 }},
+              "required": ["diseaseSpecificUse"]
+            },
+            {
+              "properties": {"otherPrimary": { "minLength": 1 }},
+              "required": ["otherPrimary"]
+            }
           ]
         }
       ],
@@ -295,6 +359,11 @@
           "type": "string",
           "label": "Consent Group Name",
           "description": "Consent Group Name"
+        },
+        "openAccess": {
+          "type": "boolean",
+          "label": "No Restrictions",
+          "description": "No Restrictions"
         },
         "generalResearchUse": {
           "type": "boolean",
@@ -375,6 +444,11 @@
           "label": "Other",
           "description": "Other"
         },
+        "dataAccessCommitteeId": {
+          "type": "number",
+          "label": "Please select which DAC should govern requests for this dataset",
+          "description": "Data Access Committee ID"
+        },
         "dataLocation": {
           "type": "array",
           "label": "Please provide the location of your data resource for this consent group",
@@ -392,6 +466,7 @@
         },
         "fileTypes": {
           "type": "array",
+          "minItems": 1,
           "items": { "$ref":  "#/$defs/fileTypeObject"},
           "description": "List of File Types"
         }
