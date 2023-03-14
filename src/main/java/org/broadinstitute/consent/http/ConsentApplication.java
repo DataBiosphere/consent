@@ -96,7 +96,6 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
@@ -182,7 +181,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         final GCSService gcsService = injector.getProvider(GCSService.class).get();
         final InstitutionService institutionService = injector.getProvider(InstitutionService.class).get();
         final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
-        final PendingCaseService pendingCaseService = injector.getProvider(PendingCaseService.class).get();
         final UserService userService = injector.getProvider(UserService.class).get();
         final VoteService voteService = injector.getProvider(VoteService.class).get();
         final AuditService auditService = injector.getProvider(AuditService.class).get();
@@ -231,7 +229,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService, datasetRegistrationService));
         env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
         env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
-        env.jersey().register(new ConsentCasesResource(pendingCaseService, summaryService));
+        env.jersey().register(new ConsentCasesResource(summaryService));
         env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
         env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
