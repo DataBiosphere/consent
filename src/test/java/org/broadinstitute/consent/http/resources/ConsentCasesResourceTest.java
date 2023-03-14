@@ -21,9 +21,6 @@ import org.mockito.Mock;
 
 public class ConsentCasesResourceTest {
 
-//    @Mock
-//    PendingCaseService pendingCaseService;
-
     @Mock
     SummaryService summaryService;
 
