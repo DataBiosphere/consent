@@ -9,12 +9,15 @@ import au.com.dius.pact.consumer.junit.PactProviderRule;
 import au.com.dius.pact.consumer.junit.PactVerification;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
+import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
+import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.pact.PactTests;
@@ -50,6 +53,16 @@ public class SamPactTests {
           .setInAllUsersGroup(true)
           .setInGoogleProxyGroup(true)
           .setTosAccepted(true);
+
+  private static final UserStatus USER_STATUS =
+      new UserStatus()
+          .setUserInfo(new UserStatus.UserInfo()
+            .setUserEmail("test.user@gmail.com")
+            .setUserSubjectId("1234567890"))
+          .setEnabled( new Enabled()
+            .setAllUsersGroup(true)
+            .setLdap(true)
+            .setGoogle(true));
 
   private SamDAO samDAO;
 
@@ -88,7 +101,7 @@ public class SamPactTests {
         .path("/" + ServicesConfiguration.RESOURCE_TYPES_PATH)
         .method("GET")
         .willRespondWith()
-        .status(200)
+        .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(headers)
         .body(RESOURCE_TYPES.toString())
         // Self Info:
@@ -97,7 +110,7 @@ public class SamPactTests {
         .path("/" + ServicesConfiguration.REGISTER_SELF_INFO_PATH)
         .method("GET")
         .willRespondWith()
-        .status(200)
+        .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(headers)
         .body(USER_STATUS_INFO.toString())
         // Self Diagnostics:
@@ -106,9 +119,20 @@ public class SamPactTests {
         .path("/" + ServicesConfiguration.REGISTER_SELF_DIAGNOSTICS_PATH)
         .method("GET")
         .willRespondWith()
-        .status(200)
+        .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(headers)
         .body(USER_STATUS_DIAGNOSTICS.toString())
+
+        .given(" POST Sam User Registration V2")
+        .uponReceiving(" POST Request: " + ServicesConfiguration.REGISTER_SELF_PATH)
+        .path("/" + ServicesConfiguration.REGISTER_SELF_PATH)
+        .method("POST")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_CREATED)
+        .headers(headers)
+        .body(USER_STATUS.toString())
+
+
         .toPact();
   }
 
@@ -128,5 +152,17 @@ public class SamPactTests {
 
     UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
     assertNotNull(statusDiagnostics);
+
+    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
+    assertNotNull(userStatus);
+
+//    String tosText = samDAO.getToSText();
+//    assertNotNull(tosText);
+//
+//    TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
+//    assertNotNull(tosPostResponse);
+//
+//    TosResponse TosDeleteResponse = samDAO.removeTosAcceptedStatus(authUser);
+//    assertNotNull(TosDeleteResponse);
   }
 }
