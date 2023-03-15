@@ -91,8 +91,11 @@ public class SamPactTests {
    */
   @Pact(provider = PROVIDER_NAME, consumer = CONSUMER_NAME)
   public RequestResponsePact createPact(PactDslWithProvider builder) {
-    Map<String, String> headers = Map.of(
+    Map<String, String> jsonHeaders = Map.of(
         "Content-Type", "application/json",
+        "Authentication", "Bearer: auth-token");
+    Map<String, String> textPlainHeaders = Map.of(
+        "Content-Type", "text/plain",
         "Authentication", "Bearer: auth-token");
     return builder
         // Resource Types:
@@ -102,7 +105,7 @@ public class SamPactTests {
         .method("GET")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_OK)
-        .headers(headers)
+        .headers(jsonHeaders)
         .body(RESOURCE_TYPES.toString())
         // Self Info:
         .given(" GET Sam Self Info")
@@ -111,7 +114,7 @@ public class SamPactTests {
         .method("GET")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_OK)
-        .headers(headers)
+        .headers(jsonHeaders)
         .body(USER_STATUS_INFO.toString())
         // Self Diagnostics:
         .given(" GET Sam Self Diagnostics")
@@ -120,19 +123,26 @@ public class SamPactTests {
         .method("GET")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_OK)
-        .headers(headers)
+        .headers(jsonHeaders)
         .body(USER_STATUS_DIAGNOSTICS.toString())
-
+        // User Registration V2
         .given(" POST Sam User Registration V2")
         .uponReceiving(" POST Request: " + ServicesConfiguration.REGISTER_SELF_PATH)
         .path("/" + ServicesConfiguration.REGISTER_SELF_PATH)
         .method("POST")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_CREATED)
-        .headers(headers)
+        .headers(jsonHeaders)
         .body(USER_STATUS.toString())
-
-
+        // Terms of Service:
+        .given(" GET Sam Terms of Service")
+        .uponReceiving(" GET Request: " + ServicesConfiguration.TOS_TEXT_PATH)
+        .path("/" + ServicesConfiguration.TOS_TEXT_PATH)
+        .method("GET")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .headers(textPlainHeaders)
+        .body("Terms of Service")
         .toPact();
   }
 
@@ -156,9 +166,9 @@ public class SamPactTests {
     UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
     assertNotNull(userStatus);
 
-//    String tosText = samDAO.getToSText();
-//    assertNotNull(tosText);
-//
+    String tosText = samDAO.getToSText();
+    assertNotNull(tosText);
+
 //    TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
 //    assertNotNull(tosPostResponse);
 //
