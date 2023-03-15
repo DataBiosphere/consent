@@ -99,6 +99,7 @@ public class SamPactTests {
         "Content-Type", "text/plain",
         "Authentication", "Bearer: auth-token");
     return builder
+
         // Resource Types:
         .given(" GET Sam Resource Types")
         .uponReceiving(" GET Request: " + ServicesConfiguration.RESOURCE_TYPES_PATH)
@@ -108,6 +109,7 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(jsonHeaders)
         .body(RESOURCE_TYPES.toString())
+
         // Self Info:
         .given(" GET Sam Self Info")
         .uponReceiving(" GET Request: " + ServicesConfiguration.REGISTER_SELF_INFO_PATH)
@@ -117,6 +119,7 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(jsonHeaders)
         .body(USER_STATUS_INFO.toString())
+
         // Self Diagnostics:
         .given(" GET Sam Self Diagnostics")
         .uponReceiving(" GET Request: " + ServicesConfiguration.REGISTER_SELF_DIAGNOSTICS_PATH)
@@ -126,6 +129,7 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(jsonHeaders)
         .body(USER_STATUS_DIAGNOSTICS.toString())
+
         // User Registration V2
         .given(" POST Sam User Registration V2")
         .uponReceiving(" POST Request: " + ServicesConfiguration.REGISTER_SELF_PATH)
@@ -135,6 +139,7 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_CREATED)
         .headers(jsonHeaders)
         .body(USER_STATUS.toString())
+
         // Terms of Service:
         .given(" GET Sam Terms of Service")
         .uponReceiving(" GET Request: " + ServicesConfiguration.TOS_TEXT_PATH)
@@ -144,11 +149,22 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(textPlainHeaders)
         .body("Terms of Service")
+
         // Accept Terms of Service:
         .given(" POST Sam Terms of Service")
         .uponReceiving(" POST Request: " + ServicesConfiguration.REGISTER_TOS_PATH)
         .path("/" + ServicesConfiguration.REGISTER_TOS_PATH)
         .method("POST")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .headers(jsonHeaders)
+        .body(USER_STATUS.toString())
+
+        // Reject Terms of Service:
+        .given(" DELETE Sam Terms of Service")
+        .uponReceiving(" DELETE Request: " + ServicesConfiguration.REGISTER_TOS_PATH)
+        .path("/" + ServicesConfiguration.REGISTER_TOS_PATH)
+        .method("DELETE")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(jsonHeaders)
@@ -182,7 +198,7 @@ public class SamPactTests {
     TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
     assertNotNull(tosPostResponse);
 
-//    TosResponse TosDeleteResponse = samDAO.removeTosAcceptedStatus(authUser);
-//    assertNotNull(TosDeleteResponse);
+    TosResponse TosDeleteResponse = samDAO.removeTosAcceptedStatus(authUser);
+    assertNotNull(TosDeleteResponse);
   }
 }
