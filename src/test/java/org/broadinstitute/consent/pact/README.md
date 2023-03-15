@@ -8,14 +8,14 @@ mvn clean test -Ppact-tests
 More details on Contract Testing can be found in our handbook
  * https://broadworkbench.atlassian.net/wiki/spaces/IRT/pages/2660368406/Getting+Started+with+Pact+Contract+Testing
 
-Each party owns a set of tests (aka contract tests). The consumer contract tests (aka consumer tests) 
-are completely independent of the provider contract tests (aka provider tests), and vice versa.
+Each party owns a set of expectations (contracts). The consumer expectations (consumer contracts)
+are completely independent of the provider expectations (provider contracts), and vice versa.
 
 Specifically:
- * Consent runs consumer tests against mock Sam service. 
+ * Consent runs tests against a mock Sam service with consent-defined expectations of what Sam does.
  * Upon success, publish a consumer-provider pact to DSP's [Pact Broker](https://pact-broker.dsp-eng-tools.broadinstitute.org/).
- * Pact Broker is the  source of truth to forge contractual obligations between consumer and provider.
- * Sam obtains contract from Pact Broker and runs provider tests to validate its obligations to consumers.
+ * Pact Broker is the  source of truth to forge contractual obligations between consumer and provider expectations (contracts).
+ * Sam obtains all Sam expectations (consent's consumer contracts) from Pact Broker and runs provider tests to validate its obligations to all consumers.
 
 The Pact Broker is a 2-way street. The consumer can see in the dashboard if the service is able to
 honor their consumer expectations (which is also true when those expectations are updated). The
@@ -40,8 +40,8 @@ sequenceDiagram
   Broker->>Broker: Validate contracts
   Consent->>Consent: Generate expected Sam behaviors
   Consent->>Consent: Unit test expected behaviors
-  Consent->>Broker: Exports contracts to broker
-  Broker->>Broker: Validate contracts
+  Consent->>Broker: Export expectations (contracts) to broker
+  Broker->>Broker: Validate expectations (contracts)
 ```
 
 #### Provider Context
@@ -50,10 +50,10 @@ sequenceDiagram
   participant Consent
   participant Broker
   participant TDR
-  Consent->>Broker: Publishes intended behaviors
-  Broker->>Broker: Validate contracts
+  Consent->>Broker: Publishes intended behaviors (contracts)
+  Broker->>Broker: Validate expectations (contracts)
   TDR->>TDR: Generate expected Consent behaviors
   TDR->>TDR: Unit test expected behaviors
-  TDR->>Broker: Exports contracts to broker
-  Broker->>Broker: Validate contracts
+  TDR->>Broker: Exports expectations (contracts) to broker
+  Broker->>Broker: Validate expectations (contracts)
 ```
