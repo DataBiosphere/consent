@@ -12,6 +12,8 @@ import au.com.dius.pact.core.model.annotations.Pact;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -19,6 +21,7 @@ import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
+import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.pact.PactTests;
@@ -57,13 +60,13 @@ public class SamPactTests {
 
   private static final UserStatus USER_STATUS =
       new UserStatus()
-          .setUserInfo(new UserStatus.UserInfo()
-            .setUserEmail("test.user@gmail.com")
-            .setUserSubjectId("1234567890"))
+          .setUserInfo(new UserInfo()
+            .setUserEmail(USER_STATUS_INFO.getUserEmail())
+            .setUserSubjectId(USER_STATUS_INFO.getUserSubjectId()))
           .setEnabled( new Enabled()
-            .setAllUsersGroup(true)
+            .setAllUsersGroup(USER_STATUS_DIAGNOSTICS.getInAllUsersGroup())
             .setLdap(true)
-            .setGoogle(true));
+            .setGoogle(USER_STATUS_DIAGNOSTICS.getInGoogleProxyGroup()));
 
   private SamDAO samDAO;
 
@@ -93,10 +96,10 @@ public class SamPactTests {
   @Pact(provider = PROVIDER_NAME, consumer = CONSUMER_NAME)
   public RequestResponsePact createPact(PactDslWithProvider builder) {
     Map<String, String> jsonHeaders = Map.of(
-        "Content-Type", "application/json",
+        HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON,
         "Authentication", "Bearer: auth-token");
     Map<String, String> textPlainHeaders = Map.of(
-        "Content-Type", "text/plain",
+        HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN,
         "Authentication", "Bearer: auth-token");
     return builder
 
