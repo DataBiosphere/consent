@@ -1,31 +1,25 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 public class ConsentCasesResourceTest {
-
-    @Mock
-    PendingCaseService pendingCaseService;
 
     @Mock
     SummaryService summaryService;
@@ -35,16 +29,6 @@ public class ConsentCasesResourceTest {
     @Before
     public void setUp() {
         openMocks(this);
-    }
-
-    @Test
-    public void testGetConsentPendingCases() {
-        when(pendingCaseService.describeConsentPendingCases(any())).thenReturn(Collections.emptyList());
-        initResource();
-        Response response = resource.getConsentPendingCases(null, null);
-        Assert.assertEquals(200, response.getStatus());
-        List cases = ((List) response.getEntity());
-        Assert.assertTrue(cases.isEmpty());
     }
 
     @Test
@@ -100,7 +84,7 @@ public class ConsentCasesResourceTest {
     }
 
     private void initResource() {
-        resource = new ConsentCasesResource(pendingCaseService, summaryService);
+        resource = new ConsentCasesResource(summaryService);
     }
 
 }
