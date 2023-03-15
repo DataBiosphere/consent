@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
@@ -143,6 +144,15 @@ public class SamPactTests {
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(textPlainHeaders)
         .body("Terms of Service")
+        // Accept Terms of Service:
+        .given(" POST Sam Terms of Service")
+        .uponReceiving(" POST Request: " + ServicesConfiguration.REGISTER_TOS_PATH)
+        .path("/" + ServicesConfiguration.REGISTER_TOS_PATH)
+        .method("POST")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .headers(jsonHeaders)
+        .body(USER_STATUS.toString())
         .toPact();
   }
 
@@ -169,9 +179,9 @@ public class SamPactTests {
     String tosText = samDAO.getToSText();
     assertNotNull(tosText);
 
-//    TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
-//    assertNotNull(tosPostResponse);
-//
+    TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
+    assertNotNull(tosPostResponse);
+
 //    TosResponse TosDeleteResponse = samDAO.removeTosAcceptedStatus(authUser);
 //    assertNotNull(TosDeleteResponse);
   }
