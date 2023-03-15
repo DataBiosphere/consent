@@ -2,45 +2,29 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.PendingCase;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.SummaryDetail;
-import org.broadinstitute.consent.http.service.PendingCaseService;
-import org.broadinstitute.consent.http.service.SummaryService;
-
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.security.PermitAll;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.SummaryDetail;
+import org.broadinstitute.consent.http.service.SummaryService;
 
 @Path("api/consent/cases")
 public class ConsentCasesResource extends Resource {
 
-    private final PendingCaseService pendingCaseService;
     private final SummaryService summaryService;
 
     @Inject
-    public ConsentCasesResource(PendingCaseService pendingCaseService, SummaryService summaryService) {
-        this.pendingCaseService = pendingCaseService;
+    public ConsentCasesResource(SummaryService summaryService) {
         this.summaryService = summaryService;
-    }
-
-    @Deprecated
-    @GET
-    @Path("/pending/{dacUserId}")
-    @RolesAllowed({MEMBER, CHAIRPERSON})
-    public Response getConsentPendingCases(@PathParam("dacUserId") Integer dacUserId, @Auth AuthUser authUser) {
-        List<PendingCase> pendingCases = pendingCaseService.describeConsentPendingCases(authUser);
-        return Response.ok().entity(pendingCases).build();
     }
 
     @GET

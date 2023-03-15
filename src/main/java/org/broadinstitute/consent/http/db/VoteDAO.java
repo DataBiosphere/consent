@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.ElectionReviewVoteMapper;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.ElectionReviewVote;
@@ -15,9 +17,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
@@ -38,9 +37,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("SELECT * FROM vote v WHERE v.voteid IN (<voteIds>)")
     List<Vote> findVotesByIds(@BindList("voteIds") List<Integer> voteIds);
-
-    @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = 'dac'")
-    List<Vote> findDACVotesByElectionId(@Bind("electionId") Integer electionId);
 
     @SqlQuery("select * from vote v where v.electionId IN (<electionIds>)")
     List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
