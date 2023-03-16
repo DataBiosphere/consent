@@ -24,11 +24,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.election_id = v.electionid WHERE election.reference_id = :referenceId")
     List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
-    @SqlQuery(" SELECT v.*, u.email, u.display_name "
-            + " FROM vote v "
-            + " INNER JOIN election ON election.election_id = v.electionId "
-            + " INNER JOIN users u ON u.user_id = v.user_id "
-            + " WHERE election.election_id = :electionId AND LOWER(v.type) = LOWER(:type)")
+    @SqlQuery("""
+        SELECT v.*, u.email, u.display_name
+        FROM vote v
+        INNER JOIN election ON election.election_id = v.electionId
+        INNER JOIN users u ON u.user_id = v.user_id
+        WHERE election.election_id = :electionId AND LOWER(v.type) = LOWER(:type)
+        """)
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
@@ -61,11 +63,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     List<Vote> findVotesByElectionIdAndUserIds(@Bind("electionId") Integer electionId,
                                                   @BindList("userIds") List<Integer> userIds);
 
-    @SqlQuery(
-        "SELECT vote.voteId FROM vote " +
-            "INNER JOIN election ON election.election_id = vote.electionId " +
-            "WHERE election.reference_id = :referenceId " +
-            "AND vote.voteId = :voteId")
+    @SqlQuery("""
+        SELECT vote.voteId FROM vote
+        INNER JOIN election ON election.election_id = vote.electionId
+        WHERE election.reference_id = :referenceId
+        AND vote.voteId = :voteId
+        """)
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
 
@@ -99,24 +102,26 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
-    @SqlQuery(
-        "SELECT v.* FROM vote v " +
-            "INNER JOIN election on election.election_id = v.electionId " +
-            "WHERE election.reference_id = :referenceId " +
-                "AND v.user_id = :userId " +
-                "AND LOWER(v.type) = LOWER(:type)")
+    @SqlQuery("""
+        SELECT v.* FROM vote v
+        INNER JOIN election on election.election_id = v.electionId
+        WHERE election.reference_id = :referenceId
+        AND v.user_id = :userId
+        AND LOWER(v.type) = LOWER(:type)
+        """)
     Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("userId") Integer userId, @Bind("type") String voteType);
 
     @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
     List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
-    @SqlQuery(
-        "SELECT count(*) FROM vote v " +
-            "INNER JOIN election e ON v.electionId = e.election_id " +
-            "WHERE LOWER(e.election_type) = LOWER(:type) " +
-            "AND LOWER(e.status) = 'closed' " +
-            "AND LOWER(v.type) = 'final' " +
-            "AND v.vote = :finalVote ")
+    @SqlQuery("""
+        SELECT count(*) FROM vote v
+        INNER JOIN election e ON v.electionId = e.election_id
+        WHERE LOWER(e.election_type) = LOWER(:type)
+        AND LOWER(e.status) = 'closed'
+        AND LOWER(v.type) = 'final'
+        AND v.vote = :finalVote
+        """)
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 
     @SqlQuery("SELECT MAX(c) FROM (SELECT COUNT(vote) as c FROM vote WHERE lower(type) = 'dac' and electionId IN (<electionIds>) GROUP BY electionId) as members")
@@ -138,11 +143,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
 
     @RegisterBeanMapper(value = User.class)
-    @SqlQuery(" SELECT DISTINCT u.* " +
-        " FROM users u " +
-        " INNER JOIN vote v ON v.user_id = u.user_id " +
-        " INNER JOIN election e ON v.electionid = e.election_id " +
-        " WHERE e.reference_id IN (<referenceIds>) ")
+    @SqlQuery("""
+        SELECT DISTINCT u.*
+        FROM users u
+        INNER JOIN vote v ON v.user_id = u.user_id
+        INNER JOIN election e ON v.electionid = e.election_id
+        WHERE e.reference_id IN (<referenceIds>)
+        """)
     List<User> findVoteUsersByElectionReferenceIdList(@BindList("referenceIds") List<String> referenceIds);
 
 }
