@@ -35,7 +35,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     LEFT JOIN (
       SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
       FROM election
-      WHERE LOWER(election.election_type) = 'dataaccess' AND election.dataset_id IN (<datasetIds>)"
+      WHERE LOWER(election.election_type) = 'dataaccess' AND election.dataset_id IN (<datasetIds>)
     ) AS e
       ON e.reference_id = dar.reference_id
     LEFT JOIN vote v
