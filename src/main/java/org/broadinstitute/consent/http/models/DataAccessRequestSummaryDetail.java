@@ -125,7 +125,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
         finalVote.flatMap(
             vote ->
                 getDacMembers().stream()
-                    .filter(u -> u.getUserId().equals(vote.getDacUserId()))
+                    .filter(u -> u.getUserId().equals(vote.getUserId()))
                     .findFirst());
     Boolean agreement =
         (finalVote.isPresent() && Objects.nonNull(getMatchObject()))

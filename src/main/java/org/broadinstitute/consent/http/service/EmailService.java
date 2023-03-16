@@ -381,7 +381,7 @@ public class EmailService {
     private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        User user = findUserById(vote.getDacUserId());
+        User user = findUserById(vote.getUserId());
 
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", user.getDisplayName());

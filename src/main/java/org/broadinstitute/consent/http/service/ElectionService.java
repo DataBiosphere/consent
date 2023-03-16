@@ -220,7 +220,7 @@ public class ElectionService {
         List<Integer> chairIds = electionChairs.stream().map(User::getUserId).collect(Collectors.toList());
         Integer exists = mailMessageDAO.existsCollectDAREmail(darReferenceId, rpReferenceId);
         if ((exists == null)) {
-            if (((darVotes.size() == 0) && (rpElectionVotes.size() == 0) && (!chairIds.contains(vote.getDacUserId())))) {
+            if (((darVotes.size() == 0) && (rpElectionVotes.size() == 0) && (!chairIds.contains(vote.getUserId())))) {
                 return true;
             } else {
                 List<Vote> rpChairVotes = voteDAO.findVotesByElectionIdAndUserIds(rpElectionId, chairIds);

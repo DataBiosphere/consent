@@ -4,23 +4,14 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import io.dropwizard.auth.Auth;
-import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.VoteService;
-
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.mail.MessagingException;
@@ -37,14 +28,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.VoteService;
 
 @Path("api/dataRequest/{requestId}/vote")
 public class DataRequestVoteResource extends Resource {
@@ -238,7 +237,7 @@ public class DataRequestVoteResource extends Resource {
         validateAuthedRoleUser(
                 Collections.singletonList(UserRoles.ADMIN),
                 user,
-                existingVote.getDacUserId());
+                existingVote.getUserId());
     }
 
     private void createDataOwnerElection(Vote vote, String referenceId) throws MessagingException, IOException, TemplateException {
