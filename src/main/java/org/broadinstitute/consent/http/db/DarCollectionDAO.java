@@ -237,6 +237,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
+    // nosemgrep
     "SELECT c.*, "
       + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
       + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
