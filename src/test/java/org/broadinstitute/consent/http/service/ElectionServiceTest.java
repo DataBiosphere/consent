@@ -154,28 +154,28 @@ public class ElectionServiceTest {
 
         sampleVoteChairpersonApproval = new Vote();
         sampleVoteChairpersonApproval.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonApproval.setDacUserId(sampleUserChairperson.getUserId());
+        sampleVoteChairpersonApproval.setUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonApproval.setVote(true);
         sampleVoteChairpersonApproval.setVoteId(1);
         sampleVoteChairpersonApproval.setRationale("Go for it");
 
         sampleVoteChairpersonReject = new Vote();
         sampleVoteChairpersonReject.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonReject.setDacUserId(sampleUserChairperson.getUserId());
+        sampleVoteChairpersonReject.setUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonReject.setVote(false);
         sampleVoteChairpersonReject.setVoteId(1);
         sampleVoteChairpersonReject.setRationale("Rejection vote");
 
         sampleVoteMember = new Vote();
         sampleVoteMember.setElectionId(sampleElection1.getElectionId());
-        sampleVoteMember.setDacUserId(sampleUserMember.getUserId());
+        sampleVoteMember.setUserId(sampleUserMember.getUserId());
         sampleVoteMember.setVote(true);
         sampleVoteMember.setVoteId(2);
         sampleVoteMember.setRationale("Go for it");
 
         sampleVoteRP = new Vote();
         sampleVoteRP.setElectionId(sampleElectionRP.getElectionId());
-        sampleVoteRP.setDacUserId(sampleUserMember.getUserId());
+        sampleVoteRP.setUserId(sampleUserMember.getUserId());
         sampleVoteRP.setVote(true);
         sampleVoteRP.setVoteId(3);
         sampleVoteRP.setRationale("Yep");
