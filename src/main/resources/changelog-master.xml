@@ -113,4 +113,5 @@
     <include file="changesets/changelog-consent-2023-01-09-dac-email.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-2023-02-28-fix-dataset-audit.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-2023-03-07-remove-use-restriction.0.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-2023-03-16-rename-vote-userid.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

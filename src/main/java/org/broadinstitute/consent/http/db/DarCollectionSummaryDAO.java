@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.List;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.DarCollectionSummary;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionSummaryReducer;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarCollectionSummary;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -24,7 +24,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   (
     "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, " +
       "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid, " +
-      "v.dacuserid as v_dac_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, " +
+      "v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, " +
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
     "FROM dar_collection c " +
     "INNER JOIN users u " +
@@ -45,7 +45,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       "ON dar.reference_id = dd.reference_id " +
     "WHERE dd.dataset_id IN (<datasetIds>) " +
     	"AND (e.latest = e.election_id OR e.election_id IS NULL) " +
-    	"AND (LOWER(v.type) = 'final' OR (v.dacuserid = :currentUserId OR v.voteid IS NULL)) " +
+    	"AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL)) " +
         "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) "
   )
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
@@ -156,7 +156,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   (
     "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, u.user_id as researcher_id, " +
       "i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid, " +
-      "v.dacuserid as v_dac_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, " +
+      "v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, " +
       "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
     "FROM dar_collection c " +
     "INNER JOIN users u " +
@@ -178,7 +178,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     "WHERE c.collection_id= :collectionId " +
       "AND dd.dataset_id IN (<datasetIds>) " +
       "AND (e.latest = e.election_id OR e.election_id IS NULL) " +
-      "AND (LOWER(v.type) = 'final' OR (v.dacuserid = :currentUserId OR v.voteid IS NULL)) " +
+      "AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL)) " +
       "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
   )
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(

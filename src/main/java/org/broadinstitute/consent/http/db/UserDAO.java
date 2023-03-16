@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UnregisteredUsersWithCardsReducer;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
@@ -17,11 +21,6 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 public interface UserDAO extends Transactional<UserDAO> {
 
@@ -182,7 +181,7 @@ public interface UserDAO extends Transactional<UserDAO> {
             " from users du " +
             " inner join user_role ur on ur.user_id = du.user_id " +
             " inner join roles r on r.roleId = ur.role_id and r.name in (<roleNames>) " +
-            " inner join vote v on v.dacUserId = du.user_id and v.electionId in (<electionIds>) ")
+            " inner join vote v on v.user_id = du.user_id and v.electionId in (<electionIds>) ")
     Set<User> findUsersForElectionsByRoles(@BindList("electionIds") List<Integer> electionIds,
                                            @BindList("roleNames") List<String> roleNames);
 

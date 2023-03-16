@@ -249,7 +249,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
       + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
       + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest, "
-      + "v.voteid as v_vote_id, v.vote as v_vote, v.dacuserid as v_dac_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
+      + "v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
       + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
       + "FROM dar_collection c "
       + "INNER JOIN users u ON c.create_user_id = u.user_id "
@@ -267,7 +267,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       + "LEFT JOIN vote v "
       + "ON v.electionid = e.election_id "
       + "LEFT JOIN users du "
-      + "ON du.user_id = v.dacuserid "
+      + "ON du.user_id = v.user_id "
       + "WHERE c.collection_id = :collectionId "
       + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
   )

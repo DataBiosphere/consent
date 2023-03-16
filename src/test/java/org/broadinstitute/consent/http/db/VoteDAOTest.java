@@ -194,7 +194,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
-        Vote foundVote = voteDAO.findVoteByElectionIdAndDACUserId(election.getElectionId(), user.getUserId());
+        Vote foundVote = voteDAO.findVoteByElectionIdAndUserId(election.getElectionId(), user.getUserId());
         assertNotNull(foundVote);
         assertEquals(vote.getVoteId(), foundVote.getVoteId());
     }
@@ -207,7 +207,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
-        List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndDACUserIds(election.getElectionId(), Collections.singletonList(user.getUserId()));
+        List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndUserIds(election.getElectionId(), Collections.singletonList(user.getUserId()));
         assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());

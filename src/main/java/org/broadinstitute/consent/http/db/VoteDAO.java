@@ -27,7 +27,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery(" SELECT v.*, u.email, u.display_name "
             + " FROM vote v "
             + " INNER JOIN election ON election.election_id = v.electionId "
-            + " INNER JOIN users u ON u.user_id = v.dacUserId "
+            + " INNER JOIN users u ON u.user_id = v.user_id "
             + " WHERE election.election_id = :electionId AND LOWER(v.type) = LOWER(:type)")
     @UseRowMapper(ElectionReviewVoteMapper.class)
     List<ElectionReviewVote> findElectionReviewVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
@@ -53,13 +53,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.vote is null and lower(v.type) = 'dac'")
     List<Vote> findPendingVotesByElectionId(@Bind("electionId") Integer electionId);
 
-    @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId = :dacUserId and lower(v.type) = 'dac'")
-    Vote findVoteByElectionIdAndDACUserId(@Bind("electionId") Integer electionId,
-                                          @Bind("dacUserId") Integer dacUserId);
+    @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id = :userId and lower(v.type) = 'dac'")
+    Vote findVoteByElectionIdAndUserId(@Bind("electionId") Integer electionId,
+                                          @Bind("userId") Integer userId);
 
-    @SqlQuery("select * from vote v where v.electionId = :electionId and v.dacUserId in (<dacUserIds>) and lower(v.type) = 'dac'")
-    List<Vote> findVotesByElectionIdAndDACUserIds(@Bind("electionId") Integer electionId,
-                                                  @BindList("dacUserIds") List<Integer> dacUserIds);
+    @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id in (<userIds>) and lower(v.type) = 'dac'")
+    List<Vote> findVotesByElectionIdAndUserIds(@Bind("electionId") Integer electionId,
+                                                  @BindList("userIds") List<Integer> userIds);
 
     @SqlQuery(
         "SELECT vote.voteId FROM vote " +
@@ -69,9 +69,9 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
 
-    @SqlUpdate("insert into vote (dacUserId, electionId, type, reminderSent) values (:dacUserId, :electionId, :type, false)")
+    @SqlUpdate("insert into vote (user_id, electionId, type, reminderSent) values (:userId, :electionId, :type, false)")
     @GetGeneratedKeys
-    Integer insertVote(@Bind("dacUserId") Integer dacUserId,
+    Integer insertVote(@Bind("userId") Integer userId,
                        @Bind("electionId") Integer electionId,
                        @Bind("type") String type);
 
@@ -103,9 +103,9 @@ public interface VoteDAO extends Transactional<VoteDAO> {
         "SELECT v.* FROM vote v " +
             "INNER JOIN election on election.election_id = v.electionId " +
             "WHERE election.reference_id = :referenceId " +
-                "AND v.dacUserId = :dacUserId " +
+                "AND v.user_id = :userId " +
                 "AND LOWER(v.type) = LOWER(:type)")
-    Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("dacUserId") Integer dacUserId, @Bind("type") String voteType);
+    Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("userId") Integer userId, @Bind("type") String voteType);
 
     @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
     List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
@@ -122,8 +122,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlQuery("SELECT MAX(c) FROM (SELECT COUNT(vote) as c FROM vote WHERE lower(type) = 'dac' and electionId IN (<electionIds>) GROUP BY electionId) as members")
     Integer findMaxNumberOfDACMembers(@BindList("electionIds") List<Integer> electionIds);
 
-    @SqlBatch("insert into vote (dacUserId, electionId, type) values (:dacUserId, :electionId, :type)")
-    void insertVotes(@Bind("dacUserId") List<Integer> dacUserIds, @Bind("electionId") Integer electionId, @Bind("type") String type);
+    @SqlBatch("insert into vote (user_id, electionId, type) values (:userId, :electionId, :type)")
+    void insertVotes(@Bind("userId") List<Integer> userIds, @Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and lower(v.type) = lower(:type)")
     List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
@@ -131,8 +131,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
     void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);
 
-    @SqlQuery("SELECT * FROM vote v WHERE v.dacuserid = :dacUserId ")
-    List<Vote> findVotesByUserId(@Bind("dacUserId") Integer dacUserId);
+    @SqlQuery("SELECT * FROM vote v WHERE v.user_id = :userId ")
+    List<Vote> findVotesByUserId(@Bind("userId") Integer userId);
 
     @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
     void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds, @Bind("rationale") String rationale);
@@ -140,7 +140,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @RegisterBeanMapper(value = User.class)
     @SqlQuery(" SELECT DISTINCT u.* " +
         " FROM users u " +
-        " INNER JOIN vote v ON v.dacuserid = u.user_id " +
+        " INNER JOIN vote v ON v.user_id = u.user_id " +
         " INNER JOIN election e ON v.electionid = e.election_id " +
         " WHERE e.reference_id IN (<referenceIds>) ")
     List<User> findVoteUsersByElectionReferenceIdList(@BindList("referenceIds") List<String> referenceIds);
