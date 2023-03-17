@@ -1,6 +1,7 @@
 # Pact Testing
 
 Pact tests can be run with maven using the `pact-tests` profile:
+
 ```shell
 mvn clean test -Ppact-tests
 ```
