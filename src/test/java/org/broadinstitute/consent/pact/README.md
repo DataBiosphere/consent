@@ -1,6 +1,7 @@
 # Pact Testing
 
 Pact tests can be run with maven using the `pact-tests` profile:
+
 ```shell
 mvn clean test -Ppact-tests
 ```
@@ -31,6 +32,7 @@ that validates an external system's expectation of a Consent-provided behavior, 
 a `Provider` context
 
 #### Consumer Context
+
 ```mermaid
 sequenceDiagram
   participant Consent
@@ -45,6 +47,7 @@ sequenceDiagram
 ```
 
 #### Provider Context
+
 ```mermaid
 sequenceDiagram
   participant Consent
