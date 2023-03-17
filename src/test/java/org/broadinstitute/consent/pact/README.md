@@ -31,6 +31,7 @@ that validates an external system's expectation of a Consent-provided behavior, 
 a `Provider` context
 
 #### Consumer Context
+
 ```mermaid
 sequenceDiagram
   participant Consent
