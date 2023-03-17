@@ -1,18 +1,21 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import javax.annotation.processing.Generated;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "consentGroupName",
+    "openAccess",
     "generalResearchUse",
     "hmb",
     "diseaseSpecificUse",
@@ -28,145 +31,156 @@ import java.util.List;
     "morDate",
     "npu",
     "otherSecondary",
+    "dataAccessCommitteeId",
     "dataLocation",
     "url",
     "fileTypes"
 })
-@Generated("jsonschema2pojo")
 public class ConsentGroup {
 
     /**
      * Consent Group Name
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("consentGroupName")
     @JsonPropertyDescription("Consent Group Name")
     private String consentGroupName;
     /**
+     * No Restrictions
+     * 
+     */
+    @JsonProperty("openAccess")
+    @JsonPropertyDescription("No Restrictions")
+    private Boolean openAccess;
+    /**
      * General Research Use
-     *
+     * 
      */
     @JsonProperty("generalResearchUse")
     @JsonPropertyDescription("General Research Use")
     private Boolean generalResearchUse;
     /**
      * Health/Medical/Biomedical Research Use
-     *
+     * 
      */
     @JsonProperty("hmb")
     @JsonPropertyDescription("Health/Medical/Biomedical Research Use")
     private Boolean hmb;
     /**
      * Disease-Specific Research Use
-     *
+     * 
      */
     @JsonProperty("diseaseSpecificUse")
     @JsonPropertyDescription("Disease-Specific Research Use")
     private List<String> diseaseSpecificUse = new ArrayList<String>();
     /**
      * Populations, Origins, Ancestry Use
-     *
+     * 
      */
     @JsonProperty("poa")
     @JsonPropertyDescription("Populations, Origins, Ancestry Use")
     private Boolean poa;
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherPrimary")
     @JsonPropertyDescription("Other")
     private String otherPrimary;
     /**
      * No Methods Development or validation studies (NMDS)
-     *
+     * 
      */
     @JsonProperty("nmds")
     @JsonPropertyDescription("No Methods Development or validation studies (NMDS)")
     private Boolean nmds;
     /**
      * Genetic studies only (GSO)
-     *
+     * 
      */
     @JsonProperty("gso")
     @JsonPropertyDescription("Genetic studies only (GSO)")
     private Boolean gso;
     /**
      * Publication Required (PUB)
-     *
+     * 
      */
     @JsonProperty("pub")
     @JsonPropertyDescription("Publication Required (PUB)")
     private Boolean pub;
     /**
      * Collaboration Required (COL)
-     *
+     * 
      */
     @JsonProperty("col")
     @JsonPropertyDescription("Collaboration Required (COL)")
     private Boolean col;
     /**
      * Ethics Approval Required (IRB)
-     *
+     * 
      */
     @JsonProperty("irb")
     @JsonPropertyDescription("Ethics Approval Required (IRB)")
     private Boolean irb;
     /**
      * Geographic Restriction (GS-)
-     *
+     * 
      */
     @JsonProperty("gs")
     @JsonPropertyDescription("Geographic Restriction (GS-)")
     private String gs;
     /**
      * Publication Moratorium (MOR)
-     *
+     * 
      */
     @JsonProperty("mor")
     @JsonPropertyDescription("Publication Moratorium (MOR)")
     private Boolean mor;
     /**
      * Publication Moratorium Date (MOR)
-     *
+     * 
      */
     @JsonProperty("morDate")
     @JsonPropertyDescription("Publication Moratorium Date (MOR)")
     private String morDate;
     /**
      * Non-profit Use Only (NPU)
-     *
+     * 
      */
     @JsonProperty("npu")
     @JsonPropertyDescription("Non-profit Use Only (NPU)")
     private Boolean npu;
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherSecondary")
     @JsonPropertyDescription("Other")
     private String otherSecondary;
     /**
+     * Data Access Committee ID
+     * 
+     */
+    @JsonProperty("dataAccessCommitteeId")
+    @JsonPropertyDescription("Data Access Committee ID")
+    private Integer dataAccessCommitteeId;
+    /**
      * Data Location
-     *
+     * 
      */
     @JsonProperty("dataLocation")
     @JsonPropertyDescription("Data Location")
-    private List<DataLocation> dataLocation = new ArrayList<DataLocation>();
+    private ConsentGroup.DataLocation dataLocation;
     /**
      * Free text field for entering URL of data
-     *
+     * 
      */
     @JsonProperty("url")
     @JsonPropertyDescription("Free text field for entering URL of data")
     private URI url;
-
     /**
      * List of File Types
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileTypes")
     @JsonPropertyDescription("List of File Types")
@@ -174,8 +188,7 @@ public class ConsentGroup {
 
     /**
      * Consent Group Name
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("consentGroupName")
     public String getConsentGroupName() {
@@ -184,8 +197,7 @@ public class ConsentGroup {
 
     /**
      * Consent Group Name
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("consentGroupName")
     public void setConsentGroupName(String consentGroupName) {
@@ -193,8 +205,26 @@ public class ConsentGroup {
     }
 
     /**
+     * No Restrictions
+     * 
+     */
+    @JsonProperty("openAccess")
+    public Boolean getOpenAccess() {
+        return openAccess;
+    }
+
+    /**
+     * No Restrictions
+     * 
+     */
+    @JsonProperty("openAccess")
+    public void setOpenAccess(Boolean openAccess) {
+        this.openAccess = openAccess;
+    }
+
+    /**
      * General Research Use
-     *
+     * 
      */
     @JsonProperty("generalResearchUse")
     public Boolean getGeneralResearchUse() {
@@ -203,7 +233,7 @@ public class ConsentGroup {
 
     /**
      * General Research Use
-     *
+     * 
      */
     @JsonProperty("generalResearchUse")
     public void setGeneralResearchUse(Boolean generalResearchUse) {
@@ -212,7 +242,7 @@ public class ConsentGroup {
 
     /**
      * Health/Medical/Biomedical Research Use
-     *
+     * 
      */
     @JsonProperty("hmb")
     public Boolean getHmb() {
@@ -221,7 +251,7 @@ public class ConsentGroup {
 
     /**
      * Health/Medical/Biomedical Research Use
-     *
+     * 
      */
     @JsonProperty("hmb")
     public void setHmb(Boolean hmb) {
@@ -230,7 +260,7 @@ public class ConsentGroup {
 
     /**
      * Disease-Specific Research Use
-     *
+     * 
      */
     @JsonProperty("diseaseSpecificUse")
     public List<String> getDiseaseSpecificUse() {
@@ -239,7 +269,7 @@ public class ConsentGroup {
 
     /**
      * Disease-Specific Research Use
-     *
+     * 
      */
     @JsonProperty("diseaseSpecificUse")
     public void setDiseaseSpecificUse(List<String> diseaseSpecificUse) {
@@ -248,7 +278,7 @@ public class ConsentGroup {
 
     /**
      * Populations, Origins, Ancestry Use
-     *
+     * 
      */
     @JsonProperty("poa")
     public Boolean getPoa() {
@@ -257,7 +287,7 @@ public class ConsentGroup {
 
     /**
      * Populations, Origins, Ancestry Use
-     *
+     * 
      */
     @JsonProperty("poa")
     public void setPoa(Boolean poa) {
@@ -266,7 +296,7 @@ public class ConsentGroup {
 
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherPrimary")
     public String getOtherPrimary() {
@@ -275,7 +305,7 @@ public class ConsentGroup {
 
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherPrimary")
     public void setOtherPrimary(String otherPrimary) {
@@ -284,7 +314,7 @@ public class ConsentGroup {
 
     /**
      * No Methods Development or validation studies (NMDS)
-     *
+     * 
      */
     @JsonProperty("nmds")
     public Boolean getNmds() {
@@ -293,7 +323,7 @@ public class ConsentGroup {
 
     /**
      * No Methods Development or validation studies (NMDS)
-     *
+     * 
      */
     @JsonProperty("nmds")
     public void setNmds(Boolean nmds) {
@@ -302,7 +332,7 @@ public class ConsentGroup {
 
     /**
      * Genetic studies only (GSO)
-     *
+     * 
      */
     @JsonProperty("gso")
     public Boolean getGso() {
@@ -311,7 +341,7 @@ public class ConsentGroup {
 
     /**
      * Genetic studies only (GSO)
-     *
+     * 
      */
     @JsonProperty("gso")
     public void setGso(Boolean gso) {
@@ -320,7 +350,7 @@ public class ConsentGroup {
 
     /**
      * Publication Required (PUB)
-     *
+     * 
      */
     @JsonProperty("pub")
     public Boolean getPub() {
@@ -329,7 +359,7 @@ public class ConsentGroup {
 
     /**
      * Publication Required (PUB)
-     *
+     * 
      */
     @JsonProperty("pub")
     public void setPub(Boolean pub) {
@@ -338,7 +368,7 @@ public class ConsentGroup {
 
     /**
      * Collaboration Required (COL)
-     *
+     * 
      */
     @JsonProperty("col")
     public Boolean getCol() {
@@ -347,7 +377,7 @@ public class ConsentGroup {
 
     /**
      * Collaboration Required (COL)
-     *
+     * 
      */
     @JsonProperty("col")
     public void setCol(Boolean col) {
@@ -356,7 +386,7 @@ public class ConsentGroup {
 
     /**
      * Ethics Approval Required (IRB)
-     *
+     * 
      */
     @JsonProperty("irb")
     public Boolean getIrb() {
@@ -365,7 +395,7 @@ public class ConsentGroup {
 
     /**
      * Ethics Approval Required (IRB)
-     *
+     * 
      */
     @JsonProperty("irb")
     public void setIrb(Boolean irb) {
@@ -374,7 +404,7 @@ public class ConsentGroup {
 
     /**
      * Geographic Restriction (GS-)
-     *
+     * 
      */
     @JsonProperty("gs")
     public String getGs() {
@@ -383,7 +413,7 @@ public class ConsentGroup {
 
     /**
      * Geographic Restriction (GS-)
-     *
+     * 
      */
     @JsonProperty("gs")
     public void setGs(String gs) {
@@ -392,7 +422,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium (MOR)
-     *
+     * 
      */
     @JsonProperty("mor")
     public Boolean getMor() {
@@ -401,7 +431,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium (MOR)
-     *
+     * 
      */
     @JsonProperty("mor")
     public void setMor(Boolean mor) {
@@ -410,7 +440,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium Date (MOR)
-     *
+     * 
      */
     @JsonProperty("morDate")
     public String getMorDate() {
@@ -419,7 +449,7 @@ public class ConsentGroup {
 
     /**
      * Publication Moratorium Date (MOR)
-     *
+     * 
      */
     @JsonProperty("morDate")
     public void setMorDate(String morDate) {
@@ -428,7 +458,7 @@ public class ConsentGroup {
 
     /**
      * Non-profit Use Only (NPU)
-     *
+     * 
      */
     @JsonProperty("npu")
     public Boolean getNpu() {
@@ -437,7 +467,7 @@ public class ConsentGroup {
 
     /**
      * Non-profit Use Only (NPU)
-     *
+     * 
      */
     @JsonProperty("npu")
     public void setNpu(Boolean npu) {
@@ -446,7 +476,7 @@ public class ConsentGroup {
 
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherSecondary")
     public String getOtherSecondary() {
@@ -455,7 +485,7 @@ public class ConsentGroup {
 
     /**
      * Other
-     *
+     * 
      */
     @JsonProperty("otherSecondary")
     public void setOtherSecondary(String otherSecondary) {
@@ -463,26 +493,44 @@ public class ConsentGroup {
     }
 
     /**
+     * Data Access Committee ID
+     * 
+     */
+    @JsonProperty("dataAccessCommitteeId")
+    public Integer getDataAccessCommitteeId() {
+        return dataAccessCommitteeId;
+    }
+
+    /**
+     * Data Access Committee ID
+     * 
+     */
+    @JsonProperty("dataAccessCommitteeId")
+    public void setDataAccessCommitteeId(Integer dataAccessCommitteeId) {
+        this.dataAccessCommitteeId = dataAccessCommitteeId;
+    }
+
+    /**
      * Data Location
-     *
+     * 
      */
     @JsonProperty("dataLocation")
-    public List<DataLocation> getDataLocation() {
+    public ConsentGroup.DataLocation getDataLocation() {
         return dataLocation;
     }
 
     /**
      * Data Location
-     *
+     * 
      */
     @JsonProperty("dataLocation")
-    public void setDataLocation(List<DataLocation> dataLocation) {
+    public void setDataLocation(ConsentGroup.DataLocation dataLocation) {
         this.dataLocation = dataLocation;
     }
 
     /**
      * Free text field for entering URL of data
-     *
+     * 
      */
     @JsonProperty("url")
     public URI getUrl() {
@@ -491,7 +539,7 @@ public class ConsentGroup {
 
     /**
      * Free text field for entering URL of data
-     *
+     * 
      */
     @JsonProperty("url")
     public void setUrl(URI url) {
@@ -500,8 +548,7 @@ public class ConsentGroup {
 
     /**
      * List of File Types
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileTypes")
     public List<FileTypeObject> getFileTypes() {
@@ -510,8 +557,7 @@ public class ConsentGroup {
 
     /**
      * List of File Types
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileTypes")
     public void setFileTypes(List<FileTypeObject> fileTypes) {
@@ -525,6 +571,10 @@ public class ConsentGroup {
         sb.append("consentGroupName");
         sb.append('=');
         sb.append(((this.consentGroupName == null)?"<null>":this.consentGroupName));
+        sb.append(',');
+        sb.append("openAccess");
+        sb.append('=');
+        sb.append(((this.openAccess == null)?"<null>":this.openAccess));
         sb.append(',');
         sb.append("generalResearchUse");
         sb.append('=');
@@ -586,6 +636,10 @@ public class ConsentGroup {
         sb.append('=');
         sb.append(((this.otherSecondary == null)?"<null>":this.otherSecondary));
         sb.append(',');
+        sb.append("dataAccessCommitteeId");
+        sb.append('=');
+        sb.append(((this.dataAccessCommitteeId == null)?"<null>":this.dataAccessCommitteeId));
+        sb.append(',');
         sb.append("dataLocation");
         sb.append('=');
         sb.append(((this.dataLocation == null)?"<null>":this.dataLocation));
@@ -614,6 +668,7 @@ public class ConsentGroup {
         result = ((result* 31)+((this.generalResearchUse == null)? 0 :this.generalResearchUse.hashCode()));
         result = ((result* 31)+((this.poa == null)? 0 :this.poa.hashCode()));
         result = ((result* 31)+((this.morDate == null)? 0 :this.morDate.hashCode()));
+        result = ((result* 31)+((this.dataAccessCommitteeId == null)? 0 :this.dataAccessCommitteeId.hashCode()));
         result = ((result* 31)+((this.otherPrimary == null)? 0 :this.otherPrimary.hashCode()));
         result = ((result* 31)+((this.gs == null)? 0 :this.gs.hashCode()));
         result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
@@ -623,12 +678,12 @@ public class ConsentGroup {
         result = ((result* 31)+((this.mor == null)? 0 :this.mor.hashCode()));
         result = ((result* 31)+((this.npu == null)? 0 :this.npu.hashCode()));
         result = ((result* 31)+((this.dataLocation == null)? 0 :this.dataLocation.hashCode()));
+        result = ((result* 31)+((this.openAccess == null)? 0 :this.openAccess.hashCode()));
         result = ((result* 31)+((this.irb == null)? 0 :this.irb.hashCode()));
         result = ((result* 31)+((this.hmb == null)? 0 :this.hmb.hashCode()));
         result = ((result* 31)+((this.pub == null)? 0 :this.pub.hashCode()));
         result = ((result* 31)+((this.nmds == null)? 0 :this.nmds.hashCode()));
         result = ((result* 31)+((this.otherSecondary == null)? 0 :this.otherSecondary.hashCode()));
-        result = ((result* 31)+((this.fileTypes == null)? 0 :this.fileTypes.hashCode()));
         return result;
     }
 
@@ -641,7 +696,53 @@ public class ConsentGroup {
             return false;
         }
         ConsentGroup rhs = ((ConsentGroup) other);
-        return ((((((((((((((((((this.col == rhs.col)||((this.col!= null)&&this.col.equals(rhs.col)))&&((this.gso == rhs.gso)||((this.gso!= null)&&this.gso.equals(rhs.gso))))&&((this.generalResearchUse == rhs.generalResearchUse)||((this.generalResearchUse!= null)&&this.generalResearchUse.equals(rhs.generalResearchUse))))&&((this.poa == rhs.poa)||((this.poa!= null)&&this.poa.equals(rhs.poa))))&&((this.otherPrimary == rhs.otherPrimary)||((this.otherPrimary!= null)&&this.otherPrimary.equals(rhs.otherPrimary))))&&((this.gs == rhs.gs)||((this.gs!= null)&&this.gs.equals(rhs.gs))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.diseaseSpecificUse == rhs.diseaseSpecificUse)||((this.diseaseSpecificUse!= null)&&this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse))))&&((this.consentGroupName == rhs.consentGroupName)||((this.consentGroupName!= null)&&this.consentGroupName.equals(rhs.consentGroupName))))&&((this.mor == rhs.mor)||((this.mor!= null)&&this.mor.equals(rhs.mor))))&&((this.npu == rhs.npu)||((this.npu!= null)&&this.npu.equals(rhs.npu))))&&((this.dataLocation == rhs.dataLocation)||((this.dataLocation!= null)&&this.dataLocation.equals(rhs.dataLocation))))&&((this.irb == rhs.irb)||((this.irb!= null)&&this.irb.equals(rhs.irb))))&&((this.hmb == rhs.hmb)||((this.hmb!= null)&&this.hmb.equals(rhs.hmb))))&&((this.pub == rhs.pub)||((this.pub!= null)&&this.pub.equals(rhs.pub))))&&((this.nmds == rhs.nmds)||((this.nmds!= null)&&this.nmds.equals(rhs.nmds))))&&((this.otherSecondary == rhs.otherSecondary)||((this.otherSecondary!= null)&&this.otherSecondary.equals(rhs.otherSecondary)))&&((this.fileTypes == rhs.fileTypes)||((this.fileTypes!= null)&&this.fileTypes.equals(rhs.fileTypes))));
+        return ((((((((((((((((((((((this.col == rhs.col)||((this.col!= null)&&this.col.equals(rhs.col)))&&((this.gso == rhs.gso)||((this.gso!= null)&&this.gso.equals(rhs.gso))))&&((this.generalResearchUse == rhs.generalResearchUse)||((this.generalResearchUse!= null)&&this.generalResearchUse.equals(rhs.generalResearchUse))))&&((this.poa == rhs.poa)||((this.poa!= null)&&this.poa.equals(rhs.poa))))&&((this.morDate == rhs.morDate)||((this.morDate!= null)&&this.morDate.equals(rhs.morDate))))&&((this.dataAccessCommitteeId == rhs.dataAccessCommitteeId)||((this.dataAccessCommitteeId!= null)&&this.dataAccessCommitteeId.equals(rhs.dataAccessCommitteeId))))&&((this.otherPrimary == rhs.otherPrimary)||((this.otherPrimary!= null)&&this.otherPrimary.equals(rhs.otherPrimary))))&&((this.gs == rhs.gs)||((this.gs!= null)&&this.gs.equals(rhs.gs))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.fileTypes == rhs.fileTypes)||((this.fileTypes!= null)&&this.fileTypes.equals(rhs.fileTypes))))&&((this.diseaseSpecificUse == rhs.diseaseSpecificUse)||((this.diseaseSpecificUse!= null)&&this.diseaseSpecificUse.equals(rhs.diseaseSpecificUse))))&&((this.consentGroupName == rhs.consentGroupName)||((this.consentGroupName!= null)&&this.consentGroupName.equals(rhs.consentGroupName))))&&((this.mor == rhs.mor)||((this.mor!= null)&&this.mor.equals(rhs.mor))))&&((this.npu == rhs.npu)||((this.npu!= null)&&this.npu.equals(rhs.npu))))&&((this.dataLocation == rhs.dataLocation)||((this.dataLocation!= null)&&this.dataLocation.equals(rhs.dataLocation))))&&((this.openAccess == rhs.openAccess)||((this.openAccess!= null)&&this.openAccess.equals(rhs.openAccess))))&&((this.irb == rhs.irb)||((this.irb!= null)&&this.irb.equals(rhs.irb))))&&((this.hmb == rhs.hmb)||((this.hmb!= null)&&this.hmb.equals(rhs.hmb))))&&((this.pub == rhs.pub)||((this.pub!= null)&&this.pub.equals(rhs.pub))))&&((this.nmds == rhs.nmds)||((this.nmds!= null)&&this.nmds.equals(rhs.nmds))))&&((this.otherSecondary == rhs.otherSecondary)||((this.otherSecondary!= null)&&this.otherSecondary.equals(rhs.otherSecondary))));
+    }
+
+
+    /**
+     * Data Location
+     * 
+     */
+    public enum DataLocation {
+
+        AN_VIL_WORKSPACE("AnVIL Workspace"),
+        TERRA_WORKSPACE("Terra Workspace"),
+        TDR_LOCATION("TDR Location"),
+        NOT_DETERMINED("Not Determined");
+        private final String value;
+        private final static Map<String, ConsentGroup.DataLocation> CONSTANTS = new HashMap<String, ConsentGroup.DataLocation>();
+
+        static {
+            for (ConsentGroup.DataLocation c: values()) {
+                CONSTANTS.put(c.value, c);
+            }
+        }
+
+        DataLocation(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        @JsonValue
+        public String value() {
+            return this.value;
+        }
+
+        @JsonCreator
+        public static ConsentGroup.DataLocation fromValue(String value) {
+            ConsentGroup.DataLocation constant = CONSTANTS.get(value);
+            if (constant == null) {
+                throw new IllegalArgumentException(value);
+            } else {
+                return constant;
+            }
+        }
+
     }
 
 }

@@ -3,16 +3,15 @@ package org.broadinstitute.consent.http.models.dataset_registration_v1;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import javax.annotation.processing.Generated;
 import java.util.HashMap;
 import java.util.Map;
 
-@Generated("jsonschema2pojo")
 public enum NihAnvilUse {
 
-    I_did("I did"),
-    I_will("I will"),
-    No("No");
+    I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY("I am NHGRI funded and I have a dbGaP PHS ID already"),
+    I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID("I am NHGRI funded and I do not have a dbGaP PHS ID"),
+    I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL("I am not NHGRI funded but I am seeking to submit data to AnVIL"),
+    I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL("I am not NHGRI funded and do not plan to store data in AnVIL");
     private final String value;
     private final static Map<String, NihAnvilUse> CONSTANTS = new HashMap<String, NihAnvilUse>();
 

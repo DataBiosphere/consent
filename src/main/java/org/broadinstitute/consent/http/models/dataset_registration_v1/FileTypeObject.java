@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import javax.annotation.processing.Generated;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,21 +16,18 @@ import java.util.Map;
     "functionalEquivalence",
     "numberOfParticipants"
 })
-@Generated("jsonschema2pojo")
 public class FileTypeObject {
 
     /**
      * File Type
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileType")
     @JsonPropertyDescription("File Type")
     private FileTypeObject.FileType fileType;
     /**
      * Functional Equivalence
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("functionalEquivalence")
     @JsonPropertyDescription("Functional Equivalence")
@@ -39,7 +35,7 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     *
+     * 
      */
     @JsonProperty("numberOfParticipants")
     @JsonPropertyDescription("# of Participants")
@@ -47,8 +43,7 @@ public class FileTypeObject {
 
     /**
      * File Type
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileType")
     public FileTypeObject.FileType getFileType() {
@@ -57,8 +52,7 @@ public class FileTypeObject {
 
     /**
      * File Type
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("fileType")
     public void setFileType(FileTypeObject.FileType fileType) {
@@ -67,8 +61,7 @@ public class FileTypeObject {
 
     /**
      * Functional Equivalence
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("functionalEquivalence")
     public String getFunctionalEquivalence() {
@@ -77,8 +70,7 @@ public class FileTypeObject {
 
     /**
      * Functional Equivalence
-     * (Required)
-     *
+     * 
      */
     @JsonProperty("functionalEquivalence")
     public void setFunctionalEquivalence(String functionalEquivalence) {
@@ -88,7 +80,7 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     *
+     * 
      */
     @JsonProperty("numberOfParticipants")
     public Integer getNumberOfParticipants() {
@@ -98,7 +90,7 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     *
+     * 
      */
     @JsonProperty("numberOfParticipants")
     public void setNumberOfParticipants(Integer numberOfParticipants) {
@@ -153,16 +145,15 @@ public class FileTypeObject {
 
     /**
      * File Type
-     *
+     * 
      */
-    @Generated("jsonschema2pojo")
     public enum FileType {
 
-        Arrays("Arrays"),
-        Genome("Genome"),
-        Exome("Exome"),
-        Survey("Survey"),
-        Phenotype("Phenotype");
+        ARRAYS("Arrays"),
+        GENOME("Genome"),
+        EXOME("Exome"),
+        SURVEY("Survey"),
+        PHENOTYPE("Phenotype");
         private final String value;
         private final static Map<String, FileTypeObject.FileType> CONSTANTS = new HashMap<String, FileTypeObject.FileType>();
 

@@ -1016,7 +1016,7 @@ public class DatasetResourceTest {
         consentGroup.setConsentGroupName("Name");
         consentGroup.setGeneralResearchUse(true);
         FileTypeObject fileType = new FileTypeObject();
-        fileType.setFileType(FileTypeObject.FileType.Arrays);
+        fileType.setFileType(FileTypeObject.FileType.ARRAYS);
         fileType.setFunctionalEquivalence("Functional Equivalence");
         fileType.setNumberOfParticipants(1);
         consentGroup.setFileTypes(List.of(fileType));
