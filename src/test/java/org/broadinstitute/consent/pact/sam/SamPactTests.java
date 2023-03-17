@@ -63,7 +63,7 @@ public class SamPactTests {
           .setUserInfo(new UserInfo()
             .setUserEmail(USER_STATUS_INFO.getUserEmail())
             .setUserSubjectId(USER_STATUS_INFO.getUserSubjectId()))
-          .setEnabled( new Enabled()
+          .setEnabled(new Enabled()
             .setAllUsersGroup(USER_STATUS_DIAGNOSTICS.getInAllUsersGroup())
             .setLdap(true)
             .setGoogle(USER_STATUS_DIAGNOSTICS.getInGoogleProxyGroup()));
