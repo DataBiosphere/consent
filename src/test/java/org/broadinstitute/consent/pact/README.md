@@ -47,6 +47,7 @@ sequenceDiagram
 ```
 
 #### Provider Context
+
 ```mermaid
 sequenceDiagram
   participant Consent
