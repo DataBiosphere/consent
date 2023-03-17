@@ -43,8 +43,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
     INNER JOIN dar_dataset dd
       ON dar.reference_id = dd.reference_id
     WHERE dd.dataset_id IN (<datasetIds>)
-    	AND (e.latest = e.election_id OR e.election_id IS NULL)
-    	AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
+      AND (e.latest = e.election_id OR e.election_id IS NULL)
+      AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
       AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
     """)
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
