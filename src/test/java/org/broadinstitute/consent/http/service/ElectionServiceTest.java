@@ -186,7 +186,7 @@ public class ElectionServiceTest {
         doNothing().when(electionDAO).archiveElectionById(any(), any());
         doNothing().when(electionDAO).updateElectionStatus(any(), any());
         doNothing().when(emailService).sendResearcherDarApproved(any(), any(), any(), any());
-        doNothing().when(emailService).sendDataCustodianApprovalMessage(any(), any(), any(), any(), any());
+//        doNothing().when(emailService).sendDataCustodianApprovalMessage(any(), any(), any(), any(), any());
         doNothing().when(emailService).sendClosedDataSetElectionsMessage(any());
 //        doNothing().when(voteDAO).deleteVoteById(any());
         doNothing().when(electionDAO).deleteElectionById(any());
@@ -264,7 +264,7 @@ public class ElectionServiceTest {
     }
 
     private void initService() {
-        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, dataSetDAO, datasetAssociationDAO, darCollectionDAO, mailMessageDAO, emailService, dataAccessRequestService);
+        service = new ElectionService(consentDAO, electionDAO, voteDAO, userDAO, mailMessageDAO, emailService, dataAccessRequestService);
     }
 
     @Test

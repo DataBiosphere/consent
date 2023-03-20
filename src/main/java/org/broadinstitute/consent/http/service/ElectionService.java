@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,9 +18,6 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -30,13 +26,10 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,26 +40,18 @@ public class ElectionService {
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
-    private final DatasetDAO datasetDAO;
-    private final DatasetAssociationDAO datasetAssociationDAO;
-    private final DarCollectionDAO darCollectionDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailService emailService;
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
-                           DatasetDAO datasetDAO, DatasetAssociationDAO datasetAssociationDAO,
-                           DarCollectionDAO darCollectionDAO,
                            MailMessageDAO mailMessageDAO, EmailService emailService,
                            DataAccessRequestService dataAccessRequestService) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
-        this.datasetDAO = datasetDAO;
-        this.datasetAssociationDAO = datasetAssociationDAO;
-        this.darCollectionDAO = darCollectionDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailService = emailService;
         this.dataAccessRequestService = dataAccessRequestService;
@@ -270,53 +255,6 @@ public class ElectionService {
         }
         if (CollectionUtils.isNotEmpty(ids)) {
             electionDAO.updateElectionStatus(ids, status);
-        }
-    }
-
-    /**
-     * For this Data Access Request, look for any datasets that have a data custodian. Send each custodian a
-     * notification email for their datasets with information about the new Data Access Request approval.
-     *
-     * @param referenceId The DAR reference id
-     */
-    private void sendDataCustodianNotification(String referenceId) {
-        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-        DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-        if (collection == null || dar == null) {
-            logger.error("Unable to send data custodian approval message: dar could not be found with reference id "+referenceId+".");
-            return;
-        }
-
-        final User researcher = userDAO.findUserById(dar.getUserId());
-        if (researcher == null) {
-            logger.error("Unable to send data custodian approval message: researcher could not be found with user id "+dar.getUserId()+".");
-            return;
-        }
-
-        List<Integer> datasetIdList = dar.getDatasetIds();
-        if (CollectionUtils.isNotEmpty(datasetIdList)) {
-            Map<Integer, List<DatasetAssociation>> userToAssociationMap = datasetAssociationDAO.
-                    getDatasetAssociations(datasetIdList).stream().
-                    collect(Collectors.groupingBy(DatasetAssociation::getDacuserId));
-            userToAssociationMap.forEach((userId, associationList) -> {
-                User custodian = userDAO.findUserById(userId);
-                List<Integer> datasetIds = associationList.stream().
-                        map(DatasetAssociation::getDatasetId).collect(Collectors.toList());
-                List<DatasetMailDTO> mailDTOS = datasetDAO.findDatasetsByIdList(datasetIds).stream().
-                        map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier())).
-                        collect(Collectors.toList());
-                try {
-                    String researcherEmail = researcher.getEmail();
-                    String darCode = Objects.nonNull(collection.getDarCode()) ?
-                            collection.getDarCode() :
-                            referenceId;
-
-                    emailService.sendDataCustodianApprovalMessage(custodian, darCode, mailDTOS,
-                            custodian.getDisplayName(), researcherEmail);
-                } catch (Exception e) {
-                    logger.error("Unable to send data custodian approval message: " + e);
-                }
-            });
         }
     }
 

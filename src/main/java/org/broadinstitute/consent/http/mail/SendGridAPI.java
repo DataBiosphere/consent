@@ -21,7 +21,6 @@ import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
-import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
@@ -49,7 +48,6 @@ public class SendGridAPI {
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
     private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
-    private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
     private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
     private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
     private final NewResearcherLibraryRequestMessage newResearcherLibraryRequestMessage = new NewResearcherLibraryRequestMessage();
@@ -181,11 +179,6 @@ public class SendGridAPI {
     }
     public Optional<Response> sendNewResearcherApprovedMessage(String toAddress, Writer template, String darCode) {
         Mail message = researcherApprovedMessage.researcherApprovedMessage(toAddress, fromAccount, template, darCode);
-        return sendMessage(message);
-    }
-
-    public Optional<Response> sendDataCustodianApprovalMessage(String toAddress, String darCode, Writer template) {
-        Mail message = dataCustodianApprovalMessage.dataCustodianApprovalMessage(toAddress, fromAccount, darCode, template);
         return sendMessage(message);
     }
 

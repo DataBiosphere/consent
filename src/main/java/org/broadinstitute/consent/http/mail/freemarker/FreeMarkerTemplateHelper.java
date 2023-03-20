@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
@@ -63,12 +61,6 @@ public class FreeMarkerTemplateHelper {
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
     }
 
-    public Writer getDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets, String dataDepositorName,
-                                                   String darCode, String researcherEmail) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
-        return generateDataCustodianApprovalTemplate(datasets, dataDepositorName, darCode, researcherEmail, temp);
-    }
-
     public Writer getDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("dataset-approved.html");
         return generateDatasetApprovedTemplate(dataSubmitterName, datasetName, dacName, temp);
@@ -84,16 +76,6 @@ public class FreeMarkerTemplateHelper {
         return generateNewResearcherLibraryRequestTemplate(researcherName, serverUrl, temp);
     }
 
-
-    private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
-                                                         String dataDepositorName, String darCode,
-                                                         String researcherEmail, Template temp) throws IOException, TemplateException {
-        DataCustodianApprovalModel model = new DataCustodianApprovalModel(datasets,
-                dataDepositorName, darCode, researcherEmail);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
 
     private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
         DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
@@ -185,10 +167,4 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateAdminApprovedDarTemplate(String userType, String entityId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl, Template temp) throws IOException, TemplateException {
-        AdminDarApprovedModel model = new AdminDarApprovedModel(userType, entityId, dataOwnersDataSets, serverUrl);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
 }
