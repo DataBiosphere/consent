@@ -53,9 +53,6 @@ public class EmailService {
     private final String SERVER_URL;
     private static final String LOG_VOTE_DUL_URL = "dul_review";
     private static final String LOG_VOTE_ACCESS_URL = "access_review";
-    private static final String COLLECT_VOTE_ACCESS_URL = "access_review_results";
-    private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
-
     public enum ElectionTypeString {
 
         DATA_ACCESS("Data Access Request"),
@@ -155,26 +152,6 @@ public class EmailService {
                     null,
                     user.getUserId(),
                     EmailType.NEW_DAR,
-                    template
-            );
-        }
-    }
-
-    public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
-        Set<User> chairs = userDAO.findUsersForElectionsByRoles(
-                Collections.singletonList(electionId),
-                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-        for (User chair : chairs) {
-            Map<String, String> data = retrieveForCollect(electionId, chair);
-            String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
-            Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-            Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-            saveEmailAndResponse(
-                    response.orElse(null),
-                    data.get("electionId"),
-                    null,
-                    Integer.valueOf(data.get("dacUserId")),
-                    EmailType.COLLECT,
                     template
             );
         }
@@ -351,17 +328,6 @@ public class EmailService {
         return serverUrl;
     }
 
-    private String generateCollectVoteUrl(String serverUrl, String electionType, String entityId, String electionId) {
-        if (electionType.equals("Data Use Limitations")) {
-            return serverUrl + COLLECT_VOTE_DUL_URL + "/" + entityId;
-        } else {
-            if (electionType.equals("Data Access Request")) {
-                return serverUrl + COLLECT_VOTE_ACCESS_URL + "/" + electionId + "/" + entityId;
-            }
-        }
-        return serverUrl;
-    }
-
     private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
@@ -396,31 +362,6 @@ public class EmailService {
         return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
     }
 
-    private Map<String, String> retrieveForCollect(Integer electionId, User user) {
-        Election election = electionDAO.findElectionWithFinalVoteById(electionId);
-        if (election.getElectionType().equals(ElectionType.RP.getValue())) {
-            election = electionDAO.findElectionById(electionDAO.findAccessElectionByElectionRPId(electionId));
-        }
-        return createDataMap(user.getDisplayName(),
-                election.getElectionType(),
-                election.getReferenceId(),
-                election.getElectionId().toString(),
-                user.getUserId().toString(),
-                user.getEmail());
-    }
-
-    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email) {
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("userName", displayName);
-        dataMap.put("electionType", retrieveElectionTypeStringCollect(electionType));
-        dataMap.put("entityId", referenceId);
-        dataMap.put("entityName", retrieveReferenceId(electionType, referenceId));
-        dataMap.put("electionId", electionId);
-        dataMap.put("dacUserId", dacUserId);
-        dataMap.put("email", email);
-        return dataMap;
-    }
-
     private Map<String, String> retrieveForNewDAR(String dataAccessRequestId, User user) {
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", user.getDisplayName());
@@ -450,10 +391,4 @@ public class EmailService {
         return ElectionTypeString.RP.getValue();
     }
 
-    private String retrieveElectionTypeStringCollect(String electionType) {
-        if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-            return ElectionTypeString.TRANSLATE_DUL.getValue();
-        }
-        return ElectionTypeString.DATA_ACCESS.getValue();
-    }
 }

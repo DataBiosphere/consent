@@ -20,7 +20,6 @@ import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
-import org.broadinstitute.consent.http.mail.message.CollectMessage;
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
@@ -42,7 +41,6 @@ public class SendGridAPI {
     private String fromAccount;
     private SendGrid sendGrid;
     private Boolean activateEmailNotifications;
-    private final CollectMessage collectMessageCreator = new CollectMessage();
     private final NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
     private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
     private final ReminderMessage reminderMessageCreator = new ReminderMessage();
@@ -145,11 +143,6 @@ public class SendGridAPI {
             }
         }
         return Optional.empty();
-    }
-
-    public Optional<Response> sendCollectMessage(String toAddress, String referenceId, String type, Writer template) {
-        Mail message = collectMessageCreator.collectMessage(toAddress, fromAccount, template, referenceId, type);
-        return sendMessage(message);
     }
 
     public Optional<Response> sendNewCaseMessage(String toAddress, String referenceId, String type, Writer template) {

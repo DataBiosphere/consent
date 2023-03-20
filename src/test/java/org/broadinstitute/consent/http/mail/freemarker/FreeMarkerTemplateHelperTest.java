@@ -55,16 +55,6 @@ public class FreeMarkerTemplateHelperTest {
     }
 
     @Test
-    public void testGetCollectTemplate() throws Exception {
-        Writer template = helper.getCollectTemplate("CollectTemplate User", "DARELECTION-1", "DAR-1", "localhost:1234");
-        String templateString = template.toString();
-        final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Collect Votes Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello CollectTemplate User,"));
-        assertTrue(templateString.contains("DAR-1"));
-    }
-
-    @Test
     public void testGetNewCaseTemplate() throws Exception {
         Writer template = helper.getNewCaseTemplate("NewCase User", "DARELECTION-1", "DAR-1", "localhost:1234");
         String templateString = template.toString();

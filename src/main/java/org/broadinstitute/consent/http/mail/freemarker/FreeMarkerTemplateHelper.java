@@ -33,11 +33,6 @@ public class FreeMarkerTemplateHelper {
         return generateDisabledDatasetsTemplate(user, datasets, entityId, serverUrl, temp);
     }
 
-    public Writer getCollectTemplate(String user, String election, String entityId, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("collect.html");
-        return generateTemplate(user, election, entityId, temp, serverUrl);
-    }
-
     public Writer getNewCaseTemplate(String userName, String election, String entityId, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-case.html");
         return generateNewCaseTemplate(userName, election, entityId, temp, serverUrl);
