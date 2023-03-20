@@ -154,28 +154,28 @@ public class ElectionServiceTest {
 
         sampleVoteChairpersonApproval = new Vote();
         sampleVoteChairpersonApproval.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonApproval.setDacUserId(sampleUserChairperson.getUserId());
+        sampleVoteChairpersonApproval.setUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonApproval.setVote(true);
         sampleVoteChairpersonApproval.setVoteId(1);
         sampleVoteChairpersonApproval.setRationale("Go for it");
 
         sampleVoteChairpersonReject = new Vote();
         sampleVoteChairpersonReject.setElectionId(sampleElection1.getElectionId());
-        sampleVoteChairpersonReject.setDacUserId(sampleUserChairperson.getUserId());
+        sampleVoteChairpersonReject.setUserId(sampleUserChairperson.getUserId());
         sampleVoteChairpersonReject.setVote(false);
         sampleVoteChairpersonReject.setVoteId(1);
         sampleVoteChairpersonReject.setRationale("Rejection vote");
 
         sampleVoteMember = new Vote();
         sampleVoteMember.setElectionId(sampleElection1.getElectionId());
-        sampleVoteMember.setDacUserId(sampleUserMember.getUserId());
+        sampleVoteMember.setUserId(sampleUserMember.getUserId());
         sampleVoteMember.setVote(true);
         sampleVoteMember.setVoteId(2);
         sampleVoteMember.setRationale("Go for it");
 
         sampleVoteRP = new Vote();
         sampleVoteRP.setElectionId(sampleElectionRP.getElectionId());
-        sampleVoteRP.setDacUserId(sampleUserMember.getUserId());
+        sampleVoteRP.setUserId(sampleUserMember.getUserId());
         sampleVoteRP.setVote(true);
         sampleVoteRP.setVoteId(3);
         sampleVoteRP.setRationale("Yep");
@@ -426,10 +426,10 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of());
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
@@ -450,12 +450,12 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(new Vote(4, true, sampleUserChairperson.getUserId(), null, null,
                     sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
                     false, false)));
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
@@ -476,10 +476,10 @@ public class ElectionServiceTest {
                 .thenReturn(Set.of(sampleUserChairperson));
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElectionRP.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of());
-        when(voteDAO.findVotesByElectionIdAndDACUserIds(sampleElection1.getElectionId(),
+        when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
             List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of());
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(

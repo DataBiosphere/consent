@@ -3,18 +3,9 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
-
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
-
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.ElectionService;
-
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
@@ -23,9 +14,15 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.VoteService;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -86,7 +83,7 @@ public class VoteResource extends Resource {
 
             // Validate that the user is only updating their own votes:
             User user = userService.findUserByEmail(authUser.getEmail());
-            boolean authed = votes.stream().map(Vote::getDacUserId).allMatch(id -> id.equals(user.getUserId()));
+            boolean authed = votes.stream().map(Vote::getUserId).allMatch(id -> id.equals(user.getUserId()));
             if (!authed) {
                 return createExceptionResponse(new NotFoundException());
             }
@@ -139,7 +136,7 @@ public class VoteResource extends Resource {
         }
 
         // Ensure the user is only updating their votes
-        boolean permitted = votes.stream().allMatch(vote -> vote.getDacUserId().equals(user.getUserId()));
+        boolean permitted = votes.stream().allMatch(vote -> vote.getUserId().equals(user.getUserId()));
         if (!permitted) {
             return createExceptionResponse(new NotFoundException());
         }

@@ -260,7 +260,7 @@ public class SummaryServiceTest {
                 v.setElectionId(electionId);
                 v.setCreateDate(new Date());
                 v.setUpdateDate(new Date());
-                v.setDacUserId(userId);
+                v.setUserId(userId);
                 return v;
             }
         ).collect(Collectors.toUnmodifiableList());

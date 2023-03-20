@@ -1,8 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -31,25 +48,6 @@ import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 public class DarCollectionService {
 
@@ -194,7 +192,7 @@ public class DarCollectionService {
           if(isVotable) {
             s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
             List<Vote> votes = s.getVotes().stream()
-              .filter(v -> v.getDacUserId().equals(userId) && v.getType().equals(VoteType.DAC.getValue()))
+              .filter(v -> v.getUserId().equals(userId) && v.getType().equals(VoteType.DAC.getValue()))
               .collect(Collectors.toList());
             if(!votes.isEmpty()) {
               Boolean hasVoted = votes.stream().allMatch(v -> Objects.nonNull(v.getVote()));

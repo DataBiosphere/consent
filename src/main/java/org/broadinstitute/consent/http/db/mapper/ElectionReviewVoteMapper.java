@@ -15,7 +15,7 @@ public class ElectionReviewVoteMapper implements RowMapper<ElectionReviewVote> {
         new Vote(
             r.getInt("voteId"),
             (r.getString("vote") == null) ? null : r.getBoolean("vote"),
-            r.getInt("dacUserId"),
+            r.getInt("user_id"),
             r.getDate("createDate"),
             r.getDate("updateDate"),
             r.getInt("electionId"),

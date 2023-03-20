@@ -1,6 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
+
 import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -25,17 +35,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 
 public class SummaryService {
 
@@ -166,7 +165,7 @@ public class SummaryService {
           Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
           List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
           Collection<Integer> dacUserIds =
-              votes.stream().map(Vote::getDacUserId).collect(Collectors.toSet());
+              votes.stream().map(Vote::getUserId).collect(Collectors.toSet());
           Collection<User> users = userDAO.findUsers(dacUserIds);
           for (Election election : reviewedElections) {
             Optional<Consent> electionConsent =
@@ -178,7 +177,7 @@ public class SummaryService {
                     .filter(ev -> ev.getElectionId().equals(election.getElectionId()))
                     .collect(Collectors.toList());
             List<Integer> electionVotesUserIds =
-                electionVotes.stream().map(Vote::getDacUserId).collect(Collectors.toList());
+                electionVotes.stream().map(Vote::getUserId).collect(Collectors.toList());
             Collection<User> electionUsers =
                 users.stream()
                     .filter(du -> electionVotesUserIds.contains(du.getUserId()))
@@ -189,7 +188,7 @@ public class SummaryService {
                     .findFirst();
             Optional<User> chairPerson = chairPersonVote
                 .flatMap(vote -> users.stream()
-                .filter(du -> du.getUserId().equals(vote.getDacUserId()))
+                .filter(du -> du.getUserId().equals(vote.getUserId()))
                 .findFirst());
             ConsentSummaryDetail detail = new ConsentSummaryDetail(
                     election,
@@ -240,7 +239,7 @@ public class SummaryService {
       List<Vote> rpVotes = rpElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(rpElectionIds);
       List<Vote> consentVotes = consentElectionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(consentElectionIds);
       List<Match> matchList = referenceIds.isEmpty() ? Collections.emptyList() : matchDAO.findMatchesForPurposeIds(referenceIds);
-      List<Integer> voteUserIds = accessVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
+      List<Integer> voteUserIds = accessVotes.stream().map(Vote::getUserId).distinct().collect(Collectors.toList());
       List<User> voteUsers = voteUserIds.isEmpty() ? Collections.emptyList() : new ArrayList<>(userDAO.findUsers(voteUserIds));
       List<Integer> darUserIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(Collectors.toList());
       List<User> darUsers = darUserIds.isEmpty() ? Collections.emptyList() : new ArrayList<>(userDAO.findUsers(darUserIds));
@@ -255,8 +254,8 @@ public class SummaryService {
             .filter(ev -> ev.getElectionId().equals(accessElection.getElectionId()))
             .collect(Collectors.toList()) :
             Collections.emptyList();
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
-        maxNumberOfDACMembers = Math.max(maxNumberOfDACMembers, dacUserIds.size());
+        List<Integer> userIds = accessElectionVotes.stream().map(Vote::getUserId).distinct().collect(Collectors.toList());
+        maxNumberOfDACMembers = Math.max(maxNumberOfDACMembers, userIds.size());
       }
 
       for (Election accessElection : accessElections) {
@@ -280,7 +279,7 @@ public class SummaryService {
             .filter(d -> d.getReferenceId().equalsIgnoreCase(accessElection.getReferenceId()))
             .findFirst();
         DataAccessRequest dar = darOption.orElse(null);
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getDacUserId).distinct().collect(Collectors.toList());
+        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getUserId).distinct().collect(Collectors.toList());
         List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
