@@ -20,7 +20,6 @@ import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
-import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
@@ -43,7 +42,6 @@ public class SendGridAPI {
     private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
     private final ReminderMessage reminderMessageCreator = new ReminderMessage();
     private final DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
-    private final DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
@@ -158,11 +156,6 @@ public class SendGridAPI {
 
     public Optional<Response> sendNewDARRequests(String toAddress, String referenceId, String type, Writer template) {
         Mail message =  newDARMessageCreator.newDARRequestMessage(toAddress, fromAccount, template, referenceId, type);
-        return sendMessage(message);
-    }
-
-    public Optional<Response> sendCancelDARRequestMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
-        Mail message =  darCancelMessageCreator.cancelDarMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
         return sendMessage(message);
     }
 

@@ -46,11 +46,6 @@ public class FreeMarkerTemplateHelper {
         return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
     }
 
-    public Writer getCancelledDarTemplate(String userType, String entityId, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("cancelled-dar-request.html");
-        return generateCancelledDarTemplate(userType, entityId, serverUrl, temp);
-    }
-
     public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("closed-dataset-elections.html");
         return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
@@ -155,13 +150,6 @@ public class FreeMarkerTemplateHelper {
 
     private Writer generateDisabledDatasetsTemplate(String user, List<String> datasets, String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
         DisabledDatasetModel model = new DisabledDatasetModel(user, datasets, entityId, serverUrl);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
-
-    private Writer generateCancelledDarTemplate(String userType, String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
-        CancelledDarModel model = new CancelledDarModel(userType, entityId, serverUrl);
         Writer out = new StringWriter();
         temp.process(model, out);
         return out;

@@ -85,24 +85,6 @@ public class FreeMarkerTemplateHelperTest {
     }
 
     @Test
-    public void testGetCancelledDarTemplate() throws Exception {
-        Writer template = helper.getCancelledDarTemplate("DARELECTION-1", "DAR-1", "localhost:1234");
-        String templateString = template.toString();
-        final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Cancelled Data Access Request"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
-    }
-
-//    @Test
-//    public void testGetAdminApprovedDarTemplate() throws Exception {
-//        Writer template = helper.getAdminApprovedDarTemplate("AdminApproved User", "DARELECTION-1", getApprovedDarMap(), "localhost:1234");
-//        String templateString = template.toString();
-//        final Document parsedTemplate = getAsHtmlDoc(templateString);
-//        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Admin - DAR Approved Notification"));
-//        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User,"));
-//    }
-
-    @Test
     public void testGetClosedDatasetElectionsTemplate() throws Exception {
         Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "DarCode",  "SomeType", "localhost:1234");
         String templateString = template.toString();

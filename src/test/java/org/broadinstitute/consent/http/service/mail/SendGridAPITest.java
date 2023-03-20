@@ -84,15 +84,6 @@ public class SendGridAPITest {
     }
 
     @Test
-    public void testCancelDARRequestMessage() {
-        try {
-            sendGridAPI.sendCancelDARRequestMessage(TO, ID, TYPE, template);
-        } catch (Exception e) {
-            Assert.fail("Should not throw exception");
-        }
-    }
-
-    @Test
     public void testClosedDatasetElectionsMessage() {
         try {
             sendGridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
