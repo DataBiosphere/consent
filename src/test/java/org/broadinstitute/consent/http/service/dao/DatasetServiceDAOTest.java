@@ -3,10 +3,9 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.storage.BlobId;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -15,11 +14,9 @@ import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
@@ -142,7 +139,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         assertEquals(2, datasets.size());
 
-        Dataset dataset1 = datasets.get(0);
+        Optional<Dataset> ds1Optional = datasets.stream().filter(d -> d.getName().equals(insert1.name())).findFirst();
+        assertTrue(ds1Optional.isPresent());
+        Dataset dataset1 = ds1Optional.get();
 
         assertEquals(insert1.name(), dataset1.getName());
         assertEquals(insert1.dacId(), dataset1.getDacId());
@@ -151,8 +150,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertNull(dataset1.getNihInstitutionalCertificationFile());
         assertNull(dataset1.getAlternativeDataSharingPlanFile());
 
-
-        Dataset dataset2 = datasets.get(1);
+        Optional<Dataset> ds2Optional = datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
+        assertTrue(ds2Optional.isPresent());
+        Dataset dataset2 = ds2Optional.get();
 
         assertEquals(insert2.name(), dataset2.getName());
         assertEquals(insert2.dacId(), dataset2.getDacId());
@@ -161,69 +161,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertNull(dataset2.getNihInstitutionalCertificationFile());
         assertNull(dataset2.getAlternativeDataSharingPlanFile());
 
-    }
-
-    /**
-     * Creates a new sample Dataset along with a User and a Dac
-     *
-     * @return Dataset
-     */
-    private Dataset createSampleDataset() {
-        User user = createUser();
-        Dac dac = createDac();
-        DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-        Timestamp now = new Timestamp(new Date().getTime());
-        Integer id = datasetDAO.insertDataset(
-                RandomStringUtils.randomAlphabetic(10),
-                now,
-                user.getUserId(),
-                RandomStringUtils.randomAlphabetic(10),
-                true,
-                dataUse.toString(),
-                dac.getDacId()
-        );
-        return datasetDAO.findDatasetById(id);
-    }
-
-    /**
-     * Creates a saved DatasetProperty that uses an existing Dictionary term
-     *
-     * @param dataset    The Dataset
-     * @param dictionary The Dictionary
-     * @return The created DatasetProperty
-     */
-    private DatasetProperty savePropWithDictionaryTerm(Dataset dataset, Dictionary dictionary) {
-        DatasetProperty prop = new DatasetProperty();
-        prop.setDataSetId(dataset.getDataSetId());
-        prop.setPropertyKey(dictionary.getKeyId());
-        prop.setPropertyName(dictionary.getKey());
-        prop.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        prop.setCreateDate(new Date());
-        prop.setSchemaProperty("testSchemaProp");
-        prop.setPropertyType(DatasetPropertyType.String);
-        datasetDAO.insertDatasetProperties(List.of(prop));
-        Optional<DatasetProperty> optional = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId())
-            .stream()
-            .filter(p -> p.getPropertyKey().equals(dictionary.getKeyId()))
-            .findFirst();
-        return optional.orElse(null);
-    }
-
-    /**
-     * Populates an unsaved DatasetProperty that does not use an existing Dictionary term
-     *
-     * @param dataset    The Dataset
-     * @return The populated DatasetProperty
-     */
-    private DatasetProperty createUnsavedPropWithKeyName(Dataset dataset, String keyName) {
-        DatasetProperty prop = new DatasetProperty();
-        prop.setDataSetId(dataset.getDataSetId());
-        prop.setPropertyName(keyName);
-        prop.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        prop.setCreateDate(new Date());
-        prop.setSchemaProperty("testSchemaProp");
-        prop.setPropertyType(DatasetPropertyType.String);
-        return prop;
     }
 
 }
