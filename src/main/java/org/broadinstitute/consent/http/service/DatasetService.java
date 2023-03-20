@@ -107,9 +107,9 @@ public class DatasetService {
         return datasetDAO.findDatasetById(datasetId);
     }
 
-    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
-        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
-    }
+//    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
+//        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
+//    }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
         if (CollectionUtils.isEmpty(dacIds)) {

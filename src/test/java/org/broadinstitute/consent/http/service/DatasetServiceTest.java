@@ -219,16 +219,16 @@ public class DatasetServiceTest {
         assertNotNull(dataSet);
     }
 
-    @Test
-    public void testFindNeedsApprovalDataSetsByObjectId() {
-        when(datasetDAO.findNeedsApprovalDatasetByDatasetId(Collections.singletonList(1)))
-                .thenReturn(getDatasets());
-        initService();
-
-        List<Dataset> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Collections.singletonList(1));
-        assertNotNull(dataSets);
-        assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
-    }
+//    @Test
+//    public void testFindNeedsApprovalDataSetsByObjectId() {
+//        when(datasetDAO.findNeedsApprovalDatasetByDatasetId(Collections.singletonList(1)))
+//                .thenReturn(getDatasets());
+//        initService();
+//
+//        List<Dataset> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Collections.singletonList(1));
+//        assertNotNull(dataSets);
+//        assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
+//    }
 
     @Test
     public void testDeleteDataset() throws Exception {

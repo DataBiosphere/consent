@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import java.sql.BatchUpdateException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +12,8 @@ import java.util.stream.Collectors;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -75,21 +74,6 @@ public class DatasetAssociationService {
             .collect(Collectors.toList());
         usersMap.put("not_associated_users", unAssociatedUsers);
         return usersMap;
-    }
-
-    public Map<User, List<Dataset>> findDataOwnersWithAssociatedDataSets(List<Integer> dataSetIdList) {
-        List<DatasetAssociation> dataSetAssociations = dsAssociationDAO.getDatasetAssociations(dataSetIdList);
-        Map<User, List<Dataset>> dataOwnerDataSetMap = new HashMap<>();
-        dataSetAssociations.forEach(dsa -> {
-            User dataOwner = userDAO.findUserById(dsa.getDacuserId());
-            if (!dataOwnerDataSetMap.containsKey(dataOwner)) {
-                dataOwnerDataSetMap.put(userDAO.findUserById(dsa.getDacuserId()), new ArrayList<>(
-                    Collections.singletonList(dsDAO.findDatasetById(dsa.getDatasetId()))));
-            } else {
-                dataOwnerDataSetMap.get(userDAO.findUserById(dsa.getDacuserId())).add(dsDAO.findDatasetById(dsa.getDatasetId()));
-            }
-        });
-        return dataOwnerDataSetMap;
     }
 
     public List<DatasetAssociation> updateDatasetAssociations(Integer dataSetId, List<Integer> userIds) {

@@ -20,27 +20,20 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -55,34 +48,28 @@ public class ElectionService {
     private final VoteDAO voteDAO;
     private final UserDAO userDAO;
     private final DatasetDAO datasetDAO;
-    private final LibraryCardDAO libraryCardDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
     private final DataAccessRequestService dataAccessRequestService;
     private final EmailService emailService;
-    private final UseRestrictionConverter useRestrictionConverter;
     private static final Logger logger = LoggerFactory.getLogger("ElectionService");
 
     @Inject
     public ElectionService(ConsentDAO consentDAO, ElectionDAO electionDAO, VoteDAO voteDAO, UserDAO userDAO,
-                           DatasetDAO datasetDAO, LibraryCardDAO libraryCardDAO, DatasetAssociationDAO datasetAssociationDAO,
-                           DataAccessRequestDAO dataAccessRequestDAO, DarCollectionDAO darCollectionDAO,
+                           DatasetDAO datasetDAO, DatasetAssociationDAO datasetAssociationDAO,
+                           DarCollectionDAO darCollectionDAO,
                            MailMessageDAO mailMessageDAO, EmailService emailService,
-                           DataAccessRequestService dataAccessRequestService, UseRestrictionConverter useRestrictionConverter) {
+                           DataAccessRequestService dataAccessRequestService) {
         this.consentDAO = consentDAO;
         this.electionDAO = electionDAO;
         this.voteDAO = voteDAO;
         this.userDAO = userDAO;
         this.datasetDAO = datasetDAO;
-        this.libraryCardDAO = libraryCardDAO;
         this.datasetAssociationDAO = datasetAssociationDAO;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
         this.darCollectionDAO = darCollectionDAO;
         this.mailMessageDAO = mailMessageDAO;
         this.emailService = emailService;
         this.dataAccessRequestService = dataAccessRequestService;
-        this.useRestrictionConverter = useRestrictionConverter;
     }
 
     public Election updateElectionById(Election rec, Integer electionId) {
@@ -122,42 +109,6 @@ public class ElectionService {
         if (Objects.nonNull(electionStatus) && archiveStatuses.contains(electionStatus)) {
             electionDAO.archiveElectionById(electionId, update);
         }
-    }
-
-    public Election submitFinalAccessVoteDataRequestElection(Integer electionId, Boolean voteValue) throws Exception {
-        Election election = electionDAO.findElectionWithFinalVoteById(electionId);
-        if (Objects.isNull(election)) {
-            logger.error("Unable to find an election with final vote when submitting a final access vote: " + electionId);
-            election = electionDAO.findElectionById(electionId);
-            if (Objects.isNull(election)) {
-                logger.error("Unable to find an election by id when submitting a final access vote: " + electionId);
-                throw new NotFoundException("Election for specified id does not exist");
-            }
-        }
-        String darId = election.getReferenceId();
-        DataAccessRequest dar = Objects.nonNull(darId) ? dataAccessRequestService.findByReferenceId(darId) : null;
-        if (Objects.isNull(dar)) {
-            throw new NotFoundException("Data Access Request for specified id does not exist");
-        }
-        Integer userId = dar.getUserId();
-        List<LibraryCard> libraryCards = Objects.nonNull(userId) ? libraryCardDAO.findLibraryCardsByUserId(userId) : Collections.emptyList();
-        //Users cannot submit a DataAccess approval if the researcher does not have a library card
-        //However Chairs can still reject DataAccess elections even if the researcher does not have a Library Card
-        //voteValue, which represents the vote from the payload, is referenced for this validation step
-        if (libraryCards.isEmpty() && (Boolean.TRUE.equals(voteValue))) {
-            throw new NotFoundException("No Library cards exist for the researcher on this DAR");
-        }
-        electionDAO.updateElectionById(
-                electionId,
-                election.getStatus(),
-                new Date(),
-                voteValue);
-        verifyElectionArchiveState(electionId, election.getStatus());
-        if (voteValue) {
-            sendResearcherNotification(election.getReferenceId());
-            sendDataCustodianNotification(election.getReferenceId());
-        }
-        return electionDAO.findElectionWithFinalVoteById(electionId);
     }
 
     public Election describeDataRequestElection(String requestId) {
@@ -276,19 +227,6 @@ public class ElectionService {
         return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds) : Collections.emptyList();
     }
 
-    public List<Election> createDataSetElections(String referenceId, Map<User, List<Dataset>> dataOwnerDataSet){
-        List<Integer> electionsIds = new ArrayList<>();
-        dataOwnerDataSet.forEach((user,dataSets) -> {
-            dataSets.forEach(dataSet -> {
-                if(electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, dataSet.getDataSetId()) == null) {
-                    Integer electionId = electionDAO.insertElection(ElectionType.DATA_SET.getValue(), ElectionStatus.OPEN.getValue(), new Date(), referenceId, dataSet.getDataSetId());
-                    electionsIds.add(electionId);
-                }
-            });
-        });
-        return CollectionUtils.isEmpty(electionsIds) ? null : electionDAO.findElectionsByIds(electionsIds);
-    }
-
     public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
         return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType) : Collections.emptyList();
     }
@@ -307,41 +245,6 @@ public class ElectionService {
             if (ElectionStatus.getValue(status) == null) {
                 throw new IllegalArgumentException(
                         "Invalid value. Valid status are: " + ElectionStatus.getValues());
-            }
-        }
-    }
-
-    /*
-     * This method shares duplicated code with `VoteService`. This class will eventually be removed
-     * in favor of `ElectionService` so leaving this here for now.
-     */
-    @SuppressWarnings("DuplicatedCode")
-    private void validateAvailableUsers(Election election) {
-        if (Objects.nonNull(election) && !ElectionType.DATA_SET.getValue().equals(election.getElectionType())) {
-            Dac dac = electionDAO.findDacForElection(election.getElectionId());
-            Set<User> users;
-            if (dac != null) {
-                users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
-            } else {
-                users = userDAO.findNonDacUsersEnabledToVote();
-            }
-            if (users == null || users.isEmpty()) {
-                throw new IllegalArgumentException("There are no enabled DAC Members or Chairpersons to hold an election.");
-            }
-            boolean chairpersonExists;
-            if (dac == null) {
-                chairpersonExists = users.stream()
-                        .flatMap(u -> u.getRoles().stream())
-                        .anyMatch(r -> r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()));
-            } else {
-                chairpersonExists = users.stream()
-                        .flatMap(u -> u.getRoles().stream())
-                        .anyMatch(r ->
-                                r.getName().equalsIgnoreCase(UserRoles.CHAIRPERSON.getRoleName()) &&
-                                        r.getDacId().equals(dac.getDacId()));
-            }
-            if (!chairpersonExists) {
-                throw new IllegalArgumentException("There has to be a Chairperson.");
             }
         }
     }
@@ -367,33 +270,6 @@ public class ElectionService {
         }
         if (CollectionUtils.isNotEmpty(ids)) {
             electionDAO.updateElectionStatus(ids, status);
-        }
-    }
-
-    private void sendResearcherNotification(String referenceId) throws Exception {
-        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-        List<Integer> dataSetIdList = dataAccessRequestDAO.findDARDatasetRelations(referenceId);
-        if (CollectionUtils.isNotEmpty(dataSetIdList)) {
-            List<Dataset> dataSets = datasetDAO.findDatasetsByIdList(dataSetIdList);
-            List<DatasetMailDTO> datasetsDetail = new ArrayList<>();
-            dataSets.forEach(ds ->
-                    datasetsDetail.add(new DatasetMailDTO(ds.getName(), ds.getDatasetIdentifier()))
-            );
-            Consent consent = consentDAO.findConsentFromDatasetID(dataSets.get(0).getDataSetId());
-            // Legacy behavior was to populate the plain language translation we received from ORSP
-            // If we don't have that and have a valid data use, use that instead as it is more up to date.
-            String translatedUseRestriction = consent.getTranslatedUseRestriction();
-            if (Objects.isNull(translatedUseRestriction)) {
-                if (Objects.nonNull(consent.getDataUse())) {
-                    translatedUseRestriction = useRestrictionConverter.translateDataUse(consent.getDataUse(), DataUseTranslationType.DATASET);
-                    // update so we don't have to make this check again
-                    consentDAO.updateConsentTranslatedUseRestriction(consent.getConsentId(), translatedUseRestriction);
-                } else {
-                    logger.error("Error finding translation for consent id: " + consent.getConsentId());
-                    translatedUseRestriction = "";
-                }
-            }
-            emailService.sendResearcherDarApproved(collection.getDarCode(),  collection.getCreateUserId(), datasetsDetail, translatedUseRestriction);
         }
     }
 

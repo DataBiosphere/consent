@@ -78,8 +78,8 @@ public interface VoteDAO extends Transactional<VoteDAO> {
                        @Bind("electionId") Integer electionId,
                        @Bind("type") String type);
 
-    @SqlUpdate("delete from vote where voteId = :voteId")
-    void deleteVoteById(@Bind("voteId") Integer voteId);
+//    @SqlUpdate("delete from vote where voteId = :voteId")
+//    void deleteVoteById(@Bind("voteId") Integer voteId);
 
     @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id = :referenceId) ")
     void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
@@ -102,17 +102,17 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
-    @SqlQuery("""
-        SELECT v.* FROM vote v
-        INNER JOIN election on election.election_id = v.electionId
-        WHERE election.reference_id = :referenceId
-        AND v.user_id = :userId
-        AND LOWER(v.type) = LOWER(:type)
-        """)
-    Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("userId") Integer userId, @Bind("type") String voteType);
+//    @SqlQuery("""
+//        SELECT v.* FROM vote v
+//        INNER JOIN election on election.election_id = v.electionId
+//        WHERE election.reference_id = :referenceId
+//        AND v.user_id = :userId
+//        AND LOWER(v.type) = LOWER(:type)
+//        """)
+//    Vote findVotesByReferenceIdTypeAndUser(@Bind("referenceId") String referenceId, @Bind("userId") Integer userId, @Bind("type") String voteType);
 
-    @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
-    List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
+//    @SqlQuery("select v.* from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
+//    List<Vote> findVoteByTypeAndElectionId(@Bind("electionId") Integer electionId, @Bind("type") String type);
 
     @SqlQuery("""
         SELECT count(*) FROM vote v
