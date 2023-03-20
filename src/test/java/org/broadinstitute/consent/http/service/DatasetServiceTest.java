@@ -111,18 +111,6 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testGetDatasetsForConsent() {
-        when(datasetDAO.getDatasetsForConsent(getDatasets().get(0).getConsentName()))
-                .thenReturn(getDatasets());
-        initService();
-
-        List<Dataset> setsForConsent = datasetService.getDataSetsForConsent("Test Consent 1");
-        assertNotNull(setsForConsent);
-        assertEquals(setsForConsent.size(), getDatasets().size());
-        assertEquals(setsForConsent.get(0).getDataSetId(), getDatasets().get(0).getDataSetId());
-    }
-
-    @Test
     public void testDescribeDataSetsByReceiveOrder() {
         when(datasetDAO.findDatasetsByReceiveOrder(Collections.singletonList(1)))
             .thenReturn(new HashSet<>(getDatasetDTOs()));

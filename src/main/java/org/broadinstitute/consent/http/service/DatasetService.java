@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -74,10 +73,6 @@ public class DatasetService {
         this.emailService = emailService;
     }
 
-    public List<Dataset> getDataSetsForConsent(String consentId) {
-        return datasetDAO.getDatasetsForConsent(consentId);
-    }
-
     public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
         return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
     }
@@ -106,10 +101,6 @@ public class DatasetService {
         datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
         return datasetDAO.findDatasetById(datasetId);
     }
-
-//    public List<Dataset> findNeedsApprovalDataSetByObjectId(List<Integer> datasetIdList) {
-//        return datasetDAO.findNeedsApprovalDatasetByDatasetId(datasetIdList);
-//    }
 
     public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
         if (CollectionUtils.isEmpty(dacIds)) {
@@ -326,19 +317,6 @@ public class DatasetService {
         return result;
     }
 
-
-    /**
-     * This method will create new, update existing, and delete unused properties for a dataset.
-     * It will also create new Dictionary keys for properties where keys do not exist.
-     *
-     * @param datasetId  The Dataset ID
-     * @param properties List of DatasetProperty objects
-     * @return List of updated DatasetProperty objects
-     * @throws SQLException The Exception
-     */
-    public List<DatasetProperty> synchronizeDatasetProperties(Integer datasetId, List<DatasetProperty> properties) throws SQLException {
-        return datasetServiceDAO.synchronizeDatasetProperties(datasetId, properties);
-    }
 
     @Deprecated // Use synchronizeDatasetProperties() instead
     public List<DatasetProperty> processDatasetProperties(Integer datasetId,

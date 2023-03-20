@@ -1,6 +1,15 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.google.cloud.storage.BlobId;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
@@ -16,17 +25,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 public class DatasetServiceDAOTest extends DAOTestHelper {
 
     private DatasetServiceDAO serviceDAO;
@@ -35,103 +33,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     public void setUp() {
         serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO);
     }
-
-    /*
-     * The following DatasetProperty synchronization test cases are covered here:
-     *  1. Add new dataset property with an existing dictionary key
-     *  2. Add new dataset property without an existing dictionary key
-     *  3. Update existing dataset property
-     *  4. Add new dataset property with an existing dictionary key + Delete existing property
-     *  5. Add new dataset property without an existing dictionary key + Delete existing property
-     *  6. Update existing dataset property + Delete existing property
-     */
-
-    @Test
-    public void testSynchronizeDatasetProperties_case1() throws Exception {
-        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        Dictionary dictionary = dictionaryTerms.get(0);
-        Dataset dataset = createSampleDataset();
-        // Creating a prop that will be added
-        DatasetProperty prop = createUnsavedPropWithKeyName(dataset, dictionary.getKey());
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
-        assertEquals(1, synchronizedProps.size());
-        assertEquals(dictionary.getKey(), synchronizedProps.get(0).getPropertyName());
-    }
-
-    @Test
-    public void testSynchronizeDatasetProperties_case2() throws Exception {
-        String newPropName = "New Prop Name";
-        Dataset dataset = createSampleDataset();
-        // Creating a prop that will be added
-        DatasetProperty prop = createUnsavedPropWithKeyName(dataset, newPropName);
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
-        assertEquals(1, synchronizedProps.size());
-        List<String> dictionaryTerms = datasetDAO.getDictionaryTerms().stream().map(Dictionary::getKey).toList();
-        assertTrue(dictionaryTerms.contains(newPropName));
-    }
-
-    @Test
-    public void testSynchronizeDatasetProperties_case3() throws Exception {
-        Dataset dataset = createSampleDataset();
-        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        Dictionary dictionary = dictionaryTerms.get(0);
-        // Saving a prop that will be updated
-        DatasetProperty prop = savePropWithDictionaryTerm(dataset, dictionary);
-        String newPropVal = RandomStringUtils.randomAlphabetic(10);
-        prop.setPropertyValue(newPropVal);
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(prop));
-        assertEquals(1, synchronizedProps.size());
-        assertEquals(newPropVal, synchronizedProps.get(0).getPropertyValueAsString());
-    }
-
-    @Test
-    public void testSynchronizeDatasetProperties_case4() throws Exception {
-        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        Dictionary dict1 = dictionaryTerms.get(0);
-        Dictionary dict2 = dictionaryTerms.get(1);
-        Dataset dataset = createSampleDataset();
-        // Saving a prop that will be deleted via synchronization
-        savePropWithDictionaryTerm(dataset, dict1);
-        // Creating a prop that will be added
-        DatasetProperty propToAdd = createUnsavedPropWithKeyName(dataset, dict2.getKey());
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToAdd));
-        assertEquals(1, synchronizedProps.size());
-        assertEquals(dict2.getKey(), synchronizedProps.get(0).getPropertyName());
-    }
-
-    @Test
-    public void testSynchronizeDatasetProperties_case5() throws Exception {
-        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        Dictionary dict1 = dictionaryTerms.get(0);
-        String newPropName = "New Prop Name";
-        Dataset dataset = createSampleDataset();
-        // Saving a prop that will be deleted via synchronization
-        savePropWithDictionaryTerm(dataset, dict1);
-        // Creating a prop that will be added
-        DatasetProperty propToAdd = createUnsavedPropWithKeyName(dataset, newPropName);
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToAdd));
-        assertEquals(1, synchronizedProps.size());
-        assertEquals(newPropName, synchronizedProps.get(0).getPropertyName());
-    }
-
-    @Test
-    public void testSynchronizeDatasetProperties_case6() throws Exception {
-        List<Dictionary> dictionaryTerms = datasetDAO.getDictionaryTerms();
-        Dictionary dict1 = dictionaryTerms.get(0);
-        Dictionary dict2 = dictionaryTerms.get(1);
-        Dataset dataset = createSampleDataset();
-        // Saving a prop that will be deleted via synchronization
-        savePropWithDictionaryTerm(dataset, dict1);
-        // Saving a prop that will be updated
-        DatasetProperty propToUpdate = savePropWithDictionaryTerm(dataset, dict2);
-        String newPropVal = RandomStringUtils.randomAlphabetic(10);
-        propToUpdate.setPropertyValue(newPropVal);
-        List<DatasetProperty> synchronizedProps = serviceDAO.synchronizeDatasetProperties(dataset.getDataSetId(), List.of(propToUpdate));
-        assertEquals(1, synchronizedProps.size());
-        assertEquals(dict2.getKey(), synchronizedProps.get(0).getPropertyName());
-        assertEquals(newPropVal, synchronizedProps.get(0).getPropertyValueAsString());
-    }
-
 
     @Test
     public void testInsertDatasets() throws Exception{
