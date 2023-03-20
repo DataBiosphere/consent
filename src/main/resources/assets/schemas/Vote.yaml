@@ -7,10 +7,17 @@ properties:
   vote:
     type: boolean
     description: Describe the Positive or negative value of the vote
-  dacUserId:
+  userId:
     type: integer
     format: int32
     description: Describes the id of the voter.
+  dacUserId:
+    deprecated: true
+    type: integer
+    format: int32
+    description: | 
+      This is a copy of userId visible for backwards compatibility.
+      This field will be removed in a future release.
   createDate:
     type: string
     format: date

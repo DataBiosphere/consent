@@ -614,13 +614,13 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Vote v2 = new Vote();
         v2.setVote(true);
         v2.setType(VoteType.FINAL.getValue());
         v2.setElectionId(2);
-        v2.setDacUserId(1);
+        v2.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -687,13 +687,13 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Vote v2 = new Vote();
         v2.setVote(true);
         v2.setType(VoteType.FINAL.getValue());
         v2.setElectionId(2);
-        v2.setDacUserId(1);
+        v2.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -763,7 +763,7 @@ public class VoteServiceTest {
         v1.setVote(false);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -814,7 +814,7 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.DAC.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -878,7 +878,7 @@ public class VoteServiceTest {
     private Vote setUpTestVote(Boolean vote, Boolean reminderSent) {
         Vote v = new Vote();
         v.setVoteId(RandomUtils.nextInt(1, 10));
-        v.setDacUserId(RandomUtils.nextInt(1, 10));
+        v.setUserId(RandomUtils.nextInt(1, 10));
         v.setElectionId(RandomUtils.nextInt(1, 10));
         v.setIsReminderSent(reminderSent);
         v.setVote(vote);

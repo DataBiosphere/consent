@@ -4,6 +4,21 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
 import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.io.Writer;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -25,22 +40,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-
-import javax.annotation.Nullable;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.io.Writer;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EmailService {
 
@@ -382,7 +381,7 @@ public class EmailService {
     private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        User user = findUserById(vote.getDacUserId());
+        User user = findUserById(vote.getUserId());
 
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", user.getDisplayName());
@@ -405,12 +404,12 @@ public class EmailService {
 
     private String findRpVoteId(Integer electionId, Integer dacUserId) {
         Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(electionId);
-        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId).getVoteId()).toString()) : "";
+        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(rpElectionId, dacUserId).getVoteId()).toString()) : "";
     }
 
     private String findDataAccessVoteId(Integer electionId, Integer dacUserId) {
         Integer dataAccessElectionId = electionDAO.findAccessElectionByElectionRPId(electionId);
-        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
+        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
     }
 
     private Map<String, String> retrieveForCollect(Integer electionId, User user) {

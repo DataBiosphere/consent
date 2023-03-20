@@ -1,6 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -28,17 +38,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class VoteService {
 
@@ -262,7 +261,7 @@ public class VoteService {
                 collect(Collectors.toList());
         if (!openElectionIds.isEmpty()) {
             List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                    filter(v -> v.getDacUserId().equals(user.getUserId())).
+                    filter(v -> v.getUserId().equals(user.getUserId())).
                     map(Vote::getVoteId).
                     collect(Collectors.toList());
             if (!openUserVoteIds.isEmpty()) {
@@ -472,7 +471,7 @@ public class VoteService {
     private void validateVote(Vote vote) {
         if (Objects.isNull(vote) ||
                 Objects.isNull(vote.getVoteId()) ||
-                Objects.isNull(vote.getDacUserId()) ||
+                Objects.isNull(vote.getUserId()) ||
                 Objects.isNull(vote.getElectionId())) {
             throw new IllegalArgumentException("Invalid vote: " + vote);
         }
