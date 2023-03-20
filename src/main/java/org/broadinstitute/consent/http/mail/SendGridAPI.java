@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage
 import org.broadinstitute.consent.http.mail.message.DarCancelMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
-import org.broadinstitute.consent.http.mail.message.DelegateResponsibilitiesMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
@@ -46,7 +45,6 @@ public class SendGridAPI {
     private final DisabledDatasetMessage disabledDatasetCreator = new DisabledDatasetMessage();
     private final DarCancelMessage darCancelMessageCreator = new DarCancelMessage();
     private final ClosedDatasetElectionMessage closedDatasetElections = new ClosedDatasetElectionMessage();
-    private final DelegateResponsibilitiesMessage delegateResponsibilitesMessage = new DelegateResponsibilitiesMessage();
     private final ResearcherApprovedMessage researcherApprovedMessage = new ResearcherApprovedMessage();
     private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
     private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
@@ -173,10 +171,6 @@ public class SendGridAPI {
         return sendMessage(message);
     }
 
-    public Optional<Response> sendDelegateResponsibilitiesMessage(String toAddress, Writer template) {
-        Mail message = delegateResponsibilitesMessage.delegateResponsibilitiesMessage(toAddress, fromAccount, template);
-        return sendMessage(message);
-    }
     public Optional<Response> sendNewResearcherApprovedMessage(String toAddress, Writer template, String darCode) {
         Mail message = researcherApprovedMessage.researcherApprovedMessage(toAddress, fromAccount, template, darCode);
         return sendMessage(message);
