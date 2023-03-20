@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -254,21 +253,6 @@ public class EmailService {
                         template
                 );
             });
-        }
-    }
-
-    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws IOException, TemplateException {
-        for (User admin : admins) {
-            Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
-            Optional<Response> response = sendGridAPI.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVER_URL, template);
-            saveEmailAndResponse(
-                    response.orElse(null),
-                    darCode,
-                    null,
-                    admin.getUserId(),
-                    EmailType.ADMIN_FLAGGED_DAR_APPROVED,
-                    template
-            );
         }
     }
 

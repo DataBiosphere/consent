@@ -1,5 +1,20 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -10,22 +25,6 @@ import org.jsoup.nodes.Element;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class FreeMarkerTemplateHelperTest {
 
@@ -104,14 +103,14 @@ public class FreeMarkerTemplateHelperTest {
         assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
     }
 
-    @Test
-    public void testGetAdminApprovedDarTemplate() throws Exception {
-        Writer template = helper.getAdminApprovedDarTemplate("AdminApproved User", "DARELECTION-1", getApprovedDarMap(), "localhost:1234");
-        String templateString = template.toString();
-        final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Admin - DAR Approved Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User,"));
-    }
+//    @Test
+//    public void testGetAdminApprovedDarTemplate() throws Exception {
+//        Writer template = helper.getAdminApprovedDarTemplate("AdminApproved User", "DARELECTION-1", getApprovedDarMap(), "localhost:1234");
+//        String templateString = template.toString();
+//        final Document parsedTemplate = getAsHtmlDoc(templateString);
+//        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Admin - DAR Approved Notification"));
+//        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello AdminApproved User,"));
+//    }
 
     @Test
     public void testGetClosedDatasetElectionsTemplate() throws Exception {
