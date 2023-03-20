@@ -3,10 +3,6 @@ properties:
   userId:
     type: integer
     description: ID of the user
-  dacUserId:
-    deprecated: true
-    type: integer
-    description: ID of the user
   displayName:
     type: string
     description: Name of the user
