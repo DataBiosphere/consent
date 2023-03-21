@@ -402,14 +402,14 @@ public class EmailService {
         return dataMap;
     }
 
-    private String findRpVoteId(Integer electionId, Integer dacUserId) {
+    private String findRpVoteId(Integer electionId, Integer userId) {
         Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(electionId);
-        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(rpElectionId, dacUserId).getVoteId()).toString()) : "";
+        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(rpElectionId, userId).getVoteId()).toString()) : "";
     }
 
-    private String findDataAccessVoteId(Integer electionId, Integer dacUserId) {
+    private String findDataAccessVoteId(Integer electionId, Integer userId) {
         Integer dataAccessElectionId = electionDAO.findAccessElectionByElectionRPId(electionId);
-        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
+        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(dataAccessElectionId, userId).getVoteId()).toString()) : "";
     }
 
     private Map<String, String> retrieveForCollect(Integer electionId, User user) {

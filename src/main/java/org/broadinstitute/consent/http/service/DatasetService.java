@@ -439,8 +439,8 @@ public class DatasetService {
     }
 
     @Deprecated
-    public List<Map<String, String>> autoCompleteDatasets(String partial, Integer dacUserId) {
-        Set<DatasetDTO> datasets = describeDatasets(dacUserId);
+    public List<Map<String, String>> autoCompleteDatasets(String partial, Integer userId) {
+        Set<DatasetDTO> datasets = describeDatasets(userId);
         String lowercasePartial = partial.toLowerCase();
         Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
                 .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
@@ -520,8 +520,8 @@ public class DatasetService {
                 });
     }
 
-    private boolean userHasRole(String roleName, Integer dacUserId) {
-        return userRoleDAO.findRoleByNameAndUser(roleName, dacUserId) != null;
+    private boolean userHasRole(String roleName, Integer userId) {
+        return userRoleDAO.findRoleByNameAndUser(roleName, userId) != null;
     }
 
     public List<Dataset> findAllDatasetsByUser(User user) {

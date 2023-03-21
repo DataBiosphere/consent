@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.util.Map;
+import java.util.Objects;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -8,9 +10,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * This class works well for individual Users as well as collections.
@@ -29,8 +28,6 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         map.computeIfAbsent(
             userId,
             id -> rowView.getRow(User.class));
-    // Populate for backwards compatibility.
-    user.setDacUserId();
 
     try {
       // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
