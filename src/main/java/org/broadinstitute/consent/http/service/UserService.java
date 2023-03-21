@@ -150,14 +150,11 @@ public class UserService {
 
     public static class SimplifiedUser {
         public Integer userId;
-        @Deprecated
-        public Integer dacUserId;
         public String displayName;
         public String email;
 
         public SimplifiedUser(User user) {
             this.userId = user.getUserId();
-            this.dacUserId = user.getUserId();
             this.displayName = user.getDisplayName();
             this.email = user.getEmail();
         }
@@ -167,11 +164,6 @@ public class UserService {
 
         public void setUserId(Integer userId) {
             this.userId = userId;
-        }
-
-        @Deprecated
-        public void setDacUserId(Integer userId) {
-            this.dacUserId = userId;
         }
 
         public void setDisplayName(String name) {

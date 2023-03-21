@@ -38,8 +38,6 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
     }
     addRole(r, user);
 
-    // Populate for backwards compatibility.
-    user.setDacUserId();
     users.put(user.getUserId(), user);
     return user;
   }
