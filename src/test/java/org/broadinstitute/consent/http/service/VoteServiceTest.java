@@ -121,16 +121,6 @@ public class VoteServiceTest {
         assertNotNull(vote);
     }
 
-//    @Test
-//    public void testUpdateVoteById() {
-//        Vote v = setUpTestVote(false, false);
-//        initService();
-//
-//        Vote vote = service.updateVoteById(v, v.getVoteId());
-//        assertNotNull(vote);
-//        assertEquals(v.getVoteId(), vote.getVoteId());
-//    }
-
     @Test(expected = NotFoundException.class)
     public void testUpdateVote_InvalidReferenceId() {
         when(voteDAO.checkVoteById("test", 11))
@@ -295,101 +285,6 @@ public class VoteServiceTest {
         List<Vote> votes = service.createDataOwnersReviewVotes(e);
         assertFalse(votes.isEmpty());
     }
-
-//    @Test(expected = NotFoundException.class)
-//    public void testDescribeVotes_InvalidReferenceId() {
-//        when(voteDAO.findVotesByReferenceId("test"))
-//                .thenReturn(null);
-//        initService();
-//        service.describeVotes("test");
-//    }
-//
-//    @Test
-//    public void testDescribeVotes() {
-//        Vote v = setUpTestVote(false, false);
-//        when(voteDAO.findVotesByReferenceId("test"))
-//                .thenReturn(List.of(v));
-//        initService();
-//        List<Vote> votes = service.describeVotes("test");
-//        assertNotNull(votes);
-//        assertEquals(1, votes.size());
-//        assertEquals(v.getVoteId(), votes.get(0).getVoteId());
-//    }
-
-//    @Test(expected = NotFoundException.class)
-//    public void testFindVoteById_InvalidId() {
-//        when(voteDAO.findVoteById(any())).thenReturn(null);
-//        initService();
-//        service.findVoteById(1);
-//    }
-
-//    @Test
-//    public void testDescribeVoteById() {
-//        Vote v = setUpTestVote(false, false);
-//        initService();
-//
-//        Vote vote = service.findVoteById(v.getVoteId());
-//        assertNotNull(vote);
-//        assertEquals(v.getVoteId(), vote.getVoteId());
-//    }
-
-//    @Test(expected = NotFoundException.class)
-//    public void testDeleteVote_NotFound() {
-//        when(voteDAO.checkVoteById(any(), any()))
-//                .thenReturn(null);
-//        initService();
-//
-//        service.deleteVote(1, "test");
-//    }
-//
-//    @Test
-//    public void testDeleteVote() {
-//        Vote v = setUpTestVote(false, false);
-//        when(voteDAO.checkVoteById(any(), any()))
-//                .thenReturn(v.getVoteId());
-//        initService();
-//
-//        service.deleteVote(v.getVoteId(), "test");
-//    }
-
-//    @Test(expected = IllegalArgumentException.class)
-//    public void testDeleteVotes_NotFound() throws IllegalArgumentException, UnknownIdentifierException {
-//        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any()))
-//                .thenReturn(null);
-//        initService();
-//
-//        service.deleteVotes("test");
-//    }
-//
-//    @Test
-//    public void testDeleteVotes() throws IllegalArgumentException, UnknownIdentifierException {
-//        setUpTestVote(false, false);
-//        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any())).thenReturn(List.of(new Election()));
-//        initService();
-//
-//        service.deleteVotes("test");
-//    }
-
-//    @Test(expected = NotFoundException.class)
-//    public void testDescribeDataOwnerVote_NotFound() {
-//        when(voteDAO.findVotesByReferenceIdTypeAndUser(any(), any(), any()))
-//                .thenReturn(null);
-//        initService();
-//
-//        service.describeDataOwnerVote("test", 1);
-//    }
-//
-//    @Test
-//    public void testDescribeDataOwnerVote() {
-//        Vote v = setUpTestVote(false, false);
-//        when(voteDAO.findVotesByReferenceIdTypeAndUser("test", 1, VoteType.DATA_OWNER.getValue()))
-//                .thenReturn(v);
-//        initService();
-//
-//        Vote vote = service.describeDataOwnerVote("test", 1);
-//        assertNotNull(vote);
-//        assertEquals(v.getVoteId(), vote.getVoteId());
-//    }
 
     @Test
     public void testUpdateVotesWithValue_NoRationale() throws Exception {

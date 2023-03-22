@@ -329,37 +329,6 @@ public class ElectionServiceTest {
         verify(electionDAO, times(0)).archiveElectionById(any(), any());
     }
 
-//    @Test
-//    public void testSubmitFinalAccessVoteDataRequestElection() throws Exception {
-//        initService();
-//        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(sampleLibraryCard));
-//        when(dataAccessRequestService.findByReferenceId(any())).thenReturn(sampleDataAccessRequest1);
-//        Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), true);
-//        assertNotNull(election);
-//        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
-//    }
-//
-//    @Test(expected = NotFoundException.class)
-//    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessApproval() throws Exception {
-//        initService();
-//        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-//        service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), true);
-//    }
-//
-//    @Test
-//    public void testSubmitFinalAccessVoteDataRequestElection_noLibraryCard_DataAccessRejection() {
-//        initService();
-//        when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of());
-//        try{
-//            Election election = service.submitFinalAccessVoteDataRequestElection(sampleElection1.getElectionId(), false);
-//            assertNotNull(election);
-//            assertEquals(sampleElection1.getElectionId(), election.getElectionId());
-//        //function throws exception, need to have a catch block to handle it
-//        } catch(Exception e) {
-//            Assert.fail("Vote should not have failed");
-//        }
-//    }
-
     @Test
     public void testDescribeDataRequestElection() {
         initService();
@@ -492,23 +461,6 @@ public class ElectionServiceTest {
         boolean ownerToClose = service.checkDataOwnerToCloseElection(5);
         assertTrue(ownerToClose);
     }
-
-//    @Test
-//    public void testCreateDataSetElections() {
-//        when(electionDAO.getOpenElectionByReferenceIdAndDataSet(sampleElection1.getReferenceId(), sampleDataset1.getDataSetId()))
-//                .thenReturn(null);
-//        when(electionDAO.findElectionsByIds(
-//            List.of(sampleDatasetElection.getElectionId())))
-//            .thenReturn(List.of(sampleElection1));
-//        when(electionDAO.insertElection(any(), any(), any(), any(), any()))
-//                .thenReturn(sampleDatasetElection.getElectionId());
-//        initService();
-//        List<Election> elections = service.createDataSetElections(sampleElection1.getReferenceId(), Map.of(sampleUserMember,
-//            List.of(sampleDataset1)));
-//        assertNotNull(elections);
-//        assertEquals(1, elections.size());
-//        assertEquals(sampleDatasetElection.getReferenceId(), elections.get(0).getReferenceId());
-//    }
 
     @Test
     public void findElectionsByVoteIdsAndType() {
