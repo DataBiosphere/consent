@@ -8,6 +8,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import org.apache.commons.io.IOUtils;
@@ -30,7 +31,7 @@ public class JsonSchemaUtil {
 
 
   public JsonSchemaUtil() {
-    factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
+    factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909);
     CacheLoader<String, String> loader = new CacheLoader<>() {
       @Override
       public String load(String key) throws Exception {
@@ -57,7 +58,10 @@ public class JsonSchemaUtil {
    */
   private JsonSchema getDatasetRegistrationSchema() throws ExecutionException {
     String schemaString = getDatasetRegistrationSchemaV1();
-    return factory.getSchema(schemaString);
+    SchemaValidatorsConfig config = new SchemaValidatorsConfig();
+    config.setHandleNullableField(false);
+    config.setTypeLoose(false);
+    return factory.getSchema(schemaString, config);
   }
 
   /**

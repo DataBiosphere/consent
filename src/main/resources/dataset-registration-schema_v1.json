@@ -1,6 +1,6 @@
 {
   "$id": "https://consent.dsde-prod.broadinstitute.org/schemas/dataset-registration",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "Dataset Registration Schema",
   "version": 1,
   "type": "object",
@@ -336,25 +336,17 @@
       }
     },
     "consentGroup": {
+      "type": "object",
+      "required": [
+        "consentGroupName",
+        "fileTypes",
+        "url"
+      ],
       "allOf": [
         {
-          "required": [
-            "consentGroupName",
-            "fileTypes",
-            "url"
-          ]
-        },
-        {
-          "$comment": "if openAccess is false OR undefined, then require dac id & add secondary consent fields",
+          "$comment": "if openAccess is false OR not present, then require dac id & add secondary consent fields",
           "if": {
-            "oneOf": [
-              {
-                "properties": {"openAccess":  {"const":  false}}
-              },
-              {
-                "properties": {"openAccess":  { "not": {} }}
-              }
-            ]
+            "properties": {"openAccess":  {"const":  false}}
           },
           "then": {
             "required": ["dataAccessCommitteeId"],
@@ -448,7 +440,6 @@
           ]
         }
       ],
-      "type": "object",
       "properties": {
         "consentGroupName": {
           "type": "string",
