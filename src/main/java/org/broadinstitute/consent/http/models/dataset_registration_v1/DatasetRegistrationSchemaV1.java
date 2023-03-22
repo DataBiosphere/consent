@@ -143,7 +143,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("nihAnvilUse")
     @JsonPropertyDescription("NIH Anvil Use")
-    private List<NihAnvilUse> nihAnvilUse = new ArrayList<NihAnvilUse>();
+    private DatasetRegistrationSchemaV1 .NihAnvilUse nihAnvilUse;
     /**
      * Are you planning to submit to AnVIL?
      * 
@@ -185,7 +185,7 @@ public class DatasetRegistrationSchemaV1 {
      */
     @JsonProperty("piInstitution")
     @JsonPropertyDescription("Principal Investigator Institution")
-    private Double piInstitution;
+    private Integer piInstitution;
     /**
      * NIH Grant or Contract Number
      * 
@@ -519,7 +519,7 @@ public class DatasetRegistrationSchemaV1 {
      * 
      */
     @JsonProperty("nihAnvilUse")
-    public List<NihAnvilUse> getNihAnvilUse() {
+    public DatasetRegistrationSchemaV1 .NihAnvilUse getNihAnvilUse() {
         return nihAnvilUse;
     }
 
@@ -529,7 +529,7 @@ public class DatasetRegistrationSchemaV1 {
      * 
      */
     @JsonProperty("nihAnvilUse")
-    public void setNihAnvilUse(List<NihAnvilUse> nihAnvilUse) {
+    public void setNihAnvilUse(DatasetRegistrationSchemaV1 .NihAnvilUse nihAnvilUse) {
         this.nihAnvilUse = nihAnvilUse;
     }
 
@@ -628,7 +628,7 @@ public class DatasetRegistrationSchemaV1 {
      * 
      */
     @JsonProperty("piInstitution")
-    public Double getPiInstitution() {
+    public Integer getPiInstitution() {
         return piInstitution;
     }
 
@@ -637,7 +637,7 @@ public class DatasetRegistrationSchemaV1 {
      * 
      */
     @JsonProperty("piInstitution")
-    public void setPiInstitution(Double piInstitution) {
+    public void setPiInstitution(Integer piInstitution) {
         this.piInstitution = piInstitution;
     }
 
@@ -1274,6 +1274,52 @@ public class DatasetRegistrationSchemaV1 {
         @JsonCreator
         public static DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted fromValue(String value) {
             DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted constant = CONSTANTS.get(value);
+            if (constant == null) {
+                throw new IllegalArgumentException(value);
+            } else {
+                return constant;
+            }
+        }
+
+    }
+
+
+    /**
+     * NIH Anvil Use
+     * 
+     */
+    public enum NihAnvilUse {
+
+        I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY("I am NHGRI funded and I have a dbGaP PHS ID already"),
+        I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID("I am NHGRI funded and I do not have a dbGaP PHS ID"),
+        I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL("I am not NHGRI funded but I am seeking to submit data to AnVIL"),
+        I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL("I am not NHGRI funded and do not plan to store data in AnVIL");
+        private final String value;
+        private final static Map<String, DatasetRegistrationSchemaV1 .NihAnvilUse> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .NihAnvilUse>();
+
+        static {
+            for (DatasetRegistrationSchemaV1 .NihAnvilUse c: values()) {
+                CONSTANTS.put(c.value, c);
+            }
+        }
+
+        NihAnvilUse(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        @JsonValue
+        public String value() {
+            return this.value;
+        }
+
+        @JsonCreator
+        public static DatasetRegistrationSchemaV1 .NihAnvilUse fromValue(String value) {
+            DatasetRegistrationSchemaV1 .NihAnvilUse constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {

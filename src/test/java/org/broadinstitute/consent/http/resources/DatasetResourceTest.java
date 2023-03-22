@@ -1,37 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-
-import java.io.IOException;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -44,9 +14,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -57,10 +25,40 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
 
@@ -890,11 +888,11 @@ public class DatasetResourceTest {
     public void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
-        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
-        String schemaString = new Gson().toJson(schemaV1);
+        String schemaV1 = createDatasetRegistrationMock(user);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, null, schemaString);
+        Response response = resource.createDatasetRegistration(authUser, null, schemaV1);
+        System.out.println(response.getEntity());
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
@@ -912,11 +910,10 @@ public class DatasetResourceTest {
 
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
-        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
-        String instance = new Gson().toJson(schemaV1);
+        String schemaV1 = createDatasetRegistrationMock(user);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
@@ -958,17 +955,16 @@ public class DatasetResourceTest {
 
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(List.of());
-        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
-        String instance = new Gson().toJson(schemaV1);
+        String schemaV1 = createDatasetRegistrationMock(user);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
 
         assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
         verify(datasetRegistrationService, times(1)).createDatasetsFromRegistration(
-                schemaV1,
-                user,
-                Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther));
+                any(),
+                eq(user),
+                eq(Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther)));
 
     }
 
@@ -985,11 +981,10 @@ public class DatasetResourceTest {
         when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
 
         when(userService.findUserByEmail(any())).thenReturn(user);
-        DatasetRegistrationSchemaV1 schemaV1 = creatDatasetRegistrationMock(user);
-        String instance = new Gson().toJson(schemaV1);
+        String schemaV1 = createDatasetRegistrationMock(user);
         initResource();
 
-        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, instance);
+        Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
@@ -998,29 +993,35 @@ public class DatasetResourceTest {
      * @param user The User
      * @return The DatasetRegistrationSchemaV1.yaml instance
      */
-    private DatasetRegistrationSchemaV1 creatDatasetRegistrationMock(User user) {
-        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
-        schemaV1.setStudyName("Name");
-        schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.Observational);
-        schemaV1.setStudyDescription("Description");
-        schemaV1.setDataTypes(List.of("Data Type"));
-        schemaV1.setPhenotypeIndication("Indication");
-        schemaV1.setSpecies("Species");
-        schemaV1.setPiName("PI Name");
-        when(user.getUserId()).thenReturn(1);
-        schemaV1.setDataSubmitterUserId(user.getUserId());
-        schemaV1.setDataCustodianEmail(List.of("valid_email@domain.org"));
-        schemaV1.setPublicVisibility(true);
-        schemaV1.setDataAccessCommitteeId(1);
-        ConsentGroup consentGroup = new ConsentGroup();
-        consentGroup.setConsentGroupName("Name");
-        consentGroup.setGeneralResearchUse(true);
-        FileTypeObject fileType = new FileTypeObject();
-        fileType.setFileType(FileTypeObject.FileType.ARRAYS);
-        fileType.setFunctionalEquivalence("Functional Equivalence");
-        fileType.setNumberOfParticipants(1);
-        consentGroup.setFileTypes(List.of(fileType));
-        schemaV1.setConsentGroups(List.of(consentGroup));
-        return schemaV1;
+    private String createDatasetRegistrationMock(User user) {
+        String format = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "phenotypeIndication": "",
+            "species": "species",
+            "piName": "PI Name",
+            "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
+            "dataSubmitterUserId": %s,
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
+              "consentGroupName": "name",
+              "generalResearchUse": true,
+              "dataAccessCommitteeId": 1,
+              "url": "https://asdf.com"
+            }],
+            "embargoReleaseDate": "1234-10-10"
+          }
+          """;
+
+        return String.format(format, user.getUserId());
     }
 }

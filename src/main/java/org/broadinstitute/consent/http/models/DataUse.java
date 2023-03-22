@@ -22,6 +22,7 @@ public class DataUse {
     private Boolean hmbResearch;
     private List<String> diseaseRestrictions;
     private Boolean populationOriginsAncestry;
+    private Boolean openAccess;
     private Boolean populationStructure;
     private Boolean commercialUse;
     private Boolean methodsResearch;
@@ -87,6 +88,13 @@ public class DataUse {
 
     public void setPopulationOriginsAncestry(Boolean populationOriginsAncestry) {
         this.populationOriginsAncestry = populationOriginsAncestry;
+    }
+    public Boolean getOpenAccess() {
+        return openAccess;
+    }
+
+    public void setOpenAccess(Boolean openAccess) {
+        this.openAccess = openAccess;
     }
 
     public Boolean getPopulationStructure() {
