@@ -179,16 +179,13 @@ public class ElectionServiceTest {
         doNothing().when(consentDAO).updateConsentSortDate(any(), any());
         doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any(), any(), any());
         doNothing().when(electionDAO).insertAccessAndConsentElection(any(), any());
-//        doNothing().when(consentDAO).updateConsentUpdateStatus(any(), any());
         doNothing().when(electionDAO).insertAccessRP(any(), any());
         doNothing().when(electionDAO).updateElectionById(any(), any(), any());
         doNothing().when(electionDAO).updateElectionById(any(), any(), any(), any());
         doNothing().when(electionDAO).archiveElectionById(any(), any());
         doNothing().when(electionDAO).updateElectionStatus(any(), any());
         doNothing().when(emailService).sendResearcherDarApproved(any(), any(), any(), any());
-//        doNothing().when(emailService).sendDataCustodianApprovalMessage(any(), any(), any(), any(), any());
         doNothing().when(emailService).sendClosedDataSetElectionsMessage(any());
-//        doNothing().when(voteDAO).deleteVoteById(any());
         doNothing().when(electionDAO).deleteElectionById(any());
         doNothing().when(electionDAO).deleteAccessRP(any());
     }
