@@ -616,7 +616,7 @@ public class JsonSchemaUtilTest {
             }
             """;
 
-    String filledDiseaseSpecifcUse = """
+    String filledDiseaseSpecificUse = """
             {
               "studyType": "Observational",
               "studyName": "name",
@@ -645,7 +645,7 @@ public class JsonSchemaUtilTest {
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(emptyDiseaseSpecificUse);
     assertFieldHasError(errors, "diseaseSpecificUse");
 
-    errors = schemaUtil.validateSchema_v1(filledDiseaseSpecifcUse);
+    errors = schemaUtil.validateSchema_v1(filledDiseaseSpecificUse);
     assertNoErrors(errors);
   }
 

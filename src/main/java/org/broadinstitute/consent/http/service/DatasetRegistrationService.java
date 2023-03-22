@@ -289,7 +289,7 @@ public class DatasetRegistrationService {
                     "Public Visibility", "publicVisibility", DatasetPropertyType.Boolean,
                     (registration, consentGroup) -> registration.getPublicVisibility()),
             new DatasetPropertyExtractor(
-                    "NIH Anvil Use", "nihAnvilUse", DatasetPropertyType.Json,
+                    "NIH Anvil Use", "nihAnvilUse", DatasetPropertyType.String,
                     (registration, consentGroup) -> registration.getNihAnvilUse()),
             new DatasetPropertyExtractor(
                     "Submitting To Anvil", "submittingToAnvil", DatasetPropertyType.Boolean,

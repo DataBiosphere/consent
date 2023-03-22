@@ -482,6 +482,7 @@ public class DatasetRegistrationServiceTest {
         schemaV1.setDbGaPStudyRegistrationName(RandomStringUtils.randomAlphabetic(10));
         schemaV1.setEmbargoReleaseDate("2007-12-03");
         schemaV1.setSequencingCenter(RandomStringUtils.randomAlphabetic(10));
+        schemaV1.setNihAnvilUse(DatasetRegistrationSchemaV1.NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
         schemaV1.setNihGrantContractNumber(RandomStringUtils.randomAlphabetic(10));
         schemaV1.setNihICsSupportingStudy(List.of(NihICsSupportingStudy.CC, NihICsSupportingStudy.CIT));
         schemaV1.setNihProgramOfficerName(RandomStringUtils.randomAlphabetic(10));
