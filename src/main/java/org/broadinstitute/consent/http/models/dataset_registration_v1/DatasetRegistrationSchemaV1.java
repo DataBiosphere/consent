@@ -16,8 +16,12 @@ import java.util.Map;
 /**
  * Dataset Registration Schema
  * <p>
- * 
- * 
+ * Dynamically generated java class from jsonschema2pojo
+ * <p>
+ * See: https://github.com/joelittlejohn/jsonschema2pojo
+ * <code>jsonschema2pojo --source src/main/resources/dataset-registration-schema_v1.json --target java-gen</code>
+ * <p>
+ * Also see https://jsonschemalint.com/#/version/draft-04/markup/json for validating json.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
