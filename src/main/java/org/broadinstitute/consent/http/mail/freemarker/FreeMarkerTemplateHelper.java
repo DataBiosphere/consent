@@ -4,18 +4,15 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
 
@@ -34,11 +31,6 @@ public class FreeMarkerTemplateHelper {
         return generateDisabledDatasetsTemplate(user, datasets, entityId, serverUrl, temp);
     }
 
-    public Writer getCollectTemplate(String user, String election, String entityId, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("collect.html");
-        return generateTemplate(user, election, entityId, temp, serverUrl);
-    }
-
     public Writer getNewCaseTemplate(String userName, String election, String entityId, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("new-case.html");
         return generateNewCaseTemplate(userName, election, entityId, temp, serverUrl);
@@ -54,16 +46,6 @@ public class FreeMarkerTemplateHelper {
         return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
     }
 
-    public Writer getCancelledDarTemplate(String userType, String entityId, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("cancelled-dar-request.html");
-        return generateCancelledDarTemplate(userType, entityId, serverUrl, temp);
-    }
-
-    public Writer getAdminApprovedDarTemplate(String userName, String entityId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("admin-dar-approved.html");
-        return generateAdminApprovedDarTemplate(userName, entityId, dataOwnersDataSets, serverUrl, temp);
-    }
-
     public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String type, String serverUrl) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("closed-dataset-elections.html");
         return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
@@ -72,12 +54,6 @@ public class FreeMarkerTemplateHelper {
     public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName, List<DatasetMailDTO> datasets, String dataUseRestriction, String email) throws IOException, TemplateException {
         Template temp = freeMarkerConfig.getTemplate("researcher-dar-approved.html");
         return generateResearcherApprovedTemplate(datasets, dataUseRestriction, darCode, researcherName, email, temp);
-    }
-
-    public Writer getDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets, String dataDepositorName,
-                                                   String darCode, String researcherEmail) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
-        return generateDataCustodianApprovalTemplate(datasets, dataDepositorName, darCode, researcherEmail, temp);
     }
 
     public Writer getDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName) throws IOException, TemplateException {
@@ -95,16 +71,6 @@ public class FreeMarkerTemplateHelper {
         return generateNewResearcherLibraryRequestTemplate(researcherName, serverUrl, temp);
     }
 
-
-    private Writer generateDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets,
-                                                         String dataDepositorName, String darCode,
-                                                         String researcherEmail, Template temp) throws IOException, TemplateException {
-        DataCustodianApprovalModel model = new DataCustodianApprovalModel(datasets,
-                dataDepositorName, darCode, researcherEmail);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
 
     private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName, String dacName, Template temp) throws IOException, TemplateException {
         DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
@@ -189,17 +155,4 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateCancelledDarTemplate(String userType, String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
-        CancelledDarModel model = new CancelledDarModel(userType, entityId, serverUrl);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
-
-    private Writer generateAdminApprovedDarTemplate(String userType, String entityId, Map<User, List<Dataset>> dataOwnersDataSets, String serverUrl, Template temp) throws IOException, TemplateException {
-        AdminDarApprovedModel model = new AdminDarApprovedModel(userType, entityId, dataOwnersDataSets, serverUrl);
-        Writer out = new StringWriter();
-        temp.process(model, out);
-        return out;
-    }
 }

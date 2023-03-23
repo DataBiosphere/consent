@@ -1,19 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DatasetAssociationMapper;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.List;
 
 
 @RegisterRowMapper(DatasetAssociationMapper.class)
@@ -25,9 +23,6 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
 
     @SqlQuery("select * from dataset_user_association where datasetId = :datasetId")
     List<DatasetAssociation> getDatasetAssociation(@Bind("datasetId") Integer datasetId);
-
-    @SqlQuery("select * from dataset_user_association where datasetId in (<dataSetIdList>)")
-    List<DatasetAssociation> getDatasetAssociations(@BindList("dataSetIdList") List<Integer> dataSetIdList);
 
     @SqlUpdate("delete from dataset_user_association where datasetId = :datasetId")
     void delete(@Bind("datasetId") Integer datasetId);
