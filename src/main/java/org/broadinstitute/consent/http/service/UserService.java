@@ -268,6 +268,10 @@ public class UserService {
         return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId, UserFields.getValues());
     }
 
+    public List<User> describeAdminUsersThatWantToReceiveMails() {
+        return userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(), true);
+    }
+
     public void updateEmailPreference(boolean preference, Integer userId) {
         userDAO.updateEmailPreference(userId, preference);
     }
@@ -401,6 +405,11 @@ public class UserService {
                 });
 
         userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
+    }
+
+    private Boolean checkForValidInstitution(Integer institutionId) {
+        Integer existingId = institutionDAO.checkForExistingInstitution(institutionId);
+        return Objects.nonNull(existingId) && existingId > 0;
     }
 
     public User findOrCreateUser(AuthUser authUser) throws Exception {

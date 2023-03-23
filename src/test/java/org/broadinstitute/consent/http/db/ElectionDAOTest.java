@@ -1,16 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -24,6 +13,18 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ElectionDAOTest extends DAOTestHelper {
 
@@ -773,6 +774,50 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testGetOpenElectionWithFinalVoteByReferenceIdAndType() {
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election accessElection = createDataAccessElection(referenceId, datasetId);
+    Election rpElection = createRPElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), accessElection.getElectionId());
+    createFinalVote(user.getUserId(), rpElection.getElectionId());
+
+    Election canceled = createDataAccessElection(referenceId, datasetId);
+    createFinalVote(user.getUserId(), canceled.getElectionId());
+
+    electionDAO.updateElectionStatus(
+            List.of(canceled.getElectionId()),
+            ElectionStatus.CANCELED.getValue());
+
+    // create irrelevant elections that should not be returned
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    // returns data access even if rp exists
+    Election returned =
+            electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(
+              referenceId,
+              ElectionType.DATA_ACCESS.getValue());
+
+    assertEquals(accessElection.getElectionId(),
+            returned.getElectionId());
+
+    // returns rp even if data access exists
+    returned =
+            electionDAO.getOpenElectionWithFinalVoteByReferenceIdAndType(
+                    referenceId,
+                    ElectionType.RP.getValue());
+
+    assertEquals(rpElection.getElectionId(),
+            returned.getElectionId());
+  }
+
+  @Test
   public void testGetElectionWithFinalVoteByReferenceIdAndType() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
@@ -1099,6 +1144,26 @@ public class ElectionDAOTest extends DAOTestHelper {
             ElectionStatus.OPEN.getValue(),
             false
     ));
+  }
+
+  @Test
+  public void testVerifyOpenElections_NoElections() {
+    assertEquals(0,(long) electionDAO.verifyOpenElections());
+  }
+
+  @Test
+  public void testVerifyOpenElections_Elections() {
+    Dac dac = createDac();
+
+    Dataset ds = createDatasetWithDac(dac.getDacId());
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = ds.getDataSetId();
+
+    createDataAccessElection(referenceId, datasetId);
+    createRPElection(referenceId, datasetId);
+
+    assertEquals(2,(long) electionDAO.verifyOpenElections());
   }
 
   @Test
@@ -1495,6 +1560,39 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(e.getElectionId(), found);
   }
+
+  @Test
+  public void testGetOpenElectionByReferenceIdAndDataSet_NoElection() {
+
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Integer found = electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, datasetId);
+
+    assertNull(found);
+  }
+
+  @Test
+  public void testGetOpenElectionByReferenceIdAndDataSet() {
+
+    Dac dac = createDac();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDataSetId();
+
+    Election e = createDataAccessElection(referenceId, datasetId);
+
+    Integer found = electionDAO.getOpenElectionByReferenceIdAndDataSet(referenceId, datasetId);
+
+    assertEquals(e.getElectionId(), found);
+  }
+
 
   @Test
   public void testArchiveElectionById() {

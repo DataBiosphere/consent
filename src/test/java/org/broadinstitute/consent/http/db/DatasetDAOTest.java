@@ -131,6 +131,25 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindNeedsApprovalDataSetByDataSetId() {
+        Dataset dataset = insertDataset();
+        datasetDAO.updateDatasetNeedsApproval(dataset.getDataSetId(), true);
+        Dac dac = insertDac();
+        Consent consent = insertConsent();
+        datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+        consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
+
+        List<Dataset> datasets = datasetDAO.findNeedsApprovalDatasetByDatasetId(List.of(dataset.getDataSetId()));
+        assertFalse(datasets.isEmpty());
+        assertEquals(1, datasets.size());
+        assertEquals(dac.getDacId(), datasets.get(0).getDacId());
+        assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
+        assertEquals(consent.getTranslatedUseRestriction(), datasets.get(0).getTranslatedUseRestriction());
+        assertFalse(datasets.get(0).getProperties().isEmpty());
+        assertTrue(datasets.get(0).getNeedsApproval());
+    }
+
+    @Test
     public void testGetNIHInstitutionalFile() {
         Dataset dataset = insertDataset();
 

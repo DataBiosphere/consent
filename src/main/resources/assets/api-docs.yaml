@@ -846,6 +846,178 @@ paths:
               schema:
                 type: string
                 format: binary
+  /api/dataRequest/{requestId}/vote:
+    get:
+      summary: Find all Data Access Request votes
+      description: Returns the votes of the election with the specified referenceId.
+      parameters:
+        - name: requestId
+          in: path
+          description: Reference Id of Data Access Request the Elections are on
+          required: true
+          schema:
+            type: string
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the list of votes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+    delete:
+      summary: Delete votes for the Data Access Request election
+      description: Deletes the votes of the election with the specified reference Id
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the Votes
+          required: true
+          schema:
+            type: string
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        200:
+          description: The Votes were deleted.
+        404:
+          description: The Election doesn't exist.
+  /api/dataRequest/{requestId}/vote/{id}:
+    post:
+      summary: Create a Data Access Request Vote
+      description: update a Vote specified by VoteId of a DataRequest Election.
+      requestBody:
+        description: Vote to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote (this value is not used in the create process, its only to complete the path)
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the updated Vote.
+        400:
+          description: Required parameter is null
+        404:
+          description: The vote id doesn't exist.
+    put:
+      summary: Update Data Access Request Vote
+      description: update an edited Vote specified by VoteId of a DataRequest Election.
+      requestBody:
+        description: Vote to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the create process , its only to complete the path)
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        201:
+          description: Returns the updated Vote.
+        400:
+          description: Required parameter is null
+        404:
+          description: The vote doesn't exist.
+    delete:
+      summary: Delete Vote by id
+      description: Deletes the vote specified by the requestId and the VoteId.
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election at which the vote belongs.
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        200:
+          description: The Vote was deleted.
+        404:
+          description: Could not find vote with this Vote ID.
+  /api/dataRequest/{requestId}/vote/{id}/final:
+    post:
+      summary: Update Final Access Consent Vote
+      description: update a the FinalAccessVote specified by VoteId of a DataRequest Election and set finalAccessVote Election property to TRUE.
+      requestBody:
+        description: Vote to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vote'
+      parameters:
+        - name: requestId
+          in: path
+          description: referenceId of the Election of the requested Vote ( this value is not used in the process , its only to complete the path)
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: Vote ID
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Vote
+        - Data Access Request
+      responses:
+        200:
+          description: Returns the updated Vote.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+        400:
+          description: Required parameter is null
+        404:
+          description: Election for specified id does not exist OR
+           Data Access Request for specified id does not exist OR
+           No Library cards exist for the researcher on this DAR
   /api/dataset:
     get:
       summary: Get Datasets

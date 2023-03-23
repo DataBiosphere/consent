@@ -1,19 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
@@ -28,10 +14,29 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test.
@@ -66,6 +71,7 @@ public class EmailServiceTest {
 
 
 
+    private final static String defaultAccount = "duos-dev@broadinstitute.org";
     private final static String serverUrl = "http://localhost:8000/#/";
 
     @Before
@@ -88,6 +94,27 @@ public class EmailServiceTest {
         templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
         service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
                 emailDAO, sendGridAPI, templateHelper, serverUrl);
+    }
+
+    @Test
+    public void testSendDataCustodianApprovalMessage() {
+        initService();
+        String darCode = "DAR-123456789";
+        List<DatasetMailDTO> datasets = new ArrayList<>();
+        datasets.add(new DatasetMailDTO("DS-1 Name", "DS-1 Alias"));
+        datasets.add(new DatasetMailDTO("DS-2 Name", "DS-2 Alias"));
+        datasets.add(new DatasetMailDTO("DS-3 Name", "DS-3 Alias"));
+        String dataDepositorName = "Data Depositor Name";
+        String researcherEmail = "researcher@test.com";
+        User user = new User();
+        user.setEmail(defaultAccount);
+        user.setUserId(1);
+        try {
+            service.sendDataCustodianApprovalMessage(user, darCode, datasets,
+                    dataDepositorName, researcherEmail);
+        } catch (Exception e) {
+            fail("Should not fail sending message: " + e);
+        }
     }
 
     @Test

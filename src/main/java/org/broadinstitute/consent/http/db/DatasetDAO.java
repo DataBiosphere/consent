@@ -326,6 +326,21 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
                     " WHERE d.alias IN (<aliases>)")
     List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
 
+    @UseRowReducer(DatasetReducer.class)
+    @SqlQuery(
+        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
+            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
+            " FROM dataset d " +
+            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
+            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
+            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
+            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
+            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
+            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
+            " WHERE d.dataset_id IN (<datasetIdList>) " +
+                " AND d.needs_approval = true ")
+    List<Dataset> findNeedsApprovalDatasetByDatasetId(@BindList("datasetIdList") List<Integer> datasetIdList);
+
     @Deprecated
     @SqlBatch("INSERT INTO dataset (name, create_date, object_id, active, alias, data_use) VALUES (:name, :createDate, :objectId, :active, :alias, :dataUse)")
     void insertAll(@BindBean Collection<Dataset> datasets);
