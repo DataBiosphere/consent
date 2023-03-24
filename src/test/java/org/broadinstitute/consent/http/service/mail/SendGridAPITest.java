@@ -101,4 +101,13 @@ public class SendGridAPITest {
         }
     }
 
+    @Test
+    public void testSendDataCustodianApprovalMessage() {
+        try {
+            sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
+        } catch (Exception e) {
+            Assert.fail("Should not throw exception");
+        }
+    }
+
 }
