@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
@@ -29,15 +32,15 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class VoteService {
+public class VoteService implements ConsentLogger {
 
     private final UserDAO userDAO;
     private final DarCollectionDAO darCollectionDAO;
@@ -50,7 +53,6 @@ public class VoteService {
     private final VoteDAO voteDAO;
     private final VoteServiceDAO voteServiceDAO;
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     @Inject
     public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO, DataAccessRequestDAO dataAccessRequestDAO,
                        DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
@@ -263,7 +265,7 @@ public class VoteService {
                     // We can recover from an email error, log it and don't fail the overall process.
                     String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString).collect(Collectors.joining(","));
                     String message = "Error notifying researchers for votes: [" + voteIds + "], " + e.getMessage();
-                    logger.error(message);
+                    logException(message, e);
                 }
             }
             return updatedVotes;
@@ -317,23 +319,25 @@ public class VoteService {
                 .map(DataAccessRequest::getDatasetIds)
                 .flatMap(List::stream)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
             List<Dataset> approvedDatasetsInCollection = datasets.stream()
                 .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
-                .collect(Collectors.toList());
+                .toList();
 
             if (!approvedDatasetsInCollection.isEmpty()) {
                 String darCode = c.getDarCode();
-                Integer researcherId = c.getCreateUserId();
-                List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection.stream()
+                User researcher = userDAO.findUserById(c.getCreateUserId());
+                Integer researcherId = researcher.getUserId();
+                List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection
+                    .stream()
                     .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-                    .collect(Collectors.toList());
+                    .toList();
 
                 // Get all Data Use translations, distinctly in the case that there are several with the same
                 // data use, and then conjoin them for email display.
                 List<DataUse> dataUses = approvedDatasetsInCollection.stream()
                     .map(Dataset::getDataUse)
-                    .collect(Collectors.toList());
+                    .toList();
                 List<String> dataUseTranslations = dataUses.stream()
                     .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
                     .distinct()
@@ -343,10 +347,70 @@ public class VoteService {
                 try {
                     emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs, translation);
                 } catch (Exception e) {
-                    logger.error("Error sending researcher dar approved email: " + e.getMessage());
+                    logException("Error sending researcher dar approved email: " + e.getMessage(), e);
+                }
+                try {
+                    notifyCustodiansOfApprovedDatasets(approvedDatasetsInCollection, researcher, darCode);
+                } catch (Exception e) {
+                    logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
                 }
             }
         });
+    }
+
+    /**
+     * Notify all custodians and data depositors of a dataset approval.
+     * @param datasets Requested datasets
+     * @param researcher The approved researcher
+     * @param darCode The DAR Collection Code
+     * @throws IllegalArgumentException when there are no custodians or depositors to notify
+     */
+    protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher, String darCode) throws IllegalArgumentException {
+        Map<User, List<Dataset>> datasetCustodianMap = new HashMap<>();
+        // Find all the custodians to notify for each dataset
+        datasets.forEach(d -> {
+            Optional<DatasetProperty> depositorProp = d.getProperties()
+                .stream()
+                .filter(p -> p.getPropertyName().equalsIgnoreCase("Data Depositor"))
+                .findFirst();
+            if (depositorProp.isPresent()) {
+                User depositor = userDAO.findUserByEmail(
+                    depositorProp.get().getPropertyValueAsString());
+                if (Objects.nonNull(depositor)) {
+                    datasetCustodianMap.putIfAbsent(depositor, new ArrayList<>());
+                    datasetCustodianMap.get(depositor).add(d);
+                }
+            }
+            List<Integer> datasetOwnersIdList = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
+            if (!datasetOwnersIdList.isEmpty()) {
+                userDAO.findUsers(datasetOwnersIdList).forEach(u -> {
+                    datasetCustodianMap.putIfAbsent(u, new ArrayList<>());
+                    datasetCustodianMap.get(u).add(d);
+                });
+            } else {
+                logWarn("Unable to find dataset owner associations for dataset identifier: " + d.getDatasetIdentifier());
+            }
+        });
+        if (datasetCustodianMap.isEmpty()) {
+            throw new IllegalArgumentException("No custodians or depositors found for provided datasets");
+        }
+        // For each custodian, notify them of their approved datasets
+        for (Map.Entry<User, List<Dataset>> entry: datasetCustodianMap.entrySet()) {
+            List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
+                .stream()
+                .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+                .toList();
+            try {
+                emailService.sendDataCustodianApprovalMessage(
+                    entry.getKey(),
+                    darCode,
+                    datasetMailDTOs,
+                    entry.getKey().getDisplayName(),
+                    researcher.getEmail());
+            } catch (Exception e) {
+                logException("Error sending custodian approval email: " + e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -375,7 +439,7 @@ public class VoteService {
         List<Election> nonOpenAccessElections = elections.stream()
                 .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
                 .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
-                .collect(Collectors.toList());
+                .toList();
         if (!nonOpenAccessElections.isEmpty()) {
             throw new IllegalArgumentException("There are non-open Data Access elections for provided votes");
         }
@@ -384,7 +448,7 @@ public class VoteService {
         List<Election> disallowedElections = elections.stream()
                 .filter(election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
                 .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
-                .collect(Collectors.toList());
+                .toList();
         if (!disallowedElections.isEmpty()) {
             throw new IllegalArgumentException("There are non-Data Access/RP elections for provided votes");
         }

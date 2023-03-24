@@ -20,6 +20,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -31,6 +32,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -40,6 +42,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -538,12 +541,18 @@ public class VoteServiceTest {
         e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
         e2.setDataSetId(2);
 
+        DatasetProperty depositorProp = new DatasetProperty();
+        depositorProp.setPropertyName("Data Depositor");
+        depositorProp.setPropertyValue("depositor@test.com");
+        depositorProp.setPropertyType(DatasetPropertyType.String);
+
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
         dar1.addDatasetId(d1.getDataSetId());
         dar1.setCollectionId(1);
         dar1.setData(data1);
         dar1.setReferenceId(referenceId1);
+        d1.setProperties(Set.of(depositorProp));
 
         DataAccessRequest dar2 = new DataAccessRequest();
         DataAccessRequestData data2 = new DataAccessRequestData();
@@ -551,6 +560,7 @@ public class VoteServiceTest {
         dar2.setCollectionId(1);
         dar2.setData(data2);
         dar2.setReferenceId(referenceId2);
+        d2.setProperties(Set.of(depositorProp));
 
         DarCollection c = new DarCollection();
         c.setDarCollectionId(1);
@@ -558,10 +568,16 @@ public class VoteServiceTest {
         c.addDar(dar2);
         c.setDarCode("DAR-CODE");
 
+        User researcher = new User();
+        researcher.setEmail("researcher@test.com");
+        researcher.setDisplayName("Researcher");
+        researcher.setUserId(1);
+
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
+        when(userDAO.findUserById(any())).thenReturn(researcher);
         spy(emailService);
 
         initService();
@@ -587,17 +603,24 @@ public class VoteServiceTest {
         v2.setElectionId(2);
         v2.setUserId(1);
 
+        DatasetProperty depositorProp = new DatasetProperty();
+        depositorProp.setPropertyName("Data Depositor");
+        depositorProp.setPropertyValue("depositor@test.com");
+        depositorProp.setPropertyType(DatasetPropertyType.String);
+
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
         d1.setName(RandomStringUtils.random(50, true, false));
         d1.setAlias(1);
         d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+        d1.setProperties(Set.of(depositorProp));
 
         Dataset d2 = new Dataset();
         d2.setDataSetId(2);
         d2.setName(RandomStringUtils.random(50, true, false));
         d2.setAlias(2);
         d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+        d2.setProperties(Set.of(depositorProp));
 
         Election e1 = new Election();
         e1.setElectionId(1);
@@ -635,10 +658,16 @@ public class VoteServiceTest {
         c2.addDar(dar2);
         c2.setDarCode("DAR-CODE-2");
 
+        User researcher = new User();
+        researcher.setEmail("researcher@test.com");
+        researcher.setDisplayName("Researcher");
+        researcher.setUserId(1);
+
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
         when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
         when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
         when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
+        when(userDAO.findUserById(any())).thenReturn(researcher);
         spy(emailService);
 
         initService();
@@ -747,6 +776,113 @@ public class VoteServiceTest {
         verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
         verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
         verify(datasetDAO, times(0)).findDatasetsByIdList(any());
+    }
+
+    @Test
+    public void testNotifyCustodiansOfApprovedDatasets() {
+        DatasetProperty depositorProp = new DatasetProperty();
+        depositorProp.setPropertyName("Data Depositor");
+        depositorProp.setPropertyValue("depositor@test.com");
+        depositorProp.setPropertyType(DatasetPropertyType.String);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+        d1.setProperties(Set.of(depositorProp));
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setName(RandomStringUtils.random(50, true, false));
+        d2.setAlias(2);
+        d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+        d2.setProperties(Set.of(depositorProp));
+
+        User researcher = new User();
+        researcher.setEmail("researcher@test.com");
+        researcher.setDisplayName("Researcher");
+        researcher.setUserId(1);
+
+        User depositor = new User();
+        depositor.setEmail("depositor@test.com");
+        depositor.setDisplayName("depositor");
+        depositor.setUserId(2);
+
+        User custodian = new User();
+        custodian.setEmail("custodian@test.com");
+        custodian.setDisplayName("custodian");
+        custodian.setUserId(3);
+
+        when(userDAO.findUserByEmail(depositor.getEmail())).thenReturn(depositor);
+        when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of(3));
+        when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
+        spy(emailService);
+
+        initService();
+        try {
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
+            verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            );
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testNotifyCustodiansOfApprovedDatasetsNoDepositorOrCustodians() throws Exception {
+        DatasetProperty depositorProp = new DatasetProperty();
+        depositorProp.setPropertyName("Data Depositor");
+        depositorProp.setPropertyValue("depositor@test.com");
+        depositorProp.setPropertyType(DatasetPropertyType.String);
+
+        Dataset d1 = new Dataset();
+        d1.setDataSetId(1);
+        d1.setName(RandomStringUtils.random(50, true, false));
+        d1.setAlias(1);
+        d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+        d1.setProperties(Set.of(depositorProp));
+
+        Dataset d2 = new Dataset();
+        d2.setDataSetId(2);
+        d2.setName(RandomStringUtils.random(50, true, false));
+        d2.setAlias(2);
+        d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+        d2.setProperties(Set.of(depositorProp));
+
+        User researcher = new User();
+        researcher.setEmail("researcher@test.com");
+        researcher.setDisplayName("Researcher");
+        researcher.setUserId(1);
+
+        User depositorNotFound = new User();
+        depositorNotFound.setEmail("depositor@test.com");
+        depositorNotFound.setDisplayName("depositor");
+        depositorNotFound.setUserId(2);
+
+        when(userDAO.findUserByEmail(depositorNotFound.getEmail())).thenReturn(null);
+        when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of());
+        spy(emailService);
+
+        initService();
+        try {
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
+            fail("service.notifyCustodiansOfApprovedDatasets should fail in this condition");
+        } catch (Exception e) {
+            verify(emailService, times(0)).sendDataCustodianApprovalMessage(
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            );
+            assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {

@@ -30,7 +30,11 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
     @SqlQuery("select exists (select * from dataset_user_association where datasetId = :datasetId )")
     Boolean exist(@Bind("datasetId") Integer datasetId);
 
-    @SqlQuery("select ds.dacuserId from dataset_user_association ds where ds.datasetId = :datasetId")
+    @SqlQuery("""
+        SELECT DISTINCT dacuserid
+        FROM dataset_user_association
+        WHERE datasetid = :datasetId
+        """)
     List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
 
 }
