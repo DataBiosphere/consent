@@ -148,8 +148,6 @@ public class VoteService implements ConsentLogger {
     /**
      * Create votes for an election
      *
-     * TODO: Refactor duplicated code when DatabaseElectionAPI is fully replaced by ElectionService
-     *
      * @param election       The Election
      * @param electionType   The Election type
      * @param isManualReview Is this a manual review election
