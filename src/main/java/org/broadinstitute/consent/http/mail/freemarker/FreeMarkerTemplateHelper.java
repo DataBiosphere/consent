@@ -73,7 +73,7 @@ public class FreeMarkerTemplateHelper {
 
     public Writer getDataCustodianApprovalTemplate(List<DatasetMailDTO> datasets, String dataDepositorName,
                                                    String darCode, String researcherEmail) throws IOException, TemplateException {
-        Template temp = freeMarkerConfig.getTemplate("data_custodian_approval.html");
+        Template temp = freeMarkerConfig.getTemplate("data-custodian-approval.html");
         return generateDataCustodianApprovalTemplate(datasets, dataDepositorName, darCode, researcherEmail, temp);
     }
 
