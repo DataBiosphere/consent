@@ -780,6 +780,11 @@ public class VoteServiceTest {
 
     @Test
     public void testNotifyCustodiansOfApprovedDatasets() {
+        User submitter = new User();
+        submitter.setEmail("submitter@test.com");
+        submitter.setDisplayName("submitter");
+        submitter.setUserId(4);
+
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
@@ -791,6 +796,7 @@ public class VoteServiceTest {
         d1.setAlias(1);
         d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
         d1.setProperties(Set.of(depositorProp));
+        d1.setCreateUserId(submitter.getUserId());
 
         Dataset d2 = new Dataset();
         d2.setDataSetId(2);
@@ -798,6 +804,7 @@ public class VoteServiceTest {
         d2.setAlias(2);
         d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
         d2.setProperties(Set.of(depositorProp));
+        d2.setCreateUserId(submitter.getUserId());
 
         User researcher = new User();
         researcher.setEmail("researcher@test.com");
@@ -814,6 +821,7 @@ public class VoteServiceTest {
         custodian.setDisplayName("custodian");
         custodian.setUserId(3);
 
+        when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
         when(userDAO.findUserByEmail(depositor.getEmail())).thenReturn(depositor);
         when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of(3));
         when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
@@ -822,7 +830,7 @@ public class VoteServiceTest {
         initService();
         try {
             service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-            verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+            verify(emailService, times(3)).sendDataCustodianApprovalMessage(
                 any(),
                 any(),
                 any(),
@@ -835,7 +843,12 @@ public class VoteServiceTest {
     }
 
     @Test
-    public void testNotifyCustodiansOfApprovedDatasetsNoDepositorOrCustodians() throws Exception {
+    public void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians() throws Exception {
+        User submitterNotFound = new User();
+        submitterNotFound.setEmail("submitter@test.com");
+        submitterNotFound.setDisplayName("submitter");
+        submitterNotFound.setUserId(4);
+
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
@@ -847,6 +860,7 @@ public class VoteServiceTest {
         d1.setAlias(1);
         d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
         d1.setProperties(Set.of(depositorProp));
+        d1.setCreateUserId(submitterNotFound.getUserId());
 
         Dataset d2 = new Dataset();
         d2.setDataSetId(2);
@@ -854,6 +868,7 @@ public class VoteServiceTest {
         d2.setAlias(2);
         d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
         d2.setProperties(Set.of(depositorProp));
+        d2.setCreateUserId(submitterNotFound.getUserId());
 
         User researcher = new User();
         researcher.setEmail("researcher@test.com");
@@ -865,6 +880,7 @@ public class VoteServiceTest {
         depositorNotFound.setDisplayName("depositor");
         depositorNotFound.setUserId(2);
 
+        when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
         when(userDAO.findUserByEmail(depositorNotFound.getEmail())).thenReturn(null);
         when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of());
         spy(emailService);

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -366,9 +367,16 @@ public class VoteService implements ConsentLogger {
      * @throws IllegalArgumentException when there are no custodians or depositors to notify
      */
     protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher, String darCode) throws IllegalArgumentException {
-        Map<User, List<Dataset>> datasetCustodianMap = new HashMap<>();
-        // Find all the custodians to notify for each dataset
+        Map<User, HashSet<Dataset>> datasetCustodianMap = new HashMap<>();
+        // Find all the custodians, data owners, and data submitters to notify for each dataset
         datasets.forEach(d -> {
+            // Data Submitter
+            User submitter = userDAO.findUserById(d.getCreateUserId());
+            if (Objects.nonNull(submitter)) {
+                datasetCustodianMap.putIfAbsent(submitter, new HashSet<>());
+                datasetCustodianMap.get(submitter).add(d);
+            }
+            // Data Depositor
             Optional<DatasetProperty> depositorProp = d.getProperties()
                 .stream()
                 .filter(p -> p.getPropertyName().equalsIgnoreCase("Data Depositor"))
@@ -377,14 +385,15 @@ public class VoteService implements ConsentLogger {
                 User depositor = userDAO.findUserByEmail(
                     depositorProp.get().getPropertyValueAsString());
                 if (Objects.nonNull(depositor)) {
-                    datasetCustodianMap.putIfAbsent(depositor, new ArrayList<>());
+                    datasetCustodianMap.putIfAbsent(depositor, new HashSet<>());
                     datasetCustodianMap.get(depositor).add(d);
                 }
             }
+            // Data Owners
             List<Integer> datasetOwnersIdList = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
             if (!datasetOwnersIdList.isEmpty()) {
                 userDAO.findUsers(datasetOwnersIdList).forEach(u -> {
-                    datasetCustodianMap.putIfAbsent(u, new ArrayList<>());
+                    datasetCustodianMap.putIfAbsent(u, new HashSet<>());
                     datasetCustodianMap.get(u).add(d);
                 });
             } else {
@@ -396,11 +405,12 @@ public class VoteService implements ConsentLogger {
             throw new IllegalArgumentException("No custodians or depositors found for provided dataset identifiers: " + identifiers);
         }
         // For each custodian, notify them of their approved datasets
-        for (Map.Entry<User, List<Dataset>> entry: datasetCustodianMap.entrySet()) {
+        for (Map.Entry<User, HashSet<Dataset>> entry: datasetCustodianMap.entrySet()) {
             List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
                 .stream()
                 .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
                 .toList();
+            System.out.println(entry.getKey());
             try {
                 emailService.sendDataCustodianApprovalMessage(
                     entry.getKey(),
