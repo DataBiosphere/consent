@@ -119,6 +119,7 @@ public class DatasetRegistrationService {
                 consentGroup.getDataAccessCommitteeId(),
                 dataUse,
                 user.getUserId(),
+                consentGroup.getOpenAccess(),
                 props,
                 fileStorageObjects
         );
@@ -126,8 +127,6 @@ public class DatasetRegistrationService {
 
     private DataUse generateDataUseFromConsentGroup(ConsentGroup group) {
         DataUse dataUse = new DataUse();
-
-        dataUse.setOpenAccess(group.getOpenAccess());
 
         dataUse.setCollaboratorRequired(group.getCol());
         dataUse.setDiseaseRestrictions(group.getDiseaseSpecificUse());

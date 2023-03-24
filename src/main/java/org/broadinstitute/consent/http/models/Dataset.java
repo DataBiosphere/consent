@@ -1,13 +1,14 @@
 package org.broadinstitute.consent.http.models;
 
+import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Dataset {
 
@@ -29,6 +30,7 @@ public class Dataset {
     private Integer updateUserId;
 
     private Boolean active;
+    private Boolean openAccess;
 
     private String consentName;
 
@@ -379,5 +381,13 @@ public class Dataset {
 
     public void setCreateUser(User createUser) {
         this.createUser = createUser;
+    }
+
+    public Boolean getOpenAccess() {
+        return openAccess;
+    }
+
+    public void setOpenAccess(Boolean openAccess) {
+        this.openAccess = openAccess;
     }
 }

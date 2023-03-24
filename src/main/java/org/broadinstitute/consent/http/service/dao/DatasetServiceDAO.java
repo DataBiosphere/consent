@@ -35,6 +35,7 @@ public class DatasetServiceDAO {
                                 Integer dacId,
                                 DataUse dataUse,
                                 Integer userId,
+                                Boolean openAccess,
                                 List<DatasetProperty> props,
                                 List<FileStorageObject> files) {}
 
@@ -55,6 +56,7 @@ public class DatasetServiceDAO {
                             insert.dacId(),
                             insert.dataUse(),
                             insert.userId(),
+                            insert.openAccess(),
                             insert.props(),
                             insert.files());
 
@@ -72,6 +74,7 @@ public class DatasetServiceDAO {
                                                  Integer dacId,
                                                  DataUse dataUse,
                                                  Integer userId,
+                                                 Boolean openAccess,
                                                  List<DatasetProperty> properties,
                                                  List<FileStorageObject> uploadedFiles) {
         // insert dataset
@@ -80,6 +83,7 @@ public class DatasetServiceDAO {
                 new Timestamp(new Date().getTime()),
                 userId,
                 null,
+                openAccess,
                 false,
                 dataUse.toString(),
                 dacId

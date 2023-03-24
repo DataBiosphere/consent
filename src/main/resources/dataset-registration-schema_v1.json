@@ -339,10 +339,18 @@
       "type": "object",
       "required": [
         "consentGroupName",
-        "fileTypes",
-        "url"
+        "fileTypes"
       ],
       "allOf": [
+        {
+          "if": {
+            "properties": {"dataLocation":  { "const": "Not Determined" }}
+          },
+          "then": {},
+          "else": {
+            "required": ["url"]
+          }
+        },
         {
           "$comment": "if openAccess is false OR not present, then require dac id & add secondary consent fields",
           "if": {

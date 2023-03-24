@@ -714,8 +714,72 @@ public class JsonSchemaUtilTest {
     assertHasErrors(errors);
   }
 
+  @Test
+  public void testValidateDatasetRegistrationObject_v1_url_not_required_if_data_loc_not_determined() {
+    String notDeterminedNoURL = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "PI Name",
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataSubmitterUserId": 1,
+            "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
+            "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
+              "consentGroupName": "name",
+              "generalResearchUse": true,
+              "dataAccessCommitteeId": 1,
+              "dataLocation": "Not Determined"
+            }]
+          }
+          """;;
+    String tdrLocationNoUrl = """
+          {
+            "studyType": "Observational",
+            "studyName": "name",
+            "studyDescription": "description",
+            "dataTypes": ["types"],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "PI Name",
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataSubmitterUserId": 1,
+            "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
+            "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
+              "consentGroupName": "name",
+              "generalResearchUse": true,
+              "dataAccessCommitteeId": 1,
+              "dataLocation": "TDR Location"
+            }]
+          }
+          """;
 
-  private void assertNoErrors(Set<ValidationMessage> errors) {
+    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(notDeterminedNoURL);
+    assertNoErrors(errors);
+
+    errors = schemaUtil.validateSchema_v1(tdrLocationNoUrl);
+    assertFieldHasError(errors, "url");
+
+  }
+
+
+
+    private void assertNoErrors(Set<ValidationMessage> errors) {
     assertTrue(String.format("Should be empty, instead was: %s", errors.stream().map(ValidationMessage::toString).toList()), errors.isEmpty());
   }
 

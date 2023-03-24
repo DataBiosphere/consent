@@ -1,23 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
@@ -36,6 +19,24 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -788,10 +789,10 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testGetDatasetsForConsent() {
         Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
-            null, RandomStringUtils.randomAlphabetic(10), true, null, null);
+            null, RandomStringUtils.randomAlphabetic(10), false, true, null, null);
         //negative record, make sure this isn't pulled in
         datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
-            RandomStringUtils.randomAlphabetic(10), true, null, null);
+            RandomStringUtils.randomAlphabetic(10), false, true, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
         consentDAO.insertConsent(consentId, false, "", null,
             RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
@@ -883,7 +884,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), null);
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false, true, dataUse.toString(), null);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
