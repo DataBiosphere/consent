@@ -392,7 +392,8 @@ public class VoteService implements ConsentLogger {
             }
         });
         if (datasetCustodianMap.isEmpty()) {
-            throw new IllegalArgumentException("No custodians or depositors found for provided datasets");
+            String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier).collect(Collectors.joining(", "));
+            throw new IllegalArgumentException("No custodians or depositors found for provided dataset identifiers: " + identifiers);
         }
         // For each custodian, notify them of their approved datasets
         for (Map.Entry<User, List<Dataset>> entry: datasetCustodianMap.entrySet()) {
