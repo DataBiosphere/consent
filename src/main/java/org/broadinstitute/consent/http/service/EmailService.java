@@ -4,6 +4,21 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
 import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.io.Writer;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -19,28 +34,11 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-
-import javax.annotation.Nullable;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.io.Writer;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EmailService {
 
@@ -55,9 +53,6 @@ public class EmailService {
     private final String SERVER_URL;
     private static final String LOG_VOTE_DUL_URL = "dul_review";
     private static final String LOG_VOTE_ACCESS_URL = "access_review";
-    private static final String COLLECT_VOTE_ACCESS_URL = "access_review_results";
-    private static final String COLLECT_VOTE_DUL_URL = "dul_review_results";
-
     public enum ElectionTypeString {
 
         DATA_ACCESS("Data Access Request"),
@@ -162,26 +157,6 @@ public class EmailService {
         }
     }
 
-    public void sendCollectMessage(Integer electionId) throws MessagingException, IOException, TemplateException {
-        Set<User> chairs = userDAO.findUsersForElectionsByRoles(
-                Collections.singletonList(electionId),
-                Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-        for (User chair : chairs) {
-            Map<String, String> data = retrieveForCollect(electionId, chair);
-            String collectUrl = generateCollectVoteUrl(SERVER_URL, data.get("electionType"), data.get("entityId"), data.get("electionId"));
-            Writer template = templateHelper.getCollectTemplate(data.get("userName"), data.get("electionType"), data.get("entityName"), collectUrl);
-            Optional<Response> response = sendGridAPI.sendCollectMessage(data.get("email"), data.get("entityName"), data.get("electionType"), template);
-            saveEmailAndResponse(
-                    response.orElse(null),
-                    data.get("electionId"),
-                    null,
-                    Integer.valueOf(data.get("dacUserId")),
-                    EmailType.COLLECT,
-                    template
-            );
-        }
-    }
-
     public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
         Map<String, String> data = retrieveForVote(voteId);
         String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"), data.get("entityId"), data.get("rpVoteId"));
@@ -258,21 +233,6 @@ public class EmailService {
         }
     }
 
-    public void sendAdminFlaggedDarApproved(String darCode, List<User> admins, Map<User, List<Dataset>> dataOwnersDataSets) throws IOException, TemplateException {
-        for (User admin : admins) {
-            Writer template = templateHelper.getAdminApprovedDarTemplate(admin.getDisplayName(), darCode, dataOwnersDataSets, SERVER_URL);
-            Optional<Response> response = sendGridAPI.sendFlaggedDarAdminApprovedMessage(admin.getEmail(), darCode, SERVER_URL, template);
-            saveEmailAndResponse(
-                    response.orElse(null),
-                    darCode,
-                    null,
-                    admin.getUserId(),
-                    EmailType.ADMIN_FLAGGED_DAR_APPROVED,
-                    template
-            );
-        }
-    }
-
     public void sendResearcherDarApproved(String darCode, Integer researcherId, List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
         User user = userDAO.findUserById(researcherId);
         Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode, user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
@@ -282,24 +242,6 @@ public class EmailService {
                 darCode,
                 null,
                 user.getUserId(),
-                EmailType.RESEARCHER_DAR_APPROVED,
-                template
-        );
-    }
-
-    public void sendDataCustodianApprovalMessage(User custodian,
-                                                 String darCode,
-                                                 List<DatasetMailDTO> datasets,
-                                                 String dataDepositorName,
-                                                 String researcherEmail) throws Exception {
-        Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
-                dataDepositorName, darCode, researcherEmail);
-        Optional<Response> response = sendGridAPI.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, template);
-        saveEmailAndResponse(
-                response.orElse(null),
-                darCode,
-                null,
-                custodian.getUserId(),
                 EmailType.RESEARCHER_DAR_APPROVED,
                 template
         );
@@ -368,21 +310,10 @@ public class EmailService {
         return serverUrl;
     }
 
-    private String generateCollectVoteUrl(String serverUrl, String electionType, String entityId, String electionId) {
-        if (electionType.equals("Data Use Limitations")) {
-            return serverUrl + COLLECT_VOTE_DUL_URL + "/" + entityId;
-        } else {
-            if (electionType.equals("Data Access Request")) {
-                return serverUrl + COLLECT_VOTE_ACCESS_URL + "/" + electionId + "/" + entityId;
-            }
-        }
-        return serverUrl;
-    }
-
     private Map<String, String> retrieveForVote(Integer voteId) {
         Vote vote = voteDAO.findVoteById(voteId);
         Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-        User user = findUserById(vote.getDacUserId());
+        User user = findUserById(vote.getUserId());
 
         Map<String, String> dataMap = new HashMap<>();
         dataMap.put("userName", user.getDisplayName());
@@ -403,39 +334,14 @@ public class EmailService {
         return dataMap;
     }
 
-    private String findRpVoteId(Integer electionId, Integer dacUserId) {
+    private String findRpVoteId(Integer electionId, Integer userId) {
         Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(electionId);
-        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(rpElectionId, dacUserId).getVoteId()).toString()) : "";
+        return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(rpElectionId, userId).getVoteId()).toString()) : "";
     }
 
-    private String findDataAccessVoteId(Integer electionId, Integer dacUserId) {
+    private String findDataAccessVoteId(Integer electionId, Integer userId) {
         Integer dataAccessElectionId = electionDAO.findAccessElectionByElectionRPId(electionId);
-        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndDACUserId(dataAccessElectionId, dacUserId).getVoteId()).toString()) : "";
-    }
-
-    private Map<String, String> retrieveForCollect(Integer electionId, User user) {
-        Election election = electionDAO.findElectionWithFinalVoteById(electionId);
-        if (election.getElectionType().equals(ElectionType.RP.getValue())) {
-            election = electionDAO.findElectionById(electionDAO.findAccessElectionByElectionRPId(electionId));
-        }
-        return createDataMap(user.getDisplayName(),
-                election.getElectionType(),
-                election.getReferenceId(),
-                election.getElectionId().toString(),
-                user.getUserId().toString(),
-                user.getEmail());
-    }
-
-    private Map<String, String> createDataMap(String displayName, String electionType, String referenceId, String electionId, String dacUserId, String email) {
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("userName", displayName);
-        dataMap.put("electionType", retrieveElectionTypeStringCollect(electionType));
-        dataMap.put("entityId", referenceId);
-        dataMap.put("entityName", retrieveReferenceId(electionType, referenceId));
-        dataMap.put("electionId", electionId);
-        dataMap.put("dacUserId", dacUserId);
-        dataMap.put("email", email);
-        return dataMap;
+        return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(dataAccessElectionId, userId).getVoteId()).toString()) : "";
     }
 
     private Map<String, String> retrieveForNewDAR(String dataAccessRequestId, User user) {
@@ -467,10 +373,4 @@ public class EmailService {
         return ElectionTypeString.RP.getValue();
     }
 
-    private String retrieveElectionTypeStringCollect(String electionType) {
-        if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-            return ElectionTypeString.TRANSLATE_DUL.getValue();
-        }
-        return ElectionTypeString.DATA_ACCESS.getValue();
-    }
 }

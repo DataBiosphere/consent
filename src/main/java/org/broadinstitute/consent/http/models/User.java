@@ -3,22 +3,20 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import java.beans.Transient;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-
-import java.beans.Transient;
-import java.util.EnumSet;
-import java.util.stream.Collectors;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
 
 public class User {
 
@@ -33,12 +31,6 @@ public class User {
 
     @JsonProperty
     private Integer userId;
-
-    // This will be removed in a future release.
-    // It is maintained here for backwards compatibility with the UI.
-    @JsonProperty
-    @Deprecated
-    private Integer dacUserId;
 
     @JsonProperty
     private String email;
@@ -81,7 +73,6 @@ public class User {
 
     public User(Integer userId, String email, String displayName, Date createDate) {
         this.userId = userId;
-        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
@@ -90,7 +81,6 @@ public class User {
     public User(Integer userId, String email, String displayName, Date createDate,
                 List<UserRole> roles) {
         this.userId = userId;
-        this.dacUserId = userId;
         this.email = email;
         this.displayName = displayName;
         this.createDate = createDate;
@@ -178,16 +168,6 @@ public class User {
         if (Objects.nonNull(u.getInstitutionId())) {
             this.setInstitutionId(u.getInstitutionId());
         }
-    }
-
-    @Deprecated // Use getUserId(). This is maintained for backward compatibility with existing UI functionality.
-    public Integer getDacUserId() {
-        return userId;
-    }
-
-    @Deprecated // This is maintained for backward compatibility with existing UI functionality.
-    public void setDacUserId() {
-        this.dacUserId = this.getUserId();
     }
 
     public String getEmail() {
@@ -362,7 +342,7 @@ public class User {
                 })
                 .collect(Collectors.toList());
         return !targetRoles.isEmpty();
-        
+
     }
 
 }

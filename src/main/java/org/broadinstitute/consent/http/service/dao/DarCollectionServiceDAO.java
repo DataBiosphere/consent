@@ -136,7 +136,7 @@ public class DarCollectionServiceDAO {
 
   private Update createVoteInsert(Handle handle, String voteType, String electionType, String referenceId, Integer datasetId, Date now, Integer userId) {
     final String sql =
-        " INSERT INTO vote (createdate, dacuserid, electionid, type, remindersent) "
+        " INSERT INTO vote (createdate, user_id, electionid, type, remindersent) "
             + " (SELECT :createDate, :userId, election_id, :voteType, false "
             + "  FROM election "
             + "  WHERE election_type = :electionType "

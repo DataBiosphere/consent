@@ -1,7 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.commons.collections4.CollectionUtils;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -15,7 +24,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -28,17 +36,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class VoteService {
 
@@ -136,17 +133,6 @@ public class VoteService {
     }
 
 
-    public Vote updateVoteById(Vote rec,  Integer voteId) throws IllegalArgumentException {
-        Vote vote = voteDAO.findVoteById(voteId);
-        if (Objects.isNull(vote)) notFoundException(voteId);
-        Integer electionId = setGeneralFields(rec, vote.getElectionId());
-        String rationale = StringUtils.isEmpty(rec.getRationale()) ? null : rec.getRationale();
-        boolean reminder = Objects.nonNull(rec.getIsReminderSent()) ? rec.getIsReminderSent() : false;
-        Date createDate = Objects.nonNull(vote.getCreateDate()) ? vote.getCreateDate() : new Date();
-        voteDAO.updateVote(rec.getVote(), rationale, new Date(), voteId, reminder, electionId, createDate, rec.getHasConcerns());
-        return voteDAO.findVoteById(voteId);
-    }
-
     public Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException {
         if (voteDAO.checkVoteById(referenceId, voteId) == null) notFoundException(voteId);
         Vote vote = voteDAO.findVoteById(voteId);
@@ -227,22 +213,6 @@ public class VoteService {
         return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
     }
 
-    public List<Vote> describeVotes(String referenceId) {
-        List<Vote> resultVotes = voteDAO.findVotesByReferenceId(referenceId);
-        if (CollectionUtils.isEmpty(resultVotes)) {
-            throw new NotFoundException("Could not find vote for specified reference id. Reference id: " + referenceId);
-        }
-        return resultVotes;
-    }
-
-    public Vote findVoteById(Integer voteId) {
-        Vote vote = voteDAO.findVoteById(voteId);
-        if (Objects.isNull(vote)) {
-            notFoundException(voteId);
-        }
-        return vote;
-    }
-
     public List<Vote> findVotesByIds(List<Integer> voteIds) {
         if (voteIds.isEmpty()) {
             return Collections.emptyList();
@@ -262,42 +232,13 @@ public class VoteService {
                 collect(Collectors.toList());
         if (!openElectionIds.isEmpty()) {
             List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                    filter(v -> v.getDacUserId().equals(user.getUserId())).
+                    filter(v -> v.getUserId().equals(user.getUserId())).
                     map(Vote::getVoteId).
                     collect(Collectors.toList());
             if (!openUserVoteIds.isEmpty()) {
                 voteDAO.removeVotesByIds(openUserVoteIds);
             }
         }
-    }
-
-    public void deleteVote(Integer voteId, String referenceId) {
-        if (voteDAO.checkVoteById(referenceId, voteId) == null) {
-            throw new NotFoundException("Does not exist vote for the specified id. Id: " + voteId);
-        }
-        voteDAO.deleteVoteById(voteId);
-
-    }
-
-    public void deleteVotes(String referenceId)
-            throws IllegalArgumentException, UnknownIdentifierException {
-        if (electionDAO.findElectionsWithFinalVoteByReferenceId(referenceId) == null) {
-            throw new IllegalArgumentException();
-        }
-        voteDAO.deleteVotesByReferenceId(referenceId);
-
-    }
-
-    public List<Vote> describeVoteByTypeAndElectionId(String type, Integer electionId) {
-        return voteDAO.findVoteByTypeAndElectionId(electionId, type);
-    }
-
-    public Vote describeDataOwnerVote(String requestId, Integer dataOwnerId) throws NotFoundException {
-        Vote vote = voteDAO.findVotesByReferenceIdTypeAndUser(requestId, dataOwnerId, VoteType.DATA_OWNER.getValue());
-        if (Objects.isNull(vote)) {
-            throw new NotFoundException("Vote doesn't exist for the specified dataOwnerId");
-        }
-        return vote;
     }
 
     /**
@@ -472,20 +413,13 @@ public class VoteService {
     private void validateVote(Vote vote) {
         if (Objects.isNull(vote) ||
                 Objects.isNull(vote.getVoteId()) ||
-                Objects.isNull(vote.getDacUserId()) ||
+                Objects.isNull(vote.getUserId()) ||
                 Objects.isNull(vote.getElectionId())) {
             throw new IllegalArgumentException("Invalid vote: " + vote);
         }
         if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
             throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
         }
-    }
-
-    private Integer setGeneralFields(Vote rec, Integer electionId) {
-        rec.setCreateDate(new Date());
-        rec.setElectionId(electionId);
-        rec.setType(rec.getType());
-        return electionId;
     }
 
     private void notFoundException(Integer voteId) {

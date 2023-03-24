@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
-
 import java.util.Date;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public class Vote {
   public static final String QUERY_FIELDS_WITH_V_PREFIX =
       "v.voteid as v_vote_id, "
           + " v.vote as v_vote, "
-          + " v.dacuserid as v_dac_user_id, "
+          + " v.user_id as v_user_id, "
           + " v.rationale as v_rationale, "
           + " v.electionid as v_election_id, "
           + "v.createdate as v_create_date, "
@@ -28,7 +27,7 @@ public class Vote {
     private Boolean vote;
 
     @JsonProperty
-    private Integer dacUserId;
+    private Integer userId;
 
     @JsonProperty
     private Date createDate;
@@ -57,11 +56,11 @@ public class Vote {
     public Vote() {
     }
 
-    public Vote(Integer voteId, Boolean vote, Integer dacUserId, Date createDate, Date updateDate,
+    public Vote(Integer voteId, Boolean vote, Integer userId, Date createDate, Date updateDate,
                 Integer electionId, String rationale, String type, Boolean isReminderSent, Boolean hasConcerns) {
         this.voteId = voteId;
         this.vote = vote;
-        this.dacUserId = dacUserId;
+        this.userId = userId;
         this.createDate = createDate;
         this.updateDate = updateDate;
         this.electionId = electionId;
@@ -87,12 +86,12 @@ public class Vote {
         this.vote = vote;
     }
 
-    public Integer getDacUserId() {
-        return dacUserId;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setDacUserId(Integer dacUserId) {
-        this.dacUserId = dacUserId;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public Date getCreateDate() {

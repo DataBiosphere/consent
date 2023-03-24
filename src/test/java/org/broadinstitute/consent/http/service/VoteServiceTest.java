@@ -35,7 +35,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -84,8 +83,6 @@ public class VoteServiceTest {
 
     private void doNothings() {
         doNothing().when(voteDAO).updateVote(anyBoolean(), anyString(), any(), anyInt(), anyBoolean(), anyInt(), any(), anyBoolean());
-        doNothing().when(voteDAO).deleteVoteById(anyInt());
-        doNothing().when(voteDAO).deleteVotesByReferenceId(anyString());
     }
 
     private void initService() {
@@ -120,16 +117,6 @@ public class VoteServiceTest {
 
         Vote vote = service.updateVote(v);
         assertNotNull(vote);
-    }
-
-    @Test
-    public void testUpdateVoteById() {
-        Vote v = setUpTestVote(false, false);
-        initService();
-
-        Vote vote = service.updateVoteById(v, v.getVoteId());
-        assertNotNull(vote);
-        assertEquals(v.getVoteId(), vote.getVoteId());
     }
 
     @Test(expected = NotFoundException.class)
@@ -295,101 +282,6 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.createDataOwnersReviewVotes(e);
         assertFalse(votes.isEmpty());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testDescribeVotes_InvalidReferenceId() {
-        when(voteDAO.findVotesByReferenceId("test"))
-                .thenReturn(null);
-        initService();
-        service.describeVotes("test");
-    }
-
-    @Test
-    public void testDescribeVotes() {
-        Vote v = setUpTestVote(false, false);
-        when(voteDAO.findVotesByReferenceId("test"))
-                .thenReturn(List.of(v));
-        initService();
-        List<Vote> votes = service.describeVotes("test");
-        assertNotNull(votes);
-        assertEquals(1, votes.size());
-        assertEquals(v.getVoteId(), votes.get(0).getVoteId());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testFindVoteById_InvalidId() {
-        when(voteDAO.findVoteById(any())).thenReturn(null);
-        initService();
-        service.findVoteById(1);
-    }
-
-    @Test
-    public void testDescribeVoteById() {
-        Vote v = setUpTestVote(false, false);
-        initService();
-
-        Vote vote = service.findVoteById(v.getVoteId());
-        assertNotNull(vote);
-        assertEquals(v.getVoteId(), vote.getVoteId());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testDeleteVote_NotFound() {
-        when(voteDAO.checkVoteById(any(), any()))
-                .thenReturn(null);
-        initService();
-
-        service.deleteVote(1, "test");
-    }
-
-    @Test
-    public void testDeleteVote() {
-        Vote v = setUpTestVote(false, false);
-        when(voteDAO.checkVoteById(any(), any()))
-                .thenReturn(v.getVoteId());
-        initService();
-
-        service.deleteVote(v.getVoteId(), "test");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDeleteVotes_NotFound() throws IllegalArgumentException, UnknownIdentifierException {
-        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any()))
-                .thenReturn(null);
-        initService();
-
-        service.deleteVotes("test");
-    }
-
-    @Test
-    public void testDeleteVotes() throws IllegalArgumentException, UnknownIdentifierException {
-        setUpTestVote(false, false);
-        when(electionDAO.findElectionsWithFinalVoteByReferenceId(any())).thenReturn(List.of(new Election()));
-        initService();
-
-        service.deleteVotes("test");
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testDescribeDataOwnerVote_NotFound() {
-        when(voteDAO.findVotesByReferenceIdTypeAndUser(any(), any(), any()))
-                .thenReturn(null);
-        initService();
-
-        service.describeDataOwnerVote("test", 1);
-    }
-
-    @Test
-    public void testDescribeDataOwnerVote() {
-        Vote v = setUpTestVote(false, false);
-        when(voteDAO.findVotesByReferenceIdTypeAndUser("test", 1, VoteType.DATA_OWNER.getValue()))
-                .thenReturn(v);
-        initService();
-
-        Vote vote = service.describeDataOwnerVote("test", 1);
-        assertNotNull(vote);
-        assertEquals(v.getVoteId(), vote.getVoteId());
     }
 
     @Test
@@ -614,13 +506,13 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Vote v2 = new Vote();
         v2.setVote(true);
         v2.setType(VoteType.FINAL.getValue());
         v2.setElectionId(2);
-        v2.setDacUserId(1);
+        v2.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -687,13 +579,13 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Vote v2 = new Vote();
         v2.setVote(true);
         v2.setType(VoteType.FINAL.getValue());
         v2.setElectionId(2);
-        v2.setDacUserId(1);
+        v2.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -763,7 +655,7 @@ public class VoteServiceTest {
         v1.setVote(false);
         v1.setType(VoteType.FINAL.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -814,7 +706,7 @@ public class VoteServiceTest {
         v1.setVote(true);
         v1.setType(VoteType.DAC.getValue());
         v1.setElectionId(1);
-        v1.setDacUserId(1);
+        v1.setUserId(1);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -878,7 +770,7 @@ public class VoteServiceTest {
     private Vote setUpTestVote(Boolean vote, Boolean reminderSent) {
         Vote v = new Vote();
         v.setVoteId(RandomUtils.nextInt(1, 10));
-        v.setDacUserId(RandomUtils.nextInt(1, 10));
+        v.setUserId(RandomUtils.nextInt(1, 10));
         v.setElectionId(RandomUtils.nextInt(1, 10));
         v.setIsReminderSent(reminderSent);
         v.setVote(vote);

@@ -1,6 +1,14 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -10,15 +18,6 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
-
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class DatasetServiceDAO {
 
@@ -96,20 +95,6 @@ public class DatasetServiceDAO {
         executeInsertFilesForDataset(handle, uploadedFiles, userId, datasetId);
 
         return datasetId;
-    }
-
-    public List<DatasetProperty> synchronizeDatasetProperties(Integer datasetId, List<DatasetProperty> properties) throws SQLException {
-        jdbi.useHandle(
-                handle -> {
-                    // By default, new connections are set to auto-commit which breaks our rollback strategy.
-                    // Turn that off for this connection. This will not affect existing or new connections and
-                    // only applies to the current one in this handle.
-                    handle.getConnection().setAutoCommit(false);
-                    executeSynchronizeDatasetProperties(handle, datasetId, properties);
-                    handle.commit();
-                }
-        );
-        return datasetDAO.findDatasetPropertiesByDatasetId(datasetId).stream().toList();
     }
 
     private void executeInsertFilesForDataset(Handle handle, List<FileStorageObject> files, Integer userId, Integer datasetId) {

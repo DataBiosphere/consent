@@ -1,17 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Test;
+import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -19,12 +12,16 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
-import static junit.framework.TestCase.assertNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.junit.Test;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
 
@@ -419,9 +416,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindAllApprovedDataAccessRequestsByDatasetId() {
-        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000);
-        String darCode2 = "DAR-" + RandomUtils.nextInt(100, 1000);
-        String darCode3 = "DAR-" + RandomUtils.nextInt(100, 1000);
+        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+        String darCode2 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+        String darCode3 = "DAR-" + RandomUtils.nextInt(100, 1000000);
         Dataset dataset1 = createDataset();
         Dataset dataset2 = createDataset();
 
@@ -606,6 +603,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertEquals(1, returnedDAR.size());
     }
 
+<<<<<<< HEAD
     @Test
     public void testFindDARDatasetRelations() {
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
@@ -684,4 +682,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         list.add(dsp);
         datasetDAO.insertDatasetProperties(list);
     }
+=======
+>>>>>>> develop
 }

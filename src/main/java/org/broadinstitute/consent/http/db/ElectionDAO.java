@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
@@ -14,9 +16,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
@@ -66,16 +65,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @SqlUpdate("UPDATE election SET status = :status WHERE election_id IN (<electionIds>) ")
     void updateElectionStatus(@BindList("electionIds") List<Integer> electionIds,
                               @Bind("status") String status);
-
-    @SqlQuery(
-        "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type,  e.data_use_letter, e.dul_name, e.archived, e.version " +
-            "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-            "WHERE e.reference_id = :referenceId " +
-                "AND LOWER(e.status) = 'open' " +
-                "AND LOWER(e.election_type) = LOWER(:type)")
-    Election getOpenElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery(
         "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
@@ -180,13 +169,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "AND LOWER(e.status) = LOWER(:status) " +
             "AND v.vote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
-
-    @SqlQuery(
-        "SELECT count(*) " +
-            "FROM election e " +
-            "WHERE (LOWER(e.status) = 'open' OR LOWER(e.status) = 'final') " +
-            "AND LOWER(e.election_type) != 'dataset' ")
-    Integer verifyOpenElections();
 
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election WHERE reference_id = :referenceId")
@@ -404,9 +386,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election e WHERE e.election_id = :electionId")
     Election findElectionById(@Bind("electionId") Integer electionId);
-
-    @SqlQuery("SELECT election_id FROM election WHERE reference_id = :referenceId AND LOWER(status) = 'open' AND dataset_id = :dataSetId")
-    Integer getOpenElectionByReferenceIdAndDataSet(@Bind("referenceId") String referenceId, @Bind("dataSetId") Integer dataSetId);
 
     @SqlUpdate("UPDATE election SET status = :status, last_update = :lastUpdate, final_access_vote = :finalAccessVote WHERE election_id = :electionId ")
     void updateElectionById(@Bind("electionId") Integer electionId,

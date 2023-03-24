@@ -7,7 +7,7 @@ properties:
   vote:
     type: boolean
     description: Describe the Positive or negative value of the vote
-  dacUserId:
+  userId:
     type: integer
     format: int32
     description: Describes the id of the voter.

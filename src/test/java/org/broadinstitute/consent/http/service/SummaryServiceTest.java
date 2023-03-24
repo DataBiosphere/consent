@@ -191,13 +191,13 @@ public class SummaryServiceTest {
         return Arrays.asList(e1, e2, e3, e4);
     }
 
-    private List<Vote> randomVotesList(Integer dacUserId, String voteType){
-        Vote v1 = new Vote(1, false, dacUserId, new Date(), new Date(), 1, "", voteType, false, false);
-        Vote v2 = new Vote(2, false, dacUserId, new Date(), new Date(), 2, "", voteType, false, false);
-        Vote v3 = new Vote(3, false, dacUserId, new Date(), new Date(), 3, "", voteType, false, false);
-        Vote v4 = new Vote(4, true, dacUserId, new Date(), new Date(), 4, "", voteType, false, false);
-        Vote v5 = new Vote(5, true, dacUserId, new Date(), new Date(), 5, "", voteType, false, false);
-        Vote nul = new Vote(6, null, dacUserId, new Date(), new Date(), 6, "", voteType, false, false);
+    private List<Vote> randomVotesList(Integer userId, String voteType){
+        Vote v1 = new Vote(1, false, userId, new Date(), new Date(), 1, "", voteType, false, false);
+        Vote v2 = new Vote(2, false, userId, new Date(), new Date(), 2, "", voteType, false, false);
+        Vote v3 = new Vote(3, false, userId, new Date(), new Date(), 3, "", voteType, false, false);
+        Vote v4 = new Vote(4, true, userId, new Date(), new Date(), 4, "", voteType, false, false);
+        Vote v5 = new Vote(5, true, userId, new Date(), new Date(), 5, "", voteType, false, false);
+        Vote nul = new Vote(6, null, userId, new Date(), new Date(), 6, "", voteType, false, false);
         return Arrays.asList(v1, v2, v3, v4, v5, nul);
     }
 
@@ -260,7 +260,7 @@ public class SummaryServiceTest {
                 v.setElectionId(electionId);
                 v.setCreateDate(new Date());
                 v.setUpdateDate(new Date());
-                v.setDacUserId(userId);
+                v.setUserId(userId);
                 return v;
             }
         ).collect(Collectors.toUnmodifiableList());

@@ -112,18 +112,6 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testGetDatasetsForConsent() {
-        when(datasetDAO.getDatasetsForConsent(getDatasets().get(0).getConsentName()))
-                .thenReturn(getDatasets());
-        initService();
-
-        List<Dataset> setsForConsent = datasetService.getDataSetsForConsent("Test Consent 1");
-        assertNotNull(setsForConsent);
-        assertEquals(setsForConsent.size(), getDatasets().size());
-        assertEquals(setsForConsent.get(0).getDataSetId(), getDatasets().get(0).getDataSetId());
-    }
-
-    @Test
     public void testDescribeDataSetsByReceiveOrder() {
         when(datasetDAO.findDatasetsByReceiveOrder(Collections.singletonList(1)))
             .thenReturn(new HashSet<>(getDatasetDTOs()));
@@ -218,17 +206,6 @@ public class DatasetServiceTest {
 
         Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
         assertNotNull(dataSet);
-    }
-
-    @Test
-    public void testFindNeedsApprovalDataSetsByObjectId() {
-        when(datasetDAO.findNeedsApprovalDatasetByDatasetId(Collections.singletonList(1)))
-                .thenReturn(getDatasets());
-        initService();
-
-        List<Dataset> dataSets = datasetService.findNeedsApprovalDataSetByObjectId(Collections.singletonList(1));
-        assertNotNull(dataSets);
-        assertEquals(dataSets.stream().findFirst().orElseThrow().getDataSetId(), getDatasets().stream().findFirst().orElseThrow().getDataSetId());
     }
 
     @Test

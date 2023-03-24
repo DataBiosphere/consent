@@ -54,7 +54,6 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.PendingCaseService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -303,15 +302,9 @@ public class ConsentModule extends AbstractModule {
                 providesElectionDAO(),
                 providesVoteDAO(),
                 providesUserDAO(),
-                providesDatasetDAO(),
-                providesLibraryCardDAO(),
-                providesDatasetAssociationDAO(),
-                providesDataAccessRequestDAO(),
-                providesDARCollectionDAO(),
                 providesMailMessageDAO(),
                 providesEmailService(),
-                providesDataAccessRequestService(),
-                providesUseRestrictionConverter());
+                providesDataAccessRequestService());
     }
 
     @Provides
@@ -339,19 +332,6 @@ public class ConsentModule extends AbstractModule {
         return new SendGridAPI(
             config.getMailConfiguration(),
             providesUserDAO());
-    }
-
-    @Provides
-    PendingCaseService providesPendingCaseService() {
-        return new PendingCaseService(
-                providesConsentDAO(),
-                providesDataAccessRequestService(),
-                providesElectionDAO(),
-                providesVoteDAO(),
-                providesDacService(),
-                providesUserService(),
-                providesVoteService(),
-                providesDarCollectionService());
     }
 
     @Provides

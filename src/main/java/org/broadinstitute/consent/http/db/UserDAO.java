@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.db.mapper.UnregisteredUsersWithCardsReducer;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -17,11 +19,6 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 public interface UserDAO extends Transactional<UserDAO> {
 
@@ -121,21 +118,6 @@ public interface UserDAO extends Transactional<UserDAO> {
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
-    @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-    @UseRowReducer(UserWithRolesReducer.class)
-    @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name, "
-        + "     p.propertyid AS up_property_id, p.propertykey AS up_property_key, p.propertyvalue AS up_property_value, p.userid AS up_user_id "
-        + " FROM users u "
-        + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-        + " LEFT JOIN user_property p ON p.userid = u.user_id "
-        + " ORDER BY u.create_date DESC ")
-    Set<User> findUsers();
-
-    @RegisterBeanMapper(value = User.class, prefix = "u")
-    @RegisterBeanMapper(value = UserRole.class)
     @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
     @RegisterBeanMapper(value = Institution.class, prefix = "lci")
     @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -178,11 +160,13 @@ public interface UserDAO extends Transactional<UserDAO> {
     User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
     @UseRowMapper(UserWithRolesMapper.class)
-    @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-            " from users du " +
-            " inner join user_role ur on ur.user_id = du.user_id " +
-            " inner join roles r on r.roleId = ur.role_id and r.name in (<roleNames>) " +
-            " inner join vote v on v.dacUserId = du.user_id and v.electionId in (<electionIds>) ")
+    @SqlQuery("""
+        SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
+        FROM users du
+        INNER JOIN user_role ur ON ur.user_id = du.user_id
+        INNER JOIN roles r ON r.roleId = ur.role_id AND r.name in (<roleNames>)
+        INNER JOIN vote v ON v.user_id = du.user_id AND v.electionId in (<electionIds>)
+        """)
     Set<User> findUsersForElectionsByRoles(@BindList("electionIds") List<Integer> electionIds,
                                            @BindList("roleNames") List<String> roleNames);
 
@@ -207,17 +191,6 @@ public interface UserDAO extends Transactional<UserDAO> {
             + " LEFT JOIN user_role ur ON ur.user_id = du.user_id " + " LEFT JOIN roles r ON r.roleid = ur.role_id "
             + " WHERE du.institution_id = :institutionId")
     List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
-
-    @RegisterBeanMapper(value = LibraryCard.class)
-    @RegisterBeanMapper(value = Institution.class, prefix = "lci")
-    @UseRowReducer(UnregisteredUsersWithCardsReducer.class)
-    @SqlQuery(" SELECT lc.*, " +
-            Institution.QUERY_FIELDS_WITH_LCI_PREFIX +
-            " FROM library_card lc " +
-            " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
-            " WHERE lc.user_id IS NULL " +
-            " AND lc.institution_id = :institutionId")
-    List<User> getCardsForUnregisteredUsers(@Bind("institutionId") Integer institutionId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
@@ -245,8 +218,6 @@ public interface UserDAO extends Transactional<UserDAO> {
             " LEFT JOIN institution i ON u.institution_id = i.institution_id" +
             " WHERE u.institution_id = :institutionId")
     List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
-
-    @RegisterBeanMapper(value = User.class)
 
     //SO only endpoint (so far)
     //Meant to pull in users that have not yet been assigned an institution
