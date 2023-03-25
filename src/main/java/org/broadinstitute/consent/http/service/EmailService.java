@@ -260,7 +260,7 @@ public class EmailService {
                 darCode,
                 null,
                 custodian.getUserId(),
-                EmailType.RESEARCHER_DAR_APPROVED,
+                EmailType.DATA_CUSTODIAN_APPROVAL,
                 template
         );
     }
