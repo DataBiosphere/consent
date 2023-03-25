@@ -378,7 +378,7 @@ public class VoteService implements ConsentLogger {
             List<String> custodianEmails = d.getProperties()
                 .stream()
                 .filter(p ->
-                    p.getSchemaProperty().equalsIgnoreCase("dataCustodianEmail") ||
+                    (Objects.nonNull(p.getSchemaProperty()) && p.getSchemaProperty().equalsIgnoreCase("dataCustodianEmail")) ||
                     p.getPropertyName().equalsIgnoreCase("Data Depositor"))
                 .map(DatasetProperty::getPropertyValueAsString)
                 .distinct()

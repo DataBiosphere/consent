@@ -822,7 +822,7 @@ public class VoteServiceTest {
         custodian.setUserId(3);
 
         when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
-        when(userDAO.findUserByEmail(depositor.getEmail())).thenReturn(depositor);
+        when(userDAO.findUsersByEmailList(List.of(depositor.getEmail()))).thenReturn(List.of(depositor));
         when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of(3));
         when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
         spy(emailService);
