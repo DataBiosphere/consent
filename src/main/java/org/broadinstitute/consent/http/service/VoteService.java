@@ -369,10 +369,12 @@ public class VoteService implements ConsentLogger {
         // Find all the custodians, data owners, and data submitters to notify for each dataset
         datasets.forEach(d -> {
             // Data Submitter
-            User submitter = userDAO.findUserById(d.getCreateUserId());
-            if (Objects.nonNull(submitter)) {
-                custodianMap.putIfAbsent(submitter, new HashSet<>());
-                custodianMap.get(submitter).add(d);
+            if (Objects.nonNull(d.getCreateUserId())) {
+                User submitter = userDAO.findUserById(d.getCreateUserId());
+                if (Objects.nonNull(submitter)) {
+                    custodianMap.putIfAbsent(submitter, new HashSet<>());
+                    custodianMap.get(submitter).add(d);
+                }
             }
             // Data Custodians and Data Depositor
             List<String> custodianEmails = d.getProperties()
