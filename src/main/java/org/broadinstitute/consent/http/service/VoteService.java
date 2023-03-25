@@ -258,11 +258,11 @@ public class VoteService implements ConsentLogger {
             List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
             if (voteValue) {
                 try {
-                    notifyResearchersOfDarApproval(updatedVotes);
+                    sendDatasetApprovalNotifications(updatedVotes);
                 } catch (Exception e) {
-                    // We can recover from an email error, log it and don't fail the overall process.
+                    // We can recover from email errors, log it and don't fail the overall process.
                     String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString).collect(Collectors.joining(","));
-                    String message = "Error notifying researchers for votes: [" + voteIds + "], " + e.getMessage();
+                    String message = "Error notifying researchers and custodians for votes: [" + voteIds + "]: " + e.getMessage();
                     logException(message, e);
                 }
             }
@@ -273,15 +273,15 @@ public class VoteService implements ConsentLogger {
     }
 
     /**
-     * Review all positive, FINAL votes and send a notification to the researcher describing the approved access to
-     * datasets on their Data Access Request.
+     * Review all positive, FINAL votes and send a notification to the researcher and data
+     * custodians describing the approved access to datasets on their Data Access Request.
      *
-     * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of elections for
-     *              datasets that all have the same data use restriction in a single DarCollection
-     *              This method is flexible enough to send email for any number of unrelated elections in various
-     *              DarCollections.
+     * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of
+     *              elections for datasets that all have the same data use restriction in a single
+     *              DarCollection. This method is flexible enough to send email for any number of
+     *              unrelated elections in various DarCollections.
      */
-    public void notifyResearchersOfDarApproval(List<Vote> votes) {
+    public void sendDatasetApprovalNotifications(List<Vote> votes) {
 
         List<Integer> finalElectionIds = votes.stream()
             .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election

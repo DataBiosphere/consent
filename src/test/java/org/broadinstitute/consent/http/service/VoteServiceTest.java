@@ -581,7 +581,7 @@ public class VoteServiceTest {
         spy(emailService);
 
         initService();
-        service.notifyResearchersOfDarApproval(List.of(v1, v2));
+        service.sendDatasetApprovalNotifications(List.of(v1, v2));
         // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
         verify(emailService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
     }
@@ -671,7 +671,7 @@ public class VoteServiceTest {
         spy(emailService);
 
         initService();
-        service.notifyResearchersOfDarApproval(List.of(v1, v2));
+        service.sendDatasetApprovalNotifications(List.of(v1, v2));
         // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
         verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
     }
@@ -717,7 +717,7 @@ public class VoteServiceTest {
         spy(emailService);
 
         initService();
-        service.notifyResearchersOfDarApproval(List.of(v1));
+        service.sendDatasetApprovalNotifications(List.of(v1));
         // Since we have a false vote, we should not be sending any email
         verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
         // Similar check for all DAO calls
@@ -768,7 +768,7 @@ public class VoteServiceTest {
         spy(emailService);
 
         initService();
-        service.notifyResearchersOfDarApproval(List.of(v1));
+        service.sendDatasetApprovalNotifications(List.of(v1));
         // Since we have a non-final vote, we should not be sending any email
         verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
         // Similar check for all DAO calls
