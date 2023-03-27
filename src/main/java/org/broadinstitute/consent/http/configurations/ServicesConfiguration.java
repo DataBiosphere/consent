@@ -6,6 +6,13 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
 
+  public static final String RESOURCE_TYPES_PATH = "api/config/v1/resourceTypes";
+  public static final String REGISTER_SELF_INFO_PATH = "register/user/v2/self/info";
+  public static final String REGISTER_SELF_DIAGNOSTICS_PATH = "register/user/v2/self/diagnostics";
+  public static final String REGISTER_SELF_PATH = "register/user/v2/self";
+  public static final String TOS_TEXT_PATH = "tos/text";
+  public static final String REGISTER_TOS_PATH = "register/user/v1/termsofservice";
+
   @NotNull
   private String ontologyURL;
 
@@ -68,27 +75,27 @@ public class ServicesConfiguration {
   }
 
   public String getV1ResourceTypesUrl() {
-    return getSamUrl() + "api/config/v1/resourceTypes";
+    return getSamUrl() + RESOURCE_TYPES_PATH;
   }
 
   public String getRegisterUserV2SelfInfoUrl() {
-    return getSamUrl() + "register/user/v2/self/info";
+    return getSamUrl() + REGISTER_SELF_INFO_PATH;
   }
 
   public String getV2SelfDiagnosticsUrl() {
-    return getSamUrl() + "register/user/v2/self/diagnostics";
+    return getSamUrl() + REGISTER_SELF_DIAGNOSTICS_PATH;
   }
 
   public String postRegisterUserV2SelfUrl() {
-    return getSamUrl() + "register/user/v2/self";
+    return getSamUrl() + REGISTER_SELF_PATH;
   }
 
   public String getToSTextUrl() {
-    return getSamUrl() + "tos/text";
+    return getSamUrl() + TOS_TEXT_PATH;
   }
 
   public String tosRegistrationUrl() {
-    return getSamUrl() + "register/user/v1/termsofservice";
+    return getSamUrl() + REGISTER_TOS_PATH;
   }
 
   public String postSupportRequestUrl() {

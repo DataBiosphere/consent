@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.broadinstitute</groupId>
   <artifactId>consent</artifactId>
@@ -16,6 +16,7 @@
     <liquibase.version>4.20.0</liquibase.version>
     <dropwizard.version>2.1.5</dropwizard.version>
     <owl.version>5.5.0</owl.version>
+    <pact.version>4.5.2</pact.version>
     <postgres.version>42.5.4</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <surefire.version>3.0.0</surefire.version>
@@ -25,7 +26,28 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <includes>**/*.java</includes>
   </properties>
+
+  <profiles>
+    <profile>
+      <id>all-tests</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <build.profile.id>all-tests</build.profile.id>
+        <includes>**/*.java</includes>
+      </properties>
+    </profile>
+    <profile>
+      <id>pact-tests</id>
+      <properties>
+        <build.profile.id>pact-tests</build.profile.id>
+        <includes>**/pact/**/*.java</includes>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <testResources>
@@ -185,6 +207,10 @@
         <configuration>
           <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
           <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
+          <systemPropertyVariables>
+            <pact.rootDir>target/pacts</pact.rootDir>
+          </systemPropertyVariables>
+          <includes>${includes}</includes>
         </configuration>
         <dependencies>
           <dependency>
@@ -344,17 +370,17 @@
       <artifactId>sendgrid-java</artifactId>
       <version>4.9.3</version>
       <exclusions>
-          <exclusion>
-              <groupId>com.fasterxml.jackson.core</groupId>
-              <artifactId>jackson-databind</artifactId>
-          </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-        <groupId>org.apache.httpcomponents.client5</groupId>
-        <artifactId>httpclient5</artifactId>
-        <version>5.2.1</version>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <version>5.2.1</version>
     </dependency>
 
     <!-- SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 -->
@@ -456,6 +482,28 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
       <version>${dropwizard.version}</version>
+    </dependency>
+
+    <!--suppress VulnerableLibrariesLocal -->
+    <dependency>
+      <groupId>au.com.dius.pact</groupId>
+      <artifactId>consumer</artifactId>
+      <version>${pact.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>au.com.dius.pact</groupId>
+      <artifactId>provider</artifactId>
+      <version>${pact.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>au.com.dius.pact.consumer</groupId>
+      <artifactId>junit</artifactId>
+      <version>${pact.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
