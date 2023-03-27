@@ -1,5 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -12,21 +25,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class UserDAOTest extends DAOTestHelper {
 
@@ -186,16 +184,6 @@ public class UserDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteDACUserById() {
         // No-op ... tested in `tearDown()`
-    }
-
-    @Test
-    public void testFindUsers_noArgs() {
-        createUser();
-        List<User> users = new ArrayList<>(userDAO.findUsers());
-        assertNotNull(users);
-        assertFalse(users.isEmpty());
-        assertFalse(users.get(0).getProperties().isEmpty());
-        assertFalse(users.get(0).getRoles().isEmpty());
     }
 
     @Test
@@ -366,22 +354,6 @@ public class UserDAOTest extends DAOTestHelper {
 
         List<User> differentInstitutionUsers = userDAO.getSOsByInstitution( institutionId + 1);
         assertEquals(0, differentInstitutionUsers.size());
-    }
-
-    @Test
-    public void testGetCardsForUnregisteredUsers() {
-        Institution institution = createInstitution();
-        LibraryCard card = createLCForUnregisteredUser(institution.getId());
-        List<User> users = userDAO.getCardsForUnregisteredUsers(institution.getId());
-        assertEquals(1, users.size());
-        User user = users.get(0);
-        List<LibraryCard> cards = user.getLibraryCards();
-        LibraryCard userCard = cards.get(0);
-
-        assertEquals(card.getUserEmail(), user.getEmail());
-        assertEquals(1, cards.size());
-        assertEquals(card.getId(), userCard.getId());
-        assertNull(card.getUserId());
     }
 
     @Test

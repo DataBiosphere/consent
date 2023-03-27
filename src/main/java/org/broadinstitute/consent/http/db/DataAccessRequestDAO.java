@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
@@ -18,9 +20,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * For all json queries, note the double `??` for jdbi3 escaped jsonb operators:
@@ -346,14 +345,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in (<referenceIds>)")
   void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
-
-  /**
-   * Returns all dataset_ids that match the given referenceId
-   *
-   * @param referenceId String
-   */
-  @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id = :referenceId")
-  List<Integer> findDARDatasetRelations(@Bind("referenceId") String referenceId);
 
   /**
    * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list

@@ -164,9 +164,9 @@ public class SummaryService {
           Integer maxNumberOfDACMembers = voteDAO.findMaxNumberOfDACMembers(electionIds);
           Collection<Consent> consents = consentDAO.findConsentsFromConsentsIDs(consentIds);
           List<Vote> votes = voteDAO.findVotesByElectionIds(electionIds);
-          Collection<Integer> dacUserIds =
+          Collection<Integer> userIds =
               votes.stream().map(Vote::getUserId).collect(Collectors.toSet());
-          Collection<User> users = userDAO.findUsers(dacUserIds);
+          Collection<User> users = userDAO.findUsers(userIds);
           for (Election election : reviewedElections) {
             Optional<Consent> electionConsent =
                 consents.stream()
@@ -279,8 +279,8 @@ public class SummaryService {
             .filter(d -> d.getReferenceId().equalsIgnoreCase(accessElection.getReferenceId()))
             .findFirst();
         DataAccessRequest dar = darOption.orElse(null);
-        List<Integer> dacUserIds = accessElectionVotes.stream().map(Vote::getUserId).distinct().collect(Collectors.toList());
-        List<User> dacMembers = voteUsers.stream().filter(v -> dacUserIds.contains(v.getUserId())).collect(Collectors.toList());
+        List<Integer> userIds = accessElectionVotes.stream().map(Vote::getUserId).distinct().collect(Collectors.toList());
+        List<User> dacMembers = voteUsers.stream().filter(v -> userIds.contains(v.getUserId())).collect(Collectors.toList());
 
         if (Objects.nonNull(dar) && Objects.nonNull(dar.getData())) {
           List<Integer> datasetId = dar.getDatasetIds();

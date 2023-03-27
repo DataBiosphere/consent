@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.InstitutionMapper;
 import org.broadinstitute.consent.http.db.mapper.InstitutionWithUsersReducer;
 import org.broadinstitute.consent.http.models.Institution;
@@ -13,9 +15,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
-
-import java.util.Date;
-import java.util.List;
 
 @RegisterRowMapper(InstitutionMapper.class)
 public interface InstitutionDAO extends Transactional<InstitutionDAO> {
@@ -121,6 +120,4 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   )
   List<Institution> findAllInstitutions();
 
-  @SqlQuery("SELECT institution_id FROM institution WHERE institution_id = :institutionId")
-  Integer checkForExistingInstitution(@Bind("institutionId") Integer institutionId);
 }
