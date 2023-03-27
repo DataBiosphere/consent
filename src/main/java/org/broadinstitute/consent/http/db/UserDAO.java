@@ -102,6 +102,23 @@ public interface UserDAO extends Transactional<UserDAO> {
         + " WHERE LOWER(u.email) = LOWER(:email)")
     User findUserByEmail(@Bind("email") String email);
 
+    @RegisterBeanMapper(value = User.class, prefix = "u")
+    @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
+    @UseRowReducer(UserWithRolesReducer.class)
+    @SqlQuery("""
+        SELECT
+            u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
+            u.create_date as u_create_date, u.email_preference as u_email_preference,
+            u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+            ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+            ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
+        FROM users u
+        LEFT JOIN user_role ur ON ur.user_id = u.user_id
+        LEFT JOIN roles r ON r.roleid = ur.role_id
+        WHERE LOWER(u.email) ILIKE ANY (array[<emails>])
+        """)
+    List<User> findUsersByEmailList(@BindList("emails") List<String> emails);
+
     @SqlUpdate("INSERT INTO users (email, display_name, create_date) values (:email, :displayName, :createDate)")
     @GetGeneratedKeys
     Integer insertUser(@Bind("email") String email,
