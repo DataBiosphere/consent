@@ -160,6 +160,8 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
         assertContainsDatasetProperty(props, "consentGroup.url", schema.getConsentGroups().get(0).getUrl().toString());
         assertContainsDatasetProperty(props, "consentGroup.dataAccessCommitteeId", schema.getConsentGroups().get(0).getDataAccessCommitteeId());
+        assertContainsDatasetProperty(props, "consentGroup.openAccess", schema.getConsentGroups().get(0).getOpenAccess());
+
     }
 
 
@@ -261,6 +263,7 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props, "dataSubmitterUserId", schema.getDataSubmitterUserId());
         assertContainsDatasetProperty(props, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
         assertContainsDatasetProperty(props, "consentGroup.dataAccessCommitteeId", schema.getConsentGroups().get(0).getDataAccessCommitteeId());
+        assertContainsDatasetProperty(props, "consentGroup.openAccess", schema.getConsentGroups().get(0).getOpenAccess());
 
 
 
@@ -287,6 +290,8 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props2, "species", schema.getSpecies());
         assertContainsDatasetProperty(props2, "dataSubmitterUserId", schema.getDataSubmitterUserId());
         assertContainsDatasetProperty(props2, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
+        assertContainsDatasetProperty(props2, "consentGroup.openAccess", schema.getConsentGroups().get(1).getOpenAccess());
+
     }
 
     @Test(expected = NotFoundException.class)
@@ -446,6 +451,7 @@ public class DatasetRegistrationServiceTest {
         fileType1.setNumberOfParticipants(new Random().nextInt());
         consentGroup1.setFileTypes(List.of(fileType1));
         consentGroup1.setDataAccessCommitteeId(new Random().nextInt());
+        consentGroup1.setOpenAccess(false);
 
         ConsentGroup consentGroup2 = new ConsentGroup();
         consentGroup2.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
@@ -455,7 +461,7 @@ public class DatasetRegistrationServiceTest {
         fileType2.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
         fileType2.setNumberOfParticipants(new Random().nextInt());
         consentGroup2.setFileTypes(List.of(fileType2));
-        consentGroup2.setDataAccessCommitteeId(new Random().nextInt());
+        consentGroup2.setOpenAccess(true);
 
 
         schemaV1.setConsentGroups(List.of(consentGroup1, consentGroup2));
@@ -519,6 +525,7 @@ public class DatasetRegistrationServiceTest {
         consentGroup.setMor(false);
         consentGroup.setNmds(false);
         consentGroup.setNpu(false);
+        consentGroup.setOpenAccess(false);
         consentGroup.setDataLocation(ConsentGroup.DataLocation.TDR_LOCATION);
         consentGroup.setDataAccessCommitteeId(new Random().nextInt());
 

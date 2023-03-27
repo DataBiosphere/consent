@@ -1,9 +1,0 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet id="2023-03-24-open-access" author="connorlbark">
-        <addColumn tableName="dataset">
-            <column name="open_access" type="bool"/>
-        </addColumn>
-    </changeSet>
-</databaseChangeLog>

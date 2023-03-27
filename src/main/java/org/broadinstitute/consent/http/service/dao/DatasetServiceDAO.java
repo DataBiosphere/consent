@@ -1,14 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -18,6 +10,15 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
+
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DatasetServiceDAO {
 
@@ -34,7 +35,6 @@ public class DatasetServiceDAO {
                                 Integer dacId,
                                 DataUse dataUse,
                                 Integer userId,
-                                Boolean openAccess,
                                 List<DatasetProperty> props,
                                 List<FileStorageObject> files) {}
 
@@ -55,7 +55,6 @@ public class DatasetServiceDAO {
                             insert.dacId(),
                             insert.dataUse(),
                             insert.userId(),
-                            insert.openAccess(),
                             insert.props(),
                             insert.files());
 
@@ -73,7 +72,6 @@ public class DatasetServiceDAO {
                                                  Integer dacId,
                                                  DataUse dataUse,
                                                  Integer userId,
-                                                 Boolean openAccess,
                                                  List<DatasetProperty> properties,
                                                  List<FileStorageObject> uploadedFiles) {
         // insert dataset
@@ -82,7 +80,6 @@ public class DatasetServiceDAO {
                 new Timestamp(new Date().getTime()),
                 userId,
                 null,
-                openAccess,
                 false,
                 dataUse.toString(),
                 dacId

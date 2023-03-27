@@ -30,7 +30,6 @@ public class Dataset {
     private Integer updateUserId;
 
     private Boolean active;
-    private Boolean openAccess;
 
     private String consentName;
 
@@ -383,11 +382,4 @@ public class Dataset {
         this.createUser = createUser;
     }
 
-    public Boolean getOpenAccess() {
-        return openAccess;
-    }
-
-    public void setOpenAccess(Boolean openAccess) {
-        this.openAccess = openAccess;
-    }
 }

@@ -31,9 +31,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setDataUse(
           DataUse.parseDataUse(rowView.getColumn("data_use", String.class)).orElse(null));
     }
-    if (hasColumn(rowView, "open_access", Boolean.class)) {
-      dataset.setOpenAccess(rowView.getColumn("open_access", Boolean.class));
-    }
     if (hasColumn(rowView, "translated_use_restriction", String.class)) {
       dataset.setTranslatedUseRestriction(
           rowView.getColumn("translated_use_restriction", String.class));

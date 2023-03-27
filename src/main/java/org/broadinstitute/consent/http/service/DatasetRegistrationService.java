@@ -119,7 +119,6 @@ public class DatasetRegistrationService {
                 consentGroup.getDataAccessCommitteeId(),
                 dataUse,
                 user.getUserId(),
-                consentGroup.getOpenAccess(),
                 props,
                 fileStorageObjects
         );
@@ -416,6 +415,9 @@ public class DatasetRegistrationService {
                         }
                         return null;
                     }),
+            new DatasetPropertyExtractor(
+                    "Open Access", "consentGroup.openAccess", DatasetPropertyType.Boolean,
+                    (registration, consentGroup) -> consentGroup.getOpenAccess()),
             new DatasetPropertyExtractor(
                     "DAC ID", "consentGroup.dataAccessCommitteeId", DatasetPropertyType.Number,
                     (registration, consentGroup) -> consentGroup.getDataAccessCommitteeId())

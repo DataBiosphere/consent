@@ -58,9 +58,6 @@ properties:
   active:
     type: boolean
     description: The Dataset is active
-  openAccess:
-    type: boolean
-    description: The Dataset is open access - it requires no DAC approval
   needsApproval:
     type: boolean
     description: The Dataset need Data Owners approval

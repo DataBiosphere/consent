@@ -770,10 +770,10 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testGetDatasetsForConsent() {
         Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
-            null, RandomStringUtils.randomAlphabetic(10), false, true, null, null);
+            null, RandomStringUtils.randomAlphabetic(10), false, null, null);
         //negative record, make sure this isn't pulled in
         datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
-            RandomStringUtils.randomAlphabetic(10), false, true, null, null);
+            RandomStringUtils.randomAlphabetic(10), false, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
         consentDAO.insertConsent(consentId, false, "", null,
             RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
@@ -865,7 +865,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false, true, dataUse.toString(), null);
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false, dataUse.toString(), null);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }
