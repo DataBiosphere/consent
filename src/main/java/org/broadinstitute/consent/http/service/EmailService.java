@@ -247,6 +247,24 @@ public class EmailService {
         );
     }
 
+    public void sendDataCustodianApprovalMessage(User custodian,
+                                                 String darCode,
+                                                 List<DatasetMailDTO> datasets,
+                                                 String dataDepositorName,
+                                                 String researcherEmail) throws Exception {
+        Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
+                dataDepositorName, darCode, researcherEmail);
+        Optional<Response> response = sendGridAPI.sendDataCustodianApprovalMessage(custodian.getEmail(), darCode, template);
+        saveEmailAndResponse(
+                response.orElse(null),
+                darCode,
+                null,
+                custodian.getUserId(),
+                EmailType.DATA_CUSTODIAN_APPROVAL,
+                template
+        );
+    }
+
     public void sendDatasetApprovedMessage(User user,
                                            String dacName,
                                            String datasetName) throws Exception {

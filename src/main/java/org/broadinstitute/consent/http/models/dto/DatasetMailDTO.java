@@ -3,11 +3,11 @@ package org.broadinstitute.consent.http.models.dto;
 public class DatasetMailDTO {
 
     private String name;
-    private String alias;
+    private String identifier;
 
-    public DatasetMailDTO(String name, String alias) {
+    public DatasetMailDTO(String name, String identifier) {
         this.name = name;
-        this.alias = alias;
+        this.identifier = identifier;
     }
 
     public String getName() {
@@ -18,11 +18,11 @@ public class DatasetMailDTO {
         this.name = name;
     }
 
-    public String getAlias() {
-        return alias;
+    public String getIdentifier() {
+        return identifier;
     }
 
-    public void setAlias(String alias) {
-        this.alias = alias;
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 }

@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -115,8 +116,22 @@ public class FreeMarkerTemplateHelperTest {
 
         // no unspecified values
         assertFalse(templateString.contains("${"));
+    }
 
-
+    @Test
+    public void testGetDataCustodianApprovalTemplate() throws Exception {
+        List<DatasetMailDTO> datasetMailDTOs = List.of();
+        Writer template = helper.getDataCustodianApprovalTemplate(datasetMailDTOs, "Depositor", "Dar Code", "researcher@email.com");
+        String templateString = template.toString();
+        final Document parsedTemplate = getAsHtmlDoc(templateString);
+        assertEquals("Broad Data Use Oversight System - Researcher - DAR Approved Notification", parsedTemplate.title());
+        assertTrue(
+                parsedTemplate
+                        .getElementById("content")
+                        .text()
+                        .contains("researcher@email.com was approved by the DAC for the following datasets"));
+        // no unspecified values
+        assertFalse(templateString.contains("${"));
     }
 
     /* Helper methods */

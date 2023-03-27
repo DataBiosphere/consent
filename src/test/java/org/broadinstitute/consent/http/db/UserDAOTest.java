@@ -140,7 +140,7 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDACUserByEmail() {
+    public void testFindUserByEmail() {
         User user = createUser();
         userRoleDAO.insertSingleUserRole(UserRoles.ALUMNI.getRoleId(), user.getUserId());
         userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
@@ -164,12 +164,31 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testInsertDACUser() {
+    public void testFindUserByEmails() {
+        User user1 = createUser();
+        userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user1.getUserId());
+        User user2 = createUser();
+        userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user2.getUserId());
+        User user3 = createUser();
+        userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user3.getUserId());
+
+        // Find only the first two users, ensure that we're not getting all 3
+        List<User> users = userDAO.findUsersByEmailList(List.of(user1.getEmail(), user2.getEmail()));
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
+        assertEquals(2, users.size());
+        assertTrue(users.contains(user1));
+        assertTrue(users.contains(user2));
+        assertFalse(users.contains(user3));
+    }
+
+    @Test
+    public void testInsertUser() {
         // No-op ... tested in `createUser()`
     }
 
     @Test
-    public void testUpdateDACUser_case1() {
+    public void testUpdateUser_case1() {
         User user = createUser();
         Institution firstInstitute = createInstitution();
         userDAO.updateUser(
@@ -182,7 +201,7 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testDeleteDACUserById() {
+    public void testDeleteUserById() {
         // No-op ... tested in `tearDown()`
     }
 
@@ -250,7 +269,7 @@ public class UserDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDACUserByEmailAndRoleId() {
+    public void testFindUserByEmailAndRoleId() {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(), UserRoles.CHAIRPERSON.getRoleId());
         assertNotNull(user);
