@@ -26,7 +26,7 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <test.categories/>
+    <includes>**/*.java</includes>
   </properties>
 
   <profiles>
@@ -37,14 +37,14 @@
       </activation>
       <properties>
         <build.profile.id>all-tests</build.profile.id>
-        <test.categories/>
+        <includes>**/*.java</includes>
       </properties>
     </profile>
     <profile>
       <id>pact-tests</id>
       <properties>
         <build.profile.id>pact-tests</build.profile.id>
-        <test.categories>org.broadinstitute.consent.pact.PactTests</test.categories>
+        <includes>**/pact/**/*.java</includes>
       </properties>
     </profile>
   </profiles>
@@ -210,7 +210,7 @@
           <systemPropertyVariables>
             <pact.rootDir>target/pacts</pact.rootDir>
           </systemPropertyVariables>
-          <groups>${test.categories}</groups>
+          <includes>${includes}</includes>
         </configuration>
         <dependencies>
           <dependency>

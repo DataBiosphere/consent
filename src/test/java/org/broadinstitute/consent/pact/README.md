@@ -1,9 +1,10 @@
 # Pact Testing
 
-Pact tests can be run with maven using the `pact-tests` profile:
+Pact tests can be run separately with maven using the `pact-tests` profile. They are always run
+alongside all other tests:
 
 ```shell
-mvn clean test -Ppact-tests
+mvn clean test -P pact-tests
 ```
 
 More details on Contract Testing can be found in our handbook

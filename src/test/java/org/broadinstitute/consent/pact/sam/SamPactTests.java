@@ -24,16 +24,13 @@ import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.pact.PactTests;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 /**
  * Pact Consumer Contract and test for interactions between Consent and Sam
  */
-@Category(PactTests.class)
 public class SamPactTests {
 
   private static final String PROVIDER_NAME = "sam-provider";
