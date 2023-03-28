@@ -75,6 +75,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Dispatch to terra-github-workflows
         uses: aurelien-baudet/workflow-dispatch@93e95b157d791ae7f42aef8f8a0d3d723eba1c31 #commit sha for v2.1.1
