@@ -1,18 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -53,6 +45,15 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 public class DAOTestHelper {
 
@@ -424,7 +425,7 @@ public class DAOTestHelper {
         Timestamp now = new Timestamp(new Date().getTime());
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), dacId);
+        Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false, dataUse.toString(), dacId);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
     }

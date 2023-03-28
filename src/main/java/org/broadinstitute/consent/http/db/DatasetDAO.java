@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
@@ -35,6 +30,12 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 @RegisterBeanMapper(value = User.class, prefix = "u")
 @RegisterRowMapper(DatasetMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
@@ -43,11 +44,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     String CHAIRPERSON = Resource.CHAIRPERSON;
 
     @SqlUpdate(
-            "INSERT INTO dataset "
-            + "(name, create_date, create_user_id, update_date, "
-                + "update_user_id, object_id, active, dac_id, alias, data_use) "
-            + "(SELECT :name, :createDate, :createUserId, :createDate, "
-                + ":createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)")
+            """
+            INSERT INTO dataset
+                (name, create_date, create_user_id, update_date,
+                update_user_id, object_id, active, dac_id, alias, data_use)
+            (SELECT :name, :createDate, :createUserId, :createDate,
+                :createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)
+            """)
     @GetGeneratedKeys
     Integer insertDataset(
         @Bind("name") String name,

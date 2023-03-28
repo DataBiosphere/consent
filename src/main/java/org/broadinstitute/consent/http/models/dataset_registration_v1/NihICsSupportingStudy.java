@@ -3,11 +3,9 @@ package org.broadinstitute.consent.http.models.dataset_registration_v1;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import javax.annotation.processing.Generated;
 import java.util.HashMap;
 import java.util.Map;
 
-@Generated("jsonschema2pojo")
 public enum NihICsSupportingStudy {
 
     NCI("NCI"),

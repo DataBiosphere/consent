@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -12,6 +9,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>, RowMapperHelper {
 

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import com.networknt.schema.ValidationMessage;
 import io.dropwizard.auth.Auth;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -160,9 +161,11 @@ public class DatasetResource extends Resource {
             FormDataMultiPart multipart,
             @FormDataParam("dataset") String json) {
         try {
-            List<String> errors = jsonSchemaUtil.validateSchema_v1(json);
+            Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
             if (!errors.isEmpty()) {
-                throw new BadRequestException("Invalid schema:\n" + String.join("\n", errors));
+                throw new BadRequestException(
+                        "Invalid schema:\n"
+                                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
             }
 
 

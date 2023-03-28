@@ -13,9 +13,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -67,10 +65,6 @@ public class DatasetRegistrationService {
             User user,
             Map<String, FormDataBodyPart> files) throws SQLException, IllegalArgumentException {
 
-        if (Objects.isNull(dacDAO.findById(registration.getDataAccessCommitteeId()))) {
-            throw new NotFoundException("Could not find DAC");
-        }
-
         registration.setDataSubmitterUserId(user.getUserId());
 
         Map<String, BlobId> uploadedFileCache = new HashMap<>();
@@ -112,13 +106,17 @@ public class DatasetRegistrationService {
                                                                 Integer consentGroupIdx) throws IOException {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
+        if (Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+            throw new NotFoundException("Could not find DAC");
+        }
+
         List<DatasetProperty> props = convertRegistrationToDatasetProperties(registration, consentGroup);
         DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
         List<FileStorageObject> fileStorageObjects = uploadFiles(files, uploadedFileCache, consentGroupIdx, user);
 
         return new DatasetServiceDAO.DatasetInsert(
                 consentGroup.getConsentGroupName(),
-                registration.getDataAccessCommitteeId(),
+                consentGroup.getDataAccessCommitteeId(),
                 dataUse,
                 user.getUserId(),
                 props,
@@ -289,13 +287,8 @@ public class DatasetRegistrationService {
                     "Public Visibility", "publicVisibility", DatasetPropertyType.Boolean,
                     (registration, consentGroup) -> registration.getPublicVisibility()),
             new DatasetPropertyExtractor(
-                    "NIH Anvil Use", "nihAnvilUse", DatasetPropertyType.Json,
-                    (registration, consentGroup) -> {
-                        if (Objects.nonNull(registration.getNihAnvilUse())) {
-                            return GsonUtil.getInstance().toJson(registration.getNihAnvilUse().stream().map(NihAnvilUse::value).toList());
-                        }
-                        return null;
-                    }),
+                    "NIH Anvil Use", "nihAnvilUse", DatasetPropertyType.String,
+                    (registration, consentGroup) -> registration.getNihAnvilUse()),
             new DatasetPropertyExtractor(
                     "Submitting To Anvil", "submittingToAnvil", DatasetPropertyType.Boolean,
                     (registration, consentGroup) -> registration.getSubmittingToAnvil()),
@@ -311,9 +304,6 @@ public class DatasetRegistrationService {
             new DatasetPropertyExtractor(
                     "Sequencing Center", "sequencingCenter", DatasetPropertyType.String,
                     (registration, consentGroup) -> registration.getSequencingCenter()),
-            new DatasetPropertyExtractor(
-                    "PI Email", "piEmail", DatasetPropertyType.String,
-                    (registration, consentGroup) -> registration.getPiEmail()),
             new DatasetPropertyExtractor(
                     "PI Institution", "piInstitution", DatasetPropertyType.Number,
                     (registration, consentGroup) -> registration.getPiInstitution()),
@@ -357,8 +347,8 @@ public class DatasetRegistrationService {
                     "Controlled Access Required For Genomic Summary Results GSR", "controlledAccessRequiredForGenomicSummaryResultsGSR", DatasetPropertyType.Boolean,
                     (registration, consentGroup) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSR()),
             new DatasetPropertyExtractor(
-                    "Controlled Access Not Required For Genomic Summary Results GSR Explanation", "controlledAccessRequiredForGenomicSummaryResultsGSRNotRequiredExplanation", DatasetPropertyType.String,
-                    (registration, consentGroup) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSRNotRequiredExplanation()),
+                    "Controlled Access Required For Genomic Summary Results GSR Explanation", "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation", DatasetPropertyType.String,
+                    (registration, consentGroup) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation()),
             new DatasetPropertyExtractor(
                     "Alternative Data Sharing Plan", "alternativeDataSharingPlan", DatasetPropertyType.Boolean,
                     (registration, consentGroup) -> registration.getAlternativeDataSharingPlan()),
@@ -402,10 +392,10 @@ public class DatasetRegistrationService {
                         return null;
                     }),
             new DatasetPropertyExtractor(
-                    "Data Location", "consentGroup.dataLocation", DatasetPropertyType.Json,
+                    "Data Location", "consentGroup.dataLocation", DatasetPropertyType.String,
                     (registration, consentGroup) -> {
                         if (Objects.nonNull(consentGroup.getDataLocation())) {
-                            return GsonUtil.getInstance().toJson(consentGroup.getDataLocation().stream().map(DataLocation::value).toList());
+                            return consentGroup.getDataLocation().value();
                         }
                         return null;
                     }),
@@ -424,7 +414,13 @@ public class DatasetRegistrationService {
                             return consentGroup.getUrl().toString();
                         }
                         return null;
-                    })
+                    }),
+            new DatasetPropertyExtractor(
+                    "Open Access", "consentGroup.openAccess", DatasetPropertyType.Boolean,
+                    (registration, consentGroup) -> consentGroup.getOpenAccess()),
+            new DatasetPropertyExtractor(
+                    "DAC ID", "consentGroup.dataAccessCommitteeId", DatasetPropertyType.Number,
+                    (registration, consentGroup) -> consentGroup.getDataAccessCommitteeId())
     );
 
 
