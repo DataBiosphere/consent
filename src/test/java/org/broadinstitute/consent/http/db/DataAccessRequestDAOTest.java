@@ -509,6 +509,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
+        assertEquals(1, dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).size());
+
         Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
         Vote v2 = createFinalVote(dataset1.getCreateUserId(), e2.getElectionId());
         now = new Date();
