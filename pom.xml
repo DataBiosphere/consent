@@ -17,7 +17,7 @@
     <dropwizard.version>2.1.6</dropwizard.version>
     <owl.version>5.5.0</owl.version>
     <pact.version>4.5.4</pact.version>
-    <postgres.version>42.5.4</postgres.version>
+    <postgres.version>42.6.0</postgres.version>
     <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <surefire.version>3.0.0</surefire.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
