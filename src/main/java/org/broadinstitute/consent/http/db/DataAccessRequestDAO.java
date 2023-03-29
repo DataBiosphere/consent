@@ -65,7 +65,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
 
   @SqlQuery("""
-          SELECT dar.user_id
+          SELECT DISTINCT dar.user_id
           FROM data_access_request dar
           INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
           INNER JOIN (
