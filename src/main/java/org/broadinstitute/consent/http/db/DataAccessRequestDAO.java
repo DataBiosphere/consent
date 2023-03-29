@@ -64,16 +64,28 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findAllApprovedDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
 
 
-  @SqlQuery(
-        " SELECT dar.user_id FROM data_access_request dar "
-          + "  LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-          + "  WHERE dar.draft = false"
-            + "  AND (EXISTS (SELECT 1 FROM election e"
-          + "  INNER JOIN vote v on v.electionId = e.election_id AND LOWER(v.type) = 'final'"
-          + "  WHERE v.vote = true AND LOWER(e.election_type) = 'dataaccess'"
-          + "  AND e.dataset_id = :datasetId"
-            + "  AND e.reference_id = dar.reference_id))"
-            + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
+  @SqlQuery("""
+          SELECT dar.user_id
+          FROM data_access_request dar
+          INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
+          INNER JOIN (
+            SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
+            OVER(
+              PARTITION BY e.reference_id
+                ORDER BY v.createdate
+                RANGE BETWEEN
+                  UNBOUNDED PRECEDING AND
+                  UNBOUNDED FOLLOWING
+            ) last_vote
+            FROM election e
+            INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+            WHERE e.dataset_id = :datasetId
+            AND LOWER(e.election_type) = 'dataaccess'
+            AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
+          WHERE dar.draft = false
+          AND final_access_vote.last_vote = TRUE
+          AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      """)
   List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
