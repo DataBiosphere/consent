@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -336,7 +337,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -353,9 +354,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Dataset dataset2 = createDARDAOTestDataset();
 
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
-        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
+        createDAR(user, dataset2, darCode2);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
         assertEquals(1, returnedDARs.size());
     }
 
@@ -371,7 +372,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -532,7 +533,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDraftDAR(user);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDraftDataAccessRequests();
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -563,7 +564,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-        List returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
+        List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
         assertTrue(returnedDARs.isEmpty());
     }
 
@@ -593,7 +594,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
-        List returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
+        List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
         assertTrue(returnedDAR.isEmpty());
     }
 
@@ -616,7 +617,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
-        List returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId(), testDar3.getReferenceId()));
+        List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId(), testDar3.getReferenceId()));
         assertEquals(1, returnedDAR.size());
     }
 
@@ -635,16 +636,16 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Dataset dataset3 = createDARDAOTestDataset();
         DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
-        DataAccessRequest testDar3 = createDAR(user, dataset3, darCode3);
+        createDAR(user, dataset3, darCode3);
 
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
-        List returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
+        List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
         assertEquals(1, returnedDAR.size());
     }
 
     /**
-     * Override abstract implementation
+     * Replace parent implementation of `createDataset()`
      * @return Dataset
      */
     private Dataset createDARDAOTestDataset() {
@@ -654,7 +655,14 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false, dataUse.toString(), null);
-        createDatasetProperties(id);
+        List<DatasetProperty> list = new ArrayList<>();
+        DatasetProperty dsp = new DatasetProperty();
+        dsp.setDataSetId(id);
+        dsp.setPropertyKey(1);
+        dsp.setPropertyValue("Test_PropertyValue");
+        dsp.setCreateDate(new Date());
+        list.add(dsp);
+        datasetDAO.insertDatasetProperties(list);
         return datasetDAO.findDatasetById(id);
     }
 
