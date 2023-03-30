@@ -106,9 +106,12 @@ public class DatasetRegistrationService {
                                                                 Integer consentGroupIdx) throws IOException {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
-        if (Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
-            throw new NotFoundException("Could not find DAC");
+        if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
+            && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+                throw new NotFoundException("Could not find DAC");
         }
+
+
 
         List<DatasetProperty> props = convertRegistrationToDatasetProperties(registration, consentGroup);
         DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
