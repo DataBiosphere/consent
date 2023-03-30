@@ -45,6 +45,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -209,6 +210,28 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props, "species", schema.getSpecies());
         assertContainsDatasetProperty(props, "dataSubmitterUserId", schema.getDataSubmitterUserId());
         assertContainsDatasetProperty(props, "consentGroup.fileTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
+    }
+
+    @Test
+    public void testInsertOpenAccess() throws Exception {
+        User user = mock();
+        DatasetRegistrationSchemaV1 schema = createOpenAccessRegistrationNoDacId(user);
+
+        spy(gcsService);
+        spy(dacDAO);
+
+        initService();
+
+        datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+
+        verify(datasetServiceDAO).insertDatasets(datasetInsertCaptor.capture());
+        verify(gcsService, times(0)).storeDocument(any(), any(), any());
+
+        List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
+
+        assertEquals(1, inserts.size());
+
+        verify(dacDAO, never()).findById(any());
     }
 
 
@@ -423,6 +446,33 @@ public class DatasetRegistrationServiceTest {
         fileType.setNumberOfParticipants(new Random().nextInt());
         consentGroup.setFileTypes(List.of(fileType));
         consentGroup.setDataAccessCommitteeId(new Random().nextInt());
+
+        schemaV1.setConsentGroups(List.of(consentGroup));
+        return schemaV1;
+    }
+
+    private DatasetRegistrationSchemaV1 createOpenAccessRegistrationNoDacId(User user) {
+        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+        schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
+        schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
+        schemaV1.setStudyDescription(RandomStringUtils.randomAlphabetic(10));
+        schemaV1.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+        schemaV1.setPhenotypeIndication(RandomStringUtils.randomAlphabetic(10));
+        schemaV1.setSpecies(RandomStringUtils.randomAlphabetic(10));
+        schemaV1.setPiName(RandomStringUtils.randomAlphabetic(10));
+        when(user.getUserId()).thenReturn(1);
+        schemaV1.setDataSubmitterUserId(user.getUserId());
+        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)+"@domain.org"));
+        schemaV1.setPublicVisibility(true);
+
+        ConsentGroup consentGroup = new ConsentGroup();
+        consentGroup.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
+        consentGroup.setOpenAccess(true);
+        FileTypeObject fileType = new FileTypeObject();
+        fileType.setFileType(FileTypeObject.FileType.ARRAYS);
+        fileType.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
+        fileType.setNumberOfParticipants(new Random().nextInt());
+        consentGroup.setFileTypes(List.of(fileType));
 
         schemaV1.setConsentGroups(List.of(consentGroup));
         return schemaV1;
