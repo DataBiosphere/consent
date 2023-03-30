@@ -81,7 +81,8 @@
     "studyName": {
       "type": "string",
       "label": "Study Name",
-      "description": "The study name"
+      "description": "The study name",
+      "minLength": 1
     },
     "studyType": {
       "type": "string",
@@ -92,7 +93,8 @@
     "studyDescription": {
       "type": "string",
       "label": "Study Description",
-      "description": "Description of the study"
+      "description": "Description of the study",
+      "minLength": 1
     },
     "dataTypes": {
       "type": "array",
@@ -100,7 +102,8 @@
       "description": "All data types that study encompasses",
       "items": {
         "type": "string"
-      }
+      },
+      "minItems": 1
     },
     "phenotypeIndication": {
       "type": "string",
@@ -115,7 +118,8 @@
     "piName": {
       "type": "string",
       "label": "Principal Investigator Name",
-      "description": "Principal Investigator Name"
+      "description": "Principal Investigator Name",
+      "minLength": 1
     },
     "dataSubmitterUserId": {
       "type": "integer",
@@ -193,7 +197,8 @@
         "dbGaPPhsID": {
           "type": "string",
           "label": "dbGaP phs ID",
-          "description": "dbGaP phs ID"
+          "description": "dbGaP phs ID",
+          "minLength": 1
         },
         "dbGaPStudyRegistrationName": {
           "type": "string",
@@ -224,7 +229,8 @@
         "nihGrantContractNumber": {
           "type": "string",
           "label": "NIH Grant or Contract Number",
-          "description": "NIH Grant or Contract Number"
+          "description": "NIH Grant or Contract Number",
+          "minLength": 1
         },
         "nihICsSupportingStudy": {
           "type": "array",
@@ -272,7 +278,8 @@
         "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation": {
           "type": "string",
           "label": "If yes, explain why controlled access is required for GSR",
-          "description": "If yes, explain why controlled access is required for GSR"
+          "description": "If yes, explain why controlled access is required for GSR",
+          "minLength": 1
         },
         "alternativeDataSharingPlan": {
           "type": "boolean",
@@ -452,7 +459,8 @@
         "consentGroupName": {
           "type": "string",
           "label": "Consent Group Name",
-          "description": "Consent Group Name"
+          "description": "Consent Group Name",
+          "minLength": 1
         },
         "openAccess": {
           "type": "boolean",
@@ -497,7 +505,8 @@
           "type": "string",
           "format": "uri",
           "label": "Free text field for entering URL of data",
-          "description": "Free text field for entering URL of data"
+          "description": "Free text field for entering URL of data",
+          "minLength": 1
         },
         "fileTypes": {
           "type": "array",
