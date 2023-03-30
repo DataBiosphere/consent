@@ -106,10 +106,9 @@ public class DatasetRegistrationService {
                                                                 Integer consentGroupIdx) throws IOException {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
-        if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())) {
-            if (Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+        if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
+            && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
                 throw new NotFoundException("Could not find DAC");
-            }
         }
 
 
