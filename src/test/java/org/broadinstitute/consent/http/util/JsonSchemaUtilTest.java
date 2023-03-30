@@ -778,6 +778,52 @@ public class JsonSchemaUtilTest {
   }
 
 
+  @Test
+  public void testValidateDatasetRegistrationObject_v1_empty_string_is_invalid_if_required() {
+    String instance = """
+          {
+            "studyType": "Observational",
+            "studyName": "",
+            "studyDescription": "",
+            "dataTypes": ["types"],
+            "phenotypeIndication": "phenotype",
+            "species": "species",
+            "piName": "",
+            "dataCustodianEmail": ["email@abc.com"],
+            "publicVisibility": true,
+            "dataSubmitterUserId": 1,
+            "nihAnvilUse": "I am NHGRI funded and I have a dbGaP PHS ID already",
+            "dbGaPPhsID": "",
+            "piInstitution": 10,
+            "nihGrantContractNumber": "",
+            "controlledAccessRequiredForGenomicSummaryResultsGSR": true,
+            "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation": "",
+            "consentGroups": [{
+              "fileTypes": [{
+                "fileType": "Arrays",
+                "functionalEquivalence": "equivalence",
+                "numberOfParticipants": 2
+              }],
+              "consentGroupName": "",
+              "generalResearchUse": true,
+              "dataAccessCommitteeId": 1,
+              "url": ""
+            }]
+          }
+         """;
+
+    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
+    assertFieldHasError(errors, "studyName");
+    assertFieldHasError(errors, "studyDescription");
+    assertFieldHasError(errors, "piName");
+    assertFieldHasError(errors, "dbGaPPhsID");
+    assertFieldHasError(errors, "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
+    assertFieldHasError(errors, "nihGrantContractNumber");
+    assertFieldHasError(errors, "consentGroupName");
+    assertFieldHasError(errors, "url");
+  }
+
+
 
     private void assertNoErrors(Set<ValidationMessage> errors) {
     assertTrue(String.format("Should be empty, instead was: %s", errors.stream().map(ValidationMessage::toString).toList()), errors.isEmpty());
