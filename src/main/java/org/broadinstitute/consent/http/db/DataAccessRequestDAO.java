@@ -63,7 +63,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   )
   List<DataAccessRequest> findAllApprovedDataAccessRequestsByDatasetId(@Bind("datasetId") Integer datasetId);
 
-
+  /**
+   * This query finds unique user ids on dar-dataset combinations where the most recent
+   * vote is true. The query accomplishes this by creating a view that is a grouping
+   * of election reference ids and LAST vote in the group of final votes for all data access
+   * elections. We need to group them due to the case of multiple elections on a dar-dataset
+   * request. Election 1 may have been denied. Election 2 may have been approved. Election 3
+   * may have been denied again. When we partition over the election reference id, we'll get all
+   * final votes. The `LAST_VALUE` function selects the last result in the partition, which
+   * would be `FALSE` in the example. Outside the JOIN, we filter on groupings where the final
+   * vote value is `TRUE` so the election in the example would be filtered out.
+   *
+   * @param datasetId The dataset id
+   * @return List of approved user ids for the dataset
+   */
   @SqlQuery("""
           SELECT DISTINCT dar.user_id
           FROM data_access_request dar
