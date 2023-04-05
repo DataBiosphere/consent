@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import com.networknt.schema.ValidationMessage;
 import io.dropwizard.auth.Auth;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -361,7 +362,7 @@ public class DatasetResource extends Resource {
     @PermitAll
     public Response validateStudyName(@QueryParam("studyName") String name) {
         try {
-            Dataset datasetWithName = datasetService.findDatasetByStudyName(name);
+            Dataset datasetWithName = datasetService.findDatasetByStudyName(StringEscapeUtils.unescapeJava(name));
             return Response.ok(datasetWithName.getDataSetId()).build();
         } catch (Exception e) {
             throw new NotFoundException("Could not find the dataset with study name: " + name);
