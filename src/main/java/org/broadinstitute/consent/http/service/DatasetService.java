@@ -238,6 +238,10 @@ public class DatasetService {
         return datasetDAO.getDatasetByName(lowercaseName);
     }
 
+    public Dataset findDatasetByStudyName(String name) {
+        return datasetDAO.findDatasetByStudyName(name);
+    }
+
     public Dataset findDatasetById(Integer id) {
         return datasetDAO.findDatasetById(id);
     }

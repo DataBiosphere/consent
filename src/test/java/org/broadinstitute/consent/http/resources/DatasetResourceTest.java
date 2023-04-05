@@ -365,6 +365,21 @@ public class DatasetResourceTest {
     }
 
     @Test
+    public void testValidateDatasetStudyNameSuccess() {
+        Dataset testDataset = new Dataset();
+        when(datasetService.findDatasetByStudyName("test")).thenReturn(testDataset);
+        initResource();
+        Response response = resource.validateStudyName("test");
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testValidateDatasetStudyNameNotFound() {
+        initResource();
+        resource.validateStudyName("test");
+    }
+
+    @Test
     public void testDescribeDataSetSuccess() {
         DatasetDTO testDTO = createMockDatasetDTO();
         when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);

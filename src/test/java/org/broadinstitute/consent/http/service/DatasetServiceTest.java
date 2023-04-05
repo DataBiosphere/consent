@@ -236,6 +236,18 @@ public class DatasetServiceTest {
     }
 
     @Test
+    public void testGetDatasetByStudyName() {
+        when(datasetDAO.findDatasetByStudyName("Example Study Name"))
+                .thenReturn(getDatasets().get(0));
+        initService();
+
+        Dataset dataset = datasetService.findDatasetByStudyName("Example Study Name");
+
+        assertNotNull(dataset);
+        assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+    }
+
+    @Test
     public void testFindDatasetById() {
         when(datasetDAO.findDatasetById(getDatasets().get(0).getDataSetId()))
             .thenReturn(getDatasets().get(0));
