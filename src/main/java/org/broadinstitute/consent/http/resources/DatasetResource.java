@@ -359,12 +359,12 @@ public class DatasetResource extends Resource {
     @Produces("application/json")
     @Path("/validate/studyName")
     @PermitAll
-    public Response validateStudyName(@QueryParam("name") String name) {
+    public Response validateStudyName(@QueryParam("studyName") String name) {
         try {
             Dataset datasetWithName = datasetService.findDatasetByStudyName(name);
-            return Response.ok().entity(datasetWithName.getDataSetId()).build();
+            return Response.ok(datasetWithName.getDataSetId()).build();
         } catch (Exception e) {
-            throw new NotFoundException("Could not find the dataset with nJSTUDY ame: " + name);
+            throw new NotFoundException("Could not find the dataset with study name: " + name);
         }
     }
 
