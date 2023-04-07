@@ -685,7 +685,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testFindDatasetByStudyName() {
+    public void testFindAllActiveStudyNames() {
         Dataset ds1 = insertDataset();
         String ds1Name = RandomStringUtils.randomAlphabetic(20);
         createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
@@ -699,35 +699,27 @@ public class DatasetDAOTest extends DAOTestHelper {
         createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, DatasetPropertyType.String);
 
 
-        Dataset returned = datasetDAO.findDatasetByStudyName(ds1Name);
-        assertEquals(ds1.getDataSetId(), returned.getDataSetId());
+        Set<String> returned = datasetDAO.findAllActiveStudyNames();
 
-        returned = datasetDAO.findDatasetByStudyName(ds2Name);
-        assertEquals(ds2.getDataSetId(), returned.getDataSetId());
-
-        returned = datasetDAO.findDatasetByStudyName(ds3Name);
-        assertEquals(ds3.getDataSetId(), returned.getDataSetId());
-
-
-        returned = datasetDAO.findDatasetByStudyName("asdfasdf");
-        assertNull(returned);
+        assertEquals(3, returned.size());
+        assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
     }
 
     @Test
-    public void testFindDatasetByStudyName_case_insensitive() {
+    public void testFindAllActiveStudyNames_inactive_dataset() {
         Dataset ds1 = insertDataset();
-        createDatasetProperty(ds1.getDataSetId(), "studyName", "ALLUPPERCASE", DatasetPropertyType.String);
+        String ds1Name = RandomStringUtils.randomAlphabetic(20);
+        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
 
         Dataset ds2 = insertDataset();
-        createDatasetProperty(ds2.getDataSetId(), "studyName", "mIxEdCaSe", DatasetPropertyType.String);
+        String ds2Name = RandomStringUtils.randomAlphabetic(20);
+        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, DatasetPropertyType.String);
 
+        datasetDAO.updateDatasetActive(ds1.getDataSetId(), false);
 
-        Dataset returned = datasetDAO.findDatasetByStudyName("alluppercase");
-        assertEquals(ds1.getDataSetId(), returned.getDataSetId());
-
-        returned = datasetDAO.findDatasetByStudyName("MiXeDcAsE");
-        assertEquals(ds2.getDataSetId(), returned.getDataSetId());
-
+        Set<String> returned = datasetDAO.findAllActiveStudyNames();
+        assertEquals(1, returned.size());
+        assertTrue(returned.contains(ds2Name));
     }
 
     @Test

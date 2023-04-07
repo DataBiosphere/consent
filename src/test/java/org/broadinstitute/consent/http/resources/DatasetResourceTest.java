@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -365,18 +366,11 @@ public class DatasetResourceTest {
     }
 
     @Test
-    public void testValidateDatasetStudyNameSuccess() {
-        Dataset testDataset = new Dataset();
-        when(datasetService.findDatasetByStudyName("test")).thenReturn(testDataset);
+    public void testFindAllActiveStudyNamesSuccess() {
+        when(datasetService.findAllActiveStudyNames()).thenReturn(Set.of("Hi", "Hello"));
         initResource();
-        Response response = resource.validateStudyName("test");
+        Response response = resource.findAllActiveStudyNames();
         assertEquals(200, response.getStatus());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testValidateDatasetStudyNameNotFound() {
-        initResource();
-        resource.validateStudyName("test");
     }
 
     @Test
