@@ -364,7 +364,7 @@ public class DatasetResource extends Resource {
             Set<String> studyNames = datasetService.findAllActiveStudyNames();
             return Response.ok(studyNames).build();
         } catch (Exception e) {
-            throw new NotFoundException("Could not get all study names");
+            return createExceptionResponse(e);
         }
     }
 

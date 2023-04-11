@@ -1,6 +1,6 @@
 get:
   summary: Find All Study Names
-  description: Returns a list of all the actively used study names in the backend.
+  description: Returns a list of all the actively used dataset study names.
   tags:
     - Dataset
   responses:
@@ -12,5 +12,5 @@ get:
             type: array
             items:
               type: string
-    404:
-      description: Dataset not found
+    500:
+      description: Server error

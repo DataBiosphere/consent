@@ -374,6 +374,14 @@ public class DatasetResourceTest {
     }
 
     @Test
+    public void testFindAllActiveStudyNamesFail() {
+        when(datasetService.findAllActiveStudyNames()).thenThrow();
+        initResource();
+        Response response = resource.findAllActiveStudyNames();
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
     public void testDescribeDataSetSuccess() {
         DatasetDTO testDTO = createMockDatasetDTO();
         when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);
