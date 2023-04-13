@@ -889,6 +889,8 @@ paths:
                 type: integer
         404:
           description: Dataset not found
+  /api/dataset/studyNames:
+    $ref: './paths/findAllStudyNames.yaml'
   /api/dataset/sample:
     get:
       summary: getDataSetSample

@@ -281,6 +281,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
     List<Dataset> getActiveDatasets();
 
+    @SqlQuery("""
+        SELECT DISTINCT dp.property_value
+        FROM dataset_property dp
+        INNER JOIN dataset d ON dp.dataset_id = d.dataset_id AND d.active = true
+        WHERE (dp.schema_property = 'studyName')
+    """)
+    Set<String> findAllActiveStudyNames();
+
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery("""
         SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,

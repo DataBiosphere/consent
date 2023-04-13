@@ -1,23 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
@@ -36,6 +19,24 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class DatasetDAOTest extends DAOTestHelper {
 
@@ -684,6 +685,44 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
     @Test
+    public void testFindAllActiveStudyNames() {
+        Dataset ds1 = insertDataset();
+        String ds1Name = RandomStringUtils.randomAlphabetic(20);
+        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
+
+        Dataset ds2 = insertDataset();
+        String ds2Name = RandomStringUtils.randomAlphabetic(25);
+        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, DatasetPropertyType.String);
+
+        Dataset ds3 = insertDataset();
+        String ds3Name = RandomStringUtils.randomAlphabetic(15);
+        createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, DatasetPropertyType.String);
+
+
+        Set<String> returned = datasetDAO.findAllActiveStudyNames();
+
+        assertEquals(3, returned.size());
+        assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
+    }
+
+    @Test
+    public void testFindAllActiveStudyNames_inactive_dataset() {
+        Dataset ds1 = insertDataset();
+        String ds1Name = RandomStringUtils.randomAlphabetic(20);
+        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
+
+        Dataset ds2 = insertDataset();
+        String ds2Name = RandomStringUtils.randomAlphabetic(20);
+        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, DatasetPropertyType.String);
+
+        datasetDAO.updateDatasetActive(ds1.getDataSetId(), false);
+
+        Set<String> returned = datasetDAO.findAllActiveStudyNames();
+        assertEquals(1, returned.size());
+        assertTrue(returned.contains(ds2Name));
+    }
+
+    @Test
     public void testFindDatasetsByUser() {
         Dataset dataset = insertDataset();
         Dac dac = insertDac();
@@ -867,6 +906,20 @@ public class DatasetDAOTest extends DAOTestHelper {
         Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), null);
         createDatasetProperties(id);
         return datasetDAO.findDatasetById(id);
+    }
+
+
+    protected void createDatasetProperty(Integer datasetId, String schemaProperty, String value, DatasetPropertyType type) {
+        List<DatasetProperty> list = new ArrayList<>();
+        DatasetProperty dsp = new DatasetProperty();
+        dsp.setDataSetId(datasetId);
+        dsp.setPropertyKey(1);
+        dsp.setSchemaProperty(schemaProperty);
+        dsp.setPropertyValue(type.coerce(value));
+        dsp.setPropertyType(type);
+        dsp.setCreateDate(new Date());
+        list.add(dsp);
+        datasetDAO.insertDatasetProperties(list);
     }
 
     private Dac insertDac() {
