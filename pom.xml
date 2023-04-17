@@ -13,7 +13,7 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.20.0</liquibase.version>
+    <liquibase.version>4.21.1</liquibase.version>
     <dropwizard.version>2.1.6</dropwizard.version>
     <owl.version>5.5.0</owl.version>
     <pact.version>4.5.4</pact.version>
