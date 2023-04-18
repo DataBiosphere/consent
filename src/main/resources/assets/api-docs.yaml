@@ -512,24 +512,6 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
-  /api/dar/v2/draft/manage:
-    get:
-      deprecated: true
-      summary: Get all Draft Data Access Request Manage Objects
-      description: Returns a list of information (Dar Manage Objects) on Draft DARs
-      tags:
-        - Data Access Request
-      responses:
-        201:
-          description: Returns the draft Data Access Request Manage objects.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequestManage'
-        500:
-          description: Internal Server Error.
   /api/dar/v2/{referenceId}/irbDocument:
     get:
       summary: Retrieve DAR IRB Document

@@ -1,7 +1,31 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -9,7 +33,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -20,31 +43,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceVersion2Test {
 
@@ -487,24 +485,4 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
   }
 
-  @Test
-  public void getDraftManageDataAccessRequests() {
-    initResource();
-    List<DataAccessRequestManage> list = Collections.emptyList();
-    User user = new User();
-    user.setUserId(10);
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(dataAccessRequestService.getDraftDataAccessRequestManage(any())).thenReturn(list);
-    Response res = resource.getDraftManageDataAccessRequests(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-    assertTrue(res.hasEntity());
-  }
-
-  @Test
-  public void getDraftManageDataAccessRequests_UserNotFound() {
-    initResource();
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-    Response res = resource.getDraftManageDataAccessRequests(authUser);
-    assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
-  }
 }

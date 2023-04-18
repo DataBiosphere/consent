@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -490,34 +489,6 @@ public class DataAccessRequestServiceTest {
         initService();
         List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(new User());
         assertEquals(foundDars.size(), 1);
-    }
-
-    @Test
-    public void getDraftDataAccessRequestManage_NullUserId() {
-        DataAccessRequest dar = new DataAccessRequest();
-        dar.setReferenceId("referenceId");
-        dar.setUserId(1);
-        DataAccessRequestData data = new DataAccessRequestData();
-        dar.addDatasetId(361);
-        dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(dar));
-        initService();
-        List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(null);
-        assertEquals(1, darManages.size());
-    }
-
-    @Test
-    public void getDraftDataAccessRequestManage() {
-        DataAccessRequest dar = new DataAccessRequest();
-        dar.setReferenceId("referenceId");
-        dar.setUserId(1);
-        DataAccessRequestData data = new DataAccessRequestData();
-        dar.addDatasetId(361);
-        dar.setData(data);
-        when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(dar));
-        initService();
-        List<DataAccessRequestManage> darManages = service.getDraftDataAccessRequestManage(1);
-        assertEquals(1, darManages.size());
     }
 
     @Test

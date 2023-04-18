@@ -438,13 +438,6 @@ public class DataAccessRequestService {
       }
     }
 
-    public List<DataAccessRequestManage> getDraftDataAccessRequestManage(Integer userId) {
-        List<DataAccessRequest> accessList = userId == null
-                ? dataAccessRequestDAO.findAllDraftDataAccessRequests()
-                : dataAccessRequestDAO.findAllDraftsByUserId(userId);
-        return createAccessRequestManageV2(accessList);
-    }
-
     public File createApprovedDARDocument() throws IOException {
         List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
         File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
