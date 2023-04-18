@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -32,17 +31,6 @@ public class DataAccessRequestResource extends Resource {
     public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.userService = userService;
-    }
-
-    @Deprecated
-    @GET
-    @Path("cases/unreviewed")
-    @Produces("application/json")
-    @RolesAllowed(ADMIN)
-    public Response getTotalUnReviewedDAR(@Auth AuthUser authUser) {
-        int count = dataAccessRequestService.getTotalUnReviewedDars(authUser);
-        UnreviewedCases entity = new UnreviewedCases(count);
-        return Response.ok().entity(entity).build();
     }
 
     // Partial Data Access Requests Methods

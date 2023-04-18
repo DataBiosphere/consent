@@ -29,7 +29,6 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -80,33 +79,6 @@ public class DataAccessRequestService {
         this.dacService = dacService;
         this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO);
         this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
-    }
-
-    /**
-     * Get a count of data access requests that do not have an election
-     *
-     * @param authUser AuthUser
-     * @return Count of user-accessible DARs with no election.
-     */
-    public Integer getTotalUnReviewedDars(AuthUser authUser) {
-        List<String> unReviewedDarIds = getUnReviewedDarsForUser(authUser).
-                stream().
-                map(DataAccessRequest::getReferenceId).
-                collect(toList());
-        Integer unReviewedDarCount = 0;
-        if (!unReviewedDarIds.isEmpty()) {
-            List<String> electionReferenceIds = electionDAO.
-                    findLastElectionsWithFinalVoteByReferenceIdsAndType(unReviewedDarIds, ElectionType.DATA_ACCESS.getValue()).
-                    stream().
-                    map(Election::getReferenceId).
-                    toList();
-            for (String darId : unReviewedDarIds) {
-                if (!electionReferenceIds.contains(darId)) {
-                    ++unReviewedDarCount;
-                }
-            }
-        }
-        return unReviewedDarCount;
     }
 
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -467,23 +439,23 @@ public class DataAccessRequestService {
         return this.userDAO.findUsers(userIds);
     }
 
-    /**
-     * @param authUser AuthUser
-     * @return List<DataAccessRequest>
-     */
-    private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
-        List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
-                filter(d -> !DarStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
-                collect(Collectors.toList());
-        if (dacService.isAuthUserAdmin(authUser)) {
-            return activeDars;
-        }
-        List<Integer> dataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
-                map(Dataset::getDataSetId).
-                toList();
-        return activeDars.stream().
-                filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
-                collect(Collectors.toList());
-    }
+//    /**
+//     * @param authUser AuthUser
+//     * @return List<DataAccessRequest>
+//     */
+//    private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
+//        List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
+//                filter(d -> !DarStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
+//                collect(Collectors.toList());
+//        if (dacService.isAuthUserAdmin(authUser)) {
+//            return activeDars;
+//        }
+//        List<Integer> dataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
+//                map(Dataset::getDataSetId).
+//                toList();
+//        return activeDars.stream().
+//                filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
+//                collect(Collectors.toList());
+//    }
 
 }

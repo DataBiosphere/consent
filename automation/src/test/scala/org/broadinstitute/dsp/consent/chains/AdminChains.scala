@@ -12,10 +12,6 @@ object AdminChains {
         exec(
             Requests.User.me(OK.code, additionalHeaders)
         )
-        .pause(TestConfig.defaultPause)
-        .exec(
-            Requests.Admin.initConsole(OK.code, additionalHeaders)
-        )
     }
 
     def createElections(additionalHeaders: Map[String, String]): ChainBuilder = {

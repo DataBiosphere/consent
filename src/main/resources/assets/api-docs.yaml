@@ -668,16 +668,6 @@ paths:
           description: Unable to find the Data Access Request with the provided id
         500:
           description: Internal error
-  /api/dar/cases/unreviewed:
-      get:
-        deprecated: true
-        summary: getTotalUnReviewedDAR
-        description: Retrieves the amount of unreviewed DAR.
-        tags:
-          - Data Access Request
-        responses:
-         200:
-           description: 'Returns an integer corresponding to the amount of unreviewed DARs'
   /api/dar/partial:
     post:
       summary: Create Partial Data Access Request

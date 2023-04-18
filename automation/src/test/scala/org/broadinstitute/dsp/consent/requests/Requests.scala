@@ -252,23 +252,6 @@ object Requests {
 
   object Admin {
     val unreviewedDarResponse: String = "unreviewedDarResponse"
-
-    def unreviewedDar(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("Get Unreviewed DARs")
-        .get("/api/dar/cases/unreviewed")
-        .headers(TestConfig.jsonHeader)
-        .headers(additionalHeaders)
-        .check(bodyString.saveAs(unreviewedDarResponse))
-        .check(status.is(expectedStatus))
-    }
-
-    def initConsole(expectedStatus: Int, additionalHeaders: Map[String, String]): HttpRequestBuilder = {
-      http("Init Admin Console")
-        .get("/")
-        .resources(
-          unreviewedDar(expectedStatus, additionalHeaders)
-        )
-    }
   }
 
   object Election {

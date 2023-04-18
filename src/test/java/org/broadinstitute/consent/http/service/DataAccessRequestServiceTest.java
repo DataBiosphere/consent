@@ -118,29 +118,6 @@ public class DataAccessRequestServiceTest {
     }
 
     @Test
-    public void testGetTotalUnreviewedDars() {
-        Integer genericId = 1;
-        DataAccessRequest dar = generateDataAccessRequest();
-        dar.setData(new DataAccessRequestData());
-        dar.addDatasetId(genericId);
-        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(Collections.singletonList(dar));
-        Election e = new Election();
-        e.setReferenceId(dar.getReferenceId());
-        e.setElectionId(genericId);
-        when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
-        Dataset ds = new Dataset();
-        ds.setConsentName(dar.getReferenceId());
-        ds.setDataSetId(1);
-        ds.setName("test dataset");
-        when(dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()))
-                .thenReturn(Collections.singletonList(ds));
-        initService();
-
-        Integer count = service.getTotalUnReviewedDars(authUser);
-        assertEquals(Integer.valueOf(1), count);
-    }
-
-    @Test
     public void testCancelDataAccessRequestSuccess() {
         List<Election> electionList = new ArrayList<Election>();
         when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);

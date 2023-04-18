@@ -1102,60 +1102,6 @@ public class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindLastElectionsWithFinalVoteByReferenceIdsAndType() {
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDataSetId();
-
-    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
-    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
-    electionDAO.updateElectionById(
-            dataAccessElection.getElectionId(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            true
-    );
-
-    List<Election> returned =
-            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(
-                    List.of(referenceId),
-                    ElectionType.DATA_ACCESS.getValue());
-
-    assertEquals(1, returned.size());
-    assertEquals(dataAccessElection.getElectionId(), returned.get(0).getElectionId());
-  }
-
-  @Test
-  public void testFindLastElectionsWithFinalVoteByReferenceIdsAndType_WrongType() {
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDataSetId();
-
-    Election dataAccessElection = createDataAccessElection(referenceId, datasetId);
-    createFinalVote(user.getUserId(), dataAccessElection.getElectionId());
-    electionDAO.updateElectionById(
-            dataAccessElection.getElectionId(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            true
-    );
-
-    List<Election> returned =
-            electionDAO.findLastElectionsWithFinalVoteByReferenceIdsAndType(
-                    List.of(referenceId),
-                    ElectionType.RP.getValue());
-
-    assertEquals(0, returned.size());
-  }
-
-
-  @Test
   public void testFindLastElectionsByReferenceIdAndType() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
