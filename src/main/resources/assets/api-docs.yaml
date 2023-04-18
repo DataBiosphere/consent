@@ -641,33 +641,6 @@ paths:
           description: Returns the created Data Access Request, json file.
         500:
           description: Internal Server Error.
-  /api/dar/cancel/{id}:
-    put:
-      deprecated: true
-      summary: Cancel a Data Access Request
-      description: Cancel a Data Access Request
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Successful cancelation of the Data Access Request
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/DataAccessRequest.yaml'
-        403:
-          description: Forbidden
-        404:
-          description: Unable to find the Data Access Request with the provided id
-        500:
-          description: Internal error
   /api/dar/partial:
     post:
       summary: Create Partial Data Access Request

@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,7 +17,6 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -115,41 +113,6 @@ public class DataAccessRequestServiceTest {
         container.setVoteDAO(voteDAO);
         container.setMatchDAO(matchDAO);
         service = new DataAccessRequestService(counterService, container, dacService, dataAccessRequestServiceDAO);
-    }
-
-    @Test
-    public void testCancelDataAccessRequestSuccess() {
-        List<Election> electionList = new ArrayList<Election>();
-        when(electionDAO.findElectionsByReferenceId(anyString())).thenReturn(electionList);
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        when(userDAO.findUserByEmail(any())).thenReturn(new User());
-        initService();
-
-        DataAccessRequest updated = service.cancelDataAccessRequest(authUser, dar.getReferenceId());
-        assertNotNull(updated);
-        assertNotNull(updated.getData());
-        assertNotNull(updated.getData().getStatus());
-        assertEquals(DarStatus.CANCELED.getValue(), updated.getData().getStatus());
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testCancelDataAccessRequestWithElectionPresentFail() {
-        when(electionDAO.getElectionIdsByReferenceIds(anyList())).thenReturn(List.of(1));
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-        initService();
-
-        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testCancelDataAccessRequestNotFound() {
-        DataAccessRequest dar = generateDataAccessRequest();
-        when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(null);
-        initService();
-
-        service.cancelDataAccessRequest(authUser, dar.getReferenceId());
     }
 
     @Test

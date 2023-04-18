@@ -240,27 +240,6 @@ public class DataAccessRequestService {
     }
 
     /**
-     * Cancel a Data Access Request
-     *
-     * @param referenceId The DAR Reference Id
-     * @return The updated DAR
-     */
-    public DataAccessRequest cancelDataAccessRequest(AuthUser authUser, String referenceId) {
-        User user = userDAO.findUserByEmail(authUser.getEmail());
-        DataAccessRequest dar = findByReferenceId(referenceId);
-        if (Objects.isNull(dar)) {
-            throw new NotFoundException("Unable to find Data Access Request with the provided id: " + referenceId);
-        }
-        List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(List.of(referenceId));
-        if (!electionIds.isEmpty()) {
-            throw new UnsupportedOperationException("Cancelling this DAR is not allowed");
-        }
-        dar.getData().setStatus(DarStatus.CANCELED.getValue());
-        updateByReferenceId(user, dar);
-        return findByReferenceId(referenceId);
-    }
-
-    /**
      * Generate a DataAccessRequest from the provided DAR. The provided DAR may or may not exist in
      * draft form, so it covers both cases of converting an existing draft to submitted and creating
      * a brand new DAR from scratch.
