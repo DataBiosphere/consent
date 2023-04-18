@@ -1,11 +1,22 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -13,19 +24,6 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceTest {
 
@@ -44,24 +42,6 @@ public class DataAccessRequestResourceTest {
     }
 
     @Test
-    public void testDescribeManageDataAccessRequestsV2_NoRoleWithAccess() {
-        User so = new User();
-        so.setUserId(1);
-        so.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
-        when(userService.findUserByEmail(any())).thenReturn(so);
-        DataAccessRequest dar = generateDataAccessRequest();
-        DataAccessRequestManage manage = new DataAccessRequestManage();
-        manage.setDar(dar);
-        when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
-            .thenReturn(Collections.singletonList(manage));
-        resource = new DataAccessRequestResource(
-            dataAccessRequestService,
-            userService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-
-    @Test
     public void testDescribeManageDataAccessRequestsV2_NoRoleNoAccess() {
         User user = new User();
         user.setRoles(Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
@@ -71,24 +51,6 @@ public class DataAccessRequestResourceTest {
             userService);
         Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.empty());
         assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-
-    @Test
-    public void testDescribeManageDataAccessRequestsV2_WithRole() {
-        User so = new User();
-        so.setUserId(1);
-        so.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
-        when(userService.findUserByEmail(any())).thenReturn(so);
-        DataAccessRequest dar = generateDataAccessRequest();
-        DataAccessRequestManage manage = new DataAccessRequestManage();
-        manage.setDar(dar);
-        when(dataAccessRequestService.describeDataAccessRequestManageV2(any(), any()))
-            .thenReturn(Collections.singletonList(manage));
-        resource = new DataAccessRequestResource(
-            dataAccessRequestService,
-            userService);
-        Response response = resource.describeManageDataAccessRequestsV2(authUser, Optional.of(UserRoles.SIGNINGOFFICIAL.getRoleName()));
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test

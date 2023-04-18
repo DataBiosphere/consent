@@ -3,16 +3,10 @@ package org.broadinstitute.consent.http.resources;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.UserService;
-
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -20,12 +14,13 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -37,36 +32,6 @@ public class DataAccessRequestResource extends Resource {
     public DataAccessRequestResource(DataAccessRequestService dataAccessRequestService, UserService userService) {
         this.dataAccessRequestService = dataAccessRequestService;
         this.userService = userService;
-    }
-
-    @GET
-    @Produces("application/json")
-    @Path("/manage/v2")
-    @RolesAllowed({SIGNINGOFFICIAL})
-    public Response describeManageDataAccessRequestsV2(@Auth AuthUser authUser, @QueryParam("roleName") Optional<String> roleName) {
-        try {
-            User user = userService.findUserByEmail(authUser.getEmail());
-            String roleNameValue = roleName.orElse(SIGNINGOFFICIAL);
-            UserRoles queriedUserRole = UserRoles.getUserRoleFromName(roleNameValue);
-            // if a roleName was passed in but it is not in the UserRoles enum throw exception
-            if (roleName.isPresent()) {
-                if (Objects.isNull(queriedUserRole)) {
-                    throw new BadRequestException("Invalid role name: " + roleNameValue);
-                }
-            }
-            // if it is not SO, then throw an exception
-            if (!Objects.equals(queriedUserRole, UserRoles.SIGNINGOFFICIAL)) {
-                throw new BadRequestException("Unsupported role name: " +  queriedUserRole.getRoleName());
-            }
-            // if the user does not have the given roleName throw NotFoundException
-            if (!user.hasUserRole(queriedUserRole)) {
-                throw new NotFoundException("User: " + user.getDisplayName() + ", does not have " +  queriedUserRole.getRoleName() + " role.");
-            }
-            List<DataAccessRequestManage> dars = dataAccessRequestService.describeDataAccessRequestManageV2(user, queriedUserRole);
-            return Response.ok().entity(dars).build();
-        } catch(Exception e) {
-            return createExceptionResponse(e);
-        }
     }
 
     @Deprecated

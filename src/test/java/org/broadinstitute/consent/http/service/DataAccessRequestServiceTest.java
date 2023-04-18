@@ -44,7 +44,6 @@ import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -55,7 +54,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.Before;
 import org.junit.Test;
@@ -285,83 +283,6 @@ public class DataAccessRequestServiceTest {
         initService();
         DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
         assertNotNull(dar);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDescribeDataAccessRequestManageV2_Admin() {
-        User user = new User();
-        user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
-        initService();
-        service.describeDataAccessRequestManageV2(user, UserRoles.ADMIN);
-    }
-
-    @Test
-    public void testDescribeDataAccessRequestManageV2_SO() {
-        User user = new User();
-        user.setInstitutionId(1);
-        user.setRoles(new ArrayList<>());
-        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
-
-        Integer genericId = 1;
-        DataAccessRequest dar = generateDataAccessRequest();
-        dar.setData(new DataAccessRequestData());
-        dar.addDatasetId(genericId);
-        when(dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(any())).thenReturn(Collections.singletonList(dar));
-
-        Election e = new Election();
-        e.setReferenceId(dar.getReferenceId());
-        e.setElectionId(genericId);
-        when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), any())).thenReturn(Collections.singletonList(e));
-
-        Vote v = new Vote();
-        v.setVoteId(genericId);
-        v.setElectionId(e.getElectionId());
-        when(voteDAO.findVotesByElectionIds(any())).thenReturn(Collections.singletonList(v));
-
-        Dac d = new Dac();
-        d.setDacId(genericId);
-        d.addDatasetId(genericId);
-        when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Collections.singleton(d));
-        initService();
-
-        List<DataAccessRequestManage> manages =  service.describeDataAccessRequestManageV2(user, UserRoles.SIGNINGOFFICIAL);
-        assertNotNull(manages);
-        assertFalse(manages.isEmpty());
-        assertEquals(dar.getReferenceId(), manages.get(0).getDar().getReferenceId());
-        assertEquals(1, manages.size());
-        assertEquals(e.getElectionId(), manages.get(0).getElection().getElectionId());
-        assertEquals(d.getDacId(), manages.get(0).getDac().getDacId());
-        assertFalse(manages.get(0).getVotes().isEmpty());
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void testDescribeDataAccessRequestManageV2_SO_InstitutionNotFound() {
-        User user = new User();
-        user.setRoles(new ArrayList<>());
-        user.getRoles().add(new UserRole(7, UserRoles.SIGNINGOFFICIAL.getRoleName()));
-        initService();
-        service.describeDataAccessRequestManageV2(user, UserRoles.SIGNINGOFFICIAL);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDescribeDataAccessRequestManageV2_Researcher() {
-        User user = new User();
-        user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-        initService();
-        service.describeDataAccessRequestManageV2(user, UserRoles.RESEARCHER);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDescribeDataAccessRequestManageV2_NullUserRole() {
-        User user = new User();
-        initService();
-        service.describeDataAccessRequestManageV2(user, null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDescribeDataAccessRequestManageV2_NullUser() {
-        initService();
-        service.describeDataAccessRequestManageV2(null, UserRoles.MEMBER);
     }
 
     @Test

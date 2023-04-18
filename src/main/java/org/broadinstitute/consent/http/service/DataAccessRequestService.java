@@ -1,7 +1,26 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -33,26 +52,6 @@ import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
@@ -119,31 +118,6 @@ public class DataAccessRequestService {
             }
         }
         return unReviewedDarCount;
-    }
-
-    /**
-     * Filter DataAccessRequestManage objects on user.
-     *
-     * @param user Filter on what DARs the user has access to.
-     * @return List of DataAccessRequestManage objects
-     */
-    public List<DataAccessRequestManage> describeDataAccessRequestManageV2(User user, UserRoles userRoles) {
-        if (Objects.isNull(user)) {
-            throw new IllegalArgumentException("User is required");
-        }
-        if (Objects.isNull(userRoles)) {
-            throw new IllegalArgumentException("UserRoles is required");
-        }
-        if (!Objects.equals(userRoles, UserRoles.SIGNINGOFFICIAL)) {
-            throw new IllegalArgumentException("Only the Signing Official role is supported");
-        }
-        if (Objects.isNull(user.getInstitutionId())) {
-            throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") "
-                    + "is not associated with an Institution.");
-        }
-        List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
-        List<DataAccessRequest> openDars = filterOutCanceledDars(dars);
-        return createAccessRequestManageV2(openDars);
     }
 
     public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -378,10 +352,6 @@ public class DataAccessRequestService {
                 return darManage;
             })
             .collect(toList());
-    }
-
-    private List<DataAccessRequest> filterOutCanceledDars(List<DataAccessRequest> dars) {
-        return dars.stream().filter(dar -> !DarStatus.CANCELED.getValue().equals(dar.getData().getStatus())).collect(Collectors.toList());
     }
 
     /**
