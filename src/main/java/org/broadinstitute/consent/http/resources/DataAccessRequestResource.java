@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import java.util.Collections;
@@ -48,15 +47,6 @@ public class DataAccessRequestResource extends Resource {
             return Response.ok().entity(dar).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
-        }
-    }
-
-    static class UnreviewedCases {
-        @JsonProperty
-        Integer darUnReviewedCases;
-
-        UnreviewedCases(Integer darUnReviewedCases) {
-            this.darUnReviewedCases = darUnReviewedCases;
         }
     }
 
