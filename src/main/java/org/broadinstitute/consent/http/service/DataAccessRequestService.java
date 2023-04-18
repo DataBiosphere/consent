@@ -45,7 +45,6 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("UnusedReturnValue")
 public class DataAccessRequestService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -100,7 +99,7 @@ public class DataAccessRequestService {
                     findLastElectionsWithFinalVoteByReferenceIdsAndType(unReviewedDarIds, ElectionType.DATA_ACCESS.getValue()).
                     stream().
                     map(Election::getReferenceId).
-                    collect(toList());
+                    toList();
             for (String darId : unReviewedDarIds) {
                 if (!electionReferenceIds.contains(darId)) {
                     ++unReviewedDarCount;
@@ -481,7 +480,7 @@ public class DataAccessRequestService {
         }
         List<Integer> dataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
                 map(Dataset::getDataSetId).
-                collect(Collectors.toList());
+                toList();
         return activeDars.stream().
                 filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
                 collect(Collectors.toList());
