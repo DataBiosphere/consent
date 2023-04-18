@@ -418,23 +418,4 @@ public class DataAccessRequestService {
         return this.userDAO.findUsers(userIds);
     }
 
-//    /**
-//     * @param authUser AuthUser
-//     * @return List<DataAccessRequest>
-//     */
-//    private List<DataAccessRequest> getUnReviewedDarsForUser(AuthUser authUser) {
-//        List<DataAccessRequest> activeDars = dataAccessRequestDAO.findAllDataAccessRequests().stream().
-//                filter(d -> !DarStatus.CANCELED.getValue().equalsIgnoreCase(Objects.nonNull(d.getData()) ? d.getData().getStatus() : "")).
-//                collect(Collectors.toList());
-//        if (dacService.isAuthUserAdmin(authUser)) {
-//            return activeDars;
-//        }
-//        List<Integer> dataSetIds = datasetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).stream().
-//                map(Dataset::getDataSetId).
-//                toList();
-//        return activeDars.stream().
-//                filter(d -> d.getDatasetIds().stream().anyMatch(dataSetIds::contains)).
-//                collect(Collectors.toList());
-//    }
-
 }
