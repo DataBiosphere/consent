@@ -10,21 +10,16 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -38,16 +33,13 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.slf4j.Logger;
@@ -60,7 +52,6 @@ public class DataAccessRequestService {
 
     private final ConsentDAO consentDAO;
     private final CounterService counterService;
-    private final DacDAO dacDAO;
     private final DatasetDAO datasetDAO;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DarCollectionDAO darCollectionDAO;
@@ -79,7 +70,6 @@ public class DataAccessRequestService {
             DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
-        this.dacDAO = container.getDacDAO();
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
         this.darCollectionDAO = container.getDarCollectionDAO();
         this.datasetDAO = container.getDatasetDAO();
@@ -297,61 +287,6 @@ public class DataAccessRequestService {
         dar.getData().setStatus(DarStatus.CANCELED.getValue());
         updateByReferenceId(user, dar);
         return findByReferenceId(referenceId);
-    }
-
-    /**
-     * Iterate over a list of DataAccessRequests to find relevant Election, Vote, and Dac
-     * information for each one.
-     *
-     * @param dataAccessRequests List of DataAccessRequest
-     * @return List of DataAccessRequestManage
-     */
-    private List<DataAccessRequestManage> createAccessRequestManageV2(List<DataAccessRequest> dataAccessRequests) {
-        List<String> requestIds = dataAccessRequests.stream().map(DataAccessRequest::getReferenceId).collect(toList());
-        // Batch call 1
-        List<Election> allElections = requestIds.isEmpty() ? Collections.emptyList() : electionDAO.findLastElectionsByReferenceIdsAndType(requestIds, ElectionType.DATA_ACCESS.getValue());
-        Map<String, Election> referenceIdToElectionMap = allElections
-            .stream()
-            .collect(Collectors.toMap(Election::getReferenceId, Function.identity()));
-        List<Integer> electionIds = allElections.stream().map(Election::getElectionId).collect(toList());
-        // Batch call 2
-        List<Vote> allVotes = electionIds.isEmpty() ? Collections.emptyList() : voteDAO.findVotesByElectionIds(electionIds);
-        Map<String, List<Vote>> referenceIdToVoteMap = allElections.stream()
-            .collect(Collectors.toMap(
-                Election::getReferenceId,
-                e -> allVotes.stream()
-                    .filter(v -> v.getElectionId().equals(e.getElectionId()))
-                    .collect(toList())
-            ));
-        List<Integer> datasetIds = dataAccessRequests.stream()
-            .map(DataAccessRequest::getDatasetIds)
-            .flatMap(List::stream)
-            .collect(toList());
-        // Batch call 3
-        Set<Dac> dacs = datasetIds.isEmpty() ? Collections.emptySet() : dacDAO.findDacsForDatasetIds(datasetIds);
-        // Batch call 4
-        List<Integer> userIds = dataAccessRequests.stream().map(DataAccessRequest::getUserId).collect(toList());
-        Collection<User> researchers = userIds.isEmpty() ? Collections.emptyList() : userDAO.findUsers(userIds);
-        Map<Integer, User> researcherMap = researchers.stream()
-                .collect(Collectors.toMap(User::getUserId, Function.identity()));
-
-        return dataAccessRequests.stream()
-            .filter(Objects::nonNull)
-            .map(dar -> {
-                DataAccessRequestManage darManage = new DataAccessRequestManage();
-                darManage.setResearcher(researcherMap.get(dar.getUserId()));
-                darManage.setDar(dar);
-                darManage.setElection(referenceIdToElectionMap.get(dar.getReferenceId()));
-                darManage.setVotes(referenceIdToVoteMap.get(dar.getReferenceId()));
-                dar.getDatasetIds().stream()
-                    .findFirst()
-                    .flatMap(id -> dacs.stream()
-                        .filter(dataset -> dataset.getDatasetIds().contains(id))
-                        .findFirst())
-                    .ifPresent(darManage::setDac);
-                return darManage;
-            })
-            .collect(toList());
     }
 
     /**
