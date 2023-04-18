@@ -60,8 +60,6 @@ import org.mockito.Mock;
 public class DataAccessRequestServiceTest {
 
     @Mock
-    private AuthUser authUser;
-    @Mock
     private ConsentDAO consentDAO;
     @Mock
     private CounterService counterService;
