@@ -3,22 +3,15 @@ package org.broadinstitute.consent.http.resources;
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.enumeration.DarDocumentType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataAccessRequestManage;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.EmailService;
-import org.broadinstitute.consent.http.service.MatchService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -36,15 +29,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.service.MatchService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
@@ -203,21 +201,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
       return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated
-  @GET
-  @Produces("application/json")
-  @Path("/draft/manage")
-  @RolesAllowed(RESEARCHER)
-  public Response getDraftManageDataAccessRequests(@Auth AuthUser authUser) {
-    try {
-      User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequestManage> partials = dataAccessRequestService.getDraftDataAccessRequestManage(user.getUserId());
-      return Response.ok().entity(partials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

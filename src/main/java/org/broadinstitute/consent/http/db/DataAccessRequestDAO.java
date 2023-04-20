@@ -316,20 +316,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               + "OR data->>'status' IS NULL)")
   List<DataAccessRequestData> findAllDataAccessRequestDatas();
 
-  /**
-   * Find all non-draft/partial DataAccessRequests for users in the given institution
-   *
-   * @return List<DataAccessRequest>
-   */
-  @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery("SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, (dar.data #>> '{}')::jsonb AS data "
-      + " FROM data_access_request dar "
-      + " INNER JOIN users u ON u.user_id = dar.user_id AND u.institution_id = :institutionId "
-      + " LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
-      + " WHERE dar.draft != true "
-        + " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)")
-  List<DataAccessRequest> findAllDataAccessRequestsForInstitution(@Bind("institutionId") Integer institutionId);
-
   @SqlUpdate(
       " UPDATE data_access_request"
         + " SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true) "

@@ -226,25 +226,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     List<Election> findOpenElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, " +
-            "v.createDate final_vote_date, e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN " +
-            "(SELECT reference_id, MAX(create_date) max_date " +
-            "FROM election e " +
-            "WHERE e.election_type = :type " +
-            "GROUP BY reference_id) election_view " +
-                "ON election_view.max_date = e.create_date " +
-                "AND election_view.reference_id = e.reference_id " +
-                "AND e.reference_id in (<referenceIds>) " +
-                "AND LOWER(e.election_type) = LOWER(:type) " +
-        "LEFT JOIN vote v " +
-            "ON v.electionId = e.election_id " +
-            "AND LOWER(v.type) = 'final' ")
-    List<Election> findLastElectionsWithFinalVoteByReferenceIdsAndType(@BindList("referenceIds") List<String> referenceIds, @Bind("type") String type);
-
-    @SqlQuery(
         "SELECT DISTINCT e.* " +
             "FROM election e " +
             "INNER JOIN " +

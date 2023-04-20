@@ -512,24 +512,6 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
-  /api/dar/v2/draft/manage:
-    get:
-      deprecated: true
-      summary: Get all Draft Data Access Request Manage Objects
-      description: Returns a list of information (Dar Manage Objects) on Draft DARs
-      tags:
-        - Data Access Request
-      responses:
-        201:
-          description: Returns the draft Data Access Request Manage objects.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequestManage'
-        500:
-          description: Internal Server Error.
   /api/dar/v2/{referenceId}/irbDocument:
     get:
       summary: Retrieve DAR IRB Document
@@ -659,71 +641,6 @@ paths:
           description: Returns the created Data Access Request, json file.
         500:
           description: Internal Server Error.
-  /api/dar/cancel/{id}:
-    put:
-      deprecated: true
-      summary: Cancel a Data Access Request
-      description: Cancel a Data Access Request
-      parameters:
-        - name: id
-          in: path
-          description: The id of the DAR
-          required: true
-          schema:
-            type: string
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Successful cancelation of the Data Access Request
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/DataAccessRequest.yaml'
-        403:
-          description: Forbidden
-        404:
-          description: Unable to find the Data Access Request with the provided id
-        500:
-          description: Internal error
-  /api/dar/manage/v2:
-    get:
-      summary: Manage Data Access Requests V2
-      description: |
-        Returns all the elections created for Data Access Requests relevant to the current user.
-      parameters:
-        - name: roleName
-          in: query
-          description: An optional roleName that the user is making the request as. Currently supports the Signing Official role.
-          required: false
-          schema:
-            type: string
-            nullable: true
-            enum:
-              - SigningOfficial
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A list of DAR elections.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DataAccessRequestManage'
-        500:
-          description: Server error.
-  /api/dar/cases/unreviewed:
-      get:
-        deprecated: true
-        summary: getTotalUnReviewedDAR
-        description: Retrieves the amount of unreviewed DAR.
-        tags:
-          - Data Access Request
-        responses:
-         200:
-           description: 'Returns an integer corresponding to the amount of unreviewed DARs'
   /api/dar/partial:
     post:
       summary: Create Partial Data Access Request

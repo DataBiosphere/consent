@@ -196,21 +196,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void  testFindAllDataAccessRequestsForInstitution() {
-        //should be included in result
-        Integer institutionId = createDataAccessRequestUserWithInstitute();
-
-        //should not be included in result
-        createDraftDataAccessRequest();
-        createDataAccessRequestV3();
-
-        List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(institutionId);
-        assertFalse(newDars.isEmpty());
-        assertEquals(1, newDars.size());
-
-    }
-
-    @Test
     public void testDeleteByCollectionId() {
         //creates a dar with a collection ID (also creates a DarCollection)
         DataAccessRequest dar = createDataAccessRequestV3();
@@ -620,29 +605,6 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
         List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId(), testDar3.getReferenceId()));
-        assertEquals(1, returnedDAR.size());
-    }
-
-    // findAllDataAccessRequestsForInstitution should exclude archived DARs
-    @Test
-    public void testFindAllDataAccessRequestsForInstitutionArchived() {
-        User user = createUserWithInstitution();
-        List<DataAccessRequestData> dars = dataAccessRequestDAO.findAllDataAccessRequestDatas();
-        assertTrue(dars.isEmpty());
-
-        String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
-        String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
-        String darCode3 = "DAR-" + RandomUtils.nextInt(301, 400);
-        Dataset dataset1 = createDARDAOTestDataset();
-        Dataset dataset2 = createDARDAOTestDataset();
-        Dataset dataset3 = createDARDAOTestDataset();
-        DataAccessRequest testDar1 = createDAR(user, dataset1, darCode1);
-        DataAccessRequest testDar2 = createDAR(user, dataset2, darCode2);
-        createDAR(user, dataset3, darCode3);
-
-        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
-        dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
-        List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findAllDataAccessRequestsForInstitution(user.getInstitutionId());
         assertEquals(1, returnedDAR.size());
     }
 
