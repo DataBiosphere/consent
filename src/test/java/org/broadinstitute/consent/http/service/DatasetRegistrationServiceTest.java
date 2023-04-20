@@ -203,7 +203,6 @@ public class DatasetRegistrationServiceTest {
         List<DatasetProperty> props = inserts.get(0).props();
         assertContainsDatasetProperty(props, "piName", schema.getPiName());
         assertContainsDatasetProperty(props, "studyName", schema.getStudyName());
-        assertContainsDatasetProperty(props, "studyType", schema.getStudyType().value());
         assertContainsDatasetProperty(props, "dataTypes", DatasetPropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getDataTypes())));
         assertContainsDatasetProperty(props, "studyDescription", schema.getStudyDescription());
         assertContainsDatasetProperty(props, "phenotypeIndication", schema.getPhenotypeIndication());
@@ -426,7 +425,6 @@ public class DatasetRegistrationServiceTest {
     private DatasetRegistrationSchemaV1 createRandomMinimumDatasetRegistration(User user) {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
         schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
-        schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
         schemaV1.setStudyDescription(RandomStringUtils.randomAlphabetic(10));
         schemaV1.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
         schemaV1.setPhenotypeIndication(RandomStringUtils.randomAlphabetic(10));
