@@ -256,7 +256,12 @@ public class DatasetRegistrationService {
                     (registration, consentGroup) -> registration.getStudyName()),
             new DatasetPropertyExtractor(
                     "Study Type", "studyType", DatasetPropertyType.String,
-                    (registration, consentGroup) -> registration.getStudyType().value()),
+                    (registration, consentGroup) -> {
+                        if (Objects.nonNull(registration.getStudyType())) {
+                            return registration.getStudyType().value();
+                        }
+                        return null;
+                    }),
             new DatasetPropertyExtractor(
                     "Data Types", "dataTypes", DatasetPropertyType.Json,
                     (registration, consentGroup) -> {
