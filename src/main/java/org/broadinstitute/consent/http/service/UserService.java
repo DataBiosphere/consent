@@ -5,7 +5,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +17,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -52,6 +52,7 @@ public class UserService {
     private final UserDAO userDAO;
     private final UserRoleDAO userRoleDAO;
     private final VoteDAO voteDAO;
+    private final DatasetAssociationDAO datasetAssociationDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final AcknowledgementDAO acknowledgementDAO;
@@ -63,13 +64,14 @@ public class UserService {
 
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
-                       InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
+                       DatasetAssociationDAO datasetAssociationDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
                        AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO, SamDAO samDAO,
                        UserServiceDAO userServiceDAO, EmailService emailService) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
+        this.datasetAssociationDAO = datasetAssociationDAO;
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
         this.acknowledgementDAO = acknowledgementDAO;
@@ -272,6 +274,7 @@ public class UserService {
             List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
             voteDAO.removeVotesByIds(voteIds);
         }
+        datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
         institutionDAO.deleteAllInstitutionsByUser(userId);
         userPropertyDAO.deleteAllPropertiesByUser(userId);
         libraryCardDAO.deleteAllLibraryCardsByUser(userId);
