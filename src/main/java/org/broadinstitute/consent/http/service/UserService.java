@@ -261,6 +261,7 @@ public class UserService {
             voteDAO.removeVotesByIds(voteIds);
         }
         userPropertyDAO.deleteAllPropertiesByUser(user.getUserId());
+        libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
         userDAO.deleteUserById(user.getUserId());
     }
 
