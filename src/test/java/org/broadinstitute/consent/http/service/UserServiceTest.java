@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
@@ -75,6 +76,9 @@ public class UserServiceTest {
     private AcknowledgementDAO acknowledgementDAO;
 
     @Mock
+    private FileStorageObjectDAO fileStorageObjectDAO;
+
+    @Mock
     private SamDAO samDAO;
 
     @Mock
@@ -93,7 +97,7 @@ public class UserServiceTest {
 
     private void initService() {
         service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO,
-         acknowledgementDAO, samDAO, userServiceDAO, emailService);
+         acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, emailService);
     }
 
     @Test

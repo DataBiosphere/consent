@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+
+import java.io.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +18,7 @@ import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
@@ -52,6 +55,7 @@ public class UserService {
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
     private final AcknowledgementDAO acknowledgementDAO;
+    private final FileStorageObjectDAO fileStorageObjectDAO;
     private final SamDAO samDAO;
     private final UserServiceDAO userServiceDAO;
     private final EmailService emailService;
@@ -60,7 +64,7 @@ public class UserService {
     @Inject
     public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
                        InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
-                       AcknowledgementDAO acknowledgementDAO, SamDAO samDAO,
+                       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO, SamDAO samDAO,
                        UserServiceDAO userServiceDAO, EmailService emailService) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
@@ -69,6 +73,7 @@ public class UserService {
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
         this.acknowledgementDAO = acknowledgementDAO;
+        this.fileStorageObjectDAO = fileStorageObjectDAO;
         this.samDAO = samDAO;
         this.userServiceDAO = userServiceDAO;
         this.emailService = emailService;
@@ -253,23 +258,26 @@ public class UserService {
         if (user == null) {
             throw new NotFoundException("The user for the specified E-Mail address does not exist");
         }
+        Integer userId = user.getUserId();
         List<Integer> roleIds = userRoleDAO.
-                findRolesByUserId(user.getUserId()).
+                findRolesByUserId(userId).
                 stream().
                 map(UserRole::getRoleId).
                 collect(Collectors.toList());
         if (!roleIds.isEmpty()) {
-            userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
+            userRoleDAO.removeUserRoles(userId, roleIds);
         }
-        List<Vote> votes = voteDAO.findVotesByUserId(user.getUserId());
+        List<Vote> votes = voteDAO.findVotesByUserId(userId);
         if (!votes.isEmpty()) {
             List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
             voteDAO.removeVotesByIds(voteIds);
         }
-        userPropertyDAO.deleteAllPropertiesByUser(user.getUserId());
-        libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-        acknowledgementDAO.deleteAllAcknowledgementsByUser(user.getUserId());
-        userDAO.deleteUserById(user.getUserId());
+        institutionDAO.deleteAllInstitutionsByUser(userId);
+        userPropertyDAO.deleteAllPropertiesByUser(userId);
+        libraryCardDAO.deleteAllLibraryCardsByUser(userId);
+        acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
+        fileStorageObjectDAO.deleteAllUserFiles(userId);
+        userDAO.deleteUserById(userId);
     }
 
     public List<UserProperty> findAllUserProperties(Integer userId) {
