@@ -15,6 +15,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
@@ -50,19 +51,24 @@ public class UserService {
     private final VoteDAO voteDAO;
     private final InstitutionDAO institutionDAO;
     private final LibraryCardDAO libraryCardDAO;
+    private final AcknowledgementDAO acknowledgementDAO;
     private final SamDAO samDAO;
     private final UserServiceDAO userServiceDAO;
     private final EmailService emailService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
-    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserServiceDAO userServiceDAO, EmailService emailService) {
+    public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO, VoteDAO voteDAO,
+                       InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
+                       AcknowledgementDAO acknowledgementDAO, SamDAO samDAO,
+                       UserServiceDAO userServiceDAO, EmailService emailService) {
         this.userDAO = userDAO;
         this.userPropertyDAO = userPropertyDAO;
         this.userRoleDAO = userRoleDAO;
         this.voteDAO = voteDAO;
         this.institutionDAO = institutionDAO;
         this.libraryCardDAO = libraryCardDAO;
+        this.acknowledgementDAO = acknowledgementDAO;
         this.samDAO = samDAO;
         this.userServiceDAO = userServiceDAO;
         this.emailService = emailService;
@@ -262,6 +268,7 @@ public class UserService {
         }
         userPropertyDAO.deleteAllPropertiesByUser(user.getUserId());
         libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+        acknowledgementDAO.deleteAllAcknowledgementsByUser(user.getUserId());
         userDAO.deleteUserById(user.getUserId());
     }
 

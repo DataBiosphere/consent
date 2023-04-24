@@ -97,4 +97,14 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
         List<Acknowledgement> user2AcknowledgementsWithList = acknowledgementDAO.findAcknowledgementsForUser(key_list, user2Id);
         assertEquals(1, user2AcknowledgementsWithList.size());
     }
+
+    @Test
+    public void testDeleteAcknowledgmentByUserId() {
+        User user = createUser();
+        String ack = RandomStringUtils.randomAlphabetic(100);
+        acknowledgementDAO.upsertAcknowledgement(ack, user.getUserId());
+        assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user.getUserId()).size());
+        acknowledgementDAO.deleteAllAcknowledgementsByUser(user.getUserId());
+        assertEquals(0, acknowledgementDAO.findAcknowledgementsForUser(user.getUserId()).size());
+    }
 }
