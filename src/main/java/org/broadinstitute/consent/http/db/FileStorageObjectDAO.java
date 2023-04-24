@@ -112,4 +112,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
             """
     )
     List<FileStorageObject> findFilesByEntityIdAndCategory(@Bind("entityId") String entityId, @Bind("category") String category);
+
+    @SqlUpdate("DELETE FROM file_storage_object WHERE create_user_id = :userId OR update_user_id = :userId OR delete_user_id = :userId")
+    void deleteAllUserFiles(@Bind("userId") Integer userId);
 }

@@ -50,4 +50,20 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
         List<Integer> userIds = datasetAssociationDAO.getDataOwnersOfDataSet(dataset.getDataSetId());
         assertTrue(userIds.contains(user.getUserId()));
     }
+
+    @Test
+    public void testDeleteDatasetAssociationsByUserId() {
+        Dataset dataset1 = createDataset();
+        Integer datasetId = dataset1.getDataSetId();
+        Integer userId = dataset1.getCreateUserId();
+
+        datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, List.of(userId)));
+        List<Integer> userIds1 = datasetAssociationDAO.getDataOwnersOfDataSet(datasetId);
+        assertTrue(userIds1.contains(userId));
+
+        datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
+
+        List<Integer> userIds2 = datasetAssociationDAO.getDataOwnersOfDataSet(datasetId);
+        assertTrue(userIds2.isEmpty());
+    }
 }

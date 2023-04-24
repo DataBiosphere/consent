@@ -153,4 +153,12 @@ public class InstitutionDAOTest extends DAOTestHelper {
     List<Institution> found = institutionDAO.findInstitutionsByName(RandomStringUtils.randomAlphabetic(10));
     assertTrue(found.isEmpty());
   }
+
+  @Test
+  public void testDeleteInstitutionByUserId() {
+    Institution institution = createInstitution();
+    Integer userId = institution.getCreateUserId();
+    institutionDAO.deleteAllInstitutionsByUser(userId);
+    assertNull(institutionDAO.findInstitutionById(institution.getId()));
+  }
 }

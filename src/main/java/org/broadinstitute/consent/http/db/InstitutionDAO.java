@@ -120,4 +120,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   )
   List<Institution> findAllInstitutions();
 
+  @SqlUpdate("DELETE FROM institution WHERE create_user = :userId OR update_user = :userId")
+  void deleteAllInstitutionsByUser(@Bind("userId") Integer userId);
 }

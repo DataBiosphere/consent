@@ -27,6 +27,9 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
     @SqlUpdate("delete from dataset_user_association where datasetId = :datasetId")
     void delete(@Bind("datasetId") Integer datasetId);
 
+    @SqlUpdate("DELETE FROM dataset_user_association WHERE dacuserId = :userId")
+    void deleteAllDatasetUserAssociationsByUser(@Bind("userId") Integer userId);
+
     @SqlQuery("select exists (select * from dataset_user_association where datasetId = :datasetId )")
     Boolean exist(@Bind("datasetId") Integer datasetId);
 
