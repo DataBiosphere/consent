@@ -25,7 +25,7 @@ public class DAOContainer {
   private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
   private FileStorageObjectDAO fileStorageObjectDAO;
-  private AcknowledgementDAO acknowledgementDAO;
+  private AcknowledgmentDAO acknowledgmentDAO;
 
   public ConsentDAO getConsentDAO() {
     return consentDAO;
@@ -167,11 +167,11 @@ public class DAOContainer {
   public FileStorageObjectDAO getFileStorageObjectDAO() { return fileStorageObjectDAO; }
   public void setFileStorageObjectDAO(FileStorageObjectDAO fileStorageObjectDAO) { this.fileStorageObjectDAO = fileStorageObjectDAO; }
 
-  public AcknowledgementDAO getAcknowledgementDAO() {
-    return acknowledgementDAO;
+  public AcknowledgmentDAO getAcknowledgmentDAO() {
+    return acknowledgmentDAO;
   }
 
-  public void setAcknowledgementDAO(AcknowledgementDAO acknowledgementDAO) {
-    this.acknowledgementDAO = acknowledgementDAO;
+  public void setAcknowledgmentDAO(AcknowledgmentDAO acknowledgmentDAO) {
+    this.acknowledgmentDAO = acknowledgmentDAO;
   }
 }

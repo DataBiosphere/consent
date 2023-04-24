@@ -1418,8 +1418,8 @@ paths:
                 type: string
   /api/user/acknowledgements/{key}:
     get:
-      summary: Get Acknowledgement by key
-      description: Obtains a specific acknowledgement by acknowledgement key.
+      summary: Get acknowledgment by key
+      description: Obtains a specific acknowledgment by acknowledgment key.
       parameters:
         - name: key
           in: path
@@ -1435,16 +1435,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Acknowledgement'
+                $ref: '#/components/schemas/Acknowledgment'
         401:
           description: Unauthorized, log in and try the operation again.
         404:
-          description: No acknowledgement found for the given key.
+          description: No acknowledgment found for the given key.
         500:
           description: Error processing the request.
     delete:
-      summary: ADMIN ONLY - Delete Acknowledgement by key
-      description: Deletes a specific acknowledgement for the current user by acknowledgement key.  Returns the deleted acknowledgement.
+      summary: ADMIN ONLY - Delete acknowledgment by key
+      description: Deletes a specific acknowledgment for the current user by acknowledgment key.  Returns the deleted acknowledgment.
       parameters:
         - name: key
           in: path
@@ -1460,11 +1460,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Acknowledgement'
+                $ref: '#/components/schemas/Acknowledgment'
         401:
           description: Unauthorized, log in and try the operation again.
         404:
-          description: No acknowledgement found for the given key.
+          description: No acknowledgment found for the given key.
         500:
           description: Error processing the request.
   /api/user/acknowledgements:
@@ -1480,15 +1480,15 @@ paths:
               example: ["key1", "key2", "key3"]
       tags:
         - User
-      summary: Set acknowledgements for a user
-      description: Records an acknowledgement record for each entry supplied
+      summary: Set acknowledgments for a user
+      description: Records an acknowledgment record for each entry supplied
       responses:
         200:
           description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AcknowledgementMap'
+                $ref: '#/components/schemas/AcknowledgmentMap'
         400:
           description: The request isn't in the proper format.
         401:
@@ -1498,15 +1498,15 @@ paths:
     get:
       tags:
         - User
-      summary: Obtains all acknowledgements for a user
-      description: Obtains an acknowledgement record for each entry supplied.  Missing entries will not have a key in the response
+      summary: Obtains all acknowledgments for a user
+      description: Obtains an acknowledgment record for each entry supplied.  Missing entries will not have a key in the response
       responses:
         200:
           description: Successful operation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AcknowledgementMap'
+                $ref: '#/components/schemas/AcknowledgmentMap'
         401:
           description: Unauthorized, log in and try the operation again.
         500:
@@ -1661,7 +1661,7 @@ components:
             email: email authorization
             profile: profile authorization
   schemas:
-    Acknowledgement:
+    Acknowledgment:
       type: object
       properties:
         userId:
@@ -1681,11 +1681,11 @@ components:
         ackKey: "key1"
         firstAcknowledged: 1668461426
         lastAcknowledged: 1668461426
-    AcknowledgementMap:
+    AcknowledgmentMap:
       type: object
-      description: A map of keys to their associated Acknowledgement objects.
+      description: A map of keys to their associated Acknowledgment objects.
       additionalProperties:
-        $ref: '#/components/schemas/Acknowledgement'
+        $ref: '#/components/schemas/Acknowledgment'
     Collaborator:
       $ref: './schemas/Collaborator.yaml'
     Consent:

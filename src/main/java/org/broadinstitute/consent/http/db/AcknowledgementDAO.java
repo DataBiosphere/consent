@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.db.mapper.AcknowledgementMapper;
-import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.db.mapper.AcknowledgmentMapper;
+import org.broadinstitute.consent.http.models.Acknowledgment;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -11,26 +11,26 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 import java.util.List;
 
-@RegisterRowMapper(AcknowledgementMapper.class)
-public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
+@RegisterRowMapper(AcknowledgmentMapper.class)
+public interface AcknowledgmentDAO extends Transactional<AcknowledgmentDAO> {
 
-    @SqlUpdate("INSERT INTO acknowledgement (ack_key, user_id, first_acknowledged, last_acknowledged) "
+    @SqlUpdate("INSERT INTO acknowledgment (ack_key, user_id, first_acknowledged, last_acknowledged) "
                     + " VALUES (:key, :userId, current_timestamp, current_timestamp) "
                     + " ON CONFLICT (ack_key, user_id) DO UPDATE SET last_acknowledged = current_timestamp ")
-    void upsertAcknowledgement(@Bind("key") String key, @Bind("userId") Integer userId);
+    void upsertAcknowledgment(@Bind("key") String key, @Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-            + " FROM acknowledgement WHERE ack_key = :key and user_id = :userId")
-    Acknowledgement findAcknowledgementsByKeyForUser(@Bind("key") String key, @Bind("userId") Integer userId);
+            + " FROM acknowledgment WHERE ack_key = :key and user_id = :userId")
+    Acknowledgment findAcknowledgmentsByKeyForUser(@Bind("key") String key, @Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-            + " FROM acknowledgement WHERE user_id = :userId")
-    List<Acknowledgement> findAcknowledgementsForUser(@Bind("userId") Integer userId);
+            + " FROM acknowledgment WHERE user_id = :userId")
+    List<Acknowledgment> findAcknowledgmentsForUser(@Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-          + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
-    List<Acknowledgement> findAcknowledgementsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
+          + " FROM acknowledgment WHERE user_id = :userId and ack_key IN (<key_list>)")
+    List<Acknowledgment> findAcknowledgmentsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
 
-    @SqlUpdate("DELETE FROM acknowledgement where user_id = :userId AND ack_key = :key")
-    void deleteAcknowledgement(@Bind("key") String key, @Bind("userId") Integer userId);
+    @SqlUpdate("DELETE FROM acknowledgment where user_id = :userId AND ack_key = :key")
+    void deleteAcknowledgment(@Bind("key") String key, @Bind("userId") Integer userId);
 }

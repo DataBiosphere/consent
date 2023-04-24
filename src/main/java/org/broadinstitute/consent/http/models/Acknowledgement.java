@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Objects;
 
-public class Acknowledgement {
+public class Acknowledgment {
 
     private String ackKey;
     private Integer userId;
@@ -45,7 +45,7 @@ public class Acknowledgement {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Acknowledgement ack = (Acknowledgement) o;
+        Acknowledgment ack = (Acknowledgment) o;
         return (Objects.equals(this.getAckKey(), ack.getAckKey()) &&
                 Objects.equals(this.getUserId(), ack.getUserId()) &&
                 this.getLastAcknowledged().getTime() == (ack.getLastAcknowledged().getTime()) &&

@@ -8,7 +8,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.Acknowledgment;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -17,7 +17,7 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.AcknowledgmentService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -82,7 +82,7 @@ public class UserResourceTest {
 
   @Mock private UserStatusInfo userStatusInfo;
 
-  @Mock private AcknowledgementService acknowledgementService;
+  @Mock private AcknowledgmentService acknowledgmentService;
 
   private final String TEST_EMAIL = "test@gmail.com";
 
@@ -103,7 +103,7 @@ public class UserResourceTest {
   }
 
   private void initResource() {
-    userResource = new UserResource(samService, userService, datasetService, supportRequestService, acknowledgementService);
+    userResource = new UserResource(samService, userService, datasetService, supportRequestService, acknowledgmentService);
   }
 
   @Test
@@ -986,157 +986,157 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgement(){
+  public void testPostAcknowledgment(){
     User user = createUserWithRole();
-    String acknowledgementKey = "key1";
-    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.makeAcknowledgements(anyList(), any())).thenReturn(acknowledgementMap);
+    String acknowledgmentKey = "key1";
+    Map<String, Acknowledgment> acknowledgmentMap = getDefaultAcknowledgmentForUser(user, acknowledgmentKey);
+    when(acknowledgmentService.makeAcknowledgments(anyList(), any())).thenReturn(acknowledgmentMap);
     initResource();
 
-    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
-    Response response = userResource.postAcknowledgements(authUser, jsonString);
+    String jsonString = userResource.unmarshal(List.of(acknowledgmentKey));
+    Response response = userResource.postAcknowledgments(authUser, jsonString);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testPostAcknowledgementException(){
-    String acknowledgementKey = "key1";
-    doThrow(new RuntimeException("exception during post")).when(acknowledgementService).makeAcknowledgements(anyList(), any());
+  public void testPostAcknowledgmentException(){
+    String acknowledgmentKey = "key1";
+    doThrow(new RuntimeException("exception during post")).when(acknowledgmentService).makeAcknowledgments(anyList(), any());
     initResource();
-    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
+    String jsonString = userResource.unmarshal(List.of(acknowledgmentKey));
 
-    Response response = userResource.postAcknowledgements(authUser, jsonString);
+    Response response = userResource.postAcknowledgments(authUser, jsonString);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testPostAcknowledgementBadJson(){
-    doThrow(new RuntimeException("exception during post")).when(acknowledgementService).makeAcknowledgements(anyList(), any());
+  public void testPostAcknowledgmentBadJson(){
+    doThrow(new RuntimeException("exception during post")).when(acknowledgmentService).makeAcknowledgments(anyList(), any());
     initResource();
     String jsonString = "The quick brown fox jumped over the lazy dog.";
 
-    Response response = userResource.postAcknowledgements(authUser, jsonString);
+    Response response = userResource.postAcknowledgments(authUser, jsonString);
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testPostAcknowledgementEmptyJson(){
+  public void testPostAcknowledgmentEmptyJson(){
     initResource();
 
-    Response response = userResource.postAcknowledgements(authUser, "");
+    Response response = userResource.postAcknowledgments(authUser, "");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testPostAcknowledgementEmptyJsonList(){
+  public void testPostAcknowledgmentEmptyJsonList(){
     initResource();
 
-    Response response = userResource.postAcknowledgements(authUser, "[]");
+    Response response = userResource.postAcknowledgments(authUser, "[]");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testMissingAcknowledgement(){
-    String acknowledgementKey = "key1";
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+  public void testMissingAcknowledgment(){
+    String acknowledgmentKey = "key1";
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
+    Response response = userResource.getUserAcknowledgment(authUser, acknowledgmentKey);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetAcknowledgementException(){
-    String acknowledgementKey = "key1";
-    doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService).findAcknowledgementForUserByKey(any(), any());
+  public void testGetAcknowledgmentException(){
+    String acknowledgmentKey = "key1";
+    doThrow(new RuntimeException("some exception during get.")).when(acknowledgmentService).findAcknowledgmentForUserByKey(any(), any());
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
+    Response response = userResource.getUserAcknowledgment(authUser, acknowledgmentKey);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetAcknowledgementNull(){
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+  public void testGetAcknowledgmentNull(){
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser, null);
+    Response response = userResource.getUserAcknowledgment(authUser, null);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetUnsetAcknowledgementsForUser(){
-    when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(null);
+  public void testGetUnsetAcknowledgmentsForUser(){
+    when(acknowledgmentService.findAcknowledgmentsForUser(any())).thenReturn(null);
     initResource();
 
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgments(authUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetAcknowledgementsForUserException(){
-    doThrow(new RuntimeException("some get exception")).when(acknowledgementService).findAcknowledgementsForUser(any());
+  public void testGetAcknowledgmentsForUserException(){
+    doThrow(new RuntimeException("some get exception")).when(acknowledgmentService).findAcknowledgmentsForUser(any());
     initResource();
 
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgments(authUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetSetAcknowledgementForUser(){
-    String acknowledgementKey = "key1";
+  public void testGetSetAcknowledgmentForUser(){
+    String acknowledgmentKey = "key1";
     User user = createUserWithRole();
-    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    Map<String, Acknowledgment> acknowledgmentMap = getDefaultAcknowledgmentForUser(user, acknowledgmentKey);
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(acknowledgmentMap.get(acknowledgmentKey));
     initResource();
 
-    Response response = userResource.getUserAcknowledgement(authUser,acknowledgementKey);
+    Response response = userResource.getUserAcknowledgment(authUser,acknowledgmentKey);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testDeleteAcknowledgementForUser(){
-    String acknowledgementKey = "key1";
+  public void testDeleteAcknowledgmentForUser(){
+    String acknowledgmentKey = "key1";
     User user = createUserWithRole();
-    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    Map<String, Acknowledgment> acknowledgmentMap = getDefaultAcknowledgmentForUser(user, acknowledgmentKey);
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(acknowledgmentMap.get(acknowledgmentKey));
     initResource();
 
-    Response response = userResource.deleteUserAcknowledgement(authUser,acknowledgementKey);
+    Response response = userResource.deleteUserAcknowledgment(authUser,acknowledgmentKey);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testDeleteMissingAcknowledgementForUser(){
+  public void testDeleteMissingAcknowledgmentForUser(){
     User user = createUserWithRole();
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
-    Response response = userResource.deleteUserAcknowledgement(authUser, "key");
+    Response response = userResource.deleteUserAcknowledgment(authUser, "key");
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetAllAcknowledgements(){
-    String acknowledgementKey = "key1";
+  public void testGetAllAcknowledgments(){
+    String acknowledgmentKey = "key1";
     User user = createUserWithRole();
-    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user, acknowledgementKey);
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(acknowledgementMap.get(acknowledgementKey));
+    Map<String, Acknowledgment> acknowledgmentMap = getDefaultAcknowledgmentForUser(user, acknowledgmentKey);
+    when(acknowledgmentService.findAcknowledgmentForUserByKey(any(), any())).thenReturn(acknowledgmentMap.get(acknowledgmentKey));
     initResource();
 
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgments(authUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
-  private Map<String, Acknowledgement> getDefaultAcknowledgementForUser(User user, String acknowledgementKey) {
-    Acknowledgement ack = new Acknowledgement();
+  private Map<String, Acknowledgment> getDefaultAcknowledgmentForUser(User user, String acknowledgmentKey) {
+    Acknowledgment ack = new Acknowledgment();
     Timestamp timestamp = new Timestamp(new Date().getTime());
-    ack.setAckKey(acknowledgementKey);
+    ack.setAckKey(acknowledgmentKey);
     ack.setLastAcknowledged(timestamp);
     ack.setFirstAcknowledged(timestamp);
     ack.setUserId(user.getUserId());
-    HashMap<String, Acknowledgement> map = new HashMap<>();
-    map.put(acknowledgementKey, ack);
+    HashMap<String, Acknowledgment> map = new HashMap<>();
+    map.put(acknowledgmentKey, ack);
     return map;
   }
 

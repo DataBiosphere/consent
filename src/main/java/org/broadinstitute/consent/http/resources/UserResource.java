@@ -37,7 +37,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.authentication.GoogleUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.Acknowledgment;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
@@ -45,7 +45,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.AcknowledgmentService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -60,17 +60,17 @@ public class UserResource extends Resource {
     private final SamService samService;
     private final DatasetService datasetService;
     private final SupportRequestService supportRequestService;
-    private final AcknowledgementService acknowledgementService;
+    private final AcknowledgmentService acknowledgmentService;
 
     @Inject
     public UserResource(SamService samService, UserService userService,
                         DatasetService datasetService, SupportRequestService supportRequestService,
-                        AcknowledgementService acknowledgementService) {
+                        AcknowledgmentService acknowledgmentService) {
         this.samService = samService;
         this.userService = userService;
         this.datasetService = datasetService;
         this.supportRequestService = supportRequestService;
-        this.acknowledgementService = acknowledgementService;
+        this.acknowledgmentService = acknowledgmentService;
     }
 
     @GET
@@ -430,13 +430,13 @@ public class UserResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/acknowledgements")
+    @Path("/acknowledgments")
     @PermitAll
-    public Response getUserAcknowledgements(@Auth AuthUser authUser) {
+    public Response getUserAcknowledgments(@Auth AuthUser authUser) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(user);
-            return Response.ok().entity(acknowledgementMap).build();
+            Map<String, Acknowledgment> acknowledgmentMap = acknowledgmentService.findAcknowledgmentsForUser(user);
+            return Response.ok().entity(acknowledgmentMap).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
         }
@@ -444,12 +444,12 @@ public class UserResource extends Resource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/acknowledgements/{key}")
+    @Path("/acknowledgments/{key}")
     @PermitAll
-    public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+    public Response getUserAcknowledgment(@Auth AuthUser authUser, @PathParam("key") String key) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
+            Acknowledgment ack = acknowledgmentService.findAcknowledgmentForUserByKey(user, key);
             if (ack == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -461,16 +461,16 @@ public class UserResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Path ("/acknowledgements/{key}")
+    @Path ("/acknowledgments/{key}")
     @RolesAllowed(ADMIN)
-    public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+    public Response deleteUserAcknowledgment(@Auth AuthUser authUser, @PathParam("key") String key) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
-            Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
+            Acknowledgment ack = acknowledgmentService.findAcknowledgmentForUserByKey(user, key);
             if (Objects.isNull(ack)) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
-            acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
+            acknowledgmentService.deleteAcknowledgmentForUserByKey(user, key);
             return Response.ok().entity(ack).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -480,9 +480,9 @@ public class UserResource extends Resource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/acknowledgements")
+    @Path("/acknowledgments")
     @PermitAll
-    public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
+    public Response postAcknowledgments(@Auth AuthUser authUser, String json) {
         ArrayList<String> keys;
         try {
             Type listOfStringsType = new TypeToken<ArrayList<String>>() {}.getType();
@@ -496,8 +496,8 @@ public class UserResource extends Resource {
 
         try{
             User user = userService.findUserByEmail(authUser.getEmail());
-            Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(keys, user);
-            return Response.ok().entity(acknowledgementMap).build();
+            Map<String, Acknowledgment> acknowledgmentMap = acknowledgmentService.makeAcknowledgments(keys, user);
+            return Response.ok().entity(acknowledgmentMap).build();
         } catch (Exception e){
             return createExceptionResponse(e);
         }

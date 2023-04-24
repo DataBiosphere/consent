@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.AcknowledgmentDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.Acknowledgment;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Before;
@@ -25,11 +25,11 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class AcknowledgementServiceTest {
+public class AcknowledgmentServiceTest {
 
     @Mock
-    private static AcknowledgementDAO acknowledgementDAO;
-    private AcknowledgementService acknowledgementService;
+    private static AcknowledgmentDAO acknowledgmentDAO;
+    private AcknowledgmentService acknowledgmentService;
 
     @Before
     public void setUp() {
@@ -37,52 +37,52 @@ public class AcknowledgementServiceTest {
     }
 
     private void initService(){
-        acknowledgementService = new AcknowledgementService(acknowledgementDAO);
+        acknowledgmentService = new AcknowledgmentService(acknowledgmentDAO);
     }
 
     @Test
-    public void test_noAcknowledgementsForUser(){
+    public void test_noAcknowledgmentsForUser(){
         User user = new User(1, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-        when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
-        when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
+        when(acknowledgmentDAO.findAcknowledgmentsForUser(anyInt())).thenReturn(new ArrayList<>());
+        when(acknowledgmentDAO.findAcknowledgmentsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
-        assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
-        assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
+        assertTrue(acknowledgmentService.findAcknowledgmentsForUser(user).isEmpty());
+        assertNull(acknowledgmentService.findAcknowledgmentForUserByKey(user, "key1"));
     }
 
     @Test
-    public void test_makeAndDeleteAcknowledgementForUser(){
+    public void test_makeAndDeleteAcknowledgmentForUser(){
         User user = new User(2, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         String key = "key2";
         List<String> keys = List.of(key);
         Timestamp timestamp = new Timestamp(new Date().getTime());
-        Acknowledgement key2Acknowledgement = new Acknowledgement();
-        key2Acknowledgement.setUserId(user.getUserId());
-        key2Acknowledgement.setAckKey(key);
-        key2Acknowledgement.setFirstAcknowledged(timestamp);
-        key2Acknowledgement.setLastAcknowledged(timestamp);
-        List<Acknowledgement> acknowledgementList = List.of(key2Acknowledgement);
-        when(acknowledgementDAO.findAcknowledgementsForUser(any(), any())).thenReturn(acknowledgementList);
-        when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
-        when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgement);
-        doNothing().when(acknowledgementDAO).deleteAcknowledgement(anyString(), anyInt());
+        Acknowledgment key2Acknowledgment = new Acknowledgment();
+        key2Acknowledgment.setUserId(user.getUserId());
+        key2Acknowledgment.setAckKey(key);
+        key2Acknowledgment.setFirstAcknowledged(timestamp);
+        key2Acknowledgment.setLastAcknowledged(timestamp);
+        List<Acknowledgment> acknowledgmentList = List.of(key2Acknowledgment);
+        when(acknowledgmentDAO.findAcknowledgmentsForUser(any(), any())).thenReturn(acknowledgmentList);
+        when(acknowledgmentDAO.findAcknowledgmentsForUser(anyInt())).thenReturn(acknowledgmentList);
+        when(acknowledgmentDAO.findAcknowledgmentsByKeyForUser(anyString(), anyInt())).thenReturn(key2Acknowledgment);
+        doNothing().when(acknowledgmentDAO).deleteAcknowledgment(anyString(), anyInt());
         initService();
 
-        Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys,user);
+        Map<String, Acknowledgment> makeResponse = acknowledgmentService.makeAcknowledgments(keys,user);
         assertEquals(1, makeResponse.size());
         assertTrue(makeResponse.containsKey(key));
-        assertEquals(key2Acknowledgement, makeResponse.get(key));
+        assertEquals(key2Acknowledgment, makeResponse.get(key));
 
-        Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(user);
+        Map<String, Acknowledgment> lookupResponse = acknowledgmentService.findAcknowledgmentsForUser(user);
         assertEquals(1, lookupResponse.size());
         assertTrue(lookupResponse.containsKey(key));
-        assertEquals(key2Acknowledgement, lookupResponse.get(key));
+        assertEquals(key2Acknowledgment, lookupResponse.get(key));
 
-        Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user,key);
-        assertEquals(singleLookupResponse, key2Acknowledgement);
+        Acknowledgment singleLookupResponse = acknowledgmentService.findAcknowledgmentForUserByKey(user,key);
+        assertEquals(singleLookupResponse, key2Acknowledgment);
 
-        acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
+        acknowledgmentService.deleteAcknowledgmentForUserByKey(user, key);
     }
 }
