@@ -139,13 +139,13 @@ properties:
   irbProtocolExpiration:
     type: string
     description: IRB Protocol Expiration
-  dsAcknowledgement:
+  dsAcknowledgment:
     type: boolean
     description: Boolean value that represents user acknowledgment of disease studies restrictions (if applciable)
-  gsoAcknowledgement:
+  gsoAcknowledgment:
     type: boolean
     description: Boolean value that represents user acknowledgment of genetic studies limitations (if applicable)
-  pubAcknowledgement:
+  pubAcknowledgment:
     type: boolean
     description: Boolean value that represents user acknowledgment of publication requirements (if applicable)
   itDirector:

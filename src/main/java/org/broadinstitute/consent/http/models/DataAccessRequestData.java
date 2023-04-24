@@ -103,9 +103,9 @@ public class DataAccessRequestData {
     private List<Collaborator> labCollaborators;
     private List<Collaborator> internalCollaborators;
     private List<Collaborator> externalCollaborators;
-    private Boolean dsAcknowledgement;
-    private Boolean gsoAcknowledgement;
-    private Boolean pubAcknowledgement;
+    private Boolean dsAcknowledgment;
+    private Boolean gsoAcknowledgment;
+    private Boolean pubAcknowledgment;
     private String piName;
 
     @Override
@@ -607,28 +607,28 @@ public class DataAccessRequestData {
         this.signingOfficial = signingOfficial;
     }
 
-    public void setDSAcknowledgement(Boolean dsAcknowledgement) {
-        this.dsAcknowledgement = dsAcknowledgement;
+    public void setDSAcknowledgment(Boolean dsAcknowledgment) {
+        this.dsAcknowledgment = dsAcknowledgment;
     }
 
-    public Boolean getDSAcknowledgement() {
-        return dsAcknowledgement;
+    public Boolean getDSAcknowledgment() {
+        return dsAcknowledgment;
     }
 
-    public void setGSOAcknowledgement(Boolean gsoAcknowledgement) {
-        this.gsoAcknowledgement = gsoAcknowledgement;
+    public void setGSOAcknowledgment(Boolean gsoAcknowledgment) {
+        this.gsoAcknowledgment = gsoAcknowledgment;
     }
 
-    public Boolean getGSOAcknowledgement() {
-        return gsoAcknowledgement;
+    public Boolean getGSOAcknowledgment() {
+        return gsoAcknowledgment;
     }
 
-    public void setPubAcknowledgement(Boolean pubAcknowledgement) {
-        this.pubAcknowledgement = pubAcknowledgement;
+    public void setPubAcknowledgment(Boolean pubAcknowledgment) {
+        this.pubAcknowledgment = pubAcknowledgment;
     }
 
-    public Boolean getPubAcknowledgement() {
-        return pubAcknowledgement;
+    public Boolean getPubAcknowledgment() {
+        return pubAcknowledgment;
     }
 
     public String getPiName() {

@@ -1416,7 +1416,7 @@ paths:
             application/json:
               schema:
                 type: string
-  /api/user/acknowledgements/{key}:
+  /api/user/acknowledgments/{key}:
     get:
       summary: Get acknowledgment by key
       description: Obtains a specific acknowledgment by acknowledgment key.
@@ -1467,7 +1467,7 @@ paths:
           description: No acknowledgment found for the given key.
         500:
           description: Error processing the request.
-  /api/user/acknowledgements:
+  /api/user/acknowledgments:
     post:
       requestBody:
         required: true
