@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -326,7 +326,7 @@ public class DacDAOTest extends DAOTestHelper {
                 1,
                 "dataAccessCommitteeId",
                 dac.getDacId().toString(),
-                DatasetPropertyType.Number,
+                PropertyType.Number,
                 Date.from(Instant.now()))));
 
         List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());

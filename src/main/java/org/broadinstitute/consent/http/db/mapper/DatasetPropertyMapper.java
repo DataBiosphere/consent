@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DatasetPropertyMapper implements RowMapper<DatasetProperty>, RowMapperHelper {
 
@@ -17,7 +17,7 @@ public class DatasetPropertyMapper implements RowMapper<DatasetProperty>, RowMap
           r.getInt("property_key"),
           r.getString("schema_property"),
           r.getString("property_value"),
-          DatasetPropertyType.parse(r.getString("property_type")),
+          PropertyType.parse(r.getString("property_type")),
           r.getTimestamp("create_date")
       );
       if (hasColumn(r, "key")) {
