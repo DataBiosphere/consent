@@ -7,7 +7,6 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
-import javax.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.cloudstore.GCSStore;
@@ -30,6 +29,7 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -74,6 +74,8 @@ import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
+import javax.ws.rs.client.Client;
+
 public class ConsentModule extends AbstractModule {
 
     @Inject
@@ -87,6 +89,7 @@ public class ConsentModule extends AbstractModule {
     private final CounterDAO counterDAO;
     private final ElectionDAO electionDAO;
     private final VoteDAO voteDAO;
+    private final StudyDAO studyDAO;
     private final DatasetDAO datasetDAO;
     private final DatasetAssociationDAO datasetAssociationDAO;
     private final DacDAO dacDAO;
@@ -123,6 +126,7 @@ public class ConsentModule extends AbstractModule {
         this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
         this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
         this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
+        this.studyDAO = this.jdbi.onDemand(StudyDAO.class);
         this.datasetDAO = this.jdbi.onDemand(DatasetDAO.class);
         this.datasetAssociationDAO = this.jdbi.onDemand(DatasetAssociationDAO.class);
         this.dacDAO = this.jdbi.onDemand(DacDAO.class);
@@ -166,6 +170,7 @@ public class ConsentModule extends AbstractModule {
         container.setUserDAO(providesUserDAO());
         container.setUserRoleDAO(providesUserRoleDAO());
         container.setVoteDAO(providesVoteDAO());
+        container.setStudyDAO(providesStudyDAO());
         container.setInstitutionDAO(providesInstitutionDAO());
         container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
         container.setAcknowledgementDAO(providesAcknowledgementDAO());
@@ -375,6 +380,11 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteDAO providesVoteDAO() {
         return voteDAO;
+    }
+
+    @Provides
+    StudyDAO providesStudyDAO() {
+        return studyDAO;
     }
 
     @Provides

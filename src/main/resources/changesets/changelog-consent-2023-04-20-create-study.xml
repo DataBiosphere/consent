@@ -7,10 +7,10 @@
       <column name="study_id" autoIncrement="true" type="int">
         <constraints primaryKey="true"/>
       </column>
-      <column name="study_name" type="text" >
+      <column name="name" type="text" >
         <constraints nullable="false" unique="true"/>
       </column>
-      <column name="study_description" type="text" >
+      <column name="description" type="text" >
         <constraints nullable="false"/>
       </column>
       <column name="data_types" type="text[]" >
@@ -31,7 +31,7 @@
       <column name="study_id" type="int">
         <constraints foreignKeyName="fk_study_id" nullable="false"/>
       </column>
-      <column name="name" type="text" >
+      <column name="key" type="text" >
         <constraints nullable="false"/>
       </column>
       <column name="type" type="text" >

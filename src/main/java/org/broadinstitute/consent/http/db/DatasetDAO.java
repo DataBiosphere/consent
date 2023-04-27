@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.resources.Resource;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 @RegisterBeanMapper(value = User.class, prefix = "u")
+@RegisterBeanMapper(value = Study.class, prefix = "s")
 @RegisterRowMapper(DatasetMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface DatasetDAO extends Transactional<DatasetDAO> {
@@ -72,6 +74,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
             fso.file_storage_object_id AS fso_file_storage_object_id,
+            s.study_id AS s_study_id, s.name AS s_name,
+            s.description AS s_description, s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name, s.public_visibility AS s_public_visibility,
+            sp.study_property_id AS sp_study_property_id, sp.key AS sp_key,
+            sp.type AS sp_type, sp.value AS sp_value,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
             fso.category AS fso_category,
@@ -91,6 +98,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
         LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
         WHERE d.dataset_id = :datasetId
     """)
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);

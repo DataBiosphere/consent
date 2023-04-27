@@ -57,6 +57,7 @@ public class Dataset {
     private Boolean dacApproval;
 
     private User createUser;
+    private Study study;
 
     public Dataset() {
     }
@@ -343,6 +344,14 @@ public class Dataset {
                                 .anyMatch(
                                         (t) -> t.contains(q)
                                 ));
+    }
+
+    public Study getStudy() {
+        return study;
+    }
+
+    public void setStudy(Study study) {
+        this.study = study;
     }
 
     @Override

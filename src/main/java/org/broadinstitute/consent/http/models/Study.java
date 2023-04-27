@@ -1,19 +1,19 @@
 package org.broadinstitute.consent.http.models;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public class Study {
     private Integer studyId;
-    private String studyName;
-    private String studyDescription;
+    private String name;
+    private String description;
     private Boolean publicVisibility;
     private String piName;
     private Set<String> dataTypes;
-    private Set<Dataset> datasets;
+    private Set<Integer> datasetIds;
     private List<StudyProperty> properties;
     private FileStorageObject alternativeDataSharingPlan;
     private Date createDate;
@@ -30,20 +30,20 @@ public class Study {
         this.studyId = studyId;
     }
 
-    public String getStudyName() {
-        return studyName;
+    public String getName() {
+        return name;
     }
 
-    public void setStudyName(String studyName) {
-        this.studyName = studyName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getStudyDescription() {
-        return studyDescription;
+    public String getDescription() {
+        return description;
     }
 
-    public void setStudyDescription(String studyDescription) {
-        this.studyDescription = studyDescription;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Boolean getPublicVisibility() {
@@ -62,20 +62,6 @@ public class Study {
         this.piName = piName;
     }
 
-    public Set<Dataset> getDatasets() {
-        return datasets;
-    }
-
-    public void setDatasets(Set<Dataset> datasets) {
-        this.datasets = datasets;
-    }
-    public void addDataset(Dataset ds) {
-        if (Objects.isNull(this.datasets)) {
-            this.datasets = new HashSet<>();
-        }
-        this.datasets.add(ds);
-    }
-
     public Set<String> getDataTypes() {
         return dataTypes;
     }
@@ -92,6 +78,13 @@ public class Study {
         this.properties = properties;
     }
 
+    public void addProperty(StudyProperty prop) {
+        if (Objects.isNull(this.properties)) {
+            this.properties = new ArrayList<>();
+        }
+        this.properties.add(prop);
+    }
+
     public FileStorageObject getAlternativeDataSharingPlan() {
         return alternativeDataSharingPlan;
     }
@@ -99,6 +92,43 @@ public class Study {
     public void setAlternativeDataSharingPlan(FileStorageObject alternativeDataSharingPlan) {
         this.alternativeDataSharingPlan = alternativeDataSharingPlan;
     }
+    public Set<Integer> getDatasetIds() {
+        return datasetIds;
+    }
 
+    public void setDatasetIds(Set<Integer> datasetIds) {
+        this.datasetIds = datasetIds;
+    }
 
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
+
+    public Integer getCreateUserId() {
+        return createUserId;
+    }
+
+    public void setCreateUserId(Integer createUserId) {
+        this.createUserId = createUserId;
+    }
+
+    public Date getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setUpdateDate(Date updateDate) {
+        this.updateDate = updateDate;
+    }
+
+    public Integer getUpdateUserId() {
+        return updateUserId;
+    }
+
+    public void setUpdateUserId(Integer updateUserId) {
+        this.updateUserId = updateUserId;
+    }
 }
