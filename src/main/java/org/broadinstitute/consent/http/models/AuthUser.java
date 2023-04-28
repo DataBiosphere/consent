@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
 import java.security.Principal;
+import java.util.Objects;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
@@ -25,8 +26,12 @@ public class AuthUser implements Principal {
   }
 
   public AuthUser(GenericUser genericUser) {
-    this.name = genericUser.getName();
-    this.email = genericUser.getEmail();
+    if (Objects.nonNull(genericUser) && Objects.nonNull(genericUser.getName())) {
+      this.name = genericUser.getName();
+    }
+    if (Objects.nonNull(genericUser) && Objects.nonNull(genericUser.getEmail())) {
+      this.email = genericUser.getEmail();
+    }
     this.genericUser = genericUser;
   }
 
@@ -48,13 +53,8 @@ public class AuthUser implements Principal {
     return this;
   }
 
-  public GenericUser getGoogleUser() {
+  public GenericUser getGenericUser() {
     return genericUser;
-  }
-
-  public AuthUser setGoogleUser(GenericUser genericUser) {
-    this.genericUser = genericUser;
-    return this;
   }
 
   @Override

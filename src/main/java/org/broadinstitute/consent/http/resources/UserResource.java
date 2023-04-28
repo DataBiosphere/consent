@@ -372,7 +372,7 @@ public class UserResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response createResearcher(@Context UriInfo info, @Auth AuthUser user) {
-        GenericUser genericUser = user.getGoogleUser();
+        GenericUser genericUser = user.getGenericUser();
         if (genericUser == null || genericUser.getEmail() == null || genericUser.getName() == null) {
             return Response.
                     status(Response.Status.BAD_REQUEST).

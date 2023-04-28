@@ -133,7 +133,7 @@ public class DatasetResourceTest {
         when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
         when(datasetService.getDatasetDTO(any())).thenReturn(result);
-        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(authUser.getGenericUser()).thenReturn(genericUser);
         when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
@@ -227,7 +227,7 @@ public class DatasetResourceTest {
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         doThrow(new RuntimeException()).when(datasetService).createDatasetWithConsent(any(), any(), anyInt());
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
-        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(authUser.getGenericUser()).thenReturn(genericUser);
         when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
@@ -243,7 +243,7 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
-        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(authUser.getGenericUser()).thenReturn(genericUser);
         when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
@@ -317,7 +317,7 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
-        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(authUser.getGenericUser()).thenReturn(genericUser);
         when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);

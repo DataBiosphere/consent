@@ -258,7 +258,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
                 .setAuthenticator(new DefaultAuthenticator())
                 .setRealm(" ")
                 .buildAuthFilter();
-        List<AuthFilter> filters = Lists.newArrayList(
+        List<AuthFilter> filters = List.of(
                 defaultAuthFilter,
                 new OAuthCustomAuthFilter(authenticator, userRoleDAO));
         env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
