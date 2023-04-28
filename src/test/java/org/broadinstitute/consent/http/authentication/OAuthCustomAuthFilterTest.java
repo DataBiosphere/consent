@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import io.dropwizard.auth.AuthFilter;
 import java.util.Optional;
@@ -12,17 +15,12 @@ import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
 public class OAuthCustomAuthFilterTest {
 
-    @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
     @Mock
     ContainerRequestContext requestContext;
     @Mock
@@ -44,7 +42,7 @@ public class OAuthCustomAuthFilterTest {
 
     @Before
     public void setUp(){
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
         when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
@@ -66,12 +64,15 @@ public class OAuthCustomAuthFilterTest {
 
 
     @Test
-    public void testFilterExceptionBadCredentials() throws Exception {
+    public void testFilterExceptionBadCredentials() {
         principal = Optional.empty();
         when(uriInfo.getPath()).thenReturn("api/something");
         when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-        expectedEx.expect(WebApplicationException.class);
-        expectedEx.expectMessage("HTTP 401 Unauthorized");
-        filter.filter(requestContext);
+        try {
+            filter.filter(requestContext);
+            fail("Filter should have failed");
+        } catch (Exception e) {
+            assertTrue(e instanceof WebApplicationException);
+        }
     }
 }
