@@ -15,7 +15,7 @@ import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 public class User {
@@ -87,9 +87,9 @@ public class User {
         this.roles = roles;
     }
 
-    public User(GoogleUser googleUser) {
-        this.displayName = googleUser.getName();
-        this.email = googleUser.getEmail();
+    public User(GenericUser genericUser) {
+        this.displayName = genericUser.getName();
+        this.email = genericUser.getEmail();
     }
 
     /**

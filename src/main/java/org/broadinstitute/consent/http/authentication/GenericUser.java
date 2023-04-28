@@ -4,7 +4,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class GoogleUser {
+public class GenericUser {
 
     private String sub;
     private String name;
@@ -17,7 +17,7 @@ public class GoogleUser {
     private String locale;
     private String hd;
 
-    public GoogleUser() {}
+    public GenericUser() {}
 
     /**
      * Convenience method to deserialize from Google's userinfo API, e.g.:
@@ -36,11 +36,11 @@ public class GoogleUser {
      *
      * @param json The JSON string to deserialize
      */
-    GoogleUser(String json) {
+    GenericUser(String json) {
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
-        GoogleUser u = gson.fromJson(json, GoogleUser.class);
+        GenericUser u = gson.fromJson(json, GenericUser.class);
         this.setSub(u.getSub());
         this.setName(u.getName());
         this.setGivenName(u.getGivenName());
