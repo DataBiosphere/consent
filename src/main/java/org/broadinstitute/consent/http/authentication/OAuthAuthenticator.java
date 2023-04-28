@@ -5,18 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
+import java.util.HashMap;
+import java.util.Optional;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Optional;
 
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
@@ -37,8 +36,8 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
     public Optional<AuthUser> authenticate(String bearer) {
         try {
             validateAudience(bearer);
-            GoogleUser googleUser = getUserInfo(bearer);
-            AuthUser user = new AuthUser(googleUser).setAuthToken(bearer);
+            GenericUser genericUser = getUserInfo(bearer);
+            AuthUser user = new AuthUser(genericUser).setAuthToken(bearer);
             AuthUser userWithStatus = getUserWithStatusInfo(user);
             return Optional.of(userWithStatus);
         } catch (Exception e) {
@@ -94,15 +93,15 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
         return tokenInfo;
     }
 
-    private GoogleUser getUserInfo(String bearer) throws AuthenticationException {
-        GoogleUser u = null;
+    private GenericUser getUserInfo(String bearer) throws AuthenticationException {
+        GenericUser u = null;
         try {
             Response response = this.client.
                     target(USER_INFO_URL + bearer).
                     request(MediaType.APPLICATION_JSON_TYPE).
                     get(Response.class);
             String result = response.readEntity(String.class);
-            u = new GoogleUser(result);
+            u = new GenericUser(result);
         } catch (Exception e) {
             logger.error("Error getting user info from token: " + e.getMessage());
             unauthorized(bearer);

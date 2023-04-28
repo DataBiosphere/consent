@@ -35,7 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -372,15 +372,15 @@ public class UserResource extends Resource {
     @Produces("application/json")
     @PermitAll
     public Response createResearcher(@Context UriInfo info, @Auth AuthUser user) {
-        GoogleUser googleUser = user.getGoogleUser();
-        if (googleUser == null || googleUser.getEmail() == null || googleUser.getName() == null) {
+        GenericUser genericUser = user.getGoogleUser();
+        if (genericUser == null || genericUser.getEmail() == null || genericUser.getName() == null) {
             return Response.
                     status(Response.Status.BAD_REQUEST).
                     entity(new Error("Unable to verify google identity", Response.Status.BAD_REQUEST.getStatusCode())).
                     build();
         }
         try {
-            if (userService.findUserByEmail(googleUser.getEmail()) != null) {
+            if (userService.findUserByEmail(genericUser.getEmail()) != null) {
                 return Response.
                         status(Response.Status.CONFLICT).
                         entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
@@ -389,7 +389,7 @@ public class UserResource extends Resource {
         } catch (NotFoundException nfe) {
             // no-op, we expect to not find the new user in this case.
         }
-        User dacUser = new User(googleUser);
+        User dacUser = new User(genericUser);
         UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         dacUser.setRoles(Collections.singletonList(researcher));
         try {

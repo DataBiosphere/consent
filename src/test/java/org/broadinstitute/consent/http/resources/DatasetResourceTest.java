@@ -1,9 +1,40 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
+import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -29,38 +60,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 public class DatasetResourceTest {
 
     @Mock
@@ -78,7 +77,7 @@ public class DatasetResourceTest {
     private AuthUser authUser;
 
     @Mock
-    private GoogleUser googleUser;
+    private GenericUser genericUser;
 
     @Mock
     private User user;
@@ -134,8 +133,8 @@ public class DatasetResourceTest {
         when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
         when(datasetService.getDatasetDTO(any())).thenReturn(result);
-        when(authUser.getGoogleUser()).thenReturn(googleUser);
-        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -228,8 +227,8 @@ public class DatasetResourceTest {
         when(datasetService.getDatasetByName("test")).thenReturn(null);
         doThrow(new RuntimeException()).when(datasetService).createDatasetWithConsent(any(), any(), anyInt());
         when(datasetService.createConsentForDataset(any())).thenReturn(consent);
-        when(authUser.getGoogleUser()).thenReturn(googleUser);
-        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
         initResource();
@@ -244,8 +243,8 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.of(preexistingDataset));
-        when(authUser.getGoogleUser()).thenReturn(googleUser);
-        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
         when(user.hasUserRole(any())).thenReturn(true);
@@ -318,8 +317,8 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
         when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
         when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
-        when(authUser.getGoogleUser()).thenReturn(googleUser);
-        when(googleUser.getEmail()).thenReturn("email@email.com");
+        when(authUser.getGoogleUser()).thenReturn(genericUser);
+        when(genericUser.getEmail()).thenReturn("email@email.com");
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(user.getUserId()).thenReturn(1);
         when(user.hasUserRole(any())).thenReturn(true);

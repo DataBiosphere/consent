@@ -1,16 +1,15 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
-import org.broadinstitute.consent.http.authentication.GoogleUser;
-import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-
 import java.security.Principal;
+import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
 public class AuthUser implements Principal {
 
   private String authToken;
   private String email;
-  private GoogleUser googleUser;
+  private GenericUser genericUser;
   private String name;
   private UserStatusInfo userStatusInfo;
 
@@ -25,10 +24,10 @@ public class AuthUser implements Principal {
     return gson.fromJson(gson.toJson(this), AuthUser.class);
   }
 
-  public AuthUser(GoogleUser googleUser) {
-    this.name = googleUser.getName();
-    this.email = googleUser.getEmail();
-    this.googleUser = googleUser;
+  public AuthUser(GenericUser genericUser) {
+    this.name = genericUser.getName();
+    this.email = genericUser.getEmail();
+    this.genericUser = genericUser;
   }
 
   public String getAuthToken() {
@@ -49,12 +48,12 @@ public class AuthUser implements Principal {
     return this;
   }
 
-  public GoogleUser getGoogleUser() {
-    return googleUser;
+  public GenericUser getGoogleUser() {
+    return genericUser;
   }
 
-  public AuthUser setGoogleUser(GoogleUser googleUser) {
-    this.googleUser = googleUser;
+  public AuthUser setGoogleUser(GenericUser genericUser) {
+    this.genericUser = genericUser;
     return this;
   }
 
