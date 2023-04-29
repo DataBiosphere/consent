@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 
+import java.util.Objects;
+
 public class StudyProperty {
     private Integer studyPropertyId;
     private Integer studyId;
@@ -47,5 +49,18 @@ public class StudyProperty {
 
     public void setValue(Object value) {
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StudyProperty that = (StudyProperty) o;
+        return Objects.equals(studyPropertyId, that.studyPropertyId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(studyPropertyId);
     }
 }

@@ -23,18 +23,26 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
 
 
   public void reduceStudy(Study study, RowView rowView) {
-    if (hasColumn(rowView, "sp_key", String.class)
-            && hasColumn(rowView, "sp_property_value", String.class)) {
+
+    if (hasColumn(rowView, "s_dataset_id", Integer.class)) {
+      study.addDatasetId(rowView.getColumn("s_dataset_id", Integer.class));
+    }
+
+    if (hasColumn(rowView, "sp_study_property_id", Integer.class)) {
+      Integer studyPropertyId = rowView.getColumn("sp_study_property_id", Integer.class);
       String keyName = rowView.getColumn("sp_key", String.class);
       String propVal = rowView.getColumn("sp_value", String.class);
+      Integer studyId = rowView.getColumn("sp_study_id", Integer.class);
       PropertyType propType = PropertyType.String;
-      if (hasColumn(rowView, "sp_property_type", String.class)) {
-        propType = PropertyType.parse(rowView.getColumn("sp_property_type", String.class));
+      if (hasColumn(rowView, "sp_type", String.class)) {
+        propType = PropertyType.parse(rowView.getColumn("sp_type", String.class));
       }
 
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
         try {
           StudyProperty prop = new StudyProperty();
+          prop.setStudyPropertyId(studyPropertyId);
+          prop.setStudyId(studyId);
           prop.setStudyId(study.getStudyId());
           prop.setValue(propType.coerce(propVal));
           prop.setName(keyName);

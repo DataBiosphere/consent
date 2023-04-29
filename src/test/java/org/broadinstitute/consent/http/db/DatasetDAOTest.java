@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.db;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
@@ -854,6 +855,40 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.insertDatasetAudit(audit);
     }
 
+    @Test
+    public void testDatasetWithStudy() {
+        Study study = insertStudyWithProperties();
+
+        Dataset ds = createDataset();
+        createDataset(); // create unrelated datasets (for testing study's dataset ids)
+        Dataset otherDsOnStudy = createDataset();
+
+        datasetDAO.updateStudyId(ds.getDataSetId(), study.getStudyId());
+        datasetDAO.updateStudyId(otherDsOnStudy.getDataSetId(), study.getStudyId());
+
+        createDataset(); // create unrelated datasets (for testing study's dataset ids)
+
+
+        FileStorageObject fso = createFileStorageObject(study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+
+        ds = datasetDAO.findDatasetById(ds.getDataSetId());
+
+        assertNotNull(ds.getStudy());
+
+        // mapper ran properly
+        assertEquals(study.getName(), ds.getStudy().getName());
+        // reducer caught properties
+        assertEquals(
+                study.getProperties().size(),
+                ds.getStudy().getProperties().size());
+        // reducer caught FSO
+        assertNotNull(fso);
+        assertEquals(fso.getFileStorageObjectId(), ds.getStudy().getAlternativeDataSharingPlan().getFileStorageObjectId());
+        assertEquals(2, ds.getStudy().getDatasetIds().size());
+        assertTrue(ds.getStudy().getDatasetIds().contains(ds.getDataSetId()));
+        assertTrue(ds.getStudy().getDatasetIds().contains(otherDsOnStudy.getDataSetId()));
+    }
+
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
@@ -944,6 +979,46 @@ public class DatasetDAOTest extends DAOTestHelper {
             "Everything",
             "Group");
         return consentDAO.findConsentById(consentId);
+    }
+
+    private Study insertStudyWithProperties() {
+        User u = createUser();
+
+        String name = RandomStringUtils.randomAlphabetic(20);
+        String description = RandomStringUtils.randomAlphabetic(20);
+        List<String> dataTypes = List.of(
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20)
+        );
+        String piName = org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20);
+        Boolean publicVisibility = true;
+
+        Integer id = studyDAO.insertStudy(
+                name,
+                description,
+                piName,
+                dataTypes,
+                publicVisibility,
+                u.getUserId(),
+                Instant.now(),
+                UUID.randomUUID()
+        );
+
+        studyDAO.insertStudyProperty(
+                id,
+                "prop1",
+                PropertyType.String.toString(),
+                "asdf"
+        );
+
+        studyDAO.insertStudyProperty(
+                id,
+                "prop2",
+                PropertyType.Number.toString(),
+                "1"
+        );
+
+        return studyDAO.findStudyById(id);
     }
 
 }

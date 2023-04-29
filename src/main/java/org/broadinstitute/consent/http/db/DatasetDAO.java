@@ -74,11 +74,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
             fso.file_storage_object_id AS fso_file_storage_object_id,
-            s.study_id AS s_study_id, s.name AS s_name,
-            s.description AS s_description, s.data_types AS s_data_types,
-            s.pi_name AS s_pi_name, s.public_visibility AS s_public_visibility,
-            sp.study_property_id AS sp_study_property_id, sp.key AS sp_key,
-            sp.type AS sp_type, sp.value AS sp_value,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
             fso.category AS fso_category,
@@ -96,10 +107,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
-        LEFT JOIN consents c ON c.consent_id = ca.consent_id
         LEFT JOIN study s ON s.study_id = d.study_id
         LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
+        LEFT JOIN consents c ON c.consent_id = ca.consent_id
         WHERE d.dataset_id = :datasetId
     """)
     Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
@@ -114,6 +126,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -132,6 +160,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
         LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
         WHERE d.dataset_id in (<datasetIds>)
@@ -148,6 +179,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -166,7 +213,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
     """)
     List<Dataset> findAllDatasets();
@@ -189,6 +239,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -207,7 +273,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
         INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
         INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.email = :email
@@ -231,6 +300,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -249,7 +334,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
         WHERE d.dac_id = :dacId
         OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)
@@ -266,6 +354,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -284,7 +388,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
         WHERE d.name IS NOT NULL AND d.active = true
     """)
@@ -308,6 +415,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
             k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
             ca.consent_id, c.translated_use_restriction,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
             fso.file_storage_object_id AS fso_file_storage_object_id,
             fso.entity_id AS fso_entity_id,
             fso.file_name AS fso_file_name,
@@ -326,7 +449,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
         LEFT JOIN dictionary k ON k.key_id = dp.property_key
         LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
-        LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+        LEFT JOIN study s ON s.study_id = d.study_id
+        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
         LEFT JOIN consents c ON c.consent_id = ca.consent_id
         WHERE d.alias = :alias
     """)
@@ -334,16 +460,39 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(
-            "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-                    FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-                    " FROM dataset d " +
-                    " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-                    " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-                    " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-                    " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-                    " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-                    " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-                    " WHERE d.alias IN (<aliases>)")
+            """
+                    SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use,
+                        s.study_id AS s_study_id,
+                        s.name AS s_name,
+                        s.description AS s_description,
+                        s.data_types AS s_data_types,
+                        s.pi_name AS s_pi_name,
+                        s.create_user_id AS s_create_user_id,
+                        s.create_date AS s_create_date,
+                        s.update_user_id AS s_user_id,
+                        s.update_date AS s_update_date,
+                        s.public_visibility AS s_public_visibility,
+                        s_dataset.dataset_id AS s_dataset_id,
+                        sp.study_property_id AS sp_study_property_id,
+                        sp.study_id AS sp_study_id,
+                        sp.key AS sp_key,
+                        sp.value AS sp_value,
+                        sp.type AS sp_type,
+                    """
+                    + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
+                    """
+                        FROM dataset d
+                        LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+                        LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+                        LEFT JOIN dictionary k ON k.key_id = dp.property_key
+                        LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+                        LEFT JOIN study s ON s.study_id = d.study_id
+                        LEFT JOIN study_property sp ON sp.study_id = s.study_id
+                        LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+                        LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
+                        LEFT JOIN consents c ON c.consent_id = ca.consent_id
+                        WHERE d.alias IN (<aliases>)
+                   """ )
     List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
 
     @Deprecated
@@ -380,6 +529,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             + "WHERE dataset_id = :datasetId "
                 + "AND property_key = :propertyKey")
     void updateDatasetProperty(@Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
+
+    @SqlUpdate(
+        """
+        UPDATE dataset
+        SET study_id = :studyId
+        WHERE dataset_id = :datasetId
+        """
+    )
+    void updateStudyId(@Bind("datasetId") Integer datasetId, @Bind("studyId") Integer studyId);
 
     @SqlUpdate(
         "DELETE from dataset_property "
@@ -424,17 +582,40 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
     @UseRowReducer(DatasetReducer.class)
     @SqlQuery(
-        "SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use, " +
-            FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX +
-            " FROM dataset d " +
-            " LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id " +
-            " LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id " +
-            " LEFT JOIN dictionary k ON k.key_id = dp.property_key " +
-            " LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id " +
-            " LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false " +
-            " LEFT JOIN consents c ON c.consent_id = ca.consent_id " +
-            " WHERE d.dataset_id IN (<datasetIds>)" +
-            " ORDER BY d.dataset_id, k.display_order")
+        """
+        SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id, ca.consent_id, d.dac_id, c.translated_use_restriction, dar_ds_ids.id as in_use,
+            s.study_id AS s_study_id,
+            s.name AS s_name,
+            s.description AS s_description,
+            s.data_types AS s_data_types,
+            s.pi_name AS s_pi_name,
+            s.create_user_id AS s_create_user_id,
+            s.create_date AS s_create_date,
+            s.update_user_id AS s_user_id,
+            s.update_date AS s_update_date,
+            s.public_visibility AS s_public_visibility,
+            s_dataset.dataset_id AS s_dataset_id,
+            sp.study_property_id AS sp_study_property_id,
+            sp.study_id AS sp_study_id,
+            sp.key AS sp_key,
+            sp.value AS sp_value,
+            sp.type AS sp_type,
+        """
+        + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " "  +
+        """
+            FROM dataset d
+            LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+            LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+            LEFT JOIN dictionary k ON k.key_id = dp.property_key
+            LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+            LEFT JOIN study s ON s.study_id = d.study_id
+            LEFT JOIN study_property sp ON sp.study_id = s.study_id
+            LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+            LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
+            LEFT JOIN consents c ON c.consent_id = ca.consent_id
+            WHERE d.dataset_id IN (<datasetIds>)
+            ORDER BY d.dataset_id, k.display_order
+        """)
     Set<Dataset> findDatasetWithDataUseByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
     @Deprecated

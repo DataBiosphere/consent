@@ -73,6 +73,13 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
 
+    if (hasColumn(rowView, "s_study_id", Integer.class)) {
+      if (Objects.isNull(dataset.getStudy())) {
+        dataset.setStudy(rowView.getRow(Study.class));
+      }
+      new StudyReducer().reduceStudy(dataset.getStudy(), rowView);
+    }
+
     if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class)
       && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))
     ) {
@@ -97,12 +104,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     if (hasColumn(rowView, "u_user_id", Integer.class)) {
       User user = rowView.getRow(User.class);
       dataset.setCreateUser(user);
-    }
-
-    if (hasColumn(rowView, "s_study_id", Integer.class)) {
-      Study study = rowView.getRow(Study.class);
-      new StudyReducer().reduceStudy(study, rowView);
-      dataset.setStudy(study);
     }
 
     // The name property doesn't always come through, add it manually:

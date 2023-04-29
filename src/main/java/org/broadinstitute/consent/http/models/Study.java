@@ -1,10 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 public class Study {
     private Integer studyId;
@@ -12,14 +13,15 @@ public class Study {
     private String description;
     private Boolean publicVisibility;
     private String piName;
-    private Set<String> dataTypes;
+    private List<String> dataTypes;
     private Set<Integer> datasetIds;
-    private List<StudyProperty> properties;
+    private Set<StudyProperty> properties;
     private FileStorageObject alternativeDataSharingPlan;
     private Date createDate;
     private Integer createUserId;
     private Date updateDate;
     private Integer updateUserId;
+    private UUID uuid;
 
 
     public Integer getStudyId() {
@@ -62,25 +64,25 @@ public class Study {
         this.piName = piName;
     }
 
-    public Set<String> getDataTypes() {
+    public List<String> getDataTypes() {
         return dataTypes;
     }
 
-    public void setDataTypes(Set<String> dataTypes) {
+    public void setDataTypes(List<String> dataTypes) {
         this.dataTypes = dataTypes;
     }
 
-    public List<StudyProperty> getProperties() {
+    public Set<StudyProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(List<StudyProperty> properties) {
+    public void setProperties(Set<StudyProperty> properties) {
         this.properties = properties;
     }
 
     public void addProperty(StudyProperty prop) {
         if (Objects.isNull(this.properties)) {
-            this.properties = new ArrayList<>();
+            this.properties = new HashSet<>();
         }
         this.properties.add(prop);
     }
@@ -98,6 +100,14 @@ public class Study {
 
     public void setDatasetIds(Set<Integer> datasetIds) {
         this.datasetIds = datasetIds;
+    }
+
+    public void addDatasetId(Integer datasetId) {
+        if (Objects.isNull(this.datasetIds)) {
+            this.datasetIds = new HashSet<>();
+        }
+
+        this.datasetIds.add(datasetId);
     }
 
     public Date getCreateDate() {
@@ -130,5 +140,13 @@ public class Study {
 
     public void setUpdateUserId(Integer updateUserId) {
         this.updateUserId = updateUserId;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 }
