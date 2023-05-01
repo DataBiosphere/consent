@@ -9,6 +9,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -59,7 +60,16 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
             }
             return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
         } catch (NotFoundException e) {
-            logWarn("User not found: '" + authUser.getEmail());
+            // Try to post the user to Sam if they have not registered previously
+            try {
+                UserStatus userStatus = samService.postRegistrationInfo(authUser);
+                if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
+                    authUser.setEmail(userStatus.getUserInfo().getUserEmail());
+                }
+            } catch (Exception exc) {
+                // Same
+                logException("User not able to be registered: '" + authUser.getEmail(), exc);
+            }
         } catch (Throwable e) {
             logException("Exception retrieving Sam user info for '" + authUser.getEmail() + "'", new Exception(e.getMessage()));
         }
