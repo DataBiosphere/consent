@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -61,7 +60,6 @@ import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
-import org.broadinstitute.consent.http.resources.IndexerResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.LivenessResource;
@@ -99,10 +97,6 @@ import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.ontology.IndexOntologyService;
-import org.broadinstitute.consent.http.service.ontology.IndexerService;
-import org.broadinstitute.consent.http.service.ontology.IndexerServiceImpl;
-import org.broadinstitute.consent.http.service.ontology.StoreOntologyService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
@@ -204,16 +198,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.healthChecks().register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
         env.healthChecks().register(SG_CHECK, new SendGridHealthCheck(clientUtil, config.getMailConfiguration()));
 
-        final StoreOntologyService storeOntologyService = new StoreOntologyService(
-                googleStore,
-                config.getStoreOntologyConfiguration().getBucketSubdirectory(),
-                config.getStoreOntologyConfiguration().getConfigurationFileName());
         final NihService nihService = injector.getProvider(NihService.class).get();
-
-
-        final IndexOntologyService indexOntologyService = new IndexOntologyService(config.getElasticSearchConfiguration());
-        final IndexerService indexerService = new IndexerServiceImpl(storeOntologyService, indexOntologyService);
-
         // Custom Error handling. Expand to include other codes when necessary
         final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
         errorHandler.addErrorPage(404, "/error/404");
@@ -234,7 +219,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new ElectionResource(voteService, electionService));
         env.jersey().register(new EmailNotifierResource(emailService));
-        env.jersey().register(new IndexerResource(indexerService, googleStore));
         env.jersey().register(new InstitutionResource(userService, institutionService));
         env.jersey().register(new LibraryCardResource(userService, libraryCardService));
         env.jersey().register(new MatchResource(matchService));

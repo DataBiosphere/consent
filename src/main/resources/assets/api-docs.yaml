@@ -51,111 +51,6 @@ paths:
     $ref: './paths/mailByType.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
-  /api/ontology:
-    get:
-      summary: List Ontology Files
-      description: Returns description of the current ontology files that are indexed and stored.
-      tags:
-        - Ontology
-      responses:
-        200:
-          description: Returns the collection of current ontology file information.
-        400:
-          description: There was a problem retrieving the files
-    post:
-      summary: Upload Ontology File
-      description: Uploads and indexes an ontology file
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      parameters:
-        - name: metadata
-          schema:
-            type: string
-          in: formData
-          description: |
-            JSON object specifying the ontology file metadata. Prefix is "DUOS" or "DOID" and type is "Organization" or "Disease"
-            Examples:
-              `{ "ontology_file": { "prefix": "DUOS", "type": "Organization" } }`
-              `{ "ontology_file": { "prefix": "DOID", "type": "Disease" } }`
-          required: true
-        - name: ontology_file
-          schema:
-            type: file
-          in: formData
-          description: The uploaded ontology file
-          required: true
-      tags:
-        - Ontology
-      responses:
-        200:
-          description: Returns the result of the upload operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OntologyFile'
-        400:
-          description: There was a problem indexing the file and the results were not uploaded or indexed
-    put:
-      summary: Delete Indexed File
-      description: Delete an indexed ontology file.
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      tags:
-        - Ontology
-      responses:
-        200:
-          description: Successful file deletion
-        400:
-          description: There was a problem deleting the file.
-      parameters:
-        - name: fileURL
-          in: formData
-          description: Storage URL of the file to delete.
-          required: true
-          schema:
-            type: string
-  /api/ontology/file:
-    get:
-      summary: Get Ontology File
-      description: Get the specified ontology file by storage url
-      parameters:
-        - name: fileUrl
-          in: query
-          description: File URL
-          required: true
-          schema:
-            type: string
-        - name: fileName
-          in: query
-          description: File Name
-          required: true
-          schema:
-            type: string
-      tags:
-        - Ontology
-      responses:
-        200:
-          description: Specified file.
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-  /api/ontology/types:
-    get:
-      summary: Get Ontology Types
-      description: Get the allowed types for ontology file indexing purposes
-      tags:
-        - Ontology
-      responses:
-        200:
-          description: List of allowed types.
   /api/consent/cases/summary:
     get:
       summary: Get Consent Summary Cases
@@ -1987,20 +1882,6 @@ components:
         code:
           type: integer
           description: The response status code
-    OntologyFileMetaData:
-      type: object
-      properties:
-        prefix:
-          type: string
-          description: The prefix of the ontology file, i.e. "DUOS", "DOID", etc.
-        type:
-          type: string
-          description: The allowed type of ontology file, i.e. "Organization" or "Disease"
-    OntologyFile:
-      type: object
-      properties:
-        ontology_file:
-          $ref: '#/components/schemas/OntologyFileMetaData'
     Version:
       type: object
       properties:
