@@ -387,13 +387,6 @@
       <version>5.2.1</version>
     </dependency>
 
-<!--    &lt;!&ndash; SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 &ndash;&gt;-->
-<!--    <dependency>-->
-<!--      <groupId>commons-codec</groupId>-->
-<!--      <artifactId>commons-codec</artifactId>-->
-<!--      <version>1.15</version>-->
-<!--    </dependency>-->
-
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
@@ -605,13 +598,6 @@
       <version>2.2.0</version>
     </dependency>
 
-    <!-- Deprecated - TODO: Remove this when GCSStore is removed -->
-    <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20230301-2.0.0</version>
-    </dependency>
-
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
@@ -667,13 +653,6 @@
       <artifactId>elasticsearch-rest-client</artifactId>
       <version>8.7.0</version>
     </dependency>
-
-<!--    <dependency>-->
-<!--      <groupId>org.hamcrest</groupId>-->
-<!--      <artifactId>hamcrest-core</artifactId>-->
-<!--      <version>2.2</version>-->
-<!--      <scope>test</scope>-->
-<!--    </dependency>-->
 
     <dependency>
       <groupId>org.webjars</groupId>

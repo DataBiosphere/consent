@@ -37,7 +37,6 @@ import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
@@ -159,7 +158,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Clients
         final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
-        final GCSStore googleStore = injector.getProvider(GCSStore.class).get();
 
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
