@@ -15,10 +15,8 @@
     <maven.compiler.target>17</maven.compiler.target>
     <liquibase.version>4.21.1</liquibase.version>
     <dropwizard.version>2.1.6</dropwizard.version>
-    <owl.version>5.5.0</owl.version>
     <pact.version>4.5.6</pact.version>
     <postgres.version>42.6.0</postgres.version>
-    <rdf4j-rio.version>3.7.7</rdf4j-rio.version>
     <surefire.version>3.0.0</surefire.version>
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
@@ -389,12 +387,12 @@
       <version>5.2.1</version>
     </dependency>
 
-    <!-- SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 -->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-    </dependency>
+<!--    &lt;!&ndash; SourceClear fix https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/31917576 &ndash;&gt;-->
+<!--    <dependency>-->
+<!--      <groupId>commons-codec</groupId>-->
+<!--      <artifactId>commons-codec</artifactId>-->
+<!--      <version>1.15</version>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>com.sendgrid</groupId>
@@ -476,12 +474,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-jdbi3</artifactId>
       <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>stringtemplate</artifactId>
-      <version>4.0.2</version>
     </dependency>
 
     <dependency>
@@ -676,99 +668,12 @@
       <version>8.7.0</version>
     </dependency>
 
-    <!-- See https://broadinstitute-dsp.sourceclear.io/workspaces/jppForw/issues/vulnerabilities/11441966 -->
-    <!-- For all `rdf4j-rio-*` libraries, pulling in directly to evict older, transitive dependencies -->
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-binary</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-datatypes</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-trix</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-jsonld</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-languages</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-n3</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-nquads</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-ntriples</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-rdfjson</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-rdfxml</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-trig</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.rdf4j</groupId>
-      <artifactId>rdf4j-rio-turtle</artifactId>
-      <version>${rdf4j-rio.version}</version>
-    </dependency>
-    <!-- End of rdf4j-rio-* fixes -->
-
-    <dependency>
-      <groupId>net.sourceforge.owlapi</groupId>
-      <artifactId>owlapi-distribution</artifactId>
-      <version>${owl.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
-      <version>2.2</version>
-      <scope>test</scope>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.hamcrest</groupId>-->
+<!--      <artifactId>hamcrest-core</artifactId>-->
+<!--      <version>2.2</version>-->
+<!--      <scope>test</scope>-->
+<!--    </dependency>-->
 
     <dependency>
       <groupId>org.webjars</groupId>
