@@ -70,7 +70,6 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
                     throw new ServerErrorException("User not able to be registered", 500);
                 }
             } catch (Exception exc) {
-                // Same
                 logException("User not able to be registered: '" + authUser.getEmail(), exc);
             }
         } catch (Throwable e) {
