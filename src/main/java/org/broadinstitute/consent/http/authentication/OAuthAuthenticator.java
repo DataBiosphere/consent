@@ -5,6 +5,7 @@ import io.dropwizard.auth.Authenticator;
 import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -65,6 +66,8 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
                 UserStatus userStatus = samService.postRegistrationInfo(authUser);
                 if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
                     authUser.setEmail(userStatus.getUserInfo().getUserEmail());
+                } else {
+                    throw new ServerErrorException("User not able to be registered", 500);
                 }
             } catch (Exception exc) {
                 // Same
