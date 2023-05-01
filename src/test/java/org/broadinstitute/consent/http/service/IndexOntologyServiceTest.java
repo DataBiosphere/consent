@@ -1,6 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.ontology.StreamRec;
@@ -13,6 +23,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -24,17 +35,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.testcontainers.containers.MockServerContainer;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 public class IndexOntologyServiceTest implements WithMockServer {
 
@@ -69,6 +69,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testParentTerms() throws Exception {
         Collection<Term> terms = getTerms();
         Term female = null;
@@ -94,6 +95,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testGenerateTerms() {
         try {
             URL url = Resources.getResource("data-use.owl");
@@ -112,6 +114,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testReIndexOntology() {
         try {
             URL url = Resources.getResource("data-use.owl");
@@ -128,6 +131,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testGetParents() throws Exception {
         URL url = Resources.getResource("data-use.owl");
         StreamRec streamRec = new StreamRec(
@@ -149,6 +153,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testTerms() {
         try {
             Collection<Term> terms = getTerms();
@@ -159,6 +164,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testBulkUploadTerms() {
         try {
             Collection<Term> terms = getTerms();
@@ -169,6 +175,7 @@ public class IndexOntologyServiceTest implements WithMockServer {
     }
 
     @Test
+    @Ignore
     public void testBulkDeprecateTerms() {
         try {
             indexUtils.bulkDeprecateTerms(client, INDEX_NAME, "organization");

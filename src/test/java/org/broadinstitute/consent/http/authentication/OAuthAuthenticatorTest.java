@@ -2,12 +2,17 @@ package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
 import java.util.Optional;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -88,6 +93,22 @@ public class OAuthAuthenticatorTest {
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertTrue(authUser.isPresent());
     assertEquals(authUser.get().getAuthToken(), bearerToken);
+  }
+
+  /**
+   * Test that in the case of a Sam user lookup failure, we then try to register the user
+   */
+  @Test
+  public void testAuthenticateGetUserWithStatusInfoFailurePostUserSuccess() throws Exception {
+    String bearerToken = "bearer-token";
+    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    oAuthAuthenticator = new OAuthAuthenticator(client, samService);
+    spy(samService);
+
+    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
+    assertTrue(authUser.isPresent());
+    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    verify(samService, times(1)).postRegistrationInfo(any());
   }
 
 }
