@@ -154,7 +154,7 @@ public class MatchServiceTest {
         when(response.getStatus()).thenReturn(200);
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-        when(clientMock.target(config.getMatchURL_v2())).thenReturn(target);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
         spy(datasetDAO);
         initService();
 
@@ -262,6 +262,6 @@ public class MatchServiceTest {
     }
 
     private Match createMatchObject() {
-        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, false, new Date(), MatchAlgorithm.V2.getVersion());
+        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, false, new Date(), MatchAlgorithm.V3.getVersion());
     }
 }

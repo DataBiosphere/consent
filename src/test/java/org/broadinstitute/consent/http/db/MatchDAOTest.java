@@ -187,7 +187,7 @@ public class MatchDAOTest extends DAOTestHelper {
   public void testInsertFailureReason() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -207,7 +207,7 @@ public class MatchDAOTest extends DAOTestHelper {
   public void testDeleteFailureReasonsByConsentIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -228,7 +228,7 @@ public class MatchDAOTest extends DAOTestHelper {
   public void testDeleteFailureReasonsByPurposeIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V2.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
