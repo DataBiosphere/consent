@@ -81,6 +81,15 @@ public class DataAccessRequestData {
     @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
     private List<Integer> datasetIds;
 
+    // Progress Report/Closeout Fields
+    private String progressReportSummary;
+    private String intellectualPropertySummary;
+    private List<Publication> publications;
+    private List<Presentation> presentations;
+    private DataManagementIncident dmi;
+    private String researchPlans;
+    private CloseoutSupplement closeoutSupplement;
+
     private Boolean anvilUse;
     private Boolean cloudUse;
     private Boolean localUse;
@@ -655,5 +664,64 @@ public class DataAccessRequestData {
                 data.setOntologies(filteredEntries);
             }
         }
+    }
+
+    public String getProgressReportSummary() {
+        return progressReportSummary;
+    }
+
+    public void setProgressReportSummary(String progressReportSummary) {
+        this.progressReportSummary = progressReportSummary;
+    }
+
+    public String getIntellectualPropertySummary() {
+        return intellectualPropertySummary;
+    }
+
+    public void setIntellectualPropertySummary(String intellectualPropertySummary) {
+        this.intellectualPropertySummary = intellectualPropertySummary;
+    }
+
+    public List<Publication> getPublications() {
+        return publications;
+    }
+
+    public void setPublications(
+        List<Publication> publications) {
+        this.publications = publications;
+    }
+
+    public List<Presentation> getPresentations() {
+        return presentations;
+    }
+
+    public void setPresentations(
+        List<Presentation> presentations) {
+        this.presentations = presentations;
+    }
+
+    public DataManagementIncident getDmi() {
+        return dmi;
+    }
+
+    public void setDmi(DataManagementIncident dmi) {
+        this.dmi = dmi;
+    }
+
+    public String getResearchPlans() {
+        return researchPlans;
+    }
+
+    public void setResearchPlans(String researchPlans) {
+        this.researchPlans = researchPlans;
+    }
+
+    public CloseoutSupplement getCloseoutSupplement() {
+        return closeoutSupplement;
+    }
+
+    public void setCloseoutSupplement(
+        CloseoutSupplement closeoutSupplement) {
+        this.closeoutSupplement = closeoutSupplement;
     }
 }
