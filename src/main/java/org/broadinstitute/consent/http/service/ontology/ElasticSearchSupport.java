@@ -6,11 +6,6 @@ import org.apache.http.message.BasicHeader;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.elasticsearch.client.RestClient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.util.stream.Collectors;
-
 @SuppressWarnings("WeakerAccess")
 public class ElasticSearchSupport {
 
@@ -19,16 +14,9 @@ public class ElasticSearchSupport {
             getServers().
             stream().
             map(server -> new HttpHost(server, configuration.getPort(), "http")).
-            collect(Collectors.toList()).toArray(new HttpHost[configuration.getServers().size()]);
+            toList().
+            toArray(new HttpHost[configuration.getServers().size()]);
         return RestClient.builder(hosts).build();
-    }
-
-    public static String getIndexPath(String index) {
-        return "/" + index;
-    }
-
-    public static String getTermIdPath(String index, String termId) throws UnsupportedEncodingException {
-        return "/" + index + "/ontology_term/" + URLEncoder.encode(termId, Charset.defaultCharset());
     }
 
     public static String getClusterHealthPath() {

@@ -5,11 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.db.DataSourceFactory;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsentConfiguration extends Configuration {
@@ -62,12 +61,6 @@ public class ConsentConfiguration extends Configuration {
     @JsonProperty
     private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
 
-    @Valid
-    @NotNull
-    @JsonProperty
-    private final StoreOntologyConfiguration storeOntology = new StoreOntologyConfiguration();
-
-
     public DataSourceFactory getDataSourceFactory() {
         return database;
     }
@@ -98,10 +91,6 @@ public class ConsentConfiguration extends Configuration {
 
     public ElasticSearchConfiguration getElasticSearchConfiguration() {
         return elasticSearch;
-    }
-
-    public StoreOntologyConfiguration getStoreOntologyConfiguration() {
-        return storeOntology;
     }
 
     public List<String> getDatasets() {
