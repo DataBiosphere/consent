@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -9,7 +10,6 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -179,12 +179,12 @@ public class StudyDAOTest extends DAOTestHelper {
 
     @Test
     public void testIncludesDatasetIds() {
-        Study s = this.insertStudyWithProperties();
+        Study s = insertStudyWithProperties();
 
         insertDataset();
-        Dataset ds1 = this.insertDatasetForStudy(s.getStudyId());
+        Dataset ds1 = insertDatasetForStudy(s.getStudyId());
         insertDataset();
-        Dataset ds2 = this.insertDatasetForStudy(s.getStudyId());
+        Dataset ds2 = insertDatasetForStudy(s.getStudyId());
         insertDataset();
 
         s = studyDAO.findStudyById(s.getStudyId());
@@ -195,9 +195,9 @@ public class StudyDAOTest extends DAOTestHelper {
     }
 
     private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-        String fileName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
-        String bucketName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
-        String gcsFileUri = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
+        String fileName = RandomStringUtils.randomAlphabetic(10);
+        String bucketName = RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
         User createUser = createUser();
         Instant createDate = Instant.now();
 
@@ -216,13 +216,13 @@ public class StudyDAOTest extends DAOTestHelper {
     private Study insertStudyWithProperties() {
         User u = createUser();
 
-        String name = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20);
-        String description = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20);
+        String name = RandomStringUtils.randomAlphabetic(20);
+        String description = RandomStringUtils.randomAlphabetic(20);
         List<String> dataTypes = List.of(
-                org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20),
-                org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20)
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20)
         );
-        String piName = org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20);
+        String piName = RandomStringUtils.randomAlphabetic(20);
         Boolean publicVisibility = true;
 
         Integer id = studyDAO.insertStudy(
@@ -255,9 +255,9 @@ public class StudyDAOTest extends DAOTestHelper {
 
     private Dataset insertDatasetForStudy(Integer studyId) {
         User user = createUser();
-        String name = "Name_" + org.apache.commons.lang3.RandomStringUtils.random(20, true, true);
+        String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
-        String objectId = "Object ID_" + org.apache.commons.lang3.RandomStringUtils.random(20, true, true);
+        String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), null);
 
@@ -268,9 +268,9 @@ public class StudyDAOTest extends DAOTestHelper {
 
     private Dataset insertDataset() {
         User user = createUser();
-        String name = "Name_" + org.apache.commons.lang3.RandomStringUtils.random(20, true, true);
+        String name = "Name_" + RandomStringUtils.random(20, true, true);
         Timestamp now = new Timestamp(new Date().getTime());
-        String objectId = "Object ID_" + org.apache.commons.lang3.RandomStringUtils.random(20, true, true);
+        String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true, dataUse.toString(), null);
         return datasetDAO.findDatasetById(id);
