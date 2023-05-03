@@ -894,7 +894,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                 RandomStringUtils.randomAlphabetic(20),
                 RandomStringUtils.randomAlphabetic(20)
         );
-        String piName = org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20);
+        String piName = RandomStringUtils.randomAlphabetic(20);
         Boolean publicVisibility = true;
 
         Integer id = studyDAO.insertStudy(
