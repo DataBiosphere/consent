@@ -1,0 +1,19 @@
+package org.broadinstitute.consent.http.models.matching;
+
+public enum DataUseMatchResultType {
+    APPROVE,
+    DENY,
+    ABSTAIN;
+
+    public static Boolean Approve(DataUseMatchResultType x) {
+        return x == APPROVE;
+    }
+
+    public static Boolean Deny(DataUseMatchResultType x) {
+        return x == DENY;
+    }
+
+    public static Boolean Abstain(DataUseMatchResultType x) {
+        return x == ABSTAIN;
+    }
+}
