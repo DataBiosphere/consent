@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.matching;
 
+// Copied from MatchResultPair in consent-ontology
 public enum DataUseMatchResultType {
     APPROVE,
     DENY,
