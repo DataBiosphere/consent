@@ -47,13 +47,12 @@ properties:
     type: boolean
     description: Public Visibility of this study
   nihAnvilUse:
-    type: array
-    items:
-      type: string
-      enum:
-        - I did
-        - I will
-        - 'No'
+    type: string
+    enum:
+      - 'I am NHGRI funded and I have a dbGaP PHS ID already'
+      - 'I am NHGRI funded and I do not have a dbGaP PHS ID'
+      - 'I am not NHGRI funded but I am seeking to submit data to AnVIL'
+      - 'I am not NHGRI funded and do not plan to store data in AnVIL'
   submittingToAnvil:
     type: boolean
     description: Are you planning to submit to AnVIL?
@@ -164,7 +163,7 @@ properties:
   controlledAccessRequiredForGenomicSummaryResultsGSR:
     type: boolean
     description: Is controlled access required for genomic summary results (GSR)?
-  controlledAccessRequiredForGenomicSummaryResultsGSRNotRequiredExplanation:
+  controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation:
     type: string
     description: If no, explain why controlled access is required for GSR
   alternativeDataSharingPlan:
@@ -214,9 +213,7 @@ properties:
     enum:
       - Controlled Access
       - Open Access
-  dataAccessCommitteeId:
-    type: number
-    description: Data Access Committee ID
+
   consentGroups:
     type: array
     description: Consent Groups
@@ -224,17 +221,11 @@ properties:
       "$ref": "#/$defs/consentGroup"
 required:
   - studyName
-  - studyType
   - studyDescription
   - dataTypes
-  - fileTypes
-  - phenotypeIndication
-  - species
   - piName
   - dataSubmitterUserId
-  - dataCustodianEmail
   - publicVisibility
-  - dataAccessCommitteeId
   - consentGroups
 "$defs":
   fileTypeObject:
@@ -272,6 +263,9 @@ required:
       generalResearchUse:
         type: boolean
         description: General Research Use
+      openAccess:
+        type: boolean
+        description: Open Access
       hmb:
         type: boolean
         description: Health/Medical/Biomedical Research Use
@@ -286,6 +280,9 @@ required:
       otherPrimary:
         type: string
         description: Other
+      dataAccessCommitteeId:
+        type: number
+        description: Data Access Committee ID
       nmds:
         type: boolean
         description: No Methods Development or validation studies (NMDS)
@@ -318,15 +315,13 @@ required:
         type: string
         description: Other
       dataLocation:
-        type: array
         description: Data Location
-        items:
-          type: string
-          enum:
-            - AnVIL Workspace
-            - Terra Workspace
-            - TDR Location
-            - Not Determined
+        type: string
+        enum:
+          - AnVIL Workspace
+          - Terra Workspace
+          - TDR Location
+          - Not Determined
       url:
         type: string
         format: uri
