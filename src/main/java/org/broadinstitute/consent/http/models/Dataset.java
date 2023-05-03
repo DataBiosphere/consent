@@ -50,7 +50,6 @@ public class Dataset {
     private Boolean deletable;
 
     private FileStorageObject nihInstitutionalCertificationFile;
-    private FileStorageObject alternativeDataSharingPlanFile;
 
     private Set<DatasetProperty> properties;
 
@@ -373,14 +372,6 @@ public class Dataset {
 
     public void setNihInstitutionalCertificationFile(FileStorageObject nihInstitutionalCertificationFile) {
         this.nihInstitutionalCertificationFile = nihInstitutionalCertificationFile;
-    }
-
-    public FileStorageObject getAlternativeDataSharingPlanFile() {
-        return alternativeDataSharingPlanFile;
-    }
-
-    public void setAlternativeDataSharingPlanFile(FileStorageObject alternativeDataSharingPlanFile) {
-        this.alternativeDataSharingPlanFile = alternativeDataSharingPlanFile;
     }
 
     public User getCreateUser() {

@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 
@@ -45,13 +46,15 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
           prop.setStudyId(studyId);
           prop.setStudyId(study.getStudyId());
           prop.setValue(propType.coerce(propVal));
-          prop.setName(keyName);
+          prop.setKey(keyName);
           prop.setType(propType);
 
           study.addProperty(prop);
         } catch (Exception e) {
           // do nothing.
         }
+      } else if (Objects.isNull(study.getProperties())) {
+        study.setProperties(new HashSet<>());
       }
     }
 

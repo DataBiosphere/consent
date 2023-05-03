@@ -91,11 +91,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
             dataset.setNihInstitutionalCertificationFile(fileStorageObject);
           }
         }
-        case ALTERNATIVE_DATA_SHARING_PLAN -> {
-          if (isFileNewer(fileStorageObject, dataset.getAlternativeDataSharingPlanFile())) {
-            dataset.setAlternativeDataSharingPlanFile(fileStorageObject);
-          }
-        }
         default -> {
         }
       }
