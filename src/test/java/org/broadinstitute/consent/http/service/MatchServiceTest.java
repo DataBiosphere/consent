@@ -262,6 +262,6 @@ public class MatchServiceTest {
     }
 
     private Match createMatchObject() {
-        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, false, new Date(), MatchAlgorithm.V3.getVersion());
+        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, true, false, new Date(), MatchAlgorithm.V3.getVersion());
     }
 }

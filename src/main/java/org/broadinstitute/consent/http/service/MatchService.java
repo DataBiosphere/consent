@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -28,6 +27,9 @@ import org.broadinstitute.consent.http.models.matching.DataUseRequestMatchingObj
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.client.ClientProperties;
+
+import static org.broadinstitute.consent.http.models.Match.matchFailure;
+import static org.broadinstitute.consent.http.models.Match.matchSuccess;
 
 public class MatchService implements ConsentLogger {
     private final MatchDAO matchDAO;
@@ -124,7 +126,7 @@ public class MatchService implements ConsentLogger {
                 } catch (Exception e) {
                     String message = "Error finding single match for purpose: " + dar.getReferenceId();
                     logWarn(message);
-                    matches.add(new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V3, List.of(message)));
+                    matches.add(matchFailure(dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
                 }
             }
         });
@@ -144,15 +146,14 @@ public class MatchService implements ConsentLogger {
                 try {
                     matches.add(singleEntitiesMatchV3(d, dar));
                 } catch (Exception e) {
-                    logWarn("Error finding  matches for consent: " + consentId);
-                    matches.add(new Match(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V3, List.of()));
+                    logWarn("Error finding matches for consent: " + consentId);
+                    matches.add(matchFailure(consentId, dar.getReferenceId(), List.of()));
                 }
             });
         });
         return matches;
     }
 
-    // TODO: add abstain case
     private Match singleEntitiesMatchV3(Dataset dataset, DataAccessRequest dar) {
         if (Objects.isNull(dataset)) {
             logWarn("Dataset is null");
@@ -166,12 +167,14 @@ public class MatchService implements ConsentLogger {
         DataUseRequestMatchingObject requestObject = createRequestObject(dataset, dar);
         String json = new Gson().toJson(requestObject);
         Response res = matchServiceTargetV3.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        String datasetId = dataset.getDatasetIdentifier();
+        String darReferenceId = dar.getReferenceId();
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             String stringEntity = res.readEntity(String.class);
             DataUseResponseMatchingObject entity = new Gson().fromJson(stringEntity, DataUseResponseMatchingObject.class);
-            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V3, entity.getFailureReasons());
+            match = matchSuccess(datasetId, darReferenceId, entity.getResult(), entity.getFailureReasons());
         } else {
-            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V3, List.of());
+            match = matchFailure(datasetId, darReferenceId, List.of());
         }
         return match;
     }
