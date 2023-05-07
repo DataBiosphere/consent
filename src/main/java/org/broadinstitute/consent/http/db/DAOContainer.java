@@ -22,6 +22,7 @@ public class DAOContainer {
   private UserDAO userDAO;
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
+  private StudyDAO studyDAO;
   private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
   private FileStorageObjectDAO fileStorageObjectDAO;
@@ -151,6 +152,14 @@ public class DAOContainer {
 
   public void setVoteDAO(VoteDAO voteDAO) {
     this.voteDAO = voteDAO;
+  }
+
+  public StudyDAO getStudyDAO() {
+    return studyDAO;
+  }
+
+  public void setStudyDAO(StudyDAO studyDAO) {
+    this.studyDAO = studyDAO;
   }
 
   public ConsentAuditDAO getConsentAuditDAO() {

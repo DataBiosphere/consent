@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -544,7 +544,7 @@ public class VoteServiceTest {
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
-        depositorProp.setPropertyType(DatasetPropertyType.String);
+        depositorProp.setPropertyType(PropertyType.String);
 
         DataAccessRequest dar1 = new DataAccessRequest();
         DataAccessRequestData data1 = new DataAccessRequestData();
@@ -606,7 +606,7 @@ public class VoteServiceTest {
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
-        depositorProp.setPropertyType(DatasetPropertyType.String);
+        depositorProp.setPropertyType(PropertyType.String);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -788,7 +788,7 @@ public class VoteServiceTest {
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
-        depositorProp.setPropertyType(DatasetPropertyType.String);
+        depositorProp.setPropertyType(PropertyType.String);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);
@@ -852,7 +852,7 @@ public class VoteServiceTest {
         DatasetProperty depositorProp = new DatasetProperty();
         depositorProp.setPropertyName("Data Depositor");
         depositorProp.setPropertyValue("depositor@test.com");
-        depositorProp.setPropertyType(DatasetPropertyType.String);
+        depositorProp.setPropertyType(PropertyType.String);
 
         Dataset d1 = new Dataset();
         d1.setDataSetId(1);

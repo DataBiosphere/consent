@@ -9,7 +9,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
@@ -77,6 +76,7 @@ public class DAOTestHelper {
     protected static ElectionDAO electionDAO;
     protected static UserRoleDAO userRoleDAO;
     protected static VoteDAO voteDAO;
+    protected static StudyDAO studyDAO;
     protected static DataAccessRequestDAO dataAccessRequestDAO;
     protected static MatchDAO matchDAO;
     protected static MailMessageDAO mailMessageDAO;
@@ -141,6 +141,7 @@ public class DAOTestHelper {
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
+        studyDAO = jdbi.onDemand(StudyDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         matchDAO = jdbi.onDemand(MatchDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
@@ -177,8 +178,10 @@ public class DAOTestHelper {
         testingDAO.deleteAllDatasetProperties();
         testingDAO.deleteAllDictionaryTerms();
         testingDAO.deleteAllDatasetAssociations();
-        testingDAO.deleteAllDatasetAudits();;
+        testingDAO.deleteAllDatasetAudits();
         testingDAO.deleteAllDatasets();
+        testingDAO.deleteAllStudyProperties();
+        testingDAO.deleteAllStudies();
         testingDAO.deleteAllDacUserRoles();
         testingDAO.deleteAllDacs();
         testingDAO.deleteAllLibraryCards();

@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -560,7 +560,7 @@ public class DatasetServiceTest {
         DatasetProperty ds1PI = new DatasetProperty();
         ds1PI.setPropertyName("Principal Investigator(PI)");
         ds1PI.setPropertyValue("John Doe");
-        ds1PI.setPropertyType(DatasetPropertyType.String);
+        ds1PI.setPropertyType(PropertyType.String);
         ds1.setProperties(Set.of(ds1PI));
 
         Dataset ds2 = new Dataset();
@@ -569,7 +569,7 @@ public class DatasetServiceTest {
         DatasetProperty ds2PI = new DatasetProperty();
         ds2PI.setPropertyName("Principal Investigator(PI)");
         ds2PI.setPropertyValue("Sally Doe");
-        ds2PI.setPropertyType(DatasetPropertyType.String);
+        ds2PI.setPropertyType(PropertyType.String);
         ds2.setProperties(Set.of(ds2PI));
 
         User u = new User();
@@ -867,7 +867,7 @@ public class DatasetServiceTest {
                 new DatasetProperty(1,
                         i,
                         "Test Value" + RandomStringUtils.randomAlphanumeric(25),
-                        DatasetPropertyType.String,
+                        PropertyType.String,
                         new Date())
             ).collect(Collectors.toSet());
     }

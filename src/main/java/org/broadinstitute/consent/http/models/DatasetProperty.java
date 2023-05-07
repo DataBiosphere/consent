@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.common.base.Objects;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 
 import java.util.Date;
 
@@ -14,7 +14,7 @@ public class DatasetProperty {
     private Object propertyValue;
     private Date createDate;
     private String schemaProperty;
-    private DatasetPropertyType propertyType;
+    private PropertyType propertyType;
 
     public DatasetProperty(){
     }
@@ -24,7 +24,7 @@ public class DatasetProperty {
                            Integer dataSetId,
                            Integer propertyKey,
                            String propertyValue,
-                           DatasetPropertyType type,
+                           PropertyType type,
                            Date createDate) {
         this(dataSetId, propertyKey, propertyValue, type, createDate);
         this.propertyId = propertyId;
@@ -34,7 +34,7 @@ public class DatasetProperty {
     public DatasetProperty(Integer dataSetId,
                            Integer propertyKey,
                            String propertyValue,
-                           DatasetPropertyType type,
+                           PropertyType type,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
@@ -48,7 +48,7 @@ public class DatasetProperty {
                            Integer propertyKey,
                            String schemaProperty,
                            String propertyValue,
-                           DatasetPropertyType type,
+                           PropertyType type,
                            Date createDate) {
         this(dataSetId, propertyKey, schemaProperty, propertyValue, type, createDate);
         this.propertyId = propertyId;
@@ -58,7 +58,7 @@ public class DatasetProperty {
                            Integer propertyKey,
                            String schemaProperty,
                            String propertyValue,
-                           DatasetPropertyType type,
+                           PropertyType type,
                            Date createDate){
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
@@ -132,9 +132,9 @@ public class DatasetProperty {
         this.createDate = createDate;
     }
 
-    public DatasetPropertyType getPropertyType() {
+    public PropertyType getPropertyType() {
         if (java.util.Objects.isNull(this.propertyType)) {
-            return DatasetPropertyType.String;
+            return PropertyType.String;
         }
 
         return this.propertyType;
@@ -143,7 +143,7 @@ public class DatasetProperty {
         return this.getPropertyType().toString();
     }
 
-    public void setPropertyType(DatasetPropertyType propertyType) {
+    public void setPropertyType(PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 

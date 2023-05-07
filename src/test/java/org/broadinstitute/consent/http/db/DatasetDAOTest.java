@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.db;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Test;
@@ -451,7 +452,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset d = insertDataset();
         Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         DatasetProperty originalProperty = properties.stream().toList().get(0);
-        DatasetProperty newProperty = new DatasetProperty(d.getDataSetId(), 1, "Updated Value", DatasetPropertyType.String, new Date());
+        DatasetProperty newProperty = new DatasetProperty(d.getDataSetId(), 1, "Updated Value", PropertyType.String, new Date());
         List<DatasetProperty> updatedProperties = new ArrayList<>();
         updatedProperties.add(newProperty);
         datasetDAO.updateDatasetProperty(d.getDataSetId(), updatedProperties.get(0).getPropertyKey(), updatedProperties.get(0).getPropertyValue().toString());
@@ -475,7 +476,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                         d.getDataSetId(),
                         1,
                         "10",
-                        DatasetPropertyType.Number,
+                        PropertyType.Number,
                         new Date())
         );
         datasetDAO.insertDatasetProperties(newProps);
@@ -484,7 +485,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         assertEquals(1, dWithProps.getProperties().size());
         DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
-        assertEquals(DatasetPropertyType.Number, prop.getPropertyType());
+        assertEquals(PropertyType.Number, prop.getPropertyType());
         assertEquals("10", prop.getPropertyValueAsString());
         assertEquals(10, prop.getPropertyValue());
     }
@@ -502,7 +503,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                 d.getDataSetId(),
                 1,
                 date.toString(),
-                DatasetPropertyType.Date,
+                PropertyType.Date,
                 new Date());
 
         propToAdd.setSchemaProperty("date");
@@ -514,7 +515,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
         assertEquals(1, props.size());
         DatasetProperty prop = props.stream().findFirst().get();
-        assertEquals(DatasetPropertyType.Date, prop.getPropertyType());
+        assertEquals(PropertyType.Date, prop.getPropertyType());
         assertEquals(date.toString(), prop.getPropertyValueAsString());
     }
 
@@ -532,7 +533,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                         d.getDataSetId(),
                         1,
                         bool.toString(),
-                        DatasetPropertyType.Boolean,
+                        PropertyType.Boolean,
                         new Date())
         );
         datasetDAO.insertDatasetProperties(newProps);
@@ -541,7 +542,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         assertEquals(1, dWithProps.getProperties().size());
         DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
-        assertEquals(DatasetPropertyType.Boolean, prop.getPropertyType());
+        assertEquals(PropertyType.Boolean, prop.getPropertyType());
         assertEquals(bool.toString(), prop.getPropertyValueAsString());
         assertEquals(Boolean.FALSE, prop.getPropertyValue());
     }
@@ -561,7 +562,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                         d.getDataSetId(),
                         1,
                         jsonObject.toString(),
-                        DatasetPropertyType.Json,
+                        PropertyType.Json,
                         new Date())
         );
         datasetDAO.insertDatasetProperties(newProps);
@@ -570,7 +571,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         assertEquals(1, dWithProps.getProperties().size());
         DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
-        assertEquals(DatasetPropertyType.Json, prop.getPropertyType());
+        assertEquals(PropertyType.Json, prop.getPropertyType());
         assertEquals(jsonObject.toString(), prop.getPropertyValueAsString());
         assertEquals(jsonObject, prop.getPropertyValue());
     }
@@ -589,7 +590,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                         d.getDataSetId(),
                         1,
                         value,
-                        DatasetPropertyType.String,
+                        PropertyType.String,
                         new Date())
         );
         datasetDAO.insertDatasetProperties(newProps);
@@ -598,7 +599,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         assertEquals(1, dWithProps.getProperties().size());
         DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
-        assertEquals(DatasetPropertyType.String, prop.getPropertyType());
+        assertEquals(PropertyType.String, prop.getPropertyType());
         assertEquals(value, prop.getPropertyValueAsString());
         assertEquals(value, prop.getPropertyValue());
     }
@@ -618,7 +619,7 @@ public class DatasetDAOTest extends DAOTestHelper {
                         1,
                         schemaValue,
                         "asdf",
-                        DatasetPropertyType.String,
+                        PropertyType.String,
                         new Date())
         );
         datasetDAO.insertDatasetProperties(newProps);
@@ -627,7 +628,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         assertEquals(1, dWithProps.getProperties().size());
         DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
-        assertEquals(DatasetPropertyType.String, prop.getPropertyType());
+        assertEquals(PropertyType.String, prop.getPropertyType());
         assertEquals(schemaValue, prop.getSchemaProperty());
     }
 
@@ -688,15 +689,15 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindAllActiveStudyNames() {
         Dataset ds1 = insertDataset();
         String ds1Name = RandomStringUtils.randomAlphabetic(20);
-        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
+        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, PropertyType.String);
 
         Dataset ds2 = insertDataset();
         String ds2Name = RandomStringUtils.randomAlphabetic(25);
-        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, DatasetPropertyType.String);
+        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, PropertyType.String);
 
         Dataset ds3 = insertDataset();
         String ds3Name = RandomStringUtils.randomAlphabetic(15);
-        createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, DatasetPropertyType.String);
+        createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, PropertyType.String);
 
 
         Set<String> returned = datasetDAO.findAllActiveStudyNames();
@@ -709,11 +710,11 @@ public class DatasetDAOTest extends DAOTestHelper {
     public void testFindAllActiveStudyNames_inactive_dataset() {
         Dataset ds1 = insertDataset();
         String ds1Name = RandomStringUtils.randomAlphabetic(20);
-        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, DatasetPropertyType.String);
+        createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, PropertyType.String);
 
         Dataset ds2 = insertDataset();
         String ds2Name = RandomStringUtils.randomAlphabetic(20);
-        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, DatasetPropertyType.String);
+        createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, PropertyType.String);
 
         datasetDAO.updateDatasetActive(ds1.getDataSetId(), false);
 
@@ -854,6 +855,40 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.insertDatasetAudit(audit);
     }
 
+    @Test
+    public void testDatasetWithStudy() {
+        Study study = insertStudyWithProperties();
+
+        Dataset ds = createDataset();
+        createDataset(); // create unrelated datasets (for testing study's dataset ids)
+        Dataset otherDsOnStudy = createDataset();
+
+        datasetDAO.updateStudyId(ds.getDataSetId(), study.getStudyId());
+        datasetDAO.updateStudyId(otherDsOnStudy.getDataSetId(), study.getStudyId());
+
+        createDataset(); // create unrelated datasets (for testing study's dataset ids)
+
+
+        FileStorageObject fso = createFileStorageObject(study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+
+        ds = datasetDAO.findDatasetById(ds.getDataSetId());
+
+        assertNotNull(ds.getStudy());
+
+        // mapper ran properly
+        assertEquals(study.getName(), ds.getStudy().getName());
+        // reducer caught properties
+        assertEquals(
+                study.getProperties().size(),
+                ds.getStudy().getProperties().size());
+        // reducer caught FSO
+        assertNotNull(fso);
+        assertEquals(fso.getFileStorageObjectId(), ds.getStudy().getAlternativeDataSharingPlan().getFileStorageObjectId());
+        assertEquals(2, ds.getStudy().getDatasetIds().size());
+        assertTrue(ds.getStudy().getDatasetIds().contains(ds.getDataSetId()));
+        assertTrue(ds.getStudy().getDatasetIds().contains(otherDsOnStudy.getDataSetId()));
+    }
+
     private DarCollection createDarCollectionWithDatasets(int dacId, User user, List<Dataset> datasets) {
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
@@ -909,7 +944,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     }
 
 
-    protected void createDatasetProperty(Integer datasetId, String schemaProperty, String value, DatasetPropertyType type) {
+    protected void createDatasetProperty(Integer datasetId, String schemaProperty, String value, PropertyType type) {
         List<DatasetProperty> list = new ArrayList<>();
         DatasetProperty dsp = new DatasetProperty();
         dsp.setDataSetId(datasetId);
@@ -944,6 +979,46 @@ public class DatasetDAOTest extends DAOTestHelper {
             "Everything",
             "Group");
         return consentDAO.findConsentById(consentId);
+    }
+
+    private Study insertStudyWithProperties() {
+        User u = createUser();
+
+        String name = RandomStringUtils.randomAlphabetic(20);
+        String description = RandomStringUtils.randomAlphabetic(20);
+        List<String> dataTypes = List.of(
+                RandomStringUtils.randomAlphabetic(20),
+                RandomStringUtils.randomAlphabetic(20)
+        );
+        String piName = RandomStringUtils.randomAlphabetic(20);
+        Boolean publicVisibility = true;
+
+        Integer id = studyDAO.insertStudy(
+                name,
+                description,
+                piName,
+                dataTypes,
+                publicVisibility,
+                u.getUserId(),
+                Instant.now(),
+                UUID.randomUUID()
+        );
+
+        studyDAO.insertStudyProperty(
+                id,
+                "prop1",
+                PropertyType.String.toString(),
+                "asdf"
+        );
+
+        studyDAO.insertStudyProperty(
+                id,
+                "prop2",
+                PropertyType.Number.toString(),
+                "1"
+        );
+
+        return studyDAO.findStudyById(id);
     }
 
 }

@@ -1,0 +1,88 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2023-04-20-create-study" author="connorlbark">
+
+    <createTable tableName="study">
+      <column name="study_id" autoIncrement="true" type="bigint">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="text" >
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="description" type="text" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="data_types" type="text[]" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="pi_name" type="text" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="public_visibility" type="boolean" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="uuid" type="uuid" >
+        <constraints nullable="false"/>
+      </column>
+
+      <column name="create_user_id" type="bigint">
+        <constraints foreignKeyName="fk_create_user_id" nullable="false"/>
+      </column>
+      <column name="create_date" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="update_user_id" type="bigint">
+        <constraints foreignKeyName="fk_update_user_id"/>
+      </column>
+      <column name="update_date" type="timestamp"/>
+    </createTable>
+
+
+    <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="study" constraintName="fk_create_user_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="user_id" referencedTableName="users"
+                             referencesUniqueColumn="true"/>
+
+
+    <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="study" constraintName="fk_update_user_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="user_id" referencedTableName="users"
+                             referencesUniqueColumn="true"/>
+
+    <createTable tableName="study_property">
+      <column name="study_property_id" autoIncrement="true" type="int">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="study_id" type="int">
+        <constraints foreignKeyName="fk_study_id" nullable="false"/>
+      </column>
+      <column name="key" type="text" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="type" type="text" >
+        <constraints nullable="false"/>
+      </column>
+      <column name="value" type="text" >
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint baseColumnNames="study_id" baseTableName="study_property" constraintName="fk_study_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="study_id" referencedTableName="study"
+                             referencesUniqueColumn="true"/>
+
+    <addColumn tableName="dataset">
+      <column name="study_id" type="int">
+        <constraints foreignKeyName="fk_study_id" />
+      </column>
+    </addColumn>
+
+    <addForeignKeyConstraint baseColumnNames="study_id" baseTableName="dataset" constraintName="fk_study_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="study_id" referencedTableName="study"
+                             referencesUniqueColumn="true"/>
+
+  </changeSet>
+</databaseChangeLog>

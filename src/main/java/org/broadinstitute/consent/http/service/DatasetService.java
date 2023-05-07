@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -337,7 +337,7 @@ public class DatasetService {
                         new DatasetProperty(datasetId,
                                 dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
                                 p.getPropertyValue(),
-                                DatasetPropertyType.String,
+                                PropertyType.String,
                                 now)
                 )
                 .collect(Collectors.toList());

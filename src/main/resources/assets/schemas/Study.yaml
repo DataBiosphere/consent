@@ -1,0 +1,52 @@
+type: object
+properties:
+  studyId:
+    type: integer
+    format: int32
+    description: The study's id.
+  name:
+    type: string
+    description: The name of the study.
+  description:
+    type: string
+    description: A human-readable description of the study.
+  dataTypes:
+    type: array
+    items:
+      type: string
+    description: The data types included in the study's dataset.
+  piName:
+    type: string
+    description: The name of the PI of the study.
+  publicVisibility:
+    type: boolean
+    description: Whether this study is publicly visible or not.
+  datasetIds:
+    type: array
+    items:
+      type: integer
+      format: int32
+    description: The ids of all of the datasets related to this study.
+  properties:
+    type: array
+    items:
+      $ref: './StudyProperty.yaml'
+    description: Optional properties describing the study.
+  alternativeDataSharingPlan:
+    $ref: './FileStorageObject.yaml'
+    description: Metadata about the study's alternative data sharing plan (if present).
+  createDate:
+    type: string
+    format: date-time
+    description: The timestamp of creation.
+  createUserId:
+    type: integer
+    format: int32
+    description: The id of the user which created this study.
+  updateDate:
+    type: string
+    format: date-time
+    description: The timestamp of last update.
+  updateUserId:
+    type: boolean
+    description: The id of the user which last updated this study.

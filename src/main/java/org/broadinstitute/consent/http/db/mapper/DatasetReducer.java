@@ -1,10 +1,11 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -50,9 +51,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
         && hasColumn(rowView, "property_value", String.class)) {
       String keyName = rowView.getColumn("key", String.class);
       String propVal = rowView.getColumn("property_value", String.class);
-      DatasetPropertyType propType = DatasetPropertyType.String;
+      PropertyType propType = PropertyType.String;
       if (hasColumn(rowView, "property_type", String.class)) {
-          propType = DatasetPropertyType.parse(rowView.getColumn("property_type", String.class));
+          propType = PropertyType.parse(rowView.getColumn("property_type", String.class));
       }
 
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
@@ -70,6 +71,13 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
           // do nothing.
         }
       }
+    }
+
+    if (hasColumn(rowView, "s_study_id", Integer.class)) {
+      if (Objects.isNull(dataset.getStudy())) {
+        dataset.setStudy(rowView.getRow(Study.class));
+      }
+      new StudyReducer().reduceStudy(dataset.getStudy(), rowView);
     }
 
     if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class)
@@ -112,7 +120,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       name.setPropertyName(DatasetService.DATASET_NAME_KEY);
       name.setPropertyValue(dataset.getName());
       name.setDataSetId(dataset.getDataSetId());
-      name.setPropertyType(DatasetPropertyType.String);
+      name.setPropertyType(PropertyType.String);
       dataset.addProperty(name);
     }
     dataset.setDatasetName(dataset.getName());

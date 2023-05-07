@@ -6,11 +6,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -60,7 +59,7 @@ public class DatasetTests {
 
         DatasetProperty dsp = new DatasetProperty();
         dsp.setPropertyValue(value);
-        dsp.setPropertyType(DatasetPropertyType.String);
+        dsp.setPropertyType(PropertyType.String);
         ds.setProperties(Set.of(dsp));
 
         assertTrue(ds.isStringMatch(value));
