@@ -180,6 +180,21 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         assertTrue(altDataSharingFiles.contains(file3));
     }
 
+    @Test
+    public void testDeleteFileStorageObjectByUserId() {
+        var file1 = createFileStorageObject();
+        var fileId = file1.getFileStorageObjectId();
+        var userId = file1.getCreateUserId();
+
+        FileStorageObject file2 = fileStorageObjectDAO.findFileById(fileId);
+        assertNotNull(file2);
+
+        fileStorageObjectDAO.deleteAllUserFiles(userId);
+
+        FileStorageObject file3 = fileStorageObjectDAO.findFileById(fileId);
+        assertNull(file3);
+    }
+
     private FileStorageObject createFileStorageObject() {
         FileCategory category = List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
         String entityId = RandomStringUtils.randomAlphabetic(10);

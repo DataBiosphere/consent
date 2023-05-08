@@ -9,7 +9,6 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.cloudstore.GCSStore;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.ConsentAuditDAO;
@@ -225,11 +224,6 @@ public class ConsentModule extends AbstractModule {
                 providesFileStorageObjectDAO(),
                 providesGCSService()
         );
-    }
-
-    @Provides
-    GCSStore providesGCSStore() {
-        return new GCSStore(config.getCloudStoreConfiguration());
     }
 
     @Provides
@@ -550,8 +544,11 @@ public class ConsentModule extends AbstractModule {
                 providesUserPropertyDAO(),
                 providesUserRoleDAO(),
                 providesVoteDAO(),
+                providesDatasetAssociationDAO(),
                 providesInstitutionDAO(),
                 providesLibraryCardDAO(),
+                providesAcknowledgementDAO(),
+                providesFileStorageObjectDAO(),
                 providesSamDAO(),
                 providesUserServiceDAO(),
                 providesEmailService());

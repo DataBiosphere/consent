@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DatasetAssociationMapper;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -12,6 +10,9 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 
 @RegisterRowMapper(DatasetAssociationMapper.class)
@@ -26,6 +27,9 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
 
     @SqlUpdate("delete from dataset_user_association where datasetId = :datasetId")
     void delete(@Bind("datasetId") Integer datasetId);
+
+    @SqlUpdate("DELETE FROM dataset_user_association WHERE dacuserId = :userId")
+    void deleteAllDatasetUserAssociationsByUser(@Bind("userId") Integer userId);
 
     @SqlQuery("select exists (select * from dataset_user_association where datasetId = :datasetId )")
     Boolean exist(@Bind("datasetId") Integer datasetId);

@@ -1,29 +1,24 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.sam.SamService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.Objects;
+import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Optional;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
 
-public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
+public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
 
-    private static final String TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
-    private static final Logger logger = LoggerFactory.getLogger(OAuthAuthenticator.class);
     private final Client client;
     private final SamService samService;
 
@@ -36,13 +31,14 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
     @Override
     public Optional<AuthUser> authenticate(String bearer) {
         try {
-            validateAudience(bearer);
-            GoogleUser googleUser = getUserInfo(bearer);
-            AuthUser user = new AuthUser(googleUser).setAuthToken(bearer);
+            GenericUser genericUser = getUserProfileInfo(bearer);
+            AuthUser user = Objects.nonNull(genericUser) ?
+                new AuthUser(genericUser).setAuthToken(bearer) :
+                new AuthUser().setAuthToken(bearer);
             AuthUser userWithStatus = getUserWithStatusInfo(user);
             return Optional.of(userWithStatus);
         } catch (Exception e) {
-            logger.error("Error authenticating credentials: " + e.getMessage());
+            logException("Error authenticating credentials", e);
             return Optional.empty();
         }
     }
@@ -56,62 +52,51 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser> {
     private AuthUser getUserWithStatusInfo(AuthUser authUser) {
         try {
             UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
+            // safety check in case the call to generic user (i.e. Google) failed.
+            if (Objects.isNull(authUser.getEmail())) {
+                authUser.setEmail(userStatusInfo.getUserEmail());
+            }
+            if (Objects.isNull(authUser.getName())) {
+                authUser.setName(userStatusInfo.getUserEmail());
+            }
             return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
         } catch (NotFoundException e) {
-            logger.warn("User not found: '" + authUser.getEmail());
+            // Try to post the user to Sam if they have not registered previously
+            try {
+                UserStatus userStatus = samService.postRegistrationInfo(authUser);
+                if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
+                    authUser.setEmail(userStatus.getUserInfo().getUserEmail());
+                } else {
+                    throw new ServerErrorException("User not able to be registered", 500);
+                }
+            } catch (Exception exc) {
+                logException("User not able to be registered: '" + authUser.getEmail(), exc);
+            }
         } catch (Throwable e) {
-            logger.error("Exception retrieving Sam user info for '" + authUser.getEmail() + "': " + e.getMessage());
+            logException("Exception retrieving Sam user info for '" + authUser.getEmail() + "'", new Exception(e.getMessage()));
         }
         return authUser;
     }
 
-    private void validateAudience(String bearer) throws AuthenticationException {
-        HashMap<String, Object> tokenInfo = validateToken(bearer);
-        try {
-            String clientId = tokenInfo.containsKey("aud") ? tokenInfo.get("aud").toString() : tokenInfo.get("audience").toString();
-            if (clientId == null) {
-                unauthorized(bearer);
-            }
-        } catch (AuthenticationException e) {
-            logger.error("Error validating audience: " + e.getMessage());
-            unauthorized(bearer);
-        }
-    }
-
-    private HashMap<String, Object> validateToken(String accessToken) throws AuthenticationException {
-        HashMap<String, Object> tokenInfo = null;
-        try {
-            Response response = this.client.
-                    target(TOKEN_INFO_URL + accessToken).
-                    request(MediaType.APPLICATION_JSON_TYPE).
-                    get(Response.class);
-            String result = response.readEntity(String.class);
-            tokenInfo = new ObjectMapper().readValue(result, new TypeReference<>() {});
-        } catch (Exception e) {
-            logger.error("Error validating access token: " + e.getMessage());
-            unauthorized(accessToken);
-        }
-        return tokenInfo;
-    }
-
-    private GoogleUser getUserInfo(String bearer) throws AuthenticationException {
-        GoogleUser u = null;
+    /**
+     * This method is currently google-centric. When we fully support B2C authentication,
+     * we should ensure that we can look up user info from a MS service.
+     * @param bearer Bearer Token
+     * @return GenericUser
+     */
+    private GenericUser getUserProfileInfo(String bearer) {
+        GenericUser u = null;
         try {
             Response response = this.client.
                     target(USER_INFO_URL + bearer).
                     request(MediaType.APPLICATION_JSON_TYPE).
                     get(Response.class);
             String result = response.readEntity(String.class);
-            u = new GoogleUser(result);
+            u = new GenericUser(result);
         } catch (Exception e) {
-            logger.error("Error getting user info from token: " + e.getMessage());
-            unauthorized(bearer);
+            logWarn("Error getting Google user info from token: " + e.getMessage());
         }
         return u;
-    }
-
-    private void unauthorized(String accessToken) throws AuthenticationException {
-        throw new AuthenticationException("Provided access token or user credential is either null or empty or does not have permissions to access this resource." + accessToken);
     }
 
 }

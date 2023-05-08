@@ -4,8 +4,9 @@ import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.enumeration.FileCategory;
+
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -306,6 +307,7 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props, "fileTypes", PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
         assertContainsDatasetProperty(props, "dataAccessCommitteeId", schema.getConsentGroups().get(0).getDataAccessCommitteeId());
         assertContainsDatasetProperty(props, "openAccess", schema.getConsentGroups().get(0).getOpenAccess());
+
 
 
 

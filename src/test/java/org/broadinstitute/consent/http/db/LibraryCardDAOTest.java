@@ -165,5 +165,14 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     libraryCardDAO.updateEraCommonsForUser(user.getUserId(), "newEraCommonsId");
     assertEquals("newEraCommonsId", libraryCardDAO.findLibraryCardById(card.getId()).getEraCommonsId());
   }
+
+  @Test
+  public void testDeleteLibraryCardByUserId() {
+    User user = createUser();
+    LibraryCard card = createLibraryCard(user);
+    assertEquals("value", card.getEraCommonsId());
+    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+    assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
+  }
 }
 

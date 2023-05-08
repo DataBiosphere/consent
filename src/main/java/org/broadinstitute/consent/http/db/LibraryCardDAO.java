@@ -107,4 +107,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
           WHERE user_id = :userId
           """)
   void updateEraCommonsForUser(@Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
+
+  @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
+  void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
 }

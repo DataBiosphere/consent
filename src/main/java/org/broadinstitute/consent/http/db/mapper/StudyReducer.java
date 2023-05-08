@@ -44,7 +44,6 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
           StudyProperty prop = new StudyProperty();
           prop.setStudyPropertyId(studyPropertyId);
           prop.setStudyId(studyId);
-          prop.setStudyId(study.getStudyId());
           prop.setValue(propType.coerce(propVal));
           prop.setKey(keyName);
           prop.setType(propType);
