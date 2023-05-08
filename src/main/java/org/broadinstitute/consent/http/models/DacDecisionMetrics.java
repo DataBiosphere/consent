@@ -11,250 +11,252 @@ import java.util.stream.Collectors;
  */
 public class DacDecisionMetrics implements DecisionMetrics {
 
-  private Dac dac;
-  private List<DatasetDTO> datasets;
-  private List<DarDecisionMetrics> metrics;
-  private Integer chairCount;
-  private Integer memberCount;
-  private Integer datasetCount;
-  private Integer darsReceived;
-  private Integer percentDARsReviewed;
-  private Integer averageCountUniqueUser;
-  private Double averageTurnaroundTimeMillis;
-  private Integer averageTurnaroundTime;
-  private Integer percentRevealAlgorithm;
-  private Integer percentAgreementAlgorithm;
-  private Integer percentSRPAccurate;
+    private Dac dac;
+    private List<DatasetDTO> datasets;
+    private List<DarDecisionMetrics> metrics;
+    private Integer chairCount;
+    private Integer memberCount;
+    private Integer datasetCount;
+    private Integer darsReceived;
+    private Integer percentDARsReviewed;
+    private Integer averageCountUniqueUser;
+    private Double averageTurnaroundTimeMillis;
+    private Integer averageTurnaroundTime;
+    private Integer percentRevealAlgorithm;
+    private Integer percentAgreementAlgorithm;
+    private Integer percentSRPAccurate;
 
-  private static final String JOINER = "\t";
-  public static final String headerRow = String.join(
-    JOINER,
-    "DAC ID",
-    "DAC UID",
-    "# of DAC Members",
-    "# of DAC Chairs",
-    "# of Datasets",
-    "# of DARs Received",
-    "% of DARs Reviewed",
-    "Average # Users on Approved DAR",
-    "Average DAR Turnaround Time",
-    "% Reveal DUOS Algorithm",
-    "% Agreement with DUOS Algorithm",
-    "% Structured Research Purpose Accurate",
-    "\n");
+    private static final String JOINER = "\t";
+    public static final String headerRow = String.join(
+            JOINER,
+            "DAC ID",
+            "DAC UID",
+            "# of DAC Members",
+            "# of DAC Chairs",
+            "# of Datasets",
+            "# of DARs Received",
+            "% of DARs Reviewed",
+            "Average # Users on Approved DAR",
+            "Average DAR Turnaround Time",
+            "% Reveal DUOS Algorithm",
+            "% Agreement with DUOS Algorithm",
+            "% Structured Research Purpose Accurate",
+            "\n");
 
-  public String toString(String joiner) {
-    String name = this.getDac().getName();
-    return String.join(
-      joiner,
-      getValue(name),
-      getValue(getDacUID(name)),
-      getValue(getMemberCount()),
-      getValue(getChairCount()),
-      getValue(getDatasetCount()),
-      getValue(getDarsReceived()),
-      getValue(getPercentDARsReviewed()),
-      getValue(getAverageCountUniqueUser().toString()),
-      getValue(getAverageTurnaroundTime()),
-      getValue(getPercentRevealAlgorithm()),
-      getValue(getPercentAgreementAlgorithm()),
-      getValue(getPercentSRPAccurate()),
-      "\n");
-  }
-
-  public DacDecisionMetrics(Dac dac, List<DatasetDTO> datasets, List<DarDecisionMetrics> metrics) {
-    this.setDac(dac);
-    this.setDatasets(datasets);
-    this.setMetrics(metrics);
-    this.setChairCount(dac);
-    this.setMemberCount(dac);
-    this.setDatasetCount(datasets);
-    this.setDarsReceived(metrics.size());
-
-    List<DarDecisionMetrics> completedDarMetrics =
-      metrics.stream()
-        .filter(m -> Objects.nonNull(m.getDacDecision()))
-        .collect(Collectors.toList());
-
-    if (!metrics.isEmpty()) {
-      int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
-      this.setPercentDARsReviewed(percentReviewed);
+    public String toString(String joiner) {
+        String name = this.getDac().getName();
+        return String.join(
+                joiner,
+                getValue(name),
+                getValue(getDacUID(name)),
+                getValue(getMemberCount()),
+                getValue(getChairCount()),
+                getValue(getDatasetCount()),
+                getValue(getDarsReceived()),
+                getValue(getPercentDARsReviewed()),
+                getValue(getAverageCountUniqueUser().toString()),
+                getValue(getAverageTurnaroundTime()),
+                getValue(getPercentRevealAlgorithm()),
+                getValue(getPercentAgreementAlgorithm()),
+                getValue(getPercentSRPAccurate()),
+                "\n");
     }
 
-    List<DarDecisionMetrics> approvedDarMetrics =
-      completedDarMetrics.stream()
-      .filter(m -> (m.getDacDecision()).equalsIgnoreCase("Yes"))
-      .collect(Collectors.toList());
+    public DacDecisionMetrics(Dac dac, List<DatasetDTO> datasets, List<DarDecisionMetrics> metrics) {
+        this.setDac(dac);
+        this.setDatasets(datasets);
+        this.setMetrics(metrics);
+        this.setChairCount(dac);
+        this.setMemberCount(dac);
+        this.setDatasetCount(datasets);
+        this.setDarsReceived(metrics.size());
 
-    this.setAverageCountUniqueUser(approvedDarMetrics);
+        List<DarDecisionMetrics> completedDarMetrics =
+                metrics.stream()
+                        .filter(m -> Objects.nonNull(m.getDacDecision()))
+                        .collect(Collectors.toList());
 
-    completedDarMetrics.stream()
-      .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
-      .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
-      .average()
-      .ifPresent(this::setAverageTurnaroundTimeMillis);
+        if (!metrics.isEmpty()) {
+            int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
+            this.setPercentDARsReviewed(percentReviewed);
+        }
 
-    this.setAverageTurnaroundTime();
-    this.setPercentAgreementAlgorithm(completedDarMetrics);
-    this.setPercentSRPAccurate(completedDarMetrics);
-    this.setPercentRevealAlgorithm(null); //not implemented yet, will be empty column
-  }
+        List<DarDecisionMetrics> approvedDarMetrics =
+                completedDarMetrics.stream()
+                        .filter(m -> (m.getDacDecision()).equalsIgnoreCase("Yes"))
+                        .collect(Collectors.toList());
 
-  public Integer createPercentage(int num, int denom) {
-    return (int) (((double) num / (double) denom) * 100);
+        this.setAverageCountUniqueUser(approvedDarMetrics);
 
-  }
-
-  public Dac getDac() {
-    return dac;
-  }
-
-  private void setDac(Dac dac) {
-    this.dac = dac;
-  }
-
-  public List<DatasetDTO> getDatasets() {
-    return datasets;
-  }
-
-  private void setDatasets(List<DatasetDTO> datasets) {
-    this.datasets = datasets;
-  }
-
-  public List<DarDecisionMetrics> getMetrics() {
-    return metrics;
-  }
-
-  private void setMetrics(List<DarDecisionMetrics> metrics) {
-    this.metrics = metrics;
-  }
-
-  public Integer getChairCount() {
-    return chairCount;
-  }
-
-  private void setChairCount(Dac dac) {
-    if (Objects.nonNull(dac.getChairpersons()) && !dac.getChairpersons().isEmpty()) {
-      this.chairCount = dac.getChairpersons().size();
-    }
-  }
-
-  public Integer getMemberCount() {
-    return memberCount;
-  }
-
-  private void setMemberCount(Dac dac) {
-    if (Objects.nonNull(dac.getMembers()) && !dac.getMembers().isEmpty()) {
-      this.memberCount = dac.getMembers().size();
-    }
-  }
-
-  public Integer getDatasetCount() {
-    return datasetCount;
-  }
-
-  private void setDatasetCount(List<DatasetDTO> datasets) {
-    if (Objects.nonNull(datasets) && !datasets.isEmpty()) {
-      this.datasetCount = datasets.size();
-    }
-  }
-
-  private void setAverageCountUniqueUser(List<DarDecisionMetrics> metrics) {
-    this.averageCountUniqueUser = (int) metrics.stream()
-      .map(DarDecisionMetrics::getCountUniqueUsers)
-      .mapToInt(Integer::intValue)
-      .average()
-      .orElse(0);
-  }
-
-  public Integer getAverageCountUniqueUser() { return averageCountUniqueUser; }
-
-  public Integer getDarsReceived() {
-    return darsReceived;
-  }
-
-  private void setDarsReceived(Integer darsReceived) {
-    this.darsReceived = darsReceived;
-  }
-
-  public Integer getPercentDARsReviewed() {
-    return percentDARsReviewed;
-  }
-
-  private void setPercentDARsReviewed(Integer percentDARsReviewed) {
-    this.percentDARsReviewed = percentDARsReviewed;
-  }
-
-  public Double getAverageTurnaroundTimeMillis() {
-    return averageTurnaroundTimeMillis;
-  }
-
-  private void setAverageTurnaroundTimeMillis(Double averageTurnaroundTimeMillis) {
-    this.averageTurnaroundTimeMillis = averageTurnaroundTimeMillis;
-  }
-
-  public Integer getAverageTurnaroundTime() {
-    return averageTurnaroundTime;
-  }
-
-  private void setAverageTurnaroundTime() {
-    if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
-      this.averageTurnaroundTime = this.convertMillisToDays(this.averageTurnaroundTimeMillis.longValue());
-    }
-  }
-
-  public Integer getPercentRevealAlgorithm() {
-    return percentRevealAlgorithm;
-  }
-
-  private void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
-    this.percentRevealAlgorithm = percentRevealAlgorithm;
-  }
-
-  public Integer getPercentAgreementAlgorithm() {
-    return percentAgreementAlgorithm;
-  }
-
-  private void setPercentAgreementAlgorithm(List<DarDecisionMetrics> completedDarMetrics) {
-    if (!completedDarMetrics.isEmpty()) {
-      List<DarDecisionMetrics> agreementMetricsDenominator =
         completedDarMetrics.stream()
-          .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
-          .collect(Collectors.toList());
+                .filter(m -> Objects.nonNull(m.getTurnaroundTimeMillis()))
+                .mapToLong(DarDecisionMetrics::getTurnaroundTimeMillis)
+                .average()
+                .ifPresent(this::setAverageTurnaroundTimeMillis);
 
-      List<DarDecisionMetrics> agreementMetricsNumerator =
-        agreementMetricsDenominator.stream()
-          .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
-          .collect(Collectors.toList());
-
-      int percentAgreement = createPercentage(agreementMetricsNumerator.size(), agreementMetricsDenominator.size());
-      this.percentAgreementAlgorithm = percentAgreement;
+        this.setAverageTurnaroundTime();
+        this.setPercentAgreementAlgorithm(completedDarMetrics);
+        this.setPercentSRPAccurate(completedDarMetrics);
+        this.setPercentRevealAlgorithm(null); //not implemented yet, will be empty column
     }
-  }
 
-  public Integer getPercentSRPAccurate() {
-    return percentSRPAccurate;
-  }
+    public Integer createPercentage(int num, int denom) {
+        return (int) (((double) num / (double) denom) * 100);
 
-  private void setPercentSRPAccurate(List<DarDecisionMetrics> completedDarMetrics) {
-    List<DarDecisionMetrics> srpMetricsDenominator =
-      completedDarMetrics.stream()
-        .filter(m -> Objects.nonNull(m.getSrpDecision()))
-        .collect(Collectors.toList());
+    }
 
-    List<DarDecisionMetrics> srpMetricsNumerator =
-      srpMetricsDenominator.stream()
-        .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-        .collect(Collectors.toList());
-    int percentSrp = createPercentage(srpMetricsNumerator.size(), srpMetricsDenominator.size());
-    this.percentSRPAccurate = percentSrp;
-  }
+    public Dac getDac() {
+        return dac;
+    }
 
-  private String getValue(String str) {
-    return Objects.nonNull(str) ? str : "";
-  }
+    private void setDac(Dac dac) {
+        this.dac = dac;
+    }
 
-  private String getValue(Integer i) {
-    return Objects.nonNull(i) ? i.toString() : "";
-  }
+    public List<DatasetDTO> getDatasets() {
+        return datasets;
+    }
+
+    private void setDatasets(List<DatasetDTO> datasets) {
+        this.datasets = datasets;
+    }
+
+    public List<DarDecisionMetrics> getMetrics() {
+        return metrics;
+    }
+
+    private void setMetrics(List<DarDecisionMetrics> metrics) {
+        this.metrics = metrics;
+    }
+
+    public Integer getChairCount() {
+        return chairCount;
+    }
+
+    private void setChairCount(Dac dac) {
+        if (Objects.nonNull(dac.getChairpersons()) && !dac.getChairpersons().isEmpty()) {
+            this.chairCount = dac.getChairpersons().size();
+        }
+    }
+
+    public Integer getMemberCount() {
+        return memberCount;
+    }
+
+    private void setMemberCount(Dac dac) {
+        if (Objects.nonNull(dac.getMembers()) && !dac.getMembers().isEmpty()) {
+            this.memberCount = dac.getMembers().size();
+        }
+    }
+
+    public Integer getDatasetCount() {
+        return datasetCount;
+    }
+
+    private void setDatasetCount(List<DatasetDTO> datasets) {
+        if (Objects.nonNull(datasets) && !datasets.isEmpty()) {
+            this.datasetCount = datasets.size();
+        }
+    }
+
+    private void setAverageCountUniqueUser(List<DarDecisionMetrics> metrics) {
+        this.averageCountUniqueUser = (int) metrics.stream()
+                .map(DarDecisionMetrics::getCountUniqueUsers)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+    }
+
+    public Integer getAverageCountUniqueUser() {
+        return averageCountUniqueUser;
+    }
+
+    public Integer getDarsReceived() {
+        return darsReceived;
+    }
+
+    private void setDarsReceived(Integer darsReceived) {
+        this.darsReceived = darsReceived;
+    }
+
+    public Integer getPercentDARsReviewed() {
+        return percentDARsReviewed;
+    }
+
+    private void setPercentDARsReviewed(Integer percentDARsReviewed) {
+        this.percentDARsReviewed = percentDARsReviewed;
+    }
+
+    public Double getAverageTurnaroundTimeMillis() {
+        return averageTurnaroundTimeMillis;
+    }
+
+    private void setAverageTurnaroundTimeMillis(Double averageTurnaroundTimeMillis) {
+        this.averageTurnaroundTimeMillis = averageTurnaroundTimeMillis;
+    }
+
+    public Integer getAverageTurnaroundTime() {
+        return averageTurnaroundTime;
+    }
+
+    private void setAverageTurnaroundTime() {
+        if (Objects.nonNull(this.getAverageTurnaroundTimeMillis())) {
+            this.averageTurnaroundTime = this.convertMillisToDays(this.averageTurnaroundTimeMillis.longValue());
+        }
+    }
+
+    public Integer getPercentRevealAlgorithm() {
+        return percentRevealAlgorithm;
+    }
+
+    private void setPercentRevealAlgorithm(Integer percentRevealAlgorithm) {
+        this.percentRevealAlgorithm = percentRevealAlgorithm;
+    }
+
+    public Integer getPercentAgreementAlgorithm() {
+        return percentAgreementAlgorithm;
+    }
+
+    private void setPercentAgreementAlgorithm(List<DarDecisionMetrics> completedDarMetrics) {
+        if (!completedDarMetrics.isEmpty()) {
+            List<DarDecisionMetrics> agreementMetricsDenominator =
+                    completedDarMetrics.stream()
+                            .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
+                            .collect(Collectors.toList());
+
+            List<DarDecisionMetrics> agreementMetricsNumerator =
+                    agreementMetricsDenominator.stream()
+                            .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
+                            .collect(Collectors.toList());
+
+            int percentAgreement = createPercentage(agreementMetricsNumerator.size(), agreementMetricsDenominator.size());
+            this.percentAgreementAlgorithm = percentAgreement;
+        }
+    }
+
+    public Integer getPercentSRPAccurate() {
+        return percentSRPAccurate;
+    }
+
+    private void setPercentSRPAccurate(List<DarDecisionMetrics> completedDarMetrics) {
+        List<DarDecisionMetrics> srpMetricsDenominator =
+                completedDarMetrics.stream()
+                        .filter(m -> Objects.nonNull(m.getSrpDecision()))
+                        .collect(Collectors.toList());
+
+        List<DarDecisionMetrics> srpMetricsNumerator =
+                srpMetricsDenominator.stream()
+                        .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
+                        .collect(Collectors.toList());
+        int percentSrp = createPercentage(srpMetricsNumerator.size(), srpMetricsDenominator.size());
+        this.percentSRPAccurate = percentSrp;
+    }
+
+    private String getValue(String str) {
+        return Objects.nonNull(str) ? str : "";
+    }
+
+    private String getValue(Integer i) {
+        return Objects.nonNull(i) ? i.toString() : "";
+    }
 }

@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.annotations.Expose;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -15,19 +12,19 @@ public class FileStorageObject {
 
     public static final String QUERY_FIELDS_WITH_FSO_PREFIX =
             """
-            fso.file_storage_object_id AS fso_file_storage_object_id,
-            fso.entity_id AS fso_entity_id,
-            fso.file_name AS fso_file_name,
-            fso.category AS fso_category,
-            fso.gcs_file_uri AS fso_gcs_file_uri,
-            fso.media_type AS fso_media_type,
-            fso.create_date AS fso_create_date,
-            fso.create_user_id AS fso_create_user_id,
-            fso.update_date AS fso_update_date,
-            fso.update_user_id AS fso_update_user_id,
-            fso.deleted AS fso_deleted,
-            fso.delete_user_id AS fso_delete_user_id
-            """;
+                    fso.file_storage_object_id AS fso_file_storage_object_id,
+                    fso.entity_id AS fso_entity_id,
+                    fso.file_name AS fso_file_name,
+                    fso.category AS fso_category,
+                    fso.gcs_file_uri AS fso_gcs_file_uri,
+                    fso.media_type AS fso_media_type,
+                    fso.create_date AS fso_create_date,
+                    fso.create_user_id AS fso_create_user_id,
+                    fso.update_date AS fso_update_date,
+                    fso.update_user_id AS fso_update_user_id,
+                    fso.deleted AS fso_deleted,
+                    fso.delete_user_id AS fso_delete_user_id
+                    """;
 
     private Integer fileStorageObjectId;
     private String entityId;
@@ -160,6 +157,7 @@ public class FileStorageObject {
 
     /**
      * Computes the last time this file was changed, be it created, updated, or deleted.
+     *
      * @return The last time the file has been changed.
      */
     public Instant getLatestUpdateDate() {

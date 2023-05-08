@@ -1,7 +1,8 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
-import java.util.List;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+
+import java.util.List;
 
 public class DataCustodianApprovalModel {
     List<DatasetMailDTO> datasets;

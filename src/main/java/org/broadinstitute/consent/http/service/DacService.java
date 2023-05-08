@@ -77,13 +77,13 @@ public class DacService {
         Map<Dac, List<User>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
         return dacs.stream().peek(d -> {
             List<User> chairs = dacToUserMap.get(d).stream().
-                  filter(u -> u.getRoles().stream().
-                        anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
-                  collect(Collectors.toList());
+                    filter(u -> u.getRoles().stream().
+                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
+                    collect(Collectors.toList());
             List<User> members = dacToUserMap.get(d).stream().
-                  filter(u -> u.getRoles().stream().
-                        anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
-                  collect(Collectors.toList());
+                    filter(u -> u.getRoles().stream().
+                            anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId().equals(d.getDacId()))).
+                    collect(Collectors.toList());
             d.setChairpersons(chairs);
             d.setMembers(members);
         }).collect(Collectors.toList());
@@ -272,17 +272,17 @@ public class DacService {
             // Chair and Member users can see data access requests that they have DAC access to
             if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
                 List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetsByAuthUserEmail(user.getEmail()).
-                  stream().
-                  map(Dataset::getDataSetId).
-                  collect(Collectors.toList());
+                        stream().
+                        map(Dataset::getDataSetId).
+                        collect(Collectors.toList());
 
                 return documents.
-                  stream().
-                  filter(d -> {
-                      List<Integer> datasetIds = d.getDatasetIds();
-                      return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
-                  }).
-                  collect(Collectors.toList());
+                        stream().
+                        filter(d -> {
+                            List<Integer> datasetIds = d.getDatasetIds();
+                            return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
+                        }).
+                        collect(Collectors.toList());
             }
         }
         return Collections.emptyList();

@@ -80,14 +80,15 @@ public enum PropertyType {
     public static Number coerceToNumber(String value) throws IllegalArgumentException {
         try {
             return Integer.valueOf(value);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Could not parse as Integer: " + e.getMessage());
         }
     }
+
     public static JsonElement coerceToJson(String value) throws IllegalArgumentException {
         try {
             return new Gson().fromJson(value, JsonElement.class);
-        } catch(JsonSyntaxException e) {
+        } catch (JsonSyntaxException e) {
             throw new IllegalArgumentException("Could not parse as Json: " + e.getMessage());
         }
     }

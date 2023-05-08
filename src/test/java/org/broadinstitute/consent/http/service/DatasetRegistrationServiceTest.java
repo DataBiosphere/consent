@@ -4,8 +4,8 @@ import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -288,7 +288,6 @@ public class DatasetRegistrationServiceTest {
         assertContainsDatasetProperty(props, "consentGroup.openAccess", schema.getConsentGroups().get(0).getOpenAccess());
 
 
-
         // assert on all the same properties, but for the second dataset
 
         assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(), inserts.get(1).name());
@@ -379,6 +378,7 @@ public class DatasetRegistrationServiceTest {
         assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
         assertEquals(extractor.type(), prop.get().getPropertyType());
     }
+
     private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
         assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
         assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
@@ -407,7 +407,6 @@ public class DatasetRegistrationServiceTest {
     }
 
 
-
     private FormDataBodyPart createFormDataBodyPart() {
         FormDataContentDisposition content = FormDataContentDisposition
                 .name("file")
@@ -432,7 +431,7 @@ public class DatasetRegistrationServiceTest {
         schemaV1.setPiName(RandomStringUtils.randomAlphabetic(10));
         when(user.getUserId()).thenReturn(1);
         schemaV1.setDataSubmitterUserId(user.getUserId());
-        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)+"@domain.org"));
+        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10) + "@domain.org"));
         schemaV1.setPublicVisibility(true);
 
         ConsentGroup consentGroup = new ConsentGroup();
@@ -460,7 +459,7 @@ public class DatasetRegistrationServiceTest {
         schemaV1.setPiName(RandomStringUtils.randomAlphabetic(10));
         when(user.getUserId()).thenReturn(1);
         schemaV1.setDataSubmitterUserId(user.getUserId());
-        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)+"@domain.org"));
+        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10) + "@domain.org"));
         schemaV1.setPublicVisibility(true);
 
         ConsentGroup consentGroup = new ConsentGroup();
@@ -487,7 +486,7 @@ public class DatasetRegistrationServiceTest {
         schemaV1.setPiName(RandomStringUtils.randomAlphabetic(10));
         when(user.getUserId()).thenReturn(1);
         schemaV1.setDataSubmitterUserId(user.getUserId());
-        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)+"@domain.org"));
+        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10) + "@domain.org"));
         schemaV1.setPublicVisibility(true);
 
         ConsentGroup consentGroup1 = new ConsentGroup();
@@ -529,7 +528,7 @@ public class DatasetRegistrationServiceTest {
         schemaV1.setPiName(RandomStringUtils.randomAlphabetic(10));
         when(user.getUserId()).thenReturn(1);
         schemaV1.setDataSubmitterUserId(user.getUserId());
-        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)+"@domain.org"));
+        schemaV1.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10) + "@domain.org"));
         schemaV1.setPublicVisibility(true);
         schemaV1.setSubmittingToAnvil(true);
         schemaV1.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(10));

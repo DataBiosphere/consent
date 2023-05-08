@@ -18,7 +18,9 @@ public class DataUseResponseMatchingObject {
         this.failureReasons = failureReasons;
     }
 
-    public DataUseMatchResultType getResult() { return result; }
+    public DataUseMatchResultType getResult() {
+        return result;
+    }
 
     public boolean isResult() {
         return Approve(result);

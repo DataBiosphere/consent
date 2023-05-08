@@ -11,11 +11,11 @@ public class ElasticSearchSupport {
 
     public static RestClient createRestClient(ElasticSearchConfiguration configuration) {
         HttpHost[] hosts = configuration.
-            getServers().
-            stream().
-            map(server -> new HttpHost(server, configuration.getPort(), "http")).
-            toList().
-            toArray(new HttpHost[configuration.getServers().size()]);
+                getServers().
+                stream().
+                map(server -> new HttpHost(server, configuration.getPort(), "http")).
+                toList().
+                toArray(new HttpHost[configuration.getServers().size()]);
         return RestClient.builder(hosts).build();
     }
 

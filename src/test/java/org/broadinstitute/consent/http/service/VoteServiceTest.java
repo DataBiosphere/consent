@@ -1,28 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -32,9 +9,9 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -52,6 +29,30 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.NotFoundException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class VoteServiceTest {
 
@@ -125,7 +126,7 @@ public class VoteServiceTest {
     @Test(expected = NotFoundException.class)
     public void testUpdateVote_InvalidReferenceId() {
         when(voteDAO.checkVoteById("test", 11))
-        .thenReturn(null);
+                .thenReturn(null);
         Vote v = setUpTestVote(false, false);
         initService();
 
@@ -831,11 +832,11 @@ public class VoteServiceTest {
         try {
             service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
             verify(emailService, times(3)).sendDataCustodianApprovalMessage(
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any()
             );
         } catch (Exception e) {
             fail(e.getMessage());
@@ -891,11 +892,11 @@ public class VoteServiceTest {
             fail("service.notifyCustodiansOfApprovedDatasets should fail in this condition");
         } catch (Exception e) {
             verify(emailService, times(0)).sendDataCustodianApprovalMessage(
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any()
             );
             assertTrue(e instanceof IllegalArgumentException);
         }

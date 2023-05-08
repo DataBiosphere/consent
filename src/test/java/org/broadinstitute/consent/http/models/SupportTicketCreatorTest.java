@@ -37,7 +37,7 @@ public class SupportTicketCreatorTest {
     public void setUp() {
         openMocks(this);
         this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
-        String supportRequestUrl =  RandomStringUtils.randomAlphabetic(10);
+        String supportRequestUrl = RandomStringUtils.randomAlphabetic(10);
         when(configuration.postSupportRequestUrl()).thenReturn(supportRequestUrl);
     }
 

@@ -12,11 +12,12 @@ public class UserServiceDAO {
     UserRoleDAO userRoleDAO;
 
     @Inject
-    public UserServiceDAO(Jdbi jdbi, UserDAO userDAO, UserRoleDAO userRoleDAO){
+    public UserServiceDAO(Jdbi jdbi, UserDAO userDAO, UserRoleDAO userRoleDAO) {
         this.jdbi = jdbi;
         this.userDAO = userDAO;
         this.userRoleDAO = userRoleDAO;
     }
+
     public void insertRoleAndInstitutionTxn(UserRole role, Integer institutionId, Integer userId) {
         jdbi.useTransaction(transactionHandle -> {
             UserDAO userDAOT = transactionHandle.attach(UserDAO.class);

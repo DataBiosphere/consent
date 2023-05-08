@@ -16,7 +16,7 @@ public class DatasetProperty {
     private String schemaProperty;
     private PropertyType propertyType;
 
-    public DatasetProperty(){
+    public DatasetProperty() {
     }
 
     @Deprecated
@@ -35,7 +35,7 @@ public class DatasetProperty {
                            Integer propertyKey,
                            String propertyValue,
                            PropertyType type,
-                           Date createDate){
+                           Date createDate) {
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
         this.propertyValue = type.coerce(propertyValue);
@@ -59,7 +59,7 @@ public class DatasetProperty {
                            String schemaProperty,
                            String propertyValue,
                            PropertyType type,
-                           Date createDate){
+                           Date createDate) {
         this.dataSetId = dataSetId;
         this.propertyKey = propertyKey;
         this.propertyValue = type.coerce(propertyValue);
@@ -139,6 +139,7 @@ public class DatasetProperty {
 
         return this.propertyType;
     }
+
     public String getPropertyTypeAsString() {
         return this.getPropertyType().toString();
     }

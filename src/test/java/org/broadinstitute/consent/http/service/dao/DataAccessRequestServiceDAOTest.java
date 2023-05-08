@@ -30,48 +30,48 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateByReferenceId() throws Exception {
 
-      Dataset datasetOne = createDataset();
-      Dataset datasetTwo = createDataset();
-      Dataset datasetThree = createDataset();
-      User user = createUser();
-      Calendar cal = Calendar.getInstance();
-      cal.set(Calendar.YEAR, 2020);
-      cal.set(Calendar.MONTH, Calendar.JANUARY);
-      cal.set(Calendar.DAY_OF_MONTH, 1);
-      Date old = cal.getTime();
+        Dataset datasetOne = createDataset();
+        Dataset datasetTwo = createDataset();
+        Dataset datasetThree = createDataset();
+        User user = createUser();
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, 2020);
+        cal.set(Calendar.MONTH, Calendar.JANUARY);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        Date old = cal.getTime();
 
-      String referenceId =  RandomStringUtils.randomAlphanumeric(10);
-      DarDataset oldDarDataset = new DarDataset(referenceId, datasetOne.getDataSetId());
-      DarDataset oldDarDatasetTwo = new DarDataset(referenceId, datasetTwo.getDataSetId());
-      DarCollection collection = createDarCollection();
-      Integer collectionId = collection.getDarCollectionId();
-      dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, user.getUserId(), old, old, old, old, new DataAccessRequestData());
-      dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
+        String referenceId = RandomStringUtils.randomAlphanumeric(10);
+        DarDataset oldDarDataset = new DarDataset(referenceId, datasetOne.getDataSetId());
+        DarDataset oldDarDatasetTwo = new DarDataset(referenceId, datasetTwo.getDataSetId());
+        DarCollection collection = createDarCollection();
+        Integer collectionId = collection.getDarCollectionId();
+        dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, user.getUserId(), old, old, old, old, new DataAccessRequestData());
+        dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
 
-      DataAccessRequest dar = new DataAccessRequest();
-      dar.setReferenceId(referenceId);
-      dar.setCollectionId(collectionId);
-      DataAccessRequestData data = new DataAccessRequestData();
-      data.setOtherText("This is a test value");
-      List<Integer> newDatasetIds = List.of(datasetThree.getDataSetId());
-      dar.setDatasetIds(newDatasetIds);
-      dar.setData(data);
+        DataAccessRequest dar = new DataAccessRequest();
+        dar.setReferenceId(referenceId);
+        dar.setCollectionId(collectionId);
+        DataAccessRequestData data = new DataAccessRequestData();
+        data.setOtherText("This is a test value");
+        List<Integer> newDatasetIds = List.of(datasetThree.getDataSetId());
+        dar.setDatasetIds(newDatasetIds);
+        dar.setData(data);
 
-      initService();
+        initService();
 
-      DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
+        DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
-      Timestamp oldTimestamp = new Timestamp(old.getTime()); 
-      assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
-      assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
-      assertEquals(newDatasetIds, updatedDar.getDatasetIds());
-      DataAccessRequestData updatedData = updatedDar.getData();
-      assertEquals(data.getOtherText(), updatedData.getOtherText());
+        Timestamp oldTimestamp = new Timestamp(old.getTime());
+        assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
+        assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
+        assertEquals(newDatasetIds, updatedDar.getDatasetIds());
+        DataAccessRequestData updatedData = updatedDar.getData();
+        assertEquals(data.getOtherText(), updatedData.getOtherText());
 
-      DarCollection targetCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-      assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
+        DarCollection targetCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+        assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
 
-      // collection should have the same update date as the updated dar
-      assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
+        // collection should have the same update date as the updated dar
+        assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
     }
 }

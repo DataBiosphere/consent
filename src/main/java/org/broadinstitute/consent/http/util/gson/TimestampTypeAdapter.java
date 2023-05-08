@@ -11,7 +11,6 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
 
 public class TimestampTypeAdapter
         implements JsonSerializer<Timestamp>, JsonDeserializer<Timestamp> {

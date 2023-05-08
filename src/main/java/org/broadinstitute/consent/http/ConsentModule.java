@@ -206,15 +206,15 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DarCollectionService providesDarCollectionService() {
         return new DarCollectionService(
-            providesDARCollectionDAO(),
-            providesDarCollectionServiceDAO(),
-            providesDatasetDAO(),
-            providesElectionDAO(),
-            providesDataAccessRequestDAO(),
-            providesEmailService(),
-            providesVoteDAO(),
-            providesMatchDAO(),
-            providesDarCollectionSummaryDAO()
+                providesDARCollectionDAO(),
+                providesDarCollectionServiceDAO(),
+                providesDatasetDAO(),
+                providesElectionDAO(),
+                providesDataAccessRequestDAO(),
+                providesEmailService(),
+                providesVoteDAO(),
+                providesMatchDAO(),
+                providesDarCollectionSummaryDAO()
         );
     }
 
@@ -287,10 +287,10 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DatasetAssociationService providesDatasetAssociationService() {
         return new DatasetAssociationService(
-            providesDatasetAssociationDAO(),
-            providesUserDAO(),
-            providesDatasetDAO(),
-            providesUserRoleDAO()
+                providesDatasetAssociationDAO(),
+                providesUserDAO(),
+                providesDatasetDAO(),
+                providesUserRoleDAO()
         );
     }
 
@@ -329,8 +329,8 @@ public class ConsentModule extends AbstractModule {
     @Provides
     SendGridAPI providesSendGridAPI() {
         return new SendGridAPI(
-            config.getMailConfiguration(),
-            providesUserDAO());
+                config.getMailConfiguration(),
+                providesUserDAO());
     }
 
     @Provides
@@ -351,19 +351,19 @@ public class ConsentModule extends AbstractModule {
     @Provides
     DarCollectionServiceDAO providesDarCollectionServiceDAO() {
         return new DarCollectionServiceDAO(
-            providesDatasetDAO(),
-            providesElectionDAO(),
-            providesJdbi(),
-            providesUserDAO());
+                providesDatasetDAO(),
+                providesElectionDAO(),
+                providesJdbi(),
+                providesUserDAO());
     }
 
     @Provides
     DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
-      return new DataAccessRequestServiceDAO(
-        providesDataAccessRequestDAO(),
-        providesJdbi(),
-        providesDARCollectionDAO()
-      );
+        return new DataAccessRequestServiceDAO(
+                providesDataAccessRequestDAO(),
+                providesJdbi(),
+                providesDARCollectionDAO()
+        );
     }
 
     @Provides
@@ -384,8 +384,8 @@ public class ConsentModule extends AbstractModule {
     @Provides
     VoteServiceDAO providesVoteServiceDAO() {
         return new VoteServiceDAO(
-        providesJdbi(),
-        providesVoteDAO());
+                providesJdbi(),
+                providesVoteDAO());
     }
 
     @Provides
@@ -494,10 +494,14 @@ public class ConsentModule extends AbstractModule {
     }
 
     @Provides
-    LibraryCardDAO providesLibraryCardDAO() { return libraryCardDAO; }
+    LibraryCardDAO providesLibraryCardDAO() {
+        return libraryCardDAO;
+    }
 
     @Provides
-    AcknowledgementDAO providesAcknowledgementDAO() { return acknowledgementDAO; }
+    AcknowledgementDAO providesAcknowledgementDAO() {
+        return acknowledgementDAO;
+    }
 
     @Provides
     InstitutionService providesInstitutionService() {
@@ -537,6 +541,7 @@ public class ConsentModule extends AbstractModule {
                 providesUserRoleDAO()
         );
     }
+
     @Provides
     UserService providesUserService() {
         return new UserService(
@@ -565,9 +570,9 @@ public class ConsentModule extends AbstractModule {
     @Provides
     NihService providesNihService() {
         return new NihService(
-            providesResearcherService(),
-            providesUserDAO(),
-            providesNIHServiceDAO());
+                providesResearcherService(),
+                providesUserDAO(),
+                providesNIHServiceDAO());
     }
 
     @Provides
@@ -578,14 +583,14 @@ public class ConsentModule extends AbstractModule {
     @Provides
     SummaryService providesSummaryService() {
         return new SummaryService(
-            providesDataAccessRequestService(),
-            providesVoteDAO(),
-            providesElectionDAO(),
-            providesUserDAO(),
-            providesConsentDAO(),
-            providesDatasetDAO(),
-            providesMatchDAO(),
-            providesDARCollectionDAO()
+                providesDataAccessRequestService(),
+                providesVoteDAO(),
+                providesElectionDAO(),
+                providesUserDAO(),
+                providesConsentDAO(),
+                providesDatasetDAO(),
+                providesMatchDAO(),
+                providesDARCollectionDAO()
         );
     }
 

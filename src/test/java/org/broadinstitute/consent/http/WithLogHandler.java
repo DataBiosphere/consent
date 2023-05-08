@@ -21,8 +21,11 @@ public interface WithLogHandler {
             lastLevel = record.getLevel();
         }
 
-        public void close(){}
-        public void flush(){}
+        public void close() {
+        }
+
+        public void flush() {
+        }
     }
 
     default LogHandler createLogHandler(String className) {

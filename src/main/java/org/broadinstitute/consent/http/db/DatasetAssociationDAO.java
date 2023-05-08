@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DatasetAssociationMapper;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -12,6 +10,9 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 
 @RegisterRowMapper(DatasetAssociationMapper.class)
@@ -34,10 +35,10 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
     Boolean exist(@Bind("datasetId") Integer datasetId);
 
     @SqlQuery("""
-        SELECT DISTINCT dacuserid
-        FROM dataset_user_association
-        WHERE datasetid = :datasetId
-        """)
+            SELECT DISTINCT dacuserid
+            FROM dataset_user_association
+            WHERE datasetid = :datasetId
+            """)
     List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
 
 }

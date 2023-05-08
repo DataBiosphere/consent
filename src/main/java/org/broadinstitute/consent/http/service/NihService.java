@@ -73,7 +73,7 @@ public class NihService implements ConsentLogger {
         Calendar c = Calendar.getInstance();
         c.setTime(currentDate);
         c.add(Calendar.DATE, 30);
-        Date expires= c.getTime();
+        Date expires = c.getTime();
         return String.valueOf(expires.getTime());
     }
 

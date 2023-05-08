@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Objects;
-
 import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Objects;
 
 public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, RowMapperHelper {
     @Override
@@ -30,7 +30,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
             file.setEntityId(r.getString(addPrefix("entity_id")));
         }
 
-        if (hasColumn(r, addPrefix( "gcs_file_uri"))) {
+        if (hasColumn(r, addPrefix("gcs_file_uri"))) {
             try {
                 file.setBlobId(BlobId.fromGsUtilUri(r.getString(addPrefix("gcs_file_uri"))));
             } catch (Exception e) {
@@ -42,7 +42,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
         if (hasColumn(r, addPrefix("category"))) {
             try {
                 file.setCategory(FileCategory.findValue(r.getString(addPrefix("category"))));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 file.setCategory(null);
             }
         }
@@ -69,7 +69,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
             file.setDeleteUserId(id.equals(0) ? null : id);
         }
 
-        if (hasColumn(r,  addPrefix("delete_date"))) {
+        if (hasColumn(r, addPrefix("delete_date"))) {
             Timestamp deleteDate = r.getTimestamp(addPrefix("delete_date"));
             file.setDeleteDate((Objects.nonNull(deleteDate) ? deleteDate.toInstant() : null));
         }

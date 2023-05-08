@@ -10,13 +10,6 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.ClosedDatasetElectionMessage;
@@ -32,6 +25,14 @@ import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.broadinstitute.consent.http.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.mail.MessagingException;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class SendGridAPI {
 
@@ -157,12 +158,12 @@ public class SendGridAPI {
     }
 
     public Optional<Response> sendNewDARRequests(String toAddress, String referenceId, String type, Writer template) {
-        Mail message =  newDARMessageCreator.newDARRequestMessage(toAddress, fromAccount, template, referenceId, type);
+        Mail message = newDARMessageCreator.newDARRequestMessage(toAddress, fromAccount, template, referenceId, type);
         return sendMessage(message);
     }
 
     public Optional<Response> sendClosedDatasetElectionsMessage(String toAddress, String dataAccessRequestId, String type, Writer template) {
-        Mail message =  closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
+        Mail message = closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount, template, dataAccessRequestId, type);
         return sendMessage(message);
     }
 

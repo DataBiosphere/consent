@@ -4,8 +4,8 @@ import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -56,8 +56,8 @@ public class DatasetRegistrationService {
      * There will be one dataset per ConsentGroup in the dataset.
      *
      * @param registration The DatasetRegistrationSchemaV1.yaml
-     * @param user The User creating these datasets
-     * @param files Map of files, where the key is the name of the field
+     * @param user         The User creating these datasets
+     * @param files        Map of files, where the key is the name of the field
      * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(
@@ -107,10 +107,9 @@ public class DatasetRegistrationService {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
         if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
-            && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
-                throw new NotFoundException("Could not find DAC");
+                && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+            throw new NotFoundException("Could not find DAC");
         }
-
 
 
         List<DatasetProperty> props = convertRegistrationToDatasetProperties(registration, consentGroup);
@@ -161,9 +160,9 @@ public class DatasetRegistrationService {
 
         if (files.containsKey(ALTERNATIVE_DATA_SHARING_PLAN_NAME)) {
             consentGroupFSOs.add(uploadFile(
-                                 files, uploadedFileCache, user,
-                                 ALTERNATIVE_DATA_SHARING_PLAN_NAME,
-                                 FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
+                    files, uploadedFileCache, user,
+                    ALTERNATIVE_DATA_SHARING_PLAN_NAME,
+                    FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
         }
 
         if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx))) {
@@ -206,10 +205,10 @@ public class DatasetRegistrationService {
     /**
      * Extracts an individual field as a dataset property.
      *
-     * @param name The human-readable name of the field
+     * @param name       The human-readable name of the field
      * @param schemaProp The schema property name (camelCase)
-     * @param type The type of the field, e.g. Boolean, String
-     * @param getField Lambda which gets the field's value
+     * @param type       The type of the field, e.g. Boolean, String
+     * @param getField   Lambda which gets the field's value
      */
     public record DatasetPropertyExtractor(
             String name,
@@ -219,7 +218,7 @@ public class DatasetRegistrationService {
              * Takes in: Dataset registration object and consent group
              * Produces: The value of the field, can be null if field not present.
              */
-            BiFunction<DatasetRegistrationSchemaV1,ConsentGroup,Object> getField
+            BiFunction<DatasetRegistrationSchemaV1, ConsentGroup, Object> getField
     ) {
 
         /**
@@ -244,7 +243,9 @@ public class DatasetRegistrationService {
             return Optional.of(datasetProperty);
 
         }
-    };
+    }
+
+    ;
 
     // TODO: is there some way to do this automatically from, e.g., the schema?
     private static final List<DatasetPropertyExtractor> DATASET_REGISTRATION_V1_PROPERTY_EXTRACTORS = List.of(

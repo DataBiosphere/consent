@@ -19,7 +19,8 @@ public class NIHUserAccount {
 
     private Boolean status;
 
-    public NIHUserAccount() {}
+    public NIHUserAccount() {
+    }
 
     public NIHUserAccount(String nihUsername, ArrayList datasetPermissions, String eraExpiration, Boolean status) {
         this.nihUsername = nihUsername;

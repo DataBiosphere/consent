@@ -1,20 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -43,6 +28,22 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 public class SummaryServiceTest {
 
     @Mock
@@ -68,12 +69,12 @@ public class SummaryServiceTest {
     public void setUp() throws Exception {
         openMocks(this);
         summaryService = Mockito.spy(new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
-            datasetDAO, matchDAO, darCollectionDAO));
+                datasetDAO, matchDAO, darCollectionDAO));
     }
 
     private void initService() {
         summaryService = new SummaryService(dataAccessRequestService, voteDAO, electionDAO, userDAO, consentDAO,
-            datasetDAO, matchDAO, darCollectionDAO);
+                datasetDAO, matchDAO, darCollectionDAO);
     }
 
     // Test that empty data will not throw errors
@@ -181,9 +182,11 @@ public class SummaryServiceTest {
         assertTrue("The list for closed negative cases should be three: ", matchSummaryList.get(1).getReviewedNegativeCases().equals(3));
     }
 
-    /** Private methods for mocking **/
+    /**
+     * Private methods for mocking
+     **/
 
-    private List<Election> electionsList(String electionType, String status){
+    private List<Election> electionsList(String electionType, String status) {
         Election e1 = new Election(1, electionType, status, new Date(), "571fd0ca5ce51d1b148715f3", new Date(), false, 1);
         Election e2 = new Election(2, electionType, status, new Date(), "572fd0ca5ce51d1b148715f3", new Date(), false, 2);
         Election e3 = new Election(3, electionType, status, new Date(), "573fd0ca5ce51d1b148715f3", new Date(), false, 3);
@@ -191,7 +194,7 @@ public class SummaryServiceTest {
         return Arrays.asList(e1, e2, e3, e4);
     }
 
-    private List<Vote> randomVotesList(Integer userId, String voteType){
+    private List<Vote> randomVotesList(Integer userId, String voteType) {
         Vote v1 = new Vote(1, false, userId, new Date(), new Date(), 1, "", voteType, false, false);
         Vote v2 = new Vote(2, false, userId, new Date(), new Date(), 2, "", voteType, false, false);
         Vote v3 = new Vote(3, false, userId, new Date(), new Date(), 3, "", voteType, false, false);
@@ -254,15 +257,15 @@ public class SummaryServiceTest {
 
     private List<Vote> createVotes(Integer electionId, Integer userId) {
         return Arrays.stream(VoteType.values()).map(t -> {
-                Vote v = new Vote();
-                v.setVote(true);
-                v.setType(t.getValue());
-                v.setElectionId(electionId);
-                v.setCreateDate(new Date());
-                v.setUpdateDate(new Date());
-                v.setUserId(userId);
-                return v;
-            }
+                    Vote v = new Vote();
+                    v.setVote(true);
+                    v.setType(t.getValue());
+                    v.setElectionId(electionId);
+                    v.setCreateDate(new Date());
+                    v.setUpdateDate(new Date());
+                    v.setUserId(userId);
+                    return v;
+                }
         ).collect(Collectors.toUnmodifiableList());
     }
 

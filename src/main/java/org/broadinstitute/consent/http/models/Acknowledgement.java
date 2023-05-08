@@ -19,7 +19,9 @@ public class Acknowledgement {
         this.userId = userId;
     }
 
-    public Date getFirstAcknowledged() { return firstAcknowledged; }
+    public Date getFirstAcknowledged() {
+        return firstAcknowledged;
+    }
 
     public void setFirstAcknowledged(Timestamp firstAcknowledged) {
         this.firstAcknowledged = firstAcknowledged;

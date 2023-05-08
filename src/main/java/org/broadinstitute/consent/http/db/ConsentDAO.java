@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.ConsentMapper;
 import org.broadinstitute.consent.http.models.Consent;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -11,6 +8,10 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 @RegisterRowMapper(ConsentMapper.class)
 public interface ConsentDAO extends Transactional<ConsentDAO> {
@@ -37,12 +38,12 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
 
 
     @SqlUpdate("""
-        INSERT INTO consents
-            (consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name,
-            create_date, sort_date, translated_use_restriction, group_name)
-        VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name,
-            :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)
-        """)
+            INSERT INTO consents
+                (consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name,
+                create_date, sort_date, translated_use_restriction, group_name)
+            VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name,
+                :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)
+            """)
     void insertConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("dataUse") String dataUse,
@@ -58,20 +59,20 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
     void deleteConsent(@Bind("consentId") String consentId);
 
     @SqlUpdate("""
-        UPDATE consents
-        SET requires_manual_review = :requiresManualReview,
-            data_use = :dataUse,
-            data_use_letter = :dataUseLetter,
-            name = :name,
-            dul_name = :dulName,
-            last_update = :lastUpdate,
-            sort_date = :sortDate,
-            translated_use_restriction = :translatedUseRestriction,
-            group_name = :groupName,
-            updated = :updated
-        WHERE consent_id = :consentId
-        AND active = true
-        """)
+            UPDATE consents
+            SET requires_manual_review = :requiresManualReview,
+                data_use = :dataUse,
+                data_use_letter = :dataUseLetter,
+                name = :name,
+                dul_name = :dulName,
+                last_update = :lastUpdate,
+                sort_date = :sortDate,
+                translated_use_restriction = :translatedUseRestriction,
+                group_name = :groupName,
+                updated = :updated
+            WHERE consent_id = :consentId
+            AND active = true
+            """)
     void updateConsent(@Bind("consentId") String consentId,
                        @Bind("requiresManualReview") Boolean requiresManualReview,
                        @Bind("dataUse") String dataUse,
@@ -85,11 +86,11 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
                        @Bind("updated") Boolean updateStatus);
 
     @SqlUpdate("""
-        UPDATE consents
-        SET sort_date = :sortDate
-        WHERE consent_id = :consentId
-        AND active = true
-        """)
+            UPDATE consents
+            SET sort_date = :sortDate
+            WHERE consent_id = :consentId
+            AND active = true
+            """)
     void updateConsentSortDate(@Bind("consentId") String consentId, @Bind("sortDate") Date sortDate);
 
     // Consent Association Access Methods

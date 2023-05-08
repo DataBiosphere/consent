@@ -42,7 +42,7 @@ public abstract class ResourceTestHelper {
      * @param resources Resource class instances to add to the test rule
      * @return ResourceTestRule.Builder
      */
-    ResourceTestRule.Builder testRuleBuilder(Resource ... resources) {
+    ResourceTestRule.Builder testRuleBuilder(Resource... resources) {
         ResourceTestRule.Builder builder = ResourceTestRule.builder()
                 .addProvider(MultiPartFeature.class)
                 .addProvider(RolesAllowedDynamicFeature.class)

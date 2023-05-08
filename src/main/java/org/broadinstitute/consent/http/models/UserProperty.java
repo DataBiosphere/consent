@@ -7,7 +7,7 @@ import com.google.common.base.Objects;
 public class UserProperty {
 
     public static final String QUERY_FIELDS_WITH_UP_PREFIX =
-                    " up.propertyid AS up_property_id, " +
+            " up.propertyid AS up_property_id, " +
                     " up.userid AS up_user_id, " +
                     " up.propertykey AS up_property_key, " +
                     " up.propertyvalue AS up_property_value ";

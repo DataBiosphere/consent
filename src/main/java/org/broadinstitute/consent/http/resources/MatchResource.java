@@ -15,7 +15,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -24,51 +23,51 @@ import java.util.stream.Collectors;
 @Path("api/match")
 public class MatchResource extends Resource {
 
-  private final MatchService service;
+    private final MatchService service;
 
-  @Inject
-  public MatchResource(MatchService matchService) {
-    this.service = matchService;
-  }
+    @Inject
+    public MatchResource(MatchService matchService) {
+        this.service = matchService;
+    }
 
-  @GET
-  @Path("/purpose/batch")
-  @PermitAll
-  public Response getMatchesForLatestDataAccessElectionsByPurposeIds(
-      @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds) {
-    try {
-      if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
-        throw new BadRequestException("No purpose ids were provided");
-      } else {
-        List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
-            .stream()
-            .filter(id -> !id.isBlank())
-            .map(id -> id.strip())
-            .collect(Collectors.toList());
+    @GET
+    @Path("/purpose/batch")
+    @PermitAll
+    public Response getMatchesForLatestDataAccessElectionsByPurposeIds(
+            @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds) {
+        try {
+            if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
+                throw new BadRequestException("No purpose ids were provided");
+            } else {
+                List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
+                        .stream()
+                        .filter(id -> !id.isBlank())
+                        .map(id -> id.strip())
+                        .collect(Collectors.toList());
 
-        if (purposeIdsList.isEmpty()) {
-          throw new BadRequestException("Invalid query params provided");
-        } else {
-          List<Match> matchList = service.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIdsList);
-          return Response.ok().entity(matchList).build();
+                if (purposeIdsList.isEmpty()) {
+                    throw new BadRequestException("Invalid query params provided");
+                } else {
+                    List<Match> matchList = service.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIdsList);
+                    return Response.ok().entity(matchList).build();
+                }
+            }
+        } catch (Exception e) {
+            return createExceptionResponse(e);
         }
-      }
-    } catch (Exception e) {
-      return createExceptionResponse(e);
     }
-  }
 
-  @POST
-  @Path("/reprocess/purpose/{purposeId}")
-  @RolesAllowed({Resource.ADMIN})
-  public Response reprocessPurposeMatches(
-      @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
-    try {
-      service.reprocessMatchesForPurpose(purposeId);
-      List<Match> matches = service.findMatchesByPurposeId(purposeId);
-      return Response.ok().entity(matches).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
+    @POST
+    @Path("/reprocess/purpose/{purposeId}")
+    @RolesAllowed({Resource.ADMIN})
+    public Response reprocessPurposeMatches(
+            @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
+        try {
+            service.reprocessMatchesForPurpose(purposeId);
+            List<Match> matches = service.findMatchesByPurposeId(purposeId);
+            return Response.ok().entity(matches).build();
+        } catch (Exception e) {
+            return createExceptionResponse(e);
+        }
     }
-  }
 }

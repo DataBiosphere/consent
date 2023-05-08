@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.service.dao;
 import com.google.cloud.storage.BlobId;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -33,7 +33,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testInsertDatasets() throws Exception{
+    public void testInsertDatasets() throws Exception {
 
         Dac dac = createDac();
         User user = createUser();

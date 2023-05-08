@@ -115,8 +115,8 @@ public class DatasetResource extends Resource {
         List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
         if (invalidProperties.size() > 0) {
             List<String> invalidKeys = invalidProperties.stream()
-                .map(DatasetPropertyDTO::getPropertyName)
-                .collect(Collectors.toList());
+                    .map(DatasetPropertyDTO::getPropertyName)
+                    .collect(Collectors.toList());
             throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
         }
         List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
@@ -142,8 +142,7 @@ public class DatasetResource extends Resource {
             DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset, name, userId);
             URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(createdDatasetWithConsent.getDataSetId());
             return Response.created(uri).entity(createdDatasetWithConsent).build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -205,7 +204,7 @@ public class DatasetResource extends Resource {
             for (FormDataBodyPart part : parts) {
                 if (Objects.nonNull(part.getContentDisposition().getFileName())) {
                     validateFileDetails(part.getContentDisposition());
-                    files.put(part.getName(),part);
+                    files.put(part.getName(), part);
                 }
             }
         }
@@ -234,8 +233,8 @@ public class DatasetResource extends Resource {
             List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(inputDataset.getProperties());
             if (invalidProperties.size() > 0) {
                 List<String> invalidKeys = invalidProperties.stream()
-                    .map(DatasetPropertyDTO::getPropertyName)
-                    .collect(Collectors.toList());
+                        .map(DatasetPropertyDTO::getPropertyName)
+                        .collect(Collectors.toList());
                 throw new BadRequestException("Dataset contains invalid properties that could not be recognized or associated with a key: " + invalidKeys.toString());
             }
             List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(inputDataset.getProperties());
@@ -250,8 +249,7 @@ public class DatasetResource extends Resource {
             if (updatedDataset.isPresent()) {
                 URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}").build(updatedDataset.get().getDataSetId());
                 return Response.ok(uri).entity(updatedDataset.get()).build();
-            }
-            else {
+            } else {
                 return Response.noContent().build();
             }
         } catch (Exception e) {
@@ -291,11 +289,11 @@ public class DatasetResource extends Resource {
     @Path("/{datasetId}")
     @Produces("application/json")
     @PermitAll
-    public Response describeDataSet( @PathParam("datasetId") Integer datasetId){
+    public Response describeDataSet(@PathParam("datasetId") Integer datasetId) {
         try {
             DatasetDTO datasetDTO = datasetService.getDatasetDTO(datasetId);
             return Response.ok(datasetDTO, MediaType.APPLICATION_JSON).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -304,14 +302,14 @@ public class DatasetResource extends Resource {
     @Path("/v2/{datasetId}")
     @Produces("application/json")
     @PermitAll
-    public Response getDataset(@PathParam("datasetId") Integer datasetId){
+    public Response getDataset(@PathParam("datasetId") Integer datasetId) {
         try {
             Dataset dataset = datasetService.findDatasetById(datasetId);
             if (Objects.isNull(dataset)) {
                 throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
             }
             return Response.ok(dataset).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -320,7 +318,7 @@ public class DatasetResource extends Resource {
     @Path("/batch")
     @Produces("application/json")
     @PermitAll
-    public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds){
+    public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds) {
         try {
             List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
 
@@ -335,7 +333,7 @@ public class DatasetResource extends Resource {
 
             }
             return Response.ok(datasets).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -396,11 +394,11 @@ public class DatasetResource extends Resource {
 
             JSONObject json = new JSONObject();
 
-            Collection<Dictionary> headers  =  datasetService.describeDictionaryByReceiveOrder();
+            Collection<Dictionary> headers = datasetService.describeDictionaryByReceiveOrder();
 
             StringBuilder sb = new StringBuilder();
             String TSV_DELIMITER = "\t";
-            for(Dictionary header : headers) {
+            for (Dictionary header : headers) {
                 if (sb.length() > 0)
                     sb.append(TSV_DELIMITER);
                 sb.append(header.getKey());
@@ -416,7 +414,7 @@ public class DatasetResource extends Resource {
 
             for (DatasetDTO row : rows) {
                 StringBuilder sbr = new StringBuilder();
-                DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID",row.getConsentId());
+                DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID", row.getConsentId());
                 List<DatasetPropertyDTO> props = row.getProperties();
                 props.add(property);
                 for (DatasetPropertyDTO prop : props) {
@@ -488,7 +486,7 @@ public class DatasetResource extends Resource {
     @Produces("application/json")
     @PermitAll
     @Deprecated
-    public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial){
+    public Response datasetAutocomplete(@Auth AuthUser authUser, @PathParam("partial") String partial) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             Integer userId = user.getUserId();
@@ -503,7 +501,7 @@ public class DatasetResource extends Resource {
     @Path("/search")
     @Produces("application/json")
     @PermitAll
-    public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query){
+    public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query) {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Dataset> datasets = datasetService.searchDatasets(query, user);
@@ -516,11 +514,11 @@ public class DatasetResource extends Resource {
     @PUT
     @Produces("application/json")
     @RolesAllowed(ADMIN)
-    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval){
-        try{
+    public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId, @QueryParam("needsApproval") Boolean needsApproval) {
+        try {
             Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
             return Response.ok().entity(unmarshal(dataset)).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -558,7 +556,7 @@ public class DatasetResource extends Resource {
         try {
             String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
             return Response.ok(content)
-                    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=DatasetApprovedUsers.tsv")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
                     .build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -570,9 +568,9 @@ public class DatasetResource extends Resource {
             return;
         }
         List<Integer> dacIds = user.getRoles().stream()
-            .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
-            .map(UserRole::getDacId)
-            .toList();
+                .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
+                .map(UserRole::getDacId)
+                .toList();
         if (dacIds.isEmpty()) {
             // Something went very wrong here. A chairperson with no dac ids is an error
             logWarn("Unable to find dac ids for chairperson user: " + user.getEmail());
