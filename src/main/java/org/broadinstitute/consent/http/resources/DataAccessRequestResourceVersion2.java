@@ -3,15 +3,21 @@ package org.broadinstitute.consent.http.resources;
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.service.MatchService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -29,20 +35,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.enumeration.DarDocumentType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.EmailService;
-import org.broadinstitute.consent.http.service.MatchService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("api/dar/v2")
 public class DataAccessRequestResourceVersion2 extends Resource {
@@ -89,6 +90,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
+      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+      }
+
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
