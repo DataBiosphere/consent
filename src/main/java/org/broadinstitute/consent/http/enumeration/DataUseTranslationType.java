@@ -8,42 +8,42 @@ import java.util.List;
  * a dataset (i.e. consent) or a purpose (i.e. DAR or research purpose).
  */
 public enum DataUseTranslationType {
-  DATASET("dataset"),
-  PURPOSE("purpose");
-  private final String value;
+    DATASET("dataset"),
+    PURPOSE("purpose");
+    private final String value;
 
-  DataUseTranslationType(String value) {
-    this.value = value;
-  }
-
-  public String getValue() {
-    return value;
-  }
-
-  public static String getValue(String value) {
-    for (DataUseTranslationType e : DataUseTranslationType.values()) {
-      if (e.getValue().equalsIgnoreCase(value)) {
-        return e.getValue();
-      }
+    DataUseTranslationType(String value) {
+        this.value = value;
     }
-    return null;
-  }
 
-  public static boolean contains(List<String> valueList) {
-    for (String value : valueList) {
-      if (!contains(value)) {
-        return false;
-      }
+    public String getValue() {
+        return value;
     }
-    return true;
-  }
 
-  public static boolean contains(String value) {
-    for (DataUseTranslationType c : DataUseTranslationType.values()) {
-      if (c.name().equalsIgnoreCase(value)) {
+    public static String getValue(String value) {
+        for (DataUseTranslationType e : DataUseTranslationType.values()) {
+            if (e.getValue().equalsIgnoreCase(value)) {
+                return e.getValue();
+            }
+        }
+        return null;
+    }
+
+    public static boolean contains(List<String> valueList) {
+        for (String value : valueList) {
+            if (!contains(value)) {
+                return false;
+            }
+        }
         return true;
-      }
     }
-    return false;
-  }
+
+    public static boolean contains(String value) {
+        for (DataUseTranslationType c : DataUseTranslationType.values()) {
+            if (c.name().equalsIgnoreCase(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

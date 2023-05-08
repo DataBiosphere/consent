@@ -11,18 +11,21 @@
     <table style="width: 600px">
         <tr>
             <td style="padding: 15px 15px 0px; text-align: center;">
-                <img src="https://duos.org/images/favicon/android-chrome-192x192.png" height="100px" width="100px" alt="DUOS Logo">
+                <img src="https://duos.org/images/favicon/android-chrome-192x192.png" height="100px" width="100px"
+                     alt="DUOS Logo">
             </td>
         </tr>
         <tr>
-            <td id="userName" style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 22px; color: #1F3B50; text-align: left; line-height: 25px; display: block; font-weight: 500;">
+            <td id="userName"
+                style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 22px; color: #1F3B50; text-align: left; line-height: 25px; display: block; font-weight: 500;">
                 Hello Admin,
             </td>
         </tr>
         <tr>
             <td style="padding: 0px 15px 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
                 <p>
-                    The following Dataset(s) elections finished its reviewing process by the Data Owners, or were closed by the system automatically because the allowed voting time expired.
+                    The following Dataset(s) elections finished its reviewing process by the Data Owners, or were closed
+                    by the system automatically because the allowed voting time expired.
                 </p>
                 <table style="margin: 15px 0 10px 0; border-collapse: collapse; width: 600px;">
                     <tr>
@@ -37,23 +40,25 @@
                         </th>
                     </tr>
                     <#list closedElections>
-                        <#items as election>
-                            <tr>
-                                <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${election.darId}
-                                </td>
-                                <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${election.numberOfDatasets}
-                                </td>
-                                <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${election.dsElectionResult}
-                                </td>
-                            </tr>
-                        </#items>
-                    </#list>
-                </table>
-            </td>
-        </tr>
+                    <#items as election>
+                    <tr>
+                        <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                            ${election.darId}
+                        </td>
+                        <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                            ${election.numberOfDatasets}
+                        </td>
+                        <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                            ${election.dsElectionResult}
+                        </td>
+                    </tr>
+                </
+                #items>
+            </
+            #list>
+    </table>
+    </td>
+    </tr>
     </table>
 </div>
 </body>

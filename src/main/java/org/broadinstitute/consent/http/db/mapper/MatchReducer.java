@@ -13,10 +13,10 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
     @Override
     public void accumulate(Map<Integer, Match> map, RowView rowView) {
         Match match = map.computeIfAbsent(rowView.getColumn("matchid", Integer.class), id -> rowView.getRow(Match.class));
-        if (hasColumn(rowView, "consent",String.class)) {
+        if (hasColumn(rowView, "consent", String.class)) {
             match.setConsent(rowView.getColumn("consent", String.class));
         }
-        if (hasColumn(rowView, "purpose",String.class)) {
+        if (hasColumn(rowView, "purpose", String.class)) {
             match.setPurpose(rowView.getColumn("purpose", String.class));
         }
         if (hasColumn(rowView, "algorithm_version", String.class)) {

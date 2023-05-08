@@ -1,5 +1,5 @@
-
 ----
+
 Have you read [CONTRIBUTING.md](../CONTRIBUTING.md) lately? If not, do that first.
 
 - Label PR with a Jira ticket number and include a link to the ticket

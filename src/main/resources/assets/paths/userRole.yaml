@@ -1,6 +1,6 @@
 put:
   summary: Add a role to a user
-  description: Add a role to a user id. Available to Admin and Signing Officials.  
+  description: Add a role to a user id. Available to Admin and Signing Officials.
     Signing Officials may add roleId 6, 7, 8 for users with the same institution or when no institution is set.
     When no institution is set for a user and a signing official adds a role, the user is added to the Signing Official's institution.
   parameters:
@@ -53,7 +53,7 @@ put:
       description: Server error.
 delete:
   summary: Delete a role from a user
-  description: Delete a role from a user, specified by given userId. Available to Admin and Signing Official roles.  
+  description: Delete a role from a user, specified by given userId. Available to Admin and Signing Official roles.
     Signing Officials may remove user roles [6, 7, 8] for users in their organization.  They may not remove the
     Signing Official role from themselves.
   parameters:

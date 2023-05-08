@@ -12,16 +12,16 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class Election {
 
-  public static final String QUERY_FIELDS_WITH_E_PREFIX =
-      " e.election_id AS e_election_id, "
-          + " e.reference_id AS e_reference_id, "
-          + " e.status AS e_status, "
-          + " e.create_date AS e_create_date, "
-          + " e.last_update AS e_last_update, "
-          + " e.dataset_id AS e_dataset_id, "
-          + " e.election_type AS e_election_type, "
-          + " e.archived AS e_archived, "
-          + " e.latest AS e_latest ";
+    public static final String QUERY_FIELDS_WITH_E_PREFIX =
+            " e.election_id AS e_election_id, "
+                    + " e.reference_id AS e_reference_id, "
+                    + " e.status AS e_status, "
+                    + " e.create_date AS e_create_date, "
+                    + " e.last_update AS e_last_update, "
+                    + " e.dataset_id AS e_dataset_id, "
+                    + " e.election_type AS e_election_type, "
+                    + " e.archived AS e_archived, "
+                    + " e.latest AS e_latest ";
 
     @JsonProperty
     private Integer electionId;
@@ -84,8 +84,8 @@ public class Election {
     }
 
     public Election(Integer electionId, String electionType,
-            String status, Date createDate,
-            String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
+                    String status, Date createDate,
+                    String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer dataSetId) {
         this.electionId = electionId;
         this.electionType = electionType;
         this.status = status;
@@ -222,7 +222,9 @@ public class Election {
         return dulName;
     }
 
-    public void setDulName(String dulName) { this.dulName = dulName; }
+    public void setDulName(String dulName) {
+        this.dulName = dulName;
+    }
 
     public Boolean getArchived() {
         return archived;
@@ -240,9 +242,13 @@ public class Election {
         this.version = version;
     }
 
-    public String getConsentGroupName() { return consentGroupName; }
+    public String getConsentGroupName() {
+        return consentGroupName;
+    }
 
-    public void setConsentGroupName(String consentGroupName) { this.consentGroupName = consentGroupName; }
+    public void setConsentGroupName(String consentGroupName) {
+        this.consentGroupName = consentGroupName;
+    }
 
     public String getProjectTitle() {
         return projectTitle;
@@ -261,13 +267,13 @@ public class Election {
     }
 
     public void addVote(Vote vote) {
-        if(java.util.Objects.isNull(votes)) {
+        if (java.util.Objects.isNull(votes)) {
             this.setVotes(new HashMap<>());
         }
-        if(java.util.Objects.nonNull(vote)) {
+        if (java.util.Objects.nonNull(vote)) {
             Integer voteId = vote.getVoteId();
             Vote savedVote = votes.get(voteId);
-            if(java.util.Objects.isNull(savedVote)) {
+            if (java.util.Objects.isNull(savedVote)) {
                 votes.put(voteId, vote);
             }
         }

@@ -2,6 +2,7 @@
 @Grab('com.google.code.GSON:GSON:2.8.6')
 import com.google.gson.Gson
 import groovy.json.JsonSlurper
+
 import java.util.logging.Logger
 
 import static groovyx.net.http.HttpBuilder.configure

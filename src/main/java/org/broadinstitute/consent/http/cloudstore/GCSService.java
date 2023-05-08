@@ -9,21 +9,21 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.ws.rs.NotFoundException;
-import org.apache.commons.io.IOUtils;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GCSService {
 
@@ -74,14 +74,14 @@ public class GCSService {
     /**
      * Store an input stream as a Blob
      *
-     * @param content InputStream content
+     * @param content   InputStream content
      * @param mediaType String media type
-     * @param id String UUID of the file
+     * @param id        String UUID of the file
      * @return BlobId of the stored document
      * @throws IOException Exception when storing document
      */
     public BlobId storeDocument(InputStream content, String mediaType, UUID id)
-        throws IOException {
+            throws IOException {
         byte[] bytes = IOUtils.toByteArray(content);
         BlobId blobId = BlobId.of(config.getBucket(), id.toString());
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
@@ -99,8 +99,8 @@ public class GCSService {
     public boolean deleteDocument(String blobIdName) {
         Optional<Blob> blobOptional = getBlobFromUrl(blobIdName);
         return blobOptional
-            .map(blob -> storage.delete(blob.getBlobId()))
-            .orElse(false);
+                .map(blob -> storage.delete(blob.getBlobId()))
+                .orElse(false);
     }
 
     /**

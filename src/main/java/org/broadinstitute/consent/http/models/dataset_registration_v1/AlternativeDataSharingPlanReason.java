@@ -20,7 +20,7 @@ public enum AlternativeDataSharingPlanReason {
     private final static Map<String, AlternativeDataSharingPlanReason> CONSTANTS = new HashMap<String, AlternativeDataSharingPlanReason>();
 
     static {
-        for (AlternativeDataSharingPlanReason c: values()) {
+        for (AlternativeDataSharingPlanReason c : values()) {
             CONSTANTS.put(c.value, c);
         }
     }

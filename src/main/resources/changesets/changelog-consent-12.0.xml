@@ -57,12 +57,13 @@
             </column>
             <column name="required" type="boolean"/>
             <column name="displayorder" type="int"/>
-         </createTable>
+        </createTable>
     </changeSet>
 
     <changeSet author="vvicario" id="50">
         <validCheckSum>ANY</validCheckSum>
-        <addForeignKeyConstraint baseColumnNames="propertykey" baseTableName="datasetproperty" constraintName="fkDataSetProperty"
+        <addForeignKeyConstraint baseColumnNames="propertykey" baseTableName="datasetproperty"
+                                 constraintName="fkDataSetProperty"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="keyid" referencedTableName="dictionary"
                                  referencesUniqueColumn="false"/>
@@ -70,7 +71,8 @@
 
     <changeSet author="vvicario" id="51">
         <validCheckSum>ANY</validCheckSum>
-        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="datasetproperty" constraintName="fkDataSetMetadata"
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="datasetproperty"
+                                 constraintName="fkDataSetMetadata"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="datasetid" referencedTableName="dataset"
                                  referencesUniqueColumn="false"/>
@@ -134,7 +136,7 @@
     <changeSet author="ssaucedo" id="53">
         <validCheckSum>ANY</validCheckSum>
         <addUniqueConstraint columnNames="objectid" tableName="dataset"
-          deferrable="false" initiallyDeferred="false"/>
+                             deferrable="false" initiallyDeferred="false"/>
     </changeSet>
 
     <changeSet author="ssaucedo" id="54">

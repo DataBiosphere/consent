@@ -14,7 +14,7 @@ public class DatasetAssociationMapper implements RowMapper<DatasetAssociation> {
         DatasetAssociation association = new DatasetAssociation();
         association.setDatasetId(r.getInt("datasetId"));
         association.setDacuserId(r.getInt("dacuserId"));
-        association.setCreateDate(  r.getDate("createDate"));
+        association.setCreateDate(r.getDate("createDate"));
         return association;
     }
 }

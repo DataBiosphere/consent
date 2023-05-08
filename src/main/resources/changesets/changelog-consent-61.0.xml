@@ -30,11 +30,13 @@
         <createIndex tableName="institution" indexName="institution_name_index">
             <column name="institution_name"></column>
         </createIndex>
-        <addForeignKeyConstraint baseColumnNames="create_user" baseTableName="institution" constraintName="fkInstitutionCreateUser"
+        <addForeignKeyConstraint baseColumnNames="create_user" baseTableName="institution"
+                                 constraintName="fkInstitutionCreateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
-        <addForeignKeyConstraint baseColumnNames="update_user" baseTableName="institution" constraintName="fkInstitutionUpdateUser"
+        <addForeignKeyConstraint baseColumnNames="update_user" baseTableName="institution"
+                                 constraintName="fkInstitutionUpdateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>

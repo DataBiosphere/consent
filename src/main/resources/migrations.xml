@@ -43,7 +43,7 @@
         <validCheckSum>ANY</validCheckSum>
         <createTable tableName="consentassociations">
             <column name="associationid" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false" />
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="consentid" type="varchar(255)">
                 <constraints nullable="false"/>

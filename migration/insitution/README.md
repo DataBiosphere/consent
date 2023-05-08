@@ -15,5 +15,5 @@ node app.js \
 * Replace `institutions.txt` with the name of your text file.
 * Replace `https://consent.dsde-dev.broadinstitute.org/` with the desired consent environment.
 
-Errors will be printed out to the console. Conflict errors can be ignored. Other errors are 
+Errors will be printed out to the console. Conflict errors can be ignored. Other errors are
 written to a `retry.log` so they can be followed up on.

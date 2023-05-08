@@ -1,9 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
@@ -20,6 +16,11 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 public interface UserDAO extends Transactional<UserDAO> {
 
     String QUERY_FIELD_SEPARATOR = ", ";
@@ -29,33 +30,33 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = Institution.class, prefix = "i")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
-        + " FROM users u "
-        + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-        + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
-        + " WHERE u.user_id = :userId")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
+            + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
+            + " FROM users u "
+            + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
+            + " WHERE u.user_id = :userId")
     User findUserById(@Bind("userId") Integer userId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX
-        + " FROM users u WHERE u.user_id IN (<userIds>)")
+            + User.QUERY_FIELDS_WITH_U_PREFIX
+            + " FROM users u WHERE u.user_id IN (<userIds>)")
     Collection<User> findUsers(@BindList("userIds") Collection<Integer> userIds);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM users u "
-        + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-        + " WHERE r.name = :name")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+            + " FROM users u "
+            + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE r.name = :name")
     List<User> describeUsersByRole(@Bind("name") String name);
 
     @SqlQuery("select du.user_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.roleId = ur.role_id where du.user_id = :userId and r.name = 'Chairperson'")
@@ -65,24 +66,24 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
-        + " FROM users u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id = :dacId "
-        + " INNER JOIN roles r ON r.roleId = ur.role_id "
-        + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+            + " FROM users u "
+            + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id = :dacId "
+            + " INNER JOIN roles r ON r.roleId = ur.role_id "
+            + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
     Set<User> findUsersEnabledToVoteByDAC(@Bind("dacId") Integer dacId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("select "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
-        + " FROM users u "
-        + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id is null "
-        + " INNER JOIN roles r on r.roleId = ur.role_id "
-        + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+            + " FROM users u "
+            + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id is null "
+            + " INNER JOIN roles r on r.roleId = ur.role_id "
+            + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
     Set<User> findNonDacUsersEnabledToVote();
 
     @UseRowMapper(UserWithRolesMapper.class)
@@ -93,42 +94,42 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id, "
-        + "     ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name "
-        + " FROM users u "
-        + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-        + " WHERE LOWER(u.email) = LOWER(:email)")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + "     ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id, "
+            + "     ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name "
+            + " FROM users u "
+            + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE LOWER(u.email) = LOWER(:email)")
     User findUserByEmail(@Bind("email") String email);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("""
-        SELECT
-            u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
-            u.create_date as u_create_date, u.email_preference as u_email_preference,
-            u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
-            ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
-            ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
-        FROM users u
-        LEFT JOIN user_role ur ON ur.user_id = u.user_id
-        LEFT JOIN roles r ON r.roleid = ur.role_id
-        WHERE LOWER(u.email) ILIKE ANY (array[<emails>])
-        """)
+            SELECT
+                u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
+                u.create_date as u_create_date, u.email_preference as u_email_preference,
+                u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+                ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+                ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
+            FROM users u
+            LEFT JOIN user_role ur ON ur.user_id = u.user_id
+            LEFT JOIN roles r ON r.roleid = ur.role_id
+            WHERE LOWER(u.email) ILIKE ANY (array[<emails>])
+            """)
     List<User> findUsersByEmailList(@BindList("emails") List<String> emails);
 
     @SqlUpdate("INSERT INTO users (email, display_name, create_date) values (:email, :displayName, :createDate)")
     @GetGeneratedKeys
     Integer insertUser(@Bind("email") String email,
-                          @Bind("displayName") String displayName,
-                          @Bind("createDate") Date createDate);
+                       @Bind("displayName") String displayName,
+                       @Bind("createDate") Date createDate);
 
     @SqlUpdate("UPDATE users SET display_name=:displayName, institution_id=:institutionId WHERE user_id=:id")
     void updateUser(@Bind("displayName") String displayName,
-                       @Bind("id") Integer id,
-                       @Bind("institutionId") Integer institutionId);
+                    @Bind("id") Integer id,
+                    @Bind("institutionId") Integer institutionId);
 
     @SqlUpdate("delete from users where user_id = :id")
     void deleteUserById(@Bind("id") Integer id);
@@ -167,23 +168,23 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery("SELECT "
-        + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-        + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-        + " FROM users u "
-        + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-        + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-        + " WHERE LOWER(u.email) = LOWER(:email) "
-        + " AND r.roleid = :roleId")
+            + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+            + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+            + " FROM users u "
+            + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE LOWER(u.email) = LOWER(:email) "
+            + " AND r.roleid = :roleId")
     User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
     @UseRowMapper(UserWithRolesMapper.class)
     @SqlQuery("""
-        SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
-        FROM users du
-        INNER JOIN user_role ur ON ur.user_id = du.user_id
-        INNER JOIN roles r ON r.roleId = ur.role_id AND r.name in (<roleNames>)
-        INNER JOIN vote v ON v.user_id = du.user_id AND v.electionId in (<electionIds>)
-        """)
+            SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
+            FROM users du
+            INNER JOIN user_role ur ON ur.user_id = du.user_id
+            INNER JOIN roles r ON r.roleId = ur.role_id AND r.name in (<roleNames>)
+            INNER JOIN vote v ON v.user_id = du.user_id AND v.electionId in (<electionIds>)
+            """)
     Set<User> findUsersForElectionsByRoles(@BindList("electionIds") List<Integer> electionIds,
                                            @BindList("roleNames") List<String> roleNames);
 
@@ -219,21 +220,21 @@ public interface UserDAO extends Transactional<UserDAO> {
             //This will pull in users tied to the institution
             //Users will come with LCs issued by SOs institution (if any)
             " SELECT " +
-                User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-                " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
-                " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
-                " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
-                " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
-                " lc.update_user_id AS lc_update_user_id, " +
-                Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", " +
-                Institution.QUERY_FIELDS_WITH_I_PREFIX +
-            " FROM users u " +
-            " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
-            " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-            " LEFT JOIN library_card lc ON lc.user_id = u.user_id AND lc.institution_id = :institutionId " +
-            " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
-            " LEFT JOIN institution i ON u.institution_id = i.institution_id" +
-            " WHERE u.institution_id = :institutionId")
+                    User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+                    " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id, " +
+                    " lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id, " +
+                    " lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email, " +
+                    " lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date, " +
+                    " lc.update_user_id AS lc_update_user_id, " +
+                    Institution.QUERY_FIELDS_WITH_LCI_PREFIX + ", " +
+                    Institution.QUERY_FIELDS_WITH_I_PREFIX +
+                    " FROM users u " +
+                    " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
+                    " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+                    " LEFT JOIN library_card lc ON lc.user_id = u.user_id AND lc.institution_id = :institutionId " +
+                    " LEFT JOIN institution lci ON lc.institution_id = lci.institution_id" +
+                    " LEFT JOIN institution i ON u.institution_id = i.institution_id" +
+                    " WHERE u.institution_id = :institutionId")
     List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
 
     //SO only endpoint (so far)
@@ -243,20 +244,20 @@ public interface UserDAO extends Transactional<UserDAO> {
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(" SELECT " +
-                User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-                " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id " +
-                " FROM users u " +
-                " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
-                " LEFT JOIN roles r ON r.roleid = ur.role_id " +
-                " WHERE u.institution_id IS NULL")
+            User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
+            " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id " +
+            " FROM users u " +
+            " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
+            " LEFT JOIN roles r ON r.roleid = ur.role_id " +
+            " WHERE u.institution_id IS NULL")
     List<User> getUsersWithNoInstitution();
 
     @RegisterBeanMapper(value = User.class)
     @SqlQuery("SELECT u.user_id, u.display_name, u.email FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.roleid = ur.role_id "
-      + " WHERE LOWER(r.name) = 'signingofficial' "
-      + " AND u.institution_id = :institutionId")
+            + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+            + " LEFT JOIN roles r ON r.roleid = ur.role_id "
+            + " WHERE LOWER(r.name) = 'signingofficial' "
+            + " AND u.institution_id = :institutionId")
     List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
     @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")

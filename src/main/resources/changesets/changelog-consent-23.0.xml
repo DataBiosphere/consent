@@ -19,11 +19,11 @@
 
     <changeSet author="vvicario" id="85">
         <addColumn tableName="dataset">
-            <column name="needs_approval" type="boolean" defaultValueBoolean= "false"/>
+            <column name="needs_approval" type="boolean" defaultValueBoolean="false"/>
         </addColumn>
     </changeSet>
 
-    <changeSet  author="ssaucedo" id="86">
+    <changeSet author="ssaucedo" id="86">
         <validCheckSum>ANY</validCheckSum>
         <createTable tableName="dataset_user_association">
             <column name="datasetid" type="bigint">
@@ -42,11 +42,13 @@
                 constraintName="avoid_duplicated_associations"
                 tableName="dataset_user_association"/>
 
-        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="dataset_user_association" constraintName="fkDataSetId"
+        <addForeignKeyConstraint baseColumnNames="datasetid" baseTableName="dataset_user_association"
+                                 constraintName="fkDataSetId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="datasetid" referencedTableName="dataset"
                                  referencesUniqueColumn="true"/>
-        <addForeignKeyConstraint baseColumnNames="dacuserid" baseTableName="dataset_user_association" constraintName="fkDacuserId"
+        <addForeignKeyConstraint baseColumnNames="dacuserid" baseTableName="dataset_user_association"
+                                 constraintName="fkDacuserId"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="true"/>
@@ -54,7 +56,7 @@
 
     <changeSet author="vvicario" id="87">
         <addColumn tableName="vote">
-            <column name="has_concerns" type="boolean" defaultValueBoolean= "false"/>
+            <column name="has_concerns" type="boolean" defaultValueBoolean="false"/>
         </addColumn>
     </changeSet>
 

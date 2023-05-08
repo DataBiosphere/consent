@@ -15,7 +15,7 @@ get:
       description: String value that represents the role name to query by
       schema:
         type: string
-        enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]
+        enum: [ Admin, Chairperson, Member, SigningOfficial, Researcher ]
     - name: collectionId
       in: path
       description: DAR Collection Id

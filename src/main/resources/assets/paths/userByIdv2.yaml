@@ -23,7 +23,7 @@ get:
       description: Server error.
 put:
   summary: Update limited user fields by id
-  description: | 
+  description: |
     Updates a limited number of user fields by the user id. Available to Admins only
   parameters:
     - name: userId

@@ -1,12 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -16,6 +9,13 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class LibraryCardService {
 
@@ -119,7 +119,7 @@ public class LibraryCardService {
     }
 
     private void checkInstitutionId(Integer institutionId) {
-        if (Objects.isNull(institutionId)){
+        if (Objects.isNull(institutionId)) {
             throw new IllegalArgumentException("Institution ID is a required parameter");
         }
     }
@@ -144,12 +144,11 @@ public class LibraryCardService {
         Optional<LibraryCard> foundCard;
         List<LibraryCard> results;
 
-        if(Objects.nonNull(payload.getUserId())) {
+        if (Objects.nonNull(payload.getUserId())) {
             results = libraryCardDAO.findLibraryCardsByUserId(userId);
-        } else if(Objects.nonNull(email)) {
+        } else if (Objects.nonNull(email)) {
             results = libraryCardDAO.findAllLibraryCardsByUserEmail(email);
-        }
-        else {
+        } else {
             throw new BadRequestException();
         }
         foundCard = results.stream().filter(card -> {
@@ -159,7 +158,7 @@ public class LibraryCardService {
             return (sameUserId || sameUserEmail) && sameInstitution;
         }).findFirst();
 
-        if(foundCard.isPresent()) {
+        if (foundCard.isPresent()) {
             throw new ConsentConflictException();
         }
     }
@@ -173,7 +172,7 @@ public class LibraryCardService {
             } else {
                 //If a user is found, update the card to have the correct userId associated
                 User user = userDAO.findUserByEmail(card.getUserEmail());
-                if(!Objects.isNull(user)) {
+                if (!Objects.isNull(user)) {
                     Integer userId = user.getUserId();
                     card.setUserId(userId);
                 }
@@ -181,10 +180,10 @@ public class LibraryCardService {
         } else {
             //check if userId exists
             User user = userDAO.findUserById(card.getUserId());
-            if(Objects.isNull(user)) {
+            if (Objects.isNull(user)) {
                 throw new NotFoundException();
             }
-            if(Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
+            if (Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
                 //throw error here, user is trying to associate incorrect userId with email
                 throw new ConsentConflictException();
             }
@@ -195,7 +194,7 @@ public class LibraryCardService {
 
     private Boolean checkIsAdmin(User user) {
         return user.getRoles()
-            .stream()
-            .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
+                .stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
     }
 }

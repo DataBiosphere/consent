@@ -12,14 +12,14 @@ put:
         type: integer
     - name: roleName
       in: query
-      description: | 
+      description: |
         String value that represents the role name to act as. If not provided,
         the system will cancel the collection and associated elections as the 
         least permissioned role the user has (researcher) for safety.
       required: false
       schema:
         type: string
-        enum: [Admin, Chairperson, Researcher]
+        enum: [ Admin, Chairperson, Researcher ]
   responses:
     200:
       description: Returns target dar collection with DARs canceled

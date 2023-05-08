@@ -1,26 +1,26 @@
-    get:
-      summary: Get All Datasets for DAC
-      operationId: getDacDatasets
-      description: List all Datasets of a DAC
-      parameters:
-        - name: dacId
-          in: path
-          description: The DAC ID
-          required: true
+get:
+  summary: Get All Datasets for DAC
+  operationId: getDacDatasets
+  description: List all Datasets of a DAC
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The list of datasets
+      content:
+        application/json:
           schema:
-            type: integer
-      tags:
-        - DAC
-      responses:
-        200:
-          description: The list of datasets
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '../schemas/Dataset.yaml'
-        404:
-          description: No DAC found with the provided ID
-        500:
-          description: Internal Server Error
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+    404:
+      description: No DAC found with the provided ID
+    500:
+      description: Internal Server Error

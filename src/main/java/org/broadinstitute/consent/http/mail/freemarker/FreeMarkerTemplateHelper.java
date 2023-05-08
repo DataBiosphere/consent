@@ -4,15 +4,16 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
 
@@ -98,7 +99,7 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets,  String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {
+    private Writer generateResearcherApprovedTemplate(List<DatasetMailDTO> datasets, String dataUseRestriction, String darCode, String researcherName, String email, Template temp) throws IOException, TemplateException {
         ResearcherDarApprovedModel model = new ResearcherDarApprovedModel()
                 .setResearcherName(researcherName)
                 .setDarCode(darCode)
@@ -123,7 +124,7 @@ public class FreeMarkerTemplateHelper {
     private Writer generateClosedDatasetElectionsTemplate(Map<String, List<Election>> elections, String darCode, String serverUrl, Template temp) throws IOException, TemplateException {
         List<ClosedDatasetElectionModel> closedElections = new ArrayList<>();
         List<String> dars = new ArrayList<>(elections.keySet());
-        for(String key: dars){
+        for (String key : dars) {
             String numberOfDatasets = String.valueOf((elections.get(key)).size());
             closedElections.add(new ClosedDatasetElectionModel(key, numberOfDatasets, consolidateDatasetElectionResult(elections.get(key))));
         }
@@ -133,9 +134,9 @@ public class FreeMarkerTemplateHelper {
         return out;
     }
 
-    private String consolidateDatasetElectionResult(List<Election> elections){
-        for(Election e: elections){
-            if(! e.getFinalAccessVote()){
+    private String consolidateDatasetElectionResult(List<Election> elections) {
+        for (Election e : elections) {
+            if (!e.getFinalAccessVote()) {
                 return "Denied";
             }
         }

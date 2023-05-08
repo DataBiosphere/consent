@@ -1,4 +1,4 @@
-version:  "3.7"
+version: "3.7"
 services:
   postgres:
     image: broadinstitute/cloudsqlproxy:1.11_20180808

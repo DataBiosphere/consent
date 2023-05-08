@@ -261,7 +261,7 @@ required:
       - numberOfParticipants
   consentGroup:
     type: object
-    description: | 
+    description: |
       Each Consent Group will be translated into a separate dataset
       Required fields include the `consentGroupName` and any one of 
       `generalResearchUse`, `hmb`, or `diseaseSpecificUse`.

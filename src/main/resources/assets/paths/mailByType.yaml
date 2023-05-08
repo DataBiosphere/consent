@@ -10,19 +10,19 @@ get:
       schema:
         type: string
         enum:
-         - COLLECT
-         - NEW_CASE
-         - REMINDER
-         - NEW_DAR
-         - DISABLED_DATASET
-         - CLOSED_DATASET_ELECTION
-         - DATA_CUSTODIAN_APPROVAL
-         - RESEARCHER_DAR_APPROVED
-         - ADMIN_FLAGGED_DAR_APPROVED
-         - DAR_CANCEL
-         - DELEGATE_RESPONSIBILITIES
-         - NEW_RESEARCHER
-         - RESEARCHER_APPROVED
+          - COLLECT
+          - NEW_CASE
+          - REMINDER
+          - NEW_DAR
+          - DISABLED_DATASET
+          - CLOSED_DATASET_ELECTION
+          - DATA_CUSTODIAN_APPROVAL
+          - RESEARCHER_DAR_APPROVED
+          - ADMIN_FLAGGED_DAR_APPROVED
+          - DAR_CANCEL
+          - DELEGATE_RESPONSIBILITIES
+          - NEW_RESEARCHER
+          - RESEARCHER_APPROVED
     - name: limit
       in: query
       description: Number of results to return.  Defaults to 20 if unset. May not be negative.

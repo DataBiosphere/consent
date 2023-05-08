@@ -1,23 +1,29 @@
 # Postgres Migration
 
 Helpful resources:
+
 * [Postgres Cheat sheet](https://www.postgresqltutorial.com/postgresql-cheat-sheet/)
 * [Postgres Dockerhub](https://hub.docker.com/_/postgres)
 * [pgloader](https://pgloader.readthedocs.io/en/latest/)
 
-## Local DB Migration 
+## Local DB Migration
 
 Install [pgloader](https://pgloader.readthedocs.io/en/latest/)
+
 ```
 brew install pgloader
 ```
-Spin up a local copy of the database using this [compose file](postgres-migrate-local.yaml) 
+
+Spin up a local copy of the database using this [compose file](postgres-migrate-local.yaml)
 with appropriate secret values set up correctly.
+
 ```shell script
 docker-compose -f postgres.yaml up
 ```
 
-Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to the local environment:
+Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to the local
+environment:
+
 ```
 pgloader commands.txt 
 LOG pgloader version "3.6.1"
@@ -74,16 +80,20 @@ consent.accesselection_consentelection          0        168     1.2 kB         
 --------------------------------------  ---------  ---------  ---------  --------------
                      Total import time          ✓       7473     3.0 MB          3.645s
 ```
+
 Dump that to a local file for testing:
+
 ```shell script
 pg_dump -h localhost -U consent -d consent > consent.sql
 ```
 
 ## Remote DB Migration
 
-Spin up a compose that establishes two connections, one to the remote mysql, one to the remote postgres using this [compose file](postgres-migrate-remote.yaml) with appropriate secret values set up correctly.
+Spin up a compose that establishes two connections, one to the remote mysql, one to the remote postgres using
+this [compose file](postgres-migrate-remote.yaml) with appropriate secret values set up correctly.
 
 Then run pgloader using this [commands file](commands.txt) updated to include passwords appropriate to environment:
+
 ```shell script
 pgloader commands.txt 
 LOG pgloader version "3.6.1"
@@ -143,7 +153,8 @@ consent.accesselection_consentelection          0        177     1.3 kB         
 
 ### Validation
 
-The [row_counts.sql](row_counts.sql) script will show all of the row counts for the tables in the same order that `pgloder` loaded them. 
+The [row_counts.sql](row_counts.sql) script will show all of the row counts for the tables in the same order
+that `pgloder` loaded them.
 Run it against the original db and manually compare with the report that `pgloader` provides.
 
 ```shell script
@@ -155,7 +166,8 @@ docker run -v ${PWD}:/working -v $HOME:/root -it \
   -f /working/row_counts.sql
 ```
 
-Output: 
+Output:
+
 ```
 [wmd08-a62:~/develop/consent/migration]$ docker run -v ${PWD}:/working -v $HOME:/root -it  broadinstitute/dsde-toolbox mysql-connect.sh -p firecloud -e dev -a consent -f /working/row_counts.sql 
 
@@ -273,9 +285,11 @@ count(*)
 ```
 
 ## Code Changes Required
-Running consent against the postgres export requires some configuration and code changes. 
+
+Running consent against the postgres export requires some configuration and code changes.
 
 `consent.yaml` - change the driver, connection string, and user/password info:
+
 ```yaml
 database:
   driverClass: org.postgresql.Driver
@@ -285,11 +299,13 @@ database:
 ```
 
 `ConsentModule.java` - change the driver name:
+
 ```
 this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory(), "postgresql");
 ```
 
 `pom.xml` changes - add the driver, remove mysql, and update `sql-maven-plugin`:
+
 ```xml
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -299,6 +315,7 @@ this.jdbi = new DBIFactory().build(this.environment, config.getDataSourceFactory
 ```
 
 `ElectionDAO.findExpiredElections` needs a query update since datediff isn't supported:
+
 ```
 DATE_PART('day', NOW()::timestamp) - DATE_PART('day', createDate::timestamp)
 ```

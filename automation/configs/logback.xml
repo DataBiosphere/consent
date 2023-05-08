@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-<!--
-# This configuration is for use as a locally running consent app
-# that gatling tests can hit.
-  -->
+    <!--
+    # This configuration is for use as a locally running consent app
+    # that gatling tests can hit.
+      -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>[AUTOMATION] %d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
@@ -17,7 +17,7 @@
     <!--<logger name="io.gatling.http.engine.response" level="TRACE" />-->
 
     <root level="WARN">
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="CONSOLE"/>
     </root>
 
 </configuration>

@@ -59,7 +59,7 @@
                       newColumnName="object_id"/>
 
         <renameTable oldTableName="datasetproperty"
-                     newTableName="dataset_property" />
+                     newTableName="dataset_property"/>
 
     </changeSet>
 </databaseChangeLog>

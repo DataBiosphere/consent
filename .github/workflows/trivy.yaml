@@ -1,5 +1,5 @@
 name: dsp-appsec-trivy
-on: [pull_request]
+on: [ pull_request ]
 
 jobs:
   appsec-trivy:

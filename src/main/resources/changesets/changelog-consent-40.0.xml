@@ -1,17 +1,19 @@
 <databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet author="vvicario" id="118">
         <validCheckSum>ANY</validCheckSum>
-        <sql> UPDATE election as el SET datauseletter =
+        <sql>UPDATE election as el SET datauseletter =
             (SELECT c.datauseletter from consents c where el.referenceid = c.consentid)
-            where el.createdate &lt; '2018-05-23' </sql>
-        <sql> UPDATE election as el SET dulname =
+            where el.createdate &lt; '2018-05-23'
+        </sql>
+        <sql>UPDATE election as el SET dulname =
             (SELECT c.dulname from consents c where el.referenceid = c.consentid)
-            where el.createdate &lt; '2018-05-23' </sql>
+            where el.createdate &lt; '2018-05-23'
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

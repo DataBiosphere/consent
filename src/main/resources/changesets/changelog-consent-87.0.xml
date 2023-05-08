@@ -14,7 +14,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="match_entity_id" baseTableName="match_failure_reason" constraintName="fk_match_failure_entity_id"
+        <addForeignKeyConstraint baseColumnNames="match_entity_id" baseTableName="match_failure_reason"
+                                 constraintName="fk_match_failure_entity_id"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="matchid" referencedTableName="match_entity"/>
 

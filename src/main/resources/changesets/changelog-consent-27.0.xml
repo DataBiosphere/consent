@@ -15,7 +15,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="changeaction" type="varchar(255)">
-                 <constraints nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="modifiedbyuser" type="bigint">
                 <constraints nullable="false"/>

@@ -5,7 +5,7 @@ get:
   parameters:
     - name: start
       in: query
-      description: | 
+      description: |
         Earliest Date to search in MM/dd/yyyy format. (e.g. 05/19/2019)
       required: true
       schema:

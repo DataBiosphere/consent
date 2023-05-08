@@ -17,7 +17,7 @@ put:
         application/json:
           schema:
             $ref: '../schemas/DarCollectionSummary.yaml'
-    400: 
+    400:
       description: Bad Request (dar collection is not canceled)
     404:
       description: Not Found

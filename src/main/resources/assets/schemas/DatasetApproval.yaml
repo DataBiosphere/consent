@@ -1,5 +1,5 @@
 type: object
 properties:
-  approval: 
+  approval:
     type: boolean
     descrption: Value that represent DAC chair decision on whether to approve a dataset

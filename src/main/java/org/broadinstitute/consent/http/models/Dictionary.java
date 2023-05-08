@@ -11,12 +11,12 @@ public class Dictionary {
     @Deprecated
     private Integer receiveOrder;
 
-    public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder){
+    public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder) {
         this(key, required, displayOrder, receiveOrder);
         this.keyId = keyId;
     }
 
-    public Dictionary(String key, Boolean required, Integer displayOrder, Integer receiveOrder){
+    public Dictionary(String key, Boolean required, Integer displayOrder, Integer receiveOrder) {
         this.key = key;
         this.required = required;
         this.displayOrder = displayOrder;

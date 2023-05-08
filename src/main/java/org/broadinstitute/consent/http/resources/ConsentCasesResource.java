@@ -2,20 +2,21 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.models.SummaryDetail;
+import org.broadinstitute.consent.http.service.SummaryService;
+
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.models.SummaryDetail;
-import org.broadinstitute.consent.http.service.SummaryService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Path("api/consent/cases")
 public class ConsentCasesResource extends Resource {

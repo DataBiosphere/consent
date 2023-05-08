@@ -13,7 +13,7 @@
             <column name="data" type="jsonb"/>
         </createTable>
         <rollback>
-            <dropTable tableName="data_access_request" />
+            <dropTable tableName="data_access_request"/>
         </rollback>
     </changeSet>
 

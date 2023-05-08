@@ -54,7 +54,7 @@ put:
       description: Internal Server Error.
 delete:
   summary: Delete DAR by Reference Id
-  description: | 
+  description: |
     Deletes the DAR by reference id. If the user is the owner, and a researcher, the DAR
     will only be deleted if there are no elections created for it. If the user is an Admin,
     all votes and elections associated to the DAR will also be deleted.

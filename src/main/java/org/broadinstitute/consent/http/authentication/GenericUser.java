@@ -17,21 +17,22 @@ public class GenericUser {
     private String locale;
     private String hd;
 
-    public GenericUser() {}
+    public GenericUser() {
+    }
 
     /**
      * Convenience method to deserialize from Google's userinfo API, e.g.:
      * {
-     *   "sub": "...",
-     *   "name": "Gregory Rushton",
-     *   "given_name": "Gregory",
-     *   "family_name": "Rushton",
-     *   "profile": "https://plus.google.com/...",
-     *   "picture": "https://lh3.googleusercontent.com/...",
-     *   "email": "grushton@broadinstitute.org",
-     *   "email_verified": true,
-     *   "locale": "en",
-     *   "hd": "broadinstitute.org"
+     * "sub": "...",
+     * "name": "Gregory Rushton",
+     * "given_name": "Gregory",
+     * "family_name": "Rushton",
+     * "profile": "https://plus.google.com/...",
+     * "picture": "https://lh3.googleusercontent.com/...",
+     * "email": "grushton@broadinstitute.org",
+     * "email_verified": true,
+     * "locale": "en",
+     * "hd": "broadinstitute.org"
      * }
      *
      * @param json The JSON string to deserialize

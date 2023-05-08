@@ -1,6 +1,6 @@
 get:
   summary: Get Datasets
-  description: | 
+  description: |
     Returns Dataset list filtered by authenticated user role.
     Admins can see all datasets, both active and inactive.
     Chairpersons can see all active datasets and inactive ones 

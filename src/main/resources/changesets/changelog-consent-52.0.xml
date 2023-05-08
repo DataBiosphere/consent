@@ -13,7 +13,7 @@
             <column name="count" type="bigint"/>
         </createTable>
         <rollback>
-            <dropTable tableName="counter" />
+            <dropTable tableName="counter"/>
         </rollback>
     </changeSet>
     <changeSet dbms="postgresql" author="grushton" id="52.1">
@@ -21,7 +21,7 @@
             <column name="draft" type="boolean" defaultValueBoolean="false"/>
         </addColumn>
         <rollback>
-            <dropColumn columnName="draft" tableName="data_access_request" />
+            <dropColumn columnName="draft" tableName="data_access_request"/>
         </rollback>
     </changeSet>
 

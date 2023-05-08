@@ -5,6 +5,6 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="62.0" author="jthomas0209">
-        <addUniqueConstraint tableName="institution" columnNames="institution_name" />
+        <addUniqueConstraint tableName="institution" columnNames="institution_name"/>
     </changeSet>
 </databaseChangeLog>

@@ -20,13 +20,13 @@
         <sql>
             UPDATE dataset d
             SET dac_id = (
-                SELECT c.dac_id
-                FROM consents c
-                         INNER JOIN consent_associations ca
-                                    ON ca.consent_id = c.consent_id
-                WHERE ca.dataset_id = d.dataset_id
-                LIMIT 1
-                )
+            SELECT c.dac_id
+            FROM consents c
+            INNER JOIN consent_associations ca
+            ON ca.consent_id = c.consent_id
+            WHERE ca.dataset_id = d.dataset_id
+            LIMIT 1
+            )
         </sql>
 
         <dropColumn tableName="consents" columnName="dac_id"/>

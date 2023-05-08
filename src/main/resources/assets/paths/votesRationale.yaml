@@ -1,6 +1,6 @@
 put:
   summary: Update Vote Rationale by id List
-  description: | 
+  description: |
     Update Votes' Rationale specified by the ids in provided list.
      * The Rationale for RP Votes can be updated for any election status.
      * The Rationale for DataAccess Votes can only be updated for OPEN elections.
@@ -14,7 +14,7 @@ put:
           type: string
           example: {
             "rationale": "rationale",
-            "voteIds": [1, 2, 3]
+            "voteIds": [ 1, 2, 3 ]
           }
   tags:
     - Vote

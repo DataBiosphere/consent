@@ -2,7 +2,7 @@ post:
   summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
   description: Creates a set of Datasets from a valid dataset registration JsonSchema object
   requestBody:
-    description: | 
+    description: |
       Dataset registration schema instance and optional file for
       an alternative data sharing plan. The registration schema is 
       always required. If a file is also provided, then alternative 

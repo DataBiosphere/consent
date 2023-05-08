@@ -6,7 +6,7 @@ properties:
     properties:
       adminEnabled:
         type: boolean
-        description: | 
+        description: |
           Admin enabled/disabled status used to indicate whether or not a Terra admin has 
           explicitly disabled a user in the system
       allUsersGroup:

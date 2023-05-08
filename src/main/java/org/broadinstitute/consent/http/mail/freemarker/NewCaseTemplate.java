@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.mail.freemarker;
 
 public class NewCaseTemplate {
 
-     /* This model works for templates: new-case. */
+    /* This model works for templates: new-case. */
 
     private String userName;
 

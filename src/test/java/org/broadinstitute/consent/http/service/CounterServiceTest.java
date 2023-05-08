@@ -12,26 +12,27 @@ import static org.mockito.Mockito.when;
 
 public class CounterServiceTest {
 
-  @Mock private CounterDAO counterDAO;
+    @Mock
+    private CounterDAO counterDAO;
 
-  private CounterService service;
+    private CounterService service;
 
-  @Before
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
-  private void initService() {
-    service = new CounterService(counterDAO);
-  }
+    private void initService() {
+        service = new CounterService(counterDAO);
+    }
 
-  @Test
-  public void testGetNextDarSequence() {
-    int count = 10;
-    when(counterDAO.incrementCountByName(any())).thenReturn(count);
-    initService();
+    @Test
+    public void testGetNextDarSequence() {
+        int count = 10;
+        when(counterDAO.incrementCountByName(any())).thenReturn(count);
+        initService();
 
-    Integer seq = service.getNextDarSequence();
-    assertEquals(count, seq.intValue());
-  }
+        Integer seq = service.getNextDarSequence();
+        assertEquals(count, seq.intValue());
+    }
 }

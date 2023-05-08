@@ -14,7 +14,7 @@ get:
       description: String value that represents the role name to query by
       schema:
         type: string
-        enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]
+        enum: [ Admin, Chairperson, Member, SigningOfficial, Researcher ]
   responses:
     200:
       description: Returns a list of DAR Collection Summaries

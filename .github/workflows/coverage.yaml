@@ -2,10 +2,10 @@ name: Coverage
 on:
   push:
     branches:
-    - develop
+      - develop
   pull_request:
     branches:
-    - develop
+      - develop
 jobs:
   package:
     name: Coverage

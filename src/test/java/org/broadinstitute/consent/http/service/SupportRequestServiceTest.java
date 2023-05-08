@@ -25,7 +25,6 @@ import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
 import javax.ws.rs.ServerErrorException;
-
 import java.util.List;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;

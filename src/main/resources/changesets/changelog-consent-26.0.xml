@@ -32,9 +32,9 @@
     <changeSet author="vvicario" id="98">
         <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="dictionary">
-           <column name="receiveorder" type="int">
-           </column>
-       </addColumn>
+            <column name="receiveorder" type="int">
+            </column>
+        </addColumn>
 
         <sql>
             update dictionary d set displayorder = 0, receiveorder = 0 where d.key = 'Dataset Name';
@@ -45,8 +45,8 @@
             update dictionary d set displayorder = 5, receiveorder = 4 where d.key = '# of participants';
             update dictionary d set displayorder = 6, receiveorder = 5 where d.key = 'Description';
             update dictionary d set displayorder = 7, receiveorder = 6 where d.key = 'dbGAP';
-            update dictionary d set displayorder = 8, receiveorder = 7 where d.key =  'Data Depositor';
-            update dictionary d set displayorder = 9, receiveorder = 8 where d.key =  'Principal Investigator(PI)';
+            update dictionary d set displayorder = 8, receiveorder = 7 where d.key = 'Data Depositor';
+            update dictionary d set displayorder = 9, receiveorder = 8 where d.key = 'Principal Investigator(PI)';
         </sql>
     </changeSet>
 

@@ -2,14 +2,14 @@ type: object
 properties:
   unfilteredCount:
     type: integer
-    description: Total number of DAR Collections present 
+    description: Total number of DAR Collections present
   filteredCount:
     type: integer
     description: Total number of DAR Collections that match query parameters
   filteredPageCount:
     type: integer
     description: Total number of pages for filtered results
-  results: 
+  results:
     type: array
     description: List of DAR Collections that match query parameters
     items:

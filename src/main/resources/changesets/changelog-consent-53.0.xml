@@ -33,11 +33,11 @@
             where update_date is null
         </sql>
         <rollback>
-            <dropColumn columnName="user_id" tableName="data_access_request" />
-            <dropColumn columnName="create_date" tableName="data_access_request" />
-            <dropColumn columnName="sort_date" tableName="data_access_request" />
-            <dropColumn columnName="submission_date" tableName="data_access_request" />
-            <dropColumn columnName="update_date" tableName="data_access_request" />
+            <dropColumn columnName="user_id" tableName="data_access_request"/>
+            <dropColumn columnName="create_date" tableName="data_access_request"/>
+            <dropColumn columnName="sort_date" tableName="data_access_request"/>
+            <dropColumn columnName="submission_date" tableName="data_access_request"/>
+            <dropColumn columnName="update_date" tableName="data_access_request"/>
         </rollback>
     </changeSet>
 

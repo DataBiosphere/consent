@@ -11,7 +11,7 @@ properties:
     description: Name of the file
   category:
     type: string
-    enum: [irbCollaborationLetter, dataUseLetter, alternativeDataSharingPlan, nihInstitutionalCertification]
+    enum: [ irbCollaborationLetter, dataUseLetter, alternativeDataSharingPlan, nihInstitutionalCertification ]
     description: The purpose of the file uploaded
   mediaType:
     type: string

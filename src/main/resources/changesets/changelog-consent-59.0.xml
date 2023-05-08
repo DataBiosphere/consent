@@ -6,8 +6,8 @@
 
     <changeSet dbms="postgresql" author="grushton" id="59.0">
         <renameTable
-          oldTableName="researcher_property"
-          newTableName="user_property"
+                oldTableName="researcher_property"
+                newTableName="user_property"
         />
     </changeSet>
 

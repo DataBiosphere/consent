@@ -53,7 +53,7 @@
     <changeSet author="vvicario" id="65">
         <validCheckSum>ANY</validCheckSum>
         <addColumn tableName="vote">
-            <column name="type"  type="varchar(255)"/>
+            <column name="type" type="varchar(255)"/>
         </addColumn>
     </changeSet>
 
@@ -69,7 +69,6 @@
         <validCheckSum>ANY</validCheckSum>
         <dropColumn tableName="vote" columnName="isfinalaccessvote"/>
     </changeSet>
-
 
 
 </databaseChangeLog>

@@ -10,7 +10,7 @@
                 <constraints nullable="true"
                              foreignKeyName="fk_consent_dac_id"
                              referencedColumnNames="dac_id"
-                             referencedTableName="dac" />
+                             referencedTableName="dac"/>
             </column>
         </addColumn>
         <rollback>

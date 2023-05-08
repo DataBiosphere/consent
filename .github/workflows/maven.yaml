@@ -1,5 +1,5 @@
 name: Maven
-on: [pull_request]
+on: [ pull_request ]
 jobs:
   package:
     name: Package

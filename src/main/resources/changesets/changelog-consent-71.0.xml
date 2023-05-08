@@ -22,14 +22,16 @@
         <sql>
             UPDATE dacuser
             SET era_commons_id = subquery.propertyvalue
-            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'eracommonsid' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'eracommonsid' AND
+            propertyvalue is not NULL and propertyvalue != '') AS subquery
             WHERE dacuserid = subquery.userid
         </sql>
 
         <sql>
             UPDATE dacuser
             SET era_commons_id = subquery.propertyvalue
-            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'nihusername' AND propertyvalue is not NULL and propertyvalue != '') AS subquery
+            FROM (SELECT distinct userid, propertyvalue FROM user_property WHERE LOWER(propertykey) = 'nihusername' AND
+            propertyvalue is not NULL and propertyvalue != '') AS subquery
             WHERE dacuserid = subquery.userid
         </sql>
 

@@ -9,10 +9,10 @@
         <sql>
             UPDATE dataset d
             SET data_use = (SELECT c.datause
-                              FROM consents c
-                              INNER JOIN consentassociations ca
-                                  ON c.consentid = ca.consentid
-                                  AND ca.datasetid = d.datasetid)
+            FROM consents c
+            INNER JOIN consentassociations ca
+            ON c.consentid = ca.consentid
+            AND ca.datasetid = d.datasetid)
             WHERE data_use IS NULL;
         </sql>
         <rollback>

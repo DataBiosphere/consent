@@ -119,8 +119,8 @@ paths:
         400:
           description:
             Consent updates are only allowed when
-              1-There have been no previous elections created for this consent
-              2-The most recent election has been closed/cancelled AND archived
+            1-There have been no previous elections created for this consent
+            2-The most recent election has been closed/cancelled AND archived
         404:
           description: The consent associated with the ID couldn't be found.
         500:
@@ -298,7 +298,7 @@ paths:
               schema:
                 type: array
                 items:
-                 $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
   /api/dacuser:
@@ -1065,12 +1065,12 @@ paths:
         - Library Card
         - Admin
       parameters:
-      - name: id
-        in: path
-        description: Library Card ID
-        required: true
-        schema:
-          type: integer
+        - name: id
+          in: path
+          description: Library Card ID
+          required: true
+          schema:
+            type: integer
       responses:
         200:
           description: Library Card GET success
@@ -1091,19 +1091,19 @@ paths:
         - Library Card
         - Admin
       parameters:
-      - name: id
-        in: path
-        description: Library Card ID
-        required: true
-        schema:
-          type: integer
-      requestBody:
-          description: 'JSON representation of updated Library Card state'
+        - name: id
+          in: path
+          description: Library Card ID
           required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LibraryCard'
+          schema:
+            type: integer
+      requestBody:
+        description: 'JSON representation of updated Library Card state'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LibraryCard'
       responses:
         200:
           description: Library Card PUT request success
@@ -1128,12 +1128,12 @@ paths:
         - Library Card
         - Admin
       parameters:
-      - name: id
-        in: path
-        description: Library Card ID
-        required: true
-        schema:
-          type: integer
+        - name: id
+          in: path
+          description: Library Card ID
+          required: true
+          schema:
+            type: integer
       responses:
         204:
           description: Library Card DELETE request success
@@ -1151,12 +1151,12 @@ paths:
         - Library Card
         - Institutions
       parameters:
-      - name: id
-        in: path
-        description: Institution ID
-        required: true
-        schema:
-          type: integer
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+            type: integer
       responses:
         200:
           description: Library Card GET request success
@@ -1271,7 +1271,7 @@ paths:
           schema:
             type: string
             required: true
-            enum: [Admin, SigningOfficial]
+            enum: [ Admin, SigningOfficial ]
       tags:
         - User
       responses:
@@ -1372,7 +1372,7 @@ paths:
               type: array
               items:
                 type: string
-              example: ["key1", "key2", "key3"]
+              example: [ "key1", "key2", "key3" ]
       tags:
         - User
       summary: Set acknowledgements for a user

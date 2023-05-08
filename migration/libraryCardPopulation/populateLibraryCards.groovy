@@ -1,5 +1,6 @@
 @Grab('io.github.http-builder-ng:http-builder-ng-core:1.0.4')
 import groovy.json.JsonSlurper
+
 import java.util.logging.Logger
 
 import static groovyx.net.http.HttpBuilder.configure

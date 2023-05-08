@@ -6,7 +6,7 @@ put:
     The request will fail if the dataset is already approved, the request body (payload) is invalid, or if the user does not have access to the dataset as a Chairperson.
   tags:
     - DAC
-  parameters: 
+  parameters:
     - name: dacId
       in: path
       required: true
@@ -18,12 +18,12 @@ put:
       schema:
         type: integer
   requestBody:
-      description: 'Payload that should contain the key-value pair of {"approval": true|false}'
-      required: true
-      content: 
-        application/json:
-          schema:
-            $ref: '../schemas/DatasetApproval.yaml'
+    description: 'Payload that should contain the key-value pair of {"approval": true|false}'
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DatasetApproval.yaml'
   responses:
     200:
       description: Returns the updated dataset
@@ -35,5 +35,5 @@ put:
       description: Bad Request (missing or invalid request body)
     404:
       description: Not Found
-    500: 
+    500:
       description: Internal Server Error

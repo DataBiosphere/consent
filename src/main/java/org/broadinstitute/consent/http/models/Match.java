@@ -27,7 +27,7 @@ public class Match {
     private List<String> failureReasons;
 
     @Deprecated
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate) {
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
@@ -37,7 +37,7 @@ public class Match {
         this.algorithmVersion = MatchAlgorithm.V1.getVersion();
     }
 
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion){
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion) {
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
@@ -57,7 +57,7 @@ public class Match {
         this.setFailureReasons(failureReasons);
     }
 
-    public Match(){
+    public Match() {
     }
 
     public Integer getId() {

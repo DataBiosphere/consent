@@ -3,10 +3,10 @@ name: Tag, Build and Push Image
 on:
   push:
     branches:
-    - develop
+      - develop
   pull_request:
     branches:
-    - develop
+      - develop
 env:
   REGISTRY_HOST: gcr.io
   GOOGLE_PROJECT: broad-dsp-gcr-public
@@ -17,57 +17,57 @@ jobs:
     outputs:
       sherlock-version: ${{ steps.short-sha.outputs.sha }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Get Short Sha
-      id: short-sha
-      run: echo "sha=$(git rev-parse --short=12 HEAD)" >> $GITHUB_OUTPUT
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v1'
-    - name: Construct tags
-      id: construct-tags
-      run: |
-        SHA_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.short-sha.outputs.sha }}"
-        ENVIRONMENT_TAG=""
-        if ${{ github.event_name == 'pull_request'}}; then
-          ENVIRONMENT_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:pr-${{ steps.short-sha.outputs.sha }}"
-        elif ${{github.event_name == 'push' }}; then
-          ENVIRONMENT_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:dev"
-        fi
-        echo "sha-tag=$SHA_TAG" >> $GITHUB_OUTPUT
-        echo "environment-tag=$ENVIRONMENT_TAG" >> $GITHUB_OUTPUT
-    - name: Build Image
-      run: |
-        docker build \
-        -t ${{ steps.construct-tags.outputs.sha-tag }} \
-        -t ${{ steps.construct-tags.outputs.environment-tag }} \
-        .
-    - name: Log Github Actor
-      run: echo "${{ github.actor }}"
-    - name: Auth to GCR
-      if: github.actor != 'dependabot[bot]'
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
-    - name: Auth Docker for GCR
-      if: github.actor != 'dependabot[bot]'
-      run: gcloud auth configure-docker --quiet
-    - name: Push Image to GCR
-      if: github.actor != 'dependabot[bot]'
-      run: |
-        docker push ${{ steps.construct-tags.outputs.sha-tag }}
-        docker push ${{ steps.construct-tags.outputs.environment-tag }}
-    - name: Notify Slack
-      # only notify for develop branch build
-      if: github.event_name == 'push'
-      uses: broadinstitute/action-slack@v3.8.0
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        status: ${{ job.status }}
-        channel: "#duos-notifications"
-        fields: repo,commit,author,action,eventName,ref,workflow,job,took
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Get Short Sha
+        id: short-sha
+        run: echo "sha=$(git rev-parse --short=12 HEAD)" >> $GITHUB_OUTPUT
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: Construct tags
+        id: construct-tags
+        run: |
+          SHA_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:${{ steps.short-sha.outputs.sha }}"
+          ENVIRONMENT_TAG=""
+          if ${{ github.event_name == 'pull_request'}}; then
+            ENVIRONMENT_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:pr-${{ steps.short-sha.outputs.sha }}"
+          elif ${{github.event_name == 'push' }}; then
+            ENVIRONMENT_TAG="${REGISTRY_HOST}/${GOOGLE_PROJECT}/${SERVICE_NAME}:dev"
+          fi
+          echo "sha-tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          echo "environment-tag=$ENVIRONMENT_TAG" >> $GITHUB_OUTPUT
+      - name: Build Image
+        run: |
+          docker build \
+          -t ${{ steps.construct-tags.outputs.sha-tag }} \
+          -t ${{ steps.construct-tags.outputs.environment-tag }} \
+          .
+      - name: Log Github Actor
+        run: echo "${{ github.actor }}"
+      - name: Auth to GCR
+        if: github.actor != 'dependabot[bot]'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: ${{ secrets.GCR_PUBLISH_KEY_B64 }}
+      - name: Auth Docker for GCR
+        if: github.actor != 'dependabot[bot]'
+        run: gcloud auth configure-docker --quiet
+      - name: Push Image to GCR
+        if: github.actor != 'dependabot[bot]'
+        run: |
+          docker push ${{ steps.construct-tags.outputs.sha-tag }}
+          docker push ${{ steps.construct-tags.outputs.environment-tag }}
+      - name: Notify Slack
+        # only notify for develop branch build
+        if: github.event_name == 'push'
+        uses: broadinstitute/action-slack@v3.8.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          status: ${{ job.status }}
+          channel: "#duos-notifications"
+          fields: repo,commit,author,action,eventName,ref,workflow,job,took
   report-to-sherlock:
     if: github.event_name == 'push'
     uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main

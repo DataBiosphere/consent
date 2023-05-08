@@ -11,13 +11,16 @@
             <column name="rationale" type="text"/>
         </addColumn>
         <sql dbms="hsqldb, mysql">
-            update dacuser set status = 0 where dacuserid in (select user_id from user_role where status = 0 and role_id = 5)
+            update dacuser set status = 0 where dacuserid in (select user_id from user_role where status = 0 and role_id
+            = 5)
         </sql>
         <sql dbms="hsqldb, mysql">
-            update dacuser set status = 1 where dacuserid in (select user_id from user_role where status = 1 and role_id = 5)
+            update dacuser set status = 1 where dacuserid in (select user_id from user_role where status = 1 and role_id
+            = 5)
         </sql>
         <sql dbms="hsqldb, mysql">
-            update dacuser set status = 2 where dacuserid in (select user_id from user_role where status = 2 and role_id = 5)
+            update dacuser set status = 2 where dacuserid in (select user_id from user_role where status = 2 and role_id
+            = 5)
         </sql>
         <sql dbms="hsqldb, mysql">
             update dacuser u
@@ -30,8 +33,8 @@
             and trim(r.rationale) != '' )
         </sql>
         <rollback>
-            <dropColumn tableName="dacuser" columnName="status" />
-            <dropColumn tableName="dacuser" columnName="rationale" />
+            <dropColumn tableName="dacuser" columnName="status"/>
+            <dropColumn tableName="dacuser" columnName="rationale"/>
         </rollback>
     </changeSet>
 

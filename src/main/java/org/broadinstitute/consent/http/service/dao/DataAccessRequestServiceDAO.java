@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -28,7 +27,7 @@ public class DataAccessRequestServiceDAO {
         this.darCollectionDAO = darCollectionDAO;
     }
 
-    public DataAccessRequest updateByReferenceId( User user, DataAccessRequest dar) throws SQLException {
+    public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) throws SQLException {
         Instant now = Instant.now();
         String referenceId = dar.getReferenceId();
         jdbi.useHandle(handle -> {
@@ -36,13 +35,13 @@ public class DataAccessRequestServiceDAO {
             handle.useTransaction(h -> {
 
                 final String updateDataByReferenceId = "UPDATE data_access_request "
-                    + "SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, "
-                    + "submission_date = :submissionDate, update_date = :updateDate "
-                    + "WHERE reference_id = :referenceId";
+                        + "SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, "
+                        + "submission_date = :submissionDate, update_date = :updateDate "
+                        + "WHERE reference_id = :referenceId";
                 final String deleteDarDatasetRelationByReferenceId = "DELETE FROM dar_dataset WHERE reference_id = :referenceId";
                 final String insertDarDataset = "INSERT INTO dar_dataset (reference_id, dataset_id) "
-                    + "VALUES (:referenceId, :datasetId) "
-                    + "ON CONFLICT DO NOTHING";
+                        + "VALUES (:referenceId, :datasetId) "
+                        + "ON CONFLICT DO NOTHING";
 
                 Update darUpdate = h.createUpdate(updateDataByReferenceId);
                 darUpdate.bind("referenceId", referenceId);
@@ -53,10 +52,10 @@ public class DataAccessRequestServiceDAO {
                 darUpdate.bind("submissionDate", dar.getSubmissionDate());
                 darUpdate.execute();
 
-                if(Objects.nonNull(dar.getCollectionId())) {
-                  darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), new Date(now.getEpochSecond()));
+                if (Objects.nonNull(dar.getCollectionId())) {
+                    darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), new Date(now.getEpochSecond()));
                 }
-                
+
                 Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
                 darDatasetDelete.bind("referenceId", dar.getReferenceId());
                 darDatasetDelete.execute();

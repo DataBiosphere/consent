@@ -1,6 +1,6 @@
 put:
   summary: Updates Vote values by id List
-  description: | 
+  description: |
     Updates votes specified by the ids in provided list. Requires the authenticated user to be the owner of all votes to be updated.
     * The following fields can be updated via this endpoint
       * Vote (required)
@@ -8,7 +8,7 @@ put:
 
     * RP Votes can be updated for any election status.
     * DataAccess Votes can only be updated for OPEN elections.
-
+    
     
     In the case of votes that impact elections, the associated 
     election will also be updated. Examples include votes of 
@@ -24,7 +24,7 @@ put:
           example: {
             "vote": true|false,
             "rationale": "rationale string",
-            "voteIds": [1, 2, 3]
+            "voteIds": [ 1, 2, 3 ]
           }
   tags:
     - Vote

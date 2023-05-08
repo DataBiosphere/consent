@@ -13,10 +13,10 @@ properties:
         [
           {
             "associationType": "sample",
-            "elements": ["SAMPLE-1234", "SAMPLE-5678"]
+            "elements": [ "SAMPLE-1234", "SAMPLE-5678" ]
           },
           {
             "associationType": "sampleSet",
-            "elements": ["SAMPLE_SET-1234", "SAMPLE_SET-5678"]
+            "elements": [ "SAMPLE_SET-1234", "SAMPLE_SET-5678" ]
           }
         ]

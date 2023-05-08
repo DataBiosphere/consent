@@ -29,19 +29,23 @@
             <column name="update_user_id" type="bigint"/>
             <column name="update_date" type="DATETIME"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="library_card" constraintName="fkLibraryCardUser"
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="library_card"
+                                 constraintName="fkLibraryCardUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
-        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="library_card" constraintName="fkLibraryCardInstitution"
+        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="library_card"
+                                 constraintName="fkLibraryCardInstitution"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="institution_id" referencedTableName="institution"
                                  referencesUniqueColumn="false"/>
-        <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="library_card" constraintName="fkLibraryCardCreateUser"
+        <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="library_card"
+                                 constraintName="fkLibraryCardCreateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>
-        <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="library_card" constraintName="fkLibraryCardUpdateUser"
+        <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="library_card"
+                                 constraintName="fkLibraryCardUpdateUser"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                                  referencedColumnNames="dacuserid" referencedTableName="dacuser"
                                  referencesUniqueColumn="false"/>

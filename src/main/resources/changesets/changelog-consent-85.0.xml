@@ -5,7 +5,8 @@
         <!--Back populate missing dataset ids for elections where we have a valid dataset id -->
         <sql>
             UPDATE election
-            SET datasetid = (SELECT (((data #>> '{}')::jsonb->>'datasetIds')::json->>0)::bigint FROM data_access_request WHERE reference_id = referenceid LIMIT 1)
+            SET datasetid = (SELECT (((data #>> '{}')::jsonb->>'datasetIds')::json->>0)::bigint FROM data_access_request
+            WHERE reference_id = referenceid LIMIT 1)
             WHERE datasetid IS NULL
             AND LOWER(electiontype) IN ('rp', 'dataaccess');
         </sql>

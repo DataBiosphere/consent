@@ -1,6 +1,6 @@
 put:
   summary: Admin Only API to update the Dataset's Data Use object from JSON
-  description: | 
+  description: |
     Admin Only API to update the Dataset's Data Use object from JSON.
     ## Note
     This endpoint is restricted to updating the data use object only and does
@@ -24,7 +24,7 @@ put:
       application/json:
         schema:
           type: object
-        example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": ["http://purl.obolibrary.org/obo/DOID_602"] }
+        example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": [ "http://purl.obolibrary.org/obo/DOID_602" ] }
   tags:
     - Admin
   responses:

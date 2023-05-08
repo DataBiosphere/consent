@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 import javax.ws.rs.ServerErrorException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 

@@ -15,11 +15,11 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
 
     public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, UserRoleDAO userRoleDAO) {
         filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
-            .setAuthenticator(authenticator)
-            .setAuthorizer(new UserAuthorizer(userRoleDAO))
-            .setPrefix("Bearer")
-            .setRealm("OAUTH-AUTH")
-            .buildAuthFilter();
+                .setAuthenticator(authenticator)
+                .setAuthorizer(new UserAuthorizer(userRoleDAO))
+                .setPrefix("Bearer")
+                .setRealm("OAUTH-AUTH")
+                .buildAuthFilter();
     }
 
     @Override
