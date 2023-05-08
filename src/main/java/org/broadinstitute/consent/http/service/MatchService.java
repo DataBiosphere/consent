@@ -154,7 +154,7 @@ public class MatchService implements ConsentLogger {
         return matches;
     }
 
-    private Match singleEntitiesMatchV3(Dataset dataset, DataAccessRequest dar) {
+    public Match singleEntitiesMatchV3(Dataset dataset, DataAccessRequest dar) {
         if (Objects.isNull(dataset)) {
             logWarn("Dataset is null");
             throw new IllegalArgumentException("Consent cannot be null");
