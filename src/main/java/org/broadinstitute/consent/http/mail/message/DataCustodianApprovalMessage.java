@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import com.sendgrid.helpers.mail.Mail;
+
 import java.io.Writer;
 
 public class DataCustodianApprovalMessage extends MailMessage {

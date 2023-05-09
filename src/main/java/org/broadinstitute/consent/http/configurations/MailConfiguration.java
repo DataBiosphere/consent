@@ -43,7 +43,11 @@ public class MailConfiguration {
         this.sendGridApiKey = sendGridApiKey;
     }
 
-    public String getSendGridStatusUrl() { return sendGridStatusUrl; }
+    public String getSendGridStatusUrl() {
+        return sendGridStatusUrl;
+    }
 
-    public void setSendGridStatusUrl(String sendGridStatusUrl) { this.sendGridStatusUrl = sendGridStatusUrl; }
+    public void setSendGridStatusUrl(String sendGridStatusUrl) {
+        this.sendGridStatusUrl = sendGridStatusUrl;
+    }
 }

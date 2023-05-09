@@ -2,18 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -27,6 +15,19 @@ import org.broadinstitute.consent.http.models.matching.DataUseRequestMatchingObj
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.client.ClientProperties;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.consent.http.models.Match.matchFailure;
 import static org.broadinstitute.consent.http.models.Match.matchSuccess;
@@ -58,12 +59,12 @@ public class MatchService implements ConsentLogger {
     public void insertMatches(List<Match> match) {
         match.forEach(m -> {
             Integer id = matchDAO.insertMatch(
-                m.getConsent(),
-                m.getPurpose(),
-                m.getMatch(),
-                m.getFailed(),
-                new Date(),
-                m.getAlgorithmVersion()
+                    m.getConsent(),
+                    m.getPurpose(),
+                    m.getMatch(),
+                    m.getFailed(),
+                    new Date(),
+                    m.getAlgorithmVersion()
             );
             if (!m.getFailureReasons().isEmpty()) {
                 m.getFailureReasons().forEach(f -> {

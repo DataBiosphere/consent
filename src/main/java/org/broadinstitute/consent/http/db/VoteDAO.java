@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -14,6 +12,9 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
+
+import java.util.Date;
+import java.util.List;
 
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
@@ -41,18 +42,18 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id = :userId and lower(v.type) = 'dac'")
     Vote findVoteByElectionIdAndUserId(@Bind("electionId") Integer electionId,
-                                          @Bind("userId") Integer userId);
+                                       @Bind("userId") Integer userId);
 
     @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id in (<userIds>) and lower(v.type) = 'dac'")
     List<Vote> findVotesByElectionIdAndUserIds(@Bind("electionId") Integer electionId,
-                                                  @BindList("userIds") List<Integer> userIds);
+                                               @BindList("userIds") List<Integer> userIds);
 
     @SqlQuery("""
-        SELECT vote.voteId FROM vote
-        INNER JOIN election ON election.election_id = vote.electionId
-        WHERE election.reference_id = :referenceId
-        AND vote.voteId = :voteId
-        """)
+            SELECT vote.voteId FROM vote
+            INNER JOIN election ON election.election_id = vote.electionId
+            WHERE election.reference_id = :referenceId
+            AND vote.voteId = :voteId
+            """)
     Integer checkVoteById(@Bind("referenceId") String referenceId,
                           @Bind("voteId") Integer voteId);
 
@@ -84,13 +85,13 @@ public interface VoteDAO extends Transactional<VoteDAO> {
     void updateVoteReminderFlag(@Bind("voteId") Integer voteId, @Bind("reminderSent") boolean reminderSent);
 
     @SqlQuery("""
-        SELECT count(*) FROM vote v
-        INNER JOIN election e ON v.electionId = e.election_id
-        WHERE LOWER(e.election_type) = LOWER(:type)
-        AND LOWER(e.status) = 'closed'
-        AND LOWER(v.type) = 'final'
-        AND v.vote = :finalVote
-        """)
+            SELECT count(*) FROM vote v
+            INNER JOIN election e ON v.electionId = e.election_id
+            WHERE LOWER(e.election_type) = LOWER(:type)
+            AND LOWER(e.status) = 'closed'
+            AND LOWER(v.type) = 'final'
+            AND v.vote = :finalVote
+            """)
     Integer findTotalFinalVoteByElectionTypeAndVote(@Bind("type") String type, @Bind("finalVote") Boolean finalVote);
 
     @SqlQuery("SELECT MAX(c) FROM (SELECT COUNT(vote) as c FROM vote WHERE lower(type) = 'dac' and electionId IN (<electionIds>) GROUP BY electionId) as members")
@@ -113,12 +114,12 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
     @RegisterBeanMapper(value = User.class)
     @SqlQuery("""
-        SELECT DISTINCT u.*
-        FROM users u
-        INNER JOIN vote v ON v.user_id = u.user_id
-        INNER JOIN election e ON v.electionid = e.election_id
-        WHERE e.reference_id IN (<referenceIds>)
-        """)
+            SELECT DISTINCT u.*
+            FROM users u
+            INNER JOIN vote v ON v.user_id = u.user_id
+            INNER JOIN election e ON v.electionid = e.election_id
+            WHERE e.reference_id IN (<referenceIds>)
+            """)
     List<User> findVoteUsersByElectionReferenceIdList(@BindList("referenceIds") List<String> referenceIds);
 
 }

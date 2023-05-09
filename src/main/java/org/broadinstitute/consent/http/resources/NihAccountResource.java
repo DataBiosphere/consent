@@ -38,7 +38,7 @@ public class NihAccountResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getUserId());
             return Response.ok(authUserProps).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

@@ -32,7 +32,7 @@ public class Match {
 
     private List<String> failureReasons;
 
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean abstain, Boolean failed, Date createDate, String algorithmVersion){
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean abstain, Boolean failed, Date createDate, String algorithmVersion) {
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
@@ -54,7 +54,7 @@ public class Match {
         this.setFailureReasons(failureReasons);
     }
 
-    public Match(){
+    public Match() {
     }
 
     public Integer getId() {

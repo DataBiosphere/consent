@@ -4,7 +4,7 @@ import com.sendgrid.helpers.mail.Mail;
 
 import java.io.Writer;
 
-public class NewDARRequestMessage extends MailMessage{
+public class NewDARRequestMessage extends MailMessage {
 
     private final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
 

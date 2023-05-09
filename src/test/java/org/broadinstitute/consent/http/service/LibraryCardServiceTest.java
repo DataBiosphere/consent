@@ -15,17 +15,16 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-
-import java.util.Collections;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 
 public class LibraryCardServiceTest {
 
@@ -84,7 +83,7 @@ public class LibraryCardServiceTest {
 
         // last two calls in the function, no need to test within this service test file
         when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
-                        .thenReturn(1);
+                .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
@@ -107,7 +106,7 @@ public class LibraryCardServiceTest {
 
         // last two calls in the function, no need to test within this service test file
         when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
-                        .thenReturn(1);
+                .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
@@ -150,7 +149,7 @@ public class LibraryCardServiceTest {
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
 
         when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
-                        .thenReturn(1);
+                .thenReturn(1);
         when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
@@ -352,5 +351,7 @@ public class LibraryCardServiceTest {
         User user = testUser(institution.getId());
         user.addRole(new UserRole(id, name));
         return user;
-    };
+    }
+
+    ;
 }

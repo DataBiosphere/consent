@@ -1,14 +1,14 @@
 package org.broadinstitute.consent.http.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
+
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DataUse;
 
 @Deprecated
 public class DatasetDTO {
@@ -87,7 +87,7 @@ public class DatasetDTO {
     }
 
     public DatasetDTO(List<DatasetPropertyDTO> properties) {
-        this.properties= properties;
+        this.properties = properties;
     }
 
     public String getConsentId() {
@@ -114,7 +114,7 @@ public class DatasetDTO {
         this.deletable = deletable;
     }
 
-    public String getPropertyValue(String propertyName){
+    public String getPropertyValue(String propertyName) {
         return properties.get(properties.indexOf(new DatasetPropertyDTO(propertyName, ""))).getPropertyValue();
     }
 
@@ -170,7 +170,7 @@ public class DatasetDTO {
         this.alias = Dataset.parseAliasToIdentifier(alias);
     }
 
-    public String getAlias(){
+    public String getAlias() {
         return alias;
     }
 
@@ -182,21 +182,37 @@ public class DatasetDTO {
         this.objectId = objectId;
     }
 
-    public Date getCreateDate() { return createDate; }
+    public Date getCreateDate() {
+        return createDate;
+    }
 
-    public void setCreateDate(Date createDate) { this.createDate = createDate; }
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
+    }
 
-    public Integer getCreateUserId() { return createUserId; }
+    public Integer getCreateUserId() {
+        return createUserId;
+    }
 
-    public void setCreateUserId(Integer createUserId) { this.createUserId = createUserId; }
+    public void setCreateUserId(Integer createUserId) {
+        this.createUserId = createUserId;
+    }
 
-    public Timestamp getUpdateDate() { return updateDate; }
+    public Timestamp getUpdateDate() {
+        return updateDate;
+    }
 
-    public void setUpdateDate(Timestamp updateDate) { this.updateDate = updateDate; }
+    public void setUpdateDate(Timestamp updateDate) {
+        this.updateDate = updateDate;
+    }
 
-    public Integer getUpdateUserId() { return updateUserId; }
+    public Integer getUpdateUserId() {
+        return updateUserId;
+    }
 
-    public void setUpdateUserId(Integer updateUserId) { this.updateUserId = updateUserId; }
+    public void setUpdateUserId(Integer updateUserId) {
+        this.updateUserId = updateUserId;
+    }
 
     public void addProperty(DatasetPropertyDTO property) {
         if (this.getProperties() == null) {

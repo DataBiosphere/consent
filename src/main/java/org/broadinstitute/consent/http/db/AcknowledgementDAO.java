@@ -15,8 +15,8 @@ import java.util.List;
 public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
 
     @SqlUpdate("INSERT INTO acknowledgement (ack_key, user_id, first_acknowledged, last_acknowledged) "
-                    + " VALUES (:key, :userId, current_timestamp, current_timestamp) "
-                    + " ON CONFLICT (ack_key, user_id) DO UPDATE SET last_acknowledged = current_timestamp ")
+            + " VALUES (:key, :userId, current_timestamp, current_timestamp) "
+            + " ON CONFLICT (ack_key, user_id) DO UPDATE SET last_acknowledged = current_timestamp ")
     void upsertAcknowledgement(@Bind("key") String key, @Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
@@ -28,7 +28,7 @@ public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
     List<Acknowledgement> findAcknowledgementsForUser(@Bind("userId") Integer userId);
 
     @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-          + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
+            + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
     List<Acknowledgement> findAcknowledgementsForUser(@BindList("key_list") List<String> keys, @Bind("userId") Integer userId);
 
     @SqlUpdate("DELETE FROM acknowledgement where user_id = :userId AND ack_key = :key")

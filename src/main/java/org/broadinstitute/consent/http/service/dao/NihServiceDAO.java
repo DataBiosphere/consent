@@ -34,8 +34,8 @@ public class NihServiceDAO implements ConsentLogger {
             UserDAO userDAO = handler.attach(UserDAO.class);
             UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
             Collection<UserProperty> properties = List.of(
-                new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue(), nihAccount.getStatus().toString()),
-                new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), nihAccount.getEraExpiration())
+                    new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue(), nihAccount.getStatus().toString()),
+                    new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), nihAccount.getEraExpiration())
             );
             userPropertyDAO.insertAll(properties);
             libraryCardDAO.updateEraCommonsForUser(user.getUserId(), nihAccount.getNihUsername());

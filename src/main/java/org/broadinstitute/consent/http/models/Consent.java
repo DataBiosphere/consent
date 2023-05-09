@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.sql.Timestamp;
 
 /**
@@ -104,7 +105,7 @@ public class Consent {
 
     @JsonProperty
     public void setDataUseLetter(String dataUseLetter) {
-       this.dataUseLetter = dataUseLetter;
+        this.dataUseLetter = dataUseLetter;
     }
 
     @JsonProperty
@@ -173,7 +174,9 @@ public class Consent {
     }
 
     @JsonProperty
-    public void setGroupName(String groupName) { this.groupName = groupName; }
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
 
     public String getLastElectionStatus() {
         return lastElectionStatus;

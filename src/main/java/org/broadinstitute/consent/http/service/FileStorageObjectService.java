@@ -63,7 +63,7 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     // fetches file from GCS and adds it to the fileStorageObject
-    private void fetchAndPopulateUploadedFile(FileStorageObject fileStorageObject) throws NotFoundException  {
+    private void fetchAndPopulateUploadedFile(FileStorageObject fileStorageObject) throws NotFoundException {
         try {
             InputStream document = gcsService.getDocument(fileStorageObject.getBlobId());
             fileStorageObject.setUploadedFile(document);
@@ -76,7 +76,7 @@ public class FileStorageObjectService implements ConsentLogger {
         }
     }
 
-    private void fetchAndPopulateMultipleUploadedFiles(List<FileStorageObject> fileStorageObjects) throws NotFoundException  {
+    private void fetchAndPopulateMultipleUploadedFiles(List<FileStorageObject> fileStorageObjects) throws NotFoundException {
         try {
             Map<BlobId, InputStream> documentMap = gcsService.getDocuments(
                     fileStorageObjects.stream().map(FileStorageObject::getBlobId).collect(Collectors.toList()));

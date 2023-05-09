@@ -20,14 +20,16 @@ public class DatasetAssociation {
     @JsonProperty
     private Date createDate;
 
-    public DatasetAssociation(){};
+    public DatasetAssociation() {
+    }
 
-    public DatasetAssociation(Integer datasetId, Integer dacuserId){
+    ;
+
+    public DatasetAssociation(Integer datasetId, Integer dacuserId) {
         this.datasetId = datasetId;
         this.dacuserId = dacuserId;
         this.createDate = new Date();
     }
-
 
 
     public Integer getDatasetId() {
@@ -54,9 +56,9 @@ public class DatasetAssociation {
         return dacuserId;
     }
 
-    public static List<DatasetAssociation>  createDatasetAssociations(Integer datasetId, Collection<Integer> usersIdList){
+    public static List<DatasetAssociation> createDatasetAssociations(Integer datasetId, Collection<Integer> usersIdList) {
         ArrayList<DatasetAssociation> associationList = new ArrayList<>();
-        usersIdList.forEach(dacUserId -> associationList.add(new DatasetAssociation(datasetId,dacUserId)));
+        usersIdList.forEach(dacUserId -> associationList.add(new DatasetAssociation(datasetId, dacUserId)));
         return associationList;
     }
 }

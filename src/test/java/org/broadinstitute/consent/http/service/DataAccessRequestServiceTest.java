@@ -1,30 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -56,6 +31,32 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestServiceTest {
 
@@ -139,7 +140,7 @@ public class DataAccessRequestServiceTest {
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
-        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
+        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1, 100));
         doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
         DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
@@ -204,11 +205,11 @@ public class DataAccessRequestServiceTest {
         user.setUserId(1);
         DataAccessRequest draft = generateDataAccessRequest();
         doNothing()
-            .when(dataAccessRequestDAO)
-            .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
+                .when(dataAccessRequestDAO)
+                .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         doNothing()
-            .when(dataAccessRequestDAO)
-            .updateDraftByReferenceId(any(), any());
+                .when(dataAccessRequestDAO)
+                .updateDraftByReferenceId(any(), any());
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
         initService();
         DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
@@ -526,13 +527,13 @@ public class DataAccessRequestServiceTest {
         sourceCollection.addDar(dar);
         when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any()
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
         );
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
         initService();

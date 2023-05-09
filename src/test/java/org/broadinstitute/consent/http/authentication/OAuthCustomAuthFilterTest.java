@@ -1,23 +1,24 @@
 package org.broadinstitute.consent.http.authentication;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import io.dropwizard.auth.AuthFilter;
-import java.util.Optional;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import java.util.Optional;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class OAuthCustomAuthFilterTest {
 
@@ -41,7 +42,7 @@ public class OAuthCustomAuthFilterTest {
     GenericUser genericUser;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         openMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
         when(requestContext.getUriInfo()).thenReturn(uriInfo);

@@ -53,8 +53,8 @@ public class TDRServiceTest {
 
         ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(dataset);
         List<String> approvedUsersEmails = approvedUsers.getApprovedUsers().stream()
-                        .map(ApprovedUser::getEmail)
-                        .toList();
+                .map(ApprovedUser::getEmail)
+                .toList();
 
         assertTrue(approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail())));
     }
@@ -76,12 +76,12 @@ public class TDRServiceTest {
         dataset2.setDataSetId(2);
         dataset2.setAlias(00002);
 
-        when(datasetDAO.findDatasetsByAlias(identifierList)).thenReturn(List.of(dataset1,dataset2));
+        when(datasetDAO.findDatasetsByAlias(identifierList)).thenReturn(List.of(dataset1, dataset2));
 
         initService();
         List<Dataset> datasetIds = service.getDatasetsByIdentifier(identifierList);
 
         assertEquals(datasetIds.size(), identifierList.size());
-        assertTrue(datasetIds.containsAll(List.of(dataset1,dataset2)));
+        assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
     }
 }

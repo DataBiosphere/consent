@@ -15,7 +15,7 @@ public class EmailNotifierResource extends Resource {
     private final EmailService emailService;
 
     @Inject
-    public EmailNotifierResource(EmailService emailService){
+    public EmailNotifierResource(EmailService emailService) {
         this.emailService = emailService;
     }
 

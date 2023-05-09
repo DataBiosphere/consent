@@ -18,6 +18,7 @@ public class SchemaResource extends Resource {
     public SchemaResource() {
         this.jsonSchemaUtil = new JsonSchemaUtil();
     }
+
     @GET
     @Path("/dataset-registration/v1")
     @Produces(MediaType.APPLICATION_JSON)

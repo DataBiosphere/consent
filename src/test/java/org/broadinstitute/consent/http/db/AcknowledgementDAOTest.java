@@ -65,7 +65,7 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void ensureMissingAcknowledgementWorks(){
+    public void ensureMissingAcknowledgementWorks() {
         User user2 = createUser();
         User user3 = createUser();
         Integer user1Id = user2.getUserId();

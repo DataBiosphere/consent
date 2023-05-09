@@ -1,13 +1,5 @@
 package org.broadinstitute.consent.http.health;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -17,67 +9,78 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 public class OntologyHealthCheckTest {
 
-  @Mock private HttpClientUtil clientUtil;
+    @Mock
+    private HttpClientUtil clientUtil;
 
-  @Mock private SimpleResponse response;
+    @Mock
+    private SimpleResponse response;
 
-  @Mock private ServicesConfiguration servicesConfiguration;
+    @Mock
+    private ServicesConfiguration servicesConfiguration;
 
-  private OntologyHealthCheck healthCheck;
+    private OntologyHealthCheck healthCheck;
 
-  @Before
-  public void setUp() {
-    openMocks(this);
-  }
-
-  private void initHealthCheck(boolean configOk) {
-    try {
-      when(response.entity()).thenReturn("{}");
-      when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      if (configOk) {
-        when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
-      }
-      healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
-    } catch (Exception e) {
-      fail(e.getMessage());
+    @Before
+    public void setUp() {
+        openMocks(this);
     }
-  }
 
-  @Test
-  public void testCheckSuccess() {
-    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    initHealthCheck(true);
+    private void initHealthCheck(boolean configOk) {
+        try {
+            when(response.entity()).thenReturn("{}");
+            when(clientUtil.getCachedResponse(any())).thenReturn(response);
+            if (configOk) {
+                when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
+            }
+            healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
 
-    HealthCheck.Result result = healthCheck.check();
-    assertTrue(result.isHealthy());
-  }
+    @Test
+    public void testCheckSuccess() {
+        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+        initHealthCheck(true);
 
-  @Test
-  public void testCheckFailure() {
-    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-    initHealthCheck(true);
+        HealthCheck.Result result = healthCheck.check();
+        assertTrue(result.isHealthy());
+    }
 
-    HealthCheck.Result result = healthCheck.check();
-    assertFalse(result.isHealthy());
-  }
+    @Test
+    public void testCheckFailure() {
+        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        initHealthCheck(true);
 
-  @Test
-  public void testCheckException() {
-    doThrow(new RuntimeException()).when(response).code();
-    initHealthCheck(true);
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
+    }
 
-    HealthCheck.Result result = healthCheck.check();
-    assertFalse(result.isHealthy());
-  }
+    @Test
+    public void testCheckException() {
+        doThrow(new RuntimeException()).when(response).code();
+        initHealthCheck(true);
 
-  @Test
-  public void testConfigException() {
-    doThrow(new RuntimeException()).when(servicesConfiguration).getOntologyURL();
-    initHealthCheck(false);
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
+    }
 
-    HealthCheck.Result result = healthCheck.check();
-    assertFalse(result.isHealthy());
-  }
+    @Test
+    public void testConfigException() {
+        doThrow(new RuntimeException()).when(servicesConfiguration).getOntologyURL();
+        initHealthCheck(false);
+
+        HealthCheck.Result result = healthCheck.check();
+        assertFalse(result.isHealthy());
+    }
 }
