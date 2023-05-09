@@ -39,7 +39,7 @@ public enum NihICsSupportingStudy {
     private final static Map<String, NihICsSupportingStudy> CONSTANTS = new HashMap<String, NihICsSupportingStudy>();
 
     static {
-        for (NihICsSupportingStudy c: values()) {
+        for (NihICsSupportingStudy c : values()) {
             CONSTANTS.put(c.value, c);
         }
     }

@@ -412,7 +412,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         propToAdd.setSchemaProperty("date");
         List<DatasetProperty> newProps = List.of(
-            propToAdd
+                propToAdd
         );
         datasetDAO.insertDatasetProperties(newProps);
 
@@ -684,11 +684,11 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = insertDataset();
         DataUse oldDataUse = dataset.getDataUse();
         DataUse newDataUse = new DataUseBuilder()
-            .setGeneralUse(false)
-            .setCommercialUse(true)
-            .setHmbResearch(true)
-            .setDiseaseRestrictions(List.of("DOID_1"))
-            .build();
+                .setGeneralUse(false)
+                .setCommercialUse(true)
+                .setHmbResearch(true)
+                .setDiseaseRestrictions(List.of("DOID_1"))
+                .build();
 
         datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), newDataUse.toString());
         Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
@@ -713,14 +713,14 @@ public class DatasetDAOTest extends DAOTestHelper {
     @Test
     public void testGetDatasetsForConsent() {
         Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
-            null, RandomStringUtils.randomAlphabetic(10), true, null, null);
+                null, RandomStringUtils.randomAlphabetic(10), true, null, null);
         //negative record, make sure this isn't pulled in
         datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
-            RandomStringUtils.randomAlphabetic(10), true, null, null);
+                RandomStringUtils.randomAlphabetic(10), true, null, null);
         String consentId = RandomStringUtils.randomAlphabetic(10);
         consentDAO.insertConsent(consentId, false, "", null,
-            RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
-            null, RandomStringUtils.randomAlphabetic(10));
+                RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(), new Date(),
+                null, RandomStringUtils.randomAlphabetic(10));
         consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10), datasetId);
 
         List<Dataset> datasets = datasetDAO.getDatasetsForConsent(consentId);
@@ -872,16 +872,16 @@ public class DatasetDAOTest extends DAOTestHelper {
     protected Consent insertConsent() {
         String consentId = UUID.randomUUID().toString();
         consentDAO.insertConsent(consentId,
-            false,
-            """
-            {"generalUse":true}""",
-            "dul",
-            consentId,
-            "dulName",
-            new Date(),
-            new Date(),
-            "Everything",
-            "Group");
+                false,
+                """
+                        {"generalUse":true}""",
+                "dul",
+                consentId,
+                "dulName",
+                new Date(),
+                new Date(),
+                "Everything",
+                "Group");
         return consentDAO.findConsentById(consentId);
     }
 

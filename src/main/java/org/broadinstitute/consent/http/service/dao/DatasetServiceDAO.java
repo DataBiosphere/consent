@@ -42,19 +42,21 @@ public class DatasetServiceDAO {
                               Boolean publicVisibility,
                               Integer userId,
                               List<StudyProperty> props,
-                              List<FileStorageObject> files) {}
+                              List<FileStorageObject> files) {
+    }
 
     public record DatasetInsert(String name,
                                 Integer dacId,
                                 DataUse dataUse,
                                 Integer userId,
                                 List<DatasetProperty> props,
-                                List<FileStorageObject> files) {}
+                                List<FileStorageObject> files) {
+    }
 
     /**
      * Inserts a set of datasets, optionally under a study.
      *
-     * @param study If provided, creates a study and links all datasets to it; if null, no study is created.
+     * @param study    If provided, creates a study and links all datasets to it; if null, no study is created.
      * @param datasets The datasets to create.
      * @return The IDs of the datasets created.
      * @throws SQLException if DB transaction fails.
@@ -63,33 +65,33 @@ public class DatasetServiceDAO {
         final List<Integer> createdDatasets = new ArrayList<>();
 
         jdbi.useHandle(
-            handle -> {
-                // By default, new connections are set to auto-commit which breaks our rollback strategy.
-                // Turn that off for this connection. This will not affect existing or new connections and
-                // only applies to the current one in this handle.
-                handle.getConnection().setAutoCommit(false);
+                handle -> {
+                    // By default, new connections are set to auto-commit which breaks our rollback strategy.
+                    // Turn that off for this connection. This will not affect existing or new connections and
+                    // only applies to the current one in this handle.
+                    handle.getConnection().setAutoCommit(false);
 
-                Integer studyId = null;
-                if (Objects.nonNull(study)) {
-                    studyId = executeInsertStudy(handle, study);
+                    Integer studyId = null;
+                    if (Objects.nonNull(study)) {
+                        studyId = executeInsertStudy(handle, study);
+                    }
+
+                    for (DatasetInsert insert : datasets) {
+                        Integer datasetId = executeInsertDatasetWithFiles(
+                                handle,
+                                insert.name(),
+                                insert.dacId(),
+                                studyId,
+                                insert.dataUse(),
+                                insert.userId(),
+                                insert.props(),
+                                insert.files());
+
+                        createdDatasets.add(datasetId);
+                    }
+
+                    handle.commit();
                 }
-
-                for (DatasetInsert insert : datasets) {
-                    Integer datasetId = executeInsertDatasetWithFiles(
-                            handle,
-                            insert.name(),
-                            insert.dacId(),
-                            studyId,
-                            insert.dataUse(),
-                            insert.userId(),
-                            insert.props(),
-                            insert.files());
-
-                    createdDatasets.add(datasetId);
-                }
-
-                handle.commit();
-            }
         );
         return createdDatasets;
     }
@@ -205,10 +207,10 @@ public class DatasetServiceDAO {
 
     private Update createDictionaryInsert(Handle handle, String key) {
         final String sql = """
-            INSERT INTO dictionary (key, required)
-            VALUES (:key, FALSE)
-            ON CONFLICT DO NOTHING
-        """;
+                    INSERT INTO dictionary (key, required)
+                    VALUES (:key, FALSE)
+                    ON CONFLICT DO NOTHING
+                """;
         Update insert = handle.createUpdate(sql);
         insert.bind("key", key);
         return insert;
@@ -233,11 +235,11 @@ public class DatasetServiceDAO {
 
     private Update createPropertyInsert(Handle handle, DatasetProperty property, Timestamp now) {
         final String sql = """
-            INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )
-            SELECT :datasetId,
-                    (SELECT DISTINCT key_id FROM dictionary WHERE LOWER(key) = LOWER(:propertyName) ORDER BY key_id LIMIT 1),
-                    :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
-        """;
+                    INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )
+                    SELECT :datasetId,
+                            (SELECT DISTINCT key_id FROM dictionary WHERE LOWER(key) = LOWER(:propertyName) ORDER BY key_id LIMIT 1),
+                            :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
+                """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyKey", property.getPropertyKey());
@@ -266,12 +268,12 @@ public class DatasetServiceDAO {
 
     private Update createPropertyUpdate(Handle handle, DatasetProperty property) {
         final String sql = """
-            UPDATE dataset_property
-            SET property_value = :propertyStringValue
-            WHERE dataset_id = :datasetId
-            AND property_key = :propertyKey
-            AND property_id = :propertyId
-        """;
+                    UPDATE dataset_property
+                    SET property_value = :propertyStringValue
+                    WHERE dataset_id = :datasetId
+                    AND property_key = :propertyKey
+                    AND property_id = :propertyId
+                """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyStringValue", property.getPropertyValueAsString());
@@ -296,11 +298,11 @@ public class DatasetServiceDAO {
 
     private Update createPropertyDelete(Handle handle, DatasetProperty property) {
         final String sql = """
-            DELETE FROM dataset_property
-            WHERE dataset_id = :datasetId
-            AND property_key = :propertyKey
-            AND property_id = :propertyId
-        """;
+                    DELETE FROM dataset_property
+                    WHERE dataset_id = :datasetId
+                    AND property_key = :propertyKey
+                    AND property_id = :propertyId
+                """;
         Update insert = handle.createUpdate(sql);
         insert.bind("datasetId", property.getDataSetId());
         insert.bind("propertyKey", property.getPropertyKey());

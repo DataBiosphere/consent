@@ -2,11 +2,18 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetApproval;
+import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
@@ -21,17 +28,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetApproval;
-import org.broadinstitute.consent.http.models.Role;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Path("api/dac")
 public class DacResource extends Resource {
@@ -226,27 +227,27 @@ public class DacResource extends Resource {
     @Path("{dacId}/dataset/{datasetId}")
     @RolesAllowed({CHAIRPERSON})
     public Response approveDataset(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("datasetId") Integer datasetId, String json) {
-        try{
+        try {
             User user = userService.findUserByEmail(authUser.getEmail());
             Dataset dataset = datasetService.findDatasetById(datasetId);
-            if(Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
+            if (Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
                 //Vague message is intentional, don't want to reveal too much info
                 throw new NotFoundException("Dataset not found");
             }
             Boolean userHasRole = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
-            if(!userHasRole) {
+            if (!userHasRole) {
                 throw new NotFoundException("User role not found");
             }
-            if(Objects.isNull(json) || json.isBlank()) {
+            if (Objects.isNull(json) || json.isBlank()) {
                 throw new BadRequestException("Request body is empty");
             }
             DatasetApproval payload = GsonUtil.buildGson().fromJson(json, DatasetApproval.class);
-            if(Objects.isNull(payload.getApproval())) {
+            if (Objects.isNull(payload.getApproval())) {
                 throw new BadRequestException("Invalid request payload");
             }
             Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
             return Response.ok().entity(unmarshal(updatedDataset)).build();
-        } catch(Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -270,7 +271,8 @@ public class DacResource extends Resource {
     /**
      * Validate that a user is not already a member of a DAC. If they are, throw a conflict
      * exception.
-     * @param dacId The DAC Id
+     *
+     * @param dacId  The DAC Id
      * @param userId The User Id
      * @throws UnsupportedOperationException Conflicts
      */
@@ -291,7 +293,7 @@ public class DacResource extends Resource {
      * - Chairpersons can only make modifications to chairs and members in a DAC that they are a
      * chairperson in.
      *
-     * @param dac The Dac
+     * @param dac      The Dac
      * @param authUser The AuthUser
      * @throws NotAuthorizedException Not authorized
      */
@@ -307,8 +309,8 @@ public class DacResource extends Resource {
         }
 
         Optional<User> chair = dac.getChairpersons().stream()
-            .filter(u -> u.getUserId().equals(user.getUserId()))
-            .findFirst();
+                .filter(u -> u.getUserId().equals(user.getUserId()))
+                .findFirst();
         if (chair.isEmpty()) {
             throw e;
         }

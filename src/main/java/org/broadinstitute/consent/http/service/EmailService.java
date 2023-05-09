@@ -4,21 +4,6 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
 import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.io.Writer;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -40,6 +25,22 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 
+import javax.annotation.Nullable;
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.io.Writer;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class EmailService {
 
     private final DarCollectionDAO collectionDAO;
@@ -53,6 +54,7 @@ public class EmailService {
     private final String SERVER_URL;
     private static final String LOG_VOTE_DUL_URL = "dul_review";
     private static final String LOG_VOTE_ACCESS_URL = "access_review";
+
     public enum ElectionTypeString {
 
         DATA_ACCESS("Data Access Request"),

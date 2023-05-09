@@ -3,17 +3,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -23,6 +12,18 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -41,15 +42,15 @@ public class VoteResource extends Resource {
     /**
      * This API will take a boolean vote value as a query param and apply it to the list of vote ids
      * passed in as a list of integer vote ids.
-     *
+     * <p>
      * Error cases are:
      * 1. Vote is null
      * 2. Auth user is not the owner of all votes being updated
      * 3. No votes match the list of ids provided
      *
      * @param authUser The AuthUser
-     * @param json The boolean value to update votes to, string value for all rationales,
-     *             and list of vote ids, in json format
+     * @param json     The boolean value to update votes to, string value for all rationales,
+     *                 and list of vote ids, in json format
      * @return Response with results of the update.
      */
     @PUT
@@ -107,7 +108,7 @@ public class VoteResource extends Resource {
      * In all cases, one can only update their own votes.
      *
      * @param authUser The AuthUser
-     * @param json The rationale and vote ids to update
+     * @param json     The rationale and vote ids to update
      * @return Response with results of the update.
      */
     @Path("rationale")
@@ -153,26 +154,26 @@ public class VoteResource extends Resource {
     private void voteUpdateLCCheck(List<Vote> votes) {
         //filter for chair or final votes
         List<Vote> targetVotes = votes.stream()
-            .filter(v -> {
-                String type = v.getType();
-                return type.equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()) || type.equalsIgnoreCase(VoteType.FINAL.getValue());
-            })
-            .collect(Collectors.toList());
-        //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
-        if(!targetVotes.isEmpty()) {
-            List<Integer> voteIds = targetVotes.stream()
-                .map(Vote::getVoteId)
+                .filter(v -> {
+                    String type = v.getType();
+                    return type.equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()) || type.equalsIgnoreCase(VoteType.FINAL.getValue());
+                })
                 .collect(Collectors.toList());
+        //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
+        if (!targetVotes.isEmpty()) {
+            List<Integer> voteIds = targetVotes.stream()
+                    .map(Vote::getVoteId)
+                    .collect(Collectors.toList());
             List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds, ElectionType.DATA_ACCESS.getValue());
             //If DataAccess votes are present, get elections from DARs created by users with LCs
-            if(!targetElections.isEmpty()) {
+            if (!targetElections.isEmpty()) {
                 List<Integer> targetElectionIds = targetElections.stream()
-                    .map(Election::getElectionId)
-                    .collect(Collectors.toList());
+                        .map(Election::getElectionId)
+                        .collect(Collectors.toList());
                 List<Election> electionsWithCardHoldingUsers = electionService.findElectionsWithCardHoldingUsersByElectionIds(targetElectionIds);
                 //We want to make sure that each election is associated with a card holding user
                 //Therefore, if the number of electionsWithCardHoldingUsers does not equal the number of target elections, we can assume that there exists an election where a user does not have a LC
-                if(electionsWithCardHoldingUsers.size() != targetElections.size()) {
+                if (electionsWithCardHoldingUsers.size() != targetElections.size()) {
                     throw new BadRequestException("Some Data Access Requests have been submitted by users with no library card");
                 }
             }

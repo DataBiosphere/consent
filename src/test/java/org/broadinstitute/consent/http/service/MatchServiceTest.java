@@ -1,31 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -44,6 +18,33 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 @SuppressWarnings({"unchecked", "resource"})
 public class MatchServiceTest {
@@ -73,7 +74,7 @@ public class MatchServiceTest {
     @Mock
     private UseRestrictionConverter useRestrictionConverter;
 
-   private void initService() {
+    private void initService() {
         service = new MatchService(clientMock, config, consentDAO, matchDAO,
                 dataAccessRequestDAO, datasetDAO,
                 useRestrictionConverter);
@@ -154,7 +155,7 @@ public class MatchServiceTest {
         when(response.getStatus()).thenReturn(200);
         when(builder.post(any())).thenReturn(response);
         when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-        when(clientMock.target(config.getMatchURL_v2())).thenReturn(target);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
         spy(datasetDAO);
         initService();
 
@@ -178,6 +179,113 @@ public class MatchServiceTest {
         service.createMatchesForConsent(m.getConsent());
         verify(datasetDAO, atLeastOnce()).getDatasetsForConsent(any());
         verify(dataAccessRequestDAO, atLeastOnce()).findAllDataAccessRequests();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSingleEntitiesMatchV3EmptyDataset() {
+        DataAccessRequest dar = new DataAccessRequest();
+        initService();
+        service.singleEntitiesMatchV3(null, dar);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSingleEntitiesMatchV3EmptyDar() {
+        Dataset dataset = new Dataset();
+        initService();
+        service.singleEntitiesMatchV3(dataset, null);
+    }
+
+    @Test
+    public void testSingleEntitiesMatchV3Failure() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        dataset.setAlias(2);
+        dataset.setDatasetIdentifier();
+        DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+        dar.setDatasetIds(List.of(1, 2, 3));
+
+        Response response = Mockito.mock(Response.class);
+        when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
+        when(response.getStatus()).thenReturn(500);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+
+        initService();
+        Match match = service.singleEntitiesMatchV3(dataset, dar);
+        assertFalse(match.getMatch());
+        assertFalse(match.getAbstain());
+        assertTrue(match.getFailed());
+    }
+
+    @Test
+    public void testSingleEntitiesMatchV3Approve() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+        dar.setDatasetIds(List.of(1, 2, 3));
+        String stringEntity = "{\"result\": \"APPROVE\", \"matchPair\": {}, \"failureReasons\": []}";
+
+        when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
+        when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
+        when(response.getStatus()).thenReturn(200);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+
+        initService();
+        Match match = service.singleEntitiesMatchV3(dataset, dar);
+        assertTrue(match.getMatch());
+        assertFalse(match.getAbstain());
+        assertFalse(match.getFailed());
+    }
+
+    @Test
+    public void testSingleEntitiesMatchV3Deny() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+        dar.setDatasetIds(List.of(1, 2, 3));
+        String stringEntity = "{\"result\": \"DENY\", \"matchPair\": {}, \"failureReasons\": []}";
+
+        when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
+        when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
+        when(response.getStatus()).thenReturn(200);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+
+        initService();
+        Match match = service.singleEntitiesMatchV3(dataset, dar);
+        assertFalse(match.getMatch());
+        assertFalse(match.getAbstain());
+        assertFalse(match.getFailed());
+    }
+
+    @Test
+    public void testSingleEntitiesMatchV3Abstain() {
+        Dataset dataset = new Dataset();
+        dataset.setDataSetId(1);
+        DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+        dar.setDatasetIds(List.of(1, 2, 3));
+        String stringEntity = "{\"result\": \"ABSTAIN\", \"matchPair\": {}, \"failureReasons\": []}";
+
+        when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
+        when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
+        when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
+        when(response.getStatus()).thenReturn(200);
+        when(builder.post(any())).thenReturn(response);
+        when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+        when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+
+        initService();
+        Match match = service.singleEntitiesMatchV3(dataset, dar);
+        assertFalse(match.getMatch());
+        assertTrue(match.getAbstain());
+        assertFalse(match.getFailed());
     }
 
     @Test
@@ -262,6 +370,6 @@ public class MatchServiceTest {
     }
 
     private Match createMatchObject() {
-        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, false, new Date(), MatchAlgorithm.V2.getVersion());
+        return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, true, false, new Date(), MatchAlgorithm.V3.getVersion());
     }
 }

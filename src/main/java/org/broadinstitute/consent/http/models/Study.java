@@ -94,6 +94,7 @@ public class Study {
     public void setAlternativeDataSharingPlan(FileStorageObject alternativeDataSharingPlan) {
         this.alternativeDataSharingPlan = alternativeDataSharingPlan;
     }
+
     public Set<Integer> getDatasetIds() {
         return datasetIds;
     }

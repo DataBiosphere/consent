@@ -3,7 +3,19 @@ package org.broadinstitute.consent.http.resources;
 import com.google.api.client.http.GenericUrl;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.net.URI;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
+import org.broadinstitute.consent.http.enumeration.AuditTable;
+import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.AuditService;
+import org.broadinstitute.consent.http.service.ConsentService;
+import org.broadinstitute.consent.http.service.MatchService;
+import org.broadinstitute.consent.http.service.UserService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -19,18 +31,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
-import org.broadinstitute.consent.http.enumeration.AuditTable;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentService;
-import org.broadinstitute.consent.http.service.MatchService;
-import org.broadinstitute.consent.http.service.UserService;
+import java.net.URI;
 
 @Path("api/consent")
 public class ConsentResource extends Resource {
@@ -79,7 +80,7 @@ public class ConsentResource extends Resource {
             URI uri = info.getRequestUriBuilder().path("{id}").build(consent.consentId);
             matchService.reprocessMatchesForConsent(consent.consentId);
             return Response.created(uri).build();
-        }  catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -118,8 +119,7 @@ public class ConsentResource extends Resource {
         try {
             consentService.delete(consentId);
             return Response.ok().build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

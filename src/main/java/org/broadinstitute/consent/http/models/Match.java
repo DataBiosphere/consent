@@ -2,11 +2,15 @@ package org.broadinstitute.consent.http.models;
 
 
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.models.matching.DataUseMatchResultType;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+
+import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Abstain;
+import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
 
 public class Match {
 
@@ -18,6 +22,8 @@ public class Match {
 
     private Boolean match;
 
+    private Boolean abstain;
+
     private Boolean failed;
 
     private Date createDate;
@@ -26,38 +32,29 @@ public class Match {
 
     private List<String> failureReasons;
 
-    @Deprecated
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate){
+    public Match(Integer id, String consent, String purpose, Boolean match, Boolean abstain, Boolean failed, Date createDate, String algorithmVersion) {
         this.id = id;
         this.consent = consent;
         this.purpose = purpose;
         this.match = match;
-        this.failed = failed;
-        this.createDate = createDate;
-        this.algorithmVersion = MatchAlgorithm.V1.getVersion();
-    }
-
-    public Match(Integer id, String consent, String purpose, Boolean match, Boolean failed, Date createDate, String algorithmVersion){
-        this.id = id;
-        this.consent = consent;
-        this.purpose = purpose;
-        this.match = match;
+        this.abstain = abstain;
         this.failed = failed;
         this.createDate = createDate;
         this.algorithmVersion = algorithmVersion;
     }
 
-    public Match(String consentId, String purposeId, boolean failed, boolean isMatch, MatchAlgorithm algorithm, List<String> failureReasons) {
+    public Match(String consentId, String purposeId, boolean match, boolean abstain, boolean failed, MatchAlgorithm algorithm, List<String> failureReasons) {
         this.setConsent(consentId);
         this.setPurpose(purposeId);
+        this.setMatch(match);
+        this.setAbstain(abstain);
         this.setFailed(failed);
-        this.setMatch(isMatch);
         this.setCreateDate(new Date());
         this.setAlgorithmVersion(algorithm.getVersion());
         this.setFailureReasons(failureReasons);
     }
 
-    public Match(){
+    public Match() {
     }
 
     public Integer getId() {
@@ -90,6 +87,14 @@ public class Match {
 
     public void setMatch(Boolean match) {
         this.match = match;
+    }
+
+    public Boolean getAbstain() {
+        return abstain;
+    }
+
+    public void setAbstain(Boolean abstain) {
+        this.abstain = abstain;
     }
 
     public Boolean getFailed() {
@@ -134,5 +139,13 @@ public class Match {
         if (!this.failureReasons.contains(reason) && !reason.isBlank()) {
             this.failureReasons.add(reason);
         }
+    }
+
+    public static Match matchFailure(String consentId, String purposeId, List<String> failureReasons) {
+        return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V3, failureReasons);
+    }
+
+    public static Match matchSuccess(String consentId, String purposeId, DataUseMatchResultType match, List<String> failureReasons) {
+        return new Match(consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V3, failureReasons);
     }
 }

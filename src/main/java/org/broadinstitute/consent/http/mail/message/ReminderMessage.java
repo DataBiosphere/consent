@@ -16,7 +16,7 @@ public class ReminderMessage extends MailMessage {
 
     @Override
     String assignSubject(String referenceId, String type) {
-        if(type.equals("Data Use Limitations"))
+        if (type.equals("Data Use Limitations"))
             return String.format(REMINDER_DUL, referenceId);
         else {
             if (type.equals("Data Access Request")) {

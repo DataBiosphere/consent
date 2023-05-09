@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import org.broadinstitute.consent.http.models.DatasetAssociation;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -14,9 +15,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.DatasetAssociation;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Path("api/datasetAssociation")
 public class DatasetAssociationsResource extends Resource {
@@ -38,7 +39,7 @@ public class DatasetAssociationsResource extends Resource {
     public Response associateDatasetWithUsers(@PathParam("datasetId") Integer datasetId, List<Integer> userIdList) {
         try {
             List<DatasetAssociation> associations = service
-                .createDatasetUsersAssociation(datasetId, userIdList);
+                    .createDatasetUsersAssociation(datasetId, userIdList);
             return Response.status(Response.Status.CREATED).entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);
@@ -67,7 +68,7 @@ public class DatasetAssociationsResource extends Resource {
     public Response updateDatasetAssociations(@PathParam("dataSetId") Integer datasetId, List<Integer> userIdList) {
         try {
             List<DatasetAssociation> associations = service
-                .updateDatasetAssociations(datasetId, userIdList);
+                    .updateDatasetAssociations(datasetId, userIdList);
             return Response.ok().entity(associations).build();
         } catch (Exception e) {
             return createExceptionResponse(e);

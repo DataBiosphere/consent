@@ -12,8 +12,8 @@ public class DatasetPropertyDTO {
     private String propertyValue;
 
     public DatasetPropertyDTO(String propertyName, String propertyValue) {
-        this.propertyName=propertyName;
-        this.propertyValue=propertyValue;
+        this.propertyName = propertyName;
+        this.propertyValue = propertyValue;
     }
 
 

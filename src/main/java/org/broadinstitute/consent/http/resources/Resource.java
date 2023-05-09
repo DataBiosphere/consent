@@ -58,7 +58,7 @@ abstract public class Resource implements ConsentLogger {
 
     // NOTE: implement more Postgres vendor codes as we encounter them
     private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
-        new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
+            new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(), Response.Status.CONFLICT.getStatusCode())
     );
 
     protected Response createExceptionResponse(Exception e) {
@@ -96,7 +96,7 @@ abstract public class Resource implements ConsentLogger {
         }
         boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
         if (!validSize) {
-            throw new IllegalArgumentException("File size is invalid. Max size is: " + validator.getMaxFileUploadSize()/1000000 + " MB");
+            throw new IllegalArgumentException("File size is invalid. Max size is: " + validator.getMaxFileUploadSize() / 1000000 + " MB");
         }
     }
 
@@ -107,8 +107,8 @@ abstract public class Resource implements ConsentLogger {
     private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
 
     static {
-        dispatch.put(ConsentConflictException.class, e->
-            Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
+        dispatch.put(ConsentConflictException.class, e ->
+                Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(UnsupportedOperationException.class, e ->
                 Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON).entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
         dispatch.put(IllegalArgumentException.class, e ->
@@ -170,9 +170,9 @@ abstract public class Resource implements ConsentLogger {
         }
 
         return Response.status(status)
-            .type(MediaType.APPLICATION_JSON)
-            .entity(new Error("Database Error", status))
-            .build();
+                .type(MediaType.APPLICATION_JSON)
+                .entity(new Error("Database Error", status))
+                .build();
     }
 
     /**
@@ -187,9 +187,9 @@ abstract public class Resource implements ConsentLogger {
      * Privileged users such as admins, chairpersons, and members, may be allowed
      * access to some resources even if they are not the creator/owner.
      *
-     * @param privilegedRoles   List of privileged UserRoles enums
-     * @param authedUser        The authenticated User
-     * @param userId            The user id that the authenticated user is requesting access for
+     * @param privilegedRoles List of privileged UserRoles enums
+     * @param authedUser      The authenticated User
+     * @param userId          The user id that the authenticated user is requesting access for
      */
     void validateAuthedRoleUser(final List<UserRoles> privilegedRoles, final User authedUser, final Integer userId) {
         List<Integer> authedRoleIds = privilegedRoles.stream().
@@ -210,7 +210,7 @@ abstract public class Resource implements ConsentLogger {
      * one and that the user actually has that role to prevent escalated privilege
      * violations.
      *
-     * @param user The User
+     * @param user     The User
      * @param roleName The UserRole name
      */
     void validateUserHasRoleName(User user, String roleName) {

@@ -1,11 +1,6 @@
 package org.broadinstitute.consent.http.service.mail;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.MockitoAnnotations.openMocks;
-
 import com.sendgrid.SendGrid;
-import java.io.Writer;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -13,6 +8,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.io.Writer;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SendGridAPITest {
 

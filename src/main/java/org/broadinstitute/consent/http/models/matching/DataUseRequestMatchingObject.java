@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models.matching;
 
 import org.broadinstitute.consent.http.models.DataUse;
 
+// Copied from DataUseMatchPair in consent-ontology
 public class DataUseRequestMatchingObject {
 
     public DataUse consent;

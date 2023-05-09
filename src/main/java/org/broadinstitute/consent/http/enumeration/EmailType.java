@@ -14,8 +14,7 @@ public enum EmailType {
     DAR_CANCEL(10),
     DELEGATE_RESPONSIBILITIES(11),
     NEW_RESEARCHER(12),
-    RESEARCHER_APPROVED(13)
-    ;
+    RESEARCHER_APPROVED(13);
 
     private final Integer typeInt;
 

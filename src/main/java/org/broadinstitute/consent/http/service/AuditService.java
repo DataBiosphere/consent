@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.broadinstitute.consent.http.db.ConsentAuditDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.ConsentAudit;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.ConsentAuditDAO;
-import org.broadinstitute.consent.http.models.ConsentAudit;
 
 public class AuditService {
 

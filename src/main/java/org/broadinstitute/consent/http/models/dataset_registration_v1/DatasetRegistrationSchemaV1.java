@@ -25,64 +25,61 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "studyName",
-    "studyType",
-    "studyDescription",
-    "dataTypes",
-    "phenotypeIndication",
-    "species",
-    "piName",
-    "dataSubmitterUserId",
-    "dataCustodianEmail",
-    "publicVisibility",
-    "nihAnvilUse",
-    "submittingToAnvil",
-    "dbGaPPhsID",
-    "dbGaPStudyRegistrationName",
-    "embargoReleaseDate",
-    "sequencingCenter",
-    "piInstitution",
-    "nihGrantContractNumber",
-    "nihICsSupportingStudy",
-    "nihProgramOfficerName",
-    "nihInstitutionCenterSubmission",
-    "nihGenomicProgramAdministratorName",
-    "multiCenterStudy",
-    "collaboratingSites",
-    "controlledAccessRequiredForGenomicSummaryResultsGSR",
-    "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation",
-    "alternativeDataSharingPlan",
-    "alternativeDataSharingPlanReasons",
-    "alternativeDataSharingPlanExplanation",
-    "alternativeDataSharingPlanFileName",
-    "alternativeDataSharingPlanDataSubmitted",
-    "alternativeDataSharingPlanDataReleased",
-    "alternativeDataSharingPlanTargetDeliveryDate",
-    "alternativeDataSharingPlanTargetPublicReleaseDate",
-    "alternativeDataSharingPlanControlledOpenAccess",
-    "consentGroups"
+        "studyName",
+        "studyType",
+        "studyDescription",
+        "dataTypes",
+        "phenotypeIndication",
+        "species",
+        "piName",
+        "dataSubmitterUserId",
+        "dataCustodianEmail",
+        "publicVisibility",
+        "nihAnvilUse",
+        "submittingToAnvil",
+        "dbGaPPhsID",
+        "dbGaPStudyRegistrationName",
+        "embargoReleaseDate",
+        "sequencingCenter",
+        "piInstitution",
+        "nihGrantContractNumber",
+        "nihICsSupportingStudy",
+        "nihProgramOfficerName",
+        "nihInstitutionCenterSubmission",
+        "nihGenomicProgramAdministratorName",
+        "multiCenterStudy",
+        "collaboratingSites",
+        "controlledAccessRequiredForGenomicSummaryResultsGSR",
+        "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation",
+        "alternativeDataSharingPlan",
+        "alternativeDataSharingPlanReasons",
+        "alternativeDataSharingPlanExplanation",
+        "alternativeDataSharingPlanFileName",
+        "alternativeDataSharingPlanDataSubmitted",
+        "alternativeDataSharingPlanDataReleased",
+        "alternativeDataSharingPlanTargetDeliveryDate",
+        "alternativeDataSharingPlanTargetPublicReleaseDate",
+        "alternativeDataSharingPlanControlledOpenAccess",
+        "consentGroups"
 })
 public class DatasetRegistrationSchemaV1 {
 
     /**
      * The study name
      * (Required)
-     * 
      */
     @JsonProperty("studyName")
     @JsonPropertyDescription("The study name")
     private String studyName;
     /**
      * The study type
-     * 
      */
     @JsonProperty("studyType")
     @JsonPropertyDescription("The study type")
-    private DatasetRegistrationSchemaV1 .StudyType studyType;
+    private DatasetRegistrationSchemaV1.StudyType studyType;
     /**
      * Description of the study
      * (Required)
-     * 
      */
     @JsonProperty("studyDescription")
     @JsonPropertyDescription("Description of the study")
@@ -90,21 +87,18 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * All data types that study encompasses
      * (Required)
-     * 
      */
     @JsonProperty("dataTypes")
     @JsonPropertyDescription("All data types that study encompasses")
     private List<String> dataTypes = new ArrayList<String>();
     /**
      * Phenotype/Indication Studied
-     * 
      */
     @JsonProperty("phenotypeIndication")
     @JsonPropertyDescription("Phenotype/Indication Studied")
     private String phenotypeIndication;
     /**
      * Species
-     * 
      */
     @JsonProperty("species")
     @JsonPropertyDescription("Species")
@@ -112,7 +106,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Principal Investigator Name
      * (Required)
-     * 
      */
     @JsonProperty("piName")
     @JsonPropertyDescription("Principal Investigator Name")
@@ -120,14 +113,12 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * The user creating the dataset submission
      * (Required)
-     * 
      */
     @JsonProperty("dataSubmitterUserId")
     @JsonPropertyDescription("The user creating the dataset submission")
     private Integer dataSubmitterUserId;
     /**
      * Data Custodian Email
-     * 
      */
     @JsonProperty("dataCustodianEmail")
     @JsonPropertyDescription("Data Custodian Email")
@@ -135,7 +126,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Public Visibility of this study
      * (Required)
-     * 
      */
     @JsonProperty("publicVisibility")
     @JsonPropertyDescription("Public Visibility of this study")
@@ -143,183 +133,157 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * NIH Anvil Use
      * (Required)
-     * 
      */
     @JsonProperty("nihAnvilUse")
     @JsonPropertyDescription("NIH Anvil Use")
-    private DatasetRegistrationSchemaV1 .NihAnvilUse nihAnvilUse;
+    private DatasetRegistrationSchemaV1.NihAnvilUse nihAnvilUse;
     /**
      * Are you planning to submit to AnVIL?
-     * 
      */
     @JsonProperty("submittingToAnvil")
     @JsonPropertyDescription("Are you planning to submit to AnVIL?")
     private Boolean submittingToAnvil;
     /**
      * dbGaP phs ID
-     * 
      */
     @JsonProperty("dbGaPPhsID")
     @JsonPropertyDescription("dbGaP phs ID")
     private String dbGaPPhsID;
     /**
      * dbGaP Study Registration Name
-     * 
      */
     @JsonProperty("dbGaPStudyRegistrationName")
     @JsonPropertyDescription("dbGaP Study Registration Name")
     private String dbGaPStudyRegistrationName;
     /**
      * Embargo Release Date
-     * 
      */
     @JsonProperty("embargoReleaseDate")
     @JsonPropertyDescription("Embargo Release Date")
     private String embargoReleaseDate;
     /**
      * Sequencing Center
-     * 
      */
     @JsonProperty("sequencingCenter")
     @JsonPropertyDescription("Sequencing Center")
     private String sequencingCenter;
     /**
      * Principal Investigator Institution
-     * 
      */
     @JsonProperty("piInstitution")
     @JsonPropertyDescription("Principal Investigator Institution")
     private Integer piInstitution;
     /**
      * NIH Grant or Contract Number
-     * 
      */
     @JsonProperty("nihGrantContractNumber")
     @JsonPropertyDescription("NIH Grant or Contract Number")
     private String nihGrantContractNumber;
     /**
      * NIH ICs Supporting the Study
-     * 
      */
     @JsonProperty("nihICsSupportingStudy")
     @JsonPropertyDescription("NIH ICs Supporting the Study")
     private List<NihICsSupportingStudy> nihICsSupportingStudy = new ArrayList<NihICsSupportingStudy>();
     /**
      * NIH Program Officer Name
-     * 
      */
     @JsonProperty("nihProgramOfficerName")
     @JsonPropertyDescription("NIH Program Officer Name")
     private String nihProgramOfficerName;
     /**
      * NIH Institution/Center for Submission
-     * 
      */
     @JsonProperty("nihInstitutionCenterSubmission")
     @JsonPropertyDescription("NIH Institution/Center for Submission")
-    private DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission nihInstitutionCenterSubmission;
+    private DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission nihInstitutionCenterSubmission;
     /**
      * NIH Genomic Program Administrator Name
-     * 
      */
     @JsonProperty("nihGenomicProgramAdministratorName")
     @JsonPropertyDescription("NIH Genomic Program Administrator Name")
     private String nihGenomicProgramAdministratorName;
     /**
      * Is this a multi-center study?
-     * 
      */
     @JsonProperty("multiCenterStudy")
     @JsonPropertyDescription("Is this a multi-center study?")
     private Boolean multiCenterStudy;
     /**
      * What are the collaborating sites?
-     * 
      */
     @JsonProperty("collaboratingSites")
     @JsonPropertyDescription("What are the collaborating sites?")
     private List<String> collaboratingSites = new ArrayList<String>();
     /**
      * Is controlled access required for genomic summary results (GSR)?
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSR")
     @JsonPropertyDescription("Is controlled access required for genomic summary results (GSR)?")
     private Boolean controlledAccessRequiredForGenomicSummaryResultsGSR;
     /**
      * If yes, explain why controlled access is required for GSR
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation")
     @JsonPropertyDescription("If yes, explain why controlled access is required for GSR")
     private String controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
     /**
      * Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlan")
     @JsonPropertyDescription("Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?")
     private Boolean alternativeDataSharingPlan;
     /**
      * Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanReasons")
     @JsonPropertyDescription("Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)")
     private List<AlternativeDataSharingPlanReason> alternativeDataSharingPlanReasons = new ArrayList<AlternativeDataSharingPlanReason>();
     /**
      * Explanation of Request
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanExplanation")
     @JsonPropertyDescription("Explanation of Request")
     private String alternativeDataSharingPlanExplanation;
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanFileName")
     @JsonPropertyDescription("Upload your alternative sharing plan (file upload)")
     private String alternativeDataSharingPlanFileName;
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
     @JsonPropertyDescription("Upload your alternative sharing plan (file upload)")
-    private DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted;
+    private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted;
     /**
      * Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataReleased")
     @JsonPropertyDescription("Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release")
     private Boolean alternativeDataSharingPlanDataReleased;
     /**
      * Target Delivery Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetDeliveryDate")
     @JsonPropertyDescription("Target Delivery Date")
     private String alternativeDataSharingPlanTargetDeliveryDate;
     /**
      * Target Public Release Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetPublicReleaseDate")
     @JsonPropertyDescription("Target Public Release Date")
     private String alternativeDataSharingPlanTargetPublicReleaseDate;
     /**
      * Does the data need to be managed under Controlled or Open Access?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
     @JsonPropertyDescription("Does the data need to be managed under Controlled or Open Access?")
-    private DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess;
+    private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess;
     /**
      * Consent Groups
      * (Required)
-     * 
      */
     @JsonProperty("consentGroups")
     @JsonPropertyDescription("Consent Groups")
@@ -328,7 +292,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * The study name
      * (Required)
-     * 
      */
     @JsonProperty("studyName")
     public String getStudyName() {
@@ -338,7 +301,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * The study name
      * (Required)
-     * 
      */
     @JsonProperty("studyName")
     public void setStudyName(String studyName) {
@@ -347,26 +309,23 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * The study type
-     * 
      */
     @JsonProperty("studyType")
-    public DatasetRegistrationSchemaV1 .StudyType getStudyType() {
+    public DatasetRegistrationSchemaV1.StudyType getStudyType() {
         return studyType;
     }
 
     /**
      * The study type
-     * 
      */
     @JsonProperty("studyType")
-    public void setStudyType(DatasetRegistrationSchemaV1 .StudyType studyType) {
+    public void setStudyType(DatasetRegistrationSchemaV1.StudyType studyType) {
         this.studyType = studyType;
     }
 
     /**
      * Description of the study
      * (Required)
-     * 
      */
     @JsonProperty("studyDescription")
     public String getStudyDescription() {
@@ -376,7 +335,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Description of the study
      * (Required)
-     * 
      */
     @JsonProperty("studyDescription")
     public void setStudyDescription(String studyDescription) {
@@ -386,7 +344,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * All data types that study encompasses
      * (Required)
-     * 
      */
     @JsonProperty("dataTypes")
     public List<String> getDataTypes() {
@@ -396,7 +353,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * All data types that study encompasses
      * (Required)
-     * 
      */
     @JsonProperty("dataTypes")
     public void setDataTypes(List<String> dataTypes) {
@@ -405,7 +361,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Phenotype/Indication Studied
-     * 
      */
     @JsonProperty("phenotypeIndication")
     public String getPhenotypeIndication() {
@@ -414,7 +369,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Phenotype/Indication Studied
-     * 
      */
     @JsonProperty("phenotypeIndication")
     public void setPhenotypeIndication(String phenotypeIndication) {
@@ -423,7 +377,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Species
-     * 
      */
     @JsonProperty("species")
     public String getSpecies() {
@@ -432,7 +385,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Species
-     * 
      */
     @JsonProperty("species")
     public void setSpecies(String species) {
@@ -442,7 +394,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Principal Investigator Name
      * (Required)
-     * 
      */
     @JsonProperty("piName")
     public String getPiName() {
@@ -452,7 +403,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Principal Investigator Name
      * (Required)
-     * 
      */
     @JsonProperty("piName")
     public void setPiName(String piName) {
@@ -462,7 +412,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * The user creating the dataset submission
      * (Required)
-     * 
      */
     @JsonProperty("dataSubmitterUserId")
     public Integer getDataSubmitterUserId() {
@@ -472,7 +421,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * The user creating the dataset submission
      * (Required)
-     * 
      */
     @JsonProperty("dataSubmitterUserId")
     public void setDataSubmitterUserId(Integer dataSubmitterUserId) {
@@ -481,7 +429,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Data Custodian Email
-     * 
      */
     @JsonProperty("dataCustodianEmail")
     public List<String> getDataCustodianEmail() {
@@ -490,7 +437,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Data Custodian Email
-     * 
      */
     @JsonProperty("dataCustodianEmail")
     public void setDataCustodianEmail(List<String> dataCustodianEmail) {
@@ -500,7 +446,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Public Visibility of this study
      * (Required)
-     * 
      */
     @JsonProperty("publicVisibility")
     public Boolean getPublicVisibility() {
@@ -510,7 +455,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Public Visibility of this study
      * (Required)
-     * 
      */
     @JsonProperty("publicVisibility")
     public void setPublicVisibility(Boolean publicVisibility) {
@@ -520,26 +464,23 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * NIH Anvil Use
      * (Required)
-     * 
      */
     @JsonProperty("nihAnvilUse")
-    public DatasetRegistrationSchemaV1 .NihAnvilUse getNihAnvilUse() {
+    public DatasetRegistrationSchemaV1.NihAnvilUse getNihAnvilUse() {
         return nihAnvilUse;
     }
 
     /**
      * NIH Anvil Use
      * (Required)
-     * 
      */
     @JsonProperty("nihAnvilUse")
-    public void setNihAnvilUse(DatasetRegistrationSchemaV1 .NihAnvilUse nihAnvilUse) {
+    public void setNihAnvilUse(DatasetRegistrationSchemaV1.NihAnvilUse nihAnvilUse) {
         this.nihAnvilUse = nihAnvilUse;
     }
 
     /**
      * Are you planning to submit to AnVIL?
-     * 
      */
     @JsonProperty("submittingToAnvil")
     public Boolean getSubmittingToAnvil() {
@@ -548,7 +489,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Are you planning to submit to AnVIL?
-     * 
      */
     @JsonProperty("submittingToAnvil")
     public void setSubmittingToAnvil(Boolean submittingToAnvil) {
@@ -557,7 +497,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * dbGaP phs ID
-     * 
      */
     @JsonProperty("dbGaPPhsID")
     public String getDbGaPPhsID() {
@@ -566,7 +505,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * dbGaP phs ID
-     * 
      */
     @JsonProperty("dbGaPPhsID")
     public void setDbGaPPhsID(String dbGaPPhsID) {
@@ -575,7 +513,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * dbGaP Study Registration Name
-     * 
      */
     @JsonProperty("dbGaPStudyRegistrationName")
     public String getDbGaPStudyRegistrationName() {
@@ -584,7 +521,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * dbGaP Study Registration Name
-     * 
      */
     @JsonProperty("dbGaPStudyRegistrationName")
     public void setDbGaPStudyRegistrationName(String dbGaPStudyRegistrationName) {
@@ -593,7 +529,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Embargo Release Date
-     * 
      */
     @JsonProperty("embargoReleaseDate")
     public String getEmbargoReleaseDate() {
@@ -602,7 +537,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Embargo Release Date
-     * 
      */
     @JsonProperty("embargoReleaseDate")
     public void setEmbargoReleaseDate(String embargoReleaseDate) {
@@ -611,7 +545,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Sequencing Center
-     * 
      */
     @JsonProperty("sequencingCenter")
     public String getSequencingCenter() {
@@ -620,7 +553,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Sequencing Center
-     * 
      */
     @JsonProperty("sequencingCenter")
     public void setSequencingCenter(String sequencingCenter) {
@@ -629,7 +561,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Principal Investigator Institution
-     * 
      */
     @JsonProperty("piInstitution")
     public Integer getPiInstitution() {
@@ -638,7 +569,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Principal Investigator Institution
-     * 
      */
     @JsonProperty("piInstitution")
     public void setPiInstitution(Integer piInstitution) {
@@ -647,7 +577,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Grant or Contract Number
-     * 
      */
     @JsonProperty("nihGrantContractNumber")
     public String getNihGrantContractNumber() {
@@ -656,7 +585,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Grant or Contract Number
-     * 
      */
     @JsonProperty("nihGrantContractNumber")
     public void setNihGrantContractNumber(String nihGrantContractNumber) {
@@ -665,7 +593,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH ICs Supporting the Study
-     * 
      */
     @JsonProperty("nihICsSupportingStudy")
     public List<NihICsSupportingStudy> getNihICsSupportingStudy() {
@@ -674,7 +601,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH ICs Supporting the Study
-     * 
      */
     @JsonProperty("nihICsSupportingStudy")
     public void setNihICsSupportingStudy(List<NihICsSupportingStudy> nihICsSupportingStudy) {
@@ -683,7 +609,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Program Officer Name
-     * 
      */
     @JsonProperty("nihProgramOfficerName")
     public String getNihProgramOfficerName() {
@@ -692,7 +617,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Program Officer Name
-     * 
      */
     @JsonProperty("nihProgramOfficerName")
     public void setNihProgramOfficerName(String nihProgramOfficerName) {
@@ -701,25 +625,22 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Institution/Center for Submission
-     * 
      */
     @JsonProperty("nihInstitutionCenterSubmission")
-    public DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission getNihInstitutionCenterSubmission() {
+    public DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission getNihInstitutionCenterSubmission() {
         return nihInstitutionCenterSubmission;
     }
 
     /**
      * NIH Institution/Center for Submission
-     * 
      */
     @JsonProperty("nihInstitutionCenterSubmission")
-    public void setNihInstitutionCenterSubmission(DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission nihInstitutionCenterSubmission) {
+    public void setNihInstitutionCenterSubmission(DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission nihInstitutionCenterSubmission) {
         this.nihInstitutionCenterSubmission = nihInstitutionCenterSubmission;
     }
 
     /**
      * NIH Genomic Program Administrator Name
-     * 
      */
     @JsonProperty("nihGenomicProgramAdministratorName")
     public String getNihGenomicProgramAdministratorName() {
@@ -728,7 +649,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Genomic Program Administrator Name
-     * 
      */
     @JsonProperty("nihGenomicProgramAdministratorName")
     public void setNihGenomicProgramAdministratorName(String nihGenomicProgramAdministratorName) {
@@ -737,7 +657,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Is this a multi-center study?
-     * 
      */
     @JsonProperty("multiCenterStudy")
     public Boolean getMultiCenterStudy() {
@@ -746,7 +665,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Is this a multi-center study?
-     * 
      */
     @JsonProperty("multiCenterStudy")
     public void setMultiCenterStudy(Boolean multiCenterStudy) {
@@ -755,7 +673,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * What are the collaborating sites?
-     * 
      */
     @JsonProperty("collaboratingSites")
     public List<String> getCollaboratingSites() {
@@ -764,7 +681,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * What are the collaborating sites?
-     * 
      */
     @JsonProperty("collaboratingSites")
     public void setCollaboratingSites(List<String> collaboratingSites) {
@@ -773,7 +689,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Is controlled access required for genomic summary results (GSR)?
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSR")
     public Boolean getControlledAccessRequiredForGenomicSummaryResultsGSR() {
@@ -782,7 +697,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Is controlled access required for genomic summary results (GSR)?
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSR")
     public void setControlledAccessRequiredForGenomicSummaryResultsGSR(Boolean controlledAccessRequiredForGenomicSummaryResultsGSR) {
@@ -791,7 +705,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * If yes, explain why controlled access is required for GSR
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation")
     public String getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation() {
@@ -800,7 +713,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * If yes, explain why controlled access is required for GSR
-     * 
      */
     @JsonProperty("controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation")
     public void setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(String controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation) {
@@ -809,7 +721,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlan")
     public Boolean getAlternativeDataSharingPlan() {
@@ -818,7 +729,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Are you requesting an Alternative Data Sharing Plan for samples that cannot be shared through a public repository or database?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlan")
     public void setAlternativeDataSharingPlan(Boolean alternativeDataSharingPlan) {
@@ -827,7 +737,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanReasons")
     public List<AlternativeDataSharingPlanReason> getAlternativeDataSharingPlanReasons() {
@@ -836,7 +745,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanReasons")
     public void setAlternativeDataSharingPlanReasons(List<AlternativeDataSharingPlanReason> alternativeDataSharingPlanReasons) {
@@ -845,7 +753,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Explanation of Request
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanExplanation")
     public String getAlternativeDataSharingPlanExplanation() {
@@ -854,7 +761,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Explanation of Request
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanExplanation")
     public void setAlternativeDataSharingPlanExplanation(String alternativeDataSharingPlanExplanation) {
@@ -863,7 +769,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanFileName")
     public String getAlternativeDataSharingPlanFileName() {
@@ -872,7 +777,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanFileName")
     public void setAlternativeDataSharingPlanFileName(String alternativeDataSharingPlanFileName) {
@@ -881,25 +785,22 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
-    public DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted getAlternativeDataSharingPlanDataSubmitted() {
+    public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted getAlternativeDataSharingPlanDataSubmitted() {
         return alternativeDataSharingPlanDataSubmitted;
     }
 
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataSubmitted")
-    public void setAlternativeDataSharingPlanDataSubmitted(DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted) {
+    public void setAlternativeDataSharingPlanDataSubmitted(DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted) {
         this.alternativeDataSharingPlanDataSubmitted = alternativeDataSharingPlanDataSubmitted;
     }
 
     /**
      * Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataReleased")
     public Boolean getAlternativeDataSharingPlanDataReleased() {
@@ -908,7 +809,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Data to be released will meet the timeframes specified in the NHGRI Guidance for Data Submission and Data Release
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanDataReleased")
     public void setAlternativeDataSharingPlanDataReleased(Boolean alternativeDataSharingPlanDataReleased) {
@@ -917,7 +817,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Target Delivery Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetDeliveryDate")
     public String getAlternativeDataSharingPlanTargetDeliveryDate() {
@@ -926,7 +825,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Target Delivery Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetDeliveryDate")
     public void setAlternativeDataSharingPlanTargetDeliveryDate(String alternativeDataSharingPlanTargetDeliveryDate) {
@@ -935,7 +833,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Target Public Release Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetPublicReleaseDate")
     public String getAlternativeDataSharingPlanTargetPublicReleaseDate() {
@@ -944,7 +841,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Target Public Release Date
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanTargetPublicReleaseDate")
     public void setAlternativeDataSharingPlanTargetPublicReleaseDate(String alternativeDataSharingPlanTargetPublicReleaseDate) {
@@ -953,26 +849,23 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Does the data need to be managed under Controlled or Open Access?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
-    public DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess getAlternativeDataSharingPlanControlledOpenAccess() {
+    public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess getAlternativeDataSharingPlanControlledOpenAccess() {
         return alternativeDataSharingPlanControlledOpenAccess;
     }
 
     /**
      * Does the data need to be managed under Controlled or Open Access?
-     * 
      */
     @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
-    public void setAlternativeDataSharingPlanControlledOpenAccess(DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess) {
+    public void setAlternativeDataSharingPlanControlledOpenAccess(DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess) {
         this.alternativeDataSharingPlanControlledOpenAccess = alternativeDataSharingPlanControlledOpenAccess;
     }
 
     /**
      * Consent Groups
      * (Required)
-     * 
      */
     @JsonProperty("consentGroups")
     public List<ConsentGroup> getConsentGroups() {
@@ -982,7 +875,6 @@ public class DatasetRegistrationSchemaV1 {
     /**
      * Consent Groups
      * (Required)
-     * 
      */
     @JsonProperty("consentGroups")
     public void setConsentGroups(List<ConsentGroup> consentGroups) {
@@ -992,153 +884,153 @@ public class DatasetRegistrationSchemaV1 {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(DatasetRegistrationSchemaV1 .class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
+        sb.append(DatasetRegistrationSchemaV1.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
         sb.append("studyName");
         sb.append('=');
-        sb.append(((this.studyName == null)?"<null>":this.studyName));
+        sb.append(((this.studyName == null) ? "<null>" : this.studyName));
         sb.append(',');
         sb.append("studyType");
         sb.append('=');
-        sb.append(((this.studyType == null)?"<null>":this.studyType));
+        sb.append(((this.studyType == null) ? "<null>" : this.studyType));
         sb.append(',');
         sb.append("studyDescription");
         sb.append('=');
-        sb.append(((this.studyDescription == null)?"<null>":this.studyDescription));
+        sb.append(((this.studyDescription == null) ? "<null>" : this.studyDescription));
         sb.append(',');
         sb.append("dataTypes");
         sb.append('=');
-        sb.append(((this.dataTypes == null)?"<null>":this.dataTypes));
+        sb.append(((this.dataTypes == null) ? "<null>" : this.dataTypes));
         sb.append(',');
         sb.append("phenotypeIndication");
         sb.append('=');
-        sb.append(((this.phenotypeIndication == null)?"<null>":this.phenotypeIndication));
+        sb.append(((this.phenotypeIndication == null) ? "<null>" : this.phenotypeIndication));
         sb.append(',');
         sb.append("species");
         sb.append('=');
-        sb.append(((this.species == null)?"<null>":this.species));
+        sb.append(((this.species == null) ? "<null>" : this.species));
         sb.append(',');
         sb.append("piName");
         sb.append('=');
-        sb.append(((this.piName == null)?"<null>":this.piName));
+        sb.append(((this.piName == null) ? "<null>" : this.piName));
         sb.append(',');
         sb.append("dataSubmitterUserId");
         sb.append('=');
-        sb.append(((this.dataSubmitterUserId == null)?"<null>":this.dataSubmitterUserId));
+        sb.append(((this.dataSubmitterUserId == null) ? "<null>" : this.dataSubmitterUserId));
         sb.append(',');
         sb.append("dataCustodianEmail");
         sb.append('=');
-        sb.append(((this.dataCustodianEmail == null)?"<null>":this.dataCustodianEmail));
+        sb.append(((this.dataCustodianEmail == null) ? "<null>" : this.dataCustodianEmail));
         sb.append(',');
         sb.append("publicVisibility");
         sb.append('=');
-        sb.append(((this.publicVisibility == null)?"<null>":this.publicVisibility));
+        sb.append(((this.publicVisibility == null) ? "<null>" : this.publicVisibility));
         sb.append(',');
         sb.append("nihAnvilUse");
         sb.append('=');
-        sb.append(((this.nihAnvilUse == null)?"<null>":this.nihAnvilUse));
+        sb.append(((this.nihAnvilUse == null) ? "<null>" : this.nihAnvilUse));
         sb.append(',');
         sb.append("submittingToAnvil");
         sb.append('=');
-        sb.append(((this.submittingToAnvil == null)?"<null>":this.submittingToAnvil));
+        sb.append(((this.submittingToAnvil == null) ? "<null>" : this.submittingToAnvil));
         sb.append(',');
         sb.append("dbGaPPhsID");
         sb.append('=');
-        sb.append(((this.dbGaPPhsID == null)?"<null>":this.dbGaPPhsID));
+        sb.append(((this.dbGaPPhsID == null) ? "<null>" : this.dbGaPPhsID));
         sb.append(',');
         sb.append("dbGaPStudyRegistrationName");
         sb.append('=');
-        sb.append(((this.dbGaPStudyRegistrationName == null)?"<null>":this.dbGaPStudyRegistrationName));
+        sb.append(((this.dbGaPStudyRegistrationName == null) ? "<null>" : this.dbGaPStudyRegistrationName));
         sb.append(',');
         sb.append("embargoReleaseDate");
         sb.append('=');
-        sb.append(((this.embargoReleaseDate == null)?"<null>":this.embargoReleaseDate));
+        sb.append(((this.embargoReleaseDate == null) ? "<null>" : this.embargoReleaseDate));
         sb.append(',');
         sb.append("sequencingCenter");
         sb.append('=');
-        sb.append(((this.sequencingCenter == null)?"<null>":this.sequencingCenter));
+        sb.append(((this.sequencingCenter == null) ? "<null>" : this.sequencingCenter));
         sb.append(',');
         sb.append("piInstitution");
         sb.append('=');
-        sb.append(((this.piInstitution == null)?"<null>":this.piInstitution));
+        sb.append(((this.piInstitution == null) ? "<null>" : this.piInstitution));
         sb.append(',');
         sb.append("nihGrantContractNumber");
         sb.append('=');
-        sb.append(((this.nihGrantContractNumber == null)?"<null>":this.nihGrantContractNumber));
+        sb.append(((this.nihGrantContractNumber == null) ? "<null>" : this.nihGrantContractNumber));
         sb.append(',');
         sb.append("nihICsSupportingStudy");
         sb.append('=');
-        sb.append(((this.nihICsSupportingStudy == null)?"<null>":this.nihICsSupportingStudy));
+        sb.append(((this.nihICsSupportingStudy == null) ? "<null>" : this.nihICsSupportingStudy));
         sb.append(',');
         sb.append("nihProgramOfficerName");
         sb.append('=');
-        sb.append(((this.nihProgramOfficerName == null)?"<null>":this.nihProgramOfficerName));
+        sb.append(((this.nihProgramOfficerName == null) ? "<null>" : this.nihProgramOfficerName));
         sb.append(',');
         sb.append("nihInstitutionCenterSubmission");
         sb.append('=');
-        sb.append(((this.nihInstitutionCenterSubmission == null)?"<null>":this.nihInstitutionCenterSubmission));
+        sb.append(((this.nihInstitutionCenterSubmission == null) ? "<null>" : this.nihInstitutionCenterSubmission));
         sb.append(',');
         sb.append("nihGenomicProgramAdministratorName");
         sb.append('=');
-        sb.append(((this.nihGenomicProgramAdministratorName == null)?"<null>":this.nihGenomicProgramAdministratorName));
+        sb.append(((this.nihGenomicProgramAdministratorName == null) ? "<null>" : this.nihGenomicProgramAdministratorName));
         sb.append(',');
         sb.append("multiCenterStudy");
         sb.append('=');
-        sb.append(((this.multiCenterStudy == null)?"<null>":this.multiCenterStudy));
+        sb.append(((this.multiCenterStudy == null) ? "<null>" : this.multiCenterStudy));
         sb.append(',');
         sb.append("collaboratingSites");
         sb.append('=');
-        sb.append(((this.collaboratingSites == null)?"<null>":this.collaboratingSites));
+        sb.append(((this.collaboratingSites == null) ? "<null>" : this.collaboratingSites));
         sb.append(',');
         sb.append("controlledAccessRequiredForGenomicSummaryResultsGSR");
         sb.append('=');
-        sb.append(((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null)?"<null>":this.controlledAccessRequiredForGenomicSummaryResultsGSR));
+        sb.append(((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null) ? "<null>" : this.controlledAccessRequiredForGenomicSummaryResultsGSR));
         sb.append(',');
         sb.append("controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
         sb.append('=');
-        sb.append(((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == null)?"<null>":this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation));
+        sb.append(((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == null) ? "<null>" : this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation));
         sb.append(',');
         sb.append("alternativeDataSharingPlan");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlan == null)?"<null>":this.alternativeDataSharingPlan));
+        sb.append(((this.alternativeDataSharingPlan == null) ? "<null>" : this.alternativeDataSharingPlan));
         sb.append(',');
         sb.append("alternativeDataSharingPlanReasons");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanReasons == null)?"<null>":this.alternativeDataSharingPlanReasons));
+        sb.append(((this.alternativeDataSharingPlanReasons == null) ? "<null>" : this.alternativeDataSharingPlanReasons));
         sb.append(',');
         sb.append("alternativeDataSharingPlanExplanation");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanExplanation == null)?"<null>":this.alternativeDataSharingPlanExplanation));
+        sb.append(((this.alternativeDataSharingPlanExplanation == null) ? "<null>" : this.alternativeDataSharingPlanExplanation));
         sb.append(',');
         sb.append("alternativeDataSharingPlanFileName");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanFileName == null)?"<null>":this.alternativeDataSharingPlanFileName));
+        sb.append(((this.alternativeDataSharingPlanFileName == null) ? "<null>" : this.alternativeDataSharingPlanFileName));
         sb.append(',');
         sb.append("alternativeDataSharingPlanDataSubmitted");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanDataSubmitted == null)?"<null>":this.alternativeDataSharingPlanDataSubmitted));
+        sb.append(((this.alternativeDataSharingPlanDataSubmitted == null) ? "<null>" : this.alternativeDataSharingPlanDataSubmitted));
         sb.append(',');
         sb.append("alternativeDataSharingPlanDataReleased");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanDataReleased == null)?"<null>":this.alternativeDataSharingPlanDataReleased));
+        sb.append(((this.alternativeDataSharingPlanDataReleased == null) ? "<null>" : this.alternativeDataSharingPlanDataReleased));
         sb.append(',');
         sb.append("alternativeDataSharingPlanTargetDeliveryDate");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanTargetDeliveryDate == null)?"<null>":this.alternativeDataSharingPlanTargetDeliveryDate));
+        sb.append(((this.alternativeDataSharingPlanTargetDeliveryDate == null) ? "<null>" : this.alternativeDataSharingPlanTargetDeliveryDate));
         sb.append(',');
         sb.append("alternativeDataSharingPlanTargetPublicReleaseDate");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanTargetPublicReleaseDate == null)?"<null>":this.alternativeDataSharingPlanTargetPublicReleaseDate));
+        sb.append(((this.alternativeDataSharingPlanTargetPublicReleaseDate == null) ? "<null>" : this.alternativeDataSharingPlanTargetPublicReleaseDate));
         sb.append(',');
         sb.append("alternativeDataSharingPlanControlledOpenAccess");
         sb.append('=');
-        sb.append(((this.alternativeDataSharingPlanControlledOpenAccess == null)?"<null>":this.alternativeDataSharingPlanControlledOpenAccess));
+        sb.append(((this.alternativeDataSharingPlanControlledOpenAccess == null) ? "<null>" : this.alternativeDataSharingPlanControlledOpenAccess));
         sb.append(',');
         sb.append("consentGroups");
         sb.append('=');
-        sb.append(((this.consentGroups == null)?"<null>":this.consentGroups));
+        sb.append(((this.consentGroups == null) ? "<null>" : this.consentGroups));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -1148,42 +1040,42 @@ public class DatasetRegistrationSchemaV1 {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.nihGenomicProgramAdministratorName == null)? 0 :this.nihGenomicProgramAdministratorName.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanFileName == null)? 0 :this.alternativeDataSharingPlanFileName.hashCode()));
-        result = ((result* 31)+((this.studyName == null)? 0 :this.studyName.hashCode()));
-        result = ((result* 31)+((this.dataSubmitterUserId == null)? 0 :this.dataSubmitterUserId.hashCode()));
-        result = ((result* 31)+((this.publicVisibility == null)? 0 :this.publicVisibility.hashCode()));
-        result = ((result* 31)+((this.dataCustodianEmail == null)? 0 :this.dataCustodianEmail.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanDataSubmitted == null)? 0 :this.alternativeDataSharingPlanDataSubmitted.hashCode()));
-        result = ((result* 31)+((this.submittingToAnvil == null)? 0 :this.submittingToAnvil.hashCode()));
-        result = ((result* 31)+((this.dbGaPStudyRegistrationName == null)? 0 :this.dbGaPStudyRegistrationName.hashCode()));
-        result = ((result* 31)+((this.collaboratingSites == null)? 0 :this.collaboratingSites.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanTargetDeliveryDate == null)? 0 :this.alternativeDataSharingPlanTargetDeliveryDate.hashCode()));
-        result = ((result* 31)+((this.nihProgramOfficerName == null)? 0 :this.nihProgramOfficerName.hashCode()));
-        result = ((result* 31)+((this.dataTypes == null)? 0 :this.dataTypes.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanTargetPublicReleaseDate == null)? 0 :this.alternativeDataSharingPlanTargetPublicReleaseDate.hashCode()));
-        result = ((result* 31)+((this.nihGrantContractNumber == null)? 0 :this.nihGrantContractNumber.hashCode()));
-        result = ((result* 31)+((this.studyType == null)? 0 :this.studyType.hashCode()));
-        result = ((result* 31)+((this.phenotypeIndication == null)? 0 :this.phenotypeIndication.hashCode()));
-        result = ((result* 31)+((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == null)? 0 :this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanControlledOpenAccess == null)? 0 :this.alternativeDataSharingPlanControlledOpenAccess.hashCode()));
-        result = ((result* 31)+((this.sequencingCenter == null)? 0 :this.sequencingCenter.hashCode()));
-        result = ((result* 31)+((this.multiCenterStudy == null)? 0 :this.multiCenterStudy.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanDataReleased == null)? 0 :this.alternativeDataSharingPlanDataReleased.hashCode()));
-        result = ((result* 31)+((this.consentGroups == null)? 0 :this.consentGroups.hashCode()));
-        result = ((result* 31)+((this.studyDescription == null)? 0 :this.studyDescription.hashCode()));
-        result = ((result* 31)+((this.nihAnvilUse == null)? 0 :this.nihAnvilUse.hashCode()));
-        result = ((result* 31)+((this.nihICsSupportingStudy == null)? 0 :this.nihICsSupportingStudy.hashCode()));
-        result = ((result* 31)+((this.piName == null)? 0 :this.piName.hashCode()));
-        result = ((result* 31)+((this.dbGaPPhsID == null)? 0 :this.dbGaPPhsID.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlan == null)? 0 :this.alternativeDataSharingPlan.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanReasons == null)? 0 :this.alternativeDataSharingPlanReasons.hashCode()));
-        result = ((result* 31)+((this.species == null)? 0 :this.species.hashCode()));
-        result = ((result* 31)+((this.embargoReleaseDate == null)? 0 :this.embargoReleaseDate.hashCode()));
-        result = ((result* 31)+((this.alternativeDataSharingPlanExplanation == null)? 0 :this.alternativeDataSharingPlanExplanation.hashCode()));
-        result = ((result* 31)+((this.nihInstitutionCenterSubmission == null)? 0 :this.nihInstitutionCenterSubmission.hashCode()));
-        result = ((result* 31)+((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null)? 0 :this.controlledAccessRequiredForGenomicSummaryResultsGSR.hashCode()));
-        result = ((result* 31)+((this.piInstitution == null)? 0 :this.piInstitution.hashCode()));
+        result = ((result * 31) + ((this.nihGenomicProgramAdministratorName == null) ? 0 : this.nihGenomicProgramAdministratorName.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanFileName == null) ? 0 : this.alternativeDataSharingPlanFileName.hashCode()));
+        result = ((result * 31) + ((this.studyName == null) ? 0 : this.studyName.hashCode()));
+        result = ((result * 31) + ((this.dataSubmitterUserId == null) ? 0 : this.dataSubmitterUserId.hashCode()));
+        result = ((result * 31) + ((this.publicVisibility == null) ? 0 : this.publicVisibility.hashCode()));
+        result = ((result * 31) + ((this.dataCustodianEmail == null) ? 0 : this.dataCustodianEmail.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanDataSubmitted == null) ? 0 : this.alternativeDataSharingPlanDataSubmitted.hashCode()));
+        result = ((result * 31) + ((this.submittingToAnvil == null) ? 0 : this.submittingToAnvil.hashCode()));
+        result = ((result * 31) + ((this.dbGaPStudyRegistrationName == null) ? 0 : this.dbGaPStudyRegistrationName.hashCode()));
+        result = ((result * 31) + ((this.collaboratingSites == null) ? 0 : this.collaboratingSites.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanTargetDeliveryDate == null) ? 0 : this.alternativeDataSharingPlanTargetDeliveryDate.hashCode()));
+        result = ((result * 31) + ((this.nihProgramOfficerName == null) ? 0 : this.nihProgramOfficerName.hashCode()));
+        result = ((result * 31) + ((this.dataTypes == null) ? 0 : this.dataTypes.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanTargetPublicReleaseDate == null) ? 0 : this.alternativeDataSharingPlanTargetPublicReleaseDate.hashCode()));
+        result = ((result * 31) + ((this.nihGrantContractNumber == null) ? 0 : this.nihGrantContractNumber.hashCode()));
+        result = ((result * 31) + ((this.studyType == null) ? 0 : this.studyType.hashCode()));
+        result = ((result * 31) + ((this.phenotypeIndication == null) ? 0 : this.phenotypeIndication.hashCode()));
+        result = ((result * 31) + ((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == null) ? 0 : this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanControlledOpenAccess == null) ? 0 : this.alternativeDataSharingPlanControlledOpenAccess.hashCode()));
+        result = ((result * 31) + ((this.sequencingCenter == null) ? 0 : this.sequencingCenter.hashCode()));
+        result = ((result * 31) + ((this.multiCenterStudy == null) ? 0 : this.multiCenterStudy.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanDataReleased == null) ? 0 : this.alternativeDataSharingPlanDataReleased.hashCode()));
+        result = ((result * 31) + ((this.consentGroups == null) ? 0 : this.consentGroups.hashCode()));
+        result = ((result * 31) + ((this.studyDescription == null) ? 0 : this.studyDescription.hashCode()));
+        result = ((result * 31) + ((this.nihAnvilUse == null) ? 0 : this.nihAnvilUse.hashCode()));
+        result = ((result * 31) + ((this.nihICsSupportingStudy == null) ? 0 : this.nihICsSupportingStudy.hashCode()));
+        result = ((result * 31) + ((this.piName == null) ? 0 : this.piName.hashCode()));
+        result = ((result * 31) + ((this.dbGaPPhsID == null) ? 0 : this.dbGaPPhsID.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlan == null) ? 0 : this.alternativeDataSharingPlan.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanReasons == null) ? 0 : this.alternativeDataSharingPlanReasons.hashCode()));
+        result = ((result * 31) + ((this.species == null) ? 0 : this.species.hashCode()));
+        result = ((result * 31) + ((this.embargoReleaseDate == null) ? 0 : this.embargoReleaseDate.hashCode()));
+        result = ((result * 31) + ((this.alternativeDataSharingPlanExplanation == null) ? 0 : this.alternativeDataSharingPlanExplanation.hashCode()));
+        result = ((result * 31) + ((this.nihInstitutionCenterSubmission == null) ? 0 : this.nihInstitutionCenterSubmission.hashCode()));
+        result = ((result * 31) + ((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null) ? 0 : this.controlledAccessRequiredForGenomicSummaryResultsGSR.hashCode()));
+        result = ((result * 31) + ((this.piInstitution == null) ? 0 : this.piInstitution.hashCode()));
         return result;
     }
 
@@ -1197,23 +1089,22 @@ public class DatasetRegistrationSchemaV1 {
         }
         DatasetRegistrationSchemaV1 rhs = ((DatasetRegistrationSchemaV1) other);
         // nosemgrep
-        return (((((((((((((((((((((((((((((((((((((this.nihGenomicProgramAdministratorName == rhs.nihGenomicProgramAdministratorName)||((this.nihGenomicProgramAdministratorName!= null)&&this.nihGenomicProgramAdministratorName.equals(rhs.nihGenomicProgramAdministratorName)))&&((this.alternativeDataSharingPlanFileName == rhs.alternativeDataSharingPlanFileName)||((this.alternativeDataSharingPlanFileName!= null)&&this.alternativeDataSharingPlanFileName.equals(rhs.alternativeDataSharingPlanFileName))))&&((this.studyName == rhs.studyName)||((this.studyName!= null)&&this.studyName.equals(rhs.studyName))))&&((this.dataSubmitterUserId == rhs.dataSubmitterUserId)||((this.dataSubmitterUserId!= null)&&this.dataSubmitterUserId.equals(rhs.dataSubmitterUserId))))&&((this.publicVisibility == rhs.publicVisibility)||((this.publicVisibility!= null)&&this.publicVisibility.equals(rhs.publicVisibility))))&&((this.dataCustodianEmail == rhs.dataCustodianEmail)||((this.dataCustodianEmail!= null)&&this.dataCustodianEmail.equals(rhs.dataCustodianEmail))))&&((this.alternativeDataSharingPlanDataSubmitted == rhs.alternativeDataSharingPlanDataSubmitted)||((this.alternativeDataSharingPlanDataSubmitted!= null)&&this.alternativeDataSharingPlanDataSubmitted.equals(rhs.alternativeDataSharingPlanDataSubmitted))))&&((this.submittingToAnvil == rhs.submittingToAnvil)||((this.submittingToAnvil!= null)&&this.submittingToAnvil.equals(rhs.submittingToAnvil))))&&((this.dbGaPStudyRegistrationName == rhs.dbGaPStudyRegistrationName)||((this.dbGaPStudyRegistrationName!= null)&&this.dbGaPStudyRegistrationName.equals(rhs.dbGaPStudyRegistrationName))))&&((this.collaboratingSites == rhs.collaboratingSites)||((this.collaboratingSites!= null)&&this.collaboratingSites.equals(rhs.collaboratingSites))))&&((this.alternativeDataSharingPlanTargetDeliveryDate == rhs.alternativeDataSharingPlanTargetDeliveryDate)||((this.alternativeDataSharingPlanTargetDeliveryDate!= null)&&this.alternativeDataSharingPlanTargetDeliveryDate.equals(rhs.alternativeDataSharingPlanTargetDeliveryDate))))&&((this.nihProgramOfficerName == rhs.nihProgramOfficerName)||((this.nihProgramOfficerName!= null)&&this.nihProgramOfficerName.equals(rhs.nihProgramOfficerName))))&&((this.dataTypes == rhs.dataTypes)||((this.dataTypes!= null)&&this.dataTypes.equals(rhs.dataTypes))))&&((this.alternativeDataSharingPlanTargetPublicReleaseDate == rhs.alternativeDataSharingPlanTargetPublicReleaseDate)||((this.alternativeDataSharingPlanTargetPublicReleaseDate!= null)&&this.alternativeDataSharingPlanTargetPublicReleaseDate.equals(rhs.alternativeDataSharingPlanTargetPublicReleaseDate))))&&((this.nihGrantContractNumber == rhs.nihGrantContractNumber)||((this.nihGrantContractNumber!= null)&&this.nihGrantContractNumber.equals(rhs.nihGrantContractNumber))))&&((this.studyType == rhs.studyType)||((this.studyType!= null)&&this.studyType.equals(rhs.studyType))))&&((this.phenotypeIndication == rhs.phenotypeIndication)||((this.phenotypeIndication!= null)&&this.phenotypeIndication.equals(rhs.phenotypeIndication))))&&((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == rhs.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation)||((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation!= null)&&this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.equals(rhs.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation))))&&((this.alternativeDataSharingPlanControlledOpenAccess == rhs.alternativeDataSharingPlanControlledOpenAccess)||((this.alternativeDataSharingPlanControlledOpenAccess!= null)&&this.alternativeDataSharingPlanControlledOpenAccess.equals(rhs.alternativeDataSharingPlanControlledOpenAccess))))&&((this.sequencingCenter == rhs.sequencingCenter)||((this.sequencingCenter!= null)&&this.sequencingCenter.equals(rhs.sequencingCenter))))&&((this.multiCenterStudy == rhs.multiCenterStudy)||((this.multiCenterStudy!= null)&&this.multiCenterStudy.equals(rhs.multiCenterStudy))))&&((this.alternativeDataSharingPlanDataReleased == rhs.alternativeDataSharingPlanDataReleased)||((this.alternativeDataSharingPlanDataReleased!= null)&&this.alternativeDataSharingPlanDataReleased.equals(rhs.alternativeDataSharingPlanDataReleased))))&&((this.consentGroups == rhs.consentGroups)||((this.consentGroups!= null)&&this.consentGroups.equals(rhs.consentGroups))))&&((this.studyDescription == rhs.studyDescription)||((this.studyDescription!= null)&&this.studyDescription.equals(rhs.studyDescription))))&&((this.nihAnvilUse == rhs.nihAnvilUse)||((this.nihAnvilUse!= null)&&this.nihAnvilUse.equals(rhs.nihAnvilUse))))&&((this.nihICsSupportingStudy == rhs.nihICsSupportingStudy)||((this.nihICsSupportingStudy!= null)&&this.nihICsSupportingStudy.equals(rhs.nihICsSupportingStudy))))&&((this.piName == rhs.piName)||((this.piName!= null)&&this.piName.equals(rhs.piName))))&&((this.dbGaPPhsID == rhs.dbGaPPhsID)||((this.dbGaPPhsID!= null)&&this.dbGaPPhsID.equals(rhs.dbGaPPhsID))))&&((this.alternativeDataSharingPlan == rhs.alternativeDataSharingPlan)||((this.alternativeDataSharingPlan!= null)&&this.alternativeDataSharingPlan.equals(rhs.alternativeDataSharingPlan))))&&((this.alternativeDataSharingPlanReasons == rhs.alternativeDataSharingPlanReasons)||((this.alternativeDataSharingPlanReasons!= null)&&this.alternativeDataSharingPlanReasons.equals(rhs.alternativeDataSharingPlanReasons))))&&((this.species == rhs.species)||((this.species!= null)&&this.species.equals(rhs.species))))&&((this.embargoReleaseDate == rhs.embargoReleaseDate)||((this.embargoReleaseDate!= null)&&this.embargoReleaseDate.equals(rhs.embargoReleaseDate))))&&((this.alternativeDataSharingPlanExplanation == rhs.alternativeDataSharingPlanExplanation)||((this.alternativeDataSharingPlanExplanation!= null)&&this.alternativeDataSharingPlanExplanation.equals(rhs.alternativeDataSharingPlanExplanation))))&&((this.nihInstitutionCenterSubmission == rhs.nihInstitutionCenterSubmission)||((this.nihInstitutionCenterSubmission!= null)&&this.nihInstitutionCenterSubmission.equals(rhs.nihInstitutionCenterSubmission))))&&((this.controlledAccessRequiredForGenomicSummaryResultsGSR == rhs.controlledAccessRequiredForGenomicSummaryResultsGSR)||((this.controlledAccessRequiredForGenomicSummaryResultsGSR!= null)&&this.controlledAccessRequiredForGenomicSummaryResultsGSR.equals(rhs.controlledAccessRequiredForGenomicSummaryResultsGSR))))&&((this.piInstitution == rhs.piInstitution)||((this.piInstitution!= null)&&this.piInstitution.equals(rhs.piInstitution))));
+        return (((((((((((((((((((((((((((((((((((((this.nihGenomicProgramAdministratorName == rhs.nihGenomicProgramAdministratorName) || ((this.nihGenomicProgramAdministratorName != null) && this.nihGenomicProgramAdministratorName.equals(rhs.nihGenomicProgramAdministratorName))) && ((this.alternativeDataSharingPlanFileName == rhs.alternativeDataSharingPlanFileName) || ((this.alternativeDataSharingPlanFileName != null) && this.alternativeDataSharingPlanFileName.equals(rhs.alternativeDataSharingPlanFileName)))) && ((this.studyName == rhs.studyName) || ((this.studyName != null) && this.studyName.equals(rhs.studyName)))) && ((this.dataSubmitterUserId == rhs.dataSubmitterUserId) || ((this.dataSubmitterUserId != null) && this.dataSubmitterUserId.equals(rhs.dataSubmitterUserId)))) && ((this.publicVisibility == rhs.publicVisibility) || ((this.publicVisibility != null) && this.publicVisibility.equals(rhs.publicVisibility)))) && ((this.dataCustodianEmail == rhs.dataCustodianEmail) || ((this.dataCustodianEmail != null) && this.dataCustodianEmail.equals(rhs.dataCustodianEmail)))) && ((this.alternativeDataSharingPlanDataSubmitted == rhs.alternativeDataSharingPlanDataSubmitted) || ((this.alternativeDataSharingPlanDataSubmitted != null) && this.alternativeDataSharingPlanDataSubmitted.equals(rhs.alternativeDataSharingPlanDataSubmitted)))) && ((this.submittingToAnvil == rhs.submittingToAnvil) || ((this.submittingToAnvil != null) && this.submittingToAnvil.equals(rhs.submittingToAnvil)))) && ((this.dbGaPStudyRegistrationName == rhs.dbGaPStudyRegistrationName) || ((this.dbGaPStudyRegistrationName != null) && this.dbGaPStudyRegistrationName.equals(rhs.dbGaPStudyRegistrationName)))) && ((this.collaboratingSites == rhs.collaboratingSites) || ((this.collaboratingSites != null) && this.collaboratingSites.equals(rhs.collaboratingSites)))) && ((this.alternativeDataSharingPlanTargetDeliveryDate == rhs.alternativeDataSharingPlanTargetDeliveryDate) || ((this.alternativeDataSharingPlanTargetDeliveryDate != null) && this.alternativeDataSharingPlanTargetDeliveryDate.equals(rhs.alternativeDataSharingPlanTargetDeliveryDate)))) && ((this.nihProgramOfficerName == rhs.nihProgramOfficerName) || ((this.nihProgramOfficerName != null) && this.nihProgramOfficerName.equals(rhs.nihProgramOfficerName)))) && ((this.dataTypes == rhs.dataTypes) || ((this.dataTypes != null) && this.dataTypes.equals(rhs.dataTypes)))) && ((this.alternativeDataSharingPlanTargetPublicReleaseDate == rhs.alternativeDataSharingPlanTargetPublicReleaseDate) || ((this.alternativeDataSharingPlanTargetPublicReleaseDate != null) && this.alternativeDataSharingPlanTargetPublicReleaseDate.equals(rhs.alternativeDataSharingPlanTargetPublicReleaseDate)))) && ((this.nihGrantContractNumber == rhs.nihGrantContractNumber) || ((this.nihGrantContractNumber != null) && this.nihGrantContractNumber.equals(rhs.nihGrantContractNumber)))) && ((this.studyType == rhs.studyType) || ((this.studyType != null) && this.studyType.equals(rhs.studyType)))) && ((this.phenotypeIndication == rhs.phenotypeIndication) || ((this.phenotypeIndication != null) && this.phenotypeIndication.equals(rhs.phenotypeIndication)))) && ((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == rhs.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation) || ((this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation != null) && this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.equals(rhs.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation)))) && ((this.alternativeDataSharingPlanControlledOpenAccess == rhs.alternativeDataSharingPlanControlledOpenAccess) || ((this.alternativeDataSharingPlanControlledOpenAccess != null) && this.alternativeDataSharingPlanControlledOpenAccess.equals(rhs.alternativeDataSharingPlanControlledOpenAccess)))) && ((this.sequencingCenter == rhs.sequencingCenter) || ((this.sequencingCenter != null) && this.sequencingCenter.equals(rhs.sequencingCenter)))) && ((this.multiCenterStudy == rhs.multiCenterStudy) || ((this.multiCenterStudy != null) && this.multiCenterStudy.equals(rhs.multiCenterStudy)))) && ((this.alternativeDataSharingPlanDataReleased == rhs.alternativeDataSharingPlanDataReleased) || ((this.alternativeDataSharingPlanDataReleased != null) && this.alternativeDataSharingPlanDataReleased.equals(rhs.alternativeDataSharingPlanDataReleased)))) && ((this.consentGroups == rhs.consentGroups) || ((this.consentGroups != null) && this.consentGroups.equals(rhs.consentGroups)))) && ((this.studyDescription == rhs.studyDescription) || ((this.studyDescription != null) && this.studyDescription.equals(rhs.studyDescription)))) && ((this.nihAnvilUse == rhs.nihAnvilUse) || ((this.nihAnvilUse != null) && this.nihAnvilUse.equals(rhs.nihAnvilUse)))) && ((this.nihICsSupportingStudy == rhs.nihICsSupportingStudy) || ((this.nihICsSupportingStudy != null) && this.nihICsSupportingStudy.equals(rhs.nihICsSupportingStudy)))) && ((this.piName == rhs.piName) || ((this.piName != null) && this.piName.equals(rhs.piName)))) && ((this.dbGaPPhsID == rhs.dbGaPPhsID) || ((this.dbGaPPhsID != null) && this.dbGaPPhsID.equals(rhs.dbGaPPhsID)))) && ((this.alternativeDataSharingPlan == rhs.alternativeDataSharingPlan) || ((this.alternativeDataSharingPlan != null) && this.alternativeDataSharingPlan.equals(rhs.alternativeDataSharingPlan)))) && ((this.alternativeDataSharingPlanReasons == rhs.alternativeDataSharingPlanReasons) || ((this.alternativeDataSharingPlanReasons != null) && this.alternativeDataSharingPlanReasons.equals(rhs.alternativeDataSharingPlanReasons)))) && ((this.species == rhs.species) || ((this.species != null) && this.species.equals(rhs.species)))) && ((this.embargoReleaseDate == rhs.embargoReleaseDate) || ((this.embargoReleaseDate != null) && this.embargoReleaseDate.equals(rhs.embargoReleaseDate)))) && ((this.alternativeDataSharingPlanExplanation == rhs.alternativeDataSharingPlanExplanation) || ((this.alternativeDataSharingPlanExplanation != null) && this.alternativeDataSharingPlanExplanation.equals(rhs.alternativeDataSharingPlanExplanation)))) && ((this.nihInstitutionCenterSubmission == rhs.nihInstitutionCenterSubmission) || ((this.nihInstitutionCenterSubmission != null) && this.nihInstitutionCenterSubmission.equals(rhs.nihInstitutionCenterSubmission)))) && ((this.controlledAccessRequiredForGenomicSummaryResultsGSR == rhs.controlledAccessRequiredForGenomicSummaryResultsGSR) || ((this.controlledAccessRequiredForGenomicSummaryResultsGSR != null) && this.controlledAccessRequiredForGenomicSummaryResultsGSR.equals(rhs.controlledAccessRequiredForGenomicSummaryResultsGSR)))) && ((this.piInstitution == rhs.piInstitution) || ((this.piInstitution != null) && this.piInstitution.equals(rhs.piInstitution))));
     }
 
 
     /**
      * Does the data need to be managed under Controlled or Open Access?
-     * 
      */
     public enum AlternativeDataSharingPlanControlledOpenAccess {
 
         CONTROLLED_ACCESS("Controlled Access"),
         OPEN_ACCESS("Open Access");
         private final String value;
-        private final static Map<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess>();
+        private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess>();
 
         static {
-            for (DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess c: values()) {
+            for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -1233,8 +1124,8 @@ public class DatasetRegistrationSchemaV1 {
         }
 
         @JsonCreator
-        public static DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess fromValue(String value) {
-            DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanControlledOpenAccess constant = CONSTANTS.get(value);
+        public static DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess fromValue(String value) {
+            DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {
@@ -1247,17 +1138,16 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * Upload your alternative sharing plan (file upload)
-     * 
      */
     public enum AlternativeDataSharingPlanDataSubmitted {
 
         WITHIN_3_MONTHS_OF_THE_LAST_DATA_GENERATED_OR_LAST_CLINICAL_VISIT("Within 3 months of the last data generated or last clinical visit"),
         BY_BATCHES_OVER_STUDY_TIMELINE_E_G_BASED_ON_CLINICAL_TRIAL_ENROLLMENT_BENCHMARKS("By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)");
         private final String value;
-        private final static Map<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted>();
+        private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted>();
 
         static {
-            for (DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted c: values()) {
+            for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -1277,8 +1167,8 @@ public class DatasetRegistrationSchemaV1 {
         }
 
         @JsonCreator
-        public static DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted fromValue(String value) {
-            DatasetRegistrationSchemaV1 .AlternativeDataSharingPlanDataSubmitted constant = CONSTANTS.get(value);
+        public static DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted fromValue(String value) {
+            DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {
@@ -1291,7 +1181,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Anvil Use
-     * 
      */
     public enum NihAnvilUse {
 
@@ -1300,10 +1189,10 @@ public class DatasetRegistrationSchemaV1 {
         I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL("I am not NHGRI funded but I am seeking to submit data to AnVIL"),
         I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL("I am not NHGRI funded and do not plan to store data in AnVIL");
         private final String value;
-        private final static Map<String, DatasetRegistrationSchemaV1 .NihAnvilUse> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .NihAnvilUse>();
+        private final static Map<String, DatasetRegistrationSchemaV1.NihAnvilUse> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihAnvilUse>();
 
         static {
-            for (DatasetRegistrationSchemaV1 .NihAnvilUse c: values()) {
+            for (DatasetRegistrationSchemaV1.NihAnvilUse c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -1323,8 +1212,8 @@ public class DatasetRegistrationSchemaV1 {
         }
 
         @JsonCreator
-        public static DatasetRegistrationSchemaV1 .NihAnvilUse fromValue(String value) {
-            DatasetRegistrationSchemaV1 .NihAnvilUse constant = CONSTANTS.get(value);
+        public static DatasetRegistrationSchemaV1.NihAnvilUse fromValue(String value) {
+            DatasetRegistrationSchemaV1.NihAnvilUse constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {
@@ -1337,7 +1226,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * NIH Institution/Center for Submission
-     * 
      */
     public enum NihInstitutionCenterSubmission {
 
@@ -1369,10 +1257,10 @@ public class DatasetRegistrationSchemaV1 {
         NCATS("NCATS"),
         NCCIH("NCCIH");
         private final String value;
-        private final static Map<String, DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission>();
+        private final static Map<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission>();
 
         static {
-            for (DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission c: values()) {
+            for (DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -1392,8 +1280,8 @@ public class DatasetRegistrationSchemaV1 {
         }
 
         @JsonCreator
-        public static DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission fromValue(String value) {
-            DatasetRegistrationSchemaV1 .NihInstitutionCenterSubmission constant = CONSTANTS.get(value);
+        public static DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission fromValue(String value) {
+            DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {
@@ -1406,7 +1294,6 @@ public class DatasetRegistrationSchemaV1 {
 
     /**
      * The study type
-     * 
      */
     public enum StudyType {
 
@@ -1421,10 +1308,10 @@ public class DatasetRegistrationSchemaV1 {
         CROSS_SECTIONAL("Cross-sectional"),
         COHORT_STUDY("Cohort study");
         private final String value;
-        private final static Map<String, DatasetRegistrationSchemaV1 .StudyType> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1 .StudyType>();
+        private final static Map<String, DatasetRegistrationSchemaV1.StudyType> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.StudyType>();
 
         static {
-            for (DatasetRegistrationSchemaV1 .StudyType c: values()) {
+            for (DatasetRegistrationSchemaV1.StudyType c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
@@ -1444,8 +1331,8 @@ public class DatasetRegistrationSchemaV1 {
         }
 
         @JsonCreator
-        public static DatasetRegistrationSchemaV1 .StudyType fromValue(String value) {
-            DatasetRegistrationSchemaV1 .StudyType constant = CONSTANTS.get(value);
+        public static DatasetRegistrationSchemaV1.StudyType fromValue(String value) {
+            DatasetRegistrationSchemaV1.StudyType constant = CONSTANTS.get(value);
             if (constant == null) {
                 throw new IllegalArgumentException(value);
             } else {

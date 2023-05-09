@@ -12,46 +12,46 @@ import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 
 public class OntologyHealthCheck extends HealthCheck implements Managed {
 
-  private final HttpClientUtil clientUtil;
-  private final ServicesConfiguration servicesConfiguration;
+    private final HttpClientUtil clientUtil;
+    private final ServicesConfiguration servicesConfiguration;
 
-  public OntologyHealthCheck(
-      HttpClientUtil clientUtil, ServicesConfiguration servicesConfiguration) {
-    this.clientUtil = clientUtil;
-    this.servicesConfiguration = servicesConfiguration;
-  }
-
-  @Override
-  public Result check() {
-    try {
-      String statusUrl = servicesConfiguration.getOntologyURL() + "status";
-      HttpGet httpGet = new HttpGet(statusUrl);
-      try {
-        SimpleResponse response = clientUtil.getCachedResponse(httpGet);
-        if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
-          String content = response.entity();
-          Object ontologyStatus = new Gson().fromJson(content, Object.class);
-          return Result.builder()
-              .withDetail(StatusResource.OK, true)
-              .withDetail(StatusResource.SYSTEMS, ontologyStatus)
-              .healthy()
-              .build();
-        } else {
-          return Result.unhealthy("Ontology status is unhealthy: " + response.code());
-        }
-      } catch (Exception e) {
-        return Result.unhealthy(e);
-      }
-    } catch (Exception e) {
-      return Result.unhealthy(e);
+    public OntologyHealthCheck(
+            HttpClientUtil clientUtil, ServicesConfiguration servicesConfiguration) {
+        this.clientUtil = clientUtil;
+        this.servicesConfiguration = servicesConfiguration;
     }
-  }
 
-  @Override
-  public void start() {
-  }
+    @Override
+    public Result check() {
+        try {
+            String statusUrl = servicesConfiguration.getOntologyURL() + "status";
+            HttpGet httpGet = new HttpGet(statusUrl);
+            try {
+                SimpleResponse response = clientUtil.getCachedResponse(httpGet);
+                if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
+                    String content = response.entity();
+                    Object ontologyStatus = new Gson().fromJson(content, Object.class);
+                    return Result.builder()
+                            .withDetail(StatusResource.OK, true)
+                            .withDetail(StatusResource.SYSTEMS, ontologyStatus)
+                            .healthy()
+                            .build();
+                } else {
+                    return Result.unhealthy("Ontology status is unhealthy: " + response.code());
+                }
+            } catch (Exception e) {
+                return Result.unhealthy(e);
+            }
+        } catch (Exception e) {
+            return Result.unhealthy(e);
+        }
+    }
 
-  @Override
-  public void stop() {
-  }
+    @Override
+    public void start() {
+    }
+
+    @Override
+    public void stop() {
+    }
 }

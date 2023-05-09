@@ -4,9 +4,8 @@ import com.google.cloud.storage.BlobId;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -58,8 +57,8 @@ public class DatasetRegistrationService {
      * There will be one dataset per ConsentGroup in the dataset.
      *
      * @param registration The DatasetRegistrationSchemaV1.yaml
-     * @param user The User creating these datasets
-     * @param files Map of files, where the key is the name of the field
+     * @param user         The User creating these datasets
+     * @param files        Map of files, where the key is the name of the field
      * @return List of created Datasets from the provided registration schema
      */
     public List<Dataset> createDatasetsFromRegistration(
@@ -92,8 +91,8 @@ public class DatasetRegistrationService {
 
         List<Integer> createdDatasetIds =
                 datasetServiceDAO.insertDatasetRegistration(
-                    studyInsert,
-                    datasetInserts);
+                        studyInsert,
+                        datasetInserts);
         return datasetDAO.findDatasetsByIdList(createdDatasetIds);
     }
 
@@ -133,10 +132,9 @@ public class DatasetRegistrationService {
         ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
         if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
-            && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
-                throw new NotFoundException("Could not find DAC");
+                && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+            throw new NotFoundException("Could not find DAC");
         }
-
 
 
         List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
@@ -180,9 +178,9 @@ public class DatasetRegistrationService {
     private static final String NIH_INSTITUTIONAL_CERTIFICATION_NAME = "consentGroups[%s].nihInstitutionalCertificationFile";
 
     private List<FileStorageObject> uploadFilesForDataset(Map<String, FormDataBodyPart> files,
-                                                         Map<String, BlobId> uploadedFileCache,
-                                                         Integer consentGroupIdx,
-                                                         User user) throws IOException {
+                                                          Map<String, BlobId> uploadedFileCache,
+                                                          Integer consentGroupIdx,
+                                                          User user) throws IOException {
         List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
 
         if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx))) {
@@ -240,10 +238,10 @@ public class DatasetRegistrationService {
     /**
      * Extracts an individual field as a dataset property.
      *
-     * @param name The human-readable name of the field
+     * @param name       The human-readable name of the field
      * @param schemaProp The schema property name (camelCase)
-     * @param type The type of the field, e.g. Boolean, String
-     * @param getField Lambda which gets the field's value
+     * @param type       The type of the field, e.g. Boolean, String
+     * @param getField   Lambda which gets the field's value
      */
     public record DatasetPropertyExtractor(
             String name,
@@ -253,7 +251,7 @@ public class DatasetRegistrationService {
              * Takes in: Dataset registration object and consent group
              * Produces: The value of the field, can be null if field not present.
              */
-            Function<ConsentGroup,Object> getField
+            Function<ConsentGroup, Object> getField
     ) {
 
         /**
@@ -277,7 +275,9 @@ public class DatasetRegistrationService {
             return Optional.of(datasetProperty);
 
         }
-    };
+    }
+
+    ;
 
     public record StudyPropertyExtractor(
             String key,
@@ -286,14 +286,14 @@ public class DatasetRegistrationService {
              * Takes in: Dataset registration object
              * Produces: The value of the field, can be null if field not present.
              */
-            Function<DatasetRegistrationSchemaV1,Object> getField
+            Function<DatasetRegistrationSchemaV1, Object> getField
     ) {
 
         /**
          * Converts a field on the given registration to a StudyProperty.
          *
          * @param registration The registration object to extract from
-=         * @return The study property, if the field has a value, otherwise Optional.empty()
+         *                     =         * @return The study property, if the field has a value, otherwise Optional.empty()
          */
         Optional<StudyProperty> extract(DatasetRegistrationSchemaV1 registration) {
             Object value = this.getField.apply(registration);
@@ -309,7 +309,9 @@ public class DatasetRegistrationService {
             return Optional.of(studyProperty);
 
         }
-    };
+    }
+
+    ;
 
 
     private static final List<StudyPropertyExtractor> DATASET_REGISTRATION_V1_STUDY_PROPERTY_EXTRACTORS = List.of(
@@ -358,7 +360,7 @@ public class DatasetRegistrationService {
                     "sequencingCenter", PropertyType.String,
                     DatasetRegistrationSchemaV1::getSequencingCenter),
             new StudyPropertyExtractor(
-                   "piInstitution", PropertyType.Number,
+                    "piInstitution", PropertyType.Number,
                     DatasetRegistrationSchemaV1::getPiInstitution),
             new StudyPropertyExtractor(
                     "nihGrantContractNumber", PropertyType.String,

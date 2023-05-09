@@ -253,7 +253,7 @@ public class Dataset {
             return Integer.parseInt(aliasAsString); // parse remaining as integer
         } catch (Exception e) {
             throw new IllegalArgumentException(
-                    "Could not parse identifier ("+identifier+"). Proper format: "+PREFIX+"XXXXXX");
+                    "Could not parse identifier (" + identifier + "). Proper format: " + PREFIX + "XXXXXX");
         }
     }
 

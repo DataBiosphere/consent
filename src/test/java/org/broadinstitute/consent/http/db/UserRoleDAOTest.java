@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
     @Test
     public void testFindRoleIdByName() {
-        List<String> roleNames =  userRoleDAO.
+        List<String> roleNames = userRoleDAO.
                 findRoles().
                 stream().
                 map(Role::getName).

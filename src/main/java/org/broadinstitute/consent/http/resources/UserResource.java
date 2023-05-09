@@ -8,16 +8,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.SupportRequestService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
+
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.BadRequestException;
@@ -35,22 +42,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Acknowledgement;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.sam.SamService;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("api/user")
 public class UserResource extends Resource {
@@ -91,8 +92,7 @@ public class UserResource extends Resource {
                 }
                 List<User> users = userService.getUsersAsRole(user, roleName);
                 return Response.ok().entity(users).build();
-            }
-            else {
+            } else {
                 throw new BadRequestException("Invalid role name: " + roleName);
             }
         } catch (Exception e) {
@@ -127,9 +127,9 @@ public class UserResource extends Resource {
             Set<DatasetDTO> datasets;
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Integer> dacIds = user.getRoles().stream()
-                .filter(r -> Objects.nonNull(r.getDacId()))
-                .map(UserRole::getDacId)
-                .collect(Collectors.toList());
+                    .filter(r -> Objects.nonNull(r.getDacId()))
+                    .map(UserRole::getDacId)
+                    .collect(Collectors.toList());
             datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
             return Response.ok().entity(datasets).build();
         } catch (Exception e) {
@@ -145,9 +145,9 @@ public class UserResource extends Resource {
         try {
             User user = userService.findUserByEmail(authUser.getEmail());
             List<Integer> dacIds = user.getRoles().stream()
-                .map(UserRole::getDacId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                    .map(UserRole::getDacId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
             List<Dataset> datasets = dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
             if (datasets.isEmpty()) {
                 throw new NotFoundException("No datasets found for current user");
@@ -179,7 +179,7 @@ public class UserResource extends Resource {
         try {
             List<User> unassignedUsers = userService.findUsersWithNoInstitution();
             return Response.ok().entity(unassignedUsers).build();
-        } catch(Exception e) {
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }
@@ -189,7 +189,7 @@ public class UserResource extends Resource {
     @Produces("application/json")
     @RolesAllowed({ADMIN})
     public Response getUsersByInstitution(
-        @Auth AuthUser user, @PathParam("institutionId") Integer institutionId) {
+            @Auth AuthUser user, @PathParam("institutionId") Integer institutionId) {
         try {
             List<User> users = userService.findUsersByInstitutionId(institutionId);
             return Response.ok().entity(users).build();
@@ -461,7 +461,7 @@ public class UserResource extends Resource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Path ("/acknowledgements/{key}")
+    @Path("/acknowledgements/{key}")
     @RolesAllowed(ADMIN)
     public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
         try {
@@ -485,20 +485,21 @@ public class UserResource extends Resource {
     public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
         ArrayList<String> keys;
         try {
-            Type listOfStringsType = new TypeToken<ArrayList<String>>() {}.getType();
+            Type listOfStringsType = new TypeToken<ArrayList<String>>() {
+            }.getType();
             keys = gson.fromJson(json, listOfStringsType);
-            if (keys == null || keys.isEmpty()){
+            if (keys == null || keys.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        try{
+        try {
             User user = userService.findUserByEmail(authUser.getEmail());
             Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(keys, user);
             return Response.ok().entity(acknowledgementMap).build();
-        } catch (Exception e){
+        } catch (Exception e) {
             return createExceptionResponse(e);
         }
     }

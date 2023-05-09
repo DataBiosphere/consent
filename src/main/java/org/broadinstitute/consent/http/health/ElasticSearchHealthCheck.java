@@ -22,7 +22,8 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
     private final RestClient client;
 
     @Override
-    public void start() throws Exception { }
+    public void start() throws Exception {
+    }
 
     @Override
     public void stop() throws Exception {

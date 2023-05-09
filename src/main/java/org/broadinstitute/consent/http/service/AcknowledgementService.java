@@ -33,7 +33,7 @@ public class AcknowledgementService {
         return acknowledgementListToMap(acknowledgementList);
     }
 
-    private Map<String, Acknowledgement> acknowledgementListToMap(List<Acknowledgement> acknowledgements){
+    private Map<String, Acknowledgement> acknowledgementListToMap(List<Acknowledgement> acknowledgements) {
         return acknowledgements.stream().collect(Collectors.toMap(Acknowledgement::getAckKey, Function.identity()));
     }
 

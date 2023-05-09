@@ -5,7 +5,7 @@ import com.sendgrid.helpers.mail.Mail;
 import javax.mail.MessagingException;
 import java.io.Writer;
 
-public class NewResearcherLibraryRequestMessage extends MailMessage{
+public class NewResearcherLibraryRequestMessage extends MailMessage {
 
     private final String NEW_RESEARCHER = "New Library Card Request in DUOS";
 

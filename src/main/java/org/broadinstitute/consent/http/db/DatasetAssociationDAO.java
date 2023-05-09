@@ -35,10 +35,10 @@ public interface DatasetAssociationDAO extends Transactional<DatasetAssociationD
     Boolean exist(@Bind("datasetId") Integer datasetId);
 
     @SqlQuery("""
-        SELECT DISTINCT dacuserid
-        FROM dataset_user_association
-        WHERE datasetid = :datasetId
-        """)
+            SELECT DISTINCT dacuserid
+            FROM dataset_user_association
+            WHERE datasetid = :datasetId
+            """)
     List<Integer> getDataOwnersOfDataSet(@Bind("datasetId") Integer datasetId);
 
 }

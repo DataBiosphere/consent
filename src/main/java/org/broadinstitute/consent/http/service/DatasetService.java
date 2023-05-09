@@ -111,7 +111,7 @@ public class DatasetService {
     }
 
     public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {
-        if(CollectionUtils.isEmpty(dacIds)) {
+        if (CollectionUtils.isEmpty(dacIds)) {
             throw new BadRequestException("No dataset IDs provided");
         }
         return datasetDAO.findDatasetListByDacIds(dacIds);

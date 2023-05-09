@@ -4,10 +4,8 @@ import com.sendgrid.helpers.mail.Mail;
 
 import javax.mail.MessagingException;
 import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
 
-public class DatasetDeniedMessage extends MailMessage{
+public class DatasetDeniedMessage extends MailMessage {
 
     private final String DATASET_DENIED = "Dataset denied for DUOS";
 
