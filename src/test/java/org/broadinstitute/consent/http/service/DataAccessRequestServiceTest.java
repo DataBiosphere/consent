@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
@@ -119,6 +120,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.addDatasetIds(List.of(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
+        user.setLibraryCards(List.of(new LibraryCard()));
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
@@ -136,7 +138,8 @@ public class DataAccessRequestServiceTest {
         dar.setCreateDate(new Timestamp(1000));
         dar.setSortDate(new Timestamp(1000));
         dar.setReferenceId("id");
-        User user = new User(1, "email@test.org", "Display Name", new Date());
+        User user = new User(1, "email@test.org", "Display Name", new Date());        user.setLibraryCards(List.of(new LibraryCard()));
+        user.setLibraryCards(List.of(new LibraryCard()));
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
@@ -145,6 +148,24 @@ public class DataAccessRequestServiceTest {
         initService();
         DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
         assertNotNull(newDar);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateDataAccessRequest_FailsIfNoLibraryCard() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.addDatasetIds(List.of(1, 2, 3));
+        dar.setCreateDate(new Timestamp(1000));
+        dar.setSortDate(new Timestamp(1000));
+        dar.setReferenceId("id");
+        User user = new User(1, "email@test.org", "Display Name", new Date());        user.setLibraryCards(List.of(new LibraryCard()));
+        user.setLibraryCards(List.of());
+        when(counterService.getNextDarSequence()).thenReturn(1);
+        when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+        when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
+        doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
+        initService();
+        service.createDataAccessRequest(user, dar);
     }
 
     @Test

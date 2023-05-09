@@ -252,6 +252,11 @@ public class DataAccessRequestService {
         if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
             throw new IllegalArgumentException("User and DataAccessRequest are required");
         }
+
+        if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+            throw new IllegalArgumentException("User must have a library card.");
+        }
+
         Date now = new Date();
         long nowTime = now.getTime();
         DataAccessRequest newDar;

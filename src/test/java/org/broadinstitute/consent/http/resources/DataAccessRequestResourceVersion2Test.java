@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -100,9 +101,33 @@ public class DataAccessRequestResourceVersion2Test {
     }
 
     @Test
-    public void testCreateDataAccessRequest() {
+    public void testCreateDataAccessRequestNoLibraryCard() {
         try {
             when(userService.findUserByEmail(any())).thenReturn(user);
+            DataAccessRequest dar = new DataAccessRequest();
+            dar.setReferenceId(UUID.randomUUID().toString());
+            dar.setCollectionId(1);
+            DataAccessRequestData data = new DataAccessRequestData();
+            data.setReferenceId(dar.getReferenceId());
+            dar.setData(data);
+            when(dataAccessRequestService.createDataAccessRequest(any(), any()))
+                    .thenReturn(dar);
+            doNothing().when(matchService).reprocessMatchesForPurpose(any());
+            doNothing().when(emailService).sendNewDARCollectionMessage(any());
+        } catch (Exception e) {
+            fail("Initialization Exception: " + e.getMessage());
+        }
+        initResource();
+        Response response = resource.createDataAccessRequest(authUser, info, "");
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testCreateDataAccessRequest() {
+        try {
+            User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+            userWithCards.setLibraryCards(List.of(new LibraryCard()));
+            when(userService.findUserByEmail(any())).thenReturn(userWithCards);
             DataAccessRequest dar = new DataAccessRequest();
             dar.setReferenceId(UUID.randomUUID().toString());
             dar.setCollectionId(1);
