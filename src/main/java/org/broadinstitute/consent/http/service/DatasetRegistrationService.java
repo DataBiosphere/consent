@@ -177,6 +177,17 @@ public class DatasetRegistrationService {
     // nosemgrep
     private static final String NIH_INSTITUTIONAL_CERTIFICATION_NAME = "consentGroups[%s].nihInstitutionalCertificationFile";
 
+    /**
+     * Uploads the files related to the Dataset Registration's dataset object to Google Cloud and returns
+     * references to them as FileStorageObjects.
+     *
+     * @param files             The files the user provided: fileType (e.g., alternativeDataSharingPlan) -> FormDataBodyPart
+     * @param uploadedFileCache Previously uploaded files - ensures that the same file is not reuploaded if used on different datasets.
+     * @param consentGroupIdx   The index of the consent group that this dataset is associated to
+     * @param user              The create user
+     * @return The list of FSOs created for this study
+     * @throws IOException if GCS upload fails
+     */
     private List<FileStorageObject> uploadFilesForDataset(Map<String, FormDataBodyPart> files,
                                                           Map<String, BlobId> uploadedFileCache,
                                                           Integer consentGroupIdx,
@@ -194,6 +205,16 @@ public class DatasetRegistrationService {
 
     }
 
+    /**
+     * Uploads the files related to the Dataset Registration's study object to Google Cloud and returns
+     * references to them as FileStorageObjects.
+     *
+     * @param files             The files the user provided: fileType (e.g., alternativeDataSharingPlan) -> FormDataBodyPart
+     * @param uploadedFileCache Previously uploaded files - ensures that the same file is not reuploaded if used on different datasets.
+     * @param user              The create user
+     * @return The list of FSOs created for this study
+     * @throws IOException if GCS upload fails
+     */
     private List<FileStorageObject> uploadFilesForStudy(Map<String, FormDataBodyPart> files,
                                                         Map<String, BlobId> uploadedFileCache,
                                                         User user) throws IOException {
@@ -234,6 +255,9 @@ public class DatasetRegistrationService {
         return fso;
     }
 
+
+    // TODO: refactor these DatasetPropertyExtractors into something cleaner - they work, but they feel a bit clunky.
+    //       perhaps a separate class which is more generic would work better.
 
     /**
      * Extracts an individual field as a dataset property.
@@ -277,8 +301,6 @@ public class DatasetRegistrationService {
         }
     }
 
-    ;
-
     public record StudyPropertyExtractor(
             String key,
             PropertyType type,
@@ -310,8 +332,6 @@ public class DatasetRegistrationService {
 
         }
     }
-
-    ;
 
 
     private static final List<StudyPropertyExtractor> DATASET_REGISTRATION_V1_STUDY_PROPERTY_EXTRACTORS = List.of(
