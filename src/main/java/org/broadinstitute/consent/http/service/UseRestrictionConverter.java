@@ -2,18 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -22,6 +10,19 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("WeakerAccess")
 public class UseRestrictionConverter {
@@ -66,13 +67,13 @@ public class UseRestrictionConverter {
         ArrayList<HashMap<String, String>> ontologies = (ArrayList<HashMap<String, String>>) form.get("ontologies");
         if (CollectionUtils.isNotEmpty(ontologies)) {
             List<String> restrictions = ontologies
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(hashMap -> hashMap.containsKey("id"))
-                .map(hashMap -> hashMap.get("id"))
-                .collect(Collectors.toList());
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .filter(hashMap -> hashMap.containsKey("id"))
+                    .map(hashMap -> hashMap.get("id"))
+                    .collect(Collectors.toList());
             if (!restrictions.isEmpty()) {
-              dataUse.setDiseaseRestrictions(restrictions);
+                dataUse.setDiseaseRestrictions(restrictions);
             }
         }
 
@@ -136,7 +137,7 @@ public class UseRestrictionConverter {
             //
 
             List<String> ontologies = dar.getData().getOntologies()
-                .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+                    .stream().map(OntologyEntry::getId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(ontologies)) {
                 dataUse.setDiseaseRestrictions(ontologies);
             }

@@ -14,7 +14,7 @@ public class AccessRP {
     private Integer electionRPId;
 
 
-    public AccessRP(Integer id, Integer electionAccessId , Integer electionRPId ){
+    public AccessRP(Integer id, Integer electionAccessId, Integer electionRPId) {
         this.id = id;
         this.electionAccessId = electionAccessId;
         this.electionRPId = electionRPId;

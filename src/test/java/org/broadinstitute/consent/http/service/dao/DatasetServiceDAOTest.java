@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.service.dao;
 import com.google.cloud.storage.BlobId;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -33,7 +33,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testInsertDatasets() throws Exception{
+    public void testInsertDatasets() throws Exception {
 
         Dac dac = createDac();
         User user = createUser();
@@ -41,13 +41,13 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         DatasetProperty prop1 = new DatasetProperty();
         prop1.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
         prop1.setPropertyName(RandomStringUtils.randomAlphabetic(10));
-        prop1.setPropertyType(DatasetPropertyType.Number);
+        prop1.setPropertyType(PropertyType.Number);
         prop1.setPropertyValue(new Random().nextInt());
 
         DatasetProperty prop2 = new DatasetProperty();
         prop2.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
         prop2.setPropertyName(RandomStringUtils.randomAlphabetic(10));
-        prop2.setPropertyType(DatasetPropertyType.Date);
+        prop2.setPropertyType(PropertyType.Date);
         prop2.setPropertyValueAsString("2000-10-20");
 
         FileStorageObject file1 = new FileStorageObject();
@@ -115,7 +115,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         prop1.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
         prop1.setPropertyName(RandomStringUtils.randomAlphabetic(10));
         prop1.setPropertyValue(new Random().nextInt());
-        prop1.setPropertyType(DatasetPropertyType.Number);
+        prop1.setPropertyType(PropertyType.Number);
 
 
         DatasetServiceDAO.DatasetInsert insert1 = new DatasetServiceDAO.DatasetInsert(

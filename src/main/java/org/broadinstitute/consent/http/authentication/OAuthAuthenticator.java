@@ -2,18 +2,19 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
-import java.util.Objects;
-import java.util.Optional;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.Objects;
+import java.util.Optional;
 
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
@@ -33,8 +34,8 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         try {
             GenericUser genericUser = getUserProfileInfo(bearer);
             AuthUser user = Objects.nonNull(genericUser) ?
-                new AuthUser(genericUser).setAuthToken(bearer) :
-                new AuthUser().setAuthToken(bearer);
+                    new AuthUser(genericUser).setAuthToken(bearer) :
+                    new AuthUser().setAuthToken(bearer);
             AuthUser userWithStatus = getUserWithStatusInfo(user);
             return Optional.of(userWithStatus);
         } catch (Exception e) {
@@ -81,6 +82,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
     /**
      * This method is currently google-centric. When we fully support B2C authentication,
      * we should ensure that we can look up user info from a MS service.
+     *
      * @param bearer Bearer Token
      * @return GenericUser
      */

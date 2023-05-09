@@ -70,9 +70,9 @@ public enum UserRoles {
             return false;
         }
         return EnumSet.allOf(UserRoles.class)
-          .stream()
-          .map(UserRoles::getRoleName)
-          .anyMatch(roleName::equalsIgnoreCase);
+                .stream()
+                .map(UserRoles::getRoleName)
+                .anyMatch(roleName::equalsIgnoreCase);
     }
 
     public static boolean isValidNonDACRoleId(Integer roleId) {

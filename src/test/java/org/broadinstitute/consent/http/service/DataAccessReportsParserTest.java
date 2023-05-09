@@ -1,8 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,15 +20,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessReportsParserTest {
 
@@ -34,13 +35,13 @@ public class DataAccessReportsParserTest {
     private final String DS_IDENTIFIER = "DUOS-000001";
     private final String RUS_SUMMARY = "Purpose";
     private final String sDUL = """
-        Samples Restricted for use with "cancer" [DOID_162(CC)]
-        Future use by for-profit entities is prohibited [NPU]
-        Future use of aggregate-level data for general research purposes is prohibited [NPNV]
-        Notes:
-        Future use for methods research (analytic/software/technology development) is not prohibited
-        Future use as a control set for diseases other than those specified is not prohibited
-        """;
+            Samples Restricted for use with "cancer" [DOID_162(CC)]
+            Future use by for-profit entities is prohibited [NPU]
+            Future use of aggregate-level data for general research purposes is prohibited [NPNV]
+            Notes:
+            Future use for methods research (analytic/software/technology development) is not prohibited
+            Future use as a control set for diseases other than those specified is not prohibited
+            """;
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
@@ -75,7 +76,7 @@ public class DataAccessReportsParserTest {
             String line = iterator.next();
             String[] columns = line.split("\t");
             assertEquals(12, columns.length);
-            if(i == 0) {
+            if (i == 0) {
                 assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
                 assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
                 assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
@@ -122,7 +123,7 @@ public class DataAccessReportsParserTest {
             String line = iterator.next();
             String[] columns = line.split("\t");
             assertEquals(8, columns.length);
-            if(i == 0) {
+            if (i == 0) {
                 assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
                 assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
                 assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
@@ -164,7 +165,7 @@ public class DataAccessReportsParserTest {
             String line = iterator.next();
             String[] columns = line.split("\t");
             assertEquals(8, columns.length);
-            if(i == 0) {
+            if (i == 0) {
                 assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
                 assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
                 assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
@@ -188,7 +189,7 @@ public class DataAccessReportsParserTest {
         assertEquals(2, i);
     }
 
-    private Election createElection(Date currentDate){
+    private Election createElection(Date currentDate) {
         Election election = new Election();
         election.setFinalVoteDate(currentDate);
         election.setFinalVote(true);

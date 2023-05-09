@@ -4,16 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
@@ -41,6 +31,16 @@ import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class UserService {
 
@@ -85,7 +85,7 @@ public class UserService {
      * Update a select group of user fields for a user id.
      *
      * @param userUpdateFields A UserUpdateFields object for all update information
-     * @param userId The User's ID
+     * @param userId           The User's ID
      * @return The updated User
      */
     public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
@@ -137,8 +137,8 @@ public class UserService {
                 // Add the new role ids to the user
                 if (!roleIdsToAdd.isEmpty()) {
                     List<UserRole> newRoles = roleIdsToAdd.stream()
-                        .map(id -> new UserRole(id, Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
-                        .collect(Collectors.toList());
+                            .map(id -> new UserRole(id, Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
+                            .collect(Collectors.toList());
                     userRoleDAO.insertUserRoles(newRoles, userId);
                 }
                 // Remove the old role ids from the user
@@ -152,7 +152,7 @@ public class UserService {
     }
 
     public void insertRoleAndInstitutionForUser(UserRole role, Integer institutionId, Integer userId) {
-        try{
+        try {
             userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
         } catch (Exception e) {
             logger.error("Error when updating user: %s, institution: %s, role: %s",
@@ -233,23 +233,23 @@ public class UserService {
      * Find users as a specific role, e.g., Admins can see all users, other roles
      * can only see a subset of users.
      *
-     * @param user The user making the request
+     * @param user     The user making the request
      * @param roleName The role the user is making the request as
      * @return List of Users for specified role name
      */
     public List<User> getUsersAsRole(User user, String roleName) {
-        switch(roleName) {
+        switch (roleName) {
             // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
             // However LCs can be created for users not yet registered in the system
             // As such a more specialized query is needed to produce the proper listing
-            case Resource.SIGNINGOFFICIAL :
+            case Resource.SIGNINGOFFICIAL:
                 Integer institutionId = user.getInstitutionId();
                 if (Objects.nonNull(user.getInstitutionId())) {
                     return userDAO.getUsersFromInstitutionWithCards(institutionId);
                 } else {
                     throw new NotFoundException("Signing Official (user: " + user.getDisplayName() + ") is not associated with an Institution.");
                 }
-            case Resource.ADMIN :
+            case Resource.ADMIN:
                 return userDAO.findUsersWithLCsAndInstitution();
         }
         return Collections.emptyList();
@@ -324,7 +324,7 @@ public class UserService {
      * Convenience method to return a response-friendly json object of the user.
      *
      * @param authUser The AuthUser. Used to determine if we should return auth user properties
-     * @param userId The User. This is the user we want to return properties for
+     * @param userId   The User. This is the user we want to return properties for
      * @return JsonObject.
      */
     public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
@@ -437,7 +437,7 @@ public class UserService {
         try {
             samDAO.postRegistrationInfo(authUser);
         } catch (ConsentConflictException cce) {
-          // no-op in the case of conflicts.
+            // no-op in the case of conflicts.
         }
         return user;
     }

@@ -1,29 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -33,13 +12,32 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 public class DacResourceTest {
 
@@ -170,7 +168,6 @@ public class DacResourceTest {
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
     }
-
 
 
     @Test
@@ -489,9 +486,9 @@ public class DacResourceTest {
 
     @Test
     public void testApproveDataset_UserNotFound() {
-      when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
-      Response response = dacResource.approveDataset(authUser, 1, 1, "test");
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
+        Response response = dacResource.approveDataset(authUser, 1, 1, "test");
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -546,7 +543,7 @@ public class DacResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(user);
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
-            .thenReturn(dataset);
+                .thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
         assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
@@ -591,17 +588,16 @@ public class DacResourceTest {
     }
 
 
-
     private JsonArray getListFromEntityString(String str) {
         return GsonUtil.buildGson().fromJson(str, JsonArray.class);
     }
 
     private Dac buildDac(User chair) {
         Dac dac = new DacBuilder()
-            .setDacId(RandomUtils.nextInt())
-            .setName("name")
-            .setDescription("description")
-            .build();
+                .setDacId(RandomUtils.nextInt())
+                .setName("name")
+                .setDescription("description")
+                .build();
         if (Objects.nonNull(chair)) {
             dac.setChairpersons(Collections.singletonList(chair));
         }

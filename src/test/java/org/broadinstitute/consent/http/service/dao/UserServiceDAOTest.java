@@ -30,25 +30,25 @@ public class UserServiceDAOTest extends DAOTestHelper {
     }
 
     @Test
-    public void testTransactionPatternHappyPathInActualService(){
+    public void testTransactionPatternHappyPathInActualService() {
         User testUser = createUser();
         Institution institution = createInstitution();
         assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
-        serviceDAO.insertRoleAndInstitutionTxn(userRole,institution.getId(), testUser.getUserId());
+        serviceDAO.insertRoleAndInstitutionTxn(userRole, institution.getId(), testUser.getUserId());
         User fetchedUser = userDAO.findUserById(testUser.getUserId());
         assertEquals(fetchedUser.getUserId(), testUser.getUserId());
         assertEquals(fetchedUser.getInstitutionId(), institution.getId());
     }
 
     @Test
-    public void testTransactionRollbackAfterMultipleInserts(){
+    public void testTransactionRollbackAfterMultipleInserts() {
         boolean exceptionCaught = false;
         User testUser = createUser();
         Institution institution = createInstitution();
         assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
-        try{
+        try {
             //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
             //does indeed roll back from postgres.  mocking won't confirm that behavior.
             jdbi.useTransaction(transactionHandle -> {

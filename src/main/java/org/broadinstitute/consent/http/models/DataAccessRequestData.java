@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -20,13 +21,13 @@ public class DataAccessRequestData {
      * See <a href="https://broadworkbench.atlassian.net/browse/DUOS-728">DUOS-728</a> for more info.
      */
     public static final List<String> DEPRECATED_PROPS = Arrays
-        .asList("referenceId", "investigator",
-            "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
-            "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
-            "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
-            "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
-            "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-            "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode" );
+            .asList("referenceId", "investigator",
+                    "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
+                    "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
+                    "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
+                    "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
+                    "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
+                    "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode");
 
     @Deprecated
     private String referenceId;
@@ -412,6 +413,7 @@ public class DataAccessRequestData {
         }
         return datasetIds;
     }
+
     public String getStatus() {
         return status;
     }
@@ -556,7 +558,7 @@ public class DataAccessRequestData {
     }
 
     public void setLabCollaborators(
-        List<Collaborator> labCollaborators) {
+            List<Collaborator> labCollaborators) {
         this.labCollaborators = labCollaborators;
     }
 
@@ -568,7 +570,7 @@ public class DataAccessRequestData {
     }
 
     public void setInternalCollaborators(
-        List<Collaborator> internalCollaborators) {
+            List<Collaborator> internalCollaborators) {
         this.internalCollaborators = internalCollaborators;
     }
 
@@ -580,7 +582,7 @@ public class DataAccessRequestData {
     }
 
     public void setExternalCollaborators(
-        List<Collaborator> externalCollaborators) {
+            List<Collaborator> externalCollaborators) {
         this.externalCollaborators = externalCollaborators;
     }
 
@@ -651,13 +653,13 @@ public class DataAccessRequestData {
     // Validate all ontology entries
     private static void validateOntologyEntries(DataAccessRequestData data) {
         if (Objects.nonNull(data)
-            && !data.getOntologies().isEmpty()) {
+                && !data.getOntologies().isEmpty()) {
             List<OntologyEntry> filteredEntries =
-                data.getOntologies().stream()
-                    .filter(Objects::nonNull)
-                    .filter(e -> Objects.nonNull(e.getId()))
-                    .filter(e -> Objects.nonNull(e.getLabel()))
-                    .collect(Collectors.toList());
+                    data.getOntologies().stream()
+                            .filter(Objects::nonNull)
+                            .filter(e -> Objects.nonNull(e.getId()))
+                            .filter(e -> Objects.nonNull(e.getLabel()))
+                            .collect(Collectors.toList());
             if (filteredEntries.isEmpty()) {
                 data.setOntologies(Collections.emptyList());
             } else {
@@ -687,7 +689,7 @@ public class DataAccessRequestData {
     }
 
     public void setPublications(
-        List<Publication> publications) {
+            List<Publication> publications) {
         this.publications = publications;
     }
 
@@ -696,7 +698,7 @@ public class DataAccessRequestData {
     }
 
     public void setPresentations(
-        List<Presentation> presentations) {
+            List<Presentation> presentations) {
         this.presentations = presentations;
     }
 
@@ -721,7 +723,7 @@ public class DataAccessRequestData {
     }
 
     public void setCloseoutSupplement(
-        CloseoutSupplement closeoutSupplement) {
+            CloseoutSupplement closeoutSupplement) {
         this.closeoutSupplement = closeoutSupplement;
     }
 }

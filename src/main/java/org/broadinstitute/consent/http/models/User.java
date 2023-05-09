@@ -3,6 +3,13 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import net.gcardone.junidecode.Junidecode;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,23 +18,17 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import net.gcardone.junidecode.Junidecode;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 public class User {
 
-  public static final String QUERY_FIELDS_WITH_U_PREFIX =
-          " u.user_id as u_user_id, " +
-          " u.email as u_email, " +
-          " u.display_name as u_display_name, " +
-          " u.create_date as u_create_date, " +
-          " u.email_preference as u_email_preference, " +
-          " u.institution_id as u_institution_id," +
-          " u.era_commons_id as u_era_commons_id ";
+    public static final String QUERY_FIELDS_WITH_U_PREFIX =
+            " u.user_id as u_user_id, " +
+                    " u.email as u_email, " +
+                    " u.display_name as u_display_name, " +
+                    " u.create_date as u_create_date, " +
+                    " u.email_preference as u_email_preference, " +
+                    " u.institution_id as u_institution_id," +
+                    " u.era_commons_id as u_era_commons_id ";
 
     @JsonProperty
     private Integer userId;
@@ -120,7 +121,8 @@ public class User {
 
     /**
      * Private method to filter out fields that we do not want to parse from json objects.
-     * @param obj The json object
+     *
+     * @param obj    The json object
      * @param fields The fields to remove
      * @return Filtered Clone of the object.
      */
@@ -222,7 +224,9 @@ public class User {
         return institutionId;
     }
 
-    public void setInstitutionId(Integer institutionId) { this.institutionId = institutionId; }
+    public void setInstitutionId(Integer institutionId) {
+        this.institutionId = institutionId;
+    }
 
     public String getEraCommonsId() {
         return eraCommonsId;
@@ -274,7 +278,7 @@ public class User {
     }
 
     public void addLibraryCard(LibraryCard card) {
-        if(Objects.isNull(this.getLibraryCards())) {
+        if (Objects.isNull(this.getLibraryCards())) {
             this.setLibraryCards(new ArrayList<>());
         }
         if (!this.getLibraryCards().contains(card)) {
@@ -283,8 +287,8 @@ public class User {
     }
 
     @Override
-    public int hashCode(){
-        return  this.getUserId();
+    public int hashCode() {
+        return this.getUserId();
     }
 
     @Override
@@ -319,9 +323,9 @@ public class User {
             return List.of();
         }
         return this.getRoles()
-          .stream()
-          .map(UserRole::getRoleId)
-          .collect(Collectors.toList());
+                .stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toList());
     }
 
     @Transient

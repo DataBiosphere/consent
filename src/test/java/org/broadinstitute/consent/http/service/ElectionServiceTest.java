@@ -1,22 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -45,6 +28,24 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.NotFoundException;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ElectionServiceTest {
 
@@ -206,7 +207,7 @@ public class ElectionServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any()))
                 .thenReturn(sampleDataAccessRequest1);
         when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(
-            List.of(sampleDataset1));
+                List.of(sampleDataset1));
         when(consentDAO.checkConsentById(sampleConsent1.getConsentId())).thenReturn(sampleConsent1.getConsentId());
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(new DataAccessRequest());
     }
@@ -221,7 +222,7 @@ public class ElectionServiceTest {
         when(userDAO.findUserByEmailAndRoleId("test@test.com", UserRoles.MEMBER.getRoleId()))
                 .thenReturn(sampleUserMember);
         when(userDAO.findUsersForElectionsByRoles(
-            List.of(sampleVoteChairpersonApproval.getElectionId()),
+                List.of(sampleVoteChairpersonApproval.getElectionId()),
                 List.of(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())))
                 .thenReturn(Set.of(sampleUserChairperson, sampleUserMember));
     }
@@ -373,15 +374,15 @@ public class ElectionServiceTest {
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
-            List.of());
+                List.of());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId())).thenReturn(
-            List.of());
+                List.of());
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairpersonApproval);
         assertTrue(validate);
@@ -397,15 +398,15 @@ public class ElectionServiceTest {
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(new Vote(4, true, sampleUserChairperson.getUserId(), null, null,
-                    sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
-                    false, false)));
+                        sampleElectionRP.getElectionId(), "", VoteType.AGREEMENT.getValue(),
+                        false, false)));
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of(sampleVoteChairpersonApproval));
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
-            List.of());
+                List.of());
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
                 .thenReturn(List.of(sampleVoteMember));
         initService();
@@ -423,13 +424,13 @@ public class ElectionServiceTest {
         when(mailMessageDAO.existsCollectDAREmail(null, sampleElectionRP.getReferenceId()))
                 .thenReturn(null);
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElectionRP.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of());
         when(voteDAO.findVotesByElectionIdAndUserIds(sampleElection1.getElectionId(),
-            List.of(sampleUserChairperson.getUserId())))
+                List.of(sampleUserChairperson.getUserId())))
                 .thenReturn(List.of());
         when(voteDAO.findPendingVotesByElectionId(sampleElectionRP.getElectionId())).thenReturn(
-            List.of(sampleVoteRP));
+                List.of(sampleVoteRP));
         when(voteDAO.findPendingVotesByElectionId(sampleElection1.getElectionId()))
                 .thenReturn(List.of(sampleVoteMember));
         initService();
@@ -465,7 +466,7 @@ public class ElectionServiceTest {
         when(electionDAO.findElectionsByVoteIdsAndType(anyList(), anyString()))
                 .thenReturn(List.of(election));
         initService();
-        List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1,2), "test");
+        List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1, 2), "test");
         assertNotNull(elections);
         assertEquals(1, elections.size());
     }
@@ -474,7 +475,7 @@ public class ElectionServiceTest {
     public void findElectionsWithCardHoldingUsersByElectionIds() {
         Election election = new Election();
         when(electionDAO.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
-            .thenReturn(List.of(election));
+                .thenReturn(List.of(election));
         initService();
         List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
         assertNotNull(elections);

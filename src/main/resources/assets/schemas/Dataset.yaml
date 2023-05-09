@@ -55,6 +55,9 @@ properties:
         propertyValue: NHLBI
       - propertyName: Sample Collection ID
         propertyValue: SC-000
+  study:
+    $ref: "./Study.yaml"
+    description: The study which produced this dataset.
   active:
     type: boolean
     description: The Dataset is active

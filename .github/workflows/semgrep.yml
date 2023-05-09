@@ -1,13 +1,14 @@
 name: Semgrep
-on: [pull_request]
+on: [ pull_request ]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
     name: Check
     steps:
-    - uses: actions/checkout@v3
-    - name: Semgrep
-      id: semgrep
-      uses: returntocorp/semgrep-action@v1
-      with:
-        config: p/findsecbugs
+      - uses: actions/checkout@v3
+      - run: |
+          semgrep ci --config=p/findsecbugs \
+            --exclude-rule=gitlab.find_sec_bugs.CUSTOM_INJECTION-2 \
+            --exclude-rule=gitlab.find_sec_bugs.JAXRS_ENDPOINT-1

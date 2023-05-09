@@ -2,19 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -32,6 +19,20 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.mail.MessagingException;
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ElectionService {
 
@@ -82,15 +83,15 @@ public class ElectionService {
      * Utility method to consolidate archiving elections by status.
      *
      * @param electionId Election Id
-     * @param status Election Status String
+     * @param status     Election Status String
      */
     private void verifyElectionArchiveState(Integer electionId, String status) {
         Date update = new Date();
         ElectionStatus electionStatus = ElectionStatus.getStatusFromString(status);
         EnumSet<ElectionStatus> archiveStatuses = EnumSet.of(
-            ElectionStatus.CANCELED,
-            ElectionStatus.CLOSED,
-            ElectionStatus.FINAL);
+                ElectionStatus.CANCELED,
+                ElectionStatus.CLOSED,
+                ElectionStatus.FINAL);
         if (Objects.nonNull(electionStatus) && archiveStatuses.contains(electionStatus)) {
             electionDAO.archiveElectionById(electionId, update);
         }
@@ -121,9 +122,9 @@ public class ElectionService {
 
     /**
      * Return true if:
-     *      There are no RP or DAR votes and the vote is not a chairperson vote
-     *      All RP chair votes have not been created
-     *      All DAR chair votes have not been created
+     * There are no RP or DAR votes and the vote is not a chairperson vote
+     * All RP chair votes have not been created
+     * All DAR chair votes have not been created
      *
      * @param vote The vote to validate
      * @return True if valid, false otherwise
@@ -178,7 +179,7 @@ public class ElectionService {
         return false;
     }
 
-    public void closeDataOwnerApprovalElection(Integer electionId){
+    public void closeDataOwnerApprovalElection(Integer electionId) {
         Election election = electionDAO.findElectionById(electionId);
         List<Vote> dataOwnersVote = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
         List<Vote> rejectedVotes = dataOwnersVote.stream().filter(dov -> (dov.getVote() != null && !dov.getVote()) || (dov.getHasConcerns() != null && dov.getHasConcerns())).collect(Collectors.toList());
@@ -188,7 +189,7 @@ public class ElectionService {
         verifyElectionArchiveState(electionId, election.getStatus());
         try {
             List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_SET.getValue());
-            if(validateAllDatasetElectionsAreClosed(dsElections)){
+            if (validateAllDatasetElectionsAreClosed(dsElections)) {
                 List<Election> darElections = new ArrayList<>();
                 darElections.add(electionDAO.findLastElectionByReferenceIdAndType(election.getReferenceId(), ElectionType.DATA_ACCESS.getValue()));
                 emailService.sendClosedDataSetElectionsMessage(darElections);
@@ -198,10 +199,10 @@ public class ElectionService {
         }
     }
 
-    public boolean checkDataOwnerToCloseElection(Integer electionId){
+    public boolean checkDataOwnerToCloseElection(Integer electionId) {
         Boolean closeElection = false;
         Election election = electionDAO.findElectionById(electionId);
-        if(election.getElectionType().equals(ElectionType.DATA_SET.getValue())) {
+        if (election.getElectionType().equals(ElectionType.DATA_SET.getValue())) {
             List<Vote> pendingVotes = voteDAO.findDataOwnerPendingVotesByElectionId(electionId, VoteType.DATA_OWNER.getValue());
             closeElection = CollectionUtils.isEmpty(pendingVotes) ? true : false;
         }
@@ -216,9 +217,9 @@ public class ElectionService {
         return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType) : Collections.emptyList();
     }
 
-    private boolean validateAllDatasetElectionsAreClosed(List<Election> elections){
-        for(Election e: elections){
-            if(! e.getStatus().equals(ElectionStatus.CLOSED.getValue())){
+    private boolean validateAllDatasetElectionsAreClosed(List<Election> elections) {
+        for (Election e : elections) {
+            if (!e.getStatus().equals(ElectionStatus.CLOSED.getValue())) {
                 return false;
             }
         }

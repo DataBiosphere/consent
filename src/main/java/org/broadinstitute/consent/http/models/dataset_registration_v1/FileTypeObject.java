@@ -12,22 +12,20 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "fileType",
-    "functionalEquivalence",
-    "numberOfParticipants"
+        "fileType",
+        "functionalEquivalence",
+        "numberOfParticipants"
 })
 public class FileTypeObject {
 
     /**
      * File Type
-     * 
      */
     @JsonProperty("fileType")
     @JsonPropertyDescription("File Type")
     private FileTypeObject.FileType fileType;
     /**
      * Functional Equivalence
-     * 
      */
     @JsonProperty("functionalEquivalence")
     @JsonPropertyDescription("Functional Equivalence")
@@ -35,7 +33,6 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     * 
      */
     @JsonProperty("numberOfParticipants")
     @JsonPropertyDescription("# of Participants")
@@ -43,7 +40,6 @@ public class FileTypeObject {
 
     /**
      * File Type
-     * 
      */
     @JsonProperty("fileType")
     public FileTypeObject.FileType getFileType() {
@@ -52,7 +48,6 @@ public class FileTypeObject {
 
     /**
      * File Type
-     * 
      */
     @JsonProperty("fileType")
     public void setFileType(FileTypeObject.FileType fileType) {
@@ -61,7 +56,6 @@ public class FileTypeObject {
 
     /**
      * Functional Equivalence
-     * 
      */
     @JsonProperty("functionalEquivalence")
     public String getFunctionalEquivalence() {
@@ -70,7 +64,6 @@ public class FileTypeObject {
 
     /**
      * Functional Equivalence
-     * 
      */
     @JsonProperty("functionalEquivalence")
     public void setFunctionalEquivalence(String functionalEquivalence) {
@@ -80,7 +73,6 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     * 
      */
     @JsonProperty("numberOfParticipants")
     public Integer getNumberOfParticipants() {
@@ -90,7 +82,6 @@ public class FileTypeObject {
     /**
      * # of Participants
      * (Required)
-     * 
      */
     @JsonProperty("numberOfParticipants")
     public void setNumberOfParticipants(Integer numberOfParticipants) {
@@ -103,18 +94,18 @@ public class FileTypeObject {
         sb.append(FileTypeObject.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
         sb.append("fileType");
         sb.append('=');
-        sb.append(((this.fileType == null)?"<null>":this.fileType));
+        sb.append(((this.fileType == null) ? "<null>" : this.fileType));
         sb.append(',');
         sb.append("functionalEquivalence");
         sb.append('=');
-        sb.append(((this.functionalEquivalence == null)?"<null>":this.functionalEquivalence));
+        sb.append(((this.functionalEquivalence == null) ? "<null>" : this.functionalEquivalence));
         sb.append(',');
         sb.append("numberOfParticipants");
         sb.append('=');
-        sb.append(((this.numberOfParticipants == null)?"<null>":this.numberOfParticipants));
+        sb.append(((this.numberOfParticipants == null) ? "<null>" : this.numberOfParticipants));
         sb.append(',');
-        if (sb.charAt((sb.length()- 1)) == ',') {
-            sb.setCharAt((sb.length()- 1), ']');
+        if (sb.charAt((sb.length() - 1)) == ',') {
+            sb.setCharAt((sb.length() - 1), ']');
         } else {
             sb.append(']');
         }
@@ -124,9 +115,9 @@ public class FileTypeObject {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.numberOfParticipants == null)? 0 :this.numberOfParticipants.hashCode()));
-        result = ((result* 31)+((this.functionalEquivalence == null)? 0 :this.functionalEquivalence.hashCode()));
-        result = ((result* 31)+((this.fileType == null)? 0 :this.fileType.hashCode()));
+        result = ((result * 31) + ((this.numberOfParticipants == null) ? 0 : this.numberOfParticipants.hashCode()));
+        result = ((result * 31) + ((this.functionalEquivalence == null) ? 0 : this.functionalEquivalence.hashCode()));
+        result = ((result * 31) + ((this.fileType == null) ? 0 : this.fileType.hashCode()));
         return result;
     }
 
@@ -139,13 +130,12 @@ public class FileTypeObject {
             return false;
         }
         FileTypeObject rhs = ((FileTypeObject) other);
-        return ((((this.numberOfParticipants == rhs.numberOfParticipants)||((this.numberOfParticipants!= null)&&this.numberOfParticipants.equals(rhs.numberOfParticipants)))&&((this.functionalEquivalence == rhs.functionalEquivalence)||((this.functionalEquivalence!= null)&&this.functionalEquivalence.equals(rhs.functionalEquivalence))))&&((this.fileType == rhs.fileType)||((this.fileType!= null)&&this.fileType.equals(rhs.fileType))));
+        return ((((this.numberOfParticipants == rhs.numberOfParticipants) || ((this.numberOfParticipants != null) && this.numberOfParticipants.equals(rhs.numberOfParticipants))) && ((this.functionalEquivalence == rhs.functionalEquivalence) || ((this.functionalEquivalence != null) && this.functionalEquivalence.equals(rhs.functionalEquivalence)))) && ((this.fileType == rhs.fileType) || ((this.fileType != null) && this.fileType.equals(rhs.fileType))));
     }
 
 
     /**
      * File Type
-     * 
      */
     public enum FileType {
 
@@ -158,7 +148,7 @@ public class FileTypeObject {
         private final static Map<String, FileTypeObject.FileType> CONSTANTS = new HashMap<String, FileTypeObject.FileType>();
 
         static {
-            for (FileTypeObject.FileType c: values()) {
+            for (FileTypeObject.FileType c : values()) {
                 CONSTANTS.put(c.value, c);
             }
         }

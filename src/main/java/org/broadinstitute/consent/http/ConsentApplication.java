@@ -15,14 +15,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration.Dynamic;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -105,6 +97,15 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration.Dynamic;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+
 /**
  * Top-level entry point to the entire application.
  * <p>
@@ -127,11 +128,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             String dsn = System.getProperties().getProperty("sentry.dsn");
             if (StringUtils.isNotBlank(dsn)) {
                 Sentry.init(config -> {
-                  config.setDsn(dsn);
-                  config.setDiagnosticLevel(SentryLevel.ERROR);
-                  config.setServerName("Consent");
-                  config.addContextTag("Consent");
-                  config.addInAppInclude("org.broadinstitute");
+                    config.setDsn(dsn);
+                    config.setDiagnosticLevel(SentryLevel.ERROR);
+                    config.setServerName("Consent");
+                    config.addContextTag("Consent");
+                    config.addInAppInclude("org.broadinstitute");
                 });
                 Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
             } else {
@@ -161,7 +162,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
         // Services
         final ConsentService consentService = injector.getProvider(ConsentService.class).get();
-        final DarCollectionService darCollectionService= injector.getProvider(DarCollectionService.class).get();
+        final DarCollectionService darCollectionService = injector.getProvider(DarCollectionService.class).get();
         final DacService dacService = injector.getProvider(DacService.class).get();
         final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
         final DatasetAssociationService datasetAssociationService = injector.getProvider(DatasetAssociationService.class).get();

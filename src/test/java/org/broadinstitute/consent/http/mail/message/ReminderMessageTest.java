@@ -17,7 +17,7 @@ public class ReminderMessageTest {
     Writer template;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         openMocks(this);
     }
 

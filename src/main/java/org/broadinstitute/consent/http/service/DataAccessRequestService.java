@@ -66,7 +66,7 @@ public class DataAccessRequestService {
 
     @Inject
     public DataAccessRequestService(CounterService counterService, DAOContainer container,
-            DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
+                                    DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
         this.consentDAO = container.getConsentDAO();
         this.counterService = counterService;
         this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
@@ -130,13 +130,13 @@ public class DataAccessRequestService {
         }
         Date now = new Date();
         dataAccessRequestDAO.insertDraftDataAccessRequest(
-            dar.getReferenceId(),
-            user.getUserId(),
-            now,
-            now,
-            null,
-            now,
-            dar.getData()
+                dar.getReferenceId(),
+                user.getUserId(),
+                now,
+                now,
+                null,
+                now,
+                dar.getData()
         );
         syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
 
@@ -147,7 +147,7 @@ public class DataAccessRequestService {
      * First delete any rows with the current reference id. This will allow us to keep (referenceId, dataset_id) unique
      * Takes in a list of datasetIds and a referenceId and adds them to the dar_dataset collection
      *
-     * @param datasetIds List of Integers that represent the datasetIds
+     * @param datasetIds  List of Integers that represent the datasetIds
      * @param referenceId ReferenceId of the corresponding DAR
      */
     private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
@@ -164,7 +164,7 @@ public class DataAccessRequestService {
     /**
      * Create a new Draft DAR from the canceled DARs present in source DarCollection.
      *
-     * @param user The User
+     * @param user             The User
      * @param sourceCollection The source DarCollection
      * @return New DataAccessRequest in draft status
      */
@@ -217,13 +217,13 @@ public class DataAccessRequestService {
         newData.setCreateDate(now.getTime());
         newData.setSortDate(now.getTime());
         dataAccessRequestDAO.insertDraftDataAccessRequest(
-            referenceId,
-            user.getUserId(),
-            now,
-            now,
-            null,
-            now,
-            newData
+                referenceId,
+                user.getUserId(),
+                now,
+                now,
+                null,
+                now,
+                newData
         );
         syncDataAccessRequestDatasets(datasetIds, referenceId);
 
@@ -231,7 +231,6 @@ public class DataAccessRequestService {
     }
 
     /**
-     *
      * @param user User
      * @return List<DataAccessRequest>
      */
@@ -245,7 +244,7 @@ public class DataAccessRequestService {
      * draft form, so it covers both cases of converting an existing draft to submitted and creating
      * a brand new DAR from scratch.
      *
-     * @param user The create User
+     * @param user              The create User
      * @param dataAccessRequest DataAccessRequest with populated DAR data
      * @return The created DAR.
      */
@@ -280,12 +279,12 @@ public class DataAccessRequestService {
         if (Objects.nonNull(existingDar)) {
             dataAccessRequestDAO.updateDraftForCollection(collectionId, dataAccessRequest.getReferenceId());
             dataAccessRequestDAO.updateDataByReferenceId(
-                dataAccessRequest.getReferenceId(),
-                user.getUserId(),
-                new Date(darData.getSortDate()),
-                now,
-                now,
-                darData);
+                    dataAccessRequest.getReferenceId(),
+                    user.getUserId(),
+                    new Date(darData.getSortDate()),
+                    now,
+                    now,
+                    darData);
             newDar = findByReferenceId(dataAccessRequest.getReferenceId());
             syncDataAccessRequestDatasets(datasetIds, dataAccessRequest.getReferenceId());
         } else {
@@ -298,14 +297,14 @@ public class DataAccessRequestService {
 
     public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId, DataAccessRequestData darData, Integer collectionId, Date now) {
         dataAccessRequestDAO.insertDataAccessRequest(
-            collectionId,
-            referencedId,
-            user.getUserId(),
-            new Date(darData.getCreateDate()),
-            new Date(darData.getSortDate()),
-            now,
-            now,
-            darData);
+                collectionId,
+                referencedId,
+                user.getUserId(),
+                new Date(darData.getCreateDate()),
+                new Date(darData.getSortDate()),
+                now,
+                now,
+                darData);
         return findByReferenceId(referencedId);
     }
 
@@ -313,20 +312,20 @@ public class DataAccessRequestService {
      * Update an existing DataAccessRequest. Replaces DataAccessRequestData.
      *
      * @param user The User
-     * @param dar The DataAccessRequest
+     * @param dar  The DataAccessRequest
      * @return The updated DataAccessRequest
      */
     public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-      try {
-        return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
-      } catch(SQLException e) {
-        // If I simply rethrow the error then I'll have to redefine any method that
-        // calls this function to "throw SQLException"
-        //Instead I'm going to throw an UnableToExecuteStatementException
-        //Response class will catch it, log it, and throw a 500 through the "unableToExecuteExceptionHandler"
-        //on the Resource class, just like it would with a SQLException
-        throw new UnableToExecuteStatementException(e.getMessage());
-      }
+        try {
+            return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
+        } catch (SQLException e) {
+            // If I simply rethrow the error then I'll have to redefine any method that
+            // calls this function to "throw SQLException"
+            //Instead I'm going to throw an UnableToExecuteStatementException
+            //Response class will catch it, log it, and throw a 500 through the "unableToExecuteExceptionHandler"
+            //on the Resource class, just like it would with a SQLException
+            throw new UnableToExecuteStatementException(e.getMessage());
+        }
     }
 
     public File createApprovedDARDocument() throws IOException {
@@ -347,7 +346,7 @@ public class DataAccessRequestService {
                         String profileName = user.getDisplayName();
                         if (Objects.isNull(user.getInstitutionId())) {
                             logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", " + user.getUserId() + ") "
-                              + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId() + ")");
+                                    + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId() + ")");
                         }
                         String institution = Objects.isNull(user.getInstitutionId()) ? "" : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
                         dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest, collection.getDarCode(), profileName, institution, consent.getName(), consent.getTranslatedUseRestriction());
@@ -398,8 +397,8 @@ public class DataAccessRequestService {
         StringBuilder builder = new StringBuilder();
         builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
         List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(datasetId);
-        if (CollectionUtils.isNotEmpty(darList)){
-            for(DataAccessRequest dar: darList){
+        if (CollectionUtils.isNotEmpty(darList)) {
+            for (DataAccessRequest dar : darList) {
                 String referenceId = dar.getReferenceId();
                 DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
                 User researcher = userDAO.findUserById(dar.getUserId());

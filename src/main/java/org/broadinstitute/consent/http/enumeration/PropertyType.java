@@ -7,7 +7,7 @@ import com.google.gson.JsonSyntaxException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
-public enum DatasetPropertyType {
+public enum PropertyType {
     String("string"),
     Boolean("boolean"),
     Number("number"),
@@ -16,7 +16,7 @@ public enum DatasetPropertyType {
 
     private final String value;
 
-    DatasetPropertyType(String value) {
+    PropertyType(String value) {
         this.value = value;
     }
 
@@ -25,21 +25,21 @@ public enum DatasetPropertyType {
         return this.value;
     }
 
-    public static DatasetPropertyType parse(String type) {
+    public static PropertyType parse(String type) {
         if (type == null) {
-            return DatasetPropertyType.String;
+            return PropertyType.String;
         }
         switch (type) {
             case "boolean":
-                return DatasetPropertyType.Boolean;
+                return PropertyType.Boolean;
             case "json":
-                return DatasetPropertyType.Json;
+                return PropertyType.Json;
             case "date":
-                return DatasetPropertyType.Date;
+                return PropertyType.Date;
             case "number":
-                return DatasetPropertyType.Number;
+                return PropertyType.Number;
             default: // always default to string.
-                return DatasetPropertyType.String;
+                return PropertyType.String;
         }
     }
 
@@ -80,14 +80,15 @@ public enum DatasetPropertyType {
     public static Number coerceToNumber(String value) throws IllegalArgumentException {
         try {
             return Integer.valueOf(value);
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Could not parse as Integer: " + e.getMessage());
         }
     }
+
     public static JsonElement coerceToJson(String value) throws IllegalArgumentException {
         try {
             return new Gson().fromJson(value, JsonElement.class);
-        } catch(JsonSyntaxException e) {
+        } catch (JsonSyntaxException e) {
             throw new IllegalArgumentException("Could not parse as Json: " + e.getMessage());
         }
     }

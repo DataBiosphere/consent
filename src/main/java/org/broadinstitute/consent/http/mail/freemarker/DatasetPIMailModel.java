@@ -22,6 +22,8 @@ public class DatasetPIMailModel {
         return name;
     }
 
-    public String getDatasetIdentifier() {return datasetIdentifier; }
+    public String getDatasetIdentifier() {
+        return datasetIdentifier;
+    }
 
 }

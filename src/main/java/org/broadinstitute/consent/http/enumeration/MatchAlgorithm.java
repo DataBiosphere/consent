@@ -2,7 +2,8 @@ package org.broadinstitute.consent.http.enumeration;
 
 public enum MatchAlgorithm {
     V1("v1"),
-    V2("v2");
+    V2("v2"),
+    V3("v3");
 
     String version;
 

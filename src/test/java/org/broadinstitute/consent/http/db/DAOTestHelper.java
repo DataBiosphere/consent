@@ -9,7 +9,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
@@ -77,6 +76,7 @@ public class DAOTestHelper {
     protected static ElectionDAO electionDAO;
     protected static UserRoleDAO userRoleDAO;
     protected static VoteDAO voteDAO;
+    protected static StudyDAO studyDAO;
     protected static DataAccessRequestDAO dataAccessRequestDAO;
     protected static MatchDAO matchDAO;
     protected static MailMessageDAO mailMessageDAO;
@@ -141,6 +141,7 @@ public class DAOTestHelper {
         electionDAO = jdbi.onDemand(ElectionDAO.class);
         userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
         voteDAO = jdbi.onDemand(VoteDAO.class);
+        studyDAO = jdbi.onDemand(StudyDAO.class);
         dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
         matchDAO = jdbi.onDemand(MatchDAO.class);
         mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
@@ -177,8 +178,10 @@ public class DAOTestHelper {
         testingDAO.deleteAllDatasetProperties();
         testingDAO.deleteAllDictionaryTerms();
         testingDAO.deleteAllDatasetAssociations();
-        testingDAO.deleteAllDatasetAudits();;
+        testingDAO.deleteAllDatasetAudits();
         testingDAO.deleteAllDatasets();
+        testingDAO.deleteAllStudyProperties();
+        testingDAO.deleteAllStudies();
         testingDAO.deleteAllDacUserRoles();
         testingDAO.deleteAllDacs();
         testingDAO.deleteAllLibraryCards();
@@ -204,7 +207,7 @@ public class DAOTestHelper {
      * Create a DataAccess Election with "Open" status.
      *
      * @param referenceId A DAR's reference id
-     * @param datasetId A dataset id
+     * @param datasetId   A dataset id
      * @return DataAccess Election
      */
     protected Election createDataAccessElection(String referenceId, Integer datasetId) {
@@ -282,13 +285,13 @@ public class DAOTestHelper {
         Dac dac = createDac();
         Dataset dataset = createDataset();
         Integer matchId =
-        matchDAO.insertMatch(
-            dataset.getDatasetIdentifier(),
-            dar.getReferenceId(),
-            RandomUtils.nextBoolean(),
-            false,
-            new Date(),
-            MatchAlgorithm.V2.getVersion());
+                matchDAO.insertMatch(
+                        dataset.getDatasetIdentifier(),
+                        dar.getReferenceId(),
+                        RandomUtils.nextBoolean(),
+                        false,
+                        new Date(),
+                        MatchAlgorithm.V3.getVersion());
         return matchDAO.findMatchById(matchId);
     }
 
@@ -475,7 +478,7 @@ public class DAOTestHelper {
         User user = createUserWithInstitution();
         String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
         Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             createDataAccessRequest(user.getUserId(), collection_id, darCode);
         }
         return createDataAccessRequest(user.getUserId(), collection_id, darCode);
@@ -484,7 +487,7 @@ public class DAOTestHelper {
     protected DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             createDataAccessRequest(userId, collectionId, darCode);
         }
         return createDataAccessRequest(userId, collectionId, darCode);
@@ -526,11 +529,11 @@ public class DAOTestHelper {
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
         dataAccessRequestDAO.insertDataAccessRequest(
-            collectionId,
-            referenceId,
-            userId,
-            now, now, now, now,
-            data);
+                collectionId,
+                referenceId,
+                userId,
+                now, now, now, now,
+                data);
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
 
@@ -543,13 +546,13 @@ public class DAOTestHelper {
         String referenceId = UUID.randomUUID().toString();
         Date now = new Date();
         dataAccessRequestDAO.insertDraftDataAccessRequest(
-            referenceId,
-            user.getUserId(),
-            now,
-            now,
-            now,
-            now,
-            data
+                referenceId,
+                user.getUserId(),
+                now,
+                now,
+                now,
+                now,
+                data
         );
         return dataAccessRequestDAO.findByReferenceId(referenceId);
     }
@@ -570,7 +573,7 @@ public class DAOTestHelper {
         return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
     }
 
-    protected void createConsentAndAssociationWithDatasetId(int datasetId ) {
+    protected void createConsentAndAssociationWithDatasetId(int datasetId) {
         Consent consent = createConsent();
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, datasetId);
     }
@@ -579,7 +582,7 @@ public class DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
         datasets.stream()
-                .forEach(dataset-> {
+                .forEach(dataset -> {
                     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(), user.getUserId(), darCode);
                     Election cancelled = createCancelledAccessElection(dar.getReferenceId(), dataset.getDataSetId());
                     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());

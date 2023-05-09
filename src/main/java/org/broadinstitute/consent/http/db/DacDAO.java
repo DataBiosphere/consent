@@ -40,13 +40,13 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = Dataset.class)
     @UseRowReducer(DacWithDatasetsReducer.class)
     @SqlQuery(
-        "SELECT dac.dac_id, dac.email, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
-            + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
-            + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, d.sharing_plan_document_name, ca.consent_id, c.translated_use_restriction "
-            + " FROM dac "
-            + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
-            + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
-            + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id ")
+            "SELECT dac.dac_id, dac.email, dac.name, dac.description, d.dataset_id, d.name AS dataset_name, DATE(d.create_date) AS dataset_create_date, "
+                    + " d.object_id, d.active, d.needs_approval, d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date, "
+                    + " d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document, d.sharing_plan_document_name, ca.consent_id, c.translated_use_restriction "
+                    + " FROM dac "
+                    + " LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id"
+                    + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
+                    + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id ")
     List<Dac> findAll();
 
     /**
@@ -56,10 +56,10 @@ public interface DacDAO extends Transactional<DacDAO> {
      * @return List<Dac>
      */
     @SqlQuery(
-        "SELECT distinct d.* FROM dac d "
-            + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
-            + " INNER JOIN users u ON ur.user_id = u.user_id "
-            + " WHERE u.email = :email ")
+            "SELECT distinct d.* FROM dac d "
+                    + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
+                    + " INNER JOIN users u ON ur.user_id = u.user_id "
+                    + " WHERE u.email = :email ")
     List<Dac> findDacsForEmail(@Bind("email") String email);
 
     /**
@@ -71,12 +71,12 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
-        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-            + " r.name, "
-            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
-            + " FROM users u "
-            + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL "
-            + " INNER JOIN roles r ON r.roleId = ur.role_id")
+            "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+                    + " r.name, "
+                    + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+                    + " FROM users u "
+                    + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL "
+                    + " INNER JOIN roles r ON r.roleId = ur.role_id")
     List<User> findAllDACUserMemberships();
 
     /**
@@ -87,11 +87,11 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @UseRowMapper(UserWithRolesMapper.class)
     @SqlQuery(
-        "SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id FROM users du "
-            + " INNER JOIN user_role ur ON ur.user_id = du.user_id "
-            + " INNER JOIN roles r ON r.roleId = ur.role_id "
-            + " WHERE LOWER(du.display_name) LIKE concat('%', LOWER(:term), '%') "
-            + " OR LOWER(du.email) LIKE concat('%', LOWER(:term), '%') " )
+            "SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id FROM users du "
+                    + " INNER JOIN user_role ur ON ur.user_id = du.user_id "
+                    + " INNER JOIN roles r ON r.roleId = ur.role_id "
+                    + " WHERE LOWER(du.display_name) LIKE concat('%', LOWER(:term), '%') "
+                    + " OR LOWER(du.email) LIKE concat('%', LOWER(:term), '%') ")
     Set<User> findAllDACUsersBySearchString(@Bind("term") String term);
 
     /**
@@ -106,9 +106,9 @@ public interface DacDAO extends Transactional<DacDAO> {
     /**
      * Create a Dac given name, description, and create date
      *
-     * @param name The name for the new DAC
+     * @param name        The name for the new DAC
      * @param description The description for the new DAC
-     * @param createDate The date this new DAC was created
+     * @param createDate  The date this new DAC was created
      * @return Integer
      */
     @SqlUpdate("INSERT INTO dac (name, description, create_date) VALUES (:name, :description, :createDate)")
@@ -118,10 +118,10 @@ public interface DacDAO extends Transactional<DacDAO> {
     /**
      * Create a Dac given name, description, and create date
      *
-     * @param name The name for the new DAC
+     * @param name        The name for the new DAC
      * @param description The description for the new DAC
-     * @param email The email for the new DAC
-     * @param createDate The date this new DAC was created
+     * @param email       The email for the new DAC
+     * @param createDate  The date this new DAC was created
      * @return Integer
      */
     @SqlUpdate("INSERT INTO dac (name, description, email, create_date) VALUES (:name, :description, :email, :createDate)")
@@ -158,25 +158,25 @@ public interface DacDAO extends Transactional<DacDAO> {
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
-        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-            + " FROM users u "
-            + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-            + " INNER JOIN roles r ON r.roleid = ur.role_id "
-            + " WHERE ur.dac_id = :dacId ")
+            "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+                    + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+                    + " FROM users u "
+                    + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
+                    + " INNER JOIN roles r ON r.roleid = ur.role_id "
+                    + " WHERE ur.dac_id = :dacId ")
     List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
     @RegisterBeanMapper(value = User.class, prefix = "u")
     @RegisterBeanMapper(value = UserRole.class)
     @UseRowReducer(UserWithRolesReducer.class)
     @SqlQuery(
-        "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-            + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-            + " FROM users u "
-            + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-            + " INNER JOIN roles r ON r.roleid = ur.role_id "
-            + " WHERE ur.dac_id = :dacId "
-            + " AND ur.role_id = :roleId ")
+            "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+                    + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+                    + " FROM users u "
+                    + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
+                    + " INNER JOIN roles r ON r.roleid = ur.role_id "
+                    + " WHERE ur.dac_id = :dacId "
+                    + " AND ur.role_id = :roleId ")
     List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
     @SqlUpdate("INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)")
@@ -191,18 +191,18 @@ public interface DacDAO extends Transactional<DacDAO> {
 
     @UseRowMapper(UserRoleMapper.class)
     @SqlQuery(
-        "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id = :userId")
+            "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id = :userId")
     List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
 
     @UseRowMapper(UserRoleMapper.class)
     @SqlQuery(
-        "SELECT ur.*, r.name FROM user_role ur "
-            + " INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id IN (<userIds>)")
+            "SELECT ur.*, r.name FROM user_role ur "
+                    + " INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id IN (<userIds>)")
     List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
 
     /**
      * Find the Dacs for these datasets.
-     *
+     * <p>
      * DACs -> Consents -> Consent Associations -> DataSets
      *
      * @param datasetIds The list of dataset ids
@@ -210,9 +210,9 @@ public interface DacDAO extends Transactional<DacDAO> {
      */
     @RegisterRowMapper(DacMapper.class)
     @SqlQuery(
-        "SELECT d.*, ds.dataset_id FROM dac d "
-            + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
-            + " WHERE ds.dataset_id IN (<datasetIds>) ")
+            "SELECT d.*, ds.dataset_id FROM dac d "
+                    + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
+                    + " WHERE ds.dataset_id IN (<datasetIds>) ")
     Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

@@ -36,12 +36,12 @@ public class AcknowledgementServiceTest {
         openMocks(this);
     }
 
-    private void initService(){
+    private void initService() {
         acknowledgementService = new AcknowledgementService(acknowledgementDAO);
     }
 
     @Test
-    public void test_noAcknowledgementsForUser(){
+    public void test_noAcknowledgementsForUser() {
         User user = new User(1, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
@@ -52,7 +52,7 @@ public class AcknowledgementServiceTest {
     }
 
     @Test
-    public void test_makeAndDeleteAcknowledgementForUser(){
+    public void test_makeAndDeleteAcknowledgementForUser() {
         User user = new User(2, "test@domain.com", "Test User", new Date(),
                 List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
         String key = "key2";
@@ -70,7 +70,7 @@ public class AcknowledgementServiceTest {
         doNothing().when(acknowledgementDAO).deleteAcknowledgement(anyString(), anyInt());
         initService();
 
-        Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys,user);
+        Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys, user);
         assertEquals(1, makeResponse.size());
         assertTrue(makeResponse.containsKey(key));
         assertEquals(key2Acknowledgement, makeResponse.get(key));
@@ -80,7 +80,7 @@ public class AcknowledgementServiceTest {
         assertTrue(lookupResponse.containsKey(key));
         assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
-        Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user,key);
+        Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user, key);
         assertEquals(singleLookupResponse, key2Acknowledgement);
 
         acknowledgementService.deleteAcknowledgementForUserByKey(user, key);

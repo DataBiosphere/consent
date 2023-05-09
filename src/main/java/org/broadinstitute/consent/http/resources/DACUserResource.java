@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
 
 import javax.annotation.security.RolesAllowed;
@@ -52,7 +52,7 @@ public class DACUserResource extends Resource {
      *
      * @param json Raw json string from client
      * @return Optional value of the "emailPreference" boolean value set in either the legacy json
-     *         or the new DacUser model.
+     * or the new DacUser model.
      */
     private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
         String memberName = "emailPreference";

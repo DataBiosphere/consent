@@ -1,22 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -27,6 +16,18 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class TDRResourceTest {
 
@@ -53,11 +54,11 @@ public class TDRResourceTest {
     }
 
     private void initResource() {
-      try {
-        resource = new TDRResource(tdrService, datasetService, userService, darService);
-      } catch (Exception e) {
-        fail("Initialization Exception: " + e.getMessage());
-      }
+        try {
+            resource = new TDRResource(tdrService, datasetService, userService, darService);
+        } catch (Exception e) {
+            fail("Initialization Exception: " + e.getMessage());
+        }
     }
 
     @Test
@@ -142,7 +143,7 @@ public class TDRResourceTest {
         DataAccessRequest newDar = generateDataAccessRequest();
 
         when(userService.findOrCreateUser(any())).thenReturn(user);
-        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1,d2));
+        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
         when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
 
         initResource();

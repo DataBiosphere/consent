@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.DatasetPropertyType;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -114,7 +114,7 @@ public class DatasetServiceTest {
     @Test
     public void testDescribeDataSetsByReceiveOrder() {
         when(datasetDAO.findDatasetsByReceiveOrder(Collections.singletonList(1)))
-            .thenReturn(new HashSet<>(getDatasetDTOs()));
+                .thenReturn(new HashSet<>(getDatasetDTOs()));
         initService();
 
         Collection<DatasetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(Collections.singletonList(1));
@@ -161,7 +161,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
         initService();
 
-        datasetService.findDatasetsByDacIds(List.of(1,2,3));
+        datasetService.findDatasetsByDacIds(List.of(1, 2, 3));
     }
 
     @Test(expected = BadRequestException.class)
@@ -181,7 +181,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
         initService();
 
-        datasetService.findDatasetListByDacIds(List.of(1,2,3));
+        datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
     }
 
     @Test(expected = BadRequestException.class)
@@ -197,7 +197,7 @@ public class DatasetServiceTest {
     }
 
     @Test
-    public void testUpdateNeedsReviewDataSets(){
+    public void testUpdateNeedsReviewDataSets() {
         Integer dataSetId = 1;
         when(datasetDAO.findDatasetById(dataSetId))
                 .thenReturn(getDatasets().get(0));
@@ -226,7 +226,7 @@ public class DatasetServiceTest {
     @Test
     public void testGetDatasetByName() {
         when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
-            .thenReturn(getDatasets().get(0));
+                .thenReturn(getDatasets().get(0));
         initService();
 
         Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
@@ -250,7 +250,7 @@ public class DatasetServiceTest {
     @Test
     public void testFindDatasetById() {
         when(datasetDAO.findDatasetById(getDatasets().get(0).getDataSetId()))
-            .thenReturn(getDatasets().get(0));
+                .thenReturn(getDatasets().get(0));
         initService();
 
         Dataset dataset = datasetService.findDatasetById(1);
@@ -265,7 +265,7 @@ public class DatasetServiceTest {
         initService();
 
         List<DatasetProperty> properties = datasetService
-            .processDatasetProperties(1, getDatasetPropertiesDTO());
+                .processDatasetProperties(1, getDatasetPropertiesDTO());
 
         assertEquals(properties.size(), getDatasetPropertiesDTO().size());
     }
@@ -276,8 +276,8 @@ public class DatasetServiceTest {
         initService();
 
         List<DatasetPropertyDTO> input = getDatasetPropertiesDTO().stream()
-            .peek(p -> p.setPropertyKey("Invalid Key"))
-            .collect(Collectors.toList());
+                .peek(p -> p.setPropertyKey("Invalid Key"))
+                .collect(Collectors.toList());
 
         List<DatasetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
@@ -356,7 +356,7 @@ public class DatasetServiceTest {
         dataSetDTO.setDatasetName(dataset.getName());
         Set<DatasetProperty> datasetProps = getDatasetProperties();
         List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-            new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
+                new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
         ).collect(Collectors.toList());
         dataSetDTO.setProperties(dtoProps);
         dataset.setProperties(datasetProps);
@@ -392,14 +392,14 @@ public class DatasetServiceTest {
         initService();
         User u = new User();
         Stream.of(
-            UserRoles.CHAIRPERSON,
-            UserRoles.MEMBER,
-            UserRoles.RESEARCHER,
-            UserRoles.SIGNINGOFFICIAL,
-            UserRoles.DATAOWNER,
-            UserRoles.DATASUBMITTER,
-            UserRoles.ITDIRECTOR,
-            UserRoles.ALUMNI
+                UserRoles.CHAIRPERSON,
+                UserRoles.MEMBER,
+                UserRoles.RESEARCHER,
+                UserRoles.SIGNINGOFFICIAL,
+                UserRoles.DATAOWNER,
+                UserRoles.DATASUBMITTER,
+                UserRoles.ITDIRECTOR,
+                UserRoles.ALUMNI
         ).forEach(r -> {
             u.addRole(new UserRole(r.getRoleId(), r.getRoleName()));
         });
@@ -560,7 +560,7 @@ public class DatasetServiceTest {
         DatasetProperty ds1PI = new DatasetProperty();
         ds1PI.setPropertyName("Principal Investigator(PI)");
         ds1PI.setPropertyValue("John Doe");
-        ds1PI.setPropertyType(DatasetPropertyType.String);
+        ds1PI.setPropertyType(PropertyType.String);
         ds1.setProperties(Set.of(ds1PI));
 
         Dataset ds2 = new Dataset();
@@ -569,7 +569,7 @@ public class DatasetServiceTest {
         DatasetProperty ds2PI = new DatasetProperty();
         ds2PI.setPropertyName("Principal Investigator(PI)");
         ds2PI.setPropertyValue("Sally Doe");
-        ds2PI.setPropertyType(DatasetPropertyType.String);
+        ds2PI.setPropertyType(PropertyType.String);
         ds2.setProperties(Set.of(ds2PI));
 
         User u = new User();
@@ -836,48 +836,48 @@ public class DatasetServiceTest {
 
     private List<Dataset> getDatasets() {
         return IntStream.range(1, 3)
-            .mapToObj(i -> {
-                Dataset dataset = new Dataset();
-                dataset.setDataSetId(i);
-                dataset.setName("Test Dataset " + i);
-                dataset.setConsentName("Test Consent " + i);
-                dataset.setActive(true);
-                dataset.setNeedsApproval(false);
-                dataset.setProperties(Collections.emptySet());
-                return dataset;
-            }).collect(Collectors.toList());
+                .mapToObj(i -> {
+                    Dataset dataset = new Dataset();
+                    dataset.setDataSetId(i);
+                    dataset.setName("Test Dataset " + i);
+                    dataset.setConsentName("Test Consent " + i);
+                    dataset.setActive(true);
+                    dataset.setNeedsApproval(false);
+                    dataset.setProperties(Collections.emptySet());
+                    return dataset;
+                }).collect(Collectors.toList());
     }
 
     private List<DatasetDTO> getDatasetDTOs() {
         return IntStream.range(1, 3)
-              .mapToObj(i -> {
-                  DatasetDTO dataset = new DatasetDTO();
-                  dataset.setDataSetId(i);
-                  DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name", "Test Dataset " + i);
-                  dataset.setActive(true);
-                  dataset.setNeedsApproval(false);
-                  dataset.setProperties(Collections.singletonList(nameProperty));
-                  return dataset;
-              }).collect(Collectors.toList());
+                .mapToObj(i -> {
+                    DatasetDTO dataset = new DatasetDTO();
+                    dataset.setDataSetId(i);
+                    DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name", "Test Dataset " + i);
+                    dataset.setActive(true);
+                    dataset.setNeedsApproval(false);
+                    dataset.setProperties(Collections.singletonList(nameProperty));
+                    return dataset;
+                }).collect(Collectors.toList());
     }
 
     private Set<DatasetProperty> getDatasetProperties() {
         return IntStream.range(1, 11)
-            .mapToObj(i ->
-                new DatasetProperty(1,
-                        i,
-                        "Test Value" + RandomStringUtils.randomAlphanumeric(25),
-                        DatasetPropertyType.String,
-                        new Date())
-            ).collect(Collectors.toSet());
+                .mapToObj(i ->
+                        new DatasetProperty(1,
+                                i,
+                                "Test Value" + RandomStringUtils.randomAlphanumeric(25),
+                                PropertyType.String,
+                                new Date())
+                ).collect(Collectors.toSet());
     }
 
     private List<DatasetPropertyDTO> getDatasetPropertiesDTO() {
         List<Dictionary> dictionaries = getDictionaries();
         return dictionaries.stream()
-            .map(d ->
-                new DatasetPropertyDTO(d.getKey(), "Test Value")
-            ).collect(Collectors.toList());
+                .map(d ->
+                        new DatasetPropertyDTO(d.getKey(), "Test Value")
+                ).collect(Collectors.toList());
     }
 
     private DatasetDTO getDatasetDTO() {
@@ -895,9 +895,9 @@ public class DatasetServiceTest {
 
     private List<Dictionary> getDictionaries() {
         return IntStream.range(1, 11)
-            .mapToObj(i ->
-                new Dictionary(i, String.valueOf(i), true, i, i)
-            ).collect(Collectors.toList());
+                .mapToObj(i ->
+                        new Dictionary(i, String.valueOf(i), true, i, i)
+                ).collect(Collectors.toList());
     }
 
 }

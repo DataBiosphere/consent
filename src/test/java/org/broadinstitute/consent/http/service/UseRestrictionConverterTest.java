@@ -1,14 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -21,6 +12,16 @@ import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
 public class UseRestrictionConverterTest implements WithMockServer {
 
@@ -46,28 +47,28 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
     private void mockDataUseTranslateSuccess() {
         client
-            .when(request().withMethod("POST").withPath("/translate"))
-            .respond(
-                response()
-                    .withStatusCode(200)
-                    .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                    .withBody(
-                        "Samples are restricted for use under the following conditions:\n"
-                            + "Data is limited for health/medical/biomedical research. [HMB]\n"
-                            + "Commercial use is not prohibited.\n"
-                            + "Data use for methods development research irrespective of the specified data use limitations is not prohibited.\n"
-                            + "Restrictions for use as a control set for diseases other than those defined were not specified."));
+                .when(request().withMethod("POST").withPath("/translate"))
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                                .withBody(
+                                        "Samples are restricted for use under the following conditions:\n"
+                                                + "Data is limited for health/medical/biomedical research. [HMB]\n"
+                                                + "Commercial use is not prohibited.\n"
+                                                + "Data use for methods development research irrespective of the specified data use limitations is not prohibited.\n"
+                                                + "Restrictions for use as a control set for diseases other than those defined were not specified."));
     }
 
     private void mockDataUseTranslateFailure() {
         client
-            .when(request().withMethod("POST").withPath("/translate"))
-            .respond(
-                response()
-                        .withStatusCode(500)
-                        .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                        .withBody("Exception")
-            );
+                .when(request().withMethod("POST").withPath("/translate"))
+                .respond(
+                        response()
+                                .withStatusCode(500)
+                                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                                .withBody("Exception")
+                );
     }
 
     public ServicesConfiguration config() {
@@ -123,25 +124,25 @@ public class UseRestrictionConverterTest implements WithMockServer {
     @Test
     public void testParseDataUse() {
         String json = "{ " +
-            "\"methods\":true, " +
-            "\"population\":true, " +
-            "\"controls\":true, " +
-            "\"ontologies\":[  " +
-            "      {  " +
-            "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\"," +
-            "         \"label\":\"linitis-plastica\"," +
-            "         \"definition\":null," +
-            "         \"synonyms\":[  " +
-            "            \"Linitis plastica (morphologic abnormality)\"," +
-            "            \"Leather-bottle stomach\"" +
-            "         ]" +
-            "      }" +
-            "]," +
-            "\"forProfit\":true," +
-            "\"onegender\":true," +
-            "\"pediatric\":true," +
-            "\"gender\":\"F\"" +
-        "}";
+                "\"methods\":true, " +
+                "\"population\":true, " +
+                "\"controls\":true, " +
+                "\"ontologies\":[  " +
+                "      {  " +
+                "         \"id\":\"http://purl.obolibrary.org/obo/DOID_4023\"," +
+                "         \"label\":\"linitis-plastica\"," +
+                "         \"definition\":null," +
+                "         \"synonyms\":[  " +
+                "            \"Linitis plastica (morphologic abnormality)\"," +
+                "            \"Leather-bottle stomach\"" +
+                "         ]" +
+                "      }" +
+                "]," +
+                "\"forProfit\":true," +
+                "\"onegender\":true," +
+                "\"pediatric\":true," +
+                "\"gender\":\"F\"" +
+                "}";
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
@@ -162,9 +163,9 @@ public class UseRestrictionConverterTest implements WithMockServer {
     @Test
     public void testParseDataUseInvalidOntologiesCase1() {
         String json = "{ " +
-            "\"hmb\":true, " +
-            "\"ontologies\":[{},{},{}]" +
-            "}";
+                "\"hmb\":true, " +
+                "\"ontologies\":[{},{},{}]" +
+                "}";
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
@@ -179,8 +180,8 @@ public class UseRestrictionConverterTest implements WithMockServer {
     @Test
     public void testParseDataUseInvalidOntologiesCase2() {
         String json = "{ " +
-            "\"ontologies\":[null]" +
-            "}";
+                "\"ontologies\":[null]" +
+                "}";
 
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());

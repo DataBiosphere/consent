@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
-import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
@@ -17,33 +15,36 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+import java.util.Date;
+import java.util.List;
+
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlQuery(
-        "SELECT election_id " +
-            "FROM election " +
-            "WHERE reference_id = :referenceId " +
-                "AND LOWER(status) = 'open'")
+            "SELECT election_id " +
+                    "FROM election " +
+                    "WHERE reference_id = :referenceId " +
+                    "AND LOWER(status) = 'open'")
     Integer getOpenElectionIdByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlQuery(
-        "SELECT DISTINCT election_id " +
-            "FROM election " +
-            "WHERE reference_id IN (<referenceIds>)")
+            "SELECT DISTINCT election_id " +
+                    "FROM election " +
+                    "WHERE reference_id IN (<referenceIds>)")
     List<Integer> getElectionIdsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery(
-        "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            " e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-            "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-            "WHERE reference_id = :referenceId")
+            "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    " e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
+                    "WHERE reference_id = :referenceId")
     List<Election> findElectionsWithFinalVoteByReferenceId(@Bind("referenceId") String referenceId);
 
     @SqlUpdate("INSERT INTO election " +
-        "(election_type, status, create_date, reference_id, dataset_id) VALUES " +
-        "(:electionType, :status, :createDate,:referenceId, :datasetId)")
+            "(election_type, status, create_date, reference_id, dataset_id) VALUES " +
+            "(:electionType, :status, :createDate,:referenceId, :datasetId)")
     @GetGeneratedKeys
     Integer insertElection(@Bind("electionType") String electionType,
                            @Bind("status") String status,
@@ -67,28 +68,28 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                               @Bind("status") String status);
 
     @SqlQuery(
-        "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-            "FROM election e " +
-            "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-            "WHERE e.reference_id = :referenceId " +
-                "AND LOWER(e.election_type) = LOWER(:type) " +
-            "ORDER BY create_date DESC LIMIT 1")
+            "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
+                    "WHERE e.reference_id = :referenceId " +
+                    "AND LOWER(e.election_type) = LOWER(:type) " +
+                    "ORDER BY create_date DESC LIMIT 1")
     Election getElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery("SELECT DISTINCT "
-          + "    e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, "
-          + "    e.reference_id, v.rationale final_rationale, v.createdate final_vote_date, "
-          + "    e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, "
-          + "    e.archived, e.version "
-          + "FROM election e "
-          + "INNER JOIN vote v ON v.electionid = e.election_id AND "
-          + "    CASE "
-          + "        WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final' "
-          + "        WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
-          + "        ELSE 'chairperson' "
-          + "    END = LOWER(v.type)"
-          + "WHERE e.election_id = :electionId LIMIT 1 ")
+            + "    e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, "
+            + "    e.reference_id, v.rationale final_rationale, v.createdate final_vote_date, "
+            + "    e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, "
+            + "    e.archived, e.version "
+            + "FROM election e "
+            + "INNER JOIN vote v ON v.electionid = e.election_id AND "
+            + "    CASE "
+            + "        WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final' "
+            + "        WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
+            + "        ELSE 'chairperson' "
+            + "    END = LOWER(v.type)"
+            + "WHERE e.election_id = :electionId LIMIT 1 ")
     Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
     @SqlQuery("SELECT e.* FROM election e INNER JOIN vote v ON v.electionId = e.election_id WHERE v.voteId = :voteId")
@@ -101,73 +102,73 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     // to duplicate rows.
     // See https://broadworkbench.atlassian.net/browse/DUOS-1526
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-        "WHERE LOWER(e.election_type) = LOWER(:type) " +
-            "AND LOWER(e.status) = LOWER(:status) " +
-            "AND v.vote IS NOT NULL " +
-        "ORDER BY create_date ASC")
+            "SELECT DISTINCT " +
+                    "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
+                    "WHERE LOWER(e.election_type) = LOWER(:type) " +
+                    "AND LOWER(e.status) = LOWER(:status) " +
+                    "AND v.vote IS NOT NULL " +
+                    "ORDER BY create_date ASC")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @Bind("status") String status);
 
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-        "INNER JOIN " +
-            "(SELECT reference_id, MAX(create_date) max_date " +
-            "FROM election e " +
-            "WHERE e.election_type = :type " +
-            "GROUP BY reference_id) election_view " +
-                "ON election_view.max_date = e.create_date " +
-                "AND election_view.reference_id = e.reference_id " +
-                "AND LOWER(e.election_type) = LOWER(:type) " +
-        "ORDER BY create_date ASC")
+            "SELECT DISTINCT " +
+                    "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e " +
+                    "WHERE e.election_type = :type " +
+                    "GROUP BY reference_id) election_view " +
+                    "ON election_view.max_date = e.create_date " +
+                    "AND election_view.reference_id = e.reference_id " +
+                    "AND LOWER(e.election_type) = LOWER(:type) " +
+                    "ORDER BY create_date ASC")
     List<Election> findLastElectionsWithFinalVoteByType(@Bind("type") String type);
 
     @SqlQuery(
-        "SELECT DISTINCT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, " +
-            "   v.rationale final_rationale, v.createdate final_vote_date, " +
-            "   e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-            " FROM election e " +
-            " INNER JOIN vote v ON v.electionid = e.election_id " +
-            " INNER JOIN " +
-            "   (SELECT e2.reference_id, MAX(e2.create_date) max_date " +
-            "    FROM election e2 " +
-            "    WHERE LOWER(e2.election_type) = 'dataaccess' " +
-            "    AND LOWER(e2.status) = LOWER(:status) " +
-            "    GROUP BY e2.reference_id) election_view " +
-            "       ON election_view.max_date = e.create_date " +
-            "       AND election_view.reference_id = e.reference_id" +
-            " WHERE LOWER(e.election_type) = 'dataaccess' " +
-            " AND e.final_access_vote IS true " +
-            " AND LOWER(v.type) = 'final' " +
-            " AND LOWER(e.status) = LOWER(:status) " +
-            " ORDER BY e.create_date ASC ")
+            "SELECT DISTINCT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, " +
+                    "   v.rationale final_rationale, v.createdate final_vote_date, " +
+                    "   e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    " FROM election e " +
+                    " INNER JOIN vote v ON v.electionid = e.election_id " +
+                    " INNER JOIN " +
+                    "   (SELECT e2.reference_id, MAX(e2.create_date) max_date " +
+                    "    FROM election e2 " +
+                    "    WHERE LOWER(e2.election_type) = 'dataaccess' " +
+                    "    AND LOWER(e2.status) = LOWER(:status) " +
+                    "    GROUP BY e2.reference_id) election_view " +
+                    "       ON election_view.max_date = e.create_date " +
+                    "       AND election_view.reference_id = e.reference_id" +
+                    " WHERE LOWER(e.election_type) = 'dataaccess' " +
+                    " AND e.final_access_vote IS true " +
+                    " AND LOWER(v.type) = 'final' " +
+                    " AND LOWER(e.status) = LOWER(:status) " +
+                    " ORDER BY e.create_date ASC ")
     List<Election> findLastDataAccessElectionsWithFinalVoteByStatus(@Bind("status") String status);
 
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery(
-        "SELECT e.* FROM election e " +
-        "INNER JOIN data_access_request dar ON dar.reference_id = e.reference_id " +
-        "INNER JOIN users u ON u.user_id = dar.user_id " +
-        "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
-        "WHERE e.election_id IN (<electionIds>) ")
-    List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List <Integer> electionIds);
+            "SELECT e.* FROM election e " +
+                    "INNER JOIN data_access_request dar ON dar.reference_id = e.reference_id " +
+                    "INNER JOIN users u ON u.user_id = dar.user_id " +
+                    "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
+                    "WHERE e.election_id IN (<electionIds>) ")
+    List<Election> findElectionsWithCardHoldingUsersByElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
     @SqlQuery(
-        "SELECT count(*) " +
-            "FROM election e " +
-            "INNER JOIN vote v " +
-                "ON v.electionId = e.election_id " +
-                "AND LOWER(v.type) = 'final' " +
-            "WHERE LOWER(e.election_type) = LOWER(:type) " +
-            "AND LOWER(e.status) = LOWER(:status) " +
-            "AND v.vote = :finalVote ")
+            "SELECT count(*) " +
+                    "FROM election e " +
+                    "INNER JOIN vote v " +
+                    "ON v.electionId = e.election_id " +
+                    "AND LOWER(v.type) = 'final' " +
+                    "WHERE LOWER(e.election_type) = LOWER(:type) " +
+                    "AND LOWER(e.status) = LOWER(:status) " +
+                    "AND v.vote = :finalVote ")
     Integer findTotalElectionsByTypeStatusAndVote(@Bind("type") String type, @Bind("status") String status, @Bind("finalVote") Boolean finalVote);
 
     @UseRowMapper(SimpleElectionMapper.class)
@@ -180,59 +181,59 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @UseRowMapper(SimpleElectionMapper.class)
     @SqlQuery("SELECT * FROM election e " +
-        "INNER JOIN vote v ON v.electionid = e.election_id " +
-        "WHERE LOWER(e.election_type) = :electionType " +
-        "AND v.voteid IN (<voteIds>)")
-	List<Election> findElectionsByVoteIdsAndType(
-	    @BindList("voteIds") List<Integer> voteIds,
-	    @Bind("electionType") String electionType
-	);
+            "INNER JOIN vote v ON v.electionid = e.election_id " +
+            "WHERE LOWER(e.election_type) = :electionType " +
+            "AND v.voteid IN (<voteIds>)")
+    List<Election> findElectionsByVoteIdsAndType(
+            @BindList("voteIds") List<Integer> voteIds,
+            @Bind("electionType") String electionType
+    );
 
 
     @SqlQuery(
-      "SELECT * FROM ( "
-        + "SELECT e.*, v.vote final_vote, "
-        + "     CASE "
-        + "     WHEN v.updatedate IS NULL THEN v.createdate "
-        + "     ELSE v.updatedate "
-        + "     END as final_vote_date, "
-        + " v.rationale final_rationale, MAX(e.election_id) "
-        + " OVER (PARTITION BY e.reference_id, e.election_type) AS latest "
-        + " FROM election e "
-        + " LEFT JOIN vote v ON e.election_id = v.electionid AND "
-        + "     CASE "
-        + "     WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'"
-        + "     WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
-        + "     ELSE 'chairperson' "
-        + "     END = LOWER(v.type) "
-        + " WHERE e.reference_id IN (<referenceIds>) "
-        + ") AS results "
-        + " WHERE results.latest = results.election_id "
-        + " ORDER BY results.election_id DESC, "
-        + "     CASE "
-        + "     WHEN results.final_vote_date IS NULL THEN results.last_update "
-        + "     ELSE results.final_vote_date "
-        + "     END DESC"
+            "SELECT * FROM ( "
+                    + "SELECT e.*, v.vote final_vote, "
+                    + "     CASE "
+                    + "     WHEN v.updatedate IS NULL THEN v.createdate "
+                    + "     ELSE v.updatedate "
+                    + "     END as final_vote_date, "
+                    + " v.rationale final_rationale, MAX(e.election_id) "
+                    + " OVER (PARTITION BY e.reference_id, e.election_type) AS latest "
+                    + " FROM election e "
+                    + " LEFT JOIN vote v ON e.election_id = v.electionid AND "
+                    + "     CASE "
+                    + "     WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'"
+                    + "     WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
+                    + "     ELSE 'chairperson' "
+                    + "     END = LOWER(v.type) "
+                    + " WHERE e.reference_id IN (<referenceIds>) "
+                    + ") AS results "
+                    + " WHERE results.latest = results.election_id "
+                    + " ORDER BY results.election_id DESC, "
+                    + "     CASE "
+                    + "     WHEN results.final_vote_date IS NULL THEN results.last_update "
+                    + "     ELSE results.final_vote_date "
+                    + "     END DESC"
     )
     @UseRowMapper(ElectionMapper.class)
     List<Election> findLastElectionsByReferenceIds(
-      @BindList("referenceIds") List<String> referenceIds);
+            @BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery("SELECT DISTINCT e.* " +
-        "FROM election e " +
-        "WHERE LOWER(e.status) = 'open' " +
-        "AND e.reference_id IN (<referenceIds>) ")
+            "FROM election e " +
+            "WHERE LOWER(e.status) = 'open' " +
+            "AND e.reference_id IN (<referenceIds>) ")
     @UseRowMapper(ElectionMapper.class)
     List<Election> findOpenElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
     @SqlQuery(
-        "SELECT DISTINCT e.* " +
-            "FROM election e " +
-            "INNER JOIN " +
-                "(SELECT reference_id, MAX(create_date) max_date " +
-                "FROM election e " +
-                "WHERE e.election_type = :type " +
-                "GROUP BY reference_id) election_view " +
+            "SELECT DISTINCT e.* " +
+                    "FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e " +
+                    "WHERE e.election_type = :type " +
+                    "GROUP BY reference_id) election_view " +
                     "ON election_view.max_date = e.create_date " +
                     "AND election_view.reference_id = e.reference_id " +
                     "AND e.reference_id = :referenceId ")
@@ -241,13 +242,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     // TODO: Update for datasetid distinction. Method can return a list, so refactor usages.
     @SqlQuery(
-        "SELECT * " +
-            "FROM election e " +
-            "INNER JOIN " +
-                "(SELECT reference_id, MAX(create_date) max_date " +
-                "FROM election e " +
-                "WHERE LOWER(e.status) = LOWER(:status) " +
-                "GROUP BY reference_id) election_view " +
+            "SELECT * " +
+                    "FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e " +
+                    "WHERE LOWER(e.status) = LOWER(:status) " +
+                    "GROUP BY reference_id) election_view " +
                     "ON election_view.max_date = e.create_date " +
                     "AND election_view.reference_id = e.reference_id " +
                     "AND e.reference_id = :referenceId ")
@@ -255,44 +256,44 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Election findLastElectionByReferenceIdAndStatus(@Bind("referenceId") String referenceIds, @Bind("status") String status);
 
     @SqlQuery(
-        "SELECT distinct * " +
-            "FROM election e " +
-            "INNER JOIN " +
-                "(SELECT reference_id, MAX(create_date) max_date " +
-                "FROM election e WHERE LOWER(e.election_type) = LOWER(:type) " +
-                "GROUP BY reference_id) election_view " +
+            "SELECT distinct * " +
+                    "FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e WHERE LOWER(e.election_type) = LOWER(:type) " +
+                    "GROUP BY reference_id) election_view " +
                     "ON election_view.max_date = e.create_date " +
                     "AND election_view.reference_id = e.reference_id " +
-            "WHERE e.reference_id in (<referenceIds>) " +
-            "AND LOWER(e.election_type) = LOWER(:type)")
+                    "WHERE e.reference_id in (<referenceIds>) " +
+                    "AND LOWER(e.election_type) = LOWER(:type)")
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findLastElectionsByReferenceIdsAndType(@BindList("referenceIds") List<String> referenceIds, @Bind("type") String type);
 
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, " +
-            "v.createDate final_vote_date, e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN " +
-            "(SELECT reference_id, MAX(create_date) max_date " +
-            "FROM election e " +
-            "WHERE LOWER(e.status) = LOWER(:status) " +
-            "GROUP BY reference_id) election_view " +
-                "ON election_view.max_date = e.create_date " +
-                "AND election_view.reference_id = e.reference_id " +
-                "AND e.reference_id IN (<referenceIds>) " +
-        "LEFT JOIN vote v " +
-            "ON v.electionId = e.election_id " +
-            "AND LOWER(v.type) = 'final' ")
-     List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
+            "SELECT DISTINCT " +
+                    "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, " +
+                    "v.createDate final_vote_date, e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e " +
+                    "WHERE LOWER(e.status) = LOWER(:status) " +
+                    "GROUP BY reference_id) election_view " +
+                    "ON election_view.max_date = e.create_date " +
+                    "AND election_view.reference_id = e.reference_id " +
+                    "AND e.reference_id IN (<referenceIds>) " +
+                    "LEFT JOIN vote v " +
+                    "ON v.electionId = e.election_id " +
+                    "AND LOWER(v.type) = 'final' ")
+    List<Election> findLastElectionsWithFinalVoteByReferenceIdsTypeAndStatus(@BindList("referenceIds") List<String> referenceIds, @Bind("status") String status);
 
     @SqlQuery(
-        "SELECT * FROM election e " +
-            "INNER JOIN " +
-                "(SELECT reference_id, MAX(create_date) max_date " +
-                "FROM election e " +
-                "WHERE LOWER(e.election_type) = LOWER(:type) " +
-                "GROUP BY reference_id) election_view " +
+            "SELECT * FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, MAX(create_date) max_date " +
+                    "FROM election e " +
+                    "WHERE LOWER(e.election_type) = LOWER(:type) " +
+                    "GROUP BY reference_id) election_view " +
                     "ON election_view.max_date = e.create_date " +
                     "AND election_view.reference_id = e.reference_id " +
                     "AND e.reference_id = :referenceId ")
@@ -300,27 +301,27 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Election findLastElectionByReferenceIdAndType(@Bind("referenceId") String referenceId, @Bind("type") String type);
 
     @SqlQuery(
-        "SELECT e.* FROM election e " +
-        "INNER JOIN " +
-            "(SELECT reference_id, dataset_id, MAX(create_date) max_date " +
-            "FROM election " +
-            "WHERE LOWER(election_type) = lower(:type) AND dataset_id = :datasetId " +
-            "GROUP BY reference_id, dataset_id) election_view " +
-                "ON election_view.max_date = e.create_date " +
-                "AND election_view.reference_id = e.reference_id " +
-                "AND election_view.dataset_id = e.dataset_id " +
-        "WHERE LOWER(e.election_type) = lower(:type) " +
-        "AND e.reference_id = :referenceId " +
-        "AND e.dataset_id = :datasetId ")
+            "SELECT e.* FROM election e " +
+                    "INNER JOIN " +
+                    "(SELECT reference_id, dataset_id, MAX(create_date) max_date " +
+                    "FROM election " +
+                    "WHERE LOWER(election_type) = lower(:type) AND dataset_id = :datasetId " +
+                    "GROUP BY reference_id, dataset_id) election_view " +
+                    "ON election_view.max_date = e.create_date " +
+                    "AND election_view.reference_id = e.reference_id " +
+                    "AND election_view.dataset_id = e.dataset_id " +
+                    "WHERE LOWER(e.election_type) = lower(:type) " +
+                    "AND e.reference_id = :referenceId " +
+                    "AND e.dataset_id = :datasetId ")
     @UseRowMapper(SimpleElectionMapper.class)
     Election findLastElectionByReferenceIdDatasetIdAndType(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId, @Bind("type") String type);
 
     @SqlQuery("""
-        SELECT e.*
-        FROM election e
-        WHERE e.reference_id = :referenceId
-        AND e.dataset_id = :datasetId
-        """)
+            SELECT e.*
+            FROM election e
+            WHERE e.reference_id = :referenceId
+            AND e.dataset_id = :datasetId
+            """)
     @UseRowMapper(SimpleElectionMapper.class)
     List<Election> findElectionsByReferenceIdAndDatasetId(@Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
@@ -333,7 +334,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
     @SqlUpdate("INSERT INTO accesselection_consentelection (access_election_id, consent_election_id ) VALUES (:electionAccessId, :electionConsentId)")
     void insertAccessAndConsentElection(@Bind("electionAccessId") Integer electionAccessId,
-                        @Bind("electionConsentId") Integer electionConsentId);
+                                        @Bind("electionConsentId") Integer electionConsentId);
 
     @SqlUpdate("DELETE FROM access_rp WHERE election_access_id = :electionAccessId")
     void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
@@ -348,16 +349,16 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
 
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN vote v " +
-            "ON v.electionId = e.election_id " +
-            "AND LOWER(v.type) = 'chairperson' " +
-        "WHERE LOWER(e.election_type) = LOWER(:type) " +
-            "AND LOWER(e.status) IN (<status>) " +
-         "ORDER BY create_date ASC")
+            "SELECT DISTINCT " +
+                    "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v " +
+                    "ON v.electionId = e.election_id " +
+                    "AND LOWER(v.type) = 'chairperson' " +
+                    "WHERE LOWER(e.election_type) = LOWER(:type) " +
+                    "AND LOWER(e.status) IN (<status>) " +
+                    "ORDER BY create_date ASC")
     List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type, @BindList("status") List<String> status);
 
     @UseRowMapper(SimpleElectionMapper.class)
@@ -378,35 +379,35 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
     void archiveElectionById(@Bind("electionId") Integer electionId, @Bind("lastUpdate") Date lastUpdate);
 
     @SqlUpdate("""
-        UPDATE election
-        SET archived = true, last_update = :lastUpdate
-        WHERE election_id IN (<electionIds>)
-        """)
+            UPDATE election
+            SET archived = true, last_update = :lastUpdate
+            WHERE election_id IN (<electionIds>)
+            """)
     void archiveElectionByIds(@BindList("electionIds") List<Integer> electionIds, @Bind("lastUpdate") Date lastUpdate);
 
     @SqlQuery(
-        "SELECT DISTINCT " +
-            "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
-            "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
-        "FROM election e " +
-        "INNER JOIN vote v " +
-            "ON v.electionId = e.election_id " +
-            "AND LOWER(v.type) = 'final' " +
-        "WHERE v.vote = :isApproved " +
-            "AND LOWER(e.election_type) = 'dataaccess' " +
-        "ORDER BY create_date ASC")
+            "SELECT DISTINCT " +
+                    "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, " +
+                    "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version " +
+                    "FROM election e " +
+                    "INNER JOIN vote v " +
+                    "ON v.electionId = e.election_id " +
+                    "AND LOWER(v.type) = 'final' " +
+                    "WHERE v.vote = :isApproved " +
+                    "AND LOWER(e.election_type) = 'dataaccess' " +
+                    "ORDER BY create_date ASC")
     List<Election> findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved);
 
     @SqlQuery(
-        "SELECT MAX(v.createDate) create_date " +
-            "FROM election e " +
-            "INNER JOIN vote v " +
-                "ON v.electionId = e.election_id " +
-                "AND LOWER(v.type) = 'final' " +
-            "WHERE v.vote = true " +
-                "AND LOWER(e.election_type) = 'dataaccess' " +
-                "AND reference_id = :referenceId " +
-            "GROUP BY e.create_date")
+            "SELECT MAX(v.createDate) create_date " +
+                    "FROM election e " +
+                    "INNER JOIN vote v " +
+                    "ON v.electionId = e.election_id " +
+                    "AND LOWER(v.type) = 'final' " +
+                    "WHERE v.vote = true " +
+                    "AND LOWER(e.election_type) = 'dataaccess' " +
+                    "AND reference_id = :referenceId " +
+                    "GROUP BY e.create_date")
     @UseRowMapper(DateMapper.class)
     Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
@@ -427,25 +428,26 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
             "     INNER JOIN dataset ds2 ON d2.dac_id = ds2.dac_id " +
             "     INNER JOIN consent_associations a2 ON a2.dataset_id = ds2.dataset_id " +
             "     INNER JOIN election e2 ON e2.reference_id = a2.consent_id AND e2.election_id = :electionId " +
-            " ) as d0 limit 1 ") // `select * from (...) limit 1` syntax is an hsqldb limitation
+            " ) as d0 limit 1 ")
+    // `select * from (...) limit 1` syntax is an hsqldb limitation
     Dac findDacForElection(@Bind("electionId") Integer electionId);
 
     @SqlQuery(
-        "SELECT d.*, e.election_id as election_id "
-        + "FROM election e "
-        + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.election_id "
-        + "INNER JOIN election ce ON a.consent_election_id = ce.election_id "
-        + "INNER JOIN consent_associations ca ON ce.reference_id = ca.consent_id "
-        + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
-        + "INNER JOIN dac d on d.dac_id = ds.dac_id "
-        + "WHERE e.election_id IN (<electionIds>) "
-        + "UNION "
-        + "SELECT d.*, e.election_id "
-        + "FROM dac d "
-        + "INNER JOIN dataset data ON d.dac_id = data.dac_id "
-        + "INNER JOIN election e "
-        + "ON e.dataset_id = data.dataset_id "
-        + "WHERE e.election_id IN (<electionIds>)"
+            "SELECT d.*, e.election_id as election_id "
+                    + "FROM election e "
+                    + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.election_id "
+                    + "INNER JOIN election ce ON a.consent_election_id = ce.election_id "
+                    + "INNER JOIN consent_associations ca ON ce.reference_id = ca.consent_id "
+                    + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
+                    + "INNER JOIN dac d on d.dac_id = ds.dac_id "
+                    + "WHERE e.election_id IN (<electionIds>) "
+                    + "UNION "
+                    + "SELECT d.*, e.election_id "
+                    + "FROM dac d "
+                    + "INNER JOIN dataset data ON d.dac_id = data.dac_id "
+                    + "INNER JOIN election e "
+                    + "ON e.dataset_id = data.dataset_id "
+                    + "WHERE e.election_id IN (<electionIds>)"
     )
     @UseRowMapper(DacMapper.class)
     List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);

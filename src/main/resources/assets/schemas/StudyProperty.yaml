@@ -1,0 +1,11 @@
+type: object
+properties:
+  key:
+    type: string
+    description: Key of the Property.
+  value:
+    type: string
+    description: Value of the Property.
+  type:
+    type: string
+    description: Type of the property.

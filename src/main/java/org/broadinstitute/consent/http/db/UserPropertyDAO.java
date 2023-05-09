@@ -22,11 +22,11 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
                                                                  @BindList("keys") List<String> keys);
 
     @SqlBatch("""
-        INSERT INTO user_property (userid, propertykey, propertyvalue)
-        VALUES (:userId, :propertyKey, :propertyValue)
-        ON CONFLICT (userid, propertykey)
-        DO UPDATE SET propertyvalue = :propertyValue
-    """)
+                INSERT INTO user_property (userid, propertykey, propertyvalue)
+                VALUES (:userId, :propertyKey, :propertyValue)
+                ON CONFLICT (userid, propertykey)
+                DO UPDATE SET propertyvalue = :propertyValue
+            """)
     void insertAll(@BindBean Collection<UserProperty> researcherProperties);
 
     @SqlUpdate("DELETE FROM user_property WHERE userid = :userId")

@@ -47,7 +47,7 @@ public class DatasetAssociationServiceTest {
 
 
     @Before
-    public void setUp(){
+    public void setUp() {
         openMocks(this);
         service = new DatasetAssociationService(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
     }
@@ -90,12 +90,16 @@ public class DatasetAssociationServiceTest {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDatasetById(1)).thenReturn(ds1);
 
-        doAnswer(invocationOnMock -> { throw new BatchUpdateException(); }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
+        doAnswer(invocationOnMock -> {
+            throw new BatchUpdateException();
+        }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
         service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     }
 
 
-    /** Private data methods **/
+    /**
+     * Private data methods
+     **/
     private static final String CHAIRPERSON = "Chairperson";
     private static final String DACMEMBER = "Member";
     private static final String DATAOWNER = "DataOwner";
@@ -111,15 +115,15 @@ public class DatasetAssociationServiceTest {
     User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
     User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());
 
-    private List<UserRole> chairpersonList(){
+    private List<UserRole> chairpersonList() {
         return Arrays.asList(getChairpersonRole());
     }
 
-    private List<UserRole> memberList(){
+    private List<UserRole> memberList() {
         return Arrays.asList(getMemberRole());
     }
 
-    private List<UserRole> dataownerList(){
+    private List<UserRole> dataownerList() {
         return Arrays.asList(getDataOwnerRole());
     }
 

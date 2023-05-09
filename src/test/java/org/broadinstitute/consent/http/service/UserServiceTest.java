@@ -101,7 +101,7 @@ public class UserServiceTest {
 
     private void initService() {
         service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, datasetAssociationDAO, institutionDAO, libraryCardDAO,
-         acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, emailService);
+                acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, emailService);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class UserServiceTest {
         verify(userPropertyDAO, times(1)).insertAll(any());
         // Verify role additions/deletions.
         verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
-        verify(userRoleDAO, times(1)).removeUserRoles( 1, List.of(admin.getRoleId()));
+        verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
     }
 
     @Test
@@ -595,13 +595,13 @@ public class UserServiceTest {
     public void testFindUserWithPropertiesAsJsonObjectById() {
         User user = generateUser();
         UserStatusInfo info = new UserStatusInfo()
-            .setUserEmail(user.getEmail())
-            .setEnabled(true)
-            .setUserSubjectId("subjectId");
+                .setUserEmail(user.getEmail())
+                .setEnabled(true)
+                .setUserSubjectId("subjectId");
         AuthUser authUser = new AuthUser()
-            .setEmail(user.getEmail())
-            .setAuthToken(RandomStringUtils.random(30, true, false))
-            .setUserStatusInfo(info);
+                .setEmail(user.getEmail())
+                .setAuthToken(RandomStringUtils.random(30, true, false))
+                .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
         when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
@@ -618,13 +618,13 @@ public class UserServiceTest {
     public void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
         User user = generateUser();
         UserStatusInfo info = new UserStatusInfo()
-            .setUserEmail(user.getEmail())
-            .setEnabled(true)
-            .setUserSubjectId("subjectId");
+                .setUserEmail(user.getEmail())
+                .setEnabled(true)
+                .setUserSubjectId("subjectId");
         AuthUser authUser = new AuthUser()
-            .setEmail("not the user's email address")
-            .setAuthToken(RandomStringUtils.random(30, true, false))
-            .setUserStatusInfo(info);
+                .setEmail("not the user's email address")
+                .setAuthToken(RandomStringUtils.random(30, true, false))
+                .setUserStatusInfo(info);
         when(userDAO.findUserById(anyInt())).thenReturn(user);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
         when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(List.of(new UserProperty()));
@@ -734,7 +734,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void insertUserRoleAndInstitution_FailingTxn(){
+    public void insertUserRoleAndInstitution_FailingTxn() {
         boolean encounteredException = false;
         Integer institutionId = 1;
         User testUser = generateUserWithoutInstitution();
@@ -745,7 +745,7 @@ public class UserServiceTest {
         initService();
         try {
             service.insertRoleAndInstitutionForUser(role, institutionId, testUser.getUserId());
-        } catch(Exception e) {
+        } catch (Exception e) {
             encounteredException = true;
         }
         assertTrue(encounteredException);
@@ -790,7 +790,7 @@ public class UserServiceTest {
         LibraryCard libraryCard = new LibraryCard();
         libraryCard.setId(RandomUtils.nextInt(1, 10));
         libraryCard.setUserId(user.getUserId());
-        libraryCard.setInstitutionId(RandomUtils.nextInt(1,10));
+        libraryCard.setInstitutionId(RandomUtils.nextInt(1, 10));
         return libraryCard;
     }
 
