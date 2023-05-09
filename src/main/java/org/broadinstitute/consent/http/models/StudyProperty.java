@@ -7,7 +7,7 @@ import java.util.Objects;
 public class StudyProperty {
     private Integer studyPropertyId;
     private Integer studyId;
-    private String name;
+    private String key;
     private PropertyType type;
     private Object value;
 
@@ -27,12 +27,12 @@ public class StudyProperty {
         this.studyId = studyId;
     }
 
-    public String getName() {
-        return name;
+    public String getKey() {
+        return key;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public PropertyType getType() {

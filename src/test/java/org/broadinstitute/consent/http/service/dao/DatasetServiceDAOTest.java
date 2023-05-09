@@ -10,11 +10,14 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 
@@ -56,21 +59,15 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         file1.setBlobId(BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
         file1.setFileName(RandomStringUtils.randomAlphabetic(10));
 
-        FileStorageObject file2 = new FileStorageObject();
-        file2.setMediaType(RandomStringUtils.randomAlphabetic(20));
-        file2.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-        file2.setBlobId(BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
-        file2.setFileName(RandomStringUtils.randomAlphabetic(10));
-
         DatasetServiceDAO.DatasetInsert insert = new DatasetServiceDAO.DatasetInsert(
                 RandomStringUtils.randomAlphabetic(20),
                 dac.getDacId(),
                 new DataUseBuilder().setAddiction(true).setGeneralUse(true).build(),
                 user.getUserId(),
                 List.of(prop1, prop2),
-                List.of(file1, file2));
+                List.of(file1));
 
-        List<Integer> createdIds = serviceDAO.insertDatasets(List.of(insert));
+        List<Integer> createdIds = serviceDAO.insertDatasetRegistration(null, List.of(insert));
 
         assertEquals(1, createdIds.size());
 
@@ -94,14 +91,10 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(prop2.getPropertyValue(), createdProp2.getPropertyValue());
         assertEquals(prop2.getPropertyType(), createdProp2.getPropertyType());
 
-        assertNotNull(created.getAlternativeDataSharingPlanFile());
         assertNotNull(created.getNihInstitutionalCertificationFile());
 
         assertEquals(file1.getFileName(), created.getNihInstitutionalCertificationFile().getFileName());
         assertEquals(file1.getBlobId(), created.getNihInstitutionalCertificationFile().getBlobId());
-
-        assertEquals(file2.getFileName(), created.getAlternativeDataSharingPlanFile().getFileName());
-        assertEquals(file2.getBlobId(), created.getAlternativeDataSharingPlanFile().getBlobId());
     }
 
 
@@ -134,7 +127,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
                 List.of(prop1),
                 List.of());
 
-        List<Integer> createdIds = serviceDAO.insertDatasets(List.of(insert1, insert2));
+        List<Integer> createdIds = serviceDAO.insertDatasetRegistration(null, List.of(insert1, insert2));
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
@@ -149,7 +142,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(true, dataset1.getDataUse().getGeneralUse());
         assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
         assertNull(dataset1.getNihInstitutionalCertificationFile());
-        assertNull(dataset1.getAlternativeDataSharingPlanFile());
 
         Optional<Dataset> ds2Optional = datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
         assertTrue(ds2Optional.isPresent());
@@ -160,7 +152,188 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
         assertEquals(2, dataset2.getProperties().size());
         assertNull(dataset2.getNihInstitutionalCertificationFile());
-        assertNull(dataset2.getAlternativeDataSharingPlanFile());
+    }
 
+    @Test
+    public void testInsertStudyWithDatasets() throws Exception {
+        Dac dac = createDac();
+        User user = createUser();
+
+
+        DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                List.of(RandomStringUtils.randomAlphabetic(10)),
+                RandomStringUtils.randomAlphabetic(10),
+                true,
+                user.getUserId(),
+                List.of(),
+                List.of());
+
+        DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
+                RandomStringUtils.randomAlphabetic(20),
+                dac.getDacId(),
+                new DataUseBuilder().setGeneralUse(true).build(),
+                user.getUserId(),
+                List.of(),
+                List.of());
+
+        List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
+
+        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
+
+        assertEquals(1, datasets.size());
+
+        Dataset dataset1 = datasets.get(0);
+
+        assertNotNull(dataset1.getStudy());
+        Study s = dataset1.getStudy();
+        assertEquals(studyInsert.name(), s.getName());
+        assertEquals(studyInsert.description(), s.getDescription());
+        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        assertEquals(studyInsert.piName(), s.getPiName());
+        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        assertEquals(studyInsert.userId(), s.getCreateUserId());
+        assertNotNull(s.getCreateDate());
+
+        assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
+        assertNull(s.getAlternativeDataSharingPlan());
+    }
+
+    @Test
+    public void testInsertStudyWithProps() throws Exception {
+        Dac dac = createDac();
+        User user = createUser();
+
+        StudyProperty prop1 = new StudyProperty();
+        prop1.setKey(RandomStringUtils.randomAlphabetic(10));
+        prop1.setType(PropertyType.String);
+        prop1.setValue(RandomStringUtils.randomAlphabetic(10));
+
+        StudyProperty prop2 = new StudyProperty();
+        prop2.setKey(RandomStringUtils.randomAlphabetic(10));
+        prop2.setType(PropertyType.Number);
+        prop2.setValue(new Random().nextInt());
+
+        DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                List.of(RandomStringUtils.randomAlphabetic(10)),
+                RandomStringUtils.randomAlphabetic(10),
+                true,
+                user.getUserId(),
+                List.of(prop1, prop2),
+                List.of());
+
+        DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
+                RandomStringUtils.randomAlphabetic(20),
+                dac.getDacId(),
+                new DataUseBuilder().setGeneralUse(true).build(),
+                user.getUserId(),
+                List.of(),
+                List.of());
+
+        List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
+
+        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
+
+        assertEquals(1, datasets.size());
+
+        Dataset dataset1 = datasets.get(0);
+
+        assertNotNull(dataset1.getStudy());
+        Study s = dataset1.getStudy();
+        assertEquals(studyInsert.name(), s.getName());
+        assertEquals(studyInsert.description(), s.getDescription());
+        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        assertEquals(studyInsert.piName(), s.getPiName());
+        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        assertEquals(studyInsert.userId(), s.getCreateUserId());
+        assertNotNull(s.getCreateDate());
+
+
+        StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
+        StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
+
+        assertEquals(prop1.getType(), createdProp1.getType());
+        assertEquals(prop1.getValue(), createdProp1.getValue());
+        assertEquals(prop2.getType(), createdProp2.getType());
+        assertEquals(prop2.getValue(), createdProp2.getValue());
+
+        assertNull(s.getAlternativeDataSharingPlan());
+    }
+
+    @Test
+    public void testInsertStudyWithAlternativeDataSharingFile() throws Exception {
+        Dac dac = createDac();
+        User user = createUser();
+
+        StudyProperty prop1 = new StudyProperty();
+        prop1.setKey(RandomStringUtils.randomAlphabetic(10));
+        prop1.setType(PropertyType.String);
+        prop1.setValue(RandomStringUtils.randomAlphabetic(10));
+
+        StudyProperty prop2 = new StudyProperty();
+        prop2.setKey(RandomStringUtils.randomAlphabetic(10));
+        prop2.setType(PropertyType.Number);
+        prop2.setValue(new Random().nextInt());
+
+        FileStorageObject file = new FileStorageObject();
+        file.setMediaType(RandomStringUtils.randomAlphabetic(20));
+        file.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+        file.setBlobId(BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+        file.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+
+        DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
+                RandomStringUtils.randomAlphabetic(10),
+                RandomStringUtils.randomAlphabetic(10),
+                List.of(RandomStringUtils.randomAlphabetic(10)),
+                RandomStringUtils.randomAlphabetic(10),
+                true,
+                user.getUserId(),
+                List.of(prop1, prop2),
+                List.of(file));
+
+        DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
+                RandomStringUtils.randomAlphabetic(20),
+                dac.getDacId(),
+                new DataUseBuilder().setGeneralUse(true).build(),
+                user.getUserId(),
+                List.of(),
+                List.of());
+
+        List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
+
+        List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
+
+        assertEquals(1, datasets.size());
+
+        Dataset dataset1 = datasets.get(0);
+
+        assertNotNull(dataset1.getStudy());
+        Study s = dataset1.getStudy();
+        assertEquals(studyInsert.name(), s.getName());
+        assertEquals(studyInsert.description(), s.getDescription());
+        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        assertEquals(studyInsert.piName(), s.getPiName());
+        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        assertEquals(studyInsert.userId(), s.getCreateUserId());
+        assertNotNull(s.getCreateDate());
+
+
+        StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
+        StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
+
+        assertEquals(prop1.getType(), createdProp1.getType());
+        assertEquals(prop1.getValue(), createdProp1.getValue());
+        assertEquals(prop2.getType(), createdProp2.getType());
+        assertEquals(prop2.getValue(), createdProp2.getValue());
+
+        assertNotNull(s.getAlternativeDataSharingPlan());
+
+        assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
+        assertEquals(file.getFileName(), s.getAlternativeDataSharingPlan().getFileName());
+        assertEquals(file.getCategory(), s.getAlternativeDataSharingPlan().getCategory());
     }
 }
