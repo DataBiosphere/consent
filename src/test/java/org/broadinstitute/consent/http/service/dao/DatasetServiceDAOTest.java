@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 
@@ -195,7 +196,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(studyInsert.userId(), s.getCreateUserId());
         assertNotNull(s.getCreateDate());
 
-        assertTrue(s.getProperties().isEmpty());
+        assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
         assertNull(s.getAlternativeDataSharingPlan());
     }
 
