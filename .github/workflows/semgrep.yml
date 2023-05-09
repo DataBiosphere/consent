@@ -8,7 +8,4 @@ jobs:
     name: Check
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          semgrep ci --config=p/findsecbugs \
-            --exclude-rule=gitlab.find_sec_bugs.CUSTOM_INJECTION-2 \
-            --exclude-rule=gitlab.find_sec_bugs.JAXRS_ENDPOINT-1
+      - run: semgrep ci --config=p/findsecbugs
