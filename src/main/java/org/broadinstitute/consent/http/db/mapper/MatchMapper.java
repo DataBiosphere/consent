@@ -15,6 +15,7 @@ public class MatchMapper implements RowMapper<Match> {
         r.getString("consent"),
         r.getString("purpose"),
         r.getBoolean("matchEntity"),
+        r.getBoolean("abstain"),
         r.getBoolean("failed"),
         r.getDate("createDate"),
         r.getString("algorithm_version"));

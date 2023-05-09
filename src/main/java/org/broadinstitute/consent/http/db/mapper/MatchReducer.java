@@ -25,6 +25,9 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
         if (hasColumn(rowView, "matchentity", Boolean.class)) {
             match.setMatch(rowView.getColumn("matchentity", Boolean.class));
         }
+        if (hasColumn(rowView, "abstain", Boolean.class)) {
+            match.setAbstain(rowView.getColumn("abstain", Boolean.class));
+        }
         if (hasColumn(rowView, "failed", Boolean.class)) {
             match.setFailed(rowView.getColumn("failed", Boolean.class));
         }

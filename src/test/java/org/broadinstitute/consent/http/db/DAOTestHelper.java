@@ -291,7 +291,7 @@ public class DAOTestHelper {
             RandomUtils.nextBoolean(),
             false,
             new Date(),
-            MatchAlgorithm.V2.getVersion());
+            MatchAlgorithm.V3.getVersion());
         return matchDAO.findMatchById(matchId);
     }
 

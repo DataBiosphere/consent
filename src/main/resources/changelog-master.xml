@@ -115,4 +115,5 @@
     <include file="changesets/changelog-consent-2023-03-07-remove-use-restriction.0.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-2023-03-16-rename-vote-userid.xml" relativeToChangelogFile="true"/>
     <include file="changesets/changelog-consent-2023-04-20-create-study.xml" relativeToChangelogFile="true"/>
+    <include file="changesets/changelog-consent-2023-05-03-add-abstain.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

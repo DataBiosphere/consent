@@ -2,25 +2,29 @@ package org.broadinstitute.consent.http.models.matching;
 
 import java.util.List;
 
+import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
+
 public class DataUseResponseMatchingObject {
 
-    public boolean result;
+    public DataUseMatchResultType result;
 
     public DataUseRequestMatchingObject matchPair;
 
     public List<String> failureReasons;
 
-    public DataUseResponseMatchingObject(boolean result, DataUseRequestMatchingObject matchPair, List<String> failureReasons) {
+    public DataUseResponseMatchingObject(DataUseMatchResultType result, DataUseRequestMatchingObject matchPair, List<String> failureReasons) {
         this.result = result;
         this.matchPair = matchPair;
         this.failureReasons = failureReasons;
     }
 
+    public DataUseMatchResultType getResult() { return result; }
+
     public boolean isResult() {
-        return result;
+        return Approve(result);
     }
 
-    public void setResult(boolean result) {
+    public void setResult(DataUseMatchResultType result) {
         this.result = result;
     }
 

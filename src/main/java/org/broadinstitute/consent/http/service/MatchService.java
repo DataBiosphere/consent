@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -29,13 +28,16 @@ import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingOb
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.client.ClientProperties;
 
+import static org.broadinstitute.consent.http.models.Match.matchFailure;
+import static org.broadinstitute.consent.http.models.Match.matchSuccess;
+
 public class MatchService implements ConsentLogger {
     private final MatchDAO matchDAO;
     private final ConsentDAO consentDAO;
     private final UseRestrictionConverter useRestrictionConverter;
     private final DataAccessRequestDAO dataAccessRequestDAO;
     private final DatasetDAO datasetDAO;
-    private final WebTarget matchServiceTargetV2;
+    private final WebTarget matchServiceTargetV3;
 
     @Inject
     public MatchService(Client client, ServicesConfiguration config, ConsentDAO consentDAO, MatchDAO matchDAO,
@@ -50,7 +52,7 @@ public class MatchService implements ConsentLogger {
         Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
         client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
         client.property(ClientProperties.READ_TIMEOUT, timeout);
-        matchServiceTargetV2 = client.target(config.getMatchURL_v2());
+        matchServiceTargetV3 = client.target(config.getMatchURL_v3());
     }
 
     public void insertMatches(List<Match> match) {
@@ -120,11 +122,11 @@ public class MatchService implements ConsentLogger {
             Dataset dataset = datasetDAO.findDatasetById(id);
             if (Objects.nonNull(dataset)) {
                 try {
-                    matches.add(singleEntitiesMatchV2(dataset, dar));
+                    matches.add(singleEntitiesMatchV3(dataset, dar));
                 } catch (Exception e) {
                     String message = "Error finding single match for purpose: " + dar.getReferenceId();
                     logWarn(message);
-                    matches.add(new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of(message)));
+                    matches.add(matchFailure(dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
                 }
             }
         });
@@ -142,17 +144,17 @@ public class MatchService implements ConsentLogger {
             List<DataAccessRequest> dars = findRelatedDars(List.of(d.getDataSetId()));
             dars.forEach(dar -> {
                 try {
-                    matches.add(singleEntitiesMatchV2(d, dar));
+                    matches.add(singleEntitiesMatchV3(d, dar));
                 } catch (Exception e) {
-                    logWarn("Error finding  matches for consent: " + consentId);
-                    matches.add(new Match(consentId, dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of()));
+                    logWarn("Error finding matches for consent: " + consentId);
+                    matches.add(matchFailure(consentId, dar.getReferenceId(), List.of()));
                 }
             });
         });
         return matches;
     }
 
-    private Match singleEntitiesMatchV2(Dataset dataset, DataAccessRequest dar) {
+    public Match singleEntitiesMatchV3(Dataset dataset, DataAccessRequest dar) {
         if (Objects.isNull(dataset)) {
             logWarn("Dataset is null");
             throw new IllegalArgumentException("Consent cannot be null");
@@ -164,13 +166,15 @@ public class MatchService implements ConsentLogger {
         Match match;
         DataUseRequestMatchingObject requestObject = createRequestObject(dataset, dar);
         String json = new Gson().toJson(requestObject);
-        Response res = matchServiceTargetV2.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        Response res = matchServiceTargetV3.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+        String datasetId = dataset.getDatasetIdentifier();
+        String darReferenceId = dar.getReferenceId();
         if (res.getStatus() == Response.Status.OK.getStatusCode()) {
             String stringEntity = res.readEntity(String.class);
             DataUseResponseMatchingObject entity = new Gson().fromJson(stringEntity, DataUseResponseMatchingObject.class);
-            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), false, entity.isResult(), MatchAlgorithm.V2, entity.getFailureReasons());
+            match = matchSuccess(datasetId, darReferenceId, entity.getResult(), entity.getFailureReasons());
         } else {
-            match = new Match(dataset.getDatasetIdentifier(), dar.getReferenceId(), true, false, MatchAlgorithm.V2, List.of());
+            match = matchFailure(datasetId, darReferenceId, List.of());
         }
         return match;
     }
