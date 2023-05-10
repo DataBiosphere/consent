@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ElectionDAOTest extends DAOTestHelper {
@@ -35,7 +35,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Integer electionId = electionDAO.getOpenElectionIdByReferenceId(accessReferenceId);
         assertEquals(accessElection.getElectionId(), electionId);
         Integer missingElectionId = electionDAO.getOpenElectionIdByReferenceId("accessReferenceId");
-        Assertions.assertNull(missingElectionId);
+        assertNull(missingElectionId);
     }
 
     @Test
@@ -90,7 +90,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
-        Assertions.assertNull(foundDac);
+        assertNull(foundDac);
     }
 
     @Test
@@ -254,9 +254,9 @@ public class ElectionDAOTest extends DAOTestHelper {
         // can delete using access election
         electionDAO.deleteElectionFromAccessRP(accessElection.getElectionId());
 
-        Assertions.assertNull(
+        assertNull(
             electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
-        Assertions.assertNull(
+        assertNull(
             electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
 
         electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
@@ -269,9 +269,9 @@ public class ElectionDAOTest extends DAOTestHelper {
         // or by using rp election
         electionDAO.deleteElectionFromAccessRP(rpElection.getElectionId());
 
-        Assertions.assertNull(
+        assertNull(
             electionDAO.findRPElectionByElectionAccessId(accessElection.getElectionId()));
-        Assertions.assertNull(
+        assertNull(
             electionDAO.findAccessElectionByElectionRPId(rpElection.getElectionId()));
     }
 
@@ -703,7 +703,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election before = createDataAccessElection(referenceId, datasetId);
 
         assertEquals(ElectionStatus.OPEN.getValue(), before.getStatus());
-        Assertions.assertNull(before.getLastUpdate());
+        assertNull(before.getLastUpdate());
 
         electionDAO.updateElectionById(
                 before.getElectionId(),
@@ -728,7 +728,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election before = createDataAccessElection(referenceId, datasetId);
 
         assertEquals(ElectionStatus.OPEN.getValue(), before.getStatus());
-        Assertions.assertNull(before.getLastUpdate());
+        assertNull(before.getLastUpdate());
         assertEquals(null, before.getFinalAccessVote());
 
         electionDAO.updateElectionById(
@@ -829,7 +829,7 @@ public class ElectionDAOTest extends DAOTestHelper {
                 electionDAO.findElectionWithFinalVoteById(
                         e.getElectionId());
 
-        Assertions.assertNull(returned);
+        assertNull(returned);
     }
 
     @Test
@@ -1172,7 +1172,7 @@ public class ElectionDAOTest extends DAOTestHelper {
                         referenceId,
                         ElectionStatus.CLOSED.getValue());
 
-        Assertions.assertNull(returned);
+        assertNull(returned);
     }
 
     @Test
@@ -1262,7 +1262,7 @@ public class ElectionDAOTest extends DAOTestHelper {
                         referenceId,
                         ElectionType.DATA_ACCESS.getValue());
 
-        Assertions.assertNull(returned);
+        assertNull(returned);
     }
 
     @Test
@@ -1309,7 +1309,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         electionDAO.deleteAccessRP(datasetAccessElection.getElectionId());
 
-        Assertions.assertNull(electionDAO.findAccessElectionByElectionRPId(
+        assertNull(electionDAO.findAccessElectionByElectionRPId(
                 rpElection.getElectionId()));
 
     }
@@ -1335,7 +1335,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         electionDAO.deleteElectionFromAccessRP(datasetAccessElection.getElectionId());
 
-        Assertions.assertNull(electionDAO.findAccessElectionByElectionRPId(
+        assertNull(electionDAO.findAccessElectionByElectionRPId(
                 rpElection.getElectionId()));
     }
 
@@ -1360,7 +1360,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         electionDAO.deleteElectionFromAccessRP(rpElection.getElectionId());
 
-        Assertions.assertNull(electionDAO.findAccessElectionByElectionRPId(
+        assertNull(electionDAO.findAccessElectionByElectionRPId(
                 rpElection.getElectionId()));
     }
 
@@ -1411,7 +1411,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         Integer found = electionDAO.getOpenElectionIdByReferenceId(referenceId);
 
-        Assertions.assertNull(found);
+        assertNull(found);
     }
 
     @Test
@@ -1443,7 +1443,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election e = createDataAccessElection(referenceId, datasetId);
 
         assertEquals(false, e.getArchived());
-        Assertions.assertNull(e.getLastUpdate());
+        assertNull(e.getLastUpdate());
 
         electionDAO.archiveElectionById(e.getElectionId(), new Date());
         e = electionDAO.findElectionById(e.getElectionId());
@@ -1590,7 +1590,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election e = createDataAccessElection(referenceId, datasetId);
         Vote v = createFinalVote(user.getUserId(), e.getElectionId());
 
-        Assertions.assertNull(electionDAO.findApprovalAccessElectionDate(referenceId));
+        assertNull(electionDAO.findApprovalAccessElectionDate(referenceId));
     }
 
     @Test

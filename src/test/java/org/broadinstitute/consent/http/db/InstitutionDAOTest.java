@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -96,7 +97,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = createInstitution();
         Integer id = institution.getId();
         institutionDAO.deleteInstitutionById(id);
-        Assertions.assertNull(institutionDAO.findInstitutionById(id));
+        assertNull(institutionDAO.findInstitutionById(id));
     }
 
     @Test
@@ -163,6 +164,6 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = createInstitution();
         Integer userId = institution.getCreateUserId();
         institutionDAO.deleteAllInstitutionsByUser(userId);
-        Assertions.assertNull(institutionDAO.findInstitutionById(institution.getId()));
+        assertNull(institutionDAO.findInstitutionById(institution.getId()));
     }
 }

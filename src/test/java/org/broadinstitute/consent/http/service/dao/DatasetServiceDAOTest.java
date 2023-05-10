@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -142,7 +142,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(insert1.dacId(), dataset1.getDacId());
         assertEquals(true, dataset1.getDataUse().getGeneralUse());
         assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
-        Assertions.assertNull(dataset1.getNihInstitutionalCertificationFile());
+        assertNull(dataset1.getNihInstitutionalCertificationFile());
 
         Optional<Dataset> ds2Optional = datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
         assertTrue(ds2Optional.isPresent());
@@ -152,7 +152,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(insert2.dacId(), dataset2.getDacId());
         assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
         assertEquals(2, dataset2.getProperties().size());
-        Assertions.assertNull(dataset2.getNihInstitutionalCertificationFile());
+        assertNull(dataset2.getNihInstitutionalCertificationFile());
     }
 
     @Test
@@ -198,7 +198,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertNotNull(s.getCreateDate());
 
         assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
-        Assertions.assertNull(s.getAlternativeDataSharingPlan());
+        assertNull(s.getAlternativeDataSharingPlan());
     }
 
     @Test
@@ -261,7 +261,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertEquals(prop2.getType(), createdProp2.getType());
         assertEquals(prop2.getValue(), createdProp2.getValue());
 
-        Assertions.assertNull(s.getAlternativeDataSharingPlan());
+        assertNull(s.getAlternativeDataSharingPlan());
     }
 
     @Test

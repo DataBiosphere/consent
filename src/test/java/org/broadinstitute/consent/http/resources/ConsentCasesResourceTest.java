@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -14,7 +15,6 @@ import org.broadinstitute.consent.http.models.ConsentSummaryDetail;
 import org.broadinstitute.consent.http.models.DataAccessRequestSummaryDetail;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.SummaryService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -47,7 +47,7 @@ public class ConsentCasesResourceTest {
         Response response = resource.getConsentSummaryDetailFile(UUID.randomUUID().toString(), null);
         assertEquals(200, response.getStatus());
         Object summaryFile = response.getEntity();
-        Assertions.assertNull(summaryFile);
+        assertNull(summaryFile);
     }
 
     @Test
@@ -58,7 +58,7 @@ public class ConsentCasesResourceTest {
         Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
         assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
-        Assertions.assertNull(summaryDetails);
+        assertNull(summaryDetails);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ConsentCasesResourceTest {
         Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
         assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
-        Assertions.assertNull(summaryDetails);
+        assertNull(summaryDetails);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class ConsentCasesResourceTest {
         Response response = resource.getConsentSummaryDetailFile(null, null);
         assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
-        Assertions.assertNull(summaryDetails);
+        assertNull(summaryDetails);
     }
 
     private void initResource() {

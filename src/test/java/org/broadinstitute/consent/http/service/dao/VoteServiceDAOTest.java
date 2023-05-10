@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -62,7 +63,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
         assertNotNull(votes);
         assertFalse(votes.isEmpty());
         assertTrue(votes.get(0).getVote());
-        Assertions.assertNull(votes.get(0).getRationale());
+        assertNull(votes.get(0).getRationale());
         assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
     }
 

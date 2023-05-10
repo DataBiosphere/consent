@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -169,8 +169,8 @@ public class SupportRequestServiceTest {
         // verify no requests sent if no suggested user fields are provided; fail if request attempted
         mockServerClient.when(request()).error(new HttpError());
         service.handleInstitutionSOSupportRequest(updateFields, new User());
-        Assertions.assertNull(updateFields.getSuggestedInstitution());
-        Assertions.assertNull(updateFields.getSuggestedSigningOfficial());
+        assertNull(updateFields.getSuggestedInstitution());
+        assertNull(updateFields.getSuggestedSigningOfficial());
     }
 
     //creates support ticket with random values for testing postTicketToSupport

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DacDAOTest extends DAOTestHelper {
@@ -160,7 +160,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         dacDAO.deleteDac(dac.getDacId());
         Dac deletedDac = dacDAO.findById(dac.getDacId());
-        Assertions.assertNull(deletedDac);
+        assertNull(deletedDac);
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.SimpleDateFormat;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class VoteDAOTest extends DAOTestHelper {
@@ -246,7 +246,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         Vote vote = voteDAO.findVoteById(v.getVoteId());
         assertNotNull(vote);
-        Assertions.assertNull(vote.getVote());
+        assertNull(vote.getVote());
     }
 
     @Test
@@ -421,7 +421,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         voteDAO.removeVotesByIds(Collections.singletonList(vote.getVoteId()));
         Vote v = voteDAO.findVoteById(vote.getVoteId());
-        Assertions.assertNull(v);
+        assertNull(v);
     }
 
     @Test
@@ -447,7 +447,7 @@ public class VoteDAOTest extends DAOTestHelper {
         DataAccessRequest dar = createDataAccessRequestV3();
         Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
         Vote dacVote = createDacVote(user.getUserId(), election.getElectionId());
-        Assertions.assertNull(dacVote.getRationale());
+        assertNull(dacVote.getRationale());
 
         String rationale = RandomStringUtils.random(10, true, false);
         voteDAO.updateRationaleByVoteIds(List.of(dacVote.getVoteId()), rationale);

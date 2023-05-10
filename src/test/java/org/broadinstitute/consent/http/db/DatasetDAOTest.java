@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -282,7 +283,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         Dataset found = datasetDAO.findDatasetById(dataset.getDataSetId());
 
-        Assertions.assertNull(found.getNihInstitutionalCertificationFile());
+        assertNull(found.getNihInstitutionalCertificationFile());
     }
 
     @Test
@@ -733,7 +734,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(1, datasets.size());
         Dataset targetDataset = datasets.get(0);
         assertEquals(datasetId, targetDataset.getDataSetId());
-        Assertions.assertNull(targetDataset.getDacApproval());
+        assertNull(targetDataset.getDacApproval());
     }
 
     @Test

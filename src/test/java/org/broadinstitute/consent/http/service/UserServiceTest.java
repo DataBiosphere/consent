@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -416,7 +417,7 @@ public class UserServiceTest {
         User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
-        Assertions.assertNull(u.getRoles());
+        assertNull(u.getRoles());
     }
 
     @Test
@@ -460,7 +461,7 @@ public class UserServiceTest {
         User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
         assertEquals(u.getEmail(), user.getEmail());
-        Assertions.assertNull(u.getRoles());
+        assertNull(u.getRoles());
     }
 
     @Test
@@ -681,7 +682,7 @@ public class UserServiceTest {
             userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(
             userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
-        Assertions.assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+        assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
     }
 
     @Test
@@ -785,7 +786,7 @@ public class UserServiceTest {
         boolean encounteredException = false;
         Integer institutionId = 1;
         User testUser = generateUserWithoutInstitution();
-        Assertions.assertNull(testUser.getInstitutionId());
+        assertNull(testUser.getInstitutionId());
         UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         when(userDAO.findUserById(anyInt())).thenReturn(testUser);
         doThrow(new RuntimeException("txn error")).when(userServiceDAO).insertRoleAndInstitutionTxn(any(), any(), any());

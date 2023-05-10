@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -43,7 +44,6 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -463,7 +463,7 @@ public class DatasetRegistrationServiceTest {
         assertEquals(consentGroup.getHmb(), dataUse.getHmbResearch());
         assertEquals(consentGroup.getMorDate(), dataUse.getPublicationMoratorium());
         if (Objects.isNull(consentGroup.getNmds()) || !consentGroup.getNmds()) {
-            Assertions.assertNull(dataUse.getMethodsResearch());
+            assertNull(dataUse.getMethodsResearch());
         } else {
             assertFalse(dataUse.getMethodsResearch());
         }

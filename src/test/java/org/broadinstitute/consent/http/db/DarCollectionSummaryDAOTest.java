@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DarCollectionSummaryDAOTest extends DAOTestHelper {
@@ -798,7 +798,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
                 userChairId, targetDatasets, archivedCollectionId);
 
-        Assertions.assertNull(summary);
+        assertNull(summary);
     }
 
     @Test
@@ -813,6 +813,6 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDataSetId());
 
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(archivedCollectionId);
-        Assertions.assertNull(summary);
+        assertNull(summary);
     }
 }

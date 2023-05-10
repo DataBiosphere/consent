@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -11,7 +12,6 @@ import java.util.Collection;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ConsentDAOTest extends DAOTestHelper {
@@ -76,7 +76,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         assertNotNull(foundConsent);
         consentDAO.deleteConsent(consentId);
         Consent deletedConsent = consentDAO.findConsentById(consentId);
-        Assertions.assertNull(deletedConsent);
+        assertNull(deletedConsent);
     }
 
     @Test
@@ -144,9 +144,9 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         consentDAO.deleteAllAssociationsForConsent(consentId);
         Integer deletedAssociationId1 = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
-        Assertions.assertNull(deletedAssociationId1);
+        assertNull(deletedAssociationId1);
         Integer deletedAssociationId2 = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
-        Assertions.assertNull(deletedAssociationId2);
+        assertNull(deletedAssociationId2);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDataSetId());
         Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
-        Assertions.assertNull(deletedAssociationId);
+        assertNull(deletedAssociationId);
         Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
         assertNotNull(remainingAssociationId);
     }

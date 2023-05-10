@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -10,7 +11,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -83,7 +83,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         LibraryCard card = createLibraryCard();
         Integer id = card.getId();
         libraryCardDAO.deleteLibraryCardById(id);
-        Assertions.assertNull(libraryCardDAO.findLibraryCardById(id));
+        assertNull(libraryCardDAO.findLibraryCardById(id));
     }
 
     @Test
@@ -111,7 +111,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     @Test
     public void testFindLibraryCardByIdNegative() {
         LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardById(RandomUtils.nextInt(100, 200));
-        Assertions.assertNull(cardFromDAO);
+        assertNull(cardFromDAO);
     }
 
     @Test
@@ -177,7 +177,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         LibraryCard card = createLibraryCard(user);
         assertEquals("value", card.getEraCommonsId());
         libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-        Assertions.assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
+        assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
     }
 }
 

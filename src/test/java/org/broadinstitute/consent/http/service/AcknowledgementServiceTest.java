@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -19,7 +20,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -47,7 +47,7 @@ public class AcknowledgementServiceTest {
         when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
         assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
-        Assertions.assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
+        assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
     }
 
     @Test

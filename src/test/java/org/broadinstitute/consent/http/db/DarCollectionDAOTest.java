@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -106,7 +107,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         //dar without a collection ID
         DataAccessRequest dar = createDraftDataAccessRequest();
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
-        Assertions.assertNull(collection);
+        assertNull(collection);
     }
 
     @Test
@@ -148,7 +149,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
             p.getUserId()));
 
-        Assertions.assertNull(returned.getCreateUser().getLibraryCards());
+        assertNull(returned.getCreateUser().getLibraryCards());
     }
 
     @Test
@@ -184,7 +185,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     @Test
     public void testFindDARCollectionByCollectionIdNegative() {
         DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(RandomUtils.nextInt(1000, 2000));
-        Assertions.assertNull(returned);
+        assertNull(returned);
     }
 
     @Test
@@ -260,8 +261,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testUpdateDARCollection() {
         DarCollection collection = createDarCollection();
         assertNotNull(collection);
-        Assertions.assertNull(collection.getUpdateDate());
-        Assertions.assertNull(collection.getUpdateUserId());
+        assertNull(collection.getUpdateDate());
+        assertNull(collection.getUpdateUserId());
         User user = createUser();
         Date date = new Date();
         darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), user.getUserId(), date);
@@ -294,7 +295,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         collection.getDars().keySet().forEach(k -> dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(k));
         dataAccessRequestDAO.deleteByCollectionId(collection.getDarCollectionId());
         darCollectionDAO.deleteByCollectionId(collection.getDarCollectionId());
-        Assertions.assertNull(
+        assertNull(
             darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()));
     }
 
@@ -942,7 +943,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection archivedCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar1.getReferenceId());
         DarCollection validCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
 
-        Assertions.assertNull(archivedCollection);
+        assertNull(archivedCollection);
         assertTrue(validCollection.equals(testDarCollection2));
     }
 
@@ -958,7 +959,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
 
         DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-        Assertions.assertNull(returnedCollection);
+        assertNull(returnedCollection);
     }
 
     // returnUnfilteredCollectionCount should exclude archived collections

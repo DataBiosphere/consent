@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -12,7 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.time.Instant;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class FileStorageObjectTest {
@@ -58,8 +58,8 @@ public class FileStorageObjectTest {
         FileStorageObject fso = GsonUtil.buildGson().fromJson(jsonObject, FileStorageObject.class);
 
         assertEquals("asdf", fso.getFileName());
-        Assertions.assertNull(fso.getBlobId());
-        Assertions.assertNull(fso.getUploadedFile());
+        assertNull(fso.getBlobId());
+        assertNull(fso.getUploadedFile());
     }
 
     @Test
@@ -67,6 +67,6 @@ public class FileStorageObjectTest {
         String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
 
         FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
-        Assertions.assertNull(fso.getBlobId());
+        assertNull(fso.getBlobId());
     }
 }

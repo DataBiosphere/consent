@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
@@ -97,7 +98,7 @@ public class UserDAOTest extends DAOTestHelper {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         User member = createUserWithRole(UserRoles.MEMBER.getRoleId());
         assertNotNull(userDAO.checkChairpersonUser(chair.getUserId()));
-        Assertions.assertNull(userDAO.checkChairpersonUser(member.getUserId()));
+        assertNull(userDAO.checkChairpersonUser(member.getUserId()));
     }
 
     @Test
@@ -159,7 +160,7 @@ public class UserDAOTest extends DAOTestHelper {
                 .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
 
         User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
-        Assertions.assertNull(user2);
+        assertNull(user2);
     }
 
     @Test
@@ -402,7 +403,7 @@ public class UserDAOTest extends DAOTestHelper {
     public void testUpdateEraCommonsId() {
         User u = createUser();
         String era = u.getEraCommonsId();
-        Assertions.assertNull(era);
+        assertNull(era);
         userDAO.updateEraCommonsId(u.getUserId(), "newEraCommonsId");
         User updated = userDAO.findUserById(u.getUserId());
         assertEquals("newEraCommonsId", updated.getEraCommonsId());

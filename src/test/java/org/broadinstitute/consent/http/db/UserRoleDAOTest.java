@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -16,7 +17,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class UserRoleDAOTest extends DAOTestHelper {
@@ -67,7 +67,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
                 map(Role::getName).
                 collect(Collectors.toList());
         roleNames.forEach(r -> assertNotNull(userRoleDAO.findRoleIdByName(r)));
-        Assertions.assertNull(userRoleDAO.findRoleIdByName("Not a real role"));
+        assertNull(userRoleDAO.findRoleIdByName("Not a real role"));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         assertNotNull(roleId);
 
         Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser(UserRoles.MEMBER.getRoleName(), user.getUserId());
-        Assertions.assertNull(invalidRoleId);
+        assertNull(invalidRoleId);
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DataAccessRequestDAOTest extends DAOTestHelper {
@@ -205,7 +205,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertEquals(dar.getId(), returned.getId());
         dataAccessRequestDAO.deleteByCollectionId(dar.getCollectionId());
         DataAccessRequest returnedAfter = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertNull(returnedAfter);
+        assertNull(returnedAfter);
 
     }
 
@@ -580,7 +580,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         DataAccessRequest returnedDAR = dataAccessRequestDAO.findByReferenceId(testDar.getReferenceId());
-        Assertions.assertNull(returnedDAR);
+        assertNull(returnedDAR);
     }
 
     // findByReferenceIds should exclude archived DARs

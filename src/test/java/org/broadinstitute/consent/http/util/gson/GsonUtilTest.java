@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.util.gson;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -11,7 +12,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
@@ -107,7 +107,7 @@ public class GsonUtilTest {
 
         assertEquals(123456, parsedObj.getDate().getTime());
         assertEquals(567890, parsedObj.getInstant().toEpochMilli());
-        Assertions.assertNull(parsedObj.getTransientField());
+        assertNull(parsedObj.getTransientField());
     }
 
 }

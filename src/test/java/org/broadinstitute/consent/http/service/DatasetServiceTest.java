@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -361,7 +362,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
         initService();
-        Assertions.assertNull(datasetService.findDatasetByIdentifier("DUOS-0003"));
+        assertNull(datasetService.findDatasetByIdentifier("DUOS-0003"));
     }
 
     @Test
@@ -369,7 +370,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetByAlias(3)).thenReturn(null);
 
         initService();
-        Assertions.assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
+        assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
     }
 
     @Test

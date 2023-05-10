@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -16,7 +17,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class MailMessageDAOTest extends DAOTestHelper {
@@ -27,7 +27,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomStringUtils.random(10, true, false),
                 RandomStringUtils.random(10, true, false)
         );
-        Assertions.assertNull(exists);
+        assertNull(exists);
     }
 
     @Test

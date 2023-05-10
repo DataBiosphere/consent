@@ -3,10 +3,10 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +24,7 @@ public class DACUserResourceTest {
         String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
         assertNotNull(user);
-        Assertions.assertNull(user.getCreateDate());
+        assertNull(user.getCreateDate());
         assertEquals(user.getUserId().intValue(), 1);
         assertEquals(user.getEmail(), "email");
         assertEquals(user.getEmailPreference(), false);
@@ -38,7 +38,7 @@ public class DACUserResourceTest {
         String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
         assertNotNull(user);
-        Assertions.assertNull(user.getCreateDate());
+        assertNull(user.getCreateDate());
         assertEquals(user.getUserId().intValue(), 1);
         assertEquals(user.getEmail(), "email");
         assertEquals(user.getEmailPreference(), false);
