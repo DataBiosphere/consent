@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -102,7 +103,7 @@ public class MatchServiceTest {
         initService();
 
         Match match = service.findMatchById(m.getId());
-        Assertions.assertNotNull(match);
+        assertNotNull(match);
         verify(matchDAO, atLeastOnce()).findMatchById(any());
     }
 
@@ -127,7 +128,7 @@ public class MatchServiceTest {
         initService();
 
         List<Match> matches = service.findMatchByConsentId(m.getConsent());
-        Assertions.assertNotNull(matches);
+        assertNotNull(matches);
         Assertions.assertEquals(1, matches.size());
         verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
     }

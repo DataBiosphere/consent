@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -69,7 +70,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         assertFalse(userProperties.isEmpty());
 
         List<Election> elections = getElectionsFromCollection(targetCollection);
-        Assertions.assertNotNull(elections);
+        assertNotNull(elections);
         assertTrue(elections.size() > 0);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
         Assertions.assertEquals(0, datasetElections.size());
@@ -93,7 +94,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testFindDARCollectionByReferenceId() {
         DataAccessRequest dar = createDataAccessRequestV3();
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
-        Assertions.assertNotNull(collection);
+        assertNotNull(collection);
         Assertions.assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
         List<String> ids = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
         assertTrue(ids.contains(dar.getReferenceId()));
@@ -113,7 +114,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DataAccessRequest dar2 = createDataAccessRequestV3();
         DataAccessRequest dar3 = createDataAccessRequestV3();
         List<DarCollection> darCollections = darCollectionDAO.findDARCollectionsByReferenceIds(List.of(dar1.getReferenceId(), dar2.getReferenceId()));
-        Assertions.assertNotNull(darCollections);
+        assertNotNull(darCollections);
         Assertions.assertEquals(2, darCollections.size());
         List<Integer> darCollectionIds = darCollections.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
         assertTrue(darCollectionIds.contains(dar1.collectionId));
@@ -125,7 +126,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testFindDARCollectionByCollectionId() {
         DarCollection collection = createDarCollectionMultipleUserProperties();
         DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-        Assertions.assertNotNull(returned);
+        assertNotNull(returned);
         Assertions.assertEquals(collection.getDarCode(), returned.getDarCode());
         Assertions.assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
         generateDatasetElectionForCollection(collection);
@@ -153,7 +154,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testFindDARCollectionByCollectionIdMultipleUserProperties() {
         DarCollection collection = createDarCollectionMultipleUserProperties();
         DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-        Assertions.assertNotNull(returned);
+        assertNotNull(returned);
 
         List<UserProperty> userProperties = returned.getCreateUser().getProperties();
         Integer userId = collection.getCreateUser().getUserId();
@@ -231,7 +232,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
         assertTrue(allBefore.isEmpty());
         DarCollection collection = createDarCollection();
-        Assertions.assertNotNull(collection);
+        assertNotNull(collection);
         List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
         assertTrue(allAfter.contains(collection));
     }
@@ -257,7 +258,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateDARCollection() {
         DarCollection collection = createDarCollection();
-        Assertions.assertNotNull(collection);
+        assertNotNull(collection);
         Assertions.assertNull(collection.getUpdateDate());
         Assertions.assertNull(collection.getUpdateUserId());
         User user = createUser();

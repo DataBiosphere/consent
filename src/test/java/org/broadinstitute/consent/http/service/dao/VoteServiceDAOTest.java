@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -38,7 +39,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
 
         List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         assertTrue(votes.get(0).getVote());
         Assertions.assertEquals(rationale, votes.get(0).getRationale());
@@ -57,7 +58,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
 
         List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         assertTrue(votes.get(0).getVote());
         Assertions.assertNull(votes.get(0).getRationale());
@@ -75,7 +76,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
 
         List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         assertTrue(votes.get(0).getVote());
         Assertions.assertEquals(rationale, votes.get(0).getRationale());
@@ -98,7 +99,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
         List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
                 .map(Vote::getVoteId)
@@ -132,7 +133,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
         List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
                 .map(Vote::getVoteId)

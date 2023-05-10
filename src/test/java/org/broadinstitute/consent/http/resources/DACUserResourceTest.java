@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import org.broadinstitute.consent.http.models.User;
@@ -21,7 +22,7 @@ public class DACUserResourceTest {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
         String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertNull(user.getCreateDate());
         Assertions.assertEquals(user.getUserId().intValue(), 1);
         Assertions.assertEquals(user.getEmail(), "email");
@@ -35,7 +36,7 @@ public class DACUserResourceTest {
         String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
         String json = "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"emailPreference\": false, \"roles\": " + jsonRole + "}";
         User user = new User(json);
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertNull(user.getCreateDate());
         Assertions.assertEquals(user.getUserId().intValue(), 1);
         Assertions.assertEquals(user.getEmail(), "email");

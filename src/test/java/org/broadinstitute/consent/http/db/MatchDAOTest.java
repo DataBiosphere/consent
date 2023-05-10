@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -165,7 +166,7 @@ public class MatchDAOTest extends DAOTestHelper {
         Match match = makeMockMatch(UUID.randomUUID().toString());
         matchDAO.insertAll(List.of(match));
         Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(), match.getConsent());
-        Assertions.assertNotNull(foundMatch);
+        assertNotNull(foundMatch);
     }
 
     @Test
@@ -179,7 +180,7 @@ public class MatchDAOTest extends DAOTestHelper {
                 match.getCreateDate(),
                 match.getAlgorithmVersion());
         Match foundMatch = matchDAO.findMatchById(matchId);
-        Assertions.assertNotNull(foundMatch);
+        assertNotNull(foundMatch);
     }
 
     @Test
@@ -198,7 +199,7 @@ public class MatchDAOTest extends DAOTestHelper {
                 match.getAlgorithmVersion());
         match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
         Match foundMatch = matchDAO.findMatchById(matchId);
-        Assertions.assertNotNull(foundMatch);
+        assertNotNull(foundMatch);
         Assertions.assertEquals(match.getFailureReasons().size(),
             foundMatch.getFailureReasons().size());
     }
@@ -220,7 +221,7 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
         matchDAO.deleteFailureReasonsByConsentIds(List.of(match.getConsent()));
         Match foundMatch = matchDAO.findMatchById(matchId);
-        Assertions.assertNotNull(foundMatch);
+        assertNotNull(foundMatch);
         Assertions.assertEquals(0, foundMatch.getFailureReasons().size());
     }
 
@@ -241,7 +242,7 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
         matchDAO.deleteFailureReasonsByPurposeIds(List.of(match.getPurpose()));
         Match foundMatch = matchDAO.findMatchById(matchId);
-        Assertions.assertNotNull(foundMatch);
+        assertNotNull(foundMatch);
         Assertions.assertEquals(0, foundMatch.getFailureReasons().size());
     }
 

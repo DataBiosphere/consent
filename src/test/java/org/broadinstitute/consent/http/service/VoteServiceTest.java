@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -116,7 +117,7 @@ public class VoteServiceTest {
         initService();
 
         Vote vote = service.updateVote(v);
-        Assertions.assertNotNull(vote);
+        assertNotNull(vote);
     }
 
     @Test
@@ -143,7 +144,7 @@ public class VoteServiceTest {
         initService();
 
         Vote vote = service.updateVote(v, v.getVoteId(), "test");
-        Assertions.assertNotNull(vote);
+        assertNotNull(vote);
     }
 
     @Test
@@ -151,7 +152,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertTrue(votes.isEmpty());
     }
 
@@ -160,7 +161,7 @@ public class VoteServiceTest {
         when(voteDAO.findVotesByIds(any())).thenReturn(List.of(new Vote()));
         initService();
         List<Vote> votes = service.findVotesByIds(List.of(1));
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
     }
 
@@ -168,7 +169,7 @@ public class VoteServiceTest {
     public void testFindVotesByIds_emptyList() {
         initService();
         List<Vote> votes = service.findVotesByIds(List.of());
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertTrue(votes.isEmpty());
     }
 
@@ -317,7 +318,7 @@ public class VoteServiceTest {
         when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
         initService();
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertTrue(votes.isEmpty());
     }
 

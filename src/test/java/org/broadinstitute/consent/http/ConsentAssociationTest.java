@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -66,7 +67,7 @@ public class ConsentAssociationTest {
     @Test
     public void testToString() {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        Assertions.assertNotNull(consent_association.toString());
+        assertNotNull(consent_association.toString());
     }
 
     @Test

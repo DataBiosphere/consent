@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -86,8 +87,8 @@ public class FreeMarkerTemplateHelperTest {
         Assertions.assertEquals("Broad Data Use Oversight System - New Data Access Request",
             parsedTemplate.title());
         Element userNameElement = parsedTemplate.getElementById("userName");
-        Assertions.assertNotNull(userNameElement);
-        Assertions.assertNotNull(userNameElement.text());
+        assertNotNull(userNameElement);
+        assertNotNull(userNameElement.text());
         Assertions.assertEquals("Hello Admin,", userNameElement.text());
     }
 

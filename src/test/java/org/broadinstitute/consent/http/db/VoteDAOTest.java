@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.SimpleDateFormat;
@@ -48,7 +49,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
-        Assertions.assertNotNull(foundVote);
+        assertNotNull(foundVote);
     }
 
     @Test
@@ -67,7 +68,7 @@ public class VoteDAOTest extends DAOTestHelper {
         List<Integer> voteIds = List.of(vote.getVoteId(), vote2.getVoteId(), vote3.getVoteId(), vote4.getVoteId());
 
         List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
-        Assertions.assertNotNull(foundVotes);
+        assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         assertTrue(
             foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
@@ -88,7 +89,7 @@ public class VoteDAOTest extends DAOTestHelper {
         List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIds(electionIds);
-        Assertions.assertNotNull(foundVotes);
+        assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(2, foundVotes.size());
     }
@@ -102,17 +103,17 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType());
-        Assertions.assertNotNull(foundVotes);
+        assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(1, foundVotes.size());
 
         List<Vote> foundVotes2 = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType().toLowerCase());
-        Assertions.assertNotNull(foundVotes2);
+        assertNotNull(foundVotes2);
         assertFalse(foundVotes2.isEmpty());
         Assertions.assertEquals(1, foundVotes2.size());
 
         List<Vote> foundVotes3 = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType().toUpperCase());
-        Assertions.assertNotNull(foundVotes3);
+        assertNotNull(foundVotes3);
         assertFalse(foundVotes3.isEmpty());
         Assertions.assertEquals(1, foundVotes3.size());
     }
@@ -126,7 +127,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
-        Assertions.assertNotNull(foundVotes);
+        assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(1, foundVotes.size());
         Assertions.assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
@@ -141,7 +142,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         Vote foundVote = voteDAO.findVoteByElectionIdAndUserId(election.getElectionId(), user.getUserId());
-        Assertions.assertNotNull(foundVote);
+        assertNotNull(foundVote);
         Assertions.assertEquals(vote.getVoteId(), foundVote.getVoteId());
     }
 
@@ -154,7 +155,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndUserIds(election.getElectionId(), Collections.singletonList(user.getUserId()));
-        Assertions.assertNotNull(foundVotes);
+        assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
     }
@@ -168,7 +169,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         Integer voteId = voteDAO.checkVoteById(election.getReferenceId(), vote.getVoteId());
-        Assertions.assertNotNull(voteId);
+        assertNotNull(voteId);
         Assertions.assertEquals(vote.getVoteId(), voteId);
     }
 
@@ -243,7 +244,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote v = createDacVote(user.getUserId(), election.getElectionId());
 
         Vote vote = voteDAO.findVoteById(v.getVoteId());
-        Assertions.assertNotNull(vote);
+        assertNotNull(vote);
         Assertions.assertNull(vote.getVote());
     }
 
@@ -372,7 +373,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         voteDAO.insertVotes(userIds, election.getElectionId(), VoteType.DAC.getValue());
         List<Vote> votes = voteDAO.findVotesByElectionIds(Collections.singletonList(election.getElectionId()));
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         Assertions.assertEquals(3, votes.size());
     }
@@ -388,19 +389,19 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType());
-        Assertions.assertNotNull(votes);
+        assertNotNull(votes);
         assertFalse(votes.isEmpty());
         Assertions.assertEquals(1, votes.size());
         Assertions.assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
 
         List<Vote> votes2 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toLowerCase());
-        Assertions.assertNotNull(votes2);
+        assertNotNull(votes2);
         assertFalse(votes2.isEmpty());
         Assertions.assertEquals(1, votes2.size());
         Assertions.assertEquals(vote.getVoteId(), votes2.get(0).getVoteId());
 
         List<Vote> votes3 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toUpperCase());
-        Assertions.assertNotNull(votes3);
+        assertNotNull(votes3);
         assertFalse(votes3.isEmpty());
         Assertions.assertEquals(1, votes3.size());
         Assertions.assertEquals(vote.getVoteId(), votes3.get(0).getVoteId());
@@ -433,7 +434,7 @@ public class VoteDAOTest extends DAOTestHelper {
         createChairpersonVote(user.getUserId(), election.getElectionId());
 
         List<Vote> userVotes = voteDAO.findVotesByUserId(user.getUserId());
-        Assertions.assertNotNull(userVotes);
+        assertNotNull(userVotes);
         assertFalse(userVotes.isEmpty());
     }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -27,13 +28,13 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testInsertWithoutEmail() {
         Dac dac = insertDac();
-        Assertions.assertNotNull(dac);
+        assertNotNull(dac);
     }
 
     @Test
     public void testInsertWithEmail() {
         Dac dac = insertDacWithEmail();
-        Assertions.assertNotNull(dac);
+        assertNotNull(dac);
     }
 
     @Test
@@ -154,7 +155,7 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteDac() {
         Dac dac = insertDacWithEmail();
-        Assertions.assertNotNull(dac.getDacId());
+        assertNotNull(dac.getDacId());
 
         dacDAO.deleteDac(dac.getDacId());
         Dac deletedDac = dacDAO.findById(dac.getDacId());
@@ -176,7 +177,7 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
         List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-        Assertions.assertNotNull(dacMembers);
+        assertNotNull(dacMembers);
         assertFalse(dacMembers.isEmpty());
         Assertions.assertEquals(dacMembers.size(), 4);
     }
@@ -196,12 +197,12 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
         List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
-        Assertions.assertNotNull(chairs);
+        assertNotNull(chairs);
         assertFalse(chairs.isEmpty());
         Assertions.assertEquals(chairs.size(), 1);
 
         List<User> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
-        Assertions.assertNotNull(members);
+        assertNotNull(members);
         assertFalse(members.isEmpty());
         Assertions.assertEquals(members.size(), 3);
     }

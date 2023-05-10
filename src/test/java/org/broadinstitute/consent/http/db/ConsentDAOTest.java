@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -29,7 +30,7 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent1.getConsentId(),
                 consent2.getConsentId()));
         Collection<String> ids = consents.stream().map(Consent::getConsentId).toList();
-        Assertions.assertNotNull(consents);
+        assertNotNull(consents);
         assertFalse(consents.isEmpty());
         Assertions.assertEquals(2, consents.size());
         assertTrue(ids.contains(consent1.getConsentId()));
@@ -71,7 +72,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
         String consentId = consent.getConsentId();
         Consent foundConsent = consentDAO.findConsentById(consentId);
-        Assertions.assertNotNull(foundConsent);
+        assertNotNull(foundConsent);
         consentDAO.deleteConsent(consentId);
         Consent deletedConsent = consentDAO.findConsentById(consentId);
         Assertions.assertNull(deletedConsent);
@@ -101,7 +102,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         );
 
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        Assertions.assertNotNull(foundConsent.getName());
+        assertNotNull(foundConsent.getName());
         Assertions.assertEquals("something else", foundConsent.getName());
     }
 
@@ -159,7 +160,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
         Assertions.assertNull(deletedAssociationId);
         Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
-        Assertions.assertNotNull(remainingAssociationId);
+        assertNotNull(remainingAssociationId);
     }
 
     @Test

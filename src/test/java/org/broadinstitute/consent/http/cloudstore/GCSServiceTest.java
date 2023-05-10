@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -64,7 +65,7 @@ public class GCSServiceTest {
 
         InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());
         BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, id);
-        Assertions.assertNotNull(storedBlobId);
+        assertNotNull(storedBlobId);
     }
 
     @Test
@@ -86,7 +87,7 @@ public class GCSServiceTest {
         initStore();
         InputStream is = service.getDocument(urlString);
         String content = IOUtils.toString(is, Charset.defaultCharset());
-        Assertions.assertNotNull(is);
+        assertNotNull(is);
         Assertions.assertEquals(fileContent, content);
     }
 
@@ -109,7 +110,7 @@ public class GCSServiceTest {
         initStore();
         InputStream is = service.getDocument(BlobId.of("asdf", "ghjkl"));
         String content = IOUtils.toString(is, Charset.defaultCharset());
-        Assertions.assertNotNull(is);
+        assertNotNull(is);
         Assertions.assertEquals(fileContent, content);
     }
 
@@ -144,7 +145,7 @@ public class GCSServiceTest {
 
         initStore();
         Map<BlobId, InputStream> out = service.getDocuments(List.of(blobId1, blobId2));
-        Assertions.assertNotNull(out);
+        assertNotNull(out);
         Assertions.assertEquals(2, out.size());
         Assertions.assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
         Assertions.assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());

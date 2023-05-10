@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -140,7 +141,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userChairId, targetDatasets);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(2, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -197,7 +198,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userChairId,
                 targetDatasets);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -229,7 +230,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userOneId, targetDatasets);
 
         //test that only the non-archived collection was pulled by the query
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         Assertions.assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
     }
@@ -271,7 +272,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -307,7 +308,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -340,7 +341,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
 
         //test that only the non-archived collection was pulled by the query
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         Assertions.assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
     }
@@ -382,7 +383,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -430,7 +431,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
 
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -462,7 +463,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
 
         //test that only the non-archived collection was pulled by the query
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         Assertions.assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
     }
@@ -518,7 +519,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
         List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(2, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -561,7 +562,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
         List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(2, summaries.size());
         summaries.forEach((s) -> {
             Assertions.assertEquals(1, s.getDatasetIds().size());
@@ -592,7 +593,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
 
         //test that only the non-archived collection was pulled by the query
-        Assertions.assertNotNull(summaries);
+        assertNotNull(summaries);
         Assertions.assertEquals(1, summaries.size());
         Assertions.assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
     }
@@ -628,7 +629,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionOneId);
 
-        Assertions.assertNotNull(summary);
+        assertNotNull(summary);
         Assertions.assertEquals(collectionOneId, summary.getDarCollectionId());
         Assertions.assertEquals(1, summary.getDatasetIds().size());
         summary.getDatasetIds()
@@ -666,7 +667,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId());
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionOneId);
 
-        Assertions.assertNotNull(summary);
+        assertNotNull(summary);
         Assertions.assertEquals(collectionOneId, summary.getDarCollectionId());
         Assertions.assertEquals(1, summary.getDatasetIds().size());
         summary.getDatasetIds()
@@ -722,7 +723,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userChairId, targetDatasets, collectionOneId);
 
-        Assertions.assertNotNull(summary);
+        assertNotNull(summary);
         Assertions.assertEquals(collectionOneId, summary.getDarCollectionId());
         Assertions.assertEquals(1, summary.getDatasetIds().size());
         summary.getDatasetIds()
@@ -767,7 +768,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
                 userChairId, targetDatasets, collectionOneId);
 
-        Assertions.assertNotNull(summary);
+        assertNotNull(summary);
         Assertions.assertEquals(collectionOneId, summary.getDarCollectionId());
         Assertions.assertEquals(1, summary.getDatasetIds().size());
         summary.getDatasetIds()

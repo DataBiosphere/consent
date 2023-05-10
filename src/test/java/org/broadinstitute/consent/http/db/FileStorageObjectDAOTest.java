@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -46,8 +47,8 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
 
         FileStorageObject newFileStorageObject = fileStorageObjectDAO.findFileById(newFileStorageObjectId);
 
-        Assertions.assertNotNull(newFileStorageObject);
-        Assertions.assertNotNull(newFileStorageObject.getFileStorageObjectId());
+        assertNotNull(newFileStorageObject);
+        assertNotNull(newFileStorageObject.getFileStorageObjectId());
         Assertions.assertEquals(fileName, newFileStorageObject.getFileName());
         Assertions.assertEquals(category, newFileStorageObject.getCategory().getValue());
         Assertions.assertEquals(BlobId.fromGsUtilUri(gcsFileUri), newFileStorageObject.getBlobId());
@@ -179,7 +180,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         var userId = file1.getCreateUserId();
 
         FileStorageObject file2 = fileStorageObjectDAO.findFileById(fileId);
-        Assertions.assertNotNull(file2);
+        assertNotNull(file2);
 
         fileStorageObjectDAO.deleteAllUserFiles(userId);
 

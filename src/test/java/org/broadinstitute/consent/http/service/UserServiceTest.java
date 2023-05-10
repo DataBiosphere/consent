@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -397,8 +398,8 @@ public class UserServiceTest {
         initService();
 
         User user = service.findUserById(u.getUserId());
-        Assertions.assertNotNull(user);
-        Assertions.assertNotNull(user.getLibraryCards());
+        assertNotNull(user);
+        assertNotNull(user.getLibraryCards());
         Assertions.assertEquals(user.getLibraryCards().size(), 2);
         Assertions.assertEquals(user.getLibraryCards().get(0).getId(), one.getId());
         Assertions.assertEquals(user.getLibraryCards().get(1).getId(), two.getId());
@@ -412,7 +413,7 @@ public class UserServiceTest {
         initService();
 
         User user = service.findUserById(u.getUserId());
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
         Assertions.assertNull(u.getRoles());
     }
@@ -429,7 +430,7 @@ public class UserServiceTest {
         initService();
 
         User user = service.findUserById(u.getUserId());
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
         Assertions.assertEquals(2, u.getRoles().size());
@@ -456,7 +457,7 @@ public class UserServiceTest {
         initService();
 
         User user = service.findUserByEmail(u.getEmail());
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
         Assertions.assertNull(u.getRoles());
     }
@@ -473,7 +474,7 @@ public class UserServiceTest {
         initService();
 
         User user = service.findUserByEmail(u.getEmail());
-        Assertions.assertNotNull(user);
+        assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
         Assertions.assertEquals(2, u.getRoles().size());
@@ -562,7 +563,7 @@ public class UserServiceTest {
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(new Institution());
         initService();
         List<User> users = service.findUsersByInstitutionId(1);
-        Assertions.assertNotNull(users);
+        assertNotNull(users);
         assertTrue(users.isEmpty());
     }
 
@@ -572,7 +573,7 @@ public class UserServiceTest {
         when(userDAO.findUsersByInstitution(anyInt())).thenReturn(List.of(new User()));
         initService();
         List<User> users = service.findUsersByInstitutionId(1);
-        Assertions.assertNotNull(users);
+        assertNotNull(users);
         assertFalse(users.isEmpty());
     }
 
@@ -584,7 +585,7 @@ public class UserServiceTest {
         initService();
 
         List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertNotNull(users);
+        assertNotNull(users);
         Assertions.assertEquals(2, users.size());
     }
 
@@ -616,7 +617,7 @@ public class UserServiceTest {
         when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
-        Assertions.assertNotNull(users);
+        assertNotNull(users);
         Assertions.assertEquals(returnedUsers.size(), users.size());
     }
 
@@ -626,7 +627,7 @@ public class UserServiceTest {
         when(userDAO.getUsersWithNoInstitution()).thenReturn(List.of(user));
         initService();
         List<User> users = service.findUsersWithNoInstitution();
-        Assertions.assertNotNull(users);
+        assertNotNull(users);
         Assertions.assertEquals(1, users.size());
         Assertions.assertEquals(user.getUserId(), users.get(0).getUserId());
     }
@@ -648,7 +649,7 @@ public class UserServiceTest {
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
-        Assertions.assertNotNull(userJson);
+        assertNotNull(userJson);
         assertTrue(
             userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(
@@ -674,7 +675,7 @@ public class UserServiceTest {
 
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
-        Assertions.assertNotNull(userJson);
+        assertNotNull(userJson);
         assertTrue(
             userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
         assertTrue(

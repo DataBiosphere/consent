@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -68,7 +69,7 @@ public class InstitutionResourceTest {
         Response adminResponse = resource.getInstitutions(authUser);
         String json = adminResponse.getEntity().toString();
         Assertions.assertEquals(200, adminResponse.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -80,7 +81,7 @@ public class InstitutionResourceTest {
         Response researcherResponse = resource.getInstitutions(authUser);
         String json = researcherResponse.getEntity().toString();
         Assertions.assertEquals(200, researcherResponse.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -92,7 +93,7 @@ public class InstitutionResourceTest {
         Response adminResponse = resource.getInstitution(authUser, 1);
         String json = adminResponse.getEntity().toString();
         Assertions.assertEquals(adminResponse.getStatus(), 200);
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -104,7 +105,7 @@ public class InstitutionResourceTest {
         Response researcherResponse = resource.getInstitution(authUser, 1);
         String json = researcherResponse.getEntity().toString();
         Assertions.assertEquals(200, researcherResponse.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -128,7 +129,7 @@ public class InstitutionResourceTest {
         Response response = resource.createInstitution(authUser, requestJson);
         String json = response.getEntity().toString();
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -171,7 +172,7 @@ public class InstitutionResourceTest {
         initResource();
         Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertNotNull(response.getEntity().toString());
+        assertNotNull(response.getEntity().toString());
     }
 
     @Test

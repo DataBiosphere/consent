@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -42,7 +43,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test
@@ -60,7 +61,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                     RandomUtils.nextInt(200, 399),
                     now
             );
-            Assertions.assertNotNull(mailId);
+            assertNotNull(mailId);
         });
     }
 
@@ -78,7 +79,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test
@@ -95,7 +96,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test
@@ -112,7 +113,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test
@@ -129,7 +130,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test
@@ -146,7 +147,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 null,
                 now
         );
-        Assertions.assertNotNull(mailId);
+        assertNotNull(mailId);
     }
 
     @Test

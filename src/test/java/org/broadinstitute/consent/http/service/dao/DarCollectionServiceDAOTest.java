@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -47,7 +48,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
         DarCollection collection = setUpDarCollectionWithDacDataset();
         DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
 
         List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
 
@@ -108,7 +109,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
         DarCollection collection = setUpDarCollectionWithDacDataset();
         DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
 
         // Add another DAR with Dataset in a separate DAC to the collection
         DataAccessRequest dar2 = addDARWithDacAndDatasetToCollection(collection);
@@ -160,7 +161,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
         assertTrue(dar.isPresent());
         Integer datasetId = dar.get().getDatasetIds().get(0);
-        Assertions.assertNotNull(datasetId);
+        assertNotNull(datasetId);
         Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
         assertTrue(dac.isPresent());
         List<User> dacUsers = dacDAO.findMembersByDacId(dac.get().getDacId());
@@ -209,7 +210,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(dar.isPresent());
         assertFalse(dar.get().getDatasetIds().isEmpty());
         Integer datasetId = dar.get().getDatasetIds().get(0);
-        Assertions.assertNotNull(datasetId);
+        assertNotNull(datasetId);
 
         // Find the dac chairperson for the current DAR/Dataset combination
         Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
@@ -272,7 +273,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
         DarCollection collection = setUpDarCollectionWithDacDataset();
         DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
 
         // create elections & votes:
         List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
@@ -324,7 +325,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(dar.isPresent());
         assertFalse(dar.get().getDatasetIds().isEmpty());
         Integer datasetId = dar.get().getDatasetIds().get(0);
-        Assertions.assertNotNull(datasetId);
+        assertNotNull(datasetId);
 
         // Find the dac chairperson for the current DAR/Dataset combination
         Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
@@ -385,8 +386,8 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         createDarForCollection(user, collectionId, dataset);
         DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
         DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-        Assertions.assertNotNull(dar);
-        Assertions.assertNotNull(dar.getData());
+        assertNotNull(dar);
+        assertNotNull(dar.getData());
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         Date now = new Date();
         dataAccessRequestDAO.updateDataByReferenceId(

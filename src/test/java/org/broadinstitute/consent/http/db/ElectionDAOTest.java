@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
@@ -63,7 +64,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
-        Assertions.assertNotNull(foundDac);
+        assertNotNull(foundDac);
         Assertions.assertEquals(dac.getDacId(), foundDac.getDacId());
     }
 
@@ -77,7 +78,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         Dac foundDac = electionDAO.findDacForElection(election.getElectionId());
-        Assertions.assertNotNull(foundDac);
+        assertNotNull(foundDac);
         Assertions.assertEquals(dac.getDacId(), foundDac.getDacId());
     }
 
@@ -102,7 +103,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
-        Assertions.assertNotNull(foundElections);
+        assertNotNull(foundElections);
         Assertions.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
     }
 
@@ -180,22 +181,22 @@ public class ElectionDAOTest extends DAOTestHelper {
                 .flatMap(List::stream).toList();
 
         Election latestAccessForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
-        Assertions.assertNotNull(latestAccessForD1);
+        assertNotNull(latestAccessForD1);
         assertFalse(firstElectionIds.contains(latestAccessForD1.getElectionId()));
         assertTrue(latestElectionIds.contains(latestAccessForD1.getElectionId()));
 
         Election latestRPForD1 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d1.getDataSetId(), ElectionType.RP.getValue());
-        Assertions.assertNotNull(latestRPForD1);
+        assertNotNull(latestRPForD1);
         assertFalse(firstElectionIds.contains(latestRPForD1.getElectionId()));
         assertTrue(latestElectionIds.contains(latestRPForD1.getElectionId()));
 
         Election latestAccessForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.DATA_ACCESS.getValue());
-        Assertions.assertNotNull(latestAccessForD2);
+        assertNotNull(latestAccessForD2);
         assertFalse(firstElectionIds.contains(latestAccessForD2.getElectionId()));
         assertTrue(latestElectionIds.contains(latestAccessForD2.getElectionId()));
 
         Election latestRPForD2 = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(dar.getReferenceId(), d2.getDataSetId(), ElectionType.RP.getValue());
-        Assertions.assertNotNull(latestRPForD2);
+        assertNotNull(latestRPForD2);
         assertFalse(firstElectionIds.contains(latestRPForD2.getElectionId()));
         assertTrue(latestElectionIds.contains(latestRPForD2.getElectionId()));
     }
@@ -283,7 +284,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
 
         List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
-        Assertions.assertNotNull(foundElections);
+        assertNotNull(foundElections);
         Assertions.assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
     }
 
@@ -314,7 +315,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Vote v = voteDAO.findVoteById(voteId);
 
         Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(e.getElectionId(), election.getElectionId());
         Assertions.assertEquals(v.getVote(), election.getFinalVote());
     }
@@ -332,7 +333,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Vote v = createPopulatedChairpersonVote(u.getUserId(), e.getElectionId());
 
         Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(e.getElectionId(), election.getElectionId());
         Assertions.assertEquals(v.getVote(), election.getFinalVote());
     }
@@ -359,7 +360,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Vote v = voteDAO.findVoteById(voteId);
 
         Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(e.getElectionId(), election.getElectionId());
         Assertions.assertEquals(v.getVote(), election.getFinalVote());
     }
@@ -383,7 +384,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Vote v = createPopulatedChairpersonVote(u.getUserId(), e.getElectionId());
 
         Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(e.getElectionId(), election.getElectionId());
         Assertions.assertEquals(v.getVote(), election.getFinalVote());
     }
@@ -396,7 +397,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         createRPElection(dar.getReferenceId(), d.getDataSetId());
 
         List<Election> elections = electionDAO.findElectionsByReferenceId(dar.getReferenceId());
-        Assertions.assertNotNull(elections);
+        assertNotNull(elections);
         Assertions.assertEquals(2, elections.size());
     }
 
@@ -418,7 +419,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         Election e = electionDAO.findElectionById(electionId);
         createFinalVote(u.getUserId(), e.getElectionId());
         Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(e.getElectionId(), election.getElectionId());
     }
 
@@ -435,7 +436,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         List<Election> elections =
                 electionDAO.findLastElectionsByReferenceIdsAndType(
                         Collections.singletonList(dar.getReferenceId()), ElectionType.DATA_ACCESS.getValue());
-        Assertions.assertNotNull(elections);
+        assertNotNull(elections);
         assertFalse(elections.isEmpty());
         Assertions.assertEquals(1, elections.size());
     }
@@ -684,7 +685,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(ElectionType.DATA_ACCESS.getValue(), e.getElectionType());
         Assertions.assertEquals(ElectionStatus.OPEN.getValue(), e.getStatus());
-        Assertions.assertNotNull(e.getCreateDate());
+        assertNotNull(e.getCreateDate());
         Assertions.assertEquals(referenceId, e.getReferenceId());
         Assertions.assertEquals(datasetId, e.getDataSetId());
 
@@ -712,7 +713,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
 
         Assertions.assertEquals(ElectionStatus.FINAL.getValue(), after.getStatus());
-        Assertions.assertNotNull(after.getLastUpdate());
+        assertNotNull(after.getLastUpdate());
     }
 
     @Test
@@ -740,7 +741,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(ElectionStatus.FINAL.getValue(), after.getStatus());
         Assertions.assertEquals(true, after.getFinalAccessVote());
-        Assertions.assertNotNull(after.getLastUpdate());
+        assertNotNull(after.getLastUpdate());
     }
 
     @Test
@@ -1447,7 +1448,7 @@ public class ElectionDAOTest extends DAOTestHelper {
         e = electionDAO.findElectionById(e.getElectionId());
 
         Assertions.assertEquals(true, e.getArchived());
-        Assertions.assertNotNull(e.getLastUpdate());
+        assertNotNull(e.getLastUpdate());
     }
 
     @Test

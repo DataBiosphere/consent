@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -64,7 +65,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
                 stream().
                 map(Role::getName).
                 collect(Collectors.toList());
-        roleNames.forEach(r -> Assertions.assertNotNull(userRoleDAO.findRoleIdByName(r)));
+        roleNames.forEach(r -> assertNotNull(userRoleDAO.findRoleIdByName(r)));
         Assertions.assertNull(userRoleDAO.findRoleIdByName("Not a real role"));
     }
 
@@ -122,7 +123,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     public void testFindRoleByNameAndUser() {
         User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         Integer roleId = userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), user.getUserId());
-        Assertions.assertNotNull(roleId);
+        assertNotNull(roleId);
 
         Integer invalidRoleId = userRoleDAO.findRoleByNameAndUser(UserRoles.MEMBER.getRoleName(), user.getUserId());
         Assertions.assertNull(invalidRoleId);
@@ -132,7 +133,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     public void testFindRoleByUserIdAndRoleId() {
         User user = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
         UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getUserId(), UserRoles.DATAOWNER.getRoleId());
-        Assertions.assertNotNull(userRole);
+        assertNotNull(userRole);
     }
 
 }

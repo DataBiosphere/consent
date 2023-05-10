@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
@@ -99,7 +100,7 @@ public class SamDAOTest implements WithMockServer {
                         .withBody(userInfo.toString()));
 
         UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
-        Assertions.assertNotNull(authUserUserInfo);
+        assertNotNull(authUserUserInfo);
         Assertions.assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
         Assertions.assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
         Assertions.assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
@@ -186,7 +187,7 @@ public class SamDAOTest implements WithMockServer {
                         .withBody(diagnostics.toString()));
 
         UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
-        Assertions.assertNotNull(userDiagnostics);
+        assertNotNull(userDiagnostics);
         Assertions.assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
         Assertions.assertEquals(diagnostics.getInAllUsersGroup(),
             userDiagnostics.getInAllUsersGroup());
@@ -206,7 +207,7 @@ public class SamDAOTest implements WithMockServer {
                         .withBody(status.toString()));
 
         UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
-        Assertions.assertNotNull(userStatus);
+        assertNotNull(userStatus);
     }
 
     /**

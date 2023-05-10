@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -89,7 +90,7 @@ public class LibraryCardResourceTest {
         Response response = resource.getLibraryCards(authUser);
         String json = response.getEntity().toString();
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -100,7 +101,7 @@ public class LibraryCardResourceTest {
         Response response = resource.getLibraryCardById(authUser, 1);
         String json = response.getEntity().toString();
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -138,7 +139,7 @@ public class LibraryCardResourceTest {
         Response response = resource.createLibraryCard(authUser, payload);
         String json = response.getEntity().toString();
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test
@@ -196,7 +197,7 @@ public class LibraryCardResourceTest {
         Response response = resource.updateLibraryCard(authUser, 1, payload);
         String json = response.getEntity().toString();
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertNotNull(json);
+        assertNotNull(json);
     }
 
     @Test

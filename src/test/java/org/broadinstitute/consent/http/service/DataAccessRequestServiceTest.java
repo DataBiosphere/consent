@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -125,7 +126,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
         initService();
         DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
-        Assertions.assertNotNull(newDar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -144,7 +145,7 @@ public class DataAccessRequestServiceTest {
         doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
         initService();
         DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
-        Assertions.assertNotNull(newDar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -178,7 +179,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
-        Assertions.assertNotNull(newDar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -189,7 +190,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
         initService();
         DataAccessRequest newDar = service.updateByReferenceId(user, dar);
-        Assertions.assertNotNull(newDar);
+        assertNotNull(newDar);
     }
 
     @Test
@@ -234,7 +235,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
         initService();
         DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
     }
 
     @Test
@@ -242,7 +243,7 @@ public class DataAccessRequestServiceTest {
         initService();
         try {
             DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
-            Assertions.assertNotNull(dar);
+            assertNotNull(dar);
         } catch (Exception e) {
             assertTrue(e instanceof IllegalArgumentException);
         }
@@ -273,7 +274,7 @@ public class DataAccessRequestServiceTest {
         initService();
         try {
             File file = service.createApprovedDARDocument();
-            Assertions.assertNotNull(file);
+            assertNotNull(file);
         } catch (IOException ioe) {
             assert false;
         }
@@ -309,7 +310,7 @@ public class DataAccessRequestServiceTest {
         try {
             File file = service.createReviewedDARDocument();
 
-            Assertions.assertNotNull(file);
+            assertNotNull(file);
         } catch (Exception e) {
             assert false;
         }
@@ -341,7 +342,7 @@ public class DataAccessRequestServiceTest {
         try {
             String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
             System.out.println(approvedUsers);
-            Assertions.assertNotNull(approvedUsers);
+            assertNotNull(approvedUsers);
             assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
         } catch (Exception ioe) {
             assert false;
@@ -376,7 +377,7 @@ public class DataAccessRequestServiceTest {
         try {
             String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
             System.out.println(approvedUsers);
-            Assertions.assertNotNull(approvedUsers);
+            assertNotNull(approvedUsers);
             assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
         } catch (Exception ioe) {
             assert false;

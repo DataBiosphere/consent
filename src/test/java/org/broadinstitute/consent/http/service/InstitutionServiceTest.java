@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -54,7 +55,7 @@ public class InstitutionServiceTest {
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
         initService();
         Institution institution = service.createInstitution(mockInstitution, 1);
-        Assertions.assertNotNull(institution);
+        assertNotNull(institution);
     }
 
     @Test
@@ -89,7 +90,7 @@ public class InstitutionServiceTest {
         mockInstitution.setUpdateDate(new Date());
         //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
         Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
-        Assertions.assertNotNull(updatedInstitution);
+        assertNotNull(updatedInstitution);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -46,14 +47,14 @@ public class DatasetDAOTest extends DAOTestHelper {
         consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST, dataset.getDataSetId());
 
         Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
-        Assertions.assertNotNull(foundDataset);
+        assertNotNull(foundDataset);
         Assertions.assertEquals(dac.getDacId(), foundDataset.getDacId());
         Assertions.assertEquals(consent.getConsentId(), foundDataset.getConsentId());
         Assertions.assertEquals(consent.getTranslatedUseRestriction(),
             foundDataset.getTranslatedUseRestriction());
         assertFalse(foundDataset.getProperties().isEmpty());
         assertTrue(foundDataset.getDeletable());
-        Assertions.assertNotNull(foundDataset.getCreateUser());
+        assertNotNull(foundDataset.getCreateUser());
     }
 
     @Test
@@ -96,13 +97,13 @@ public class DatasetDAOTest extends DAOTestHelper {
         createDarCollectionWithDatasets(dac.getDacId(), user, List.of(d1, d2));
 
         Dataset foundDataset = datasetDAO.findDatasetById(d1.getDataSetId());
-        Assertions.assertNotNull(foundDataset);
+        assertNotNull(foundDataset);
         Assertions.assertEquals(dac.getDacId(), foundDataset.getDacId());
         assertFalse(foundDataset.getProperties().isEmpty());
         assertFalse(foundDataset.getDeletable());
 
         Dataset foundDataset2 = datasetDAO.findDatasetById(d2.getDataSetId());
-        Assertions.assertNotNull(foundDataset2);
+        assertNotNull(foundDataset2);
         Assertions.assertEquals(dac.getDacId(), foundDataset2.getDacId());
         assertFalse(foundDataset2.getProperties().isEmpty());
         assertFalse(foundDataset2.getDeletable());
@@ -114,7 +115,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         Dataset foundDataset = datasetDAO.findDatasetByAlias(dataset.getAlias());
 
-        Assertions.assertNotNull(foundDataset);
+        assertNotNull(foundDataset);
         Assertions.assertEquals(dataset.getDataSetId(), foundDataset.getDataSetId());
     }
 
@@ -125,7 +126,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         List<Dataset> foundDatasets = datasetDAO.findDatasetsByAlias(List.of(dataset1.getAlias(), dataset2.getAlias()));
         List<Integer> foundDatasetIds = foundDatasets.stream().map(Dataset::getDataSetId).toList();
-        Assertions.assertNotNull(foundDatasets);
+        assertNotNull(foundDatasets);
         assertTrue(
             foundDatasetIds.containsAll(List.of(dataset1.getDataSetId(), dataset2.getDataSetId())));
     }
@@ -288,8 +289,8 @@ public class DatasetDAOTest extends DAOTestHelper {
         List<Dictionary> terms = datasetDAO.getDictionaryTerms();
         assertFalse(terms.isEmpty());
         terms.forEach(t -> {
-            Assertions.assertNotNull(t.getKeyId());
-            Assertions.assertNotNull(t.getKey());
+            assertNotNull(t.getKeyId());
+            assertNotNull(t.getKey());
         });
     }
 
@@ -309,7 +310,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         Assertions.assertEquals(consent.getTranslatedUseRestriction(),
             datasets.get(0).getTranslatedUseRestriction());
         assertFalse(datasets.get(0).getProperties().isEmpty());
-        Assertions.assertNotNull(datasets.get(0).getCreateUser());
+        assertNotNull(datasets.get(0).getCreateUser());
     }
 
     // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
@@ -740,11 +741,11 @@ public class DatasetDAOTest extends DAOTestHelper {
         Dataset dataset = insertDataset();
         datasetDAO.updateDatasetApproval(true, Instant.now(), updateUser.getUserId(), dataset.getDataSetId());
         Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
-        Assertions.assertNotNull(updatedDataset);
+        assertNotNull(updatedDataset);
         assertTrue(updatedDataset.getDacApproval());
         datasetDAO.updateDatasetApproval(false, Instant.now(), updateUser.getUserId(), dataset.getDataSetId());
         Dataset updatedDatasetAfterApprovalFalse = datasetDAO.findDatasetById(dataset.getDataSetId());
-        Assertions.assertNotNull(updatedDatasetAfterApprovalFalse);
+        assertNotNull(updatedDatasetAfterApprovalFalse);
         Assertions.assertEquals(dataset.getDataSetId(),
             updatedDatasetAfterApprovalFalse.getDataSetId());
         assertFalse(updatedDatasetAfterApprovalFalse.getDacApproval());
@@ -782,14 +783,14 @@ public class DatasetDAOTest extends DAOTestHelper {
 
         ds = datasetDAO.findDatasetById(ds.getDataSetId());
 
-        Assertions.assertNotNull(ds.getStudy());
+        assertNotNull(ds.getStudy());
 
         // mapper ran properly
         Assertions.assertEquals(study.getName(), ds.getStudy().getName());
         // reducer caught properties
         Assertions.assertEquals(study.getProperties().size(), ds.getStudy().getProperties().size());
         // reducer caught FSO
-        Assertions.assertNotNull(fso);
+        assertNotNull(fso);
         Assertions.assertEquals(fso.getFileStorageObjectId(),
             ds.getStudy().getAlternativeDataSharingPlan().getFileStorageObjectId());
         Assertions.assertEquals(2, ds.getStudy().getDatasetIds().size());

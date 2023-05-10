@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -86,7 +87,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
         String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
-        Assertions.assertNotNull(translation);
+        assertNotNull(translation);
     }
 
     /*
@@ -99,7 +100,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
         String translation = converter.translateDataUse(dataUse, DataUseTranslationType.DATASET);
-        Assertions.assertNotNull(translation);
+        assertNotNull(translation);
     }
 
     /*
@@ -145,7 +146,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        Assertions.assertNotNull(dataUse);
+        assertNotNull(dataUse);
         assertTrue(dataUse.getMethodsResearch());
         assertTrue(dataUse.getPopulationStructure());
         assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
@@ -169,7 +170,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        Assertions.assertNotNull(dataUse);
+        assertNotNull(dataUse);
         Assertions.assertNull(dataUse.getDiseaseRestrictions());
     }
 
@@ -185,7 +186,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        Assertions.assertNotNull(dataUse);
+        assertNotNull(dataUse);
         Assertions.assertNull(dataUse.getDiseaseRestrictions());
     }
 

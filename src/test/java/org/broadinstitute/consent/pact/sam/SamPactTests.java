@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
@@ -29,7 +30,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -221,7 +221,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     List<ResourceType> types = samDAO.getResourceTypes(authUser);
-    Assertions.assertNotNull(types);
+    assertNotNull(types);
     assertFalse(types.isEmpty());
   }
 
@@ -233,7 +233,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     UserStatusInfo info = samDAO.getRegistrationInfo(authUser);
-    Assertions.assertNotNull(info);
+    assertNotNull(info);
   }
 
   @Test
@@ -244,7 +244,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
-    Assertions.assertNotNull(statusDiagnostics);
+    assertNotNull(statusDiagnostics);
   }
 
   @Test
@@ -255,7 +255,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
-    Assertions.assertNotNull(userStatus);
+    assertNotNull(userStatus);
   }
 
   @Test
@@ -266,7 +266,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     String tosText = samDAO.getToSText();
-    Assertions.assertNotNull(tosText);
+    assertNotNull(tosText);
   }
 
   @Test
@@ -277,7 +277,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     TosResponse tosPostResponse = samDAO.postTosAcceptedStatus(authUser);
-    Assertions.assertNotNull(tosPostResponse);
+    assertNotNull(tosPostResponse);
   }
 
   // TODO: This test succeeds when run individually separate from the rest of the tests  in this
@@ -292,7 +292,7 @@ public class SamPactTests {
     authUser.setAuthToken("auth-token");
 
     TosResponse TosDeleteResponse = samDAO.removeTosAcceptedStatus(authUser);
-    Assertions.assertNotNull(TosDeleteResponse);
+    assertNotNull(TosDeleteResponse);
   }
 
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -78,7 +79,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         DatasetProperty createdProp1 = created.getProperties().stream().filter((p) -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst().get();
         DatasetProperty createdProp2 = created.getProperties().stream().filter((p) -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst().get();
         DatasetProperty datasetNameProp = created.getProperties().stream().filter((p) -> p.getPropertyName().equals("Dataset Name")).findFirst().get();
-        Assertions.assertNotNull(datasetNameProp);
+        assertNotNull(datasetNameProp);
 
         Assertions.assertEquals(created.getDataSetId(), createdProp1.getDataSetId());
         Assertions.assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
@@ -88,7 +89,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(prop2.getPropertyValue(), createdProp2.getPropertyValue());
         Assertions.assertEquals(prop2.getPropertyType(), createdProp2.getPropertyType());
 
-        Assertions.assertNotNull(created.getNihInstitutionalCertificationFile());
+        assertNotNull(created.getNihInstitutionalCertificationFile());
 
         Assertions.assertEquals(file1.getFileName(),
             created.getNihInstitutionalCertificationFile().getFileName());
@@ -185,7 +186,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         Dataset dataset1 = datasets.get(0);
 
-        Assertions.assertNotNull(dataset1.getStudy());
+        assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
         Assertions.assertEquals(studyInsert.name(), s.getName());
         Assertions.assertEquals(studyInsert.description(), s.getDescription());
@@ -193,7 +194,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(studyInsert.piName(), s.getPiName());
         Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
         Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
-        Assertions.assertNotNull(s.getCreateDate());
+        assertNotNull(s.getCreateDate());
 
         assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
         Assertions.assertNull(s.getAlternativeDataSharingPlan());
@@ -240,7 +241,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         Dataset dataset1 = datasets.get(0);
 
-        Assertions.assertNotNull(dataset1.getStudy());
+        assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
         Assertions.assertEquals(studyInsert.name(), s.getName());
         Assertions.assertEquals(studyInsert.description(), s.getDescription());
@@ -248,7 +249,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(studyInsert.piName(), s.getPiName());
         Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
         Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
-        Assertions.assertNotNull(s.getCreateDate());
+        assertNotNull(s.getCreateDate());
 
 
         StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
@@ -310,7 +311,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         Dataset dataset1 = datasets.get(0);
 
-        Assertions.assertNotNull(dataset1.getStudy());
+        assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
         Assertions.assertEquals(studyInsert.name(), s.getName());
         Assertions.assertEquals(studyInsert.description(), s.getDescription());
@@ -318,7 +319,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(studyInsert.piName(), s.getPiName());
         Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
         Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
-        Assertions.assertNotNull(s.getCreateDate());
+        assertNotNull(s.getCreateDate());
 
 
         StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
@@ -329,7 +330,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(prop2.getType(), createdProp2.getType());
         Assertions.assertEquals(prop2.getValue(), createdProp2.getValue());
 
-        Assertions.assertNotNull(s.getAlternativeDataSharingPlan());
+        assertNotNull(s.getAlternativeDataSharingPlan());
 
         Assertions.assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
         Assertions.assertEquals(file.getFileName(),

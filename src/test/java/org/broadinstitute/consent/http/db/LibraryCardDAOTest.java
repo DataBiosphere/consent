@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -117,7 +118,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         LibraryCard libraryCard = createLibraryCard();
         List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByInstitutionId(libraryCard.getInstitutionId());
 
-        Assertions.assertNotNull(cardsFromDAO);
+        assertNotNull(cardsFromDAO);
         Assertions.assertEquals(cardsFromDAO.size(), 1);
         Assertions.assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
     }
@@ -141,7 +142,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         User user = createUser();
         LibraryCard libraryCard = createLibraryCard(user);
         List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
-        Assertions.assertNotNull(libraryCards);
+        assertNotNull(libraryCards);
         Assertions.assertEquals(1, libraryCards.size());
         Assertions.assertEquals(user.getEmail(), libraryCards.get(0).getUserEmail());
         Assertions.assertEquals(libraryCard.getId(), libraryCards.get(0).getId());
@@ -153,7 +154,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         LibraryCard one = createLibraryCard(user);
         LibraryCard two = createLibraryCard(user);
         List<LibraryCard> libraryCards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-        Assertions.assertNotNull(libraryCards);
+        assertNotNull(libraryCards);
         Assertions.assertEquals(2, libraryCards.size());
         Assertions.assertEquals(one.getId(), libraryCards.get(0).getId());
         Assertions.assertEquals(two.getId(), libraryCards.get(1).getId());

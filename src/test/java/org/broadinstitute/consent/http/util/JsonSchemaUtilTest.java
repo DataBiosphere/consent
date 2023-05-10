@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.util;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -63,20 +63,20 @@ public class JsonSchemaUtilTest {
     @Test
     public void testParseDatasetRegistrationObject_v1() {
         DatasetRegistrationSchemaV1 instance = schemaUtil.deserializeDatasetRegistration(datasetRegistrationInstance);
-        Assertions.assertNotNull(instance);
-        Assertions.assertNotNull(instance.getStudyType());
-        Assertions.assertNotNull(instance.getStudyName());
-        Assertions.assertNotNull(instance.getStudyDescription());
+        assertNotNull(instance);
+        assertNotNull(instance.getStudyType());
+        assertNotNull(instance.getStudyName());
+        assertNotNull(instance.getStudyDescription());
         assertFalse(instance.getDataTypes().isEmpty());
-        Assertions.assertNotNull(instance.getPhenotypeIndication());
-        Assertions.assertNotNull(instance.getSpecies());
-        Assertions.assertNotNull(instance.getPiName());
-        Assertions.assertNotNull(instance.getDataSubmitterUserId());
+        assertNotNull(instance.getPhenotypeIndication());
+        assertNotNull(instance.getSpecies());
+        assertNotNull(instance.getPiName());
+        assertNotNull(instance.getDataSubmitterUserId());
         assertFalse(instance.getDataCustodianEmail().isEmpty());
-        Assertions.assertNotNull(instance.getPublicVisibility());
+        assertNotNull(instance.getPublicVisibility());
         assertFalse(instance.getConsentGroups().isEmpty());
         assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
-        Assertions.assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
+        assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
     }
 
     @Test

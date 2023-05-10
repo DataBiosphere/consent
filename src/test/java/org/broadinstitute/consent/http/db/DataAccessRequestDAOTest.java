@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -149,8 +150,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertNotNull(foundDar);
-        Assertions.assertNotNull(foundDar.getData());
+        assertNotNull(foundDar);
+        assertNotNull(foundDar.getData());
         assertTrue(foundDar.getDatasetIds().contains(d1.getDataSetId()));
         assertTrue(foundDar.getDatasetIds().contains(d2.getDataSetId()));
     }
@@ -163,7 +164,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<String> referenceIds = Arrays.asList(dar1.getReferenceId(), dar2.getReferenceId(), dar3.getReferenceId());
 
         List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
-        Assertions.assertNotNull(dars);
+        assertNotNull(dars);
         assertFalse(dars.isEmpty());
         Assertions.assertEquals(3, dars.size());
     }
@@ -185,13 +186,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testInsertDraftDataAccessRequest() {
         DataAccessRequest dar = createDraftDataAccessRequest();
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
     }
 
     @Test
     public void testInsertVersion3() {
         DataAccessRequest dar = createDataAccessRequestV3();
-        Assertions.assertNotNull(dar);
+        assertNotNull(dar);
     }
 
     @Test
@@ -199,7 +200,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         //creates a dar with a collection ID (also creates a DarCollection)
         DataAccessRequest dar = createDataAccessRequestV3();
         DataAccessRequest returned = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertNotNull(returned);
+        assertNotNull(returned);
         Assertions.assertEquals(dar.getId(), returned.getId());
         dataAccessRequestDAO.deleteByCollectionId(dar.getCollectionId());
         DataAccessRequest returnedAfter = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
@@ -227,13 +228,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Assertions.assertEquals("Canceled", updatedDar1.getData().getStatus());
         Assertions.assertEquals("Canceled", updatedDar2.getData().getStatus());
 
-        Assertions.assertNotNull(updatedDar1.getData().getHmb());
-        Assertions.assertNotNull(updatedDar2.getData().getHmb());
+        assertNotNull(updatedDar1.getData().getHmb());
+        assertNotNull(updatedDar2.getData().getHmb());
         Assertions.assertEquals(dar1.getData().getHmb(), updatedDar1.getData().getHmb());
         Assertions.assertEquals(dar2.getData().getHmb(), updatedDar2.getData().getHmb());
 
-        Assertions.assertNotNull(updatedDar1.getData().getMethods());
-        Assertions.assertNotNull(updatedDar2.getData().getMethods());
+        assertNotNull(updatedDar1.getData().getMethods());
+        assertNotNull(updatedDar2.getData().getMethods());
         Assertions.assertEquals(dar1.getData().getMethods(), updatedDar1.getData().getMethods());
         Assertions.assertEquals(dar2.getData().getMethods(), updatedDar2.getData().getMethods());
     }
@@ -259,9 +260,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(dar.getReferenceId(), canceledDar.getReferenceId());
         Assertions.assertEquals("Canceled", canceledDar.getData().getStatus());
-        Assertions.assertNotNull(canceledDar.getData().getHmb());
+        assertNotNull(canceledDar.getData().getHmb());
         Assertions.assertEquals(dar.getData().getHmb(), canceledDar.getData().getHmb());
-        Assertions.assertNotNull(canceledDar.getData().getMethods());
+        assertNotNull(canceledDar.getData().getMethods());
         Assertions.assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
     }
 

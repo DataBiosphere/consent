@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -68,7 +69,7 @@ public class StudyDAOTest extends DAOTestHelper {
         Assertions.assertEquals(publicVisibility, study.getPublicVisibility());
         Assertions.assertEquals(u.getUserId(), study.getCreateUserId());
         Assertions.assertEquals(uuid, study.getUuid());
-        Assertions.assertNotNull(u.getCreateDate());
+        assertNotNull(u.getCreateDate());
     }
 
     @Test

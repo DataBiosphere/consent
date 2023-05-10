@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -263,7 +264,7 @@ public class ElectionServiceTest {
 
         initService();
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
@@ -275,7 +276,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
@@ -288,7 +289,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
@@ -301,7 +302,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
@@ -314,7 +315,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(0)).archiveElectionById(any(), any());
     }
@@ -324,7 +325,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.describeDataRequestElection(sampleElection1.getReferenceId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
     }
 
     @Test
@@ -347,7 +348,7 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
-        Assertions.assertNotNull(election);
+        assertNotNull(election);
         Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
@@ -467,7 +468,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(election));
         initService();
         List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1, 2), "test");
-        Assertions.assertNotNull(elections);
+        assertNotNull(elections);
         Assertions.assertEquals(1, elections.size());
     }
 
@@ -478,7 +479,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(election));
         initService();
         List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
-        Assertions.assertNotNull(elections);
+        assertNotNull(elections);
         Assertions.assertEquals(1, elections.size());
     }
 
