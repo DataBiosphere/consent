@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -124,7 +124,7 @@ public class FileStorageObjectServiceTest {
 
         assertEquals(file, returned);
 
-        Assertions.assertArrayEquals(content.getBytes(), returned.getUploadedFile().readAllBytes());
+        assertArrayEquals(content.getBytes(), returned.getUploadedFile().readAllBytes());
     }
 
     @Test
@@ -173,11 +173,11 @@ public class FileStorageObjectServiceTest {
         assertEquals(file2, returned.get(1));
         assertEquals(file3, returned.get(2));
 
-        Assertions.assertArrayEquals(content1.getBytes(),
+        assertArrayEquals(content1.getBytes(),
             returned.get(0).getUploadedFile().readAllBytes());
-        Assertions.assertArrayEquals(content2.getBytes(),
+        assertArrayEquals(content2.getBytes(),
             returned.get(1).getUploadedFile().readAllBytes());
-        Assertions.assertArrayEquals(content3.getBytes(),
+        assertArrayEquals(content3.getBytes(),
             returned.get(2).getUploadedFile().readAllBytes());
     }
 
@@ -228,11 +228,11 @@ public class FileStorageObjectServiceTest {
         assertEquals(file2, returned.get(1));
         assertEquals(file3, returned.get(2));
 
-        Assertions.assertArrayEquals(content1.getBytes(),
+        assertArrayEquals(content1.getBytes(),
             returned.get(0).getUploadedFile().readAllBytes());
-        Assertions.assertArrayEquals(content2.getBytes(),
+        assertArrayEquals(content2.getBytes(),
             returned.get(1).getUploadedFile().readAllBytes());
-        Assertions.assertArrayEquals(content3.getBytes(),
+        assertArrayEquals(content3.getBytes(),
             returned.get(2).getUploadedFile().readAllBytes());
     }
 

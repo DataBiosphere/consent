@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +23,6 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -148,8 +148,8 @@ public class GCSServiceTest {
         Map<BlobId, InputStream> out = service.getDocuments(List.of(blobId1, blobId2));
         assertNotNull(out);
         assertEquals(2, out.size());
-        Assertions.assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
-        Assertions.assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
+        assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
+        assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
     }
 
     @Test
