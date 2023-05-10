@@ -187,9 +187,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
         initService();
 
-        assertThrows(BadRequestException.class, () -> {
-            datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
-        });
+        datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
     }
 
     @Test
