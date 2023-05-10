@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.health;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -13,6 +10,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -44,7 +42,7 @@ public class OntologyHealthCheckTest {
             }
             healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -54,7 +52,7 @@ public class OntologyHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
+        Assertions.assertTrue(result.isHealthy());
     }
 
     @Test
@@ -63,7 +61,7 @@ public class OntologyHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
+        Assertions.assertFalse(result.isHealthy());
     }
 
     @Test
@@ -72,7 +70,7 @@ public class OntologyHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
+        Assertions.assertFalse(result.isHealthy());
     }
 
     @Test
@@ -81,6 +79,6 @@ public class OntologyHealthCheckTest {
         initHealthCheck(false);
 
         HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
+        Assertions.assertFalse(result.isHealthy());
     }
 }

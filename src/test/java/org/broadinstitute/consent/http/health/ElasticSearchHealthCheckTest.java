@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.health;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -13,6 +10,7 @@ import java.util.Collections;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +55,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
             healthCheck = new ElasticSearchHealthCheck(config);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -66,7 +64,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
+        Assertions.assertTrue(result.isHealthy());
     }
 
     @Test
@@ -74,7 +72,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
+        Assertions.assertTrue(result.isHealthy());
     }
 
     @Test
@@ -82,7 +80,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
+        Assertions.assertFalse(result.isHealthy());
     }
 
     @Test
@@ -90,6 +88,6 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
 
         HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
+        Assertions.assertFalse(result.isHealthy());
     }
 }

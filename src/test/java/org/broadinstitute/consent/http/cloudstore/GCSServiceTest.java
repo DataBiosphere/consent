@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.cloudstore;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 
 public class GCSServiceTest {
@@ -39,7 +39,7 @@ public class GCSServiceTest {
 
     @BeforeEach
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         config = new StoreConfiguration();
         config.setBucket("bucket");
         config.setEndpoint("http://localhost/");

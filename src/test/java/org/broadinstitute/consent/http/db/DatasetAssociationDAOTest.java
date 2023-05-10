@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DatasetAssociationDAOTest extends DAOTestHelper {
@@ -18,7 +16,7 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(dataset.getDataSetId(), List.of(user.getUserId())));
         List<DatasetAssociation> associationList = datasetAssociationDAO.getDatasetAssociation(dataset.getDataSetId());
-        assertFalse(associationList.isEmpty());
+        Assertions.assertFalse(associationList.isEmpty());
     }
 
     @Test
@@ -28,9 +26,9 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(dataset1.getDataSetId(), List.of(user.getUserId())));
         List<DatasetAssociation> associationList = datasetAssociationDAO.getDatasetAssociation(dataset1.getDataSetId());
-        assertFalse(associationList.isEmpty());
+        Assertions.assertFalse(associationList.isEmpty());
         List<DatasetAssociation> emptyAssociationList = datasetAssociationDAO.getDatasetAssociation(dataset2.getDataSetId());
-        assertTrue(emptyAssociationList.isEmpty());
+        Assertions.assertTrue(emptyAssociationList.isEmpty());
     }
 
     @Test
@@ -39,7 +37,7 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(dataset.getDataSetId(), List.of(user.getUserId())));
         Boolean associationExists = datasetAssociationDAO.exist(dataset.getDataSetId());
-        assertTrue(associationExists);
+        Assertions.assertTrue(associationExists);
     }
 
     @Test
@@ -48,7 +46,7 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(dataset.getDataSetId(), List.of(user.getUserId())));
         List<Integer> userIds = datasetAssociationDAO.getDataOwnersOfDataSet(dataset.getDataSetId());
-        assertTrue(userIds.contains(user.getUserId()));
+        Assertions.assertTrue(userIds.contains(user.getUserId()));
     }
 
     @Test
@@ -59,11 +57,11 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
 
         datasetAssociationDAO.insertDatasetUserAssociation(DatasetAssociation.createDatasetAssociations(datasetId, List.of(userId)));
         List<Integer> userIds1 = datasetAssociationDAO.getDataOwnersOfDataSet(datasetId);
-        assertTrue(userIds1.contains(userId));
+        Assertions.assertTrue(userIds1.contains(userId));
 
         datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
 
         List<Integer> userIds2 = datasetAssociationDAO.getDataOwnersOfDataSet(datasetId);
-        assertTrue(userIds2.isEmpty());
+        Assertions.assertTrue(userIds2.isEmpty());
     }
 }
