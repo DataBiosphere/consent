@@ -317,10 +317,11 @@ public class DarCollectionResourceTest {
     @Test
     public void testGetCollectionByIdMultipleRoles() {
         UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        researcher.addRole(chairRole);
+        UserRole researcherRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        User user = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(chairRole, researcherRole));
         DarCollection collection = mockDarCollection();
-        collection.setCreateUser(researcher);
-        collection.setCreateUserId(researcher.getUserId());
+        collection.setCreateUser(user);
+        collection.setCreateUserId(user.getUserId());
 
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(3);
