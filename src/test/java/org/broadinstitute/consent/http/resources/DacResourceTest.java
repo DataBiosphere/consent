@@ -347,7 +347,7 @@ public class DacResourceTest {
         try {
             dacResource.findById(1);
         } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
