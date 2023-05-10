@@ -1,7 +1,35 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -25,41 +53,10 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
 
@@ -94,7 +91,7 @@ public class DatasetResourceTest {
 
     private DatasetResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -144,47 +141,67 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, json);
 
-        assertEquals(201, response.getStatus());
-        assertEquals(result, response.getEntity());
+        Assertions.assertEquals(201, response.getStatus());
+        Assertions.assertEquals(result, response.getEntity());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNoJson() {
         initResource();
-        resource.createDataset(authUser, uriInfo, "");
+        try {
+            resource.createDataset(authUser, uriInfo, "");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNoProperties() {
         initResource();
-        resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        try {
+            resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNullName() {
         String json = createPropertiesJson("Dataset Name", null);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetEmptyName() {
         String json = createPropertiesJson("Dataset Name", "");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetMissingName() {
         String json = createPropertiesJson("Property", "test");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetInvalidProperty() {
         List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
         invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
@@ -193,10 +210,14 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(invalidProperties);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetDuplicateProperties() {
         List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
         duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
@@ -206,10 +227,14 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(duplicateProperties);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = ClientErrorException.class)
+    @Test
     public void testCreateDatasetNameInUse() {
         Dataset inUse = new Dataset();
         when(datasetService.getDatasetByName("test")).thenReturn(inUse);
@@ -217,7 +242,11 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        try {
+            resource.createDataset(authUser, uriInfo, json);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof ClientErrorException);
+        }
     }
 
     @Test
@@ -235,7 +264,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.createDataset(authUser, uriInfo, json);
 
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -253,22 +282,22 @@ public class DatasetResourceTest {
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-        assertEquals(200, response.getStatus());
-        assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
     }
 
     @Test
     public void testUpdateDatasetNoJson() {
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, "");
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testUpdateDatasetNoProperties() {
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, "{\"properties\":[]}");
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -278,7 +307,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -293,7 +322,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -309,7 +338,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -327,7 +356,7 @@ public class DatasetResourceTest {
         when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
         initResource();
         Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, json);
-        assertEquals(204, responseNoContent.getStatus());
+        Assertions.assertEquals(204, responseNoContent.getStatus());
     }
 
     @Test
@@ -337,7 +366,7 @@ public class DatasetResourceTest {
         when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
         initResource();
         Response response = resource.describeDataSets(authUser);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -347,7 +376,7 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).describeDatasets(anyInt());
         initResource();
         Response response = resource.describeDataSets(authUser);
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -356,13 +385,17 @@ public class DatasetResourceTest {
         when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
         initResource();
         Response response = resource.validateDatasetName("test");
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testValidateDatasetNameNotFound() {
         initResource();
-        resource.validateDatasetName("test");
+        try {
+            resource.validateDatasetName("test");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -370,7 +403,7 @@ public class DatasetResourceTest {
         when(datasetService.findAllActiveStudyNames()).thenReturn(Set.of("Hi", "Hello"));
         initResource();
         Response response = resource.findAllActiveStudyNames();
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -378,7 +411,7 @@ public class DatasetResourceTest {
         when(datasetService.findAllActiveStudyNames()).thenThrow();
         initResource();
         Response response = resource.findAllActiveStudyNames();
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -387,7 +420,7 @@ public class DatasetResourceTest {
         when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);
         initResource();
         Response response = resource.describeDataSet(1);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -395,7 +428,7 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).getDatasetDTO(any());
         initResource();
         Response response = resource.describeDataSet(1);
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -403,8 +436,8 @@ public class DatasetResourceTest {
         List<String> header = List.of("attachment; filename=DataSetSample.tsv");
         initResource();
         Response response = resource.getDataSetSample();
-        assertEquals(200, response.getStatus());
-        assertEquals(header, response.getHeaders().get("Content-Disposition"));
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(header, response.getHeaders().get("Content-Disposition"));
     }
 
     @Test
@@ -417,7 +450,7 @@ public class DatasetResourceTest {
         initResource();
 
         Response response = resource.downloadDataSets(List.of(1));
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -425,14 +458,14 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).describeDictionaryByReceiveOrder();
         initResource();
         Response response = resource.downloadDataSets(List.of(1));
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
     public void testDownloadDatasetsEmptyList() {
         initResource();
         Response response = resource.downloadDataSets(List.of());
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -440,7 +473,7 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).describeDataSetsByReceiveOrder(any());
         initResource();
         Response response = resource.downloadDataSets(List.of(1));
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -453,7 +486,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.delete(authUser, 1, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -472,7 +505,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.delete(authUser, 1, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -488,7 +521,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.delete(authUser, 1, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -506,7 +539,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.delete(authUser, 1, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -525,7 +558,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.delete(authUser, 1, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -538,7 +571,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.disableDataSet(authUser, 1, true, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -557,7 +590,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.disableDataSet(authUser, 1, true, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -573,7 +606,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.disableDataSet(authUser, 1, true, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -591,7 +624,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.disableDataSet(authUser, 1, true, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -610,7 +643,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.disableDataSet(authUser, 1, true, null);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -618,7 +651,7 @@ public class DatasetResourceTest {
         when(datasetService.describeDictionaryByDisplayOrder()).thenReturn(dictionaries);
         initResource();
         Response response = resource.describeDictionary();
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -626,7 +659,7 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(datasetService).describeDictionaryByDisplayOrder();
         initResource();
         Response response = resource.describeDictionary();
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -639,7 +672,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.datasetAutocomplete(authUser, "test");
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
 
@@ -652,7 +685,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.datasetAutocomplete(authUser, "test");
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -667,8 +700,8 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.searchDatasets(authUser, "search query");
 
-        assertEquals(200, response.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test
@@ -678,7 +711,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -689,8 +722,8 @@ public class DatasetResourceTest {
         when(datasetService.findDatasetById(1)).thenReturn(ds);
         initResource();
         Response response = resource.getDataset(1);
-        assertEquals(200, response.getStatus());
-        assertEquals(ds, response.getEntity());
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(ds, response.getEntity());
     }
 
     @Test
@@ -699,7 +732,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.getDataset(1);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -716,8 +749,8 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.getDatasets(List.of(1, 2, 3));
-        assertEquals(200, response.getStatus());
-        assertEquals(datasets, response.getEntity());
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(datasets, response.getEntity());
     }
 
     @Test
@@ -734,8 +767,8 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
-        assertEquals(200, response.getStatus());
-        assertEquals(datasets, response.getEntity());
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(datasets, response.getEntity());
     }
 
     @Test
@@ -752,10 +785,10 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
-        assertEquals(404, response.getStatus());
-        assertTrue(((Error) response.getEntity()).message().contains("3"));
-        assertFalse(((Error) response.getEntity()).message().contains("2"));
-        assertFalse(((Error) response.getEntity()).message().contains("1"));
+        Assertions.assertEquals(404, response.getStatus());
+        Assertions.assertTrue(((Error) response.getEntity()).message().contains("3"));
+        Assertions.assertFalse(((Error) response.getEntity()).message().contains("2"));
+        Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
 
     }
 
@@ -773,11 +806,11 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.getDatasets(List.of(1, 2, 3, 4));
-        assertEquals(404, response.getStatus());
-        assertTrue(((Error) response.getEntity()).message().contains("4"));
-        assertFalse(((Error) response.getEntity()).message().contains("3"));
-        assertTrue(((Error) response.getEntity()).message().contains("2"));
-        assertFalse(((Error) response.getEntity()).message().contains("1"));
+        Assertions.assertEquals(404, response.getStatus());
+        Assertions.assertTrue(((Error) response.getEntity()).message().contains("4"));
+        Assertions.assertFalse(((Error) response.getEntity()).message().contains("3"));
+        Assertions.assertTrue(((Error) response.getEntity()).message().contains("2"));
+        Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
     }
 
 
@@ -787,7 +820,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateNeedsReviewDataSets(1, true);
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -800,7 +833,7 @@ public class DatasetResourceTest {
         initResource();
         String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
         Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -810,7 +843,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -823,7 +856,7 @@ public class DatasetResourceTest {
         initResource();
         String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
         Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -835,7 +868,7 @@ public class DatasetResourceTest {
         initResource();
         String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
         Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -849,7 +882,7 @@ public class DatasetResourceTest {
 
         initResource();
         Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
-        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
 
     @Test
@@ -857,8 +890,8 @@ public class DatasetResourceTest {
         List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
         initResource();
         Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
-        assertEquals(200, response.getStatus());
-        assertEquals(header, response.getHeaders().get("Content-Disposition"));
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(header, response.getHeaders().get("Content-Disposition"));
     }
 
     @Test
@@ -866,7 +899,7 @@ public class DatasetResourceTest {
         doThrow(new RuntimeException()).when(darService).getDatasetApprovedUsersContent(any(), any());
         initResource();
         Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -875,21 +908,21 @@ public class DatasetResourceTest {
         when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
         initResource();
         Response response = resource.findAllDatasetsAvailableToUser(authUser);
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_invalidSchema_case1() {
         initResource();
         Response response = resource.createDatasetRegistration(authUser, null, "");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
     public void testCreateDatasetRegistration_invalidSchema_case2() {
         initResource();
         Response response = resource.createDatasetRegistration(authUser, null, "{}");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -898,7 +931,7 @@ public class DatasetResourceTest {
         String schemaString = new Gson().toJson(schemaV1);
         initResource();
         Response response = resource.createDatasetRegistration(authUser, null, schemaString);
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -910,7 +943,7 @@ public class DatasetResourceTest {
 
         Response response = resource.createDatasetRegistration(authUser, null, schemaV1);
         System.out.println(response.getEntity());
-        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
     @Test
@@ -931,7 +964,7 @@ public class DatasetResourceTest {
         initResource();
 
         Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
-        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
     @Test
@@ -977,7 +1010,7 @@ public class DatasetResourceTest {
 
         Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
 
-        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
         verify(datasetRegistrationService, times(1)).createDatasetsFromRegistration(
                 any(),
                 eq(user),
@@ -1002,7 +1035,7 @@ public class DatasetResourceTest {
         initResource();
 
         Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     /**

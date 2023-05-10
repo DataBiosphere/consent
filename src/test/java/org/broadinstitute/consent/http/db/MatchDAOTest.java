@@ -1,23 +1,22 @@
 package org.broadinstitute.consent.http.db;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Match;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Match;
+import org.junit.jupiter.api.Test;
 
 public class MatchDAOTest extends DAOTestHelper {
 

@@ -1,23 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.service.InstitutionService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +8,23 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class InstitutionResourceTest {
     private final AuthUser authUser = new AuthUser("test@test.com");
@@ -52,7 +51,7 @@ public class InstitutionResourceTest {
         return mockInstitution;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

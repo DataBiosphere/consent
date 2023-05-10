@@ -1,22 +1,21 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class TDRServiceTest {
 
@@ -28,7 +27,7 @@ public class TDRServiceTest {
 
     private TDRService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

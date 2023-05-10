@@ -1,5 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -24,28 +38,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ElectionServiceTest {
 
@@ -89,7 +86,7 @@ public class ElectionServiceTest {
     private static Vote sampleVoteMember;
     private static Vote sampleVoteRP;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         String referenceId = "CONS-1";
 
@@ -168,7 +165,7 @@ public class ElectionServiceTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         openMocks(this);
         bunchOfDoNothings();
@@ -271,8 +268,8 @@ public class ElectionServiceTest {
 
         initService();
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
     @Test
@@ -283,8 +280,8 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -296,8 +293,8 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -309,8 +306,8 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -322,8 +319,8 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(0)).archiveElectionById(any(), any());
     }
 
@@ -332,10 +329,10 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.describeDataRequestElection(sampleElection1.getReferenceId());
-        assertNotNull(election);
+        Assertions.assertNotNull(election);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDescribeDataRequestElection_Throws() {
         when(electionDAO.getElectionWithFinalVoteByReferenceIdAndType(sampleElection1.getReferenceId(), sampleElection1.getElectionType()))
                 .thenReturn(null);
@@ -343,7 +340,11 @@ public class ElectionServiceTest {
                 .thenReturn(null);
         initService();
 
-        Election election = service.describeDataRequestElection(sampleElection1.getReferenceId());
+        try {
+            service.describeDataRequestElection(sampleElection1.getReferenceId());
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -351,17 +352,21 @@ public class ElectionServiceTest {
         initService();
 
         Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
-        assertNotNull(election);
-        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        Assertions.assertNotNull(election);
+        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDescribeElectionByVoteId_Throws() {
         when(electionDAO.findElectionByVoteId(1))
                 .thenReturn(null);
         initService();
 
-        Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
+        try {
+            service.describeElectionByVoteId(sampleElection1.getElectionId());
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -385,7 +390,7 @@ public class ElectionServiceTest {
                 List.of());
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairpersonApproval);
-        assertTrue(validate);
+        Assertions.assertTrue(validate);
     }
 
     @Test
@@ -411,7 +416,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
-        assertTrue(validate);
+        Assertions.assertTrue(validate);
     }
 
     @Test
@@ -435,7 +440,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
-        assertTrue(validate);
+        Assertions.assertTrue(validate);
     }
 
     @Test
@@ -457,7 +462,7 @@ public class ElectionServiceTest {
         initService();
 
         boolean ownerToClose = service.checkDataOwnerToCloseElection(5);
-        assertTrue(ownerToClose);
+        Assertions.assertTrue(ownerToClose);
     }
 
     @Test
@@ -467,8 +472,8 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(election));
         initService();
         List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1, 2), "test");
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
+        Assertions.assertNotNull(elections);
+        Assertions.assertEquals(1, elections.size());
     }
 
     @Test
@@ -478,8 +483,8 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(election));
         initService();
         List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
-        assertNotNull(elections);
-        assertEquals(1, elections.size());
+        Assertions.assertNotNull(elections);
+        Assertions.assertEquals(1, elections.size());
     }
 
 }

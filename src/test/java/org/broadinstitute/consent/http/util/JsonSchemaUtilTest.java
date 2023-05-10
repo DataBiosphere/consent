@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.util;
 
-import com.networknt.schema.ValidationMessage;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.Set;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import com.networknt.schema.ValidationMessage;
+import java.util.Set;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class JsonSchemaUtilTest {
 
@@ -43,7 +42,7 @@ public class JsonSchemaUtilTest {
             """;
 
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         schemaUtil = new JsonSchemaUtil();
     }

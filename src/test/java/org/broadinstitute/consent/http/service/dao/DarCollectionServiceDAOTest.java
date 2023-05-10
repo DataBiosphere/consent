@@ -1,5 +1,14 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,24 +24,14 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
     private DarCollectionServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void initService() {
         serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
     }

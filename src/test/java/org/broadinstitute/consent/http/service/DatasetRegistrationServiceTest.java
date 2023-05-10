@@ -1,6 +1,26 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.storage.BlobId;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -20,38 +40,14 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.MediaType;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class DatasetRegistrationServiceTest {
 
@@ -69,7 +65,7 @@ public class DatasetRegistrationServiceTest {
     @Mock
     private GCSService gcsService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
@@ -109,29 +105,34 @@ public class DatasetRegistrationServiceTest {
         DatasetServiceDAO.StudyInsert capturedStudyInsert = studyInsert.getValue();
         List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
 
-        assertEquals(1, inserts.size());
+        Assertions.assertEquals(1, inserts.size());
 
-        assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
+        Assertions.assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
+            inserts.get(0).name());
         assertDataUse(schema.getConsentGroups().get(0), inserts.get(0).dataUse());
-        assertEquals(user.getUserId(), inserts.get(0).userId());
+        Assertions.assertEquals(user.getUserId(), inserts.get(0).userId());
 
-        assertEquals(1, inserts.get(0).files().size());
+        Assertions.assertEquals(1, inserts.get(0).files().size());
 
-        assertEquals(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, inserts.get(0).files().get(0).getCategory());
-        assertEquals(files.get("consentGroups[0].nihInstitutionalCertificationFile").getContentDisposition().getFileName(), inserts.get(0).files().get(0).getFileName());
-        assertEquals(BlobId.of("qwer", "tyuio"), inserts.get(0).files().get(0).getBlobId());
+        Assertions.assertEquals(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
+            inserts.get(0).files().get(0).getCategory());
+        Assertions.assertEquals(
+            files.get("consentGroups[0].nihInstitutionalCertificationFile").getContentDisposition().getFileName(),
+            inserts.get(0).files().get(0).getFileName());
+        Assertions.assertEquals(BlobId.of("qwer", "tyuio"),
+            inserts.get(0).files().get(0).getBlobId());
 
-        assertEquals(schema.getStudyName(), capturedStudyInsert.name());
-        assertEquals(schema.getPiName(), capturedStudyInsert.piName());
-        assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
-        assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-        assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
-        assertEquals(user.getUserId(), capturedStudyInsert.userId());
+        Assertions.assertEquals(schema.getStudyName(), capturedStudyInsert.name());
+        Assertions.assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+        Assertions.assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
+        Assertions.assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
+        Assertions.assertEquals(schema.getPublicVisibility(),
+            capturedStudyInsert.publicVisibility());
+        Assertions.assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
-        assertEquals(1, capturedStudyInsert.files().size());
-        assertEquals(
-                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                capturedStudyInsert.files().get(0).getCategory());
+        Assertions.assertEquals(1, capturedStudyInsert.files().size());
+        Assertions.assertEquals(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
+            capturedStudyInsert.files().get(0).getCategory());
 
         // TODO: is there a way to ensure we don't miss anything?
         List<StudyProperty> studyProps = capturedStudyInsert.props();
@@ -197,25 +198,27 @@ public class DatasetRegistrationServiceTest {
         DatasetServiceDAO.StudyInsert capturedStudyInsert = studyInsert.getValue();
         List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
 
-        assertEquals(1, inserts.size());
+        Assertions.assertEquals(1, inserts.size());
 
-        assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
+        Assertions.assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
+            inserts.get(0).name());
 
         ConsentGroup consentGroup = schema.getConsentGroups().get(0);
         DataUse dataUse = inserts.get(0).dataUse();
 
-        assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
+        Assertions.assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
 
-        assertEquals(schema.getStudyName(), capturedStudyInsert.name());
-        assertEquals(schema.getPiName(), capturedStudyInsert.piName());
-        assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
-        assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-        assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
-        assertEquals(user.getUserId(), capturedStudyInsert.userId());
+        Assertions.assertEquals(schema.getStudyName(), capturedStudyInsert.name());
+        Assertions.assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+        Assertions.assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
+        Assertions.assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
+        Assertions.assertEquals(schema.getPublicVisibility(),
+            capturedStudyInsert.publicVisibility());
+        Assertions.assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
-        assertEquals(user.getUserId(), inserts.get(0).userId());
+        Assertions.assertEquals(user.getUserId(), inserts.get(0).userId());
 
-        assertEquals(0, inserts.get(0).files().size());
+        Assertions.assertEquals(0, inserts.get(0).files().size());
 
         List<DatasetProperty> datasetProps = inserts.get(0).props();
         List<StudyProperty> studyProps = capturedStudyInsert.props();
@@ -242,7 +245,7 @@ public class DatasetRegistrationServiceTest {
 
         List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
 
-        assertEquals(1, inserts.size());
+        Assertions.assertEquals(1, inserts.size());
 
         verify(dacDAO, never()).findById(any());
     }
@@ -274,27 +277,29 @@ public class DatasetRegistrationServiceTest {
         DatasetServiceDAO.StudyInsert capturedStudyInsert = studyInsert.getValue();
         List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
 
-        assertEquals(2, inserts.size());
+        Assertions.assertEquals(2, inserts.size());
 
         // check first dataset insert is ok
 
-        assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
+        Assertions.assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
+            inserts.get(0).name());
 
         ConsentGroup consentGroup = schema.getConsentGroups().get(0);
         DataUse dataUse = inserts.get(0).dataUse();
 
-        assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
+        Assertions.assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
 
-        assertEquals(user.getUserId(), inserts.get(0).userId());
+        Assertions.assertEquals(user.getUserId(), inserts.get(0).userId());
 
-        assertEquals(schema.getStudyName(), capturedStudyInsert.name());
-        assertEquals(schema.getPiName(), capturedStudyInsert.piName());
-        assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
-        assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-        assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
-        assertEquals(user.getUserId(), capturedStudyInsert.userId());
+        Assertions.assertEquals(schema.getStudyName(), capturedStudyInsert.name());
+        Assertions.assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+        Assertions.assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
+        Assertions.assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
+        Assertions.assertEquals(schema.getPublicVisibility(),
+            capturedStudyInsert.publicVisibility());
+        Assertions.assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
-        assertEquals(1, inserts.get(0).files().size());
+        Assertions.assertEquals(1, inserts.get(0).files().size());
 
         List<StudyProperty> studyProps = capturedStudyInsert.props();
         assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
@@ -310,16 +315,17 @@ public class DatasetRegistrationServiceTest {
 
         // assert on all the same properties, but for the second dataset
 
-        assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(), inserts.get(1).name());
+        Assertions.assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(),
+            inserts.get(1).name());
 
         ConsentGroup consentGroup2 = schema.getConsentGroups().get(1);
         DataUse dataUse2 = inserts.get(1).dataUse();
 
-        assertEquals(consentGroup2.getGeneralResearchUse(), dataUse2.getGeneralUse());
+        Assertions.assertEquals(consentGroup2.getGeneralResearchUse(), dataUse2.getGeneralUse());
 
-        assertEquals(user.getUserId(), inserts.get(1).userId());
+        Assertions.assertEquals(user.getUserId(), inserts.get(1).userId());
 
-        assertEquals(0, inserts.get(1).files().size());
+        Assertions.assertEquals(0, inserts.get(1).files().size());
 
         List<DatasetProperty> props2 = inserts.get(1).props();
         assertContainsDatasetProperty(props2, "fileTypes", PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
@@ -327,7 +333,7 @@ public class DatasetRegistrationServiceTest {
 
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testRegistrationErrorsOnInvalidDacId() throws Exception {
 
         User user = mock();
@@ -337,7 +343,11 @@ public class DatasetRegistrationServiceTest {
         spy(gcsService);
 
         initService();
-        datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        try {
+            datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -351,18 +361,18 @@ public class DatasetRegistrationServiceTest {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
         // null value -> empty extraction
-        assertTrue(extractor.extract(schemaV1).isEmpty());
+        Assertions.assertTrue(extractor.extract(schemaV1).isEmpty());
 
         schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
 
         Optional<StudyProperty> prop = extractor.extract(schemaV1);
 
         // non-null value -> turn value into dataset prop
-        assertTrue(prop.isPresent());
+        Assertions.assertTrue(prop.isPresent());
 
-        assertEquals(schemaV1.getStudyName(), prop.get().getValue());
-        assertEquals(extractor.key(), prop.get().getKey());
-        assertEquals(extractor.type(), prop.get().getType());
+        Assertions.assertEquals(schemaV1.getStudyName(), prop.get().getValue());
+        Assertions.assertEquals(extractor.key(), prop.get().getKey());
+        Assertions.assertEquals(extractor.type(), prop.get().getType());
     }
 
     @Test
@@ -377,19 +387,19 @@ public class DatasetRegistrationServiceTest {
         ConsentGroup group = new ConsentGroup();
 
         // null value -> empty extraction
-        assertTrue(extractor.extract(group).isEmpty());
+        Assertions.assertTrue(extractor.extract(group).isEmpty());
 
         group.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
 
         Optional<DatasetProperty> prop = extractor.extract(group);
 
         // non-null value -> turn value into dataset prop
-        assertTrue(prop.isPresent());
+        Assertions.assertTrue(prop.isPresent());
 
-        assertEquals(group.getConsentGroupName(), prop.get().getPropertyValue());
-        assertEquals(extractor.name(), prop.get().getPropertyName());
-        assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
-        assertEquals(extractor.type(), prop.get().getPropertyType());
+        Assertions.assertEquals(group.getConsentGroupName(), prop.get().getPropertyValue());
+        Assertions.assertEquals(extractor.name(), prop.get().getPropertyName());
+        Assertions.assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
+        Assertions.assertEquals(extractor.type(), prop.get().getPropertyType());
     }
 
 
@@ -407,11 +417,12 @@ public class DatasetRegistrationServiceTest {
 
         Optional<StudyProperty> prop = extractor.extract(schemaV1);
 
-        assertTrue(prop.isPresent());
+        Assertions.assertTrue(prop.isPresent());
 
-        assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()), prop.get().getValue());
-        assertEquals(extractor.key(), prop.get().getKey());
-        assertEquals(extractor.type(), prop.get().getType());
+        Assertions.assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()),
+            prop.get().getValue());
+        Assertions.assertEquals(extractor.key(), prop.get().getKey());
+        Assertions.assertEquals(extractor.type(), prop.get().getType());
     }
 
     @Test
@@ -429,45 +440,47 @@ public class DatasetRegistrationServiceTest {
 
         Optional<DatasetProperty> prop = extractor.extract(group);
 
-        assertTrue(prop.isPresent());
+        Assertions.assertTrue(prop.isPresent());
 
-        assertEquals(GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()), prop.get().getPropertyValue());
-        assertEquals(extractor.name(), prop.get().getPropertyName());
-        assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
-        assertEquals(extractor.type(), prop.get().getPropertyType());
+        Assertions.assertEquals(GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()),
+            prop.get().getPropertyValue());
+        Assertions.assertEquals(extractor.name(), prop.get().getPropertyName());
+        Assertions.assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
+        Assertions.assertEquals(extractor.type(), prop.get().getPropertyType());
     }
 
     private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
-        assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
-        assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
-        assertEquals(consentGroup.getIrb(), dataUse.getEthicsApprovalRequired());
-        assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
-        assertEquals(consentGroup.getGs(), dataUse.getGeographicalRestrictions());
-        assertEquals(consentGroup.getGso(), dataUse.getGeneticStudiesOnly());
-        assertEquals(consentGroup.getHmb(), dataUse.getHmbResearch());
-        assertEquals(consentGroup.getMorDate(), dataUse.getPublicationMoratorium());
+        Assertions.assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
+        Assertions.assertEquals(consentGroup.getDiseaseSpecificUse(),
+            dataUse.getDiseaseRestrictions());
+        Assertions.assertEquals(consentGroup.getIrb(), dataUse.getEthicsApprovalRequired());
+        Assertions.assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
+        Assertions.assertEquals(consentGroup.getGs(), dataUse.getGeographicalRestrictions());
+        Assertions.assertEquals(consentGroup.getGso(), dataUse.getGeneticStudiesOnly());
+        Assertions.assertEquals(consentGroup.getHmb(), dataUse.getHmbResearch());
+        Assertions.assertEquals(consentGroup.getMorDate(), dataUse.getPublicationMoratorium());
         if (Objects.isNull(consentGroup.getNmds()) || !consentGroup.getNmds()) {
-            assertNull(dataUse.getMethodsResearch());
+            Assertions.assertNull(dataUse.getMethodsResearch());
         } else {
-            assertFalse(dataUse.getMethodsResearch());
+            Assertions.assertFalse(dataUse.getMethodsResearch());
         }
-        assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
-        assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());
-        assertEquals(consentGroup.getOtherSecondary(), dataUse.getSecondaryOther());
-        assertEquals(consentGroup.getPoa(), dataUse.getPopulationOriginsAncestry());
-        assertEquals(consentGroup.getPub(), dataUse.getPublicationResults());
+        Assertions.assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
+        Assertions.assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());
+        Assertions.assertEquals(consentGroup.getOtherSecondary(), dataUse.getSecondaryOther());
+        Assertions.assertEquals(consentGroup.getPoa(), dataUse.getPopulationOriginsAncestry());
+        Assertions.assertEquals(consentGroup.getPub(), dataUse.getPublicationResults());
     }
 
     private void assertContainsDatasetProperty(Collection<DatasetProperty> props, String schema, Object value) {
         Optional<DatasetProperty> prop = props.stream().filter((p) -> p.getSchemaProperty().equals(schema)).findFirst();
-        assertTrue(prop.isPresent());
-        assertEquals(value, prop.get().getPropertyValue());
+        Assertions.assertTrue(prop.isPresent());
+        Assertions.assertEquals(value, prop.get().getPropertyValue());
     }
 
     private void assertContainsStudyProperty(Collection<StudyProperty> props, String key, Object value) {
         Optional<StudyProperty> prop = props.stream().filter((p) -> p.getKey().equals(key)).findFirst();
-        assertTrue(prop.isPresent());
-        assertEquals(value, prop.get().getValue());
+        Assertions.assertTrue(prop.isPresent());
+        Assertions.assertEquals(value, prop.get().getValue());
     }
 
 

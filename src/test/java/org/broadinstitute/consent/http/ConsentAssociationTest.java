@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.jackson.Jackson;
+import java.util.ArrayList;
+import java.util.Collections;
+import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit Tests for ConsentAssociation object.

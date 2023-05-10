@@ -1,21 +1,20 @@
 package org.broadinstitute.consent.http.db;
 
-import com.google.cloud.storage.BlobId;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.enumeration.FileCategory;
-import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.User;
-import org.junit.Test;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Random;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.google.cloud.storage.BlobId;
+import java.time.Instant;
+import java.util.List;
+import java.util.Random;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
+import org.junit.jupiter.api.Test;
 
 public class FileStorageObjectDAOTest extends DAOTestHelper {
     @Test

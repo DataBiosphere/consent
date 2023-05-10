@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -9,16 +15,9 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SupportTicketCreatorTest {
 
@@ -33,7 +32,7 @@ public class SupportTicketCreatorTest {
     @Mock
     private ServicesConfiguration configuration;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);

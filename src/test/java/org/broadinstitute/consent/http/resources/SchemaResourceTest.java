@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
+
+import com.google.api.client.http.HttpStatusCodes;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
+import org.junit.jupiter.api.Test;
 
 public class SchemaResourceTest {
 

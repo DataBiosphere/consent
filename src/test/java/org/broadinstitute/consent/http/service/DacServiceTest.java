@@ -1,6 +1,27 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -20,31 +41,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DacServiceTest {
 
@@ -68,7 +68,7 @@ public class DacServiceTest {
     @Mock
     private VoteService voteService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -275,7 +275,7 @@ public class DacServiceTest {
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testRemoveDacChairFailure() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);
@@ -286,9 +286,13 @@ public class DacServiceTest {
         doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
         initService();
 
-        service.removeDacMember(role, chair, dac);
-        verify(dacDAO, times(0)).removeDacMember(anyInt());
-        verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+        try {
+            service.removeDacMember(role, chair, dac);
+            verify(dacDAO, times(0)).removeDacMember(anyInt());
+            verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
     @Test

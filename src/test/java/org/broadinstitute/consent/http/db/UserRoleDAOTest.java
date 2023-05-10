@@ -1,12 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Role;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +7,12 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Role;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 public class UserRoleDAOTest extends DAOTestHelper {
 

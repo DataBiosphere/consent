@@ -1,32 +1,28 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import javax.ws.rs.core.MediaType;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 
 public class GCSServiceTest {
@@ -41,7 +37,7 @@ public class GCSServiceTest {
 
     private GCSService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         config = new StoreConfiguration();
@@ -67,7 +63,7 @@ public class GCSServiceTest {
 
         InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());
         BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, id);
-        assertNotNull(storedBlobId);
+        Assertions.assertNotNull(storedBlobId);
     }
 
     @Test
@@ -89,8 +85,8 @@ public class GCSServiceTest {
         initStore();
         InputStream is = service.getDocument(urlString);
         String content = IOUtils.toString(is, Charset.defaultCharset());
-        assertNotNull(is);
-        assertEquals(fileContent, content);
+        Assertions.assertNotNull(is);
+        Assertions.assertEquals(fileContent, content);
     }
 
     @Test
@@ -112,8 +108,8 @@ public class GCSServiceTest {
         initStore();
         InputStream is = service.getDocument(BlobId.of("asdf", "ghjkl"));
         String content = IOUtils.toString(is, Charset.defaultCharset());
-        assertNotNull(is);
-        assertEquals(fileContent, content);
+        Assertions.assertNotNull(is);
+        Assertions.assertEquals(fileContent, content);
     }
 
     @Test
@@ -147,10 +143,10 @@ public class GCSServiceTest {
 
         initStore();
         Map<BlobId, InputStream> out = service.getDocuments(List.of(blobId1, blobId2));
-        assertNotNull(out);
-        assertEquals(2, out.size());
-        assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
-        assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
+        Assertions.assertNotNull(out);
+        Assertions.assertEquals(2, out.size());
+        Assertions.assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
+        Assertions.assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
     }
 
     @Test
@@ -165,7 +161,7 @@ public class GCSServiceTest {
         when(storage.delete(any(BlobId.class))).thenReturn(true);
         initStore();
         boolean deleted = service.deleteDocument(RandomStringUtils.random(10));
-        assertTrue(deleted);
+        Assertions.assertTrue(deleted);
     }
 
 }

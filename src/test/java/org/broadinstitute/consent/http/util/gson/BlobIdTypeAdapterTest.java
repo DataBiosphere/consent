@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.Assert.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class BlobIdTypeAdapterTest {
 

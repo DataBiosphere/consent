@@ -1,6 +1,15 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.google.cloud.storage.BlobId;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -13,24 +22,14 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DatasetServiceDAOTest extends DAOTestHelper {
 
     private DatasetServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO);
     }

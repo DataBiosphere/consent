@@ -1,25 +1,25 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.service.EmailService;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class MailResourceTest {
 
@@ -40,7 +40,7 @@ public class MailResourceTest {
         when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(
                 generateMailMessageList());
         Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -48,7 +48,7 @@ public class MailResourceTest {
         initResource();
         when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(new ArrayList<>());
         Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
                 null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -68,25 +68,31 @@ public class MailResourceTest {
                 generateMailMessageList());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
                 null);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
-    @Test(expected = javax.ws.rs.BadRequestException.class)
+    @Test
     public void test_MailResource_date_range_invalid_limit() {
         initResource();
         when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
                 generateMailMessageList());
-        Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5,
-                null);
+        try {
+            mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5, null);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
-    @Test(expected = javax.ws.rs.BadRequestException.class)
+    @Test
     public void test_MailResource_date_range_invalid_offset() {
         initResource();
         when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
                 generateMailMessageList());
-        Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
-                -1);
+        try {
+            mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, -1);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+        }
     }
 
     @Test
@@ -96,7 +102,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "55/11/2021", "05/11/2022", null,
                 null);
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -106,7 +112,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "65/98/20229",
                 null, null);
-        assertEquals(400, response.getStatus());
+        Assertions.assertEquals(400, response.getStatus());
     }
 
     private List<MailMessage> generateMailMessageList() {

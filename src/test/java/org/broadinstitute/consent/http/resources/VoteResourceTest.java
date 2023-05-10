@@ -1,23 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -26,6 +8,23 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.VoteService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class VoteResourceTest {
 
@@ -49,7 +48,7 @@ public class VoteResourceTest {
 
     private final Gson gson = new Gson();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

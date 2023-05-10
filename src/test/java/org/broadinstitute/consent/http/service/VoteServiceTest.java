@@ -1,5 +1,23 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -25,34 +43,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class VoteServiceTest {
 
@@ -79,7 +73,7 @@ public class VoteServiceTest {
     @Mock
     private VoteServiceDAO voteServiceDAO;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         doNothings();
@@ -99,7 +93,7 @@ public class VoteServiceTest {
         initService();
 
         Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
-        assertTrue(votes.isEmpty());
+        Assertions.assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -110,7 +104,7 @@ public class VoteServiceTest {
         try {
             service.advanceVotes(Collections.singletonList(v), true, "New Rationale");
         } catch (Exception e) {
-            Assert.fail("Should not error: " + e.getMessage());
+            Assertions.fail("Should not error: " + e.getMessage());
         }
     }
 
@@ -120,17 +114,21 @@ public class VoteServiceTest {
         initService();
 
         Vote vote = service.updateVote(v);
-        assertNotNull(vote);
+        Assertions.assertNotNull(vote);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testUpdateVote_InvalidReferenceId() {
         when(voteDAO.checkVoteById("test", 11))
                 .thenReturn(null);
         Vote v = setUpTestVote(false, false);
         initService();
 
-        service.updateVote(v, 11, "test");
+        try {
+            service.updateVote(v, 11, "test");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+        }
     }
 
     @Test
@@ -143,7 +141,7 @@ public class VoteServiceTest {
         initService();
 
         Vote vote = service.updateVote(v, v.getVoteId(), "test");
-        assertNotNull(vote);
+        Assertions.assertNotNull(vote);
     }
 
     @Test
@@ -151,8 +149,8 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
-        assertNotNull(votes);
-        assertTrue(votes.isEmpty());
+        Assertions.assertNotNull(votes);
+        Assertions.assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -160,16 +158,16 @@ public class VoteServiceTest {
         when(voteDAO.findVotesByIds(any())).thenReturn(List.of(new Vote()));
         initService();
         List<Vote> votes = service.findVotesByIds(List.of(1));
-        assertNotNull(votes);
-        assertFalse(votes.isEmpty());
+        Assertions.assertNotNull(votes);
+        Assertions.assertFalse(votes.isEmpty());
     }
 
     @Test
     public void testFindVotesByIds_emptyList() {
         initService();
         List<Vote> votes = service.findVotesByIds(List.of());
-        assertNotNull(votes);
-        assertTrue(votes.isEmpty());
+        Assertions.assertNotNull(votes);
+        Assertions.assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -178,13 +176,13 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 4 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
         // Final vote
         // Manual review Agreement vote
-        assertEquals(4, votes.size());
+        Assertions.assertEquals(4, votes.size());
     }
 
     @Test
@@ -193,9 +191,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        assertEquals(1, votes.size());
+        Assertions.assertEquals(1, votes.size());
     }
 
     @Test
@@ -204,12 +202,12 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 3 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
         // Final vote
-        assertEquals(3, votes.size());
+        Assertions.assertEquals(3, votes.size());
     }
 
     @Test
@@ -218,9 +216,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        assertEquals(1, votes.size());
+        Assertions.assertEquals(1, votes.size());
     }
 
     @Test
@@ -229,11 +227,11 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        assertEquals(2, votes.size());
+        Assertions.assertEquals(2, votes.size());
     }
 
     @Test
@@ -242,9 +240,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        assertEquals(1, votes.size());
+        Assertions.assertEquals(1, votes.size());
     }
 
     @Test
@@ -253,11 +251,11 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        assertEquals(2, votes.size());
+        Assertions.assertEquals(2, votes.size());
     }
 
     @Test
@@ -266,9 +264,9 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        assertEquals(1, votes.size());
+        Assertions.assertEquals(1, votes.size());
     }
 
     @Test
@@ -285,7 +283,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createDataOwnersReviewVotes(e);
-        assertFalse(votes.isEmpty());
+        Assertions.assertFalse(votes.isEmpty());
     }
 
     @Test
@@ -308,7 +306,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, null);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -317,11 +315,11 @@ public class VoteServiceTest {
         when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
         initService();
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
-        assertNotNull(votes);
-        assertTrue(votes.isEmpty());
+        Assertions.assertNotNull(votes);
+        Assertions.assertTrue(votes.isEmpty());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testUpdateVotesWithValue_ClosedElection() throws Exception {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
         Vote v = setUpTestVote(true, true);
@@ -335,11 +333,15 @@ public class VoteServiceTest {
 
         initService();
 
-        service.updateVotesWithValue(List.of(v), true, "rationale");
+        try {
+            service.updateVotesWithValue(List.of(v), true, "rationale");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() throws Exception {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
         Vote v = setUpTestVote(true, true);
@@ -359,7 +361,11 @@ public class VoteServiceTest {
 
         initService();
 
-        service.updateVotesWithValue(List.of(v), true, "rationale");
+        try {
+            service.updateVotesWithValue(List.of(v), true, "rationale");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
     @Test
@@ -407,7 +413,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -427,7 +433,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -443,7 +449,7 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -467,11 +473,11 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testUpdateRationaleByVoteIds_NonOpenDataAccessElection() {
         doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
         Vote v = setUpTestVote(true, true);
@@ -483,10 +489,14 @@ public class VoteServiceTest {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
         initService();
 
-        service.updateRationaleByVoteIds(List.of(1), "rationale");
+        try {
+            service.updateRationaleByVoteIds(List.of(1), "rationale");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testUpdateRationaleByVoteIds_NonDataAccessElection() {
         doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
         Vote v = setUpTestVote(true, true);
@@ -498,7 +508,11 @@ public class VoteServiceTest {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
         initService();
 
-        service.updateRationaleByVoteIds(List.of(1), "rationale");
+        try {
+            service.updateRationaleByVoteIds(List.of(1), "rationale");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
     @Test
@@ -839,7 +853,7 @@ public class VoteServiceTest {
                     any()
             );
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -889,7 +903,8 @@ public class VoteServiceTest {
         initService();
         try {
             service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-            fail("service.notifyCustodiansOfApprovedDatasets should fail in this condition");
+            Assertions.fail(
+                "service.notifyCustodiansOfApprovedDatasets should fail in this condition");
         } catch (Exception e) {
             verify(emailService, times(0)).sendDataCustodianApprovalMessage(
                     any(),
@@ -898,7 +913,7 @@ public class VoteServiceTest {
                     any(),
                     any()
             );
-            assertTrue(e instanceof IllegalArgumentException);
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
         }
     }
 

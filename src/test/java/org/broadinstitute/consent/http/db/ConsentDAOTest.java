@@ -1,19 +1,13 @@
 package org.broadinstitute.consent.http.db;
 
-import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.models.Consent;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ConsentDAOTest extends DAOTestHelper {
 
@@ -32,11 +26,11 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent1.getConsentId(),
                 consent2.getConsentId()));
         Collection<String> ids = consents.stream().map(Consent::getConsentId).toList();
-        assertNotNull(consents);
-        assertFalse(consents.isEmpty());
-        assertEquals(2, consents.size());
-        assertTrue(ids.contains(consent1.getConsentId()));
-        assertTrue(ids.contains(consent2.getConsentId()));
+        Assertions.assertNotNull(consents);
+        Assertions.assertFalse(consents.isEmpty());
+        Assertions.assertEquals(2, consents.size());
+        Assertions.assertTrue(ids.contains(consent1.getConsentId()));
+        Assertions.assertTrue(ids.contains(consent2.getConsentId()));
     }
 
     @Test
@@ -44,7 +38,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         String consentId = consentDAO.checkConsentById(consent.getConsentId());
-        assertEquals(consent.getConsentId(), consentId);
+        Assertions.assertEquals(consent.getConsentId(), consentId);
     }
 
     @Test
@@ -52,7 +46,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         String consentId = consentDAO.getIdByName(consent.getName());
-        assertEquals(consent.getConsentId(), consentId);
+        Assertions.assertEquals(consent.getConsentId(), consentId);
     }
 
     @Test
@@ -60,7 +54,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         Consent foundConsent = consentDAO.findConsentByName(consent.getName());
-        assertEquals(consent.getConsentId(), foundConsent.getConsentId());
+        Assertions.assertEquals(consent.getConsentId(), foundConsent.getConsentId());
     }
 
 
@@ -74,10 +68,10 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
         String consentId = consent.getConsentId();
         Consent foundConsent = consentDAO.findConsentById(consentId);
-        assertNotNull(foundConsent);
+        Assertions.assertNotNull(foundConsent);
         consentDAO.deleteConsent(consentId);
         Consent deletedConsent = consentDAO.findConsentById(consentId);
-        assertNull(deletedConsent);
+        Assertions.assertNull(deletedConsent);
     }
 
     @Test
@@ -104,8 +98,8 @@ public class ConsentDAOTest extends DAOTestHelper {
         );
 
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        assertNotNull(foundConsent.getName());
-        assertEquals("something else", foundConsent.getName());
+        Assertions.assertNotNull(foundConsent.getName());
+        Assertions.assertEquals("something else", foundConsent.getName());
     }
 
     @Test
@@ -116,7 +110,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Date yesterday = cal.getTime();
         consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday);
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
+        Assertions.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
     }
 
     @Test
@@ -145,9 +139,9 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         consentDAO.deleteAllAssociationsForConsent(consentId);
         Integer deletedAssociationId1 = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
-        assertNull(deletedAssociationId1);
+        Assertions.assertNull(deletedAssociationId1);
         Integer deletedAssociationId2 = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
-        assertNull(deletedAssociationId2);
+        Assertions.assertNull(deletedAssociationId2);
     }
 
     @Test
@@ -160,9 +154,9 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDataSetId());
         Integer deletedAssociationId = consentDAO.findAssociationsByDataSetId(dataset.getDataSetId());
-        assertNull(deletedAssociationId);
+        Assertions.assertNull(deletedAssociationId);
         Integer remainingAssociationId = consentDAO.findAssociationsByDataSetId(dataset2.getDataSetId());
-        assertNotNull(remainingAssociationId);
+        Assertions.assertNotNull(remainingAssociationId);
     }
 
     @Test
@@ -187,8 +181,8 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent2.getGroupName(),
                 consent2.getUpdated());
 
-        assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
-        assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
+        Assertions.assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
+        Assertions.assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
     }
 
     @Test
@@ -227,9 +221,9 @@ public class ConsentDAOTest extends DAOTestHelper {
                 false);
 
         Consent consent1Found = consentDAO.findConsentById(consent1.getConsentId());
-        assertTrue(consent1Found.getUpdated());
+        Assertions.assertTrue(consent1Found.getUpdated());
         Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
-        assertFalse(consent2Found.getUpdated());
+        Assertions.assertFalse(consent2Found.getUpdated());
     }
 
 }

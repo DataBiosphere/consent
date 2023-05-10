@@ -1,22 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.cloud.storage.BlobId;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
-import org.broadinstitute.consent.http.enumeration.FileCategory;
-import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +9,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.cloud.storage.BlobId;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class FileStorageObjectServiceTest {
 
@@ -37,7 +36,7 @@ public class FileStorageObjectServiceTest {
 
     private FileStorageObjectService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

@@ -1,10 +1,18 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -39,21 +47,12 @@ import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 public class DAOTestHelper {
 
@@ -98,7 +97,7 @@ public class DAOTestHelper {
 
     public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
-    @BeforeClass
+    @BeforeAll
     public static void startUp() throws Exception {
         // Start the database
         postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
@@ -156,13 +155,13 @@ public class DAOTestHelper {
         testingDAO = jdbi.onDemand(TestingDAO.class);
     }
 
-    @AfterClass
+    @AfterAll
     public static void shutDown() {
         testApp.after();
         postgresContainer.stop();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         // Order is important for FK constraints
         testingDAO.deleteAllDARDataset();

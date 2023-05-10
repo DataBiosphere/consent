@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.pact.sam;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit.PactProviderRule;
@@ -7,6 +10,10 @@ import au.com.dius.pact.consumer.junit.PactVerification;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.google.api.client.http.HttpStatusCodes;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -17,17 +24,9 @@ import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.junit.Test;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Pact Consumer Contract and test for interactions between Consent and Sam
@@ -71,7 +70,7 @@ public class SamPactTests {
     @Rule
     public PactProviderRule mockProvider = new PactProviderRule(PROVIDER_NAME, this);
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         System.setProperty("pact_do_not_track", "true");
         System.setProperty("pact.writer.overwrite", "true");

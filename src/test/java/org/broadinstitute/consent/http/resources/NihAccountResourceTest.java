@@ -1,23 +1,22 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.NIHUserAccount;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.NIHUserAccount;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.NihService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class NihAccountResourceTest {
     @Mock
@@ -37,7 +36,7 @@ public class NihAccountResourceTest {
 
     private NihAccountResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         when(nihAccount.getStatus()).thenReturn(true);

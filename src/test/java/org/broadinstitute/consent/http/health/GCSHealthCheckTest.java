@@ -1,17 +1,17 @@
 package org.broadinstitute.consent.http.health;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.cloud.storage.Bucket;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.google.cloud.storage.Bucket;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class GCSHealthCheckTest {
 
@@ -23,7 +23,7 @@ public class GCSHealthCheckTest {
     @Mock
     private Bucket bucket;
 
-    @Before
+    @BeforeEach
     public void setUpClass() {
         openMocks(this);
         healthCheck = new GCSHealthCheck(store);

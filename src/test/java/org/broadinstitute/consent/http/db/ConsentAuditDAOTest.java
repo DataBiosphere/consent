@@ -1,19 +1,15 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAudit;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Test;
-
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ConsentAuditDAOTest extends DAOTestHelper {
 
@@ -24,8 +20,8 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
         consentAuditDAO.insertWorkspaceAudit(audit);
 
         List<String> consentIds = consentAuditDAO.findAllObjectIds();
-        assertFalse(consentIds.isEmpty());
-        assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
+        Assertions.assertFalse(consentIds.isEmpty());
+        Assertions.assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
     }
 
     @Test
@@ -38,8 +34,8 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
         consentAuditDAO.batchInsertWorkspaceAudit(audits);
 
         List<String> consentIds = consentAuditDAO.findAllObjectIds();
-        assertFalse(consentIds.isEmpty());
-        auditObjectIds.forEach(id -> assertTrue(consentIds.contains(id)));
+        Assertions.assertFalse(consentIds.isEmpty());
+        auditObjectIds.forEach(id -> Assertions.assertTrue(consentIds.contains(id)));
     }
 
     private ConsentAudit createConsentAudit() {

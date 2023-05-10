@@ -1,27 +1,26 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.WithMockServer;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
-import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.model.Header;
-import org.testcontainers.containers.MockServerContainer;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
+import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.model.Header;
+import org.testcontainers.containers.MockServerContainer;
 
 public class UseRestrictionConverterTest implements WithMockServer {
 
@@ -29,17 +28,17 @@ public class UseRestrictionConverterTest implements WithMockServer {
 
     private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         container.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         container.stop();
     }
 
-    @Before
+    @BeforeEach
     public void startUp() {
         client = new MockServerClient(container.getHost(), container.getServerPort());
         client.reset();

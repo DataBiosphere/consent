@@ -1,21 +1,20 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
+import java.util.Collections;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class DatasetAssociationsResourceTest {
 
@@ -24,7 +23,7 @@ public class DatasetAssociationsResourceTest {
 
     private DatasetAssociationsResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         when(service.createDatasetUsersAssociation(any(), any())).thenReturn(Collections.emptyList());

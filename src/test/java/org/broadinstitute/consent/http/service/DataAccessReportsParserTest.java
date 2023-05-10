@@ -1,14 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -20,10 +14,15 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.enumeration.HeaderDAR;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class DataAccessReportsParserTest {
 
@@ -45,7 +44,7 @@ public class DataAccessReportsParserTest {
     private final String DAR_CODE = "DAR_3";
     private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         Dataset d = new Dataset();

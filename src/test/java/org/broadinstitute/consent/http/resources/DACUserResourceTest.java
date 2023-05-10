@@ -1,16 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import org.broadinstitute.consent.http.models.User;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 public class DACUserResourceTest {
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         openMocks(this);
     }

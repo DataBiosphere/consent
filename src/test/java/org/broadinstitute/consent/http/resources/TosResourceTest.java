@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.service.sam.SamService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class TosResourceTest {
 
@@ -20,7 +19,7 @@ public class TosResourceTest {
 
     private TosResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

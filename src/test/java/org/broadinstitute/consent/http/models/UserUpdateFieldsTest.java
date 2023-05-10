@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.models;
 
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.junit.Test;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.junit.jupiter.api.Test;
 
 public class UserUpdateFieldsTest {
 

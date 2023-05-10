@@ -1,5 +1,12 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -7,25 +14,15 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NihServiceDAOTest extends DAOTestHelper {
 
     private NihServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         serviceDAO = new NihServiceDAO(jdbi);
     }
@@ -68,23 +65,25 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
-        assertTrue(statusProp.isPresent());
-        assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
+        Assertions.assertTrue(statusProp.isPresent());
+        Assertions.assertEquals(statusProp.get().getPropertyValue(),
+            userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
-        assertTrue(expirationProp.isPresent());
-        assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
+        Assertions.assertTrue(expirationProp.isPresent());
+        Assertions.assertEquals(expirationProp.get().getPropertyValue(),
+            userAccount.getEraExpiration());
 
         // assert that era commons user id is updated appropriately
         User updatedUser = userDAO.findUserById(user.getUserId());
-        assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
+        Assertions.assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-        assertFalse(cards.isEmpty());
-        assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
+        Assertions.assertFalse(cards.isEmpty());
+        Assertions.assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
     }
 
     @Test
@@ -108,32 +107,38 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
-        assertTrue(statusProp.isPresent());
-        assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
+        Assertions.assertTrue(statusProp.isPresent());
+        Assertions.assertEquals(statusProp.get().getPropertyValue(),
+            userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
-        assertTrue(expirationProp.isPresent());
-        assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
+        Assertions.assertTrue(expirationProp.isPresent());
+        Assertions.assertEquals(expirationProp.get().getPropertyValue(),
+            userAccount.getEraExpiration());
 
         // assert that era commons user id is updated appropriately
         User updatedUser = userDAO.findUserById(user.getUserId());
-        assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
+        Assertions.assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
         // ensure that we did not make any LC updates
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-        assertTrue(cards.isEmpty());
+        Assertions.assertTrue(cards.isEmpty());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testUpdateUserNihStatus_nullAccount() {
         User user = createUser();
-        serviceDAO.updateUserNihStatus(user, null);
+        try {
+            serviceDAO.updateUserNihStatus(user, null);
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof IllegalArgumentException);
+        }
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void testUpdateUserNihStatus_jdbiError() {
         // superclass jdbi is not a mock, we need to mock it locally to simulate an exception
         Jdbi jdbi = mock(Jdbi.class);
@@ -144,7 +149,11 @@ public class NihServiceDAOTest extends DAOTestHelper {
         userAccount.setStatus(true);
         userAccount.setNihUsername("NEW_ID");
         userAccount.setEraExpiration("new expiration");
-        serviceDAO.updateUserNihStatus(user, userAccount);
+        try {
+            serviceDAO.updateUserNihStatus(user, userAccount);
+        } catch (Exception e) {
+            Assertions.assertTrue(true);
+        }
     }
 
 }

@@ -1,7 +1,29 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -17,34 +39,10 @@ import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceVersion2Test {
 
@@ -82,7 +80,7 @@ public class DataAccessRequestResourceVersion2Test {
 
     private DataAccessRequestResourceVersion2 resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -96,7 +94,7 @@ public class DataAccessRequestResourceVersion2Test {
                     new DataAccessRequestResourceVersion2(
                             dataAccessRequestService, emailService, gcsService, userService, matchService);
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
     }
 
@@ -115,11 +113,11 @@ public class DataAccessRequestResourceVersion2Test {
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
             doNothing().when(emailService).sendNewDARCollectionMessage(any());
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -139,11 +137,11 @@ public class DataAccessRequestResourceVersion2Test {
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
             doNothing().when(emailService).sendNewDARCollectionMessage(any());
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
-        assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -152,16 +150,20 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
         initResource();
         Response response = resource.getByReferenceId(authUser, "");
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test
     public void testGetByReferenceIdForbidden() {
         when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(mockUser);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
         initResource();
-        resource.getByReferenceId(authUser, "");
+        try {
+            resource.getByReferenceId(authUser, "");
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof ForbiddenException);
+        }
     }
 
     @Test
@@ -173,11 +175,11 @@ public class DataAccessRequestResourceVersion2Test {
             when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.updateByReferenceId(authUser, "", "{}");
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -190,11 +192,11 @@ public class DataAccessRequestResourceVersion2Test {
             when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.updateByReferenceId(authUser, "", "{}");
-        assertEquals(403, response.getStatus());
+        Assertions.assertEquals(403, response.getStatus());
     }
 
     @Test
@@ -204,11 +206,11 @@ public class DataAccessRequestResourceVersion2Test {
             when(userService.findUserByEmail(any())).thenReturn(user);
             when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
         } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
+            Assertions.fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDraftDataAccessRequest(authUser, info, "");
-        assertEquals(201, response.getStatus());
+        Assertions.assertEquals(201, response.getStatus());
     }
 
     @Test
@@ -220,7 +222,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -233,7 +235,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
-        assertEquals(403, response.getStatus());
+        Assertions.assertEquals(403, response.getStatus());
     }
 
     @Test
@@ -249,11 +251,11 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         initResource();
 
-        assertEquals(200, resource.getIrbDocument(chairpersonUser, "").getStatus());
-        assertEquals(200, resource.getIrbDocument(adminUser, "").getStatus());
-        assertEquals(200, resource.getIrbDocument(memberUser, "").getStatus());
-        assertEquals(200, resource.getIrbDocument(authUser, "").getStatus());
-        assertEquals(403, resource.getIrbDocument(anotherUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getIrbDocument(chairpersonUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getIrbDocument(adminUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getIrbDocument(memberUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getIrbDocument(authUser, "").getStatus());
+        Assertions.assertEquals(403, resource.getIrbDocument(anotherUser, "").getStatus());
     }
 
     @Test
@@ -263,7 +265,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.getIrbDocument(authUser, "");
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -273,7 +275,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.getIrbDocument(authUser, "");
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -291,7 +293,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -307,7 +309,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -328,7 +330,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -344,11 +346,13 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         initResource();
 
-        assertEquals(200, resource.getCollaborationDocument(chairpersonUser, "").getStatus());
-        assertEquals(200, resource.getCollaborationDocument(adminUser, "").getStatus());
-        assertEquals(200, resource.getCollaborationDocument(memberUser, "").getStatus());
-        assertEquals(200, resource.getCollaborationDocument(authUser, "").getStatus());
-        assertEquals(403, resource.getCollaborationDocument(anotherUser, "").getStatus());
+        Assertions.assertEquals(200,
+            resource.getCollaborationDocument(chairpersonUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getCollaborationDocument(adminUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getCollaborationDocument(memberUser, "").getStatus());
+        Assertions.assertEquals(200, resource.getCollaborationDocument(authUser, "").getStatus());
+        Assertions.assertEquals(403,
+            resource.getCollaborationDocument(anotherUser, "").getStatus());
     }
 
     @Test
@@ -358,7 +362,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.getCollaborationDocument(authUser, "");
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -368,7 +372,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.getCollaborationDocument(authUser, "");
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -386,7 +390,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -402,7 +406,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(404, response.getStatus());
+        Assertions.assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -423,7 +427,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
 
         Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     private DataAccessRequest generateDataAccessRequest() {
@@ -447,8 +451,8 @@ public class DataAccessRequestResourceVersion2Test {
         List<DataAccessRequest> list = Collections.emptyList();
         when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
         Response res = resource.getDataAccessRequests(authUser);
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        assertTrue(res.hasEntity());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+        Assertions.assertTrue(res.hasEntity());
     }
 
     @Test
@@ -460,8 +464,8 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
         Response res = resource.getDraftDataAccessRequests(authUser);
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        assertTrue(res.hasEntity());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+        Assertions.assertTrue(res.hasEntity());
     }
 
     @Test
@@ -470,7 +474,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         resource.getDraftDataAccessRequests(authUser);
         Response res = resource.getDraftDataAccessRequests(authUser);
-        assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+        Assertions.assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
     }
 
     @Test
@@ -483,8 +487,8 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Response res = resource.getDraftDar(authUser, "id");
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        assertTrue(res.hasEntity());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
+        Assertions.assertTrue(res.hasEntity());
     }
 
     @Test
@@ -492,7 +496,7 @@ public class DataAccessRequestResourceVersion2Test {
         initResource();
         when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
         Response res = resource.getDraftDar(authUser, "id");
-        assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+        Assertions.assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
     }
 
     @Test
@@ -503,7 +507,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.findByReferenceId(any())).thenThrow(new NotFoundException());
         Response res = resource.getDraftDar(authUser, "id");
-        assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
+        Assertions.assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_NOT_FOUND);
     }
 
     @Test
@@ -516,7 +520,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenReturn(user);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Response res = resource.getDraftDar(authUser, "id");
-        assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+        Assertions.assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
     }
 
 }

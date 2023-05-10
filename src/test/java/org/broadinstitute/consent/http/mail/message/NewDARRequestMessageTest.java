@@ -1,22 +1,21 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.mail.MessagingException;
-import java.io.Writer;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.sendgrid.helpers.mail.Mail;
+import java.io.Writer;
+import javax.mail.MessagingException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class NewDARRequestMessageTest {
 
     @Mock
     Writer template;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

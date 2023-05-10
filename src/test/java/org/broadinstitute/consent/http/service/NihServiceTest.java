@@ -1,23 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.NIHUserAccount;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +8,23 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.NIHUserAccount;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class NihServiceTest {
 
@@ -42,7 +41,7 @@ public class NihServiceTest {
     private NIHUserAccount nihUserAccount;
     private AuthUser authUser;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         nihUserAccount = new NIHUserAccount("nih username", new ArrayList(), new Date().toString(), true);
         authUser = new AuthUser("test@test.com");

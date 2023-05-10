@@ -1,11 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import io.dropwizard.testing.junit.ResourceTestRule;
+import javax.ws.rs.core.Response;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
+import org.junit.jupiter.api.Test;
 
 public class VersionResourceTest {
 

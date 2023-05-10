@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.util.gson;
 
-import com.google.gson.JsonElement;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+import com.google.gson.JsonElement;
 import java.time.Instant;
 import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
 
 public class InstantTypeAdapterTest {
 

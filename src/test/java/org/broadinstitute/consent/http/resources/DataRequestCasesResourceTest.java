@@ -1,19 +1,18 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.broadinstitute.consent.http.models.Summary;
-import org.broadinstitute.consent.http.service.SummaryService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.Summary;
+import org.broadinstitute.consent.http.service.SummaryService;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class DataRequestCasesResourceTest {
 
@@ -22,7 +21,7 @@ public class DataRequestCasesResourceTest {
 
     private DataRequestCasesResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

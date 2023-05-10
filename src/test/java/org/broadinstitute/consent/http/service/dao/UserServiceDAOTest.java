@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Optional;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -7,15 +13,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 // This is a utility test to verify a pattern for Database Transactions continues to be supported and works as expected.
 // It should be updated to include new patterns that are developed.
@@ -23,7 +22,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
 
     private UserServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void setup() {
         openMocks(this);
         serviceDAO = new UserServiceDAO(jdbi, userDAO, userRoleDAO);

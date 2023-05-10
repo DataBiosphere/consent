@@ -1,21 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -23,6 +7,21 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import java.util.Collections;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.service.ElectionService;
+import org.broadinstitute.consent.http.service.VoteService;
+import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ElectionResourceTest {
@@ -40,7 +39,7 @@ public class ElectionResourceTest {
 
     private ElectionResource electionResource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         when(voteService.findVotesByReferenceId(any())).thenReturn(Collections.emptyList());

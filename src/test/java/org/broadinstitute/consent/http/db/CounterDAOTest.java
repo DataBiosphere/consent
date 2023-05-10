@@ -2,14 +2,13 @@ package org.broadinstitute.consent.http.db;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.service.CounterService;
-import org.junit.After;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class CounterDAOTest extends DAOTestHelper {
 
-    @After
+    @AfterEach
     public void tearDown() {
         counterDAO.deleteAll();
     }
@@ -22,7 +21,7 @@ public class CounterDAOTest extends DAOTestHelper {
         for (int i = 0; i < count; i++) {
             lastCount = counterDAO.incrementCountByName(CounterService.DAR_COUNTER);
         }
-        assertEquals(Integer.valueOf(count), lastCount);
+        Assertions.assertEquals(Integer.valueOf(count), lastCount);
     }
 
     @Test
@@ -34,6 +33,6 @@ public class CounterDAOTest extends DAOTestHelper {
         for (int i = 0; i < count; i++) {
             maxCount = counterDAO.incrementCountByName(name);
         }
-        assertEquals(count, maxCount.intValue());
+        Assertions.assertEquals(count, maxCount.intValue());
     }
 }
