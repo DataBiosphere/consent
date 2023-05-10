@@ -322,12 +322,6 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.12.0</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
       <version>1.0.79</version>
@@ -473,27 +467,8 @@
 
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-lifecycle</artifactId>
-      <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
       <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-db</artifactId>
-      <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-      <version>2.12.5</version>
-      <scope>test</scope>
     </dependency>
 
     <!--suppress VulnerableLibrariesLocal -->
@@ -508,13 +483,6 @@
       <groupId>au.com.dius.pact.consumer</groupId>
       <artifactId>junit</artifactId>
       <version>${pact.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-jackson</artifactId>
-      <version>${dropwizard.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -574,13 +542,6 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>${postgres.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>1.18.0</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
