@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,7 +68,7 @@ public class VoteDAOTest extends DAOTestHelper {
         List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
         Assertions.assertNotNull(foundVotes);
         Assertions.assertFalse(foundVotes.isEmpty());
-        Assertions.assertTrue(
+        assertTrue(
             foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
     }
 
@@ -259,9 +261,9 @@ public class VoteDAOTest extends DAOTestHelper {
         voteDAO.updateVote(true, rationale, now, v.getVoteId(), true,
                 election.getElectionId(), now, true);
         Vote vote = voteDAO.findVoteById(v.getVoteId());
-        Assertions.assertTrue(vote.getVote());
-        Assertions.assertTrue(vote.getHasConcerns());
-        Assertions.assertTrue(vote.getIsReminderSent());
+        assertTrue(vote.getVote());
+        assertTrue(vote.getHasConcerns());
+        assertTrue(vote.getIsReminderSent());
         Assertions.assertEquals(vote.getRationale(), rationale);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Assertions.assertEquals(sdf.format(vote.getCreateDate()), sdf.format(now));
@@ -285,7 +287,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         voteDAO.updateVoteReminderFlag(v.getVoteId(), true);
         Vote vote = voteDAO.findVoteById(v.getVoteId());
-        Assertions.assertTrue(vote.getIsReminderSent());
+        assertTrue(vote.getIsReminderSent());
 
         voteDAO.updateVoteReminderFlag(v.getVoteId(), false);
         Vote vote2 = voteDAO.findVoteById(v.getVoteId());
@@ -455,7 +457,7 @@ public class VoteDAOTest extends DAOTestHelper {
     public void testFindVoteUsersByElectionReferenceIdList_Empty() {
         // Empty case
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of("invalid reference id"));
-        Assertions.assertTrue(voteUsers.isEmpty());
+        assertTrue(voteUsers.isEmpty());
     }
 
     @Test
@@ -472,7 +474,7 @@ public class VoteDAOTest extends DAOTestHelper {
         // This creates an election and votes for the user passed in as the creator
         DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(chair, List.of(dataset));
         Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
-        Assertions.assertTrue(dar.isPresent());
+        assertTrue(dar.isPresent());
 
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of(dar.get().getReferenceId()));
         Assertions.assertFalse(voteUsers.isEmpty());

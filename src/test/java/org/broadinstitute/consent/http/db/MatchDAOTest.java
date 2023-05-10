@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -75,7 +77,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
         matchDAO.deleteMatchesByConsentId(m.getConsent());
         List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-        Assertions.assertTrue(matches.isEmpty());
+        assertTrue(matches.isEmpty());
     }
 
     @Test
@@ -84,7 +86,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
         matchDAO.deleteMatchesByPurposeId(m.getPurpose());
         List<Match> matches = matchDAO.findMatchesByPurposeId(m.getConsent());
-        Assertions.assertTrue(matches.isEmpty());
+        assertTrue(matches.isEmpty());
     }
 
     @Test
@@ -93,9 +95,9 @@ public class MatchDAOTest extends DAOTestHelper {
         Match m2 = createMatch();
 
         Integer count1 = matchDAO.countMatchesByResult(m1.getMatch());
-        Assertions.assertTrue(count1 >= 1);
+        assertTrue(count1 >= 1);
         Integer count2 = matchDAO.countMatchesByResult(m2.getMatch());
-        Assertions.assertTrue(count2 >= 1);
+        assertTrue(count2 >= 1);
     }
 
     @Test
@@ -154,7 +156,7 @@ public class MatchDAOTest extends DAOTestHelper {
         //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
         //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
         List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
-        Assertions.assertTrue(matchResults.isEmpty());
+        assertTrue(matchResults.isEmpty());
     }
 
     @Test

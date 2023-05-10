@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -166,7 +167,7 @@ public class DatasetServiceTest {
         try {
             datasetService.findDatasetsByDacIds(Collections.emptyList());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -176,7 +177,7 @@ public class DatasetServiceTest {
         try {
             datasetService.findDatasetsByDacIds(null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -188,7 +189,7 @@ public class DatasetServiceTest {
         try {
             datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -198,7 +199,7 @@ public class DatasetServiceTest {
         try {
             datasetService.findDatasetListByDacIds(Collections.emptyList());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -208,7 +209,7 @@ public class DatasetServiceTest {
         try {
             datasetService.findDatasetListByDacIds(null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -334,7 +335,7 @@ public class DatasetServiceTest {
         try {
             datasetService.getDatasetDTO(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -429,7 +430,7 @@ public class DatasetServiceTest {
             Assertions.fail(
                 "Should have thrown an exception on datasetService.updateDatasetDataUse()");
         } catch (IllegalArgumentException e) {
-            Assertions.assertTrue(true);
+            assertTrue(true);
         }
     }
 
@@ -453,7 +454,7 @@ public class DatasetServiceTest {
 
         Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         Assertions.assertNotNull(updated);
-        Assertions.assertTrue(updated.isPresent());
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -479,7 +480,7 @@ public class DatasetServiceTest {
 
         Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         Assertions.assertNotNull(updated);
-        Assertions.assertTrue(updated.isPresent());
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -502,7 +503,7 @@ public class DatasetServiceTest {
 
         Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
         Assertions.assertNotNull(updated);
-        Assertions.assertTrue(updated.isPresent());
+        assertTrue(updated.isPresent());
     }
 
     @Test
@@ -531,7 +532,7 @@ public class DatasetServiceTest {
 
         Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
         Assertions.assertNotNull(updated);
-        Assertions.assertTrue(updated.isPresent());
+        assertTrue(updated.isPresent());
         verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any(), any());
     }
 
@@ -561,7 +562,7 @@ public class DatasetServiceTest {
         try {
             datasetService.createConsentForDataset(dataSetDTO);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -608,32 +609,32 @@ public class DatasetServiceTest {
         List<Dataset> results = datasetService.searchDatasets("asdf", u);
 
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(ds1));
+        assertTrue(results.contains(ds1));
 
         // query pi name
         results = datasetService.searchDatasets("John", u);
 
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(ds1));
+        assertTrue(results.contains(ds1));
 
         // query ds identifier
         results = datasetService.searchDatasets("DUOS-000280", u);
 
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(ds2));
+        assertTrue(results.contains(ds2));
 
         // query pi name for all of them
         results = datasetService.searchDatasets("Doe", u);
 
         Assertions.assertEquals(2, results.size());
-        Assertions.assertTrue(results.contains(ds2));
-        Assertions.assertTrue(results.contains(ds1));
+        assertTrue(results.contains(ds2));
+        assertTrue(results.contains(ds1));
 
         // search on two things at once
         results = datasetService.searchDatasets("Doe asdf", u);
 
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(ds1));
+        assertTrue(results.contains(ds1));
 
         // query nonexistent phrase
         results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", u);
@@ -707,9 +708,9 @@ public class DatasetServiceTest {
         Assertions.assertFalse(datasets.isEmpty());
         // Test that the two lists of datasets are distinctly combined in the final result
         Assertions.assertEquals(3, datasets.size());
-        Assertions.assertTrue(datasets.contains(d1));
-        Assertions.assertTrue(datasets.contains(d2));
-        Assertions.assertTrue(datasets.contains(d3));
+        assertTrue(datasets.contains(d1));
+        assertTrue(datasets.contains(d2));
+        assertTrue(datasets.contains(d3));
         verify(datasetDAO, times(0)).findAllDatasets();
         verify(datasetDAO, times(1)).getActiveDatasets();
         verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(any());
@@ -731,8 +732,8 @@ public class DatasetServiceTest {
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
         Assertions.assertFalse(datasets.isEmpty());
         Assertions.assertEquals(2, datasets.size());
-        Assertions.assertTrue(datasets.contains(d1));
-        Assertions.assertTrue(datasets.contains(d2));
+        assertTrue(datasets.contains(d1));
+        assertTrue(datasets.contains(d2));
         verify(datasetDAO, times(0)).findAllDatasets();
         verify(datasetDAO, times(1)).getActiveDatasets();
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
@@ -779,7 +780,7 @@ public class DatasetServiceTest {
         try {
             datasetService.approveDataset(dataset, user, false);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -793,7 +794,7 @@ public class DatasetServiceTest {
         try {
             datasetService.approveDataset(dataset, user, null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -821,7 +822,7 @@ public class DatasetServiceTest {
 
         Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
         Assertions.assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
-        Assertions.assertTrue(returnedDataset.getDacApproval());
+        assertTrue(returnedDataset.getDacApproval());
 
         // send approved email
         verify(emailService, times(1)).sendDatasetApprovedMessage(

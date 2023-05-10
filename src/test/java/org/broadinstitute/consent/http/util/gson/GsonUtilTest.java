@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -50,7 +52,7 @@ public class GsonUtilTest {
         } catch (RuntimeException rte) {
             serializationFailed = true;
         }
-        Assertions.assertTrue(serializationFailed);
+        assertTrue(serializationFailed);
 
         try {
             String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
@@ -58,7 +60,7 @@ public class GsonUtilTest {
         } catch (RuntimeException rte) {
             deserializationFailed = true;
         }
-        Assertions.assertTrue(deserializationFailed);
+        assertTrue(deserializationFailed);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +34,7 @@ public class ResourceTest {
         try {
             abstractResource.validateFileDetails(fileDetail);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -47,7 +48,7 @@ public class ResourceTest {
         try {
             abstractResource.validateFileDetails(fileDetail);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 

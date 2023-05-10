@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -65,7 +66,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
-        Assertions.assertTrue(statusProp.isPresent());
+        assertTrue(statusProp.isPresent());
         Assertions.assertEquals(statusProp.get().getPropertyValue(),
             userAccount.getStatus().toString());
 
@@ -73,7 +74,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
-        Assertions.assertTrue(expirationProp.isPresent());
+        assertTrue(expirationProp.isPresent());
         Assertions.assertEquals(expirationProp.get().getPropertyValue(),
             userAccount.getEraExpiration());
 
@@ -107,7 +108,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
-        Assertions.assertTrue(statusProp.isPresent());
+        assertTrue(statusProp.isPresent());
         Assertions.assertEquals(statusProp.get().getPropertyValue(),
             userAccount.getStatus().toString());
 
@@ -115,7 +116,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .stream()
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
-        Assertions.assertTrue(expirationProp.isPresent());
+        assertTrue(expirationProp.isPresent());
         Assertions.assertEquals(expirationProp.get().getPropertyValue(),
             userAccount.getEraExpiration());
 
@@ -125,7 +126,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
 
         // ensure that we did not make any LC updates
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-        Assertions.assertTrue(cards.isEmpty());
+        assertTrue(cards.isEmpty());
     }
 
     @Test
@@ -134,7 +135,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
         try {
             serviceDAO.updateUserNihStatus(user, null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -152,7 +153,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
         try {
             serviceDAO.updateUserNihStatus(user, userAccount);
         } catch (Exception e) {
-            Assertions.assertTrue(true);
+            assertTrue(true);
         }
     }
 

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -54,7 +56,7 @@ public class JsonSchemaUtilTest {
     @Test
     public void testIsValidDatasetRegistrationObject_v1_case1() {
         Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
-        Assertions.assertTrue(errors.isEmpty());
+        assertTrue(errors.isEmpty());
     }
 
     @Test
@@ -822,7 +824,7 @@ public class JsonSchemaUtilTest {
 
 
     private void assertNoErrors(Set<ValidationMessage> errors) {
-        Assertions.assertTrue(errors.isEmpty(),
+        assertTrue(errors.isEmpty(),
             String.format("Should be empty, instead was: %s", errors.stream().map(
                 ValidationMessage::toString).toList()));
     }
@@ -832,7 +834,7 @@ public class JsonSchemaUtilTest {
     }
 
     private void assertFieldHasError(Set<ValidationMessage> errors, String field) {
-        Assertions.assertTrue(
+        assertTrue(
             errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)),
             String.format("Field %s should have errored", field));
     }

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -52,11 +54,11 @@ public class UserPropertyDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(2, props.size());
 
-        Assertions.assertTrue(props.stream().anyMatch((p) ->
+        assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
                         && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
 
-        Assertions.assertTrue(props.stream().anyMatch((p) ->
+        assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
                         && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
     }

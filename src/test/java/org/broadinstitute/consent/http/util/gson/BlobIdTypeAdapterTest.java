@@ -1,10 +1,11 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class BlobIdTypeAdapterTest {
@@ -24,7 +25,7 @@ public class BlobIdTypeAdapterTest {
         } catch (RuntimeException rte) {
             failsSerialization = true;
         }
-        Assertions.assertTrue(failsSerialization);
+        assertTrue(failsSerialization);
         JsonPrimitive primitive = new JsonPrimitive(randomIdUri);
         try {
             BlobId returnedId = adapter.deserialize(primitive, null, null);
@@ -32,6 +33,6 @@ public class BlobIdTypeAdapterTest {
             failsDeserialization = true;
         }
 
-        Assertions.assertTrue(failsDeserialization);
+        assertTrue(failsDeserialization);
     }
 }

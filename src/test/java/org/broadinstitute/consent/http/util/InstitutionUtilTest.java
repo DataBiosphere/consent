@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.gson.Gson;
 import java.util.Collections;
 import java.util.Date;
@@ -40,7 +42,7 @@ public class InstitutionUtilTest {
     public void testCheckIfAdmin() {
         Boolean adminResult = util.checkIfAdmin(adminUser);
         Boolean researcherResult = util.checkIfAdmin(researcherUser);
-        Assertions.assertTrue(adminResult);
+        assertTrue(adminResult);
         Assertions.assertFalse(researcherResult);
     }
 

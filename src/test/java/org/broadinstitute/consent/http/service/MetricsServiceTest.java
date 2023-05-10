@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -124,7 +125,7 @@ public class MetricsServiceTest {
         try {
             service.generateDatasetMetrics(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
 
     }

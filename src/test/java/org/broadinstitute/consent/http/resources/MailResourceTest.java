@@ -79,7 +79,7 @@ public class MailResourceTest {
         try {
             mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5, null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -91,7 +91,7 @@ public class MailResourceTest {
         try {
             mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, -1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 

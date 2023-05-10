@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -456,7 +457,7 @@ public class UserResourceTest {
         Response response = userResource.getSOsForInstitution(authUser);
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         var body = (List) response.getEntity();
-        Assertions.assertTrue(body.isEmpty());
+        assertTrue(body.isEmpty());
     }
 
     @Test
@@ -679,26 +680,26 @@ public class UserResourceTest {
         // User with no roles and no institution can update their institution
         User u1 = new User();
         boolean canUpdate = userResource.canUpdateInstitution(u1, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // Researcher user with no institution can update their institution
         User u2 = new User();
         u2.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u2, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // Researcher user with an institution can update their institution
         User u3 = new User();
         u3.setInstitutionId(10);
         u3.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u3, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // SO user with no institution can update their institution
         User u4 = new User();
         u4.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u4, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // SO user with an institution CANNOT update their institution
         User u4a = new User();
@@ -711,7 +712,7 @@ public class UserResourceTest {
         User u5 = new User();
         u5.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u5, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // IT user with an institution CANNOT update their institution
         User u5a = new User();
@@ -724,14 +725,14 @@ public class UserResourceTest {
         User u6 = new User();
         u6.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u6, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
 
         // Admin user with an institution can update their institution
         User u7 = new User();
         u7.setInstitutionId(10);
         u7.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u7, 1);
-        Assertions.assertTrue(canUpdate);
+        assertTrue(canUpdate);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static java.lang.Thread.sleep;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,13 +11,14 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+
 public class AcknowledgementDAOTest extends DAOTestHelper {
     @Test
     public void createAndRetrieveAcknowledgement() throws InterruptedException {
         User user = createUser();
         Integer user_id = user.getUserId();
         String key = RandomStringUtils.randomAlphabetic(100);
-        Assertions.assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
+        assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
 
         acknowledgementDAO.upsertAcknowledgement(key, user_id);
         Acknowledgement newAcknowledgement = acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user_id);
@@ -50,7 +52,7 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
         Integer user_id = user.getUserId();
         String key1 = RandomStringUtils.randomAlphabetic(100);
         String key2 = RandomStringUtils.randomAlphabetic(100);
-        Assertions.assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
+        assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
 
         acknowledgementDAO.upsertAcknowledgement(key1, user_id);
         acknowledgementDAO.upsertAcknowledgement(key2, user_id);
@@ -75,8 +77,8 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
         String key1 = RandomStringUtils.randomAlphabetic(100);
         String key2 = RandomStringUtils.randomAlphabetic(100);
         List<String> key_list = Arrays.asList(key1, key2);
-        Assertions.assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user1Id).isEmpty());
-        Assertions.assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user2Id).isEmpty());
+        assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user1Id).isEmpty());
+        assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user2Id).isEmpty());
 
         acknowledgementDAO.upsertAcknowledgement(key1, user1Id);
         Assertions.assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user1Id).size());

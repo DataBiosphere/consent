@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -46,6 +47,6 @@ public class TosResourceTest {
 
         Response response = resource.getDUOSToSText();
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertTrue(response.getEntity().toString().contains("DUOS"));
+        assertTrue(response.getEntity().toString().contains("DUOS"));
     }
 }

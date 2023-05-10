@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -337,7 +338,7 @@ public class ElectionServiceTest {
         try {
             service.describeDataRequestElection(sampleElection1.getReferenceId());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -359,7 +360,7 @@ public class ElectionServiceTest {
         try {
             service.describeElectionByVoteId(sampleElection1.getElectionId());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -384,7 +385,7 @@ public class ElectionServiceTest {
                 List.of());
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteChairpersonApproval);
-        Assertions.assertTrue(validate);
+        assertTrue(validate);
     }
 
     @Test
@@ -410,7 +411,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
-        Assertions.assertTrue(validate);
+        assertTrue(validate);
     }
 
     @Test
@@ -434,7 +435,7 @@ public class ElectionServiceTest {
                 .thenReturn(List.of(sampleVoteMember));
         initService();
         boolean validate = service.validateCollectDAREmailCondition(sampleVoteMember);
-        Assertions.assertTrue(validate);
+        assertTrue(validate);
     }
 
     @Test
@@ -456,7 +457,7 @@ public class ElectionServiceTest {
         initService();
 
         boolean ownerToClose = service.checkDataOwnerToCloseElection(5);
-        Assertions.assertTrue(ownerToClose);
+        assertTrue(ownerToClose);
     }
 
     @Test

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import java.util.List;
 import java.util.Objects;
@@ -131,7 +133,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(2, datasets.size());
 
         Optional<Dataset> ds1Optional = datasets.stream().filter(d -> d.getName().equals(insert1.name())).findFirst();
-        Assertions.assertTrue(ds1Optional.isPresent());
+        assertTrue(ds1Optional.isPresent());
         Dataset dataset1 = ds1Optional.get();
 
         Assertions.assertEquals(insert1.name(), dataset1.getName());
@@ -141,7 +143,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertNull(dataset1.getNihInstitutionalCertificationFile());
 
         Optional<Dataset> ds2Optional = datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
-        Assertions.assertTrue(ds2Optional.isPresent());
+        assertTrue(ds2Optional.isPresent());
         Dataset dataset2 = ds2Optional.get();
 
         Assertions.assertEquals(insert2.name(), dataset2.getName());
@@ -193,7 +195,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
         Assertions.assertNotNull(s.getCreateDate());
 
-        Assertions.assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
+        assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
         Assertions.assertNull(s.getAlternativeDataSharingPlan());
     }
 

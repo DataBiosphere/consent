@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
@@ -113,7 +114,7 @@ public class MatchServiceTest {
         try {
             service.findMatchById(m.getId());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -138,7 +139,7 @@ public class MatchServiceTest {
         initService();
 
         List<Match> matches = service.findMatchByConsentId(m.getConsent());
-        Assertions.assertTrue(matches.isEmpty());
+        assertTrue(matches.isEmpty());
         verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
     }
 
@@ -184,7 +185,7 @@ public class MatchServiceTest {
         try {
             service.singleEntitiesMatchV3(null, dar);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -195,7 +196,7 @@ public class MatchServiceTest {
         try {
             service.singleEntitiesMatchV3(dataset, null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -220,7 +221,7 @@ public class MatchServiceTest {
         Match match = service.singleEntitiesMatchV3(dataset, dar);
         Assertions.assertFalse(match.getMatch());
         Assertions.assertFalse(match.getAbstain());
-        Assertions.assertTrue(match.getFailed());
+        assertTrue(match.getFailed());
     }
 
     @Test
@@ -241,7 +242,7 @@ public class MatchServiceTest {
 
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
-        Assertions.assertTrue(match.getMatch());
+        assertTrue(match.getMatch());
         Assertions.assertFalse(match.getAbstain());
         Assertions.assertFalse(match.getFailed());
     }
@@ -288,7 +289,7 @@ public class MatchServiceTest {
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
         Assertions.assertFalse(match.getMatch());
-        Assertions.assertTrue(match.getAbstain());
+        assertTrue(match.getAbstain());
         Assertions.assertFalse(match.getFailed());
     }
 

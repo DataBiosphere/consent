@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -162,7 +163,7 @@ public class DataAccessRequestResourceVersion2Test {
         try {
             resource.getByReferenceId(authUser, "");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ForbiddenException);
+            assertTrue(e instanceof ForbiddenException);
         }
     }
 
@@ -452,7 +453,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
         Response res = resource.getDataAccessRequests(authUser);
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        Assertions.assertTrue(res.hasEntity());
+        assertTrue(res.hasEntity());
     }
 
     @Test
@@ -465,7 +466,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
         Response res = resource.getDraftDataAccessRequests(authUser);
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        Assertions.assertTrue(res.hasEntity());
+        assertTrue(res.hasEntity());
     }
 
     @Test
@@ -488,7 +489,7 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         Response res = resource.getDraftDar(authUser, "id");
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
-        Assertions.assertTrue(res.hasEntity());
+        assertTrue(res.hasEntity());
     }
 
     @Test

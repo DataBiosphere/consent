@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
@@ -32,7 +33,6 @@ import org.mockserver.model.HttpError;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
-
 
 public class SupportRequestServiceTest {
 
@@ -140,7 +140,7 @@ public class SupportRequestServiceTest {
         try {
             service.postTicketToSupport(generateTicket());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ServerErrorException);
+            assertTrue(e instanceof ServerErrorException);
         }
     }
 

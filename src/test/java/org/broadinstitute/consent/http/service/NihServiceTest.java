@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
@@ -57,7 +58,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -90,7 +91,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(nihUserAccount, authUser, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -100,7 +101,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(null, authUser, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -112,7 +113,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(account, authUser, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 

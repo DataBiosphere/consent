@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -60,7 +61,7 @@ public class DatasetAssociationServiceTest {
         try {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
             Assertions.assertEquals("Invalid UserId list.", e.getMessage());
         }
     }
@@ -80,7 +81,7 @@ public class DatasetAssociationServiceTest {
         try {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
             Assertions.assertEquals("Invalid DatasetId", e.getMessage());
         }
     }
@@ -96,7 +97,7 @@ public class DatasetAssociationServiceTest {
         try {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BatchUpdateException);
+            assertTrue(e instanceof BatchUpdateException);
         }
     }
 

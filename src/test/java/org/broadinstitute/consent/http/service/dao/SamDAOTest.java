@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -112,7 +113,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.getRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -125,7 +126,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.getRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotAuthorizedException);
+            assertTrue(e instanceof NotAuthorizedException);
         }
     }
 
@@ -138,7 +139,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.getRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ForbiddenException);
+            assertTrue(e instanceof ForbiddenException);
         }
     }
 
@@ -152,7 +153,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.getRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -165,7 +166,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.getRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ConsentConflictException);
+            assertTrue(e instanceof ConsentConflictException);
         }
     }
 

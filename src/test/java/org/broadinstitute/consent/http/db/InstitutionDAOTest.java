@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -16,7 +18,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     public void testInsertInstitution() {
         Institution institution = createInstitution();
         List<Institution> all = institutionDAO.findAllInstitutions();
-        Assertions.assertTrue(all.contains(institution));
+        assertTrue(all.contains(institution));
     }
 
     @Test
@@ -151,7 +153,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
     @Test
     public void testFindInstitutionsByName_Missing() {
         List<Institution> found = institutionDAO.findInstitutionsByName(RandomStringUtils.randomAlphabetic(10));
-        Assertions.assertTrue(found.isEmpty());
+        assertTrue(found.isEmpty());
     }
 
     @Test

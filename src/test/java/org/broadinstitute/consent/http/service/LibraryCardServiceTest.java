@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -155,7 +156,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(payload, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ConsentConflictException);
+            assertTrue(e instanceof ConsentConflictException);
         }
     }
 
@@ -174,7 +175,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(payload, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ConsentConflictException);
+            assertTrue(e instanceof ConsentConflictException);
         }
     }
 
@@ -196,7 +197,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(payload, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ConsentConflictException);
+            assertTrue(e instanceof ConsentConflictException);
         }
     }
 
@@ -212,7 +213,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(payload, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -234,7 +235,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(libraryCard, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -246,7 +247,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(null, adminUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -260,7 +261,7 @@ public class LibraryCardServiceTest {
         try {
             service.createLibraryCard(card, soUser);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -299,7 +300,7 @@ public class LibraryCardServiceTest {
         try {
             service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -318,7 +319,7 @@ public class LibraryCardServiceTest {
         try {
             service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -337,7 +338,7 @@ public class LibraryCardServiceTest {
         try {
             service.deleteLibraryCardById(libraryCard.getId());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -349,7 +350,7 @@ public class LibraryCardServiceTest {
         try {
             service.findLibraryCardById(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 

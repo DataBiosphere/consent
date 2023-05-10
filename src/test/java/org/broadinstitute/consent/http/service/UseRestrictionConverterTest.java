@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -145,14 +146,14 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
         Assertions.assertNotNull(dataUse);
-        Assertions.assertTrue(dataUse.getMethodsResearch());
-        Assertions.assertTrue(dataUse.getPopulationStructure());
-        Assertions.assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
-        Assertions.assertTrue(
+        assertTrue(dataUse.getMethodsResearch());
+        assertTrue(dataUse.getPopulationStructure());
+        assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
+        assertTrue(
             dataUse.getDiseaseRestrictions().contains("http://purl.obolibrary.org/obo/DOID_4023"));
-        Assertions.assertTrue(dataUse.getCommercialUse());
-        Assertions.assertTrue(dataUse.getPediatric());
-        Assertions.assertTrue(dataUse.getGender().equalsIgnoreCase("Female"));
+        assertTrue(dataUse.getCommercialUse());
+        assertTrue(dataUse.getPediatric());
+        assertTrue(dataUse.getGender().equalsIgnoreCase("Female"));
     }
 
     /*
@@ -225,11 +226,11 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 "\"hmb\":true " +
                 "}";
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        Assertions.assertTrue(dataUse.getMethodsResearch());
-        Assertions.assertTrue(dataUse.getPopulationStructure());
-        Assertions.assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
-        Assertions.assertTrue(dataUse.getPopulationOriginsAncestry());
-        Assertions.assertTrue(dataUse.getHmbResearch());
+        assertTrue(dataUse.getMethodsResearch());
+        assertTrue(dataUse.getPopulationStructure());
+        assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
+        assertTrue(dataUse.getPopulationOriginsAncestry());
+        assertTrue(dataUse.getHmbResearch());
     }
 
 }

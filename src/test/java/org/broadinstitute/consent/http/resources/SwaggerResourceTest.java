@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -27,27 +28,27 @@ public class SwaggerResourceTest {
     @Test
     public void testIndex() {
         Response response = swaggerResource.content("index.html");
-        Assertions.assertTrue(checkStatusAndHeader(response, TEXT_HTML));
+        assertTrue(checkStatusAndHeader(response, TEXT_HTML));
         String content = response.getEntity().toString()
                 .replaceFirst("<!--[^-]+-->", "").trim();
-        Assertions.assertTrue(content.startsWith("<!DOCTYPE html>"));
-        Assertions.assertTrue(content.endsWith("</html>"));
+        assertTrue(content.startsWith("<!DOCTYPE html>"));
+        assertTrue(content.endsWith("</html>"));
     }
 
     @Test
     public void testInitializer() {
         Response response = swaggerResource.content("swagger-initializer.js");
-        Assertions.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
+        assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
         String content = response.getEntity().toString().trim();
-        Assertions.assertTrue(content.startsWith("window.onload"));
+        assertTrue(content.startsWith("window.onload"));
     }
 
     @Test
     public void testStyle() {
         Response response = swaggerResource.content("swagger-ui.css");
-        Assertions.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
+        assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
         String content = response.getEntity().toString().trim();
-        Assertions.assertTrue(content.startsWith(".swagger-ui"));
+        assertTrue(content.startsWith(".swagger-ui"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -151,7 +152,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, "");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -161,7 +162,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -173,7 +174,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -185,7 +186,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -197,7 +198,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -213,7 +214,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -230,7 +231,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -245,7 +246,7 @@ public class DatasetResourceTest {
         try {
             resource.createDataset(authUser, uriInfo, json);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof ClientErrorException);
+            assertTrue(e instanceof ClientErrorException);
         }
     }
 
@@ -394,7 +395,7 @@ public class DatasetResourceTest {
         try {
             resource.validateDatasetName("test");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -786,7 +787,7 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
         Assertions.assertEquals(404, response.getStatus());
-        Assertions.assertTrue(((Error) response.getEntity()).message().contains("3"));
+        assertTrue(((Error) response.getEntity()).message().contains("3"));
         Assertions.assertFalse(((Error) response.getEntity()).message().contains("2"));
         Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
 
@@ -807,9 +808,9 @@ public class DatasetResourceTest {
         initResource();
         Response response = resource.getDatasets(List.of(1, 2, 3, 4));
         Assertions.assertEquals(404, response.getStatus());
-        Assertions.assertTrue(((Error) response.getEntity()).message().contains("4"));
+        assertTrue(((Error) response.getEntity()).message().contains("4"));
         Assertions.assertFalse(((Error) response.getEntity()).message().contains("3"));
-        Assertions.assertTrue(((Error) response.getEntity()).message().contains("2"));
+        assertTrue(((Error) response.getEntity()).message().contains("2"));
         Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
     }
 

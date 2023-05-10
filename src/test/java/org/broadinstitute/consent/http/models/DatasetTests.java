@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
@@ -30,9 +31,9 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setName(name);
 
-        Assertions.assertTrue(ds.isStringMatch(name));
-        Assertions.assertTrue(ds.isStringMatch(name.substring(5, 10)));
-        Assertions.assertTrue(ds.isStringMatch(name.substring(10, 15)));
+        assertTrue(ds.isStringMatch(name));
+        assertTrue(ds.isStringMatch(name.substring(5, 10)));
+        assertTrue(ds.isStringMatch(name.substring(10, 15)));
 
         Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
     }
@@ -44,8 +45,8 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setName(name.toLowerCase());
 
-        Assertions.assertTrue(ds.isStringMatch(name.toUpperCase()));
-        Assertions.assertTrue(ds.isStringMatch(name.toUpperCase().substring(7, 14)));
+        assertTrue(ds.isStringMatch(name.toUpperCase()));
+        assertTrue(ds.isStringMatch(name.toUpperCase().substring(7, 14)));
     }
 
     @Test
@@ -59,7 +60,7 @@ public class DatasetTests {
         dsp.setPropertyType(PropertyType.String);
         ds.setProperties(Set.of(dsp));
 
-        Assertions.assertTrue(ds.isStringMatch(value));
+        assertTrue(ds.isStringMatch(value));
         Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
     }
 
@@ -68,10 +69,10 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setAlias(1235);
 
-        Assertions.assertTrue(ds.isStringMatch("DUOS-001235"));
-        Assertions.assertTrue(ds.isStringMatch("DUOS"));
-        Assertions.assertTrue(ds.isStringMatch("123"));
-        Assertions.assertTrue(ds.isStringMatch("001235"));
+        assertTrue(ds.isStringMatch("DUOS-001235"));
+        assertTrue(ds.isStringMatch("DUOS"));
+        assertTrue(ds.isStringMatch("123"));
+        assertTrue(ds.isStringMatch("001235"));
         Assertions.assertFalse(ds.isStringMatch("DUOS-123456"));
     }
 
@@ -85,8 +86,8 @@ public class DatasetTests {
 
         ds.setDataUse(du);
 
-        Assertions.assertTrue(ds.isStringMatch("collaborator"));
-        Assertions.assertTrue(ds.isStringMatch("collab"));
+        assertTrue(ds.isStringMatch("collaborator"));
+        assertTrue(ds.isStringMatch("collab"));
     }
 
     @Test
@@ -100,8 +101,8 @@ public class DatasetTests {
 
         ds.setDataUse(du);
 
-        Assertions.assertTrue(ds.isStringMatch("irb"));
-        Assertions.assertTrue(ds.isStringMatch("irb"));
+        assertTrue(ds.isStringMatch("irb"));
+        assertTrue(ds.isStringMatch("irb"));
     }
 
     @Test
@@ -116,8 +117,8 @@ public class DatasetTests {
 
         ds.setDataUse(du);
 
-        Assertions.assertTrue(ds.isStringMatch("cancer"));
-        Assertions.assertTrue(ds.isStringMatch("alzheimers"));
+        assertTrue(ds.isStringMatch("cancer"));
+        assertTrue(ds.isStringMatch("alzheimers"));
     }
 
     @Test
@@ -127,8 +128,8 @@ public class DatasetTests {
         ds.setName("asdf");
         ds.setAlias(1234);
 
-        Assertions.assertTrue(ds.isStringMatch("ASD DUOS-001234"));
-        Assertions.assertTrue(ds.isStringMatch("asdf 123"));
+        assertTrue(ds.isStringMatch("ASD DUOS-001234"));
+        assertTrue(ds.isStringMatch("asdf 123"));
 
         Assertions.assertFalse(ds.isStringMatch("asf DUOS-001234"));
         Assertions.assertFalse(ds.isStringMatch("asd 122"));

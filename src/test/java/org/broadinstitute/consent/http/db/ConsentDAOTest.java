@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -29,8 +31,8 @@ public class ConsentDAOTest extends DAOTestHelper {
         Assertions.assertNotNull(consents);
         Assertions.assertFalse(consents.isEmpty());
         Assertions.assertEquals(2, consents.size());
-        Assertions.assertTrue(ids.contains(consent1.getConsentId()));
-        Assertions.assertTrue(ids.contains(consent2.getConsentId()));
+        assertTrue(ids.contains(consent1.getConsentId()));
+        assertTrue(ids.contains(consent2.getConsentId()));
     }
 
     @Test
@@ -110,7 +112,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Date yesterday = cal.getTime();
         consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday);
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-        Assertions.assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
+        assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
     }
 
     @Test
@@ -182,7 +184,7 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent2.getUpdated());
 
         Assertions.assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
-        Assertions.assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
+        assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
     }
 
     @Test
@@ -221,7 +223,7 @@ public class ConsentDAOTest extends DAOTestHelper {
                 false);
 
         Consent consent1Found = consentDAO.findConsentById(consent1.getConsentId());
-        Assertions.assertTrue(consent1Found.getUpdated());
+        assertTrue(consent1Found.getUpdated());
         Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
         Assertions.assertFalse(consent2Found.getUpdated());
     }

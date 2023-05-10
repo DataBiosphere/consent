@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.RandomUtils;
@@ -17,7 +19,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     public void testInsertLibraryCard() {
         LibraryCard card = createLibraryCard();
         List<LibraryCard> all = libraryCardDAO.findAllLibraryCards();
-        Assertions.assertTrue(all.contains(card));
+        assertTrue(all.contains(card));
     }
 
     @Test

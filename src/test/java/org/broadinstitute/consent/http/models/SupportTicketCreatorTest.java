@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -65,14 +66,14 @@ public class SupportTicketCreatorTest {
                 suggestedInstitution);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360012744292L, displayName)));
-        Assertions.assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
-        Assertions.assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
 
         String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + configuration.postSupportRequestUrl();
         Assertions.assertEquals(commentBody, supportRequest.getComment().getBody());
@@ -100,7 +101,7 @@ public class SupportTicketCreatorTest {
                 user.getEmail(),
                 suggestedSigningOfficial);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 
@@ -131,7 +132,7 @@ public class SupportTicketCreatorTest {
                 institutionName);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 
@@ -160,7 +161,7 @@ public class SupportTicketCreatorTest {
                 institutionId);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 
@@ -192,9 +193,9 @@ public class SupportTicketCreatorTest {
                 signingOfficial.getEmail());
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 
@@ -223,7 +224,7 @@ public class SupportTicketCreatorTest {
                 signingOfficialId);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 
@@ -257,7 +258,7 @@ public class SupportTicketCreatorTest {
                 suggestedSigningOfficial);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
         Assertions.assertEquals(5, customFields.size());
-        Assertions.assertTrue(
+        assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
 }

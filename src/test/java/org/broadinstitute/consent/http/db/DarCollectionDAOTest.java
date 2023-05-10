@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +60,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testFindAllDARCollections() {
         DarCollection collection = createDarCollectionMultipleUserProperties();
         List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-        Assertions.assertTrue(allAfter.contains(collection));
+        assertTrue(allAfter.contains(collection));
         Assertions.assertEquals(1, allAfter.size());
         DarCollection targetCollection = allAfter.get(0);
         generateDatasetElectionForCollection(targetCollection);
@@ -67,7 +69,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         List<Election> elections = getElectionsFromCollection(targetCollection);
         Assertions.assertNotNull(elections);
-        Assertions.assertTrue(elections.size() > 0);
+        assertTrue(elections.size() > 0);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
         Assertions.assertEquals(0, datasetElections.size());
         userProperties.forEach(p -> Assertions.assertEquals(collection.getCreateUserId(),
@@ -78,7 +80,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testFindAllDarCollectionsMultipleUserProperties() {
         DarCollection collection = createDarCollectionMultipleUserProperties();
         List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-        Assertions.assertTrue(allAfter.contains(collection));
+        assertTrue(allAfter.contains(collection));
         Assertions.assertEquals(1, allAfter.size());
         List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
         Assertions.assertFalse(userProperties.isEmpty());
@@ -93,7 +95,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         Assertions.assertNotNull(collection);
         Assertions.assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
         List<String> ids = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
-        Assertions.assertTrue(ids.contains(dar.getReferenceId()));
+        assertTrue(ids.contains(dar.getReferenceId()));
     }
 
     @Test
@@ -113,8 +115,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         Assertions.assertNotNull(darCollections);
         Assertions.assertEquals(2, darCollections.size());
         List<Integer> darCollectionIds = darCollections.stream().map(DarCollection::getDarCollectionId).collect(Collectors.toList());
-        Assertions.assertTrue(darCollectionIds.contains(dar1.collectionId));
-        Assertions.assertTrue(darCollectionIds.contains(dar2.collectionId));
+        assertTrue(darCollectionIds.contains(dar1.collectionId));
+        assertTrue(darCollectionIds.contains(dar2.collectionId));
         Assertions.assertFalse(darCollectionIds.contains(dar3.collectionId));
     }
 
@@ -129,7 +131,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         List<Election> elections = getElectionsFromCollection(collection);
         Assertions.assertEquals(1, elections.size());
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
 
         Election election = elections.get(0);
         List<Vote> votes = new ArrayList<>(election.getVotes().values());
@@ -226,11 +228,11 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     @Test
     public void testInsertDARCollection() {
         List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
-        Assertions.assertTrue(allBefore.isEmpty());
+        assertTrue(allBefore.isEmpty());
         DarCollection collection = createDarCollection();
         Assertions.assertNotNull(collection);
         List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
-        Assertions.assertTrue(allAfter.contains(collection));
+        assertTrue(allAfter.contains(collection));
     }
 
     @Test
@@ -312,7 +314,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection targetCollection = collections.get(0);
         List<Election> elections = getElectionsFromCollection(targetCollection);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
     }
 
     @Test
@@ -326,7 +328,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection collectionOne = collectionsResult.get(0);
         DarCollection collectionTwo = collectionsResult.get(1);
         int comparatorValue = collectionOne.getDarCode().compareTo(collectionTwo.getDarCode());
-        Assertions.assertTrue(comparatorValue < 0);
+        assertTrue(comparatorValue < 0);
     }
 
     @Test
@@ -466,7 +468,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection targetCollection = collections.get(0);
         List<Election> elections = getElectionsFromCollection(targetCollection);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
     }
 
     @Test
@@ -490,7 +492,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
                 .map(DataAccessRequest::getReferenceId)
                 .collect(Collectors.toList());
 
-        Assertions.assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
+        assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
 
         List<UserProperty> userProperties = collectionResult.get(0).getCreateUser().getProperties();
         Assertions.assertFalse(userProperties.isEmpty());
@@ -548,7 +550,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection targetCollection = collections.get(0);
         List<Election> elections = getElectionsFromCollection(targetCollection);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
     }
 
     @Test
@@ -583,7 +585,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testGetFilteredListForSigningOfficialOnProjectTitle() {
         DarCollection collection = createDarCollection();
         User user = userDAO.findUserById((collection.getCreateUserId()));
-        Assertions.assertTrue(collection.getDars().values().stream().findAny().isPresent());
+        assertTrue(collection.getDars().values().stream().findAny().isPresent());
         DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
         String filterTerm = targetDar.getData().getProjectTitle();
         String testTerm = generateTestTerm(filterTerm);
@@ -619,7 +621,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection targetCollection = collections.get(0);
         List<Election> elections = getElectionsFromCollection(targetCollection);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
     }
 
     @Test
@@ -645,9 +647,9 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         Dataset secondDataset = createDatasetWithDac(dac.getDacId());
         DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(dataset));
         DarCollection negativeCollection = createDarCollectionWithDatasetsAndConsentAssociation(user, Collections.singletonList(secondDataset));
-        Assertions.assertTrue(collection.getDars().values().stream().findAny().isPresent());
+        assertTrue(collection.getDars().values().stream().findAny().isPresent());
         DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
-        Assertions.assertTrue(negativeCollection.getDars().values().stream().findAny().isPresent());
+        assertTrue(negativeCollection.getDars().values().stream().findAny().isPresent());
         DataAccessRequest negativeDar = negativeCollection.getDars().values().stream().findAny().get();
         String testTerm = generateTestTerm(targetDar.getData().getProjectTitle());
         String negativeTerm = generateTestTerm(negativeDar.getData().getProjectTitle());
@@ -694,7 +696,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection targetCollection = collections.get(0);
         List<Election> elections = getElectionsFromCollection(targetCollection);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-        Assertions.assertTrue(datasetElections.isEmpty());
+        assertTrue(datasetElections.isEmpty());
     }
 
     @Test
@@ -714,7 +716,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     public void testGetFilteredListForAdminOnProjectTitle() {
         DarCollection collection = createDarCollection();
         createDarCollection();
-        Assertions.assertTrue(collection.getDars().values().stream().findAny().isPresent());
+        assertTrue(collection.getDars().values().stream().findAny().isPresent());
         String projectTitle = collection.getDars().values().stream().findAny().get().getData().getProjectTitle();
         String testTerm = generateTestTerm(projectTitle);
         List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForAdmin("projectTitle", "DESC", testTerm);
@@ -833,7 +835,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(List.of(dac.getDacId()));
 
-        Assertions.assertTrue(collectionIds.isEmpty());
+        assertTrue(collectionIds.isEmpty());
         Assertions.assertFalse(collectionIds.contains(testDarCollection));
     }
 
@@ -850,7 +852,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(user.getInstitutionId());
 
-        Assertions.assertTrue(collectionIds.isEmpty());
+        assertTrue(collectionIds.isEmpty());
         Assertions.assertFalse(collectionIds.contains(testDarCollection));
     }
 
@@ -876,7 +878,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(1, returnedCollections.size());
         Assertions.assertFalse(returnedCollections.contains(testDarCollection1));
-        Assertions.assertTrue(returnedCollections.contains(testDarCollection2));
+        assertTrue(returnedCollections.contains(testDarCollection2));
     }
 
     // findAllDARCollections should exclude archived collections
@@ -897,7 +899,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(1, returnedCollections.size());
         Assertions.assertFalse(returnedCollections.contains(testDarCollection1));
-        Assertions.assertTrue(returnedCollections.contains(testDarCollection2));
+        assertTrue(returnedCollections.contains(testDarCollection2));
     }
 
     // findDARCollectionsCreatedByUserId should exclude archived collections
@@ -918,7 +920,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(1, returnedCollections.size());
         Assertions.assertFalse(returnedCollections.contains(testDarCollection1));
-        Assertions.assertTrue(returnedCollections.contains(testDarCollection2));
+        assertTrue(returnedCollections.contains(testDarCollection2));
     }
 
     // findDARCollectionByReferenceId should exclude archived collections
@@ -938,7 +940,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection validCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
 
         Assertions.assertNull(archivedCollection);
-        Assertions.assertTrue(validCollection.equals(testDarCollection2));
+        assertTrue(validCollection.equals(testDarCollection2));
     }
 
     // findDARCollectionByCollectionId should exclude archived collections
@@ -1018,7 +1020,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         String testTerm = generateTestTerm(filterTerm);
         List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForAdmin("dar_code", "ASC", testTerm);
 
-        Assertions.assertTrue(collections.isEmpty());
+        assertTrue(collections.isEmpty());
         Assertions.assertFalse(collections.contains(testDarCollection));
     }
 
@@ -1037,7 +1039,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         String filterTerm = testDarCollection.getDarCode();
         List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial("dar_code", "ASC", user.getInstitutionId(), filterTerm);
 
-        Assertions.assertTrue(collections.isEmpty());
+        assertTrue(collections.isEmpty());
         Assertions.assertFalse(collections.contains(testDarCollection));
     }
 
@@ -1055,7 +1057,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         String filterTerm = testDarCollection.getDarCode();
         List<DarCollection> collections = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", user.getUserId(), filterTerm);
 
-        Assertions.assertTrue(collections.isEmpty());
+        assertTrue(collections.isEmpty());
         Assertions.assertFalse(collections.contains(testDarCollection));
     }
 
@@ -1082,6 +1084,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         List<DarCollection> collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds("dar_code", "ASC", collectionIds, filterTerm);
 
         Assertions.assertFalse(collections.contains(testDarCollection1));
-        Assertions.assertTrue(collections.contains(testDarCollection2));
+        assertTrue(collections.contains(testDarCollection2));
     }
 }

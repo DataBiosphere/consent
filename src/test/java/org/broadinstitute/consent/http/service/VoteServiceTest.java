@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -93,7 +94,7 @@ public class VoteServiceTest {
         initService();
 
         Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
-        Assertions.assertTrue(votes.isEmpty());
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -127,7 +128,7 @@ public class VoteServiceTest {
         try {
             service.updateVote(v, 11, "test");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -150,7 +151,7 @@ public class VoteServiceTest {
 
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
         Assertions.assertNotNull(votes);
-        Assertions.assertTrue(votes.isEmpty());
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -167,7 +168,7 @@ public class VoteServiceTest {
         initService();
         List<Vote> votes = service.findVotesByIds(List.of());
         Assertions.assertNotNull(votes);
-        Assertions.assertTrue(votes.isEmpty());
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -316,7 +317,7 @@ public class VoteServiceTest {
         initService();
         List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
         Assertions.assertNotNull(votes);
-        Assertions.assertTrue(votes.isEmpty());
+        assertTrue(votes.isEmpty());
     }
 
     @Test
@@ -336,7 +337,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -364,7 +365,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -492,7 +493,7 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -511,7 +512,7 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -913,7 +914,7 @@ public class VoteServiceTest {
                     any(),
                     any()
             );
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 

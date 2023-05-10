@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -33,7 +34,7 @@ public class GCSHealthCheckTest {
         when(store.getRootBucketWithMetadata()).thenReturn(bucket);
 
         HealthCheck.Result result = healthCheck.execute();
-        Assertions.assertTrue(result.isHealthy());
+        assertTrue(result.isHealthy());
     }
 
     @Test
@@ -42,7 +43,7 @@ public class GCSHealthCheckTest {
 
         HealthCheck.Result result = healthCheck.execute();
         Assertions.assertFalse(result.isHealthy());
-        Assertions.assertTrue(result.getMessage().contains("GCS bucket unreachable"));
+        assertTrue(result.getMessage().contains("GCS bucket unreachable"));
     }
 
     @Test
@@ -51,6 +52,6 @@ public class GCSHealthCheckTest {
 
         HealthCheck.Result result = healthCheck.execute();
         Assertions.assertFalse(result.isHealthy());
-        Assertions.assertTrue(result.getMessage().contains("GCS bucket unreachable"));
+        assertTrue(result.getMessage().contains("GCS bucket unreachable"));
     }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -39,7 +40,7 @@ public class ErrorResourceTest {
         ErrorResource resource = new ErrorResource();
         when(request.getOriginalURI()).thenReturn(encoded);
         try (Response response = resource.notFound(request)) {
-            Assertions.assertTrue(response.getEntity().toString().contains(unicode));
+            assertTrue(response.getEntity().toString().contains(unicode));
         }
     }
 

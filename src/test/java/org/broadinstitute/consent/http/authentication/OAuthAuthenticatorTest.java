@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
@@ -51,7 +52,7 @@ public class OAuthAuthenticatorTest {
     public void testAuthenticateWithToken() {
         oAuthAuthenticator = new OAuthAuthenticator(client, samService);
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate("bearer-token");
-        Assertions.assertTrue(authUser.isPresent());
+        assertTrue(authUser.isPresent());
     }
 
     @Test
@@ -69,7 +70,7 @@ public class OAuthAuthenticatorTest {
         oAuthAuthenticator = new OAuthAuthenticator(client, samService);
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-        Assertions.assertTrue(authUser.isPresent());
+        assertTrue(authUser.isPresent());
         Assertions.assertEquals(user.getEmail(), authUser.get().getEmail());
         Assertions.assertEquals(user.getName(), authUser.get().getName());
         Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
@@ -90,7 +91,7 @@ public class OAuthAuthenticatorTest {
         oAuthAuthenticator = new OAuthAuthenticator(client, samService);
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-        Assertions.assertTrue(authUser.isPresent());
+        assertTrue(authUser.isPresent());
         Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
     }
 
@@ -105,7 +106,7 @@ public class OAuthAuthenticatorTest {
         spy(samService);
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-        Assertions.assertTrue(authUser.isPresent());
+        assertTrue(authUser.isPresent());
         Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
         verify(samService, times(1)).postRegistrationInfo(any());
     }

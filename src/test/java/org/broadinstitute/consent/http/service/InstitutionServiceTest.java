@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -64,7 +65,7 @@ public class InstitutionServiceTest {
         try {
             service.createInstitution(mockInstitution, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -76,7 +77,7 @@ public class InstitutionServiceTest {
         try {
             service.createInstitution(mockInstitution, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -99,7 +100,7 @@ public class InstitutionServiceTest {
         try {
             service.updateInstitutionById(mockInstitution, 1, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -112,7 +113,7 @@ public class InstitutionServiceTest {
         try {
             service.updateInstitutionById(mockInstitution, 1, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -125,7 +126,7 @@ public class InstitutionServiceTest {
         try {
             service.updateInstitutionById(mockInstitution, 1, 1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -148,7 +149,7 @@ public class InstitutionServiceTest {
         try {
             service.deleteInstitutionById(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -192,7 +193,7 @@ public class InstitutionServiceTest {
         try {
             service.findInstitutionById(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -200,7 +201,7 @@ public class InstitutionServiceTest {
     public void testFindAllInstitutions() {
         initService();
         when(institutionDAO.findAllInstitutions()).thenReturn(Collections.emptyList());
-        Assertions.assertTrue(service.findAllInstitutions().isEmpty());
+        assertTrue(service.findAllInstitutions().isEmpty());
     }
 
 

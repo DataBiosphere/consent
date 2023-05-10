@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +89,7 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDACUsersBySearchString_case2() {
         Set<User> users = dacDAO.findAllDACUsersBySearchString("random");
-        Assertions.assertTrue(users.isEmpty());
+        assertTrue(users.isEmpty());
     }
 
     @Test
@@ -145,7 +147,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         dacDAO.deleteDacMembers(dac.getDacId());
         List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-        Assertions.assertTrue(dacMembers.isEmpty());
+        assertTrue(dacMembers.isEmpty());
     }
 
     @Test
@@ -241,7 +243,7 @@ public class DacDAOTest extends DAOTestHelper {
         List<UserRole> userRoles = dacDAO.findUserRolesForUser(user2.getUserId());
         userRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
         List<UserRole> userRolesRemoved = dacDAO.findUserRolesForUser(user2.getUserId());
-        Assertions.assertTrue(userRolesRemoved.isEmpty());
+        assertTrue(userRolesRemoved.isEmpty());
     }
 
     @Test
@@ -305,7 +307,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(datasetAssignedDac));
+        assertTrue(results.contains(datasetAssignedDac));
     }
 
     @Test
@@ -324,7 +326,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         List<Dataset> results = datasetDAO.findDatasetsAssociatedWithDac(dac.getDacId());
         Assertions.assertEquals(1, results.size());
-        Assertions.assertTrue(results.contains(datasetSuggestedDac));
+        assertTrue(results.contains(datasetSuggestedDac));
     }
 
     private Dac insertDac() {

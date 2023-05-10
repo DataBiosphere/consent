@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -316,7 +317,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -330,7 +331,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -355,7 +356,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -368,7 +369,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -380,7 +381,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -442,7 +443,7 @@ public class UserServiceTest {
         try {
             service.findUserById(u.getUserId());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -486,7 +487,7 @@ public class UserServiceTest {
         try {
             service.findUserByEmail(u.getEmail());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -511,7 +512,7 @@ public class UserServiceTest {
         try {
             service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -540,7 +541,7 @@ public class UserServiceTest {
         try {
             service.findUsersByInstitutionId(null);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -551,7 +552,7 @@ public class UserServiceTest {
         try {
             service.findUsersByInstitutionId(1);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -561,7 +562,7 @@ public class UserServiceTest {
         initService();
         List<User> users = service.findUsersByInstitutionId(1);
         Assertions.assertNotNull(users);
-        Assertions.assertTrue(users.isEmpty());
+        assertTrue(users.isEmpty());
     }
 
     @Test
@@ -594,7 +595,7 @@ public class UserServiceTest {
         try {
             service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -647,11 +648,11 @@ public class UserServiceTest {
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         Assertions.assertNotNull(userJson);
-        Assertions.assertTrue(
+        assertTrue(
             userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-        Assertions.assertTrue(
+        assertTrue(
             userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
-        Assertions.assertTrue(
+        assertTrue(
             userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
     }
 
@@ -673,9 +674,9 @@ public class UserServiceTest {
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         Assertions.assertNotNull(userJson);
-        Assertions.assertTrue(
+        assertTrue(
             userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-        Assertions.assertTrue(
+        assertTrue(
             userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
         Assertions.assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
     }
@@ -791,7 +792,7 @@ public class UserServiceTest {
         } catch (Exception e) {
             encounteredException = true;
         }
-        Assertions.assertTrue(encounteredException);
+        assertTrue(encounteredException);
     }
 
     private User generateUserWithoutInstitution() {

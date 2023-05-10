@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -27,12 +29,12 @@ public class FileStorageObjectTest {
         JsonObject fsoJsonObject = gson.fromJson(gson.toJson(fso), JsonObject.class);
 
         Assertions.assertEquals(3, fsoJsonObject.size());
-        Assertions.assertTrue(fsoJsonObject.has("createDate"));
+        assertTrue(fsoJsonObject.has("createDate"));
         Assertions.assertEquals(fso.getCreateDate().toEpochMilli(),
             fsoJsonObject.get("createDate").getAsLong());
-        Assertions.assertTrue(fsoJsonObject.has("fileName"));
+        assertTrue(fsoJsonObject.has("fileName"));
         Assertions.assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
-        Assertions.assertTrue(fsoJsonObject.has("category"));
+        assertTrue(fsoJsonObject.has("category"));
         Assertions.assertEquals(fso.getCategory().getValue(),
             fsoJsonObject.get("category").getAsString());
 

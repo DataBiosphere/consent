@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -346,7 +347,7 @@ public class DatasetRegistrationServiceTest {
         try {
             datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -361,14 +362,14 @@ public class DatasetRegistrationServiceTest {
         DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
         // null value -> empty extraction
-        Assertions.assertTrue(extractor.extract(schemaV1).isEmpty());
+        assertTrue(extractor.extract(schemaV1).isEmpty());
 
         schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
 
         Optional<StudyProperty> prop = extractor.extract(schemaV1);
 
         // non-null value -> turn value into dataset prop
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
 
         Assertions.assertEquals(schemaV1.getStudyName(), prop.get().getValue());
         Assertions.assertEquals(extractor.key(), prop.get().getKey());
@@ -387,14 +388,14 @@ public class DatasetRegistrationServiceTest {
         ConsentGroup group = new ConsentGroup();
 
         // null value -> empty extraction
-        Assertions.assertTrue(extractor.extract(group).isEmpty());
+        assertTrue(extractor.extract(group).isEmpty());
 
         group.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
 
         Optional<DatasetProperty> prop = extractor.extract(group);
 
         // non-null value -> turn value into dataset prop
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
 
         Assertions.assertEquals(group.getConsentGroupName(), prop.get().getPropertyValue());
         Assertions.assertEquals(extractor.name(), prop.get().getPropertyName());
@@ -417,7 +418,7 @@ public class DatasetRegistrationServiceTest {
 
         Optional<StudyProperty> prop = extractor.extract(schemaV1);
 
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
 
         Assertions.assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()),
             prop.get().getValue());
@@ -440,7 +441,7 @@ public class DatasetRegistrationServiceTest {
 
         Optional<DatasetProperty> prop = extractor.extract(group);
 
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
 
         Assertions.assertEquals(GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()),
             prop.get().getPropertyValue());
@@ -473,13 +474,13 @@ public class DatasetRegistrationServiceTest {
 
     private void assertContainsDatasetProperty(Collection<DatasetProperty> props, String schema, Object value) {
         Optional<DatasetProperty> prop = props.stream().filter((p) -> p.getSchemaProperty().equals(schema)).findFirst();
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
         Assertions.assertEquals(value, prop.get().getPropertyValue());
     }
 
     private void assertContainsStudyProperty(Collection<StudyProperty> props, String key, Object value) {
         Optional<StudyProperty> prop = props.stream().filter((p) -> p.getKey().equals(key)).findFirst();
-        Assertions.assertTrue(prop.isPresent());
+        assertTrue(prop.isPresent());
         Assertions.assertEquals(value, prop.get().getValue());
     }
 

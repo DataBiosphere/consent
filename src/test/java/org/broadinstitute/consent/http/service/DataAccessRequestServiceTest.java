@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -163,7 +164,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDataAccessRequest(user, dar);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -242,7 +243,7 @@ public class DataAccessRequestServiceTest {
             DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
             Assertions.assertNotNull(dar);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -375,7 +376,7 @@ public class DataAccessRequestServiceTest {
             String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
             System.out.println(approvedUsers);
             Assertions.assertNotNull(approvedUsers);
-            Assertions.assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+            assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
         } catch (Exception ioe) {
             assert false;
         }
@@ -469,7 +470,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.findByReferenceId("referenceId");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotFoundException);
+            assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -481,7 +482,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDraftDarFromCanceledCollection(user, sourceCollection);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -496,7 +497,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDraftDarFromCanceledCollection(user, sourceCollection);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -515,7 +516,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDraftDarFromCanceledCollection(user, sourceCollection);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -535,7 +536,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDraftDarFromCanceledCollection(user, sourceCollection);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -556,7 +557,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.createDraftDarFromCanceledCollection(user, sourceCollection);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof IllegalArgumentException);
+            assertTrue(e instanceof IllegalArgumentException);
         }
     }
 
@@ -647,7 +648,7 @@ public class DataAccessRequestServiceTest {
         try {
             service.deleteByReferenceId(user, referenceId);
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof NotAcceptableException);
+            assertTrue(e instanceof NotAcceptableException);
         }
     }
 

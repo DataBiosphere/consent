@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -43,7 +44,7 @@ public class DataRequestCasesResourceTest {
         Response response = resource.getMatchSummaryCases(null);
         Assertions.assertEquals(200, response.getStatus());
         List summaries = ((List) response.getEntity());
-        Assertions.assertTrue(summaries.isEmpty());
+        assertTrue(summaries.isEmpty());
     }
 
     private void initResource() {

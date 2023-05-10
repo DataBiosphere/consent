@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -161,7 +162,7 @@ public class GCSServiceTest {
         when(storage.delete(any(BlobId.class))).thenReturn(true);
         initStore();
         boolean deleted = service.deleteDocument(RandomStringUtils.random(10));
-        Assertions.assertTrue(deleted);
+        assertTrue(deleted);
     }
 
 }

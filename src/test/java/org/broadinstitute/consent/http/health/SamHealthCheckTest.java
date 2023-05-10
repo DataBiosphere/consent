@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -65,7 +66,7 @@ public class SamHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertTrue(result.isHealthy());
+        assertTrue(result.isHealthy());
     }
 
     @Test

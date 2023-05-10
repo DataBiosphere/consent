@@ -64,7 +64,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertTrue(result.isHealthy());
+        assertTrue(result.isHealthy());
     }
 
     @Test
@@ -72,7 +72,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertTrue(result.isHealthy());
+        assertTrue(result.isHealthy());
     }
 
     @Test

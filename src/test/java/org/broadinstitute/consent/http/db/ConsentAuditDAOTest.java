@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +37,7 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
 
         List<String> consentIds = consentAuditDAO.findAllObjectIds();
         Assertions.assertFalse(consentIds.isEmpty());
-        auditObjectIds.forEach(id -> Assertions.assertTrue(consentIds.contains(id)));
+        auditObjectIds.forEach(id -> assertTrue(consentIds.contains(id)));
     }
 
     private ConsentAudit createConsentAudit() {

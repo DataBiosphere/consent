@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -40,7 +41,7 @@ public class UserAuthorizerTest {
 
     @Test
     public void testAuthorizeAuthorized() {
-        Assertions.assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
+        assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
     }
 
     /* Helper Methods */

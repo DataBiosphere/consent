@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,7 +21,7 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have all roles,
         // then roles to add should be empty
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(ALL_ROLE_IDS);
-        Assertions.assertTrue(roleIdsToAdd.isEmpty());
+        assertTrue(roleIdsToAdd.isEmpty());
     }
 
     @Test
@@ -37,7 +39,7 @@ public class UserUpdateFieldsTest {
         fields.setUserRoleIds(List.of(100, 200, 300, 400));
         // Role ids outside the range of existing roles should not be added
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(List.of());
-        Assertions.assertTrue(roleIdsToAdd.isEmpty());
+        assertTrue(roleIdsToAdd.isEmpty());
     }
 
     @Test
@@ -47,7 +49,7 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have all roles,
         // then roles to remove should be empty
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        Assertions.assertTrue(roleIdsToRemove.isEmpty());
+        assertTrue(roleIdsToRemove.isEmpty());
     }
 
     @Test
@@ -74,7 +76,7 @@ public class UserUpdateFieldsTest {
         fields.getUserRoleIds().addAll(invalidRoleIds);
         // Role ids outside the range of existing roles should not be removed
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        Assertions.assertTrue(roleIdsToRemove.isEmpty());
+        assertTrue(roleIdsToRemove.isEmpty());
     }
 
 }

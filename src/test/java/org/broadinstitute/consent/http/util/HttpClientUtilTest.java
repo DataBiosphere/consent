@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -115,7 +116,7 @@ public class HttpClientUtilTest implements WithMockServer {
             clientUtil.getHttpResponse(new HttpGet(statusUrl));
             Assertions.fail("The above request should have thrown an exception");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof RequestFailedException);
+            assertTrue(e instanceof RequestFailedException);
         }
     }
 

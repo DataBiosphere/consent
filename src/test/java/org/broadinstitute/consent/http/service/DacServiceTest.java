@@ -81,7 +81,7 @@ public class DacServiceTest {
         when(dacDAO.findAll()).thenReturn(Collections.emptyList());
         initService();
 
-        Assertions.assertTrue(service.findAll().isEmpty());
+        assertTrue(service.findAll().isEmpty());
     }
 
     @Test
@@ -90,7 +90,7 @@ public class DacServiceTest {
         when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
         initService();
 
-        Assertions.assertTrue(service.findAllDacsWithMembers().isEmpty());
+        assertTrue(service.findAllDacsWithMembers().isEmpty());
     }
 
     @Test
@@ -290,7 +290,7 @@ public class DacServiceTest {
             verify(dacDAO, times(0)).removeDacMember(anyInt());
             verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof BadRequestException);
+            assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -299,7 +299,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        Assertions.assertTrue(service.isAuthUserAdmin(getUser()));
+        assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -315,7 +315,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        Assertions.assertTrue(service.isAuthUserAdmin(getUser()));
+        assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test

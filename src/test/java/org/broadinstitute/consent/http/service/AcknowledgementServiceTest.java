@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
@@ -44,7 +45,7 @@ public class AcknowledgementServiceTest {
         when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
         when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
-        Assertions.assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
+        assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
         Assertions.assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
     }
 
@@ -69,12 +70,12 @@ public class AcknowledgementServiceTest {
 
         Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys, user);
         Assertions.assertEquals(1, makeResponse.size());
-        Assertions.assertTrue(makeResponse.containsKey(key));
+        assertTrue(makeResponse.containsKey(key));
         Assertions.assertEquals(key2Acknowledgement, makeResponse.get(key));
 
         Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(user);
         Assertions.assertEquals(1, lookupResponse.size());
-        Assertions.assertTrue(lookupResponse.containsKey(key));
+        assertTrue(lookupResponse.containsKey(key));
         Assertions.assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
         Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user, key);

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -71,7 +72,7 @@ public class OAuthCustomAuthFilterTest {
             filter.filter(requestContext);
             Assertions.fail("Filter should have failed");
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof WebApplicationException);
+            assertTrue(e instanceof WebApplicationException);
         }
     }
 }

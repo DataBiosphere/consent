@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
@@ -284,8 +286,8 @@ public class StudyDAOTest extends DAOTestHelper {
         s = studyDAO.findStudyById(s.getStudyId());
 
         Assertions.assertEquals(2, s.getDatasetIds().size());
-        Assertions.assertTrue(s.getDatasetIds().contains(ds1.getDataSetId()));
-        Assertions.assertTrue(s.getDatasetIds().contains(ds2.getDataSetId()));
+        assertTrue(s.getDatasetIds().contains(ds1.getDataSetId()));
+        assertTrue(s.getDatasetIds().contains(ds2.getDataSetId()));
     }
 
     private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

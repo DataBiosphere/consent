@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.jupiter.api.Assertions;
@@ -35,8 +37,8 @@ public class UserCheckRoleInDacTest {
         user.setRoles(List.of(chairRole, adminRole));
         Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
         Boolean isUserAdmin = user.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), null);
-        Assertions.assertTrue(isUserChair);
-        Assertions.assertTrue(isUserAdmin);
+        assertTrue(isUserChair);
+        assertTrue(isUserAdmin);
     }
 
 

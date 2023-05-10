@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +28,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAll() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         DataAccessRequest collectionDar = createDataAccessRequestV3();
         DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionDar.getCollectionId());
@@ -39,7 +41,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDrafts() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         createDataAccessRequestV3();
         DataAccessRequest draft = createDraftDataAccessRequest();
@@ -50,7 +52,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         Assertions.assertFalse(newDars.isEmpty());
         Assertions.assertEquals(1, newDars.size());
-        Assertions.assertTrue(newDars.get(0).getDraft());
+        assertTrue(newDars.get(0).getDraft());
     }
 
     @Test
@@ -66,7 +68,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Assertions.assertEquals(1, newDars.size());
 
         List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(0);
-        Assertions.assertTrue(missingDars.isEmpty());
+        assertTrue(missingDars.isEmpty());
     }
 
     @Test
@@ -80,7 +82,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Assertions.assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
 
         List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
-        Assertions.assertTrue(missingDars.isEmpty());
+        assertTrue(missingDars.isEmpty());
     }
 
     @Test
@@ -93,7 +95,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
-        Assertions.assertTrue(draftDars2.isEmpty());
+        assertTrue(draftDars2.isEmpty());
     }
 
     @Test
@@ -101,7 +103,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest dar = createDataAccessRequestV3();
 
         List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
-        Assertions.assertTrue(draftDars1.isEmpty());
+        assertTrue(draftDars1.isEmpty());
 
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
@@ -148,8 +150,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         Assertions.assertNotNull(foundDar);
         Assertions.assertNotNull(foundDar.getData());
-        Assertions.assertTrue(foundDar.getDatasetIds().contains(d1.getDataSetId()));
-        Assertions.assertTrue(foundDar.getDatasetIds().contains(d2.getDataSetId()));
+        assertTrue(foundDar.getDatasetIds().contains(d1.getDataSetId()));
+        assertTrue(foundDar.getDatasetIds().contains(d2.getDataSetId()));
     }
 
     @Test
@@ -311,7 +313,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllArchived() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDARDAOTestDataset();
@@ -319,7 +321,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
-        Assertions.assertTrue(returnedDARs.isEmpty());
+        assertTrue(returnedDARs.isEmpty());
     }
 
 
@@ -348,13 +350,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDARDAOTestDataset();
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset.getDataSetId());
-        Assertions.assertTrue(returnedDARs.isEmpty());
+        assertTrue(returnedDARs.isEmpty());
     }
 
     // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
@@ -395,7 +397,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset1.getDataSetId());
         Assertions.assertEquals(1, dars.size());
-        Assertions.assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
+        assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
     }
 
     @Test
@@ -406,9 +408,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Dataset dataset1 = createDARDAOTestDataset();
         Dataset dataset2 = createDARDAOTestDataset();
 
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).isEmpty());
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).isEmpty());
 
         User user1 = createUserWithInstitution();
@@ -417,9 +419,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
         DataAccessRequest testDar2 = createDAR(user2, dataset2, darCode2);
         DataAccessRequest testDar3 = createDAR(user3, dataset2, darCode3);
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).isEmpty());
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).isEmpty());
 
         Assertions.assertEquals(0, dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset2.getDataSetId()).size());
@@ -471,9 +473,9 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         Assertions.assertEquals(2,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).size());
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).contains(testDar3.getUserId()));
-        Assertions.assertTrue(
+        assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).contains(testDar2.getUserId()));
         Assertions.assertFalse(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).contains(testDar1.getUserId()));
@@ -525,13 +527,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     @Test
     public void testFindAllDraftsArchived() {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         User user = createUserWithInstitution();
         DataAccessRequest testDar = createDraftDAR(user);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftDataAccessRequests();
-        Assertions.assertTrue(returnedDARs.isEmpty());
+        assertTrue(returnedDARs.isEmpty());
     }
 
     // findAllDraftsByUserId should exclude archived DARs
@@ -540,12 +542,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         User user = createUserWithInstitution();
 
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftsByUserId(user.getUserId());
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         DataAccessRequest testDar = createDraftDAR(user);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftsByUserId(user.getUserId());
-        Assertions.assertTrue(returnedDARs.isEmpty());
+        assertTrue(returnedDARs.isEmpty());
     }
 
 
@@ -554,7 +556,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllDarsByUserIdArchived() {
         User user = createUserWithInstitution();
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
         Dataset dataset = createDARDAOTestDataset();
@@ -562,7 +564,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest testDar = createDAR(user, dataset, darCode);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
-        Assertions.assertTrue(returnedDARs.isEmpty());
+        assertTrue(returnedDARs.isEmpty());
     }
 
 
@@ -592,7 +594,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
         List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
-        Assertions.assertTrue(returnedDAR.isEmpty());
+        assertTrue(returnedDAR.isEmpty());
     }
 
     // findAllDataAccessRequestDatas should exclude archived DARs
@@ -600,7 +602,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     public void testFindAllDataAccessRequestDatasArchived() {
         User user = createUserWithInstitution();
         List<DataAccessRequestData> dars = dataAccessRequestDAO.findAllDataAccessRequestDatas();
-        Assertions.assertTrue(dars.isEmpty());
+        assertTrue(dars.isEmpty());
 
         String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
         String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);

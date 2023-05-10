@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +74,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         r.setRoleId(UserRoles.MEMBER.getRoleId());
         userRoleDAO.insertUserRoles(Collections.singletonList(r), user.getUserId());
         Optional<User> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getUserId())).stream().findFirst();
-        Assertions.assertTrue(updatedUser.isPresent());
+        assertTrue(updatedUser.isPresent());
         Assertions.assertEquals(2, updatedUser.get().getRoles().size());
     }
 
@@ -93,7 +95,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId).collect(Collectors.toList());
         userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
         List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertTrue(newRoles.isEmpty());
+        assertTrue(newRoles.isEmpty());
     }
 
     @Test
@@ -112,7 +114,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         );
 
         List<UserRole> newUserRoles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertTrue(newUserRoles.isEmpty());
+        assertTrue(newUserRoles.isEmpty());
     }
 
     @Test
