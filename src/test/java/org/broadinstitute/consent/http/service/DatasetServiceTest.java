@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -168,21 +169,17 @@ public class DatasetServiceTest {
     @Test
     public void testFindDatasetsByDacIdsEmptyList() {
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             datasetService.findDatasetsByDacIds(Collections.emptyList());
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
     public void testFindDatasetsByDacIdsNullList() {
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             datasetService.findDatasetsByDacIds(null);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -190,31 +187,25 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
         initService();
 
-        try {
+        assertThrows(BadRequestException.class, () -> {
             datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
     public void testFindDatasetListByDacIdsEmptyList() {
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             datasetService.findDatasetListByDacIds(Collections.emptyList());
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
     public void testFindDatasetListByDacIdsNullList() {
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             datasetService.findDatasetListByDacIds(null);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -336,11 +327,9 @@ public class DatasetServiceTest {
     public void testGetDatasetDTONotFound() {
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             datasetService.getDatasetDTO(1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -563,11 +552,9 @@ public class DatasetServiceTest {
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             datasetService.createConsentForDataset(dataSetDTO);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -781,11 +768,9 @@ public class DatasetServiceTest {
         dataset.setDacApproval(true);
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             datasetService.approveDataset(dataset, user, false);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -795,11 +780,9 @@ public class DatasetServiceTest {
         dataset.setDacApproval(true);
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             datasetService.approveDataset(dataset, user, null);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test

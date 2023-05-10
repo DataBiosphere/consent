@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -154,7 +154,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
     @Test
     public void testInsert_MissingUserId() {
         Instant now = Instant.now();
-        try {
+        assertThrows(UnableToExecuteStatementException.class, () -> {
             mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -166,15 +166,13 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 null
             );
-        } catch (Exception e) {
-            assertTrue(e instanceof UnableToExecuteStatementException);
-        }
+        });
     }
 
     @Test
     public void testInsert_MissingEmailType() {
         Instant now = Instant.now();
-        try {
+        assertThrows(UnableToExecuteStatementException.class, () -> {
             mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -186,15 +184,13 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 null
             );
-        } catch (Exception e) {
-            assertTrue(e instanceof UnableToExecuteStatementException);
-        }
+        });
     }
 
     @Test
     public void testInsert_MissingEmailText() {
         Instant now = Instant.now();
-        try {
+        assertThrows(UnableToExecuteStatementException.class, () -> {
             mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -206,15 +202,13 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 null
             );
-        } catch (Exception e) {
-            assertTrue(e instanceof UnableToExecuteStatementException);
-        }
+        });
     }
 
     @Test
     public void testInsert_MissingCreateDate() {
         Instant now = Instant.now();
-        try {
+        assertThrows(UnableToExecuteStatementException.class, () -> {
             mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
                 RandomUtils.nextInt(1, 1000),
@@ -226,9 +220,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
                 RandomUtils.nextInt(200, 399),
                 null
             );
-        } catch (Exception e) {
-            assertTrue(e instanceof UnableToExecuteStatementException);
-        }
+        });
     }
 
     @Test

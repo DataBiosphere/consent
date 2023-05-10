@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -64,11 +65,9 @@ public class InstitutionServiceTest {
         Institution mockInstitution = initMockModel();
         mockInstitution.setName("");
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.createInstitution(mockInstitution, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -76,11 +75,9 @@ public class InstitutionServiceTest {
         Institution mockInstitution = initMockModel();
         mockInstitution.setName(null);
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.createInstitution(mockInstitution, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -99,11 +96,9 @@ public class InstitutionServiceTest {
         Institution mockInstitution = initMockModel();
         when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.updateInstitutionById(mockInstitution, 1, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -112,11 +107,9 @@ public class InstitutionServiceTest {
         mockInstitution.setName("");
         initService();
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateInstitutionById(mockInstitution, 1, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -125,11 +118,9 @@ public class InstitutionServiceTest {
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
         initService();
         mockInstitution.setName(null);
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateInstitutionById(mockInstitution, 1, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -148,11 +139,9 @@ public class InstitutionServiceTest {
     public void testDeleteInstitutionByIdFail() {
         initService();
         when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.deleteInstitutionById(1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -192,11 +181,9 @@ public class InstitutionServiceTest {
     public void testFindInstitutionByIdFail() {
         initService();
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(null);
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findInstitutionById(1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -161,11 +162,10 @@ public class DataAccessRequestResourceVersion2Test {
         when(userService.findUserByEmail(any())).thenReturn(mockUser);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
         initResource();
-        try {
+
+        assertThrows(ForbiddenException.class, () -> {
             resource.getByReferenceId(authUser, "");
-        } catch (Exception e) {
-            assertTrue(e instanceof ForbiddenException);
-        }
+        });
     }
 
     @Test

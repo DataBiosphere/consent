@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -13,7 +13,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -68,11 +67,8 @@ public class OAuthCustomAuthFilterTest {
         principal = Optional.empty();
         when(uriInfo.getPath()).thenReturn("api/something");
         when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-        try {
+        assertThrows(WebApplicationException.class, () -> {
             filter.filter(requestContext);
-            Assertions.fail("Filter should have failed");
-        } catch (Exception e) {
-            assertTrue(e instanceof WebApplicationException);
-        }
+        });
     }
 }

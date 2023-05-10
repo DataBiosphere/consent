@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -336,11 +337,9 @@ public class ElectionServiceTest {
                 .thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.describeDataRequestElection(sampleElection1.getReferenceId());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -358,11 +357,9 @@ public class ElectionServiceTest {
                 .thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.describeElectionByVoteId(sampleElection1.getElectionId());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test

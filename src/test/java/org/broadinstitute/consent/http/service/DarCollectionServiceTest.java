@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -375,11 +376,9 @@ public class DarCollectionServiceTest {
         when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
         initService();
 
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.cancelDarCollectionAsResearcher(collection);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -419,11 +418,9 @@ public class DarCollectionServiceTest {
         when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
         initService();
 
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.cancelDarCollectionAsResearcher(collection);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -721,11 +718,9 @@ public class DarCollectionServiceTest {
         Integer collectionId = collection.getDarCollectionId();
 
         initService();
-        try {
+        assertThrows(NotAcceptableException.class, () -> {
             service.deleteByCollectionId(user, collectionId);
-        } catch (Exception ex) {
-            assertTrue(ex instanceof NotAcceptableException);
-        }
+        });
     }
 
     @Test
@@ -783,11 +778,9 @@ public class DarCollectionServiceTest {
         when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 
         initService();
-        try {
+        assertThrows(NotAuthorizedException.class, () -> {
             service.deleteByCollectionId(user, collectionId);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotAuthorizedException);
-        }
+        });
     }
 
     @Test
@@ -806,11 +799,9 @@ public class DarCollectionServiceTest {
         when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.deleteByCollectionId(user, collectionId);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -1506,11 +1497,9 @@ public class DarCollectionServiceTest {
                 .thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.getSummaryForRoleNameByCollectionId(user, UserRoles.RESEARCHER.getRoleName(), collectionId);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {

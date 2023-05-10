@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -49,11 +49,9 @@ public class DefaultAuthFilterTest {
     public void testUnauthorizedUrl() {
         when(uriInfo.getPath()).thenReturn("/something");
         when(headers.getFirst("Authorization")).thenReturn(null);
-        try {
+        assertThrows(WebApplicationException.class, () -> {
             filter.filter(requestContext);
-        } catch (Exception e) {
-            assertTrue(e instanceof WebApplicationException);
-        }
+        });
     }
 
     @Test

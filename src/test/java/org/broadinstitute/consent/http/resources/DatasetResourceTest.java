@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -150,21 +151,17 @@ public class DatasetResourceTest {
     @Test
     public void testCreateDatasetNoJson() {
         initResource();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, "");
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
     public void testCreateDatasetNoProperties() {
         initResource();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -172,11 +169,9 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", null);
 
         initResource();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -184,11 +179,10 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "");
 
         initResource();
-        try {
+
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -196,11 +190,9 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Property", "test");
 
         initResource();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -212,11 +204,10 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(invalidProperties);
 
         initResource();
-        try {
+
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -229,11 +220,9 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(duplicateProperties);
 
         initResource();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -244,11 +233,10 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
 
         initResource();
-        try {
+
+        assertThrows(ClientErrorException.class, () -> {
             resource.createDataset(authUser, uriInfo, json);
-        } catch (Exception e) {
-            assertTrue(e instanceof ClientErrorException);
-        }
+        });
     }
 
     @Test
@@ -393,11 +381,10 @@ public class DatasetResourceTest {
     @Test
     public void testValidateDatasetNameNotFound() {
         initResource();
-        try {
+
+        assertThrows(NotFoundException.class, () -> {
             resource.validateDatasetName("test");
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test

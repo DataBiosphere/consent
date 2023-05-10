@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -289,13 +290,11 @@ public class DacServiceTest {
         doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
         initService();
 
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.removeDacMember(role, chair, dac);
             verify(dacDAO, times(0)).removeDacMember(anyInt());
             verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test

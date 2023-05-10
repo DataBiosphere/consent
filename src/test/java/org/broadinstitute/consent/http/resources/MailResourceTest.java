@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -77,11 +77,9 @@ public class MailResourceTest {
         initResource();
         when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
                 generateMailMessageList());
-        try {
+        assertThrows(BadRequestException.class, () -> {
             mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5, null);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -89,11 +87,9 @@ public class MailResourceTest {
         initResource();
         when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
                 generateMailMessageList());
-        try {
+        assertThrows(BadRequestException.class, () -> {
             mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, -1);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test

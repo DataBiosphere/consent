@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -58,12 +57,9 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testGetAndVerifyUsersInvalidUsersList() {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-            assertEquals("Invalid UserId list.", e.getMessage());
-        }
+        });
     }
 
     @Test
@@ -78,12 +74,9 @@ public class DatasetAssociationServiceTest {
     public void testCreateDatasetUsersAssociationNotFoundException() {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDatasetById(1)).thenReturn(null);
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-            assertEquals("Invalid DatasetId", e.getMessage());
-        }
+        });
     }
 
     @Test
@@ -94,11 +87,9 @@ public class DatasetAssociationServiceTest {
         doAnswer(invocationOnMock -> {
             throw new BatchUpdateException();
         }).when(dsAssociationDAO).insertDatasetUserAssociation(any());
-        try {
+        assertThrows(BatchUpdateException.class, () -> {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
-        } catch (Exception e) {
-            assertTrue(e instanceof BatchUpdateException);
-        }
+        });
     }
 
 
@@ -113,8 +104,6 @@ public class DatasetAssociationServiceTest {
     DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
 
     Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date(), true);
-    Dataset ds2 = new Dataset(2, "DS-002", "DS-002", new Date(), true);
-
     User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(), chairpersonList());
     User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(), memberList());
     User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(), dataownerList());

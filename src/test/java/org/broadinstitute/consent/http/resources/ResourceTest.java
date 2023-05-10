@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,11 +31,9 @@ public class ResourceTest {
         Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
         FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
         when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             abstractResource.validateFileDetails(fileDetail);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -45,11 +43,9 @@ public class ResourceTest {
         FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
         when(fileDetail.getFileName()).thenReturn("temp.txt");
         when(fileDetail.getSize()).thenReturn(maxSize + 1);
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             abstractResource.validateFileDetails(fileDetail);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
 }
