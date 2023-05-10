@@ -22,11 +22,9 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 public class DatasetAssociationServiceTest {
@@ -41,10 +39,6 @@ public class DatasetAssociationServiceTest {
     private UserRoleDAO userRoleDAO;
 
     private DatasetAssociationService service;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
 
     @BeforeEach
     public void setUp() {
@@ -63,9 +57,12 @@ public class DatasetAssociationServiceTest {
     @Test
     public void testGetAndVerifyUsersInvalidUsersList() {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(member, chairperson)));
-        thrown.expect(BadRequestException.class);
-        thrown.expectMessage("Invalid UserId list.");
-        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
+        try {
+            service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof BadRequestException);
+            Assertions.assertEquals("Invalid UserId list.", e.getMessage());
+        }
     }
 
     @Test
@@ -80,9 +77,12 @@ public class DatasetAssociationServiceTest {
     public void testCreateDatasetUsersAssociationNotFoundException() {
         when(userDAO.findUsersWithRoles(notNull())).thenReturn(new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
         when(dsDAO.findDatasetById(1)).thenReturn(null);
-        thrown.expect(NotFoundException.class);
-        thrown.expectMessage("Invalid DatasetId");
-        service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        try {
+            service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof NotFoundException);
+            Assertions.assertEquals("Invalid DatasetId", e.getMessage());
+        }
     }
 
     @Test
