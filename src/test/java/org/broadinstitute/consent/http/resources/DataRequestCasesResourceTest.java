@@ -9,7 +9,7 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.service.SummaryService;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -31,9 +31,9 @@ public class DataRequestCasesResourceTest {
         when(summaryService.describeDataRequestSummaryCases(any())).thenReturn(new Summary());
         initResource();
         Response response = resource.getDataRequestSummaryCases(null, null);
-        Assert.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
         Summary summary = ((Summary) response.getEntity());
-        Assert.assertNotNull(summary);
+        Assertions.assertNotNull(summary);
     }
 
     @Test
@@ -41,9 +41,9 @@ public class DataRequestCasesResourceTest {
         when(summaryService.describeMatchSummaryCases()).thenReturn(Collections.emptyList());
         initResource();
         Response response = resource.getMatchSummaryCases(null);
-        Assert.assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
         List summaries = ((List) response.getEntity());
-        Assert.assertTrue(summaries.isEmpty());
+        Assertions.assertTrue(summaries.isEmpty());
     }
 
     private void initResource() {

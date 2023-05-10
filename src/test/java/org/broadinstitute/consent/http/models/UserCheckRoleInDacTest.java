@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.models;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class UserCheckRoleInDacTest {
 
+    @Test
     public void testCheckIfUserHasRole_RoleNotFound() {
         User user = new User();
         UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         user.setRoles(List.of(adminRole));
         Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
-        assertFalse(isUserChair);
+        Assertions.assertFalse(isUserChair);
     }
 
     @Test
@@ -24,7 +23,7 @@ public class UserCheckRoleInDacTest {
         chairRole.setDacId(1);
         user.setRoles(List.of(chairRole));
         Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
-        assertFalse(isUserChair);
+        Assertions.assertFalse(isUserChair);
     }
 
     @Test
@@ -36,8 +35,8 @@ public class UserCheckRoleInDacTest {
         user.setRoles(List.of(chairRole, adminRole));
         Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
         Boolean isUserAdmin = user.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), null);
-        assertTrue(isUserChair);
-        assertTrue(isUserAdmin);
+        Assertions.assertTrue(isUserChair);
+        Assertions.assertTrue(isUserAdmin);
     }
 
 

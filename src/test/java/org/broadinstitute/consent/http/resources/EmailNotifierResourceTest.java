@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
 import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.service.EmailService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,13 +29,13 @@ public class EmailNotifierResourceTest {
     @Test
     public void testResourceSuccess() {
         Response response = resource.sendReminderMessage(String.valueOf(RandomUtils.nextInt(100, 1000)));
-        assertEquals(200, response.getStatus());
+        Assertions.assertEquals(200, response.getStatus());
     }
 
     @Test
     public void testResourceFailure() {
         Response response = resource.sendReminderMessage("invalidVoteId");
-        assertEquals(500, response.getStatus());
+        Assertions.assertEquals(500, response.getStatus());
     }
 
 }

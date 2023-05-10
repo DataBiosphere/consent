@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -61,7 +62,7 @@ public class VoteResourceTest {
     public void testUpdateVotes_invalidJson() {
         initResource();
         Response response = resource.updateVotes(authUser, "{\"vote\": true, \"ID\":12345}");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -72,7 +73,7 @@ public class VoteResourceTest {
         voteUpdate.setRationale("example");
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -80,7 +81,7 @@ public class VoteResourceTest {
         initResource();
         Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", new ArrayList<>());
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
 
@@ -92,7 +93,7 @@ public class VoteResourceTest {
 
         Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1));
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -106,7 +107,7 @@ public class VoteResourceTest {
         voteUpdate.setVoteIds(List.of(1, 2, 3));
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -119,7 +120,7 @@ public class VoteResourceTest {
 
         Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -132,7 +133,7 @@ public class VoteResourceTest {
 
         Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -153,7 +154,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -179,7 +180,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -200,7 +201,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -230,7 +231,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -260,7 +261,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -291,7 +292,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -307,7 +308,7 @@ public class VoteResourceTest {
         voteUpdate.setVoteIds(List.of(1, 2, 3));
 
         Response response = resource.updateVotes(authUser, gson.toJson(voteUpdate, Vote.VoteUpdate.class));
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -316,7 +317,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVoteRationale(authUser, invalidJson);
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -326,7 +327,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -340,7 +341,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -355,7 +356,7 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -371,6 +372,6 @@ public class VoteResourceTest {
         initResource();
 
         Response response = resource.updateVoteRationale(authUser, new Gson().toJson(update));
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        Assertions.assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
 }

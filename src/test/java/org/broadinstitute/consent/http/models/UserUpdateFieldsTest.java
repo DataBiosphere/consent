@@ -1,13 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class UserUpdateFieldsTest {
@@ -22,7 +19,7 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have all roles,
         // then roles to add should be empty
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(ALL_ROLE_IDS);
-        assertTrue(roleIdsToAdd.isEmpty());
+        Assertions.assertTrue(roleIdsToAdd.isEmpty());
     }
 
     @Test
@@ -31,7 +28,7 @@ public class UserUpdateFieldsTest {
         fields.setUserRoleIds(ALL_ROLE_IDS);
         // If the user has no role ids, then roles to add = all non-ignorable roles
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(List.of());
-        assertEquals(NON_IGNORABLE_ROLES, roleIdsToAdd);
+        Assertions.assertEquals(NON_IGNORABLE_ROLES, roleIdsToAdd);
     }
 
     @Test
@@ -40,7 +37,7 @@ public class UserUpdateFieldsTest {
         fields.setUserRoleIds(List.of(100, 200, 300, 400));
         // Role ids outside the range of existing roles should not be added
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(List.of());
-        assertTrue(roleIdsToAdd.isEmpty());
+        Assertions.assertTrue(roleIdsToAdd.isEmpty());
     }
 
     @Test
@@ -50,7 +47,7 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have all roles,
         // then roles to remove should be empty
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        assertTrue(roleIdsToRemove.isEmpty());
+        Assertions.assertTrue(roleIdsToRemove.isEmpty());
     }
 
     @Test
@@ -60,13 +57,13 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have NO roles,
         // then roles to remove should not be empty
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        assertFalse(roleIdsToRemove.isEmpty());
+        Assertions.assertFalse(roleIdsToRemove.isEmpty());
         // We can never remove the ignorable roles, so they should not be in the list
         roleIdsToRemove.forEach(id -> {
-            assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
+            Assertions.assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
         });
         // We can also never remove the Researcher role from a user
-        assertFalse(roleIdsToRemove.contains(UserRoles.RESEARCHER.getRoleId()));
+        Assertions.assertFalse(roleIdsToRemove.contains(UserRoles.RESEARCHER.getRoleId()));
     }
 
     @Test
@@ -77,7 +74,7 @@ public class UserUpdateFieldsTest {
         fields.getUserRoleIds().addAll(invalidRoleIds);
         // Role ids outside the range of existing roles should not be removed
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        assertTrue(roleIdsToRemove.isEmpty());
+        Assertions.assertTrue(roleIdsToRemove.isEmpty());
     }
 
 }

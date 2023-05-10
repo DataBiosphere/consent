@@ -3,13 +3,13 @@ package org.broadinstitute.consent.http.resources;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,43 +27,43 @@ public class SwaggerResourceTest {
     @Test
     public void testIndex() {
         Response response = swaggerResource.content("index.html");
-        assertTrue(checkStatusAndHeader(response, TEXT_HTML));
+        Assertions.assertTrue(checkStatusAndHeader(response, TEXT_HTML));
         String content = response.getEntity().toString()
                 .replaceFirst("<!--[^-]+-->", "").trim();
-        assertTrue(content.startsWith("<!DOCTYPE html>"));
-        assertTrue(content.endsWith("</html>"));
+        Assertions.assertTrue(content.startsWith("<!DOCTYPE html>"));
+        Assertions.assertTrue(content.endsWith("</html>"));
     }
 
     @Test
     public void testInitializer() {
         Response response = swaggerResource.content("swagger-initializer.js");
-        assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
+        Assertions.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
         String content = response.getEntity().toString().trim();
-        assertTrue(content.startsWith("window.onload"));
+        Assertions.assertTrue(content.startsWith("window.onload"));
     }
 
     @Test
     public void testStyle() {
         Response response = swaggerResource.content("swagger-ui.css");
-        assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
+        Assertions.assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
         String content = response.getEntity().toString().trim();
-        assertTrue(content.startsWith(".swagger-ui"));
+        Assertions.assertTrue(content.startsWith(".swagger-ui"));
     }
 
     @Test
     public void testNotFound() {
         Response response = swaggerResource.content("foo/bar.txt");
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        Assertions.assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
     public void testImageNotFound() {
         Response response = swaggerResource.content("foo/bar.png");
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        Assertions.assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     private boolean checkStatusAndHeader(Response response, String header) {
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        Assertions.assertEquals(response.getStatus(), Status.OK.getStatusCode());
         String headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
         return headerObject.contains(header);
     }

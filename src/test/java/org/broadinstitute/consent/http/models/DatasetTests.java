@@ -1,14 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
@@ -16,9 +14,9 @@ public class DatasetTests {
 
     @Test
     public void testParseIdentifierToAlias() {
-        assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-3"));
-        assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-000003"));
-        assertEquals(123456, (int) Dataset.parseIdentifierToAlias("DUOS-123456"));
+        Assertions.assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-3"));
+        Assertions.assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-000003"));
+        Assertions.assertEquals(123456, (int) Dataset.parseIdentifierToAlias("DUOS-123456"));
 
         assertThrows(IllegalArgumentException.class, () -> Dataset.parseIdentifierToAlias("asdf-123456"));
         assertThrows(IllegalArgumentException.class, () -> Dataset.parseIdentifierToAlias("DUOS-1234 56"));
@@ -32,11 +30,11 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setName(name);
 
-        assertTrue(ds.isStringMatch(name));
-        assertTrue(ds.isStringMatch(name.substring(5, 10)));
-        assertTrue(ds.isStringMatch(name.substring(10, 15)));
+        Assertions.assertTrue(ds.isStringMatch(name));
+        Assertions.assertTrue(ds.isStringMatch(name.substring(5, 10)));
+        Assertions.assertTrue(ds.isStringMatch(name.substring(10, 15)));
 
-        assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
+        Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
     }
 
     @Test
@@ -46,8 +44,8 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setName(name.toLowerCase());
 
-        assertTrue(ds.isStringMatch(name.toUpperCase()));
-        assertTrue(ds.isStringMatch(name.toUpperCase().substring(7, 14)));
+        Assertions.assertTrue(ds.isStringMatch(name.toUpperCase()));
+        Assertions.assertTrue(ds.isStringMatch(name.toUpperCase().substring(7, 14)));
     }
 
     @Test
@@ -61,8 +59,8 @@ public class DatasetTests {
         dsp.setPropertyType(PropertyType.String);
         ds.setProperties(Set.of(dsp));
 
-        assertTrue(ds.isStringMatch(value));
-        assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
+        Assertions.assertTrue(ds.isStringMatch(value));
+        Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
     }
 
     @Test
@@ -70,56 +68,56 @@ public class DatasetTests {
         Dataset ds = new Dataset();
         ds.setAlias(1235);
 
-        assertTrue(ds.isStringMatch("DUOS-001235"));
-        assertTrue(ds.isStringMatch("DUOS"));
-        assertTrue(ds.isStringMatch("123"));
-        assertTrue(ds.isStringMatch("001235"));
-        assertFalse(ds.isStringMatch("DUOS-123456"));
+        Assertions.assertTrue(ds.isStringMatch("DUOS-001235"));
+        Assertions.assertTrue(ds.isStringMatch("DUOS"));
+        Assertions.assertTrue(ds.isStringMatch("123"));
+        Assertions.assertTrue(ds.isStringMatch("001235"));
+        Assertions.assertFalse(ds.isStringMatch("DUOS-123456"));
     }
 
     @Test
     public void testIsStringMatchDataUseCommercial() {
         Dataset ds = new Dataset();
 
-        assertFalse(ds.isStringMatch("collaborator"));
+        Assertions.assertFalse(ds.isStringMatch("collaborator"));
 
         DataUse du = new DataUseBuilder().setCollaboratorRequired(true).build();
 
         ds.setDataUse(du);
 
-        assertTrue(ds.isStringMatch("collaborator"));
-        assertTrue(ds.isStringMatch("collab"));
+        Assertions.assertTrue(ds.isStringMatch("collaborator"));
+        Assertions.assertTrue(ds.isStringMatch("collab"));
     }
 
     @Test
     public void testIsStringMatchDataUseIrb() {
         Dataset ds = new Dataset();
 
-        assertFalse(ds.isStringMatch("irb"));
+        Assertions.assertFalse(ds.isStringMatch("irb"));
 
         DataUse du = new DataUse();
         du.setEthicsApprovalRequired(true);
 
         ds.setDataUse(du);
 
-        assertTrue(ds.isStringMatch("irb"));
-        assertTrue(ds.isStringMatch("irb"));
+        Assertions.assertTrue(ds.isStringMatch("irb"));
+        Assertions.assertTrue(ds.isStringMatch("irb"));
     }
 
     @Test
     public void testIsStringMatchDataUseDiseases() {
         Dataset ds = new Dataset();
 
-        assertFalse(ds.isStringMatch("cancer"));
-        assertFalse(ds.isStringMatch("alzheimers"));
+        Assertions.assertFalse(ds.isStringMatch("cancer"));
+        Assertions.assertFalse(ds.isStringMatch("alzheimers"));
 
         DataUse du = new DataUse();
         du.setDiseaseRestrictions(List.of("cancer", "alzheimers"));
 
         ds.setDataUse(du);
 
-        assertTrue(ds.isStringMatch("cancer"));
-        assertTrue(ds.isStringMatch("alzheimers"));
+        Assertions.assertTrue(ds.isStringMatch("cancer"));
+        Assertions.assertTrue(ds.isStringMatch("alzheimers"));
     }
 
     @Test
@@ -129,11 +127,11 @@ public class DatasetTests {
         ds.setName("asdf");
         ds.setAlias(1234);
 
-        assertTrue(ds.isStringMatch("ASD DUOS-001234"));
-        assertTrue(ds.isStringMatch("asdf 123"));
+        Assertions.assertTrue(ds.isStringMatch("ASD DUOS-001234"));
+        Assertions.assertTrue(ds.isStringMatch("asdf 123"));
 
-        assertFalse(ds.isStringMatch("asf DUOS-001234"));
-        assertFalse(ds.isStringMatch("asd 122"));
+        Assertions.assertFalse(ds.isStringMatch("asf DUOS-001234"));
+        Assertions.assertFalse(ds.isStringMatch("asd 122"));
 
     }
 }

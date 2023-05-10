@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -35,8 +34,8 @@ public class TosResourceTest {
         initResource();
 
         Response response = resource.getToSText();
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        assertEquals(mockText, response.getEntity().toString());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        Assertions.assertEquals(mockText, response.getEntity().toString());
     }
 
     @Test
@@ -46,7 +45,7 @@ public class TosResourceTest {
         initResource();
 
         Response response = resource.getDUOSToSText();
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        assertTrue(response.getEntity().toString().contains("DUOS"));
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        Assertions.assertTrue(response.getEntity().toString().contains("DUOS"));
     }
 }

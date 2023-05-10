@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -13,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.time.Instant;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class FileStorageObjectTest {
@@ -30,17 +26,19 @@ public class FileStorageObjectTest {
         Gson gson = GsonUtil.buildGson();
         JsonObject fsoJsonObject = gson.fromJson(gson.toJson(fso), JsonObject.class);
 
-        assertEquals(3, fsoJsonObject.size());
-        assertTrue(fsoJsonObject.has("createDate"));
-        assertEquals(fso.getCreateDate().toEpochMilli(), fsoJsonObject.get("createDate").getAsLong());
-        assertTrue(fsoJsonObject.has("fileName"));
-        assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
-        assertTrue(fsoJsonObject.has("category"));
-        assertEquals(fso.getCategory().getValue(), fsoJsonObject.get("category").getAsString());
+        Assertions.assertEquals(3, fsoJsonObject.size());
+        Assertions.assertTrue(fsoJsonObject.has("createDate"));
+        Assertions.assertEquals(fso.getCreateDate().toEpochMilli(),
+            fsoJsonObject.get("createDate").getAsLong());
+        Assertions.assertTrue(fsoJsonObject.has("fileName"));
+        Assertions.assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
+        Assertions.assertTrue(fsoJsonObject.has("category"));
+        Assertions.assertEquals(fso.getCategory().getValue(),
+            fsoJsonObject.get("category").getAsString());
 
         // should not have these fields ever
-        assertFalse(fsoJsonObject.has("blobId"));
-        assertFalse(fsoJsonObject.has("uploadedFile"));
+        Assertions.assertFalse(fsoJsonObject.has("blobId"));
+        Assertions.assertFalse(fsoJsonObject.has("uploadedFile"));
 
     }
 
@@ -55,9 +53,9 @@ public class FileStorageObjectTest {
 
         FileStorageObject fso = GsonUtil.buildGson().fromJson(jsonObject, FileStorageObject.class);
 
-        assertEquals("asdf", fso.getFileName());
-        assertNull(fso.getBlobId());
-        assertNull(fso.getUploadedFile());
+        Assertions.assertEquals("asdf", fso.getFileName());
+        Assertions.assertNull(fso.getBlobId());
+        Assertions.assertNull(fso.getUploadedFile());
     }
 
     @Test
@@ -65,6 +63,6 @@ public class FileStorageObjectTest {
         String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
 
         FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
-        assertNull(fso.getBlobId());
+        Assertions.assertNull(fso.getBlobId());
     }
 }
