@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -12,7 +13,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
             assertEquals(1, fetchedUser.getRoles().size());
             assertEquals(UserRoles.RESEARCHER.getRoleId(),
                 fetchedUser.getRoles().get(0).getRoleId());
-            Assertions.assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
+            assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
             assertTrue(Optional.ofNullable(fetchedUser.getInstitutionId()).isEmpty());
             exceptionCaught = true;
         }

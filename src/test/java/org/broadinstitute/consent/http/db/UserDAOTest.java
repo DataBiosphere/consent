@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +23,6 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class UserDAOTest extends DAOTestHelper {
@@ -444,7 +444,7 @@ public class UserDAOTest extends DAOTestHelper {
         UserRole chairperson2 = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         chairperson2.setDacId(dac2.getDacId());
         chairperson2.setUserId(u.getUserId());
-        Assertions.assertNotEquals(chairperson1, chairperson2);
+        assertNotEquals(chairperson1, chairperson2);
 
         u.addRole(chairperson1);
         u.addRole(chairperson2);

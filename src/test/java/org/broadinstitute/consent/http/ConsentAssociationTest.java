@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,7 +13,6 @@ import io.dropwizard.jackson.Jackson;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -55,14 +55,14 @@ public class ConsentAssociationTest {
     public void testEqualsNotMatchingElements() {
         final ConsentAssociation consent_assoc1 = buildConsentAssociation("sample", "SM-1234", "SM-5678");
         final ConsentAssociation consent_assoc2 = buildConsentAssociation("sample", "SM-4321", "SM-8765");
-        Assertions.assertNotEquals(consent_assoc1, consent_assoc2);
+        assertNotEquals(consent_assoc1, consent_assoc2);
     }
 
     @Test
     public void testEqualsNotMatchingAssociationType() {
         final ConsentAssociation consent_assoc1 = buildConsentAssociation("sample", "SM-1234", "SM-5678");
         final ConsentAssociation consent_assoc2 = buildConsentAssociation("sampleSet", "SM-1234", "SM-5678");
-        Assertions.assertNotEquals(consent_assoc1, consent_assoc2);
+        assertNotEquals(consent_assoc1, consent_assoc2);
     }
 
     @Test

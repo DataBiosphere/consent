@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -83,7 +83,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
         assertTrue(votes.get(0).getVote());
         assertEquals(rationale, votes.get(0).getRationale());
         Election foundElection = electionDAO.findElectionById(vote.getElectionId());
-        Assertions.assertNotEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
+        assertNotEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
         assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
     }
 

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -766,7 +767,7 @@ public class UserServiceTest {
         returnUser.setInstitutionId(1);
         UserRole role = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         returnUser.addRole(role);
-        Assertions.assertNotEquals(testUser.getInstitutionId(), returnUser.getInstitutionId());
+        assertNotEquals(testUser.getInstitutionId(), returnUser.getInstitutionId());
         doNothing().when(userServiceDAO).insertRoleAndInstitutionTxn(any(), any(), any());
         when(userDAO.findUserById(anyInt())).thenReturn(returnUser);
         initService();

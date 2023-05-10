@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -55,7 +56,6 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -891,7 +891,7 @@ public class UserResourceTest {
         activeUser.setUserId(2);
         activeUser.addRole(so);
         activeUser.setInstitutionId(2);
-        Assertions.assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
+        assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
         when(userService.findUserById(any())).thenReturn(user);
         when(userService.findUserByEmail(any())).thenReturn(activeUser);
         initResource();

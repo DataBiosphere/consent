@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -9,7 +10,6 @@ import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 
@@ -38,12 +38,12 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
         acknowledgementDAO.upsertAcknowledgement(key, user_id);
         assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
         Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
-        Assertions.assertNotEquals(newAcknowledgement, upsertResult);
+        assertNotEquals(newAcknowledgement, upsertResult);
         assertEquals(newAcknowledgement.getAckKey(), upsertResult.getAckKey());
         assertEquals(newAcknowledgement.getFirstAcknowledged().getTime(),
             upsertResult.getFirstAcknowledged().getTime());
         assertEquals(newAcknowledgement.getUserId(), upsertResult.getUserId());
-        Assertions.assertNotEquals(newAcknowledgement.getLastAcknowledged().getTime(),
+        assertNotEquals(newAcknowledgement.getLastAcknowledged().getTime(),
             upsertResult.getLastAcknowledged().getTime());
     }
 

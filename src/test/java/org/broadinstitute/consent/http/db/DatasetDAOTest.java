@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,7 +36,6 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class DatasetDAOTest extends DAOTestHelper {
@@ -370,7 +370,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         assertEquals(originalProperty.getPropertyKey(),
             returnedProperty.getPropertyKey());
         assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
-        Assertions.assertNotEquals(originalProperty.getPropertyValue(),
+        assertNotEquals(originalProperty.getPropertyValue(),
             returnedProperty.getPropertyValue());
     }
 
@@ -550,7 +550,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         DatasetProperty propertyToDelete = properties.stream().toList().get(0);
         datasetDAO.deleteDatasetPropertyByKey(d.getDataSetId(), propertyToDelete.getPropertyKey());
         Set<DatasetProperty> returnedProperties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDataSetId());
-        Assertions.assertNotEquals(properties.size(), returnedProperties.size());
+        assertNotEquals(properties.size(), returnedProperties.size());
     }
 
     @Test
@@ -700,7 +700,7 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), newDataUse.toString());
         Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
         assertEquals(newDataUse, updated.getDataUse());
-        Assertions.assertNotEquals(oldDataUse, updated.getDataUse());
+        assertNotEquals(oldDataUse, updated.getDataUse());
     }
 
     @Test
