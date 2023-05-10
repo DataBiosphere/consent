@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -138,11 +139,11 @@ public class StudyDAOTest extends DAOTestHelper {
 
         study.getProperties().forEach((prop) -> {
             if (prop.getStudyPropertyId().equals(prop1Id)) {
-                assertEquals("prop1", prop.getName());
+                assertEquals("prop1", prop.getKey());
                 assertEquals(PropertyType.String, prop.getType());
                 assertEquals("asdf", prop.getValue());
             } else if (prop.getStudyPropertyId().equals(prop2Id)) {
-                assertEquals("prop2", prop.getName());
+                assertEquals("prop2", prop.getKey());
                 assertEquals(PropertyType.Number, prop.getType());
                 assertEquals(1, prop.getValue());
             } else {
@@ -175,6 +176,102 @@ public class StudyDAOTest extends DAOTestHelper {
         assertEquals(fso.getFileStorageObjectId(), study.getAlternativeDataSharingPlan().getFileStorageObjectId());
         assertEquals(fso.getBlobId(), study.getAlternativeDataSharingPlan().getBlobId());
 
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingFile() {
+        Study study = insertStudyWithProperties();
+
+        // create unrelated file with the same id as dataset id but different category, timestamp before
+        createFileStorageObject(
+                study.getUuid().toString(),
+                FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+        );
+
+        FileStorageObject altFile = createFileStorageObject(
+                study.getUuid().toString(),
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
+        );
+
+        // create unrelated files with timestamp later than the ADSP file: one attached to dataset, one
+        // completely separate from the dataset. ensures that the Mapper is selecting only the right file.
+        createFileStorageObject("asdfasdf", FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+        createFileStorageObject(
+                study.getUuid().toString(),
+                FileCategory.DATA_USE_LETTER
+        );
+
+        Study found = studyDAO.findStudyById(study.getStudyId());
+
+        assertEquals(altFile, found.getAlternativeDataSharingPlan());
+        assertEquals(altFile.getBlobId(), found.getAlternativeDataSharingPlan().getBlobId());
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated() throws InterruptedException {
+        Study study = insertStudyWithProperties();
+
+        String fileName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
+        String bucketName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
+        String gcsFileUri = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
+        User createUser = createUser();
+
+        Integer altFileIdCreatedFirst = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+                bucketName,
+                gcsFileUri,
+                study.getUuid().toString(),
+                createUser.getUserId(),
+                Instant.ofEpochMilli(100)
+        );
+
+        User updateUser = createUser();
+
+        fileStorageObjectDAO.updateFileById(
+                altFileIdCreatedFirst,
+                org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20),
+                org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20),
+                updateUser.getUserId(),
+                Instant.ofEpochMilli(120));
+
+        Integer altFileIdCreatedSecond = fileStorageObjectDAO.insertNewFile(
+                fileName,
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+                bucketName,
+                gcsFileUri,
+                study.getUuid().toString(),
+                createUser.getUserId(),
+                Instant.ofEpochMilli(130)
+        );
+
+
+        Study found = studyDAO.findStudyById(study.getStudyId());
+
+        // returns last updated file
+        assertEquals(altFileIdCreatedSecond, found.getAlternativeDataSharingPlan().getFileStorageObjectId());
+    }
+
+    @Test
+    public void testGetAlternativeDataSharingPlanFile_NotDeleted() {
+        Study study = insertStudyWithProperties();
+
+        FileStorageObject altFile = createFileStorageObject(
+                study.getUuid().toString(),
+                FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
+        );
+
+        User deleteUser = createUser();
+
+        fileStorageObjectDAO.deleteFileById(
+                altFile.getFileStorageObjectId(),
+                deleteUser.getUserId(),
+                Instant.now()
+        );
+
+        Study found = studyDAO.findStudyById(study.getStudyId());
+
+        assertNull(found.getAlternativeDataSharingPlan());
     }
 
     @Test

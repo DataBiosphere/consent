@@ -163,7 +163,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
                 LEFT JOIN study s ON s.study_id = d.study_id
                 LEFT JOIN study_property sp ON sp.study_id = s.study_id
                 LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-                LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+                LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
                 LEFT JOIN consents c ON c.consent_id = ca.consent_id
                 WHERE d.dataset_id in (<datasetIds>)
             """)

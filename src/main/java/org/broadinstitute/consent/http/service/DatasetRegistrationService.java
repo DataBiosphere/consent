@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Specialized service class which specifically handles
@@ -63,15 +64,19 @@ public class DatasetRegistrationService {
     public List<Dataset> createDatasetsFromRegistration(
             DatasetRegistrationSchemaV1 registration,
             User user,
-            Map<String, FormDataBodyPart> files) throws SQLException, IllegalArgumentException {
+            Map<String, FormDataBodyPart> files) throws SQLException, IllegalArgumentException, IOException {
 
         registration.setDataSubmitterUserId(user.getUserId());
 
         Map<String, BlobId> uploadedFileCache = new HashMap<>();
 
+
         List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+        DatasetServiceDAO.StudyInsert studyInsert;
 
         try {
+            studyInsert = createStudyInsert(registration, user, files, uploadedFileCache);
+
             for (int consentGroupIdx = 0; consentGroupIdx < registration.getConsentGroups().size(); consentGroupIdx++) {
                 datasetInserts.add(createDatasetInsert(registration, user, files, uploadedFileCache, consentGroupIdx));
             }
@@ -80,10 +85,14 @@ public class DatasetRegistrationService {
             uploadedFileCache.values().forEach((id) -> {
                 gcsService.deleteDocument(id.getName());
             });
+            throw e;
         }
 
 
-        List<Integer> createdDatasetIds = datasetServiceDAO.insertDatasets(datasetInserts);
+        List<Integer> createdDatasetIds =
+                datasetServiceDAO.insertDatasetRegistration(
+                        studyInsert,
+                        datasetInserts);
         return datasetDAO.findDatasetsByIdList(createdDatasetIds);
     }
 
@@ -94,6 +103,22 @@ public class DatasetRegistrationService {
                 file.getValueAs(InputStream.class),
                 mediaType,
                 UUID.randomUUID());
+    }
+
+    private DatasetServiceDAO.StudyInsert createStudyInsert(DatasetRegistrationSchemaV1 registration,
+                                                            User user,
+                                                            Map<String, FormDataBodyPart> files,
+                                                            Map<String, BlobId> uploadedFileCache) throws IOException {
+        return new DatasetServiceDAO.StudyInsert(
+                registration.getStudyName(),
+                registration.getStudyDescription(),
+                registration.getDataTypes(),
+                registration.getPiName(),
+                registration.getPublicVisibility(),
+                user.getUserId(),
+                convertRegistrationToStudyProperties(registration),
+                uploadFilesForStudy(files, uploadedFileCache, user)
+        );
     }
 
     /*
@@ -112,9 +137,9 @@ public class DatasetRegistrationService {
         }
 
 
-        List<DatasetProperty> props = convertRegistrationToDatasetProperties(registration, consentGroup);
+        List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
         DataUse dataUse = generateDataUseFromConsentGroup(consentGroup);
-        List<FileStorageObject> fileStorageObjects = uploadFiles(files, uploadedFileCache, consentGroupIdx, user);
+        List<FileStorageObject> fileStorageObjects = uploadFilesForDataset(files, uploadedFileCache, consentGroupIdx, user);
 
         return new DatasetServiceDAO.DatasetInsert(
                 consentGroup.getConsentGroupName(),
@@ -152,18 +177,22 @@ public class DatasetRegistrationService {
     // nosemgrep
     private static final String NIH_INSTITUTIONAL_CERTIFICATION_NAME = "consentGroups[%s].nihInstitutionalCertificationFile";
 
-    private List<FileStorageObject> uploadFiles(Map<String, FormDataBodyPart> files,
-                                                Map<String, BlobId> uploadedFileCache,
-                                                Integer consentGroupIdx,
-                                                User user) throws IOException {
+    /**
+     * Uploads the files related to the Dataset Registration's dataset object to Google Cloud and returns
+     * references to them as FileStorageObjects.
+     *
+     * @param files             The files the user provided: fileType (e.g., alternativeDataSharingPlan) -> FormDataBodyPart
+     * @param uploadedFileCache Previously uploaded files - ensures that the same file is not reuploaded if used on different datasets.
+     * @param consentGroupIdx   The index of the consent group that this dataset is associated to
+     * @param user              The create user
+     * @return The list of FSOs created for this study
+     * @throws IOException if GCS upload fails
+     */
+    private List<FileStorageObject> uploadFilesForDataset(Map<String, FormDataBodyPart> files,
+                                                          Map<String, BlobId> uploadedFileCache,
+                                                          Integer consentGroupIdx,
+                                                          User user) throws IOException {
         List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
-
-        if (files.containsKey(ALTERNATIVE_DATA_SHARING_PLAN_NAME)) {
-            consentGroupFSOs.add(uploadFile(
-                    files, uploadedFileCache, user,
-                    ALTERNATIVE_DATA_SHARING_PLAN_NAME,
-                    FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
-        }
 
         if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx))) {
             consentGroupFSOs.add(uploadFile(
@@ -174,6 +203,31 @@ public class DatasetRegistrationService {
 
         return consentGroupFSOs;
 
+    }
+
+    /**
+     * Uploads the files related to the Dataset Registration's study object to Google Cloud and returns
+     * references to them as FileStorageObjects.
+     *
+     * @param files             The files the user provided: fileType (e.g., alternativeDataSharingPlan) -> FormDataBodyPart
+     * @param uploadedFileCache Previously uploaded files - ensures that the same file is not reuploaded if used on different datasets.
+     * @param user              The create user
+     * @return The list of FSOs created for this study
+     * @throws IOException if GCS upload fails
+     */
+    private List<FileStorageObject> uploadFilesForStudy(Map<String, FormDataBodyPart> files,
+                                                        Map<String, BlobId> uploadedFileCache,
+                                                        User user) throws IOException {
+        List<FileStorageObject> studyFSOs = new ArrayList<>();
+
+        if (files.containsKey(ALTERNATIVE_DATA_SHARING_PLAN_NAME)) {
+            studyFSOs.add(uploadFile(
+                    files, uploadedFileCache, user,
+                    ALTERNATIVE_DATA_SHARING_PLAN_NAME,
+                    FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
+        }
+
+        return studyFSOs;
     }
 
     private FileStorageObject uploadFile(Map<String, FormDataBodyPart> files,
@@ -202,6 +256,9 @@ public class DatasetRegistrationService {
     }
 
 
+    // TODO: refactor these DatasetPropertyExtractors into something cleaner - they work, but they feel a bit clunky.
+    //       perhaps a separate class which is more generic would work better.
+
     /**
      * Extracts an individual field as a dataset property.
      *
@@ -218,18 +275,17 @@ public class DatasetRegistrationService {
              * Takes in: Dataset registration object and consent group
              * Produces: The value of the field, can be null if field not present.
              */
-            BiFunction<DatasetRegistrationSchemaV1, ConsentGroup, Object> getField
+            Function<ConsentGroup, Object> getField
     ) {
 
         /**
          * Converts a field on the given registration to a DatasetProperty.
          *
-         * @param registration The registration object to extract from
          * @param consentGroup The index of the consent group to extract from
          * @return The dataset property, if the field has a value, otherwise Optional.empty()
          */
-        Optional<DatasetProperty> extract(DatasetRegistrationSchemaV1 registration, ConsentGroup consentGroup) {
-            Object value = this.getField.apply(registration, consentGroup);
+        Optional<DatasetProperty> extract(ConsentGroup consentGroup) {
+            Object value = this.getField.apply(consentGroup);
             if (Objects.isNull(value)) {
                 return Optional.empty();
             }
@@ -245,199 +301,222 @@ public class DatasetRegistrationService {
         }
     }
 
-    ;
+    public record StudyPropertyExtractor(
+            String key,
+            PropertyType type,
+            /*
+             * Takes in: Dataset registration object
+             * Produces: The value of the field, can be null if field not present.
+             */
+            Function<DatasetRegistrationSchemaV1, Object> getField
+    ) {
 
-    // TODO: is there some way to do this automatically from, e.g., the schema?
-    private static final List<DatasetPropertyExtractor> DATASET_REGISTRATION_V1_PROPERTY_EXTRACTORS = List.of(
-            new DatasetPropertyExtractor(
-                    "PI Name", "piName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getPiName()),
-            new DatasetPropertyExtractor(
-                    "Study Name", "studyName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getStudyName()),
-            new DatasetPropertyExtractor(
-                    "Study Type", "studyType", PropertyType.String,
-                    (registration, consentGroup) -> {
+        /**
+         * Converts a field on the given registration to a StudyProperty.
+         *
+         * @param registration The registration object to extract from
+         *                     =         * @return The study property, if the field has a value, otherwise Optional.empty()
+         */
+        Optional<StudyProperty> extract(DatasetRegistrationSchemaV1 registration) {
+            Object value = this.getField.apply(registration);
+            if (Objects.isNull(value)) {
+                return Optional.empty();
+            }
+
+            StudyProperty studyProperty = new StudyProperty();
+            studyProperty.setKey(this.key);
+            studyProperty.setType(this.type);
+            studyProperty.setValue(this.type.coerce(value.toString()));
+
+            return Optional.of(studyProperty);
+
+        }
+    }
+
+
+    private static final List<StudyPropertyExtractor> DATASET_REGISTRATION_V1_STUDY_PROPERTY_EXTRACTORS = List.of(
+            new StudyPropertyExtractor(
+                    "studyType", PropertyType.String,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getStudyType())) {
                             return registration.getStudyType().value();
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "Data Types", "dataTypes", PropertyType.Json,
-                    (registration, consentGroup) -> {
-                        if (Objects.nonNull(registration.getDataTypes())) {
-                            return GsonUtil.getInstance().toJson(registration.getDataTypes());
-                        }
-                        return null;
-                    }),
-            new DatasetPropertyExtractor(
-                    "Study Description", "studyDescription", PropertyType.String,
-                    (registration, consentGroup) -> registration.getStudyDescription()),
-            new DatasetPropertyExtractor(
-                    "Phenotype Indication", "phenotypeIndication", PropertyType.String,
-                    (registration, consentGroup) -> registration.getPhenotypeIndication()),
-            new DatasetPropertyExtractor(
-                    "Species", "species", PropertyType.String,
-                    (registration, consentGroup) -> registration.getSpecies()),
-            new DatasetPropertyExtractor(
-                    "Data Submitter User ID", "dataSubmitterUserId", PropertyType.Number,
-                    (registration, consentGroup) -> registration.getDataSubmitterUserId()),
-            new DatasetPropertyExtractor(
-                    "Data Custodian Email", "dataCustodianEmail", PropertyType.Json,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "phenotypeIndication", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getPhenotypeIndication),
+            new StudyPropertyExtractor(
+                    "species", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getSpecies),
+            new StudyPropertyExtractor(
+                    "dataSubmitterUserId", PropertyType.Number,
+                    DatasetRegistrationSchemaV1::getDataSubmitterUserId),
+            new StudyPropertyExtractor(
+                    "dataCustodianEmail", PropertyType.Json,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getDataCustodianEmail())) {
                             return GsonUtil.getInstance().toJson(registration.getDataCustodianEmail());
                         }
                         return null;
 
                     }),
-            new DatasetPropertyExtractor(
-                    "Public Visibility", "publicVisibility", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getPublicVisibility()),
-            new DatasetPropertyExtractor(
-                    "NIH Anvil Use", "nihAnvilUse", PropertyType.String,
-                    (registration, consentGroup) -> registration.getNihAnvilUse()),
-            new DatasetPropertyExtractor(
-                    "Submitting To Anvil", "submittingToAnvil", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getSubmittingToAnvil()),
-            new DatasetPropertyExtractor(
-                    "dbGaP phs ID", "dbGaPPhsID", PropertyType.String,
-                    (registration, consentGroup) -> registration.getDbGaPPhsID()),
-            new DatasetPropertyExtractor(
-                    "dbGaP Study Registration Name", "dbGaPStudyRegistrationName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getDbGaPStudyRegistrationName()),
-            new DatasetPropertyExtractor(
-                    "Embargo Release Date", "embargoReleaseDate", PropertyType.Date,
-                    (registration, consentGroup) -> registration.getEmbargoReleaseDate()),
-            new DatasetPropertyExtractor(
-                    "Sequencing Center", "sequencingCenter", PropertyType.String,
-                    (registration, consentGroup) -> registration.getSequencingCenter()),
-            new DatasetPropertyExtractor(
-                    "PI Institution", "piInstitution", PropertyType.Number,
-                    (registration, consentGroup) -> registration.getPiInstitution()),
-            new DatasetPropertyExtractor(
-                    "NIH Grant Contract Number", "nihGrantContractNumber", PropertyType.String,
-                    (registration, consentGroup) -> registration.getNihGrantContractNumber()),
-            new DatasetPropertyExtractor(
-                    "NIH ICs Supporting Study", "nihICsSupportingStudy", PropertyType.Json,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "nihAnvilUse", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getNihAnvilUse),
+            new StudyPropertyExtractor(
+                    "submittingToAnvil", PropertyType.Boolean,
+                    DatasetRegistrationSchemaV1::getSubmittingToAnvil),
+            new StudyPropertyExtractor(
+                    "dbGaPPhsID", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getDbGaPPhsID),
+            new StudyPropertyExtractor(
+                    "dbGaPStudyRegistrationName", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getDbGaPStudyRegistrationName),
+            new StudyPropertyExtractor(
+                    "embargoReleaseDate", PropertyType.Date,
+                    DatasetRegistrationSchemaV1::getEmbargoReleaseDate),
+            new StudyPropertyExtractor(
+                    "sequencingCenter", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getSequencingCenter),
+            new StudyPropertyExtractor(
+                    "piInstitution", PropertyType.Number,
+                    DatasetRegistrationSchemaV1::getPiInstitution),
+            new StudyPropertyExtractor(
+                    "nihGrantContractNumber", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getNihGrantContractNumber),
+            new StudyPropertyExtractor(
+                    "nihICsSupportingStudy", PropertyType.Json,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getNihICsSupportingStudy())) {
                             return GsonUtil.getInstance().toJson(registration.getNihICsSupportingStudy().stream().map(NihICsSupportingStudy::value).toList());
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "NIH Program Officer Name", "nihProgramOfficerName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getNihProgramOfficerName()),
-            new DatasetPropertyExtractor(
-                    "NIH Institution Center Submission", "nihInstitutionCenterSubmission", PropertyType.String,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "nihProgramOfficerName", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getNihProgramOfficerName),
+            new StudyPropertyExtractor(
+                    "nihInstitutionCenterSubmission", PropertyType.String,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getNihInstitutionCenterSubmission())) {
                             return registration.getNihInstitutionCenterSubmission().value();
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "NIH Genomic Program Administrator Name", "nihGenomicProgramAdministratorName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getNihGenomicProgramAdministratorName()),
-            new DatasetPropertyExtractor(
-                    "Multi Center Study", "multiCenterStudy", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getMultiCenterStudy()),
-            new DatasetPropertyExtractor(
-                    "Collaborating Sites", "collaboratingSites", PropertyType.Json,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "nihGenomicProgramAdministratorName", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getNihGenomicProgramAdministratorName),
+            new StudyPropertyExtractor(
+                    "multiCenterStudy", PropertyType.Boolean,
+                    DatasetRegistrationSchemaV1::getMultiCenterStudy),
+            new StudyPropertyExtractor(
+                    "collaboratingSites", PropertyType.Json,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getCollaboratingSites())) {
                             return GsonUtil.getInstance().toJson(registration.getCollaboratingSites());
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "Controlled Access Required For Genomic Summary Results GSR", "controlledAccessRequiredForGenomicSummaryResultsGSR", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSR()),
-            new DatasetPropertyExtractor(
-                    "Controlled Access Required For Genomic Summary Results GSR Explanation", "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation", PropertyType.String,
-                    (registration, consentGroup) -> registration.getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan", "alternativeDataSharingPlan", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlan()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Reasons", "alternativeDataSharingPlanReasons", PropertyType.Json,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "controlledAccessRequiredForGenomicSummaryResultsGSR", PropertyType.Boolean,
+                    DatasetRegistrationSchemaV1::getControlledAccessRequiredForGenomicSummaryResultsGSR),
+            new StudyPropertyExtractor(
+                    "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlan", PropertyType.Boolean,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlan),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanReasons", PropertyType.Json,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getAlternativeDataSharingPlanReasons())) {
                             return GsonUtil.getInstance().toJson(registration.getAlternativeDataSharingPlanReasons().stream().map(AlternativeDataSharingPlanReason::value).toList());
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Explanation", "alternativeDataSharingPlanExplanation", PropertyType.String,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlanExplanation()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan File Name", "alternativeDataSharingPlanFileName", PropertyType.String,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlanFileName()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Data Submitted", "alternativeDataSharingPlanDataSubmitted", PropertyType.String,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanExplanation", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanExplanation),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanFileName", PropertyType.String,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanFileName),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanDataSubmitted", PropertyType.String,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getAlternativeDataSharingPlanDataSubmitted())) {
                             return registration.getAlternativeDataSharingPlanDataSubmitted().value();
                         }
                         return null;
                     }),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Data Released", "alternativeDataSharingPlanDataReleased", PropertyType.Boolean,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlanDataReleased()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Target Delivery Date", "alternativeDataSharingPlanTargetDeliveryDate", PropertyType.Date,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlanTargetDeliveryDate()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Target Public Release Date", "alternativeDataSharingPlanTargetPublicReleaseDate", PropertyType.Date,
-                    (registration, consentGroup) -> registration.getAlternativeDataSharingPlanTargetPublicReleaseDate()),
-            new DatasetPropertyExtractor(
-                    "Alternative Data Sharing Plan Controlled Open Access", "alternativeDataSharingPlanControlledOpenAccess", PropertyType.String,
-                    (registration, consentGroup) -> {
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanDataReleased", PropertyType.Boolean,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanDataReleased),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanTargetDeliveryDate", PropertyType.Date,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanTargetDeliveryDate),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanTargetPublicReleaseDate", PropertyType.Date,
+                    DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanTargetPublicReleaseDate),
+            new StudyPropertyExtractor(
+                    "alternativeDataSharingPlanControlledOpenAccess", PropertyType.String,
+                    (registration) -> {
                         if (Objects.nonNull(registration.getAlternativeDataSharingPlanControlledOpenAccess())) {
                             return registration.getAlternativeDataSharingPlanControlledOpenAccess().value();
                         }
                         return null;
-                    }),
+                    })
+    );
+
+
+    private static final List<DatasetPropertyExtractor> DATASET_REGISTRATION_V1_DATASET_PROPERTY_EXTRACTORS = List.of(
             new DatasetPropertyExtractor(
-                    "Data Location", "consentGroup.dataLocation", PropertyType.String,
-                    (registration, consentGroup) -> {
+                    "Data Location", "dataLocation", PropertyType.String,
+                    (consentGroup) -> {
                         if (Objects.nonNull(consentGroup.getDataLocation())) {
                             return consentGroup.getDataLocation().value();
                         }
                         return null;
                     }),
             new DatasetPropertyExtractor(
-                    "File Types", "consentGroup.fileTypes", PropertyType.Json,
-                    (registration, consentGroup) -> {
+                    "File Types", "fileTypes", PropertyType.Json,
+                    (consentGroup) -> {
                         if (Objects.nonNull(consentGroup.getFileTypes())) {
                             return GsonUtil.getInstance().toJson(consentGroup.getFileTypes());
                         }
                         return null;
                     }),
             new DatasetPropertyExtractor(
-                    "URL", "consentGroup.url", PropertyType.String,
-                    (registration, consentGroup) -> {
+                    "URL", "url", PropertyType.String,
+                    (consentGroup) -> {
                         if (Objects.nonNull(consentGroup.getUrl())) {
                             return consentGroup.getUrl().toString();
                         }
                         return null;
                     }),
             new DatasetPropertyExtractor(
-                    "Open Access", "consentGroup.openAccess", PropertyType.Boolean,
-                    (registration, consentGroup) -> consentGroup.getOpenAccess()),
+                    "Open Access", "openAccess", PropertyType.Boolean,
+                    ConsentGroup::getOpenAccess),
             new DatasetPropertyExtractor(
-                    "DAC ID", "consentGroup.dataAccessCommitteeId", PropertyType.Number,
-                    (registration, consentGroup) -> consentGroup.getDataAccessCommitteeId())
+                    "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
+                    ConsentGroup::getDataAccessCommitteeId)
     );
 
+    private List<StudyProperty> convertRegistrationToStudyProperties(DatasetRegistrationSchemaV1 registration) {
 
-    private List<DatasetProperty> convertRegistrationToDatasetProperties(DatasetRegistrationSchemaV1 registration, ConsentGroup consentGroup) {
-
-        return DATASET_REGISTRATION_V1_PROPERTY_EXTRACTORS
+        return DATASET_REGISTRATION_V1_STUDY_PROPERTY_EXTRACTORS
                 .stream()
-                .map((e) -> e.extract(registration, consentGroup))
+                .map((e) -> e.extract(registration))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+    }
+
+    private List<DatasetProperty> convertConsentGroupToDatasetProperties(ConsentGroup consentGroup) {
+
+        return DATASET_REGISTRATION_V1_DATASET_PROPERTY_EXTRACTORS
+                .stream()
+                .map((e) -> e.extract(consentGroup))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
