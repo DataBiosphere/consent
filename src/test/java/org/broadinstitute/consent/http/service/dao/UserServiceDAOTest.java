@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Optional;
@@ -13,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,12 +30,12 @@ public class UserServiceDAOTest extends DAOTestHelper {
     public void testTransactionPatternHappyPathInActualService() {
         User testUser = createUser();
         Institution institution = createInstitution();
-        assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
+        Assertions.assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         serviceDAO.insertRoleAndInstitutionTxn(userRole, institution.getId(), testUser.getUserId());
         User fetchedUser = userDAO.findUserById(testUser.getUserId());
-        assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-        assertEquals(fetchedUser.getInstitutionId(), institution.getId());
+        Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+        Assertions.assertEquals(fetchedUser.getInstitutionId(), institution.getId());
     }
 
     @Test
@@ -45,7 +43,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
         boolean exceptionCaught = false;
         User testUser = createUser();
         Institution institution = createInstitution();
-        assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
+        Assertions.assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
         UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
         try {
             //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
@@ -59,15 +57,16 @@ public class UserServiceDAOTest extends DAOTestHelper {
             });
         } catch (Exception e) {
             User fetchedUser = userDAO.findUserById(testUser.getUserId());
-            assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-            assertEquals(1, fetchedUser.getRoles().size());
-            assertEquals(UserRoles.RESEARCHER.getRoleId(), fetchedUser.getRoles().get(0).getRoleId());
-            assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
-            assertTrue(Optional.ofNullable(fetchedUser.getInstitutionId()).isEmpty());
+            Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+            Assertions.assertEquals(1, fetchedUser.getRoles().size());
+            Assertions.assertEquals(UserRoles.RESEARCHER.getRoleId(),
+                fetchedUser.getRoles().get(0).getRoleId());
+            Assertions.assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
+            Assertions.assertTrue(Optional.ofNullable(fetchedUser.getInstitutionId()).isEmpty());
             exceptionCaught = true;
         }
         // Should this test fail because of this assert, something has changed with transaction
         // support in JDBI that warrants attention.
-        assertTrue(exceptionCaught);
+        Assertions.assertTrue(exceptionCaught);
     }
 }

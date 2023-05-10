@@ -1,12 +1,9 @@
 package org.broadinstitute.consent.http.util;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -51,32 +48,32 @@ public class JsonSchemaUtilTest {
     public void testIsValidDatasetRegistrationObject_v1_case0() {
         String instance = "{}";
         Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
-        assertFalse(errors.isEmpty());
+        Assertions.assertFalse(errors.isEmpty());
     }
 
     @Test
     public void testIsValidDatasetRegistrationObject_v1_case1() {
         Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
-        assertTrue(errors.isEmpty());
+        Assertions.assertTrue(errors.isEmpty());
     }
 
     @Test
     public void testParseDatasetRegistrationObject_v1() {
         DatasetRegistrationSchemaV1 instance = schemaUtil.deserializeDatasetRegistration(datasetRegistrationInstance);
-        assertNotNull(instance);
-        assertNotNull(instance.getStudyType());
-        assertNotNull(instance.getStudyName());
-        assertNotNull(instance.getStudyDescription());
-        assertFalse(instance.getDataTypes().isEmpty());
-        assertNotNull(instance.getPhenotypeIndication());
-        assertNotNull(instance.getSpecies());
-        assertNotNull(instance.getPiName());
-        assertNotNull(instance.getDataSubmitterUserId());
-        assertFalse(instance.getDataCustodianEmail().isEmpty());
-        assertNotNull(instance.getPublicVisibility());
-        assertFalse(instance.getConsentGroups().isEmpty());
-        assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
-        assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
+        Assertions.assertNotNull(instance);
+        Assertions.assertNotNull(instance.getStudyType());
+        Assertions.assertNotNull(instance.getStudyName());
+        Assertions.assertNotNull(instance.getStudyDescription());
+        Assertions.assertFalse(instance.getDataTypes().isEmpty());
+        Assertions.assertNotNull(instance.getPhenotypeIndication());
+        Assertions.assertNotNull(instance.getSpecies());
+        Assertions.assertNotNull(instance.getPiName());
+        Assertions.assertNotNull(instance.getDataSubmitterUserId());
+        Assertions.assertFalse(instance.getDataCustodianEmail().isEmpty());
+        Assertions.assertNotNull(instance.getPublicVisibility());
+        Assertions.assertFalse(instance.getConsentGroups().isEmpty());
+        Assertions.assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
+        Assertions.assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
     }
 
     @Test
@@ -825,16 +822,18 @@ public class JsonSchemaUtilTest {
 
 
     private void assertNoErrors(Set<ValidationMessage> errors) {
-        assertTrue(String.format("Should be empty, instead was: %s", errors.stream().map(ValidationMessage::toString).toList()), errors.isEmpty());
+        Assertions.assertTrue(errors.isEmpty(),
+            String.format("Should be empty, instead was: %s", errors.stream().map(
+                ValidationMessage::toString).toList()));
     }
 
     private void assertHasErrors(Set<ValidationMessage> errors) {
-        assertFalse("Should have errored, instead was empty.", errors.isEmpty());
+        Assertions.assertFalse(errors.isEmpty(), "Should have errored, instead was empty.");
     }
 
     private void assertFieldHasError(Set<ValidationMessage> errors, String field) {
-        assertTrue(
-                String.format("Field %s should have errored", field),
-                errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)));
+        Assertions.assertTrue(
+            errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)),
+            String.format("Field %s should have errored", field));
     }
 }

@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,6 +27,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -101,7 +100,7 @@ public class EmailServiceTest {
         try {
             service.sendNewResearcherMessage(user, so);
         } catch (Exception e) {
-            fail("Should not fail sending message: " + e);
+            Assertions.fail("Should not fail sending message: " + e);
         }
 
         verify(sendGridAPI, times(1)).sendNewResearcherLibraryRequestMessage(any(), any());
@@ -124,7 +123,8 @@ public class EmailServiceTest {
         List<MailMessage> mailMessages = generateMailMessageList();
         initService();
         when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        assertEquals(2, service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
+        Assertions.assertEquals(2,
+            service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
     }
 
     @Test
@@ -134,7 +134,8 @@ public class EmailServiceTest {
         Date startDate = new Date();
         Date endDate = new Date();
         when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        assertEquals(2, service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
+        Assertions.assertEquals(2,
+            service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
     }
 
     private List<MailMessage> generateMailMessageList() {

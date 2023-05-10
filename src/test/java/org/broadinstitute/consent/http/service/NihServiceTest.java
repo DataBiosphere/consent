@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
@@ -21,6 +19,7 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -58,7 +57,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
         } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
+            Assertions.assertTrue(e instanceof NotFoundException);
         }
     }
 
@@ -73,8 +72,8 @@ public class NihServiceTest {
         initService();
         try {
             List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, user.getUserId());
-            assertEquals(1, properties.size());
-            assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
+            Assertions.assertEquals(1, properties.size());
+            Assertions.assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
             verify(nihServiceDAO, times(1)).updateUserNihStatus(user, nihUserAccount);
         } catch (BadRequestException bre) {
             assert false;
@@ -91,7 +90,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(nihUserAccount, authUser, 1);
         } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
+            Assertions.assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -101,7 +100,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(null, authUser, 1);
         } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
+            Assertions.assertTrue(e instanceof BadRequestException);
         }
     }
 
@@ -113,7 +112,7 @@ public class NihServiceTest {
         try {
             service.authenticateNih(account, authUser, 1);
         } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
+            Assertions.assertTrue(e instanceof BadRequestException);
         }
     }
 

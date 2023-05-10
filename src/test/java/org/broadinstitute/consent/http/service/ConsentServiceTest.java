@@ -19,7 +19,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.joda.time.DateTimeField;
 import org.joda.time.Instant;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -61,8 +61,8 @@ public class ConsentServiceTest {
         initService();
 
         Consent consent = service.create(testConsent);
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(consent.getName(), testConsent.getName());
+        Assertions.assertNotNull(consent);
+        Assertions.assertEquals(consent.getName(), testConsent.getName());
     }
 
     @Test
@@ -87,9 +87,9 @@ public class ConsentServiceTest {
         initService();
 
         Consent consent = service.update("test consent", testConsent);
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
-        Assert.assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
+        Assertions.assertNotNull(consent);
+        Assertions.assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
+        Assertions.assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
     }
 
     private DateTimeField getDayOfYear(Timestamp timestamp) {
@@ -108,12 +108,12 @@ public class ConsentServiceTest {
         try {
             consent = service.retrieve("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assert.fail(unknownIdentifierException.getMessage());
+            Assertions.fail(unknownIdentifierException.getMessage());
         }
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
-        Assert.assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
-        Assert.assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
+        Assertions.assertNotNull(consent);
+        Assertions.assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
+        Assertions.assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
+        Assertions.assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
     }
 
     @Test
@@ -126,10 +126,10 @@ public class ConsentServiceTest {
         try {
             consent = service.getByName("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assert.fail(unknownIdentifierException.getMessage());
+            Assertions.fail(unknownIdentifierException.getMessage());
         }
 
-        Assert.assertNotNull(consent);
+        Assertions.assertNotNull(consent);
     }
 
     private Consent getTestConsent() {

@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.cloud.storage.BlobId;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +17,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,32 +64,34 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         List<Integer> createdIds = serviceDAO.insertDatasetRegistration(null, List.of(insert));
 
-        assertEquals(1, createdIds.size());
+        Assertions.assertEquals(1, createdIds.size());
 
         Dataset created = datasetDAO.findDatasetById(createdIds.get(0));
 
-        assertEquals(insert.name(), created.getName());
-        assertEquals(insert.dacId(), created.getDacId());
+        Assertions.assertEquals(insert.name(), created.getName());
+        Assertions.assertEquals(insert.dacId(), created.getDacId());
 
-        assertEquals(3, created.getProperties().size());
+        Assertions.assertEquals(3, created.getProperties().size());
 
         DatasetProperty createdProp1 = created.getProperties().stream().filter((p) -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst().get();
         DatasetProperty createdProp2 = created.getProperties().stream().filter((p) -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst().get();
         DatasetProperty datasetNameProp = created.getProperties().stream().filter((p) -> p.getPropertyName().equals("Dataset Name")).findFirst().get();
-        assertNotNull(datasetNameProp);
+        Assertions.assertNotNull(datasetNameProp);
 
-        assertEquals(created.getDataSetId(), createdProp1.getDataSetId());
-        assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
-        assertEquals(prop1.getPropertyType(), createdProp1.getPropertyType());
+        Assertions.assertEquals(created.getDataSetId(), createdProp1.getDataSetId());
+        Assertions.assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
+        Assertions.assertEquals(prop1.getPropertyType(), createdProp1.getPropertyType());
 
-        assertEquals(created.getDataSetId(), createdProp2.getDataSetId());
-        assertEquals(prop2.getPropertyValue(), createdProp2.getPropertyValue());
-        assertEquals(prop2.getPropertyType(), createdProp2.getPropertyType());
+        Assertions.assertEquals(created.getDataSetId(), createdProp2.getDataSetId());
+        Assertions.assertEquals(prop2.getPropertyValue(), createdProp2.getPropertyValue());
+        Assertions.assertEquals(prop2.getPropertyType(), createdProp2.getPropertyType());
 
-        assertNotNull(created.getNihInstitutionalCertificationFile());
+        Assertions.assertNotNull(created.getNihInstitutionalCertificationFile());
 
-        assertEquals(file1.getFileName(), created.getNihInstitutionalCertificationFile().getFileName());
-        assertEquals(file1.getBlobId(), created.getNihInstitutionalCertificationFile().getBlobId());
+        Assertions.assertEquals(file1.getFileName(),
+            created.getNihInstitutionalCertificationFile().getFileName());
+        Assertions.assertEquals(file1.getBlobId(),
+            created.getNihInstitutionalCertificationFile().getBlobId());
     }
 
 
@@ -130,27 +128,27 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
-        assertEquals(2, datasets.size());
+        Assertions.assertEquals(2, datasets.size());
 
         Optional<Dataset> ds1Optional = datasets.stream().filter(d -> d.getName().equals(insert1.name())).findFirst();
-        assertTrue(ds1Optional.isPresent());
+        Assertions.assertTrue(ds1Optional.isPresent());
         Dataset dataset1 = ds1Optional.get();
 
-        assertEquals(insert1.name(), dataset1.getName());
-        assertEquals(insert1.dacId(), dataset1.getDacId());
-        assertEquals(true, dataset1.getDataUse().getGeneralUse());
-        assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
-        assertNull(dataset1.getNihInstitutionalCertificationFile());
+        Assertions.assertEquals(insert1.name(), dataset1.getName());
+        Assertions.assertEquals(insert1.dacId(), dataset1.getDacId());
+        Assertions.assertEquals(true, dataset1.getDataUse().getGeneralUse());
+        Assertions.assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
+        Assertions.assertNull(dataset1.getNihInstitutionalCertificationFile());
 
         Optional<Dataset> ds2Optional = datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
-        assertTrue(ds2Optional.isPresent());
+        Assertions.assertTrue(ds2Optional.isPresent());
         Dataset dataset2 = ds2Optional.get();
 
-        assertEquals(insert2.name(), dataset2.getName());
-        assertEquals(insert2.dacId(), dataset2.getDacId());
-        assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
-        assertEquals(2, dataset2.getProperties().size());
-        assertNull(dataset2.getNihInstitutionalCertificationFile());
+        Assertions.assertEquals(insert2.name(), dataset2.getName());
+        Assertions.assertEquals(insert2.dacId(), dataset2.getDacId());
+        Assertions.assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
+        Assertions.assertEquals(2, dataset2.getProperties().size());
+        Assertions.assertNull(dataset2.getNihInstitutionalCertificationFile());
     }
 
     @Test
@@ -181,22 +179,22 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
-        assertEquals(1, datasets.size());
+        Assertions.assertEquals(1, datasets.size());
 
         Dataset dataset1 = datasets.get(0);
 
-        assertNotNull(dataset1.getStudy());
+        Assertions.assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
-        assertEquals(studyInsert.name(), s.getName());
-        assertEquals(studyInsert.description(), s.getDescription());
-        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
-        assertEquals(studyInsert.piName(), s.getPiName());
-        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
-        assertEquals(studyInsert.userId(), s.getCreateUserId());
-        assertNotNull(s.getCreateDate());
+        Assertions.assertEquals(studyInsert.name(), s.getName());
+        Assertions.assertEquals(studyInsert.description(), s.getDescription());
+        Assertions.assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        Assertions.assertEquals(studyInsert.piName(), s.getPiName());
+        Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
+        Assertions.assertNotNull(s.getCreateDate());
 
-        assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
-        assertNull(s.getAlternativeDataSharingPlan());
+        Assertions.assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
+        Assertions.assertNull(s.getAlternativeDataSharingPlan());
     }
 
     @Test
@@ -236,30 +234,30 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
-        assertEquals(1, datasets.size());
+        Assertions.assertEquals(1, datasets.size());
 
         Dataset dataset1 = datasets.get(0);
 
-        assertNotNull(dataset1.getStudy());
+        Assertions.assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
-        assertEquals(studyInsert.name(), s.getName());
-        assertEquals(studyInsert.description(), s.getDescription());
-        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
-        assertEquals(studyInsert.piName(), s.getPiName());
-        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
-        assertEquals(studyInsert.userId(), s.getCreateUserId());
-        assertNotNull(s.getCreateDate());
+        Assertions.assertEquals(studyInsert.name(), s.getName());
+        Assertions.assertEquals(studyInsert.description(), s.getDescription());
+        Assertions.assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        Assertions.assertEquals(studyInsert.piName(), s.getPiName());
+        Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
+        Assertions.assertNotNull(s.getCreateDate());
 
 
         StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
         StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
 
-        assertEquals(prop1.getType(), createdProp1.getType());
-        assertEquals(prop1.getValue(), createdProp1.getValue());
-        assertEquals(prop2.getType(), createdProp2.getType());
-        assertEquals(prop2.getValue(), createdProp2.getValue());
+        Assertions.assertEquals(prop1.getType(), createdProp1.getType());
+        Assertions.assertEquals(prop1.getValue(), createdProp1.getValue());
+        Assertions.assertEquals(prop2.getType(), createdProp2.getType());
+        Assertions.assertEquals(prop2.getValue(), createdProp2.getValue());
 
-        assertNull(s.getAlternativeDataSharingPlan());
+        Assertions.assertNull(s.getAlternativeDataSharingPlan());
     }
 
     @Test
@@ -306,33 +304,35 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
-        assertEquals(1, datasets.size());
+        Assertions.assertEquals(1, datasets.size());
 
         Dataset dataset1 = datasets.get(0);
 
-        assertNotNull(dataset1.getStudy());
+        Assertions.assertNotNull(dataset1.getStudy());
         Study s = dataset1.getStudy();
-        assertEquals(studyInsert.name(), s.getName());
-        assertEquals(studyInsert.description(), s.getDescription());
-        assertEquals(studyInsert.dataTypes(), s.getDataTypes());
-        assertEquals(studyInsert.piName(), s.getPiName());
-        assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
-        assertEquals(studyInsert.userId(), s.getCreateUserId());
-        assertNotNull(s.getCreateDate());
+        Assertions.assertEquals(studyInsert.name(), s.getName());
+        Assertions.assertEquals(studyInsert.description(), s.getDescription());
+        Assertions.assertEquals(studyInsert.dataTypes(), s.getDataTypes());
+        Assertions.assertEquals(studyInsert.piName(), s.getPiName());
+        Assertions.assertEquals(studyInsert.publicVisibility(), s.getPublicVisibility());
+        Assertions.assertEquals(studyInsert.userId(), s.getCreateUserId());
+        Assertions.assertNotNull(s.getCreateDate());
 
 
         StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
         StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream().filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
 
-        assertEquals(prop1.getType(), createdProp1.getType());
-        assertEquals(prop1.getValue(), createdProp1.getValue());
-        assertEquals(prop2.getType(), createdProp2.getType());
-        assertEquals(prop2.getValue(), createdProp2.getValue());
+        Assertions.assertEquals(prop1.getType(), createdProp1.getType());
+        Assertions.assertEquals(prop1.getValue(), createdProp1.getValue());
+        Assertions.assertEquals(prop2.getType(), createdProp2.getType());
+        Assertions.assertEquals(prop2.getValue(), createdProp2.getValue());
 
-        assertNotNull(s.getAlternativeDataSharingPlan());
+        Assertions.assertNotNull(s.getAlternativeDataSharingPlan());
 
-        assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
-        assertEquals(file.getFileName(), s.getAlternativeDataSharingPlan().getFileName());
-        assertEquals(file.getCategory(), s.getAlternativeDataSharingPlan().getCategory());
+        Assertions.assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
+        Assertions.assertEquals(file.getFileName(),
+            s.getAlternativeDataSharingPlan().getFileName());
+        Assertions.assertEquals(file.getCategory(),
+            s.getAlternativeDataSharingPlan().getCategory());
     }
 }

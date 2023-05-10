@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
@@ -20,6 +17,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,8 +44,8 @@ public class AcknowledgementServiceTest {
         when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
         when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(null);
         initService();
-        assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
-        assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
+        Assertions.assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
+        Assertions.assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
     }
 
     @Test
@@ -70,17 +68,17 @@ public class AcknowledgementServiceTest {
         initService();
 
         Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys, user);
-        assertEquals(1, makeResponse.size());
-        assertTrue(makeResponse.containsKey(key));
-        assertEquals(key2Acknowledgement, makeResponse.get(key));
+        Assertions.assertEquals(1, makeResponse.size());
+        Assertions.assertTrue(makeResponse.containsKey(key));
+        Assertions.assertEquals(key2Acknowledgement, makeResponse.get(key));
 
         Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(user);
-        assertEquals(1, lookupResponse.size());
-        assertTrue(lookupResponse.containsKey(key));
-        assertEquals(key2Acknowledgement, lookupResponse.get(key));
+        Assertions.assertEquals(1, lookupResponse.size());
+        Assertions.assertTrue(lookupResponse.containsKey(key));
+        Assertions.assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
         Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user, key);
-        assertEquals(singleLookupResponse, key2Acknowledgement);
+        Assertions.assertEquals(singleLookupResponse, key2Acknowledgement);
 
         acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
     }

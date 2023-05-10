@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -17,6 +14,7 @@ import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +65,7 @@ public class HttpClientUtilTest implements WithMockServer {
             try {
                 clientUtil.getCachedResponse(new HttpGet(statusUrl));
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
         });
         mockServerClient.verify(request(), VerificationTimes.exactly(1));
@@ -92,7 +90,7 @@ public class HttpClientUtilTest implements WithMockServer {
             try {
                 clientUtil.getCachedResponse(new HttpGet(statusUrl));
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
         });
         mockServerClient.verify(request(), VerificationTimes.exactly(count));
@@ -104,7 +102,7 @@ public class HttpClientUtilTest implements WithMockServer {
                 .respond(response()
                         .withStatusCode(200));
         SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
+        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
     }
 
     @Test
@@ -115,9 +113,9 @@ public class HttpClientUtilTest implements WithMockServer {
                         .withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
         try {
             clientUtil.getHttpResponse(new HttpGet(statusUrl));
-            fail("The above request should have thrown an exception");
+            Assertions.fail("The above request should have thrown an exception");
         } catch (Exception e) {
-            assertTrue(e instanceof RequestFailedException);
+            Assertions.assertTrue(e instanceof RequestFailedException);
         }
     }
 

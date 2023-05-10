@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.util.gson;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -12,6 +7,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
@@ -25,7 +21,7 @@ public class GsonUtilTest {
 
         JsonObject jsonObject = gson.fromJson(gson.toJson(ds), JsonObject.class);
 
-        assertEquals(ds.getDisplayName(), jsonObject.get("displayName").getAsString());
+        Assertions.assertEquals(ds.getDisplayName(), jsonObject.get("displayName").getAsString());
     }
 
     @Test
@@ -36,11 +32,11 @@ public class GsonUtilTest {
 
         String instantAsJsonString = gson.toJson(instant);
 
-        assertEquals(Long.toString(instant.toEpochMilli()), instantAsJsonString);
+        Assertions.assertEquals(Long.toString(instant.toEpochMilli()), instantAsJsonString);
 
         Instant parsed = gson.fromJson(instantAsJsonString, Instant.class);
 
-        assertEquals(instant.truncatedTo(ChronoUnit.MILLIS), parsed);
+        Assertions.assertEquals(instant.truncatedTo(ChronoUnit.MILLIS), parsed);
     }
 
     @Test
@@ -54,7 +50,7 @@ public class GsonUtilTest {
         } catch (RuntimeException rte) {
             serializationFailed = true;
         }
-        assertTrue(serializationFailed);
+        Assertions.assertTrue(serializationFailed);
 
         try {
             String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
@@ -62,7 +58,7 @@ public class GsonUtilTest {
         } catch (RuntimeException rte) {
             deserializationFailed = true;
         }
-        assertTrue(deserializationFailed);
+        Assertions.assertTrue(deserializationFailed);
     }
 
     @Test
@@ -82,12 +78,13 @@ public class GsonUtilTest {
 
         JsonObject parsedJsonObj = gson.fromJson(objAsJsonString, JsonObject.class);
 
-        assertEquals(2, parsedJsonObj.size());
-        assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
-        assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
-        assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(), parsedJsonObj.get("instant").getAsLong());
+        Assertions.assertEquals(2, parsedJsonObj.size());
+        Assertions.assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
+        Assertions.assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
+        Assertions.assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
+            parsedJsonObj.get("instant").getAsLong());
 
-        assertFalse(parsedJsonObj.has("transientField"));
+        Assertions.assertFalse(parsedJsonObj.has("transientField"));
     }
 
     @Test
@@ -104,9 +101,9 @@ public class GsonUtilTest {
 
         GsonTestObject parsedObj = gson.fromJson(json, GsonTestObject.class);
 
-        assertEquals(123456, parsedObj.getDate().getTime());
-        assertEquals(567890, parsedObj.getInstant().toEpochMilli());
-        assertNull(parsedObj.getTransientField());
+        Assertions.assertEquals(123456, parsedObj.getDate().getTime());
+        Assertions.assertEquals(567890, parsedObj.getInstant().toEpochMilli());
+        Assertions.assertNull(parsedObj.getTransientField());
     }
 
 }

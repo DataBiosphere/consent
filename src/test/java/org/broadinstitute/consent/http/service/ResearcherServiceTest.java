@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -19,6 +18,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -69,7 +69,7 @@ public class ResearcherServiceTest {
         props.put(UserFields.ERA_STATUS.getValue(), "suggestion");
         props.put(UserFields.ERA_EXPIRATION_DATE.getValue(), "suggestion");
         List<UserProperty> userProps = service.updateProperties(props, authUser, true);
-        assertTrue(userProps.isEmpty());
+        Assertions.assertTrue(userProps.isEmpty());
     }
 
 }

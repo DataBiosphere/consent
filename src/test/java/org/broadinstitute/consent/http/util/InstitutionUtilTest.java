@@ -1,9 +1,5 @@
 package org.broadinstitute.consent.http.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.Gson;
 import java.util.Collections;
 import java.util.Date;
@@ -12,6 +8,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,8 +40,8 @@ public class InstitutionUtilTest {
     public void testCheckIfAdmin() {
         Boolean adminResult = util.checkIfAdmin(adminUser);
         Boolean researcherResult = util.checkIfAdmin(researcherUser);
-        assertTrue(adminResult);
-        assertFalse(researcherResult);
+        Assertions.assertTrue(adminResult);
+        Assertions.assertFalse(researcherResult);
     }
 
     @Test
@@ -53,12 +50,14 @@ public class InstitutionUtilTest {
         Gson builder = util.getGsonBuilder(true);
         String json = builder.toJson(mockInstitution);
         Institution deserialized = new Gson().fromJson(json, Institution.class);
-        assertEquals(mockInstitution.getName(), deserialized.getName());
-        assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
-        assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
-        assertEquals(mockInstitution.getCreateDate().toString(), deserialized.getCreateDate().toString());
-        assertEquals(mockInstitution.getUpdateDate().toString(), deserialized.getUpdateDate().toString());
-        assertEquals(mockInstitution.getId(), deserialized.getId());
+        Assertions.assertEquals(mockInstitution.getName(), deserialized.getName());
+        Assertions.assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
+        Assertions.assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
+        Assertions.assertEquals(mockInstitution.getCreateDate().toString(),
+            deserialized.getCreateDate().toString());
+        Assertions.assertEquals(mockInstitution.getUpdateDate().toString(),
+            deserialized.getUpdateDate().toString());
+        Assertions.assertEquals(mockInstitution.getId(), deserialized.getId());
     }
 
     @Test
@@ -66,6 +65,6 @@ public class InstitutionUtilTest {
         Institution mockInstitution = initMockInstitution();
         Gson builder = util.getGsonBuilder(false);
         String json = builder.toJson(mockInstitution);
-        assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
+        Assertions.assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
     }
 }

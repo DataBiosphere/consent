@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -13,6 +11,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -55,7 +54,8 @@ public class TDRServiceTest {
                 .map(ApprovedUser::getEmail)
                 .toList();
 
-        assertTrue(approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail())));
+        Assertions.assertTrue(
+            approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail())));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class TDRServiceTest {
         initService();
         List<Dataset> datasetIds = service.getDatasetsByIdentifier(identifierList);
 
-        assertEquals(datasetIds.size(), identifierList.size());
-        assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
+        Assertions.assertEquals(datasetIds.size(), identifierList.size());
+        Assertions.assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
     }
 }

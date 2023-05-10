@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,6 +12,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -61,16 +59,16 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
         Timestamp oldTimestamp = new Timestamp(old.getTime());
-        assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
-        assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
-        assertEquals(newDatasetIds, updatedDar.getDatasetIds());
+        Assertions.assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
+        Assertions.assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
+        Assertions.assertEquals(newDatasetIds, updatedDar.getDatasetIds());
         DataAccessRequestData updatedData = updatedDar.getData();
-        assertEquals(data.getOtherText(), updatedData.getOtherText());
+        Assertions.assertEquals(data.getOtherText(), updatedData.getOtherText());
 
         DarCollection targetCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-        assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
+        Assertions.assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
 
         // collection should have the same update date as the updated dar
-        assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
+        Assertions.assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
     }
 }

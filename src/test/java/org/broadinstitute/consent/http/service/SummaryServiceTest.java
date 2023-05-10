@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.notNull;
@@ -38,6 +35,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Summary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -81,7 +79,7 @@ public class SummaryServiceTest {
     public void testListDataAccessRequestSummaryDetails_case1() {
         initService();
         List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
-        assertTrue(details.isEmpty());
+        Assertions.assertTrue(details.isEmpty());
     }
 
     // Test that minimal data will produce minimal results.
@@ -127,15 +125,15 @@ public class SummaryServiceTest {
 
         initService();
         List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
-        assertFalse(details.isEmpty());
+        Assertions.assertFalse(details.isEmpty());
         // Should be able to print without errors.
         try {
             String headers = details.get(0).headers();
-            assertFalse(headers.isBlank());
+            Assertions.assertFalse(headers.isBlank());
             String val = details.get(0).toString();
-            assertFalse(val.isBlank());
+            Assertions.assertFalse(val.isBlank());
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -158,27 +156,38 @@ public class SummaryServiceTest {
 
         when(electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue())).thenReturn(electionsList(ElectionType.DATA_ACCESS.getValue(), "Open"));
         List<Summary> matchSummaryList = summaryService.describeMatchSummaryCases();
-        assertTrue("The list should have two elements: ", matchSummaryList.size() == 2);
-        assertTrue("The list for matches should have two positive cases: ", matchSummaryList.get(0).getReviewedPositiveCases().equals(2));
-        assertTrue("The list for matches should have two negative cases: ", matchSummaryList.get(0).getReviewedNegativeCases().equals(2));
-        assertTrue("The list for matches should have no pending cases: ", matchSummaryList.get(0).getPendingCases().equals(0));
+        Assertions.assertTrue(matchSummaryList.size() == 2, "The list should have two elements: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getReviewedPositiveCases().equals(2),
+            "The list for matches should have two positive cases: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getReviewedNegativeCases().equals(2),
+            "The list for matches should have two negative cases: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getPendingCases().equals(0),
+            "The list for matches should have no pending cases: ");
 
-        assertTrue("The list for closed positive cases should be zero: ", matchSummaryList.get(1).getReviewedPositiveCases().equals(0));
-        assertTrue("The list for closed negative cases should be zero: ", matchSummaryList.get(1).getReviewedNegativeCases().equals(0));
-        assertTrue("The list for pending cases should be zero: ", matchSummaryList.get(1).getPendingCases().equals(0));
+        Assertions.assertTrue(matchSummaryList.get(1).getReviewedPositiveCases().equals(0),
+            "The list for closed positive cases should be zero: ");
+        Assertions.assertTrue(matchSummaryList.get(1).getReviewedNegativeCases().equals(0),
+            "The list for closed negative cases should be zero: ");
+        Assertions.assertTrue(matchSummaryList.get(1).getPendingCases().equals(0),
+            "The list for pending cases should be zero: ");
 
         //This modifies the result for closed cases
         when(electionDAO.findLastElectionsWithFinalVoteByType(ElectionType.DATA_ACCESS.getValue())).thenReturn(ListUtils.union(electionsList(ElectionType.DATA_ACCESS.getValue(), "Open"), electionsList(ElectionType.DATA_ACCESS.getValue(), "Closed")));
         when(voteDAO.findVotesByElectionIds(notNull())).thenReturn(randomVotesList(123, VoteType.AGREEMENT.getValue()));
 
         matchSummaryList = summaryService.describeMatchSummaryCases();
-        assertTrue("The list should have two elements: ", matchSummaryList.size() == 2);
-        assertTrue("The list for matches should have two positive cases: ", matchSummaryList.get(0).getReviewedPositiveCases().equals(2));
-        assertTrue("The list for matches should have two negative cases: ", matchSummaryList.get(0).getReviewedNegativeCases().equals(2));
-        assertTrue("The list for matches should have no pending cases: ", matchSummaryList.get(0).getPendingCases().equals(0));
+        Assertions.assertTrue(matchSummaryList.size() == 2, "The list should have two elements: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getReviewedPositiveCases().equals(2),
+            "The list for matches should have two positive cases: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getReviewedNegativeCases().equals(2),
+            "The list for matches should have two negative cases: ");
+        Assertions.assertTrue(matchSummaryList.get(0).getPendingCases().equals(0),
+            "The list for matches should have no pending cases: ");
 
-        assertTrue("The list for closed positive cases should be two: ", matchSummaryList.get(1).getReviewedPositiveCases().equals(2));
-        assertTrue("The list for closed negative cases should be three: ", matchSummaryList.get(1).getReviewedNegativeCases().equals(3));
+        Assertions.assertTrue(matchSummaryList.get(1).getReviewedPositiveCases().equals(2),
+            "The list for closed positive cases should be two: ");
+        Assertions.assertTrue(matchSummaryList.get(1).getReviewedNegativeCases().equals(3),
+            "The list for closed negative cases should be three: ");
     }
 
     /**
@@ -265,7 +274,7 @@ public class SummaryServiceTest {
                     v.setUserId(userId);
                     return v;
                 }
-        ).collect(Collectors.toUnmodifiableList());
+        ).toList();
     }
 
 }

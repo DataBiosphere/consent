@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -15,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,7 +85,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
         String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
-        assertNotNull(translation);
+        Assertions.assertNotNull(translation);
     }
 
     /*
@@ -100,7 +98,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
         String translation = converter.translateDataUse(dataUse, DataUseTranslationType.DATASET);
-        assertNotNull(translation);
+        Assertions.assertNotNull(translation);
     }
 
     /*
@@ -114,7 +112,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
         String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
-        assertNull(translation);
+        Assertions.assertNull(translation);
     }
 
     /*
@@ -146,14 +144,15 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        assertNotNull(dataUse);
-        assertTrue(dataUse.getMethodsResearch());
-        assertTrue(dataUse.getPopulationStructure());
-        assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
-        assertTrue(dataUse.getDiseaseRestrictions().contains("http://purl.obolibrary.org/obo/DOID_4023"));
-        assertTrue(dataUse.getCommercialUse());
-        assertTrue(dataUse.getPediatric());
-        assertTrue(dataUse.getGender().equalsIgnoreCase("Female"));
+        Assertions.assertNotNull(dataUse);
+        Assertions.assertTrue(dataUse.getMethodsResearch());
+        Assertions.assertTrue(dataUse.getPopulationStructure());
+        Assertions.assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
+        Assertions.assertTrue(
+            dataUse.getDiseaseRestrictions().contains("http://purl.obolibrary.org/obo/DOID_4023"));
+        Assertions.assertTrue(dataUse.getCommercialUse());
+        Assertions.assertTrue(dataUse.getPediatric());
+        Assertions.assertTrue(dataUse.getGender().equalsIgnoreCase("Female"));
     }
 
     /*
@@ -169,8 +168,8 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        assertNotNull(dataUse);
-        assertNull(dataUse.getDiseaseRestrictions());
+        Assertions.assertNotNull(dataUse);
+        Assertions.assertNull(dataUse.getDiseaseRestrictions());
     }
 
     /*
@@ -185,8 +184,8 @@ public class UseRestrictionConverterTest implements WithMockServer {
         Client client = ClientBuilder.newClient();
         UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        assertNotNull(dataUse);
-        assertNull(dataUse.getDiseaseRestrictions());
+        Assertions.assertNotNull(dataUse);
+        Assertions.assertNull(dataUse.getDiseaseRestrictions());
     }
 
     /*
@@ -204,11 +203,11 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 "\"hmb\":false " +
                 "}";
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        assertNull(dataUse.getMethodsResearch());
-        assertNull(dataUse.getPopulationStructure());
-        assertNull(dataUse.getControlSetOption());
-        assertNull(dataUse.getPopulationOriginsAncestry());
-        assertNull(dataUse.getHmbResearch());
+        Assertions.assertNull(dataUse.getMethodsResearch());
+        Assertions.assertNull(dataUse.getPopulationStructure());
+        Assertions.assertNull(dataUse.getControlSetOption());
+        Assertions.assertNull(dataUse.getPopulationOriginsAncestry());
+        Assertions.assertNull(dataUse.getHmbResearch());
     }
 
     /*
@@ -226,11 +225,11 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 "\"hmb\":true " +
                 "}";
         DataUse dataUse = converter.parseDataUsePurpose(json);
-        assertTrue(dataUse.getMethodsResearch());
-        assertTrue(dataUse.getPopulationStructure());
-        assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
-        assertTrue(dataUse.getPopulationOriginsAncestry());
-        assertTrue(dataUse.getHmbResearch());
+        Assertions.assertTrue(dataUse.getMethodsResearch());
+        Assertions.assertTrue(dataUse.getPopulationStructure());
+        Assertions.assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
+        Assertions.assertTrue(dataUse.getPopulationOriginsAncestry());
+        Assertions.assertTrue(dataUse.getHmbResearch());
     }
 
 }

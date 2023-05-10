@@ -15,9 +15,7 @@ import java.util.List;
 import java.util.Set;
 import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -61,13 +59,9 @@ public class ElectionServiceTest {
     @Mock
     private DatasetDAO dataSetDAO;
     @Mock
-    private DatasetAssociationDAO datasetAssociationDAO;
-    @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
-    @Mock
-    private DarCollectionDAO darCollectionDAO;
     @Mock
     private EmailService emailService;
 

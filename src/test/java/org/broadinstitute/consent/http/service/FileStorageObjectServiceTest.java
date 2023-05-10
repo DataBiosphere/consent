@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -22,6 +20,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -81,7 +80,7 @@ public class FileStorageObjectServiceTest {
 
         FileStorageObject returned = service.uploadAndStoreFile(content, fileName, mediaType, category, entityId, createUserId);
 
-        assertEquals(newFileStorageObject, returned);
+        Assertions.assertEquals(newFileStorageObject, returned);
 
         verify(
                 gcsService, times(1)
@@ -122,9 +121,9 @@ public class FileStorageObjectServiceTest {
 
         FileStorageObject returned = service.fetchById(10);
 
-        assertEquals(file, returned);
+        Assertions.assertEquals(file, returned);
 
-        assertArrayEquals(content.getBytes(), returned.getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content.getBytes(), returned.getUploadedFile().readAllBytes());
     }
 
     @Test
@@ -167,15 +166,18 @@ public class FileStorageObjectServiceTest {
 
         List<FileStorageObject> returned = service.fetchAllByEntityId(entityId);
 
-        assertEquals(3, returned.size());
+        Assertions.assertEquals(3, returned.size());
 
-        assertEquals(file1, returned.get(0));
-        assertEquals(file2, returned.get(1));
-        assertEquals(file3, returned.get(2));
+        Assertions.assertEquals(file1, returned.get(0));
+        Assertions.assertEquals(file2, returned.get(1));
+        Assertions.assertEquals(file3, returned.get(2));
 
-        assertArrayEquals(content1.getBytes(), returned.get(0).getUploadedFile().readAllBytes());
-        assertArrayEquals(content2.getBytes(), returned.get(1).getUploadedFile().readAllBytes());
-        assertArrayEquals(content3.getBytes(), returned.get(2).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content1.getBytes(),
+            returned.get(0).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content2.getBytes(),
+            returned.get(1).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content3.getBytes(),
+            returned.get(2).getUploadedFile().readAllBytes());
     }
 
     @Test
@@ -219,15 +221,18 @@ public class FileStorageObjectServiceTest {
 
         List<FileStorageObject> returned = service.fetchAllByEntityIdAndCategory(entityId, category);
 
-        assertEquals(3, returned.size());
+        Assertions.assertEquals(3, returned.size());
 
-        assertEquals(file1, returned.get(0));
-        assertEquals(file2, returned.get(1));
-        assertEquals(file3, returned.get(2));
+        Assertions.assertEquals(file1, returned.get(0));
+        Assertions.assertEquals(file2, returned.get(1));
+        Assertions.assertEquals(file3, returned.get(2));
 
-        assertArrayEquals(content1.getBytes(), returned.get(0).getUploadedFile().readAllBytes());
-        assertArrayEquals(content2.getBytes(), returned.get(1).getUploadedFile().readAllBytes());
-        assertArrayEquals(content3.getBytes(), returned.get(2).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content1.getBytes(),
+            returned.get(0).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content2.getBytes(),
+            returned.get(1).getUploadedFile().readAllBytes());
+        Assertions.assertArrayEquals(content3.getBytes(),
+            returned.get(2).getUploadedFile().readAllBytes());
     }
 
 }
