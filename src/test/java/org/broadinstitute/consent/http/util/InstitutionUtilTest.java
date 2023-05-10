@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
@@ -43,7 +44,7 @@ public class InstitutionUtilTest {
         Boolean adminResult = util.checkIfAdmin(adminUser);
         Boolean researcherResult = util.checkIfAdmin(researcherUser);
         assertTrue(adminResult);
-        Assertions.assertFalse(researcherResult);
+        assertFalse(researcherResult);
     }
 
     @Test

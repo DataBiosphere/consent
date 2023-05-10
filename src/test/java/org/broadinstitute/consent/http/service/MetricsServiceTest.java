@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -79,7 +80,7 @@ public class MetricsServiceTest {
         initializeMetricsDAOCalls(darCount, datasetCount);
         initService();
         List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
-        Assertions.assertFalse(metrics.isEmpty());
+        assertFalse(metrics.isEmpty());
         Assertions.assertEquals(darCount, metrics.size());
     }
 
@@ -91,7 +92,7 @@ public class MetricsServiceTest {
 
         initService();
         List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
-        Assertions.assertFalse(metrics.isEmpty());
+        assertFalse(metrics.isEmpty());
     }
 
     @Test

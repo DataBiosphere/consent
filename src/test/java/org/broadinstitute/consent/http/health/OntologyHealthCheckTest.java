@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -62,7 +63,7 @@ public class OntologyHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -71,7 +72,7 @@ public class OntologyHealthCheckTest {
         initHealthCheck(true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -80,6 +81,6 @@ public class OntologyHealthCheckTest {
         initHealthCheck(false);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -53,7 +54,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     @Test
     public void testFindRoles() {
         List<Role> roles = userRoleDAO.findRoles();
-        Assertions.assertFalse(roles.isEmpty());
+        assertFalse(roles.isEmpty());
     }
 
     @Test
@@ -84,14 +85,14 @@ public class UserRoleDAOTest extends DAOTestHelper {
         List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
         userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), UserRoles.MEMBER.getRoleId());
         List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertFalse(currentRoles.get(0).getRoleId().equals(newRoles.get(0).getRoleId()));
+        assertFalse(currentRoles.get(0).getRoleId().equals(newRoles.get(0).getRoleId()));
     }
 
     @Test
     public void testRemoveUserRoles() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertFalse(currentRoles.isEmpty());
+        assertFalse(currentRoles.isEmpty());
         List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId).collect(Collectors.toList());
         userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
         List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
@@ -107,7 +108,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     public void testRemoveSingleUserRole() {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         List<UserRole> userRoles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertFalse(userRoles.isEmpty());
+        assertFalse(userRoles.isEmpty());
         List<Role> roles = userRoleDAO.findRoles();
         roles.forEach(r ->
                 userRoleDAO.removeSingleUserRole(user.getUserId(), r.getRoleId())

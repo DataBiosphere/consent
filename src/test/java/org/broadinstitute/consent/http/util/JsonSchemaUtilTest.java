@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.networknt.schema.ValidationMessage;
@@ -50,7 +51,7 @@ public class JsonSchemaUtilTest {
     public void testIsValidDatasetRegistrationObject_v1_case0() {
         String instance = "{}";
         Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
-        Assertions.assertFalse(errors.isEmpty());
+        assertFalse(errors.isEmpty());
     }
 
     @Test
@@ -66,15 +67,15 @@ public class JsonSchemaUtilTest {
         Assertions.assertNotNull(instance.getStudyType());
         Assertions.assertNotNull(instance.getStudyName());
         Assertions.assertNotNull(instance.getStudyDescription());
-        Assertions.assertFalse(instance.getDataTypes().isEmpty());
+        assertFalse(instance.getDataTypes().isEmpty());
         Assertions.assertNotNull(instance.getPhenotypeIndication());
         Assertions.assertNotNull(instance.getSpecies());
         Assertions.assertNotNull(instance.getPiName());
         Assertions.assertNotNull(instance.getDataSubmitterUserId());
-        Assertions.assertFalse(instance.getDataCustodianEmail().isEmpty());
+        assertFalse(instance.getDataCustodianEmail().isEmpty());
         Assertions.assertNotNull(instance.getPublicVisibility());
-        Assertions.assertFalse(instance.getConsentGroups().isEmpty());
-        Assertions.assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
+        assertFalse(instance.getConsentGroups().isEmpty());
+        assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
         Assertions.assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
     }
 
@@ -830,7 +831,7 @@ public class JsonSchemaUtilTest {
     }
 
     private void assertHasErrors(Set<ValidationMessage> errors) {
-        Assertions.assertFalse(errors.isEmpty(), "Should have errored, instead was empty.");
+        assertFalse(errors.isEmpty(), "Should have errored, instead was empty.");
     }
 
     private void assertFieldHasError(Set<ValidationMessage> errors, String field) {

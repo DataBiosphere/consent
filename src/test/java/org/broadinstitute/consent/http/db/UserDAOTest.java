@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
@@ -27,7 +28,7 @@ public class UserDAOTest extends DAOTestHelper {
     public void testFindDACUserById() {
         User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
         Assertions.assertNotNull(user);
-        Assertions.assertFalse(user.getRoles().isEmpty());
+        assertFalse(user.getRoles().isEmpty());
 
         userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
         userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getUserId());
@@ -60,7 +61,7 @@ public class UserDAOTest extends DAOTestHelper {
         User user = createUser();
         Collection<User> users = userDAO.findUsers(Collections.singletonList(user.getUserId()));
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
         Assertions.assertEquals(1, users.size());
     }
 
@@ -70,10 +71,10 @@ public class UserDAOTest extends DAOTestHelper {
         createUserWithRole(UserRoles.MEMBER.getRoleId());
 
         List<User> members = userDAO.describeUsersByRole(UserRoles.MEMBER.getRoleName());
-        Assertions.assertFalse(members.isEmpty());
+        assertFalse(members.isEmpty());
 
         List<User> chairs = userDAO.describeUsersByRole(UserRoles.CHAIRPERSON.getRoleName());
-        Assertions.assertFalse(chairs.isEmpty());
+        assertFalse(chairs.isEmpty());
 
         // Only case where we don't set up users by default.
         List<User> alumni = userDAO.describeUsersByRole(UserRoles.ALUMNI.getRoleName());
@@ -110,7 +111,7 @@ public class UserDAOTest extends DAOTestHelper {
         User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
         Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -118,7 +119,7 @@ public class UserDAOTest extends DAOTestHelper {
         createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
         createUserWithRole(UserRoles.MEMBER.getRoleId());
         Collection<User> users = userDAO.findNonDacUsersEnabledToVote();
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -127,7 +128,7 @@ public class UserDAOTest extends DAOTestHelper {
         userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getUserId());
         Collection<Integer> userIds = Collections.singletonList(chair.getUserId());
         Collection<User> users = userDAO.findUsersWithRoles(userIds);
-        users.forEach(u -> Assertions.assertFalse(u.getRoles().isEmpty(),
+        users.forEach(u -> assertFalse(u.getRoles().isEmpty(),
             "User: " + u.getUserId() + " has no roles"));
         Assertions.assertEquals(1, users.size());
         User user = users.stream().findFirst().orElse(null);
@@ -171,11 +172,11 @@ public class UserDAOTest extends DAOTestHelper {
         // Find only the first two users, ensure that we're not getting all 3
         List<User> users = userDAO.findUsersByEmailList(List.of(user1.getEmail(), user2.getEmail()));
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
         Assertions.assertEquals(2, users.size());
         assertTrue(users.contains(user1));
         assertTrue(users.contains(user2));
-        Assertions.assertFalse(users.contains(user3));
+        assertFalse(users.contains(user3));
     }
 
     @Test
@@ -211,7 +212,7 @@ public class UserDAOTest extends DAOTestHelper {
 
         List<User> users = userDAO.findUsersWithLCsAndInstitution();
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
         Assertions.assertEquals(2, users.size());
         Assertions.assertNotNull(users.get(0).getInstitution());
         Assertions.assertNotNull(users.get(0).getLibraryCards());
@@ -227,12 +228,12 @@ public class UserDAOTest extends DAOTestHelper {
         User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
         userDAO.updateEmailPreference(researcher.getUserId(), true);
         Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher", true);
-        Assertions.assertFalse(researchers.isEmpty());
+        assertFalse(researchers.isEmpty());
 
         User owner = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
         userDAO.updateEmailPreference(owner.getUserId(), false);
         Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
-        Assertions.assertFalse(dataOwners.isEmpty());
+        assertFalse(dataOwners.isEmpty());
     }
 
     @Test
@@ -243,7 +244,7 @@ public class UserDAOTest extends DAOTestHelper {
         assertTrue(u1.getEmailPreference());
         userDAO.updateEmailPreference(researcher.getUserId(), false);
         User u2 = userDAO.findUserById(researcher.getUserId());
-        Assertions.assertFalse(u2.getEmailPreference());
+        assertFalse(u2.getEmailPreference());
     }
 
     @Test
@@ -287,7 +288,7 @@ public class UserDAOTest extends DAOTestHelper {
                 Collections.singletonList(election.getElectionId()),
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
         Assertions.assertEquals(1, users.size());
     }
 
@@ -322,7 +323,7 @@ public class UserDAOTest extends DAOTestHelper {
                 Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
         Optional<User> foundUser = users.stream().findFirst();
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
         Assertions.assertEquals(1, users.size());
         Assertions.assertEquals(user.getUserId(), foundUser.get().getUserId());
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
@@ -83,7 +84,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
         Assertions.assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-        Assertions.assertFalse(cards.isEmpty());
+        assertFalse(cards.isEmpty());
         Assertions.assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
     }
 

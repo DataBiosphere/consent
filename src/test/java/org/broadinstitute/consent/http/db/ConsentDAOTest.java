@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -29,7 +30,7 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent2.getConsentId()));
         Collection<String> ids = consents.stream().map(Consent::getConsentId).toList();
         Assertions.assertNotNull(consents);
-        Assertions.assertFalse(consents.isEmpty());
+        assertFalse(consents.isEmpty());
         Assertions.assertEquals(2, consents.size());
         assertTrue(ids.contains(consent1.getConsentId()));
         assertTrue(ids.contains(consent2.getConsentId()));
@@ -183,7 +184,7 @@ public class ConsentDAOTest extends DAOTestHelper {
                 consent2.getGroupName(),
                 consent2.getUpdated());
 
-        Assertions.assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
+        assertFalse(consentDAO.checkManualReview(consent.getConsentId()));
         assertTrue(consentDAO.checkManualReview(consent2.getConsentId()));
     }
 
@@ -225,7 +226,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent1Found = consentDAO.findConsentById(consent1.getConsentId());
         assertTrue(consent1Found.getUpdated());
         Consent consent2Found = consentDAO.findConsentById(consent2.getConsentId());
-        Assertions.assertFalse(consent2Found.getUpdated());
+        assertFalse(consent2Found.getUpdated());
     }
 
 }

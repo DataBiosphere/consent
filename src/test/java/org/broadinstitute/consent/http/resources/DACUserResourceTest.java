@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import org.broadinstitute.consent.http.models.User;
@@ -25,7 +26,7 @@ public class DACUserResourceTest {
         Assertions.assertEquals(user.getUserId().intValue(), 1);
         Assertions.assertEquals(user.getEmail(), "email");
         Assertions.assertEquals(user.getEmailPreference(), false);
-        Assertions.assertFalse(user.getRoles().isEmpty());
+        assertFalse(user.getRoles().isEmpty());
         Assertions.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
     }
 
@@ -39,7 +40,7 @@ public class DACUserResourceTest {
         Assertions.assertEquals(user.getUserId().intValue(), 1);
         Assertions.assertEquals(user.getEmail(), "email");
         Assertions.assertEquals(user.getEmailPreference(), false);
-        Assertions.assertFalse(user.getRoles().isEmpty());
+        assertFalse(user.getRoles().isEmpty());
         Assertions.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
     }
 }

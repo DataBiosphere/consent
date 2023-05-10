@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -342,7 +343,7 @@ public class UserServiceTest {
         when(userRoleDAO.findRolesByUserId(any())).thenReturn(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
         initService();
         User user = service.createUser(u);
-        Assertions.assertFalse(user.getRoles().isEmpty());
+        assertFalse(user.getRoles().isEmpty());
         Assertions.assertEquals(UserRoles.RESEARCHER.getRoleId(),
             user.getRoles().get(0).getRoleId());
     }
@@ -430,7 +431,7 @@ public class UserServiceTest {
         User user = service.findUserById(u.getUserId());
         Assertions.assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
-        Assertions.assertFalse(u.getRoles().isEmpty());
+        assertFalse(u.getRoles().isEmpty());
         Assertions.assertEquals(2, u.getRoles().size());
     }
 
@@ -474,7 +475,7 @@ public class UserServiceTest {
         User user = service.findUserByEmail(u.getEmail());
         Assertions.assertNotNull(user);
         Assertions.assertEquals(u.getEmail(), user.getEmail());
-        Assertions.assertFalse(u.getRoles().isEmpty());
+        assertFalse(u.getRoles().isEmpty());
         Assertions.assertEquals(2, u.getRoles().size());
     }
 
@@ -572,7 +573,7 @@ public class UserServiceTest {
         initService();
         List<User> users = service.findUsersByInstitutionId(1);
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -774,7 +775,7 @@ public class UserServiceTest {
         User fetchedUser = service.findUserById(testUser.getUserId());
         Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
         Assertions.assertEquals(fetchedUser.getInstitutionId(), returnUser.getInstitutionId());
-        Assertions.assertFalse(encounteredException);
+        assertFalse(encounteredException);
     }
 
     @Test

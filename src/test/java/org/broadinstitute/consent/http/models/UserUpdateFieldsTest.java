@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -59,13 +60,13 @@ public class UserUpdateFieldsTest {
         // If the user has all role ids, and we're updating the user to have NO roles,
         // then roles to remove should not be empty
         List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
-        Assertions.assertFalse(roleIdsToRemove.isEmpty());
+        assertFalse(roleIdsToRemove.isEmpty());
         // We can never remove the ignorable roles, so they should not be in the list
         roleIdsToRemove.forEach(id -> {
-            Assertions.assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
+            assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
         });
         // We can also never remove the Researcher role from a user
-        Assertions.assertFalse(roleIdsToRemove.contains(UserRoles.RESEARCHER.getRoleId()));
+        assertFalse(roleIdsToRemove.contains(UserRoles.RESEARCHER.getRoleId()));
     }
 
     @Test

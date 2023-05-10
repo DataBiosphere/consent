@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
@@ -80,7 +81,7 @@ public class SamDAOTest implements WithMockServer {
                         .withBody(gson.toJson(mockResponseList)));
 
         List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
-        Assertions.assertFalse(resourceTypeList.isEmpty());
+        assertFalse(resourceTypeList.isEmpty());
         Assertions.assertEquals(mockResponseList.size(), resourceTypeList.size());
     }
 

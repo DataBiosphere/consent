@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -443,7 +444,7 @@ public class UserResourceTest {
         Response response = userResource.getSOsForInstitution(authUser);
         Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         var body = (List<UserService.SimplifiedUser>) response.getEntity();
-        Assertions.assertFalse(body.isEmpty());
+        assertFalse(body.isEmpty());
         Assertions.assertEquals(so.getDisplayName(), body.get(0).displayName);
     }
 
@@ -706,7 +707,7 @@ public class UserResourceTest {
         u4a.setInstitutionId(10);
         u4a.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u4a, 1);
-        Assertions.assertFalse(canUpdate);
+        assertFalse(canUpdate);
 
         // IT user with no institution can update their institution
         User u5 = new User();
@@ -719,7 +720,7 @@ public class UserResourceTest {
         u5a.setInstitutionId(10);
         u5a.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
         canUpdate = userResource.canUpdateInstitution(u5a, 1);
-        Assertions.assertFalse(canUpdate);
+        assertFalse(canUpdate);
 
         // Admin user with no institution can update their institution
         User u6 = new User();

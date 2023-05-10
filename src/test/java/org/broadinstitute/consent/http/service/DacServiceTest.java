@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -100,14 +102,14 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacs = service.findAllDacsWithMembers();
-        Assertions.assertFalse(dacs.isEmpty());
+        assertFalse(dacs.isEmpty());
         Assertions.assertEquals(dacs.size(), getDacs().size());
         List<Dac> dacsWithMembers = dacs.
                 stream().
                 filter(d -> !d.getChairpersons().isEmpty()).
                 filter(d -> !d.getMembers().isEmpty()).
                 toList();
-        Assertions.assertFalse(dacsWithMembers.isEmpty());
+        assertFalse(dacsWithMembers.isEmpty());
         Assertions.assertEquals(1, dacsWithMembers.size());
     }
 
@@ -121,8 +123,8 @@ public class DacServiceTest {
 
         Dac dac = service.findById(dacId);
         Assertions.assertNotNull(dac);
-        Assertions.assertFalse(dac.getChairpersons().isEmpty());
-        Assertions.assertFalse(dac.getMembers().isEmpty());
+        assertFalse(dac.getChairpersons().isEmpty());
+        assertFalse(dac.getMembers().isEmpty());
     }
 
     @Test
@@ -200,7 +202,7 @@ public class DacServiceTest {
 
         List<User> users = service.findMembersByDacId(1);
         Assertions.assertNotNull(users);
-        Assertions.assertFalse(users.isEmpty());
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -229,7 +231,7 @@ public class DacServiceTest {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         User user1 = service.addDacMember(role, user, dac);
         Assertions.assertNotNull(user1);
-        Assertions.assertFalse(user1.getRoles().isEmpty());
+        assertFalse(user1.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 
@@ -307,7 +309,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        Assertions.assertFalse(service.isAuthUserAdmin(getUser()));
+        assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -323,7 +325,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        Assertions.assertFalse(service.isAuthUserAdmin(getUser()));
+        assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test

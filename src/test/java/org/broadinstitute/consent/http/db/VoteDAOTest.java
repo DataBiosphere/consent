@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.SimpleDateFormat;
@@ -34,7 +35,7 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVotesByReferenceId(election.getReferenceId());
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         Assertions.assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
     }
 
@@ -67,7 +68,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
         Assertions.assertNotNull(foundVotes);
-        Assertions.assertFalse(foundVotes.isEmpty());
+        assertFalse(foundVotes.isEmpty());
         assertTrue(
             foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
     }
@@ -88,7 +89,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIds(electionIds);
         Assertions.assertNotNull(foundVotes);
-        Assertions.assertFalse(foundVotes.isEmpty());
+        assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(2, foundVotes.size());
     }
 
@@ -102,17 +103,17 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType());
         Assertions.assertNotNull(foundVotes);
-        Assertions.assertFalse(foundVotes.isEmpty());
+        assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(1, foundVotes.size());
 
         List<Vote> foundVotes2 = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType().toLowerCase());
         Assertions.assertNotNull(foundVotes2);
-        Assertions.assertFalse(foundVotes2.isEmpty());
+        assertFalse(foundVotes2.isEmpty());
         Assertions.assertEquals(1, foundVotes2.size());
 
         List<Vote> foundVotes3 = voteDAO.findVotesByElectionIdAndType(election.getElectionId(), vote.getType().toUpperCase());
         Assertions.assertNotNull(foundVotes3);
-        Assertions.assertFalse(foundVotes3.isEmpty());
+        assertFalse(foundVotes3.isEmpty());
         Assertions.assertEquals(1, foundVotes3.size());
     }
 
@@ -126,7 +127,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> foundVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
         Assertions.assertNotNull(foundVotes);
-        Assertions.assertFalse(foundVotes.isEmpty());
+        assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(1, foundVotes.size());
         Assertions.assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
     }
@@ -154,7 +155,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndUserIds(election.getElectionId(), Collections.singletonList(user.getUserId()));
         Assertions.assertNotNull(foundVotes);
-        Assertions.assertFalse(foundVotes.isEmpty());
+        assertFalse(foundVotes.isEmpty());
         Assertions.assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
     }
 
@@ -291,7 +292,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         voteDAO.updateVoteReminderFlag(v.getVoteId(), false);
         Vote vote2 = voteDAO.findVoteById(v.getVoteId());
-        Assertions.assertFalse(vote2.getIsReminderSent());
+        assertFalse(vote2.getIsReminderSent());
     }
 
     @Test
@@ -372,7 +373,7 @@ public class VoteDAOTest extends DAOTestHelper {
         voteDAO.insertVotes(userIds, election.getElectionId(), VoteType.DAC.getValue());
         List<Vote> votes = voteDAO.findVotesByElectionIds(Collections.singletonList(election.getElectionId()));
         Assertions.assertNotNull(votes);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         Assertions.assertEquals(3, votes.size());
     }
 
@@ -388,19 +389,19 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> votes = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType());
         Assertions.assertNotNull(votes);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         Assertions.assertEquals(1, votes.size());
         Assertions.assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
 
         List<Vote> votes2 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toLowerCase());
         Assertions.assertNotNull(votes2);
-        Assertions.assertFalse(votes2.isEmpty());
+        assertFalse(votes2.isEmpty());
         Assertions.assertEquals(1, votes2.size());
         Assertions.assertEquals(vote.getVoteId(), votes2.get(0).getVoteId());
 
         List<Vote> votes3 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(), vote.getType().toUpperCase());
         Assertions.assertNotNull(votes3);
-        Assertions.assertFalse(votes3.isEmpty());
+        assertFalse(votes3.isEmpty());
         Assertions.assertEquals(1, votes3.size());
         Assertions.assertEquals(vote.getVoteId(), votes3.get(0).getVoteId());
 
@@ -433,7 +434,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         List<Vote> userVotes = voteDAO.findVotesByUserId(user.getUserId());
         Assertions.assertNotNull(userVotes);
-        Assertions.assertFalse(userVotes.isEmpty());
+        assertFalse(userVotes.isEmpty());
     }
 
     @Test
@@ -477,7 +478,7 @@ public class VoteDAOTest extends DAOTestHelper {
         assertTrue(dar.isPresent());
 
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of(dar.get().getReferenceId()));
-        Assertions.assertFalse(voteUsers.isEmpty());
+        assertFalse(voteUsers.isEmpty());
         Assertions.assertEquals(1, voteUsers.size());
         Assertions.assertEquals(chair.getUserId(), voteUsers.get(0).getUserId());
     }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.pact.sam;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
@@ -221,7 +222,7 @@ public class SamPactTests {
 
     List<ResourceType> types = samDAO.getResourceTypes(authUser);
     Assertions.assertNotNull(types);
-    Assertions.assertFalse(types.isEmpty());
+    assertFalse(types.isEmpty());
   }
 
   @Test

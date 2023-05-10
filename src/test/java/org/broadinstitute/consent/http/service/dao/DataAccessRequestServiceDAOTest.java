@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,8 +61,8 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
         Timestamp oldTimestamp = new Timestamp(old.getTime());
-        Assertions.assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
-        Assertions.assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
+        assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
+        assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
         Assertions.assertEquals(newDatasetIds, updatedDar.getDatasetIds());
         DataAccessRequestData updatedData = updatedDar.getData();
         Assertions.assertEquals(data.getOtherText(), updatedData.getOtherText());

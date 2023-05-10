@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -160,7 +161,7 @@ public class VoteServiceTest {
         initService();
         List<Vote> votes = service.findVotesByIds(List.of(1));
         Assertions.assertNotNull(votes);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
     }
 
     @Test
@@ -177,7 +178,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 4 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
@@ -192,7 +193,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assertions.assertEquals(1, votes.size());
     }
@@ -203,7 +204,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 3 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
@@ -217,7 +218,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assertions.assertEquals(1, votes.size());
     }
@@ -228,7 +229,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
@@ -241,7 +242,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assertions.assertEquals(1, votes.size());
     }
@@ -252,7 +253,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
@@ -265,7 +266,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
         // Should create 1 member vote
         Assertions.assertEquals(1, votes.size());
     }
@@ -284,7 +285,7 @@ public class VoteServiceTest {
         initService();
 
         List<Vote> votes = service.createDataOwnersReviewVotes(e);
-        Assertions.assertFalse(votes.isEmpty());
+        assertFalse(votes.isEmpty());
     }
 
     @Test

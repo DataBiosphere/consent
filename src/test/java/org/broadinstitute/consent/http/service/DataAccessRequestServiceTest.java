@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -341,7 +342,7 @@ public class DataAccessRequestServiceTest {
             String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
             System.out.println(approvedUsers);
             Assertions.assertNotNull(approvedUsers);
-            Assertions.assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
+            assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
         } catch (Exception ioe) {
             assert false;
         }

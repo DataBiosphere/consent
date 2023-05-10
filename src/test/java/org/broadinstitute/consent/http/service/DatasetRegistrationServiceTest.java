@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -463,7 +464,7 @@ public class DatasetRegistrationServiceTest {
         if (Objects.isNull(consentGroup.getNmds()) || !consentGroup.getNmds()) {
             Assertions.assertNull(dataUse.getMethodsResearch());
         } else {
-            Assertions.assertFalse(dataUse.getMethodsResearch());
+            assertFalse(dataUse.getMethodsResearch());
         }
         Assertions.assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
         Assertions.assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());

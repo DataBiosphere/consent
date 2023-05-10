@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -86,7 +87,7 @@ public class GsonUtilTest {
         Assertions.assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
             parsedJsonObj.get("instant").getAsLong());
 
-        Assertions.assertFalse(parsedJsonObj.has("transientField"));
+        assertFalse(parsedJsonObj.has("transientField"));
     }
 
     @Test

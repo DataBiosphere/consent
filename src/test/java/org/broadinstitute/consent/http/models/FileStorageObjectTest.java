@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -39,8 +40,8 @@ public class FileStorageObjectTest {
             fsoJsonObject.get("category").getAsString());
 
         // should not have these fields ever
-        Assertions.assertFalse(fsoJsonObject.has("blobId"));
-        Assertions.assertFalse(fsoJsonObject.has("uploadedFile"));
+        assertFalse(fsoJsonObject.has("blobId"));
+        assertFalse(fsoJsonObject.has("uploadedFile"));
 
     }
 

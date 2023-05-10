@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -43,7 +44,7 @@ public class MetricsResourceTest {
         initResource();
         Response response = resource.getDarMetricsData();
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertFalse(response.getEntity().toString().isEmpty());
+        assertFalse(response.getEntity().toString().isEmpty());
         assertTrue(
             response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
     }
@@ -55,7 +56,7 @@ public class MetricsResourceTest {
         initResource();
         Response response = resource.getDacMetricsData();
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertFalse(response.getEntity().toString().isEmpty());
+        assertFalse(response.getEntity().toString().isEmpty());
         String headerRow = service.getHeaderRow(Type.DAC);
         assertTrue(response.getEntity().toString().contains(headerRow));
     }
@@ -67,7 +68,7 @@ public class MetricsResourceTest {
         initResource();
         Response response = resource.getDatasetMetricsData(1);
         Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertFalse(response.getEntity().toString().isEmpty());
+        assertFalse(response.getEntity().toString().isEmpty());
     }
 
     @Test

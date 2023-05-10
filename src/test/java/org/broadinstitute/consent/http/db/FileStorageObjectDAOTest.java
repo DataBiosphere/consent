@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -55,7 +56,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         Assertions.assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
         Assertions.assertEquals(createDate.getEpochSecond(),
             newFileStorageObject.getCreateDate().getEpochSecond());
-        Assertions.assertFalse(newFileStorageObject.getDeleted());
+        assertFalse(newFileStorageObject.getDeleted());
         Assertions.assertNull(newFileStorageObject.getUploadedFile());
     }
 
@@ -66,7 +67,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         User deleteUser = createUser();
         Instant deleteDate = Instant.now();
 
-        Assertions.assertFalse(origFile.getDeleted());
+        assertFalse(origFile.getDeleted());
         Assertions.assertNull(origFile.getDeleteUserId());
         Assertions.assertNull(origFile.getDeleteDate());
 
@@ -93,16 +94,16 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         FileStorageObject file3 = createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
         FileStorageObject file4 = createFileStorageObject(otherEntityId, FileCategory.IRB_COLLABORATION_LETTER);
 
-        Assertions.assertFalse(file1.getDeleted());
+        assertFalse(file1.getDeleted());
         Assertions.assertNull(file1.getDeleteUserId());
         Assertions.assertNull(file1.getDeleteDate());
-        Assertions.assertFalse(file2.getDeleted());
+        assertFalse(file2.getDeleted());
         Assertions.assertNull(file2.getDeleteUserId());
         Assertions.assertNull(file2.getDeleteDate());
-        Assertions.assertFalse(file3.getDeleted());
+        assertFalse(file3.getDeleted());
         Assertions.assertNull(file3.getDeleteUserId());
         Assertions.assertNull(file3.getDeleteDate());
-        Assertions.assertFalse(file4.getDeleted());
+        assertFalse(file4.getDeleted());
         Assertions.assertNull(file4.getDeleteUserId());
         Assertions.assertNull(file4.getDeleteDate());
 
@@ -125,7 +126,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
         Assertions.assertEquals(deleteUser.getUserId(), file3.getDeleteUserId());
         Assertions.assertEquals(deleteDate.getEpochSecond(),
             file3.getDeleteDate().getEpochSecond());
-        Assertions.assertFalse(file4.getDeleted()); // should not be effected
+        assertFalse(file4.getDeleted()); // should not be effected
         Assertions.assertNull(file4.getDeleteUserId());
         Assertions.assertNull(file4.getDeleteDate());
     }

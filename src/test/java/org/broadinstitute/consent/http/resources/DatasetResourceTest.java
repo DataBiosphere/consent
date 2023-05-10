@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -788,8 +789,8 @@ public class DatasetResourceTest {
         Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
         Assertions.assertEquals(404, response.getStatus());
         assertTrue(((Error) response.getEntity()).message().contains("3"));
-        Assertions.assertFalse(((Error) response.getEntity()).message().contains("2"));
-        Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
+        assertFalse(((Error) response.getEntity()).message().contains("2"));
+        assertFalse(((Error) response.getEntity()).message().contains("1"));
 
     }
 
@@ -809,9 +810,9 @@ public class DatasetResourceTest {
         Response response = resource.getDatasets(List.of(1, 2, 3, 4));
         Assertions.assertEquals(404, response.getStatus());
         assertTrue(((Error) response.getEntity()).message().contains("4"));
-        Assertions.assertFalse(((Error) response.getEntity()).message().contains("3"));
+        assertFalse(((Error) response.getEntity()).message().contains("3"));
         assertTrue(((Error) response.getEntity()).message().contains("2"));
-        Assertions.assertFalse(((Error) response.getEntity()).message().contains("1"));
+        assertFalse(((Error) response.getEntity()).message().contains("1"));
     }
 
 

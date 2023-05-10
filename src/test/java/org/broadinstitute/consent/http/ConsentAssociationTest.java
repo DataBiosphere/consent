@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -72,6 +73,6 @@ public class ConsentAssociationTest {
     public void testIsAssociationType() {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
         assertTrue(consent_association.isAssociationType("sample"));
-        Assertions.assertFalse(consent_association.isAssociationType("sampleSet"));
+        assertFalse(consent_association.isAssociationType("sampleSet"));
     }
 }

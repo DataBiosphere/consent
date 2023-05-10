@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -219,8 +220,8 @@ public class MatchServiceTest {
 
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
-        Assertions.assertFalse(match.getMatch());
-        Assertions.assertFalse(match.getAbstain());
+        assertFalse(match.getMatch());
+        assertFalse(match.getAbstain());
         assertTrue(match.getFailed());
     }
 
@@ -243,8 +244,8 @@ public class MatchServiceTest {
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
         assertTrue(match.getMatch());
-        Assertions.assertFalse(match.getAbstain());
-        Assertions.assertFalse(match.getFailed());
+        assertFalse(match.getAbstain());
+        assertFalse(match.getFailed());
     }
 
     @Test
@@ -265,9 +266,9 @@ public class MatchServiceTest {
 
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
-        Assertions.assertFalse(match.getMatch());
-        Assertions.assertFalse(match.getAbstain());
-        Assertions.assertFalse(match.getFailed());
+        assertFalse(match.getMatch());
+        assertFalse(match.getAbstain());
+        assertFalse(match.getFailed());
     }
 
     @Test
@@ -288,9 +289,9 @@ public class MatchServiceTest {
 
         initService();
         Match match = service.singleEntitiesMatchV3(dataset, dar);
-        Assertions.assertFalse(match.getMatch());
+        assertFalse(match.getMatch());
         assertTrue(match.getAbstain());
-        Assertions.assertFalse(match.getFailed());
+        assertFalse(match.getFailed());
     }
 
     @Test
@@ -301,7 +302,7 @@ public class MatchServiceTest {
         initService();
 
         List<Match> matches = service.findMatchesByPurposeId(m.getConsent());
-        Assertions.assertFalse(matches.isEmpty());
+        assertFalse(matches.isEmpty());
         verify(matchDAO, atLeastOnce()).findMatchesByPurposeId(any());
     }
 

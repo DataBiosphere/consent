@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -80,7 +82,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -88,6 +90,6 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
         initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 }

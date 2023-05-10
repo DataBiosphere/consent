@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -126,13 +127,13 @@ public class SummaryServiceTest {
 
         initService();
         List<DataAccessRequestSummaryDetail> details = summaryService.listDataAccessRequestSummaryDetails();
-        Assertions.assertFalse(details.isEmpty());
+        assertFalse(details.isEmpty());
         // Should be able to print without errors.
         try {
             String headers = details.get(0).headers();
-            Assertions.assertFalse(headers.isBlank());
+            assertFalse(headers.isBlank());
             String val = details.get(0).toString();
-            Assertions.assertFalse(val.isBlank());
+            assertFalse(val.isBlank());
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
         }

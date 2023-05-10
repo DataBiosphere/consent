@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,10 +18,10 @@ public class DarManualReviewTest {
 
     @Test
     public void testManualReviewFalse() {
-        Assertions.assertFalse(dar.requiresManualReview());
+        assertFalse(dar.requiresManualReview());
         // There are many fields we could check, but this one is enough to prove our logic.
         dar.addDatasetId(1);
-        Assertions.assertFalse(dar.requiresManualReview());
+        assertFalse(dar.requiresManualReview());
     }
 
     @Test
@@ -51,7 +51,7 @@ public class DarManualReviewTest {
     @Test
     public void testManualReviewOtherTextFalse() {
         dar.getData().setOtherText("");
-        Assertions.assertFalse(dar.requiresManualReview());
+        assertFalse(dar.requiresManualReview());
     }
 
     @Test

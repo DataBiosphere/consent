@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -145,7 +146,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = createInstitution();
 
         List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
-        Assertions.assertFalse(found.isEmpty());
+        assertFalse(found.isEmpty());
         Assertions.assertEquals(1, found.size());
         Assertions.assertEquals(institution.getId(), found.get(0).getId());
     }

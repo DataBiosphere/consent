@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -103,7 +104,7 @@ public class DatasetServiceTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
         Assertions.assertNotNull(result.getProperties());
-        Assertions.assertFalse(result.getProperties().isEmpty());
+        assertFalse(result.getProperties().isEmpty());
     }
 
     @Test
@@ -298,7 +299,7 @@ public class DatasetServiceTest {
 
         List<DatasetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
-        Assertions.assertFalse(properties.isEmpty());
+        assertFalse(properties.isEmpty());
     }
 
     @Test
@@ -311,7 +312,7 @@ public class DatasetServiceTest {
 
         List<DatasetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
 
-        Assertions.assertFalse(properties.isEmpty());
+        assertFalse(properties.isEmpty());
         Assertions.assertEquals(properties.get(0), duplicateProperty);
     }
 
@@ -325,7 +326,7 @@ public class DatasetServiceTest {
         DatasetDTO datasetDTO = datasetService.getDatasetDTO(1);
 
         Assertions.assertNotNull(datasetDTO);
-        Assertions.assertFalse(datasetDTO.getProperties().isEmpty());
+        assertFalse(datasetDTO.getProperties().isEmpty());
     }
 
     @Test
@@ -680,7 +681,7 @@ public class DatasetServiceTest {
         initService();
 
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-        Assertions.assertFalse(datasets.isEmpty());
+        assertFalse(datasets.isEmpty());
         Assertions.assertEquals(1, datasets.size());
         Assertions.assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
         verify(datasetDAO, times(1)).findAllDatasets();
@@ -705,7 +706,7 @@ public class DatasetServiceTest {
         initService();
 
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-        Assertions.assertFalse(datasets.isEmpty());
+        assertFalse(datasets.isEmpty());
         // Test that the two lists of datasets are distinctly combined in the final result
         Assertions.assertEquals(3, datasets.size());
         assertTrue(datasets.contains(d1));
@@ -730,7 +731,7 @@ public class DatasetServiceTest {
         initService();
 
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-        Assertions.assertFalse(datasets.isEmpty());
+        assertFalse(datasets.isEmpty());
         Assertions.assertEquals(2, datasets.size());
         assertTrue(datasets.contains(d1));
         assertTrue(datasets.contains(d2));
@@ -856,7 +857,7 @@ public class DatasetServiceTest {
 
         Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
         Assertions.assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
-        Assertions.assertFalse(returnedDataset.getDacApproval());
+        assertFalse(returnedDataset.getDacApproval());
 
         // send denied email
         verify(emailService, times(1)).sendDatasetDeniedMessage(

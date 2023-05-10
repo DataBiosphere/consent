@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -72,7 +73,7 @@ public class SendGridHealthCheckTest {
         initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -81,7 +82,7 @@ public class SendGridHealthCheckTest {
         initHealthCheck(badStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -90,7 +91,7 @@ public class SendGridHealthCheckTest {
         initHealthCheck(goodStatus, true);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 
     @Test
@@ -99,6 +100,6 @@ public class SendGridHealthCheckTest {
         initHealthCheck(goodStatus, false);
 
         HealthCheck.Result result = healthCheck.check();
-        Assertions.assertFalse(result.isHealthy());
+        assertFalse(result.isHealthy());
     }
 }

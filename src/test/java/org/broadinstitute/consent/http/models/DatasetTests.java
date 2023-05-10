@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class DatasetTests {
         assertTrue(ds.isStringMatch(name.substring(5, 10)));
         assertTrue(ds.isStringMatch(name.substring(10, 15)));
 
-        Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
+        assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
     }
 
     @Test
@@ -61,7 +62,7 @@ public class DatasetTests {
         ds.setProperties(Set.of(dsp));
 
         assertTrue(ds.isStringMatch(value));
-        Assertions.assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
+        assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
     }
 
     @Test
@@ -73,14 +74,14 @@ public class DatasetTests {
         assertTrue(ds.isStringMatch("DUOS"));
         assertTrue(ds.isStringMatch("123"));
         assertTrue(ds.isStringMatch("001235"));
-        Assertions.assertFalse(ds.isStringMatch("DUOS-123456"));
+        assertFalse(ds.isStringMatch("DUOS-123456"));
     }
 
     @Test
     public void testIsStringMatchDataUseCommercial() {
         Dataset ds = new Dataset();
 
-        Assertions.assertFalse(ds.isStringMatch("collaborator"));
+        assertFalse(ds.isStringMatch("collaborator"));
 
         DataUse du = new DataUseBuilder().setCollaboratorRequired(true).build();
 
@@ -94,7 +95,7 @@ public class DatasetTests {
     public void testIsStringMatchDataUseIrb() {
         Dataset ds = new Dataset();
 
-        Assertions.assertFalse(ds.isStringMatch("irb"));
+        assertFalse(ds.isStringMatch("irb"));
 
         DataUse du = new DataUse();
         du.setEthicsApprovalRequired(true);
@@ -109,8 +110,8 @@ public class DatasetTests {
     public void testIsStringMatchDataUseDiseases() {
         Dataset ds = new Dataset();
 
-        Assertions.assertFalse(ds.isStringMatch("cancer"));
-        Assertions.assertFalse(ds.isStringMatch("alzheimers"));
+        assertFalse(ds.isStringMatch("cancer"));
+        assertFalse(ds.isStringMatch("alzheimers"));
 
         DataUse du = new DataUse();
         du.setDiseaseRestrictions(List.of("cancer", "alzheimers"));
@@ -131,8 +132,8 @@ public class DatasetTests {
         assertTrue(ds.isStringMatch("ASD DUOS-001234"));
         assertTrue(ds.isStringMatch("asdf 123"));
 
-        Assertions.assertFalse(ds.isStringMatch("asf DUOS-001234"));
-        Assertions.assertFalse(ds.isStringMatch("asd 122"));
+        assertFalse(ds.isStringMatch("asf DUOS-001234"));
+        assertFalse(ds.isStringMatch("asd 122"));
 
     }
 }

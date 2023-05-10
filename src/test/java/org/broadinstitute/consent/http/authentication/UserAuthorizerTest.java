@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -9,7 +10,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -36,7 +36,7 @@ public class UserAuthorizerTest {
 
     @Test
     public void testAuthorizeNotAuthorized() {
-        Assertions.assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
+        assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
     }
 
     @Test

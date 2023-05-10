@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class MatchDAOTest extends DAOTestHelper {
         Match m = createMatch();
 
         List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-        Assertions.assertFalse(matches.isEmpty());
+        assertFalse(matches.isEmpty());
         Match found = matches.get(0);
         Assertions.assertEquals(found.getId(), m.getId());
         Assertions.assertEquals(found.getPurpose(), m.getPurpose());
@@ -37,7 +38,7 @@ public class MatchDAOTest extends DAOTestHelper {
         Match m = createMatch();
 
         List<Match> matches = matchDAO.findMatchesByPurposeId(m.getPurpose());
-        Assertions.assertFalse(matches.isEmpty());
+        assertFalse(matches.isEmpty());
         Match found = matches.get(0);
         Assertions.assertEquals(found.getId(), m.getId());
         Assertions.assertEquals(found.getPurpose(), m.getPurpose());
@@ -56,7 +57,7 @@ public class MatchDAOTest extends DAOTestHelper {
 
         matchDAO.insertAll(matches);
         List<Match> foundMatches = matchDAO.findMatchesByConsentId(consentId);
-        Assertions.assertFalse(foundMatches.isEmpty());
+        assertFalse(foundMatches.isEmpty());
         Assertions.assertEquals(matches.size(), foundMatches.size());
     }
 

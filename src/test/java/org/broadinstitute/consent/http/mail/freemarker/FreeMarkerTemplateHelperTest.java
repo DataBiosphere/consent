@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -121,7 +122,7 @@ public class FreeMarkerTemplateHelperTest {
                 .equals("http://localhost:8000/#/"));
 
         // no unspecified values
-        Assertions.assertFalse(templateString.contains("${"));
+        assertFalse(templateString.contains("${"));
     }
 
     @Test
@@ -138,7 +139,7 @@ public class FreeMarkerTemplateHelperTest {
                 .text()
                 .contains("researcher@email.com was approved by the DAC for the following datasets"));
         // no unspecified values
-        Assertions.assertFalse(templateString.contains("${"));
+        assertFalse(templateString.contains("${"));
     }
 
     /* Helper methods */
