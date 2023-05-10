@@ -567,19 +567,6 @@
       <version>31.1-jre</version>
     </dependency>
 
-    <!-- Pulling in directly to evict older, transitive dependencies -->
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.9.4</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
-    </dependency>
-
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
@@ -626,12 +613,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.11.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jvnet</groupId>
-      <artifactId>mimepull</artifactId>
-      <version>1.6</version>
     </dependency>
 
     <dependency>
