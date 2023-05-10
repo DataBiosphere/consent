@@ -380,9 +380,10 @@
       <version>2.15.0</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
     <dependency>
       <groupId>org.parboiled</groupId>
-      <artifactId>parboiled-core</artifactId>
+      <artifactId>parboiled-java</artifactId>
       <version>1.4.1</version>
     </dependency>
 
@@ -424,9 +425,24 @@
 
     <!-- Support for JSON logging -->
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.10</version>
+    </dependency>
+
+    <!-- Support for JSON logging -->
+    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-json-logging</artifactId>
       <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-dependencies</artifactId>
+      <version>${dropwizard.version}</version>
+      <type>pom</type>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
@@ -438,6 +454,12 @@
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-assets</artifactId>
+      <version>${dropwizard.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-http2</artifactId>
       <version>${dropwizard.version}</version>
     </dependency>
 
@@ -475,6 +497,13 @@
     <dependency>
       <groupId>au.com.dius.pact</groupId>
       <artifactId>consumer</artifactId>
+      <version>${pact.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>au.com.dius.pact</groupId>
+      <artifactId>provider</artifactId>
       <version>${pact.version}</version>
       <scope>test</scope>
     </dependency>
@@ -586,11 +615,11 @@
       <version>2.11.0</version>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>com.google.apis</groupId>-->
-<!--      <artifactId>google-api-services-oauth2</artifactId>-->
-<!--      <version>v2-rev20200213-2.0.0</version>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-oauth2</artifactId>
+      <version>v2-rev20200213-2.0.0</version>
+    </dependency>
 
     <dependency>
       <groupId>com.google.inject</groupId>
