@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,14 +32,14 @@ public class ConsentAssociationTest {
     @Test
     public void serializesToJSON() throws Exception {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        Assertions.assertEquals(MAPPER.writeValueAsString(consent_association),
+        assertEquals(MAPPER.writeValueAsString(consent_association),
             fixture("fixtures/consentassociation.json"));
     }
 
     @Test
     public void deserializesFromJSON() throws JsonProcessingException {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        Assertions.assertEquals(
+        assertEquals(
             MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class),
             consent_association);
     }
@@ -47,7 +48,7 @@ public class ConsentAssociationTest {
     public void testEqualsTrue() {
         final ConsentAssociation consent_assoc1 = buildConsentAssociation("sample", "SM-1234", "SM-5678");
         final ConsentAssociation consent_assoc2 = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        Assertions.assertEquals(consent_assoc1, consent_assoc2);
+        assertEquals(consent_assoc1, consent_assoc2);
     }
 
     @Test

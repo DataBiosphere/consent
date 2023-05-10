@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -248,7 +249,7 @@ public class MailMessageDAOTest extends DAOTestHelper {
         });
 
         EnumSet.allOf(EmailType.class).forEach(t ->
-            Assertions.assertEquals(1,
+            assertEquals(1,
                 mailMessageDAO.fetchMessagesByType(t.getTypeInt(), 1, 0).size()));
     }
 
@@ -269,11 +270,11 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
         List<MailMessage> mailMessageList = mailMessageDAO.fetchMessagesByType(
                 EmailType.COLLECT.getTypeInt(), 1, 0);
-        Assertions.assertEquals(1, mailMessageList.size());
+        assertEquals(1, mailMessageList.size());
 
         List<MailMessage> mailMessageList2 = mailMessageDAO.fetchMessagesByType(
                 EmailType.COLLECT.getTypeInt(), 1, 1);
-        Assertions.assertEquals(0, mailMessageList2.size());
+        assertEquals(0, mailMessageList2.size());
 
         Integer mailId2 = mailMessageDAO.insert(
                 RandomStringUtils.randomAlphanumeric(10),
@@ -289,12 +290,12 @@ public class MailMessageDAOTest extends DAOTestHelper {
 
         List<MailMessage> mailMessageList3 = mailMessageDAO.fetchMessagesByType(
                 EmailType.COLLECT.getTypeInt(), 1, 1);
-        Assertions.assertEquals(1, mailMessageList3.size());
-        Assertions.assertEquals(mailId2, mailMessageList3.get(0).getEmailId());
+        assertEquals(1, mailMessageList3.size());
+        assertEquals(mailId2, mailMessageList3.get(0).getEmailId());
 
         List<MailMessage> mailMessageList4 = mailMessageDAO.fetchMessagesByType(
                 EmailType.COLLECT.getTypeInt(), 20, 0);
-        Assertions.assertEquals(2, mailMessageList4.size());
+        assertEquals(2, mailMessageList4.size());
     }
 
     @Test
@@ -313,30 +314,30 @@ public class MailMessageDAOTest extends DAOTestHelper {
         // Find messages from beginning of today to the beginning of tomorrow. Should return `messageToday`
         List<MailMessage> messages = mailMessageDAO
                 .fetchMessagesByCreateDate(Date.from(todayStart), Date.from(tomorrowStart), 1, 0);
-        Assertions.assertEquals(1, messages.size());
-        Assertions.assertEquals(messageToday.getEmailId(), messages.get(0).getEmailId());
+        assertEquals(1, messages.size());
+        assertEquals(messageToday.getEmailId(), messages.get(0).getEmailId());
 
         // Find messages from beginning of yesterday to tomorrow. Should return both messages.
         // Order is create date descending, so today is first, yesterday second.
         List<MailMessage> messages2 = mailMessageDAO
                 .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 0);
-        Assertions.assertEquals(2, messages2.size());
-        Assertions.assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
-        Assertions.assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
+        assertEquals(2, messages2.size());
+        assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
+        assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
 
         // Find messages from beginning of yesterday to tomorrow, offset by 1. Since messages are
         // ordered by create date descending, offset should trim today's message and only return
         // yesterday's message.
         List<MailMessage> messages3 = mailMessageDAO
                 .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 1);
-        Assertions.assertEquals(1, messages3.size());
-        Assertions.assertEquals(messageYesterday.getEmailId(), messages3.get(0).getEmailId());
+        assertEquals(1, messages3.size());
+        assertEquals(messageYesterday.getEmailId(), messages3.get(0).getEmailId());
 
         // Find messages from beginning of yesterday to beginning today. Should return yesterday's message.
         List<MailMessage> messages4 = mailMessageDAO
                 .fetchMessagesByCreateDate(Date.from(yesterdayStart), Date.from(todayStart), 2, 0);
-        Assertions.assertEquals(1, messages4.size());
-        Assertions.assertEquals(messageYesterday.getEmailId(), messages4.get(0).getEmailId());
+        assertEquals(1, messages4.size());
+        assertEquals(messageYesterday.getEmailId(), messages4.get(0).getEmailId());
     }
 
     private MailMessage generateMessage(Instant instant) {

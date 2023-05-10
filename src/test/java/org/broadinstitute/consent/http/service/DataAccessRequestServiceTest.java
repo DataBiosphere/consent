@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -218,7 +219,7 @@ public class DataAccessRequestServiceTest {
 
         initService();
 
-        Assertions.assertEquals(List.of(user1, user2), service.getUsersApprovedForDataset(d));
+        assertEquals(List.of(user1, user2), service.getUsersApprovedForDataset(d));
     }
 
     @Test
@@ -435,7 +436,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequests();
-        Assertions.assertEquals(drafts.size(), 1);
+        assertEquals(drafts.size(), 1);
     }
 
     @Test
@@ -443,7 +444,7 @@ public class DataAccessRequestServiceTest {
         when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(new DataAccessRequest()));
         initService();
         List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequestsByUser(1);
-        Assertions.assertEquals(drafts.size(), 1);
+        assertEquals(drafts.size(), 1);
     }
 
     @Test
@@ -453,7 +454,7 @@ public class DataAccessRequestServiceTest {
         when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
         initService();
         List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(new User());
-        Assertions.assertEquals(foundDars.size(), 1);
+        assertEquals(foundDars.size(), 1);
     }
 
     @Test
@@ -462,7 +463,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = new DataAccessRequest();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         DataAccessRequest foundDar = service.findByReferenceId("refId");
-        Assertions.assertEquals(dar, foundDar);
+        assertEquals(dar, foundDar);
     }
 
     @Test

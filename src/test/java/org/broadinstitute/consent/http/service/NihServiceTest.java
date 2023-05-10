@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -20,7 +21,6 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -73,8 +73,8 @@ public class NihServiceTest {
         initService();
         try {
             List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser, user.getUserId());
-            Assertions.assertEquals(1, properties.size());
-            Assertions.assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
+            assertEquals(1, properties.size());
+            assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
             verify(nihServiceDAO, times(1)).updateUserNihStatus(user, nihUserAccount);
         } catch (BadRequestException bre) {
             assert false;

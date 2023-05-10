@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -14,7 +15,6 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -54,18 +54,18 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName, supportRequest.getRequester().getName());
-        Assertions.assertEquals(email, supportRequest.getRequester().getEmail());
-        Assertions.assertEquals(displayName + " user updates: New Institution Request",
+        assertEquals(displayName, supportRequest.getRequester().getName());
+        assertEquals(email, supportRequest.getRequester().getEmail());
+        assertEquals(displayName + " user updates: New Institution Request",
             supportRequest.getSubject());
-        Assertions.assertEquals(360000669472L, supportRequest.getTicketFormId());
+        assertEquals(360000669472L, supportRequest.getTicketFormId());
 
         String expectedDescription = String.format("User %s [%s] has:\n- requested a new institution: %s",
                 user.getDisplayName(),
                 user.getEmail(),
                 suggestedInstitution);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
         assertTrue(
@@ -76,7 +76,7 @@ public class SupportTicketCreatorTest {
         assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
 
         String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + configuration.postSupportRequestUrl();
-        Assertions.assertEquals(commentBody, supportRequest.getComment().getBody());
+        assertEquals(commentBody, supportRequest.getComment().getBody());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName + " user updates: New Signing Official Request",
+        assertEquals(displayName + " user updates: New Signing Official Request",
             supportRequest.getSubject());
 
         String expectedDescription = String.format("User %s [%s] has:\n- requested a new signing official: %s",
@@ -123,7 +123,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName + " user updates: Institution Selection",
+        assertEquals(displayName + " user updates: Institution Selection",
             supportRequest.getSubject());
 
         String expectedDescription = String.format("User %s [%s] has:\n- selected an existing institution: %s",
@@ -131,7 +131,7 @@ public class SupportTicketCreatorTest {
                 user.getEmail(),
                 institutionName);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
@@ -152,7 +152,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName + " user updates: Institution Selection",
+        assertEquals(displayName + " user updates: Institution Selection",
             supportRequest.getSubject());
 
         String expectedDescription = String.format("User %s [%s] has:\n- attempted to select institution with id %s (not found)",
@@ -160,7 +160,7 @@ public class SupportTicketCreatorTest {
                 user.getEmail(),
                 institutionId);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
@@ -183,7 +183,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName + " user updates: Signing Official Selection",
+        assertEquals(displayName + " user updates: Signing Official Selection",
             supportRequest.getSubject());
 
         String expectedDescription = String.format("User %s [%s] has:\n- selected an existing signing official: %s, %s",
@@ -192,7 +192,7 @@ public class SupportTicketCreatorTest {
                 signingOfficial.getDisplayName(),
                 signingOfficial.getEmail());
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
         assertTrue(
@@ -215,7 +215,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(displayName + " user updates: Signing Official Selection",
+        assertEquals(displayName + " user updates: Signing Official Selection",
             supportRequest.getSubject());
 
         String expectedDescription = String.format("User %s [%s] has:\n- attempted to select signing official with id %s (not found)",
@@ -223,7 +223,7 @@ public class SupportTicketCreatorTest {
                 user.getEmail(),
                 signingOfficialId);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }
@@ -244,7 +244,7 @@ public class SupportTicketCreatorTest {
 
         SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
         SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        Assertions.assertEquals(
+        assertEquals(
             displayName + " user updates: New Institution Request, New Signing Official Request",
             supportRequest.getSubject());
 
@@ -257,7 +257,7 @@ public class SupportTicketCreatorTest {
                 suggestedInstitution,
                 suggestedSigningOfficial);
         List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        Assertions.assertEquals(5, customFields.size());
+        assertEquals(5, customFields.size());
         assertTrue(
             customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
     }

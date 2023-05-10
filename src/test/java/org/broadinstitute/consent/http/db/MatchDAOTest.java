@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,7 +16,6 @@ import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class MatchDAOTest extends DAOTestHelper {
@@ -27,11 +27,11 @@ public class MatchDAOTest extends DAOTestHelper {
         List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
         assertFalse(matches.isEmpty());
         Match found = matches.get(0);
-        Assertions.assertEquals(found.getId(), m.getId());
-        Assertions.assertEquals(found.getPurpose(), m.getPurpose());
-        Assertions.assertEquals(found.getConsent(), m.getConsent());
-        Assertions.assertEquals(found.getFailed(), m.getFailed());
-        Assertions.assertEquals(found.getMatch(), m.getMatch());
+        assertEquals(found.getId(), m.getId());
+        assertEquals(found.getPurpose(), m.getPurpose());
+        assertEquals(found.getConsent(), m.getConsent());
+        assertEquals(found.getFailed(), m.getFailed());
+        assertEquals(found.getMatch(), m.getMatch());
     }
 
     @Test
@@ -41,11 +41,11 @@ public class MatchDAOTest extends DAOTestHelper {
         List<Match> matches = matchDAO.findMatchesByPurposeId(m.getPurpose());
         assertFalse(matches.isEmpty());
         Match found = matches.get(0);
-        Assertions.assertEquals(found.getId(), m.getId());
-        Assertions.assertEquals(found.getPurpose(), m.getPurpose());
-        Assertions.assertEquals(found.getConsent(), m.getConsent());
-        Assertions.assertEquals(found.getFailed(), m.getFailed());
-        Assertions.assertEquals(found.getMatch(), m.getMatch());
+        assertEquals(found.getId(), m.getId());
+        assertEquals(found.getPurpose(), m.getPurpose());
+        assertEquals(found.getConsent(), m.getConsent());
+        assertEquals(found.getFailed(), m.getFailed());
+        assertEquals(found.getMatch(), m.getMatch());
     }
 
     @Test
@@ -59,7 +59,7 @@ public class MatchDAOTest extends DAOTestHelper {
         matchDAO.insertAll(matches);
         List<Match> foundMatches = matchDAO.findMatchesByConsentId(consentId);
         assertFalse(foundMatches.isEmpty());
-        Assertions.assertEquals(matches.size(), foundMatches.size());
+        assertEquals(matches.size(), foundMatches.size());
     }
 
     private Match makeMockMatch(String consentId) {
@@ -130,9 +130,9 @@ public class MatchDAOTest extends DAOTestHelper {
         matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date());
 
         List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
-        Assertions.assertEquals(1, matchResults.size());
+        assertEquals(1, matchResults.size());
         Match result = matchResults.get(0);
-        Assertions.assertEquals(targetElection.getReferenceId(), result.getPurpose());
+        assertEquals(targetElection.getReferenceId(), result.getPurpose());
     }
 
     @Test
@@ -200,7 +200,7 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
         Match foundMatch = matchDAO.findMatchById(matchId);
         assertNotNull(foundMatch);
-        Assertions.assertEquals(match.getFailureReasons().size(),
+        assertEquals(match.getFailureReasons().size(),
             foundMatch.getFailureReasons().size());
     }
 
@@ -222,7 +222,7 @@ public class MatchDAOTest extends DAOTestHelper {
         matchDAO.deleteFailureReasonsByConsentIds(List.of(match.getConsent()));
         Match foundMatch = matchDAO.findMatchById(matchId);
         assertNotNull(foundMatch);
-        Assertions.assertEquals(0, foundMatch.getFailureReasons().size());
+        assertEquals(0, foundMatch.getFailureReasons().size());
     }
 
     @Test
@@ -243,7 +243,7 @@ public class MatchDAOTest extends DAOTestHelper {
         matchDAO.deleteFailureReasonsByPurposeIds(List.of(match.getPurpose()));
         Match foundMatch = matchDAO.findMatchById(matchId);
         assertNotNull(foundMatch);
-        Assertions.assertEquals(0, foundMatch.getFailureReasons().size());
+        assertEquals(0, foundMatch.getFailureReasons().size());
     }
 
 }

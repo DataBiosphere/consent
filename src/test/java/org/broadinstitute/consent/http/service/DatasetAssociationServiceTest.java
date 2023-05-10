@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAssociation;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -62,7 +62,7 @@ public class DatasetAssociationServiceTest {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
         } catch (Exception e) {
             assertTrue(e instanceof BadRequestException);
-            Assertions.assertEquals("Invalid UserId list.", e.getMessage());
+            assertEquals("Invalid UserId list.", e.getMessage());
         }
     }
 
@@ -82,7 +82,7 @@ public class DatasetAssociationServiceTest {
             service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
         } catch (Exception e) {
             assertTrue(e instanceof NotFoundException);
-            Assertions.assertEquals("Invalid DatasetId", e.getMessage());
+            assertEquals("Invalid DatasetId", e.getMessage());
         }
     }
 

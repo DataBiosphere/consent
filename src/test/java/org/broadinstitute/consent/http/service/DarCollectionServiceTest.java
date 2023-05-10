@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -100,7 +100,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -118,7 +118,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.CHAIRPERSON.getRoleName());
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -132,7 +132,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -145,7 +145,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.RESEARCHER.getRoleName());
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -156,7 +156,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, null);
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsForUserByRoleName(user, UserRoles.ADMIN.getRoleName());
-        Assertions.assertEquals(0, collections.size());
+        assertEquals(0, collections.size());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsByUserDacs(user, false);
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -200,7 +200,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollection> collections = service.getCollectionsByUserInstitution(user);
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
     }
 
     @Test
@@ -228,17 +228,17 @@ public class DarCollectionServiceTest {
                             // Assert that the results sizes are correct
                             if (page == 8) {
                                 int lastPageSize = token.getFilteredCount() % token.getPageSize();
-                                Assertions.assertEquals(lastPageSize, response.getResults().size());
+                                assertEquals(lastPageSize, response.getResults().size());
                             } else {
-                                Assertions.assertEquals((int) token.getPageSize(),
+                                assertEquals((int) token.getPageSize(),
                                     response.getResults().size());
                             }
 
                             // Assert that the returned results are what we expect them to be, based on ID
                             int expectedCollectionId = (page * token.getPageSize()) - token.getPageSize() + 1;
-                            Assertions.assertEquals(Integer.valueOf(expectedCollectionId),
+                            assertEquals(Integer.valueOf(expectedCollectionId),
                                 response.getResults().get(0).getDarCollectionId());
-                            Assertions.assertEquals(filteredCount,
+                            assertEquals(filteredCount,
                                 response.getFilteredCount().intValue());
                         });
     }
@@ -252,9 +252,9 @@ public class DarCollectionServiceTest {
 
         PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token, UserRoles.ADMIN.getRoleName());
 
-        Assertions.assertEquals(1, response.getFilteredPageCount().intValue());
-        Assertions.assertEquals(0, response.getUnfilteredCount().intValue());
-        Assertions.assertEquals(0, response.getFilteredCount().intValue());
+        assertEquals(1, response.getFilteredPageCount().intValue());
+        assertEquals(0, response.getUnfilteredCount().intValue());
+        assertEquals(0, response.getFilteredCount().intValue());
     }
 
     @Test
@@ -268,9 +268,9 @@ public class DarCollectionServiceTest {
         when(darCollectionDAO.getFilteredCollectionsForAdmin(anyString(), anyString(), anyString())).thenReturn(mockCollections);
         initService();
         PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token, UserRoles.ADMIN.getRoleName());
-        Assertions.assertEquals(1, response.getFilteredPageCount().intValue());
-        Assertions.assertEquals(filteredCount, response.getResults().size());
-        Assertions.assertEquals(filteredCount, response.getFilteredCount().intValue());
+        assertEquals(1, response.getFilteredPageCount().intValue());
+        assertEquals(filteredCount, response.getResults().size());
+        assertEquals(filteredCount, response.getFilteredCount().intValue());
     }
 
     @Test
@@ -301,17 +301,17 @@ public class DarCollectionServiceTest {
         initService();
 
         collections = service.addDatasetsToCollections(collections, List.of());
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
 
         DarCollection collection = collections.get(0);
         Set<Dataset> datasetsFromCollection = collection.getDatasets();
-        Assertions.assertEquals(datasetIds.size(), datasetsFromCollection.size());
+        assertEquals(datasetIds.size(), datasetsFromCollection.size());
 
         List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
                 .map(Dataset::getDataSetId)
                 .sorted()
                 .collect(Collectors.toList());
-        Assertions.assertEquals(datasetIds, collectionDatasetIds);
+        assertEquals(datasetIds, collectionDatasetIds);
     }
 
     @Test
@@ -335,17 +335,17 @@ public class DarCollectionServiceTest {
         initService();
 
         collections = service.addDatasetsToCollections(collections, List.of(dataset.getDataSetId()));
-        Assertions.assertEquals(1, collections.size());
+        assertEquals(1, collections.size());
 
         DarCollection collection = collections.get(0);
         Set<Dataset> datasetsFromCollection = collection.getDatasets();
-        Assertions.assertEquals(1, datasetsFromCollection.size());
+        assertEquals(1, datasetsFromCollection.size());
 
         List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
                 .map(Dataset::getDataSetId)
                 .sorted()
                 .toList();
-        Assertions.assertEquals(dataset.getDataSetId(), collectionDatasetIds.get(0));
+        assertEquals(dataset.getDataSetId(), collectionDatasetIds.get(0));
     }
 
     @Test
@@ -361,7 +361,7 @@ public class DarCollectionServiceTest {
 
         DarCollection canceledCollection = service.cancelDarCollectionAsResearcher(collection);
         for (DataAccessRequest collectionDar : canceledCollection.getDars().values()) {
-            Assertions.assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
+            assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
         }
     }
 
@@ -562,9 +562,9 @@ public class DarCollectionServiceTest {
         PaginationResponse<DarCollection> collectionResponse = service.queryCollectionsByFiltersAndUserRoles(user, token, adminName);
         assertNotNull(collectionResponse);
         int responseUnfilteredCount = collectionResponse.getUnfilteredCount();
-        Assertions.assertEquals(unfilteredCount, responseUnfilteredCount);
-        Assertions.assertEquals(mockCollectionSize, (int) collectionResponse.getFilteredCount());
-        Assertions.assertEquals(1, (int) collectionResponse.getFilteredPageCount());
+        assertEquals(unfilteredCount, responseUnfilteredCount);
+        assertEquals(mockCollectionSize, (int) collectionResponse.getFilteredCount());
+        assertEquals(1, (int) collectionResponse.getFilteredPageCount());
     }
 
     @Test
@@ -605,11 +605,11 @@ public class DarCollectionServiceTest {
         initService();
         PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token, dacRoleName);
         assertNotNull(response);
-        Assertions.assertEquals(dacIds.size(), (int) response.getUnfilteredCount());
-        Assertions.assertEquals(3, (int) response.getFilteredCount());
-        Assertions.assertEquals(1, (int) response.getFilteredPageCount());
+        assertEquals(dacIds.size(), (int) response.getUnfilteredCount());
+        assertEquals(3, (int) response.getFilteredCount());
+        assertEquals(1, (int) response.getFilteredPageCount());
         List<DarCollection> results = response.getResults();
-        Assertions.assertEquals(mockCollectionSize, results.size());
+        assertEquals(mockCollectionSize, results.size());
     }
 
     @Test
@@ -629,9 +629,9 @@ public class DarCollectionServiceTest {
         initService();
         PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token, dacRoleName);
         assertNotNull(response);
-        Assertions.assertEquals(dacIds.size(), (int) response.getUnfilteredCount());
-        Assertions.assertEquals(3, (int) response.getFilteredCount());
-        Assertions.assertEquals(1, (int) response.getFilteredPageCount());
+        assertEquals(dacIds.size(), (int) response.getUnfilteredCount());
+        assertEquals(3, (int) response.getFilteredCount());
+        assertEquals(1, (int) response.getFilteredPageCount());
     }
 
     @Test
@@ -653,9 +653,9 @@ public class DarCollectionServiceTest {
         PaginationResponse<DarCollection> response = service.queryCollectionsByFiltersAndUserRoles(user, token,
                 dacRoleName);
         assertNotNull(response);
-        Assertions.assertEquals(mockCollectionSize, (int) response.getUnfilteredCount());
-        Assertions.assertEquals(3, (int) response.getFilteredCount());
-        Assertions.assertEquals(1, (int) response.getFilteredPageCount());
+        assertEquals(mockCollectionSize, (int) response.getUnfilteredCount());
+        assertEquals(3, (int) response.getFilteredCount());
+        assertEquals(1, (int) response.getFilteredPageCount());
     }
 
     @Test
@@ -830,7 +830,7 @@ public class DarCollectionServiceTest {
 
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(summaries);
-        Assertions.assertEquals(1, summaries.size());
+        assertEquals(1, summaries.size());
         DarCollectionSummary s = summaries.get(0);
         assertTrue(
             s.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
@@ -861,7 +861,7 @@ public class DarCollectionServiceTest {
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
                 UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(summaries);
-        Assertions.assertEquals(1, summaries.size());
+        assertEquals(1, summaries.size());
         DarCollectionSummary s = summaries.get(0);
         assertTrue(
             s.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
@@ -884,7 +884,7 @@ public class DarCollectionServiceTest {
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
                 UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(summaries);
-        Assertions.assertEquals(1, summaries.size());
+        assertEquals(1, summaries.size());
         DarCollectionSummary s = summaries.get(0);
         assertTrue(
             s.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
@@ -946,7 +946,7 @@ public class DarCollectionServiceTest {
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
                 UserRoles.RESEARCHER.getRoleName());
         assertNotNull(summaries);
-        Assertions.assertEquals(4, summaries.size());
+        assertEquals(4, summaries.size());
 
         DarCollectionSummary testOne = summaries.get(0);
         Set<String> expectedOneActions = Set.of(
@@ -954,7 +954,7 @@ public class DarCollectionServiceTest {
         );
         assertTrue(
             testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testOne.getActions(), expectedOneActions);
+        assertEquals(testOne.getActions(), expectedOneActions);
 
         DarCollectionSummary testTwo = summaries.get(1);
         Set<String> expectedTwoActions = Set.of(
@@ -963,7 +963,7 @@ public class DarCollectionServiceTest {
         );
         assertTrue(
             testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-        Assertions.assertEquals(testTwo.getActions(), expectedTwoActions);
+        assertEquals(testTwo.getActions(), expectedTwoActions);
 
         DarCollectionSummary testThree = summaries.get(2);
         Set<String> expectedThreeActions = Set.of(
@@ -971,7 +971,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.REVISE.getValue());
         assertTrue(
             testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.CANCELED.getValue()));
-        Assertions.assertEquals(testThree.getActions(), expectedThreeActions);
+        assertEquals(testThree.getActions(), expectedThreeActions);
 
         DarCollectionSummary testDraft = summaries.get(3);
         Set<String> expectedDraftActions = Set.of(
@@ -979,7 +979,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.DELETE.getValue());
         assertTrue(
             testDraft.getStatus().equalsIgnoreCase(DarCollectionStatus.DRAFT.getValue()));
-        Assertions.assertEquals(testDraft.getActions(), expectedDraftActions);
+        assertEquals(testDraft.getActions(), expectedDraftActions);
     }
 
     @Test
@@ -1053,7 +1053,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.CANCEL.getValue());
         assertTrue(
             testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testOne.getActions(), expectedOneActions);
+        assertEquals(testOne.getActions(), expectedOneActions);
 
         DarCollectionSummary testTwo = summaries.get(1);
         Set<String> expectedTwoActions = Set.of(
@@ -1061,21 +1061,21 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testTwo.getActions(), expectedTwoActions);
+        assertEquals(testTwo.getActions(), expectedTwoActions);
 
         DarCollectionSummary testThree = summaries.get(2);
         Set<String> expectedThreeActions = Set.of(
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-        Assertions.assertEquals(testThree.getActions(), expectedThreeActions);
+        assertEquals(testThree.getActions(), expectedThreeActions);
 
         DarCollectionSummary testFour = summaries.get(3);
         Set<String> expectedFourActions = Set.of(
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-        Assertions.assertEquals(testFour.getActions(), expectedFourActions);
+        assertEquals(testFour.getActions(), expectedFourActions);
     }
 
     @Test
@@ -1134,27 +1134,27 @@ public class DarCollectionServiceTest {
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.MEMBER.getRoleName());
 
         assertNotNull(summaries);
-        Assertions.assertEquals(4, summaries.size());
+        assertEquals(4, summaries.size());
 
         DarCollectionSummary testOne = summaries.get(0);
         Set<String> expectedOneActions = Set.of();
-        Assertions.assertEquals(testOne.getActions(), expectedOneActions);
-        Assertions.assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
+        assertEquals(testOne.getActions(), expectedOneActions);
+        assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
 
         DarCollectionSummary testTwo = summaries.get(1);
         Set<String> expectedTwoActions = Set.of(DarCollectionActions.UPDATE.getValue());
-        Assertions.assertEquals(testTwo.getActions(), expectedTwoActions);
-        Assertions.assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
+        assertEquals(testTwo.getActions(), expectedTwoActions);
+        assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testTwo.getStatus());
 
         DarCollectionSummary testThree = summaries.get(2);
         Set<String> expectedThreeActions = Set.of();
-        Assertions.assertEquals(testThree.getActions(), expectedThreeActions);
-        Assertions.assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
+        assertEquals(testThree.getActions(), expectedThreeActions);
+        assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
 
         DarCollectionSummary testFour = summaries.get(3);
         Set<String> expectedFourActions = Set.of(DarCollectionActions.VOTE.getValue());
-        Assertions.assertEquals(testFour.getActions(), expectedFourActions);
-        Assertions.assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFour.getStatus());
+        assertEquals(testFour.getActions(), expectedFourActions);
+        assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFour.getStatus());
     }
 
     @Test
@@ -1250,7 +1250,7 @@ public class DarCollectionServiceTest {
         initService();
 
         List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user, UserRoles.CHAIRPERSON.getRoleName());
-        Assertions.assertEquals(6, summaries.size());
+        assertEquals(6, summaries.size());
 
         DarCollectionSummary testOne = summaries.get(0);
         Set<String> expectedOneActions = Set.of(
@@ -1258,7 +1258,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.CANCEL.getValue());
         assertTrue(
             testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testOne.getActions(), expectedOneActions);
+        assertEquals(testOne.getActions(), expectedOneActions);
 
         DarCollectionSummary testTwo = summaries.get(1);
         Set<String> expectedTwoActions = Set.of(
@@ -1267,21 +1267,21 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testTwo.getActions(), expectedTwoActions);
+        assertEquals(testTwo.getActions(), expectedTwoActions);
 
         DarCollectionSummary testThree = summaries.get(2);
         Set<String> expectedThreeActions = Set.of(
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-        Assertions.assertEquals(testThree.getActions(), expectedThreeActions);
+        assertEquals(testThree.getActions(), expectedThreeActions);
 
         DarCollectionSummary testFour = summaries.get(3);
         Set<String> expectedFourActions = Set.of(
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
-        Assertions.assertEquals(testFour.getActions(), expectedFourActions);
+        assertEquals(testFour.getActions(), expectedFourActions);
 
         DarCollectionSummary testFive = summaries.get(4);
         Set<String> expectedFiveActions = Set.of(
@@ -1290,7 +1290,7 @@ public class DarCollectionServiceTest {
         );
         assertTrue(
             testFive.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(testFive.getActions(), expectedFiveActions);
+        assertEquals(testFive.getActions(), expectedFiveActions);
 
         DarCollectionSummary testSix = summaries.get(5);
         Set<String> expectedSixActions = Set.of(
@@ -1298,7 +1298,7 @@ public class DarCollectionServiceTest {
         );
         assertTrue(
             testSix.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-        Assertions.assertEquals(testSix.getActions(), expectedSixActions);
+        assertEquals(testSix.getActions(), expectedSixActions);
 
     }
 
@@ -1334,7 +1334,7 @@ public class DarCollectionServiceTest {
 
         assertTrue(
             summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(Set.of(), summaryResult.getActions());
+        assertEquals(Set.of(), summaryResult.getActions());
     }
 
     @Test
@@ -1371,7 +1371,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.REVIEW.getValue());
         assertTrue(
             summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(expectedActions, summaryResult.getActions());
+        assertEquals(expectedActions, summaryResult.getActions());
     }
 
     @Test
@@ -1409,7 +1409,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(expectedActions, summaryResult.getActions());
+        assertEquals(expectedActions, summaryResult.getActions());
     }
 
     @Test
@@ -1450,7 +1450,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.OPEN.getValue());
         assertTrue(
             summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(expectedActions, summaryResult.getActions());
+        assertEquals(expectedActions, summaryResult.getActions());
     }
 
     @Test
@@ -1491,7 +1491,7 @@ public class DarCollectionServiceTest {
                 DarCollectionActions.VOTE.getValue());
         assertTrue(
             summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-        Assertions.assertEquals(expectedActions, summaryResult.getActions());
+        assertEquals(expectedActions, summaryResult.getActions());
     }
 
     @Test
@@ -1514,11 +1514,11 @@ public class DarCollectionServiceTest {
     }
 
     private void queryCollectionsAssertions(PaginationResponse<DarCollection> response, int expectedUnfilteredCount, int expectedFilteredCount) {
-        Assertions.assertEquals(expectedUnfilteredCount, (int) response.getUnfilteredCount());
-        Assertions.assertEquals(expectedFilteredCount, (int) response.getFilteredCount());
-        Assertions.assertEquals(1, (int) response.getFilteredPageCount());
+        assertEquals(expectedUnfilteredCount, (int) response.getUnfilteredCount());
+        assertEquals(expectedFilteredCount, (int) response.getFilteredCount());
+        assertEquals(1, (int) response.getFilteredPageCount());
         List<DarCollection> results = response.getResults();
-        Assertions.assertEquals(expectedFilteredCount, results.size());
+        assertEquals(expectedFilteredCount, results.size());
     }
 
     private PaginationToken initPaginationToken(String sortField, String sortOrder, String filterTerm, int pageSize) {

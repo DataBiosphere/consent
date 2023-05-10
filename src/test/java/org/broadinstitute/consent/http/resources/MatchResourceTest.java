@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
@@ -14,7 +15,6 @@ import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.service.MatchService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -45,21 +45,21 @@ public class MatchResourceTest {
 
         Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
                 UUID.randomUUID().toString());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
     public void testGetMatchesForPurpose_EmptyParam() {
         initResource();
         Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
     public void testGetMatchesForPurpose_CommaSeparatedBlanks() {
         initResource();
         Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, " , , ,");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -70,7 +70,7 @@ public class MatchResourceTest {
         initResource();
 
         Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "3, , 5, ");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -81,7 +81,7 @@ public class MatchResourceTest {
 
         Response response = resource.reprocessPurposeMatches(authUser,
                 UUID.randomUUID().toString());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
 }

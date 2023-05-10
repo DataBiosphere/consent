@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.ConsentAudit;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ConsentAuditDAOTest extends DAOTestHelper {
@@ -24,7 +24,7 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
 
         List<String> consentIds = consentAuditDAO.findAllObjectIds();
         assertFalse(consentIds.isEmpty());
-        Assertions.assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
+        assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
     }
 
     @Test

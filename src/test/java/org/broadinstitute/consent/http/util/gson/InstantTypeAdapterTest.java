@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.google.gson.JsonElement;
 import java.time.Instant;
 import java.util.Random;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class InstantTypeAdapterTest {
@@ -16,10 +17,10 @@ public class InstantTypeAdapterTest {
         InstantTypeAdapter adapter = new InstantTypeAdapter();
 
         JsonElement elem = adapter.serialize(randomTime, null, null);
-        Assertions.assertEquals(randomTimeMilli, elem.getAsLong());
+        assertEquals(randomTimeMilli, elem.getAsLong());
 
         Instant returnedInstant = adapter.deserialize(elem, null, null);
 
-        Assertions.assertEquals(randomTime, returnedInstant);
+        assertEquals(randomTime, returnedInstant);
     }
 }

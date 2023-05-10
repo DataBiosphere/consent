@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +23,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -84,12 +84,12 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        Assertions.assertEquals("Broad Data Use Oversight System - New Data Access Request",
+        assertEquals("Broad Data Use Oversight System - New Data Access Request",
             parsedTemplate.title());
         Element userNameElement = parsedTemplate.getElementById("userName");
         assertNotNull(userNameElement);
         assertNotNull(userNameElement.text());
-        Assertions.assertEquals("Hello Admin,", userNameElement.text());
+        assertEquals("Hello Admin,", userNameElement.text());
     }
 
     @Test
@@ -132,7 +132,7 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getDataCustodianApprovalTemplate(datasetMailDTOs, "Depositor", "Dar Code", "researcher@email.com");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        Assertions.assertEquals(
+        assertEquals(
             "Broad Data Use Oversight System - Researcher - DAR Approved Notification",
             parsedTemplate.title());
         assertTrue(parsedTemplate

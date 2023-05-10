@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -282,7 +282,7 @@ public class LibraryCardServiceTest {
         initService();
         LibraryCard resultCard = service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
         assertNotNull(resultCard);
-        Assertions.assertEquals(resultCard.getId(), libraryCard.getId());
+        assertEquals(resultCard.getId(), libraryCard.getId());
     }
 
     @Test
@@ -363,7 +363,7 @@ public class LibraryCardServiceTest {
         initService();
         LibraryCard result = service.findLibraryCardById(libraryCard.getId());
         assertNotNull(result);
-        Assertions.assertEquals(result.getId(), libraryCard.getId());
+        assertEquals(result.getId(), libraryCard.getId());
     }
 
     private User testUser(Integer institutionId) {

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,7 +45,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
             //JBDI wraps ALL SQL exceptions under the generic class UnableToExecuteStatementException
             //Test is specifically looking for UNIQUE constraint violations, so I need to catch and unwrap the error to confirm
         } catch (Exception e) {
-            Assertions.assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
+            assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -55,15 +56,15 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = createInstitution();
         institutionDAO.updateInstitutionById(institution.getId(), newValue, newValue, newValue, newValue, 100, newValue, newValue, newValue, OrganizationType.FOR_PROFIT.getValue(), userId, new Date());
         Institution updated = institutionDAO.findInstitutionById(institution.getId());
-        Assertions.assertEquals(newValue, updated.getName());
-        Assertions.assertEquals(newValue, updated.getItDirectorName());
-        Assertions.assertEquals(newValue, updated.getItDirectorEmail());
-        Assertions.assertEquals(newValue, updated.getInstitutionUrl());
-        Assertions.assertEquals(100, (long) updated.getDunsNumber());
-        Assertions.assertEquals(newValue, updated.getOrgChartUrl());
-        Assertions.assertEquals(newValue, updated.getVerificationUrl());
-        Assertions.assertEquals(newValue, updated.getVerificationFilename());
-        Assertions.assertEquals(OrganizationType.FOR_PROFIT.getValue(),
+        assertEquals(newValue, updated.getName());
+        assertEquals(newValue, updated.getItDirectorName());
+        assertEquals(newValue, updated.getItDirectorEmail());
+        assertEquals(newValue, updated.getInstitutionUrl());
+        assertEquals(100, (long) updated.getDunsNumber());
+        assertEquals(newValue, updated.getOrgChartUrl());
+        assertEquals(newValue, updated.getVerificationUrl());
+        assertEquals(newValue, updated.getVerificationFilename());
+        assertEquals(OrganizationType.FOR_PROFIT.getValue(),
             updated.getOrganizationType().getValue());
     }
 
@@ -86,7 +87,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
                     secondInstitution.getUpdateDate());
             Assertions.fail("UPDATE should fail due to UNIQUE constraint violation (name)");
         } catch (Exception e) {
-            Assertions.assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
+            assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -103,41 +104,41 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = createInstitution();
         Integer id = institution.getId();
         Institution institutionFromDAO = institutionDAO.findInstitutionById(id);
-        Assertions.assertEquals(institutionFromDAO.getId(), institution.getId());
-        Assertions.assertEquals(institutionFromDAO.getName(), institution.getName());
-        Assertions.assertEquals(institutionFromDAO.getItDirectorName(),
+        assertEquals(institutionFromDAO.getId(), institution.getId());
+        assertEquals(institutionFromDAO.getName(), institution.getName());
+        assertEquals(institutionFromDAO.getItDirectorName(),
             institution.getItDirectorName());
-        Assertions.assertEquals(institutionFromDAO.getItDirectorEmail(),
+        assertEquals(institutionFromDAO.getItDirectorEmail(),
             institution.getItDirectorEmail());
-        Assertions.assertEquals(institutionFromDAO.getCreateUserId(),
+        assertEquals(institutionFromDAO.getCreateUserId(),
             institution.getCreateUserId());
-        Assertions.assertEquals(institutionFromDAO.getCreateDate(), institution.getCreateDate());
+        assertEquals(institutionFromDAO.getCreateDate(), institution.getCreateDate());
     }
 
     @Test
     public void testFindAllInstitutions() {
         List<Institution> instituteList = institutionDAO.findAllInstitutions();
-        Assertions.assertEquals(0, instituteList.size());
+        assertEquals(0, instituteList.size());
         createInstitution();
         List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
-        Assertions.assertEquals(1, instituteListUpdated.size());
+        assertEquals(1, instituteListUpdated.size());
     }
 
     @Test
     public void testFindAllInstitutions_InstitutionWithSOs() {
         List<Institution> instituteList = institutionDAO.findAllInstitutions();
-        Assertions.assertEquals(0, instituteList.size());
+        assertEquals(0, instituteList.size());
 
         //inserts institution, inserts user with that institution id and SO role
         User user = createUserWithInstitution();
 
         List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
-        Assertions.assertEquals(1, instituteListUpdated.size());
+        assertEquals(1, instituteListUpdated.size());
 
         Institution institution = instituteListUpdated.get(0);
-        Assertions.assertEquals(1, institution.getSigningOfficials().size());
-        Assertions.assertEquals(user.getInstitutionId(), institution.getId());
-        Assertions.assertEquals(user.getDisplayName(),
+        assertEquals(1, institution.getSigningOfficials().size());
+        assertEquals(user.getInstitutionId(), institution.getId());
+        assertEquals(user.getDisplayName(),
             institution.getSigningOfficials().get(0).displayName);
     }
 
@@ -147,8 +148,8 @@ public class InstitutionDAOTest extends DAOTestHelper {
 
         List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
         assertFalse(found.isEmpty());
-        Assertions.assertEquals(1, found.size());
-        Assertions.assertEquals(institution.getId(), found.get(0).getId());
+        assertEquals(1, found.size());
+        assertEquals(institution.getId(), found.get(0).getId());
     }
 
     @Test

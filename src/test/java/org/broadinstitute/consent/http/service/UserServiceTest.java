@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -136,7 +137,7 @@ public class UserServiceTest {
             fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
             fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
             fields.setDaaAcceptance(true);
-            Assertions.assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
+            assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -176,7 +177,7 @@ public class UserServiceTest {
             UserUpdateFields fields = new UserUpdateFields();
             fields.setSelectedSigningOfficialId(1);
 
-            Assertions.assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -217,7 +218,7 @@ public class UserServiceTest {
             UserUpdateFields fields = new UserUpdateFields();
             fields.setSelectedSigningOfficialId(2);
 
-            Assertions.assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -256,7 +257,7 @@ public class UserServiceTest {
             UserUpdateFields fields = new UserUpdateFields();
             fields.setSelectedSigningOfficialId(1);
 
-            Assertions.assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
+            assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
@@ -305,8 +306,8 @@ public class UserServiceTest {
             Assertions.fail(e.getMessage());
         }
 
-        Assertions.assertEquals(institutionId, u.getInstitutionId());
-        Assertions.assertEquals(u.getUserId(), libraryCard.getUserId());
+        assertEquals(institutionId, u.getInstitutionId());
+        assertEquals(u.getUserId(), libraryCard.getUserId());
     }
 
     @Test
@@ -345,7 +346,7 @@ public class UserServiceTest {
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
-        Assertions.assertEquals(UserRoles.RESEARCHER.getRoleId(),
+        assertEquals(UserRoles.RESEARCHER.getRoleId(),
             user.getRoles().get(0).getRoleId());
     }
 
@@ -400,9 +401,9 @@ public class UserServiceTest {
         User user = service.findUserById(u.getUserId());
         assertNotNull(user);
         assertNotNull(user.getLibraryCards());
-        Assertions.assertEquals(user.getLibraryCards().size(), 2);
-        Assertions.assertEquals(user.getLibraryCards().get(0).getId(), one.getId());
-        Assertions.assertEquals(user.getLibraryCards().get(1).getId(), two.getId());
+        assertEquals(user.getLibraryCards().size(), 2);
+        assertEquals(user.getLibraryCards().get(0).getId(), one.getId());
+        assertEquals(user.getLibraryCards().get(1).getId(), two.getId());
     }
 
     @Test
@@ -414,7 +415,7 @@ public class UserServiceTest {
 
         User user = service.findUserById(u.getUserId());
         assertNotNull(user);
-        Assertions.assertEquals(u.getEmail(), user.getEmail());
+        assertEquals(u.getEmail(), user.getEmail());
         Assertions.assertNull(u.getRoles());
     }
 
@@ -431,9 +432,9 @@ public class UserServiceTest {
 
         User user = service.findUserById(u.getUserId());
         assertNotNull(user);
-        Assertions.assertEquals(u.getEmail(), user.getEmail());
+        assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
-        Assertions.assertEquals(2, u.getRoles().size());
+        assertEquals(2, u.getRoles().size());
     }
 
     @Test
@@ -458,7 +459,7 @@ public class UserServiceTest {
 
         User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
-        Assertions.assertEquals(u.getEmail(), user.getEmail());
+        assertEquals(u.getEmail(), user.getEmail());
         Assertions.assertNull(u.getRoles());
     }
 
@@ -475,9 +476,9 @@ public class UserServiceTest {
 
         User user = service.findUserByEmail(u.getEmail());
         assertNotNull(user);
-        Assertions.assertEquals(u.getEmail(), user.getEmail());
+        assertEquals(u.getEmail(), user.getEmail());
         assertFalse(u.getRoles().isEmpty());
-        Assertions.assertEquals(2, u.getRoles().size());
+        assertEquals(2, u.getRoles().size());
     }
 
     @Test
@@ -525,16 +526,16 @@ public class UserServiceTest {
         when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
         initService();
         List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
-        Assertions.assertEquals(3, users.size());
-        Assertions.assertEquals(u.getDisplayName(), users.get(0).displayName);
-        Assertions.assertEquals(u.getEmail(), users.get(0).email);
+        assertEquals(3, users.size());
+        assertEquals(u.getDisplayName(), users.get(0).displayName);
+        assertEquals(u.getEmail(), users.get(0).email);
     }
 
     @Test
     public void testFindSOsByInstitutionId_NullId() {
         initService();
         List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
-        Assertions.assertEquals(0, users.size());
+        assertEquals(0, users.size());
     }
 
     @Test
@@ -586,7 +587,7 @@ public class UserServiceTest {
 
         List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
         assertNotNull(users);
-        Assertions.assertEquals(2, users.size());
+        assertEquals(2, users.size());
     }
 
     @Test
@@ -618,7 +619,7 @@ public class UserServiceTest {
         initService();
         List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
         assertNotNull(users);
-        Assertions.assertEquals(returnedUsers.size(), users.size());
+        assertEquals(returnedUsers.size(), users.size());
     }
 
     @Test
@@ -628,8 +629,8 @@ public class UserServiceTest {
         initService();
         List<User> users = service.findUsersWithNoInstitution();
         assertNotNull(users);
-        Assertions.assertEquals(1, users.size());
-        Assertions.assertEquals(user.getUserId(), users.get(0).getUserId());
+        assertEquals(1, users.size());
+        assertEquals(user.getUserId(), users.get(0).getUserId());
     }
 
     @Test
@@ -707,7 +708,7 @@ public class UserServiceTest {
 
         initService();
         User existingUser = service.findOrCreateUser(authUser);
-        Assertions.assertEquals(existingUser, user);
+        assertEquals(existingUser, user);
     }
 
     @Test
@@ -746,7 +747,7 @@ public class UserServiceTest {
         initService();
 
         User newUser = service.findOrCreateUser(authUser);
-        Assertions.assertEquals(user.getEmail(), newUser.getEmail());
+        assertEquals(user.getEmail(), newUser.getEmail());
         verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
         verify(libraryCardDAO, times(1)).findAllLibraryCardsByUserEmail(any());
         verify(userDAO, times(1)).insertUser(any(), any(), any());
@@ -774,8 +775,8 @@ public class UserServiceTest {
             encounteredException = true;
         }
         User fetchedUser = service.findUserById(testUser.getUserId());
-        Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-        Assertions.assertEquals(fetchedUser.getInstitutionId(), returnUser.getInstitutionId());
+        assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+        assertEquals(fetchedUser.getInstitutionId(), returnUser.getInstitutionId());
         assertFalse(encounteredException);
     }
 

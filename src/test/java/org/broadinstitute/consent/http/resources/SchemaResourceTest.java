@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.google.api.client.http.HttpStatusCodes;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class SchemaResourceTest {
@@ -16,10 +17,10 @@ public class SchemaResourceTest {
         SchemaResource resource = new SchemaResource();
 
         Response response = resource.getDatasetRegistrationSchemaV1();
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
 
         Object body = response.getEntity();
-        Assertions.assertEquals(jsonSchemaUtil.getDatasetRegistrationSchemaV1(), body.toString());
+        assertEquals(jsonSchemaUtil.getDatasetRegistrationSchemaV1(), body.toString());
     }
 
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -12,7 +13,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -81,7 +81,7 @@ public class TDRServiceTest {
         initService();
         List<Dataset> datasetIds = service.getDatasetsByIdentifier(identifierList);
 
-        Assertions.assertEquals(datasetIds.size(), identifierList.size());
+        assertEquals(datasetIds.size(), identifierList.size());
         assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
     }
 }

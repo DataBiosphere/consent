@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -24,7 +25,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -89,7 +89,7 @@ public class LibraryCardResourceTest {
         initResource();
         Response response = resource.getLibraryCards(authUser);
         String json = response.getEntity().toString();
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         assertNotNull(json);
     }
 
@@ -100,7 +100,7 @@ public class LibraryCardResourceTest {
         initResource();
         Response response = resource.getLibraryCardById(authUser, 1);
         String json = response.getEntity().toString();
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         assertNotNull(json);
     }
 
@@ -109,7 +109,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.findLibraryCardById(anyInt())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.getLibraryCardById(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -118,7 +118,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.findLibraryCardsByInstitutionId(anyInt())).thenReturn(cards);
         initResource();
         Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -126,7 +126,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.findLibraryCardsByInstitutionId(anyInt())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class LibraryCardResourceTest {
         initResource();
         Response response = resource.createLibraryCard(authUser, payload);
         String json = response.getEntity().toString();
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
         assertNotNull(json);
     }
 
@@ -150,7 +150,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.createLibraryCard(authUser, payload);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -161,7 +161,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(exception);
         initResource();
         Response response = resource.createLibraryCard(authUser, json);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
     }
 
     @Test
@@ -172,7 +172,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(exception);
         initResource();
         Response response = resource.createLibraryCard(authUser, json);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -183,7 +183,7 @@ public class LibraryCardResourceTest {
         when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(exception);
         initResource();
         Response response = resource.createLibraryCard(authUser, json);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -196,7 +196,7 @@ public class LibraryCardResourceTest {
         initResource();
         Response response = resource.updateLibraryCard(authUser, 1, payload);
         String json = response.getEntity().toString();
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         assertNotNull(json);
     }
 
@@ -209,7 +209,7 @@ public class LibraryCardResourceTest {
                 .thenThrow(new IllegalArgumentException());
         initResource();
         Response response = resource.updateLibraryCard(authUser, 1, payload);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -220,7 +220,7 @@ public class LibraryCardResourceTest {
         String payload = new Gson().toJson(mockLibraryCardSetup());
         initResource();
         Response response = resource.updateLibraryCard(authUser, 1, payload);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -232,7 +232,7 @@ public class LibraryCardResourceTest {
         String payload = new Gson().toJson(mockLibraryCardSetup());
         initResource();
         Response response = resource.updateLibraryCard(authUser, 1, payload);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
     }
 
     @Test
@@ -243,7 +243,7 @@ public class LibraryCardResourceTest {
         initResource();
 
         Response response = resource.deleteLibraryCard(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
     }
 
     @Test
@@ -255,7 +255,7 @@ public class LibraryCardResourceTest {
         initResource();
 
         Response response = resource.deleteLibraryCard(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -270,6 +270,6 @@ public class LibraryCardResourceTest {
 
         initResource();
         Response response = resource.deleteLibraryCard(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 }

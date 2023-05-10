@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -61,14 +62,14 @@ public class StudyDAOTest extends DAOTestHelper {
 
         Study study = studyDAO.findStudyById(id);
 
-        Assertions.assertEquals(id, study.getStudyId());
-        Assertions.assertEquals(name, study.getName());
-        Assertions.assertEquals(description, study.getDescription());
-        Assertions.assertEquals(piName, study.getPiName());
-        Assertions.assertEquals(dataTypes, study.getDataTypes());
-        Assertions.assertEquals(publicVisibility, study.getPublicVisibility());
-        Assertions.assertEquals(u.getUserId(), study.getCreateUserId());
-        Assertions.assertEquals(uuid, study.getUuid());
+        assertEquals(id, study.getStudyId());
+        assertEquals(name, study.getName());
+        assertEquals(description, study.getDescription());
+        assertEquals(piName, study.getPiName());
+        assertEquals(dataTypes, study.getDataTypes());
+        assertEquals(publicVisibility, study.getPublicVisibility());
+        assertEquals(u.getUserId(), study.getCreateUserId());
+        assertEquals(uuid, study.getUuid());
         assertNotNull(u.getCreateDate());
     }
 
@@ -132,17 +133,17 @@ public class StudyDAOTest extends DAOTestHelper {
 
         Study study = studyDAO.findStudyById(id);
 
-        Assertions.assertEquals(study.getProperties().size(), 2);
+        assertEquals(study.getProperties().size(), 2);
 
         study.getProperties().forEach((prop) -> {
             if (prop.getStudyPropertyId().equals(prop1Id)) {
-                Assertions.assertEquals("prop1", prop.getKey());
-                Assertions.assertEquals(PropertyType.String, prop.getType());
-                Assertions.assertEquals("asdf", prop.getValue());
+                assertEquals("prop1", prop.getKey());
+                assertEquals(PropertyType.String, prop.getType());
+                assertEquals("asdf", prop.getValue());
             } else if (prop.getStudyPropertyId().equals(prop2Id)) {
-                Assertions.assertEquals("prop2", prop.getKey());
-                Assertions.assertEquals(PropertyType.Number, prop.getType());
-                Assertions.assertEquals(1, prop.getValue());
+                assertEquals("prop2", prop.getKey());
+                assertEquals(PropertyType.Number, prop.getType());
+                assertEquals(1, prop.getValue());
             } else {
                 Assertions.fail("Unexpected property");
             }
@@ -170,9 +171,9 @@ public class StudyDAOTest extends DAOTestHelper {
 
         Study study = studyDAO.findStudyById(id);
 
-        Assertions.assertEquals(fso.getFileStorageObjectId(),
+        assertEquals(fso.getFileStorageObjectId(),
             study.getAlternativeDataSharingPlan().getFileStorageObjectId());
-        Assertions.assertEquals(fso.getBlobId(), study.getAlternativeDataSharingPlan().getBlobId());
+        assertEquals(fso.getBlobId(), study.getAlternativeDataSharingPlan().getBlobId());
 
     }
 
@@ -201,8 +202,8 @@ public class StudyDAOTest extends DAOTestHelper {
 
         Study found = studyDAO.findStudyById(study.getStudyId());
 
-        Assertions.assertEquals(altFile, found.getAlternativeDataSharingPlan());
-        Assertions.assertEquals(altFile.getBlobId(),
+        assertEquals(altFile, found.getAlternativeDataSharingPlan());
+        assertEquals(altFile.getBlobId(),
             found.getAlternativeDataSharingPlan().getBlobId());
     }
 
@@ -248,7 +249,7 @@ public class StudyDAOTest extends DAOTestHelper {
         Study found = studyDAO.findStudyById(study.getStudyId());
 
         // returns last updated file
-        Assertions.assertEquals(altFileIdCreatedSecond,
+        assertEquals(altFileIdCreatedSecond,
             found.getAlternativeDataSharingPlan().getFileStorageObjectId());
     }
 
@@ -286,7 +287,7 @@ public class StudyDAOTest extends DAOTestHelper {
 
         s = studyDAO.findStudyById(s.getStudyId());
 
-        Assertions.assertEquals(2, s.getDatasetIds().size());
+        assertEquals(2, s.getDatasetIds().size());
         assertTrue(s.getDatasetIds().contains(ds1.getDataSetId()));
         assertTrue(s.getDatasetIds().contains(ds2.getDataSetId()));
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -35,7 +36,7 @@ public class ConsentCasesResourceTest {
         when(summaryService.describeConsentSummaryCases()).thenReturn(new Summary());
         initResource();
         Response response = resource.getConsentSummaryCases(null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         Object summary = response.getEntity();
         assertNotNull(summary);
     }
@@ -44,7 +45,7 @@ public class ConsentCasesResourceTest {
     public void testGetConsentSummaryDetailFileInvalid() {
         initResource();
         Response response = resource.getConsentSummaryDetailFile(UUID.randomUUID().toString(), null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         Object summaryFile = response.getEntity();
         Assertions.assertNull(summaryFile);
     }
@@ -55,7 +56,7 @@ public class ConsentCasesResourceTest {
         when(summaryService.describeConsentSummaryDetail()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.TRANSLATE_DUL.getValue(), null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
         Assertions.assertNull(summaryDetails);
     }
@@ -66,7 +67,7 @@ public class ConsentCasesResourceTest {
         when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(ElectionType.DATA_ACCESS.getValue(), null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
         Assertions.assertNull(summaryDetails);
     }
@@ -77,7 +78,7 @@ public class ConsentCasesResourceTest {
         when(summaryService.listDataAccessRequestSummaryDetails()).thenReturn(details);
         initResource();
         Response response = resource.getConsentSummaryDetailFile(null, null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         Object summaryDetails = response.getEntity();
         Assertions.assertNull(summaryDetails);
     }

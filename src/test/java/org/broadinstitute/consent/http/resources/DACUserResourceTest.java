@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -24,11 +25,11 @@ public class DACUserResourceTest {
         User user = new User(json);
         assertNotNull(user);
         Assertions.assertNull(user.getCreateDate());
-        Assertions.assertEquals(user.getUserId().intValue(), 1);
-        Assertions.assertEquals(user.getEmail(), "email");
-        Assertions.assertEquals(user.getEmailPreference(), false);
+        assertEquals(user.getUserId().intValue(), 1);
+        assertEquals(user.getEmail(), "email");
+        assertEquals(user.getEmailPreference(), false);
         assertFalse(user.getRoles().isEmpty());
-        Assertions.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+        assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
     }
 
     @Test
@@ -38,10 +39,10 @@ public class DACUserResourceTest {
         User user = new User(json);
         assertNotNull(user);
         Assertions.assertNull(user.getCreateDate());
-        Assertions.assertEquals(user.getUserId().intValue(), 1);
-        Assertions.assertEquals(user.getEmail(), "email");
-        Assertions.assertEquals(user.getEmailPreference(), false);
+        assertEquals(user.getUserId().intValue(), 1);
+        assertEquals(user.getEmail(), "email");
+        assertEquals(user.getEmailPreference(), false);
         assertFalse(user.getRoles().isEmpty());
-        Assertions.assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+        assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
     }
 }

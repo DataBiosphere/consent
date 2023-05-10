@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -13,7 +14,6 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -48,7 +48,7 @@ public class NihAccountResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(nihAccount, authUser);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class NihAccountResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(null);
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(nihAccount, authUser);
-        Assertions.assertEquals(500, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -65,7 +65,7 @@ public class NihAccountResourceTest {
         doThrow(new RuntimeException()).when(nihService).authenticateNih(any(), any(), any());
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(nihAccount, authUser);
-        Assertions.assertEquals(500, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class NihAccountResourceTest {
         doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.registerResearcher(null, authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -81,7 +81,7 @@ public class NihAccountResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(user);
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.deleteNihAccount(authUser);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -89,7 +89,7 @@ public class NihAccountResourceTest {
         when(userService.findUserByEmail(any())).thenReturn(null);
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.deleteNihAccount(authUser);
-        Assertions.assertEquals(500, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -98,6 +98,6 @@ public class NihAccountResourceTest {
         doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(any());
         resource = new NihAccountResource(nihService, userService);
         Response response = resource.deleteNihAccount(authUser);
-        Assertions.assertEquals(500, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 }

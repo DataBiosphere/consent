@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,7 +38,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -81,7 +81,7 @@ public class MetricsServiceTest {
         initService();
         List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
         assertFalse(metrics.isEmpty());
-        Assertions.assertEquals(darCount, metrics.size());
+        assertEquals(darCount, metrics.size());
     }
 
     @Test
@@ -111,11 +111,11 @@ public class MetricsServiceTest {
         initService();
         DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-        Assertions.assertEquals(metrics.getDars().get(0).projectTitle,
+        assertEquals(metrics.getDars().get(0).projectTitle,
             dars.get(0).getData().getProjectTitle());
-        Assertions.assertEquals(metrics.getDars().get(0).darCode, collection.getDarCode());
-        Assertions.assertEquals(metrics.getElections(), election);
-        Assertions.assertEquals(metrics.getDataset(), dataset.iterator().next());
+        assertEquals(metrics.getDars().get(0).darCode, collection.getDarCode());
+        assertEquals(metrics.getElections(), election);
+        assertEquals(metrics.getDataset(), dataset.iterator().next());
     }
 
     @Test

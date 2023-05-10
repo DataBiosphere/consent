@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,7 +25,7 @@ public class GsonUtilTest {
 
         JsonObject jsonObject = gson.fromJson(gson.toJson(ds), JsonObject.class);
 
-        Assertions.assertEquals(ds.getDisplayName(), jsonObject.get("displayName").getAsString());
+        assertEquals(ds.getDisplayName(), jsonObject.get("displayName").getAsString());
     }
 
     @Test
@@ -35,11 +36,11 @@ public class GsonUtilTest {
 
         String instantAsJsonString = gson.toJson(instant);
 
-        Assertions.assertEquals(Long.toString(instant.toEpochMilli()), instantAsJsonString);
+        assertEquals(Long.toString(instant.toEpochMilli()), instantAsJsonString);
 
         Instant parsed = gson.fromJson(instantAsJsonString, Instant.class);
 
-        Assertions.assertEquals(instant.truncatedTo(ChronoUnit.MILLIS), parsed);
+        assertEquals(instant.truncatedTo(ChronoUnit.MILLIS), parsed);
     }
 
     @Test
@@ -81,10 +82,10 @@ public class GsonUtilTest {
 
         JsonObject parsedJsonObj = gson.fromJson(objAsJsonString, JsonObject.class);
 
-        Assertions.assertEquals(2, parsedJsonObj.size());
-        Assertions.assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
-        Assertions.assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
-        Assertions.assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
+        assertEquals(2, parsedJsonObj.size());
+        assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
+        assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
+        assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
             parsedJsonObj.get("instant").getAsLong());
 
         assertFalse(parsedJsonObj.has("transientField"));
@@ -104,8 +105,8 @@ public class GsonUtilTest {
 
         GsonTestObject parsedObj = gson.fromJson(json, GsonTestObject.class);
 
-        Assertions.assertEquals(123456, parsedObj.getDate().getTime());
-        Assertions.assertEquals(567890, parsedObj.getInstant().toEpochMilli());
+        assertEquals(123456, parsedObj.getDate().getTime());
+        assertEquals(567890, parsedObj.getInstant().toEpochMilli());
         Assertions.assertNull(parsedObj.getTransientField());
     }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -63,7 +64,7 @@ public class ConsentServiceTest {
 
         Consent consent = service.create(testConsent);
         assertNotNull(consent);
-        Assertions.assertEquals(consent.getName(), testConsent.getName());
+        assertEquals(consent.getName(), testConsent.getName());
     }
 
     @Test
@@ -89,8 +90,8 @@ public class ConsentServiceTest {
 
         Consent consent = service.update("test consent", testConsent);
         assertNotNull(consent);
-        Assertions.assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
-        Assertions.assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
+        assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
+        assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
     }
 
     private DateTimeField getDayOfYear(Timestamp timestamp) {
@@ -112,9 +113,9 @@ public class ConsentServiceTest {
             Assertions.fail(unknownIdentifierException.getMessage());
         }
         assertNotNull(consent);
-        Assertions.assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
-        Assertions.assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
-        Assertions.assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
+        assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
+        assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
+        assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
     }
 
     @Test

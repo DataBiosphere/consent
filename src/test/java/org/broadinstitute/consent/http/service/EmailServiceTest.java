@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -123,7 +124,7 @@ public class EmailServiceTest {
         List<MailMessage> mailMessages = generateMailMessageList();
         initService();
         when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        Assertions.assertEquals(2,
+        assertEquals(2,
             service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
     }
 
@@ -134,7 +135,7 @@ public class EmailServiceTest {
         Date startDate = new Date();
         Date endDate = new Date();
         when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        Assertions.assertEquals(2,
+        assertEquals(2,
             service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
     }
 

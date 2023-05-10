@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -114,12 +115,12 @@ public class SupportRequestServiceTest {
         service.postTicketToSupport(ticket);
 
         HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
-        Assertions.assertEquals(1, requests.length);
+        assertEquals(1, requests.length);
         Object requestBody = requests[0].getBody().getValue();
         String requestBodyNormalizedNewLines = requestBody.toString()
                 .replace("\r\n", "\n")
                 .replace("\r", "\n");
-        Assertions.assertEquals(expectedBody, requestBodyNormalizedNewLines);
+        assertEquals(expectedBody, requestBodyNormalizedNewLines);
     }
 
     @Test

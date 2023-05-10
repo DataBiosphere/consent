@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,7 +26,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
         List<UserRole> roles = userRoleDAO.findRolesByUserId(user.getUserId());
-        Assertions.assertEquals(1, roles.size());
+        assertEquals(1, roles.size());
     }
 
     @Test
@@ -33,7 +34,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
         List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
-        Assertions.assertEquals(1, roles.size());
+        assertEquals(1, roles.size());
     }
 
     @Test
@@ -41,7 +42,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         User user = createUserWithRole(UserRoles.ADMIN.getRoleId());
         user.setEmail(randomizeCase(user.getEmail()));
         List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
-        Assertions.assertEquals(1, roles.size());
+        assertEquals(1, roles.size());
     }
 
     private String randomizeCase(String string) {
@@ -77,7 +78,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         userRoleDAO.insertUserRoles(Collections.singletonList(r), user.getUserId());
         Optional<User> updatedUser = userDAO.findUsersWithRoles(Collections.singletonList(user.getUserId())).stream().findFirst();
         assertTrue(updatedUser.isPresent());
-        Assertions.assertEquals(2, updatedUser.get().getRoles().size());
+        assertEquals(2, updatedUser.get().getRoles().size());
     }
 
     @Test

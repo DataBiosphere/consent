@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -26,7 +27,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -77,7 +77,7 @@ public class SamResourceTest {
         when(samService.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
         initResource();
         Response response = resource.getResourceTypes(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class SamResourceTest {
         when(samService.postRegistrationInfo(any())).thenReturn(status);
         initResource();
         Response response = resource.postRegistrationInfo(authUser, uriInfo);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
 
     @Test
@@ -102,7 +102,7 @@ public class SamResourceTest {
         when(samService.getSelfDiagnostics(any())).thenReturn(diagnostics);
         initResource();
         Response response = resource.getSelfDiagnostics(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class SamResourceTest {
         when(samService.getRegistrationInfo(any())).thenReturn(userInfo);
         initResource();
         Response response = resource.getRegistrationInfo(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -127,7 +127,7 @@ public class SamResourceTest {
         when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
         initResource();
         Response response = resource.postSelfTos(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -142,7 +142,7 @@ public class SamResourceTest {
         initResource();
 
         Response response = resource.postSelfTos(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         verify(userService, times(1)).createUser(any());
     }
 
@@ -158,7 +158,7 @@ public class SamResourceTest {
         initResource();
 
         Response response = resource.postSelfTos(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -172,7 +172,7 @@ public class SamResourceTest {
         initResource();
 
         Response response = resource.postSelfTos(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
         verify(samService, times(1)).postRegistrationInfo(any());
     }
 
@@ -185,7 +185,7 @@ public class SamResourceTest {
         when(samService.removeTosAcceptedStatus(any())).thenReturn(tosResponse);
         initResource();
         Response response = resource.removeTos(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,7 +84,7 @@ public class SamDAOTest implements WithMockServer {
 
         List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
         assertFalse(resourceTypeList.isEmpty());
-        Assertions.assertEquals(mockResponseList.size(), resourceTypeList.size());
+        assertEquals(mockResponseList.size(), resourceTypeList.size());
     }
 
     @Test
@@ -101,9 +102,9 @@ public class SamDAOTest implements WithMockServer {
 
         UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
         assertNotNull(authUserUserInfo);
-        Assertions.assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
-        Assertions.assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
-        Assertions.assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
+        assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
+        assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
+        assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
     }
 
     @Test
@@ -188,10 +189,10 @@ public class SamDAOTest implements WithMockServer {
 
         UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
         assertNotNull(userDiagnostics);
-        Assertions.assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
-        Assertions.assertEquals(diagnostics.getInAllUsersGroup(),
+        assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
+        assertEquals(diagnostics.getInAllUsersGroup(),
             userDiagnostics.getInAllUsersGroup());
-        Assertions.assertEquals(diagnostics.getInGoogleProxyGroup(),
+        assertEquals(diagnostics.getInGoogleProxyGroup(),
             userDiagnostics.getInGoogleProxyGroup());
     }
 
@@ -245,7 +246,7 @@ public class SamDAOTest implements WithMockServer {
 
         try {
             String text = samDAO.getToSText();
-            Assertions.assertEquals(mockText, text);
+            assertEquals(mockText, text);
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
         }

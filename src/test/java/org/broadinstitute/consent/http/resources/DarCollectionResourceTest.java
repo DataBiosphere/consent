@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -35,7 +36,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -93,7 +93,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionsForResearcher(authUser);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -107,7 +107,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionsForUserByRole(authUser, UserRoles.ADMIN.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -122,7 +122,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionsForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionsForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -151,7 +151,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -164,7 +164,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -180,7 +180,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -196,7 +196,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -212,7 +212,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -227,7 +227,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -242,7 +242,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -265,7 +265,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -288,7 +288,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -311,7 +311,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -334,7 +334,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
 
@@ -347,7 +347,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionByReferenceId(authUser, "1");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -359,7 +359,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionByReferenceId(authUser, "1");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -371,7 +371,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionByReferenceId(authUser, "1");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -383,7 +383,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -396,7 +396,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -408,7 +408,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.queryCollectionsByFiltersAndUserRoles(authUser, "researcher", "DESC", "filterTerm", "projectTitle", 10);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -422,7 +422,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, null);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
 
     @Test
@@ -437,7 +437,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -452,7 +452,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.CHAIRPERSON);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -467,7 +467,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -479,7 +479,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.RESEARCHER);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -491,7 +491,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.cancelDarCollectionByCollectionId(authUser, 1, Resource.ADMIN);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -499,7 +499,7 @@ public class DarCollectionResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(researcher);
         initResource();
         Response response = resource.getCollectionsByToken(authUser, "badTokenString", "researcher");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -507,7 +507,7 @@ public class DarCollectionResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(researcher);
         initResource();
         Response response = resource.getCollectionsByToken(authUser, null, "researcher");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -515,7 +515,7 @@ public class DarCollectionResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(researcher);
         initResource();
         Response response = resource.getCollectionsByToken(authUser, "", "researcher");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -528,7 +528,7 @@ public class DarCollectionResourceTest {
 
         String token = "eyJwYWdlIjoyLCJwYWdlU2l6ZSI6MSwic29ydEZpZWxkIjoiZGFyX2NvZGUiLCJzb3J0RGlyZWN0aW9uIjoiREVTQyIsImZpbHRlcmVkQ291bnQiOjQsImZpbHRlcmVkUGFnZUNvdW50Ijo0LCJ1bmZpbHRlcmVkQ291bnQiOjQsImFjY2VwdGFibGVTb3J0RmllbGRzIjp7InByb2plY3RUaXRsZSI6InByb2plY3RUaXRsZSIsInJlc2VhcmNoZXIiOiJyZXNlYXJjaGVyIiwiaW5zdGl0dXRpb24iOiJpbnN0aXR1dGlvbl9uYW1lIiwiZGFyQ29kZSI6ImRhcl9jb2RlIn19";
         Response response = resource.getCollectionsByToken(authUser, token, "researcher");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -539,7 +539,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.resubmitDarCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -550,7 +550,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.resubmitDarCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -573,7 +573,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.resubmitDarCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -597,7 +597,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.resubmitDarCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -609,7 +609,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.createElectionsForCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -620,7 +620,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.createElectionsForCollection(authUser, 1);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -635,7 +635,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.MEMBER.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -650,7 +650,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.CHAIRPERSON.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -665,7 +665,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -680,7 +680,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.RESEARCHER.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -695,7 +695,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.ADMIN.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -708,7 +708,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -721,7 +721,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummariesForUserByRole(authUser, "invalid");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
 
@@ -742,7 +742,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.MEMBER.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -762,7 +762,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.MEMBER.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -782,7 +782,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -802,7 +802,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -823,7 +823,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -843,7 +843,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -864,7 +864,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -884,7 +884,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -901,7 +901,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.ADMIN.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -916,7 +916,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -931,7 +931,7 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, "invalid", collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -947,6 +947,6 @@ public class DarCollectionResourceTest {
         initResource();
 
         Response response = resource.getCollectionSummaryForRoleById(authUser, UserRoles.RESEARCHER.getRoleName(), collectionId);
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 }

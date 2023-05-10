@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
@@ -103,7 +104,7 @@ public class HttpClientUtilTest implements WithMockServer {
                 .respond(response()
                         .withStatusCode(200));
         SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -17,7 +19,6 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.service.EmailService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
@@ -40,7 +41,7 @@ public class MailResourceTest {
         when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(
                 generateMailMessageList());
         Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -48,7 +49,7 @@ public class MailResourceTest {
         initResource();
         when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(new ArrayList<>());
         Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -58,7 +59,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
                 null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -68,7 +69,7 @@ public class MailResourceTest {
                 generateMailMessageList());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
                 null);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -102,7 +103,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "55/11/2021", "05/11/2022", null,
                 null);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -112,7 +113,7 @@ public class MailResourceTest {
                 new ArrayList<>());
         Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "65/98/20229",
                 null, null);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     private List<MailMessage> generateMailMessageList() {

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +39,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -265,7 +265,7 @@ public class ElectionServiceTest {
         initService();
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
     @Test
@@ -277,7 +277,7 @@ public class ElectionServiceTest {
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -290,7 +290,7 @@ public class ElectionServiceTest {
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -303,7 +303,7 @@ public class ElectionServiceTest {
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(1)).archiveElectionById(any(), any());
     }
 
@@ -316,7 +316,7 @@ public class ElectionServiceTest {
 
         Election election = service.updateElectionById(sampleElection1, sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
         verify(electionDAO, times(0)).archiveElectionById(any(), any());
     }
 
@@ -349,7 +349,7 @@ public class ElectionServiceTest {
 
         Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
         assertNotNull(election);
-        Assertions.assertEquals(sampleElection1.getElectionId(), election.getElectionId());
+        assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
     @Test
@@ -469,7 +469,7 @@ public class ElectionServiceTest {
         initService();
         List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1, 2), "test");
         assertNotNull(elections);
-        Assertions.assertEquals(1, elections.size());
+        assertEquals(1, elections.size());
     }
 
     @Test
@@ -480,7 +480,7 @@ public class ElectionServiceTest {
         initService();
         List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
         assertNotNull(elections);
-        Assertions.assertEquals(1, elections.size());
+        assertEquals(1, elections.size());
     }
 
 }

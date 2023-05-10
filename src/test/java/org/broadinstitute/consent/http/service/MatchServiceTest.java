@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -129,7 +130,7 @@ public class MatchServiceTest {
 
         List<Match> matches = service.findMatchByConsentId(m.getConsent());
         assertNotNull(matches);
-        Assertions.assertEquals(1, matches.size());
+        assertEquals(1, matches.size());
         verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
     }
 
@@ -360,8 +361,8 @@ public class MatchServiceTest {
         spy(matchDAO);
         initService();
         List<Match> matches = service.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of("test"));
-        Assertions.assertEquals(1, matches.size());
-        Assertions.assertEquals(m.getId(), matches.get(0).getId());
+        assertEquals(1, matches.size());
+        assertEquals(m.getId(), matches.get(0).getId());
         verify(matchDAO, atLeastOnce()).findMatchesForLatestDataAccessElectionsByPurposeIds(anyList());
     }
 

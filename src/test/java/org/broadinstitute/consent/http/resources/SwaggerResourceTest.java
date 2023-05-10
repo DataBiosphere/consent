@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -10,7 +11,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -54,17 +54,17 @@ public class SwaggerResourceTest {
     @Test
     public void testNotFound() {
         Response response = swaggerResource.content("foo/bar.txt");
-        Assertions.assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
     public void testImageNotFound() {
         Response response = swaggerResource.content("foo/bar.png");
-        Assertions.assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     private boolean checkStatusAndHeader(Response response, String header) {
-        Assertions.assertEquals(response.getStatus(), Status.OK.getStatusCode());
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
         String headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
         return headerObject.contains(header);
     }

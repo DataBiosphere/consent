@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,7 +13,6 @@ import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -43,7 +43,7 @@ public class MetricsResourceTest {
         when(service.getHeaderRow(Type.DAR)).thenReturn(darHeader);
         initResource();
         Response response = resource.getDarMetricsData();
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertFalse(response.getEntity().toString().isEmpty());
         assertTrue(
             response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
@@ -55,7 +55,7 @@ public class MetricsResourceTest {
         when(service.getHeaderRow(Type.DAC)).thenReturn(dacHeader);
         initResource();
         Response response = resource.getDacMetricsData();
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertFalse(response.getEntity().toString().isEmpty());
         String headerRow = service.getHeaderRow(Type.DAC);
         assertTrue(response.getEntity().toString().contains(headerRow));
@@ -67,7 +67,7 @@ public class MetricsResourceTest {
         when(service.generateDatasetMetrics(any())).thenReturn(metrics);
         initResource();
         Response response = resource.getDatasetMetricsData(1);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertFalse(response.getEntity().toString().isEmpty());
     }
 
@@ -76,6 +76,6 @@ public class MetricsResourceTest {
         when(service.generateDatasetMetrics(any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.getDatasetMetricsData(1);
-        Assertions.assertEquals(404, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 }

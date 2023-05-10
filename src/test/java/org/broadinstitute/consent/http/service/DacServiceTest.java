@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -104,14 +105,14 @@ public class DacServiceTest {
 
         List<Dac> dacs = service.findAllDacsWithMembers();
         assertFalse(dacs.isEmpty());
-        Assertions.assertEquals(dacs.size(), getDacs().size());
+        assertEquals(dacs.size(), getDacs().size());
         List<Dac> dacsWithMembers = dacs.
                 stream().
                 filter(d -> !d.getChairpersons().isEmpty()).
                 filter(d -> !d.getMembers().isEmpty()).
                 toList();
         assertFalse(dacsWithMembers.isEmpty());
-        Assertions.assertEquals(1, dacsWithMembers.size());
+        assertEquals(1, dacsWithMembers.size());
     }
 
     @Test
@@ -134,7 +135,7 @@ public class DacServiceTest {
         initService();
 
         Integer dacId = service.createDac("name", "description");
-        Assertions.assertEquals(getDacs().get(0).getDacId(), dacId);
+        assertEquals(getDacs().get(0).getDacId(), dacId);
     }
 
     @Test
@@ -143,7 +144,7 @@ public class DacServiceTest {
         initService();
 
         Integer dacId = service.createDac("name", "description", "email@test.com");
-        Assertions.assertEquals(getDacs().get(0).getDacId(), dacId);
+        assertEquals(getDacs().get(0).getDacId(), dacId);
     }
 
     @Test
@@ -192,7 +193,7 @@ public class DacServiceTest {
 
         List<Dataset> returned = service.findDatasetsByDacId(1);
         assertNotNull(returned);
-        Assertions.assertEquals(datasets, returned);
+        assertEquals(datasets, returned);
     }
 
     @Test
@@ -342,7 +343,7 @@ public class DacServiceTest {
 
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, user);
         // As an admin, all docs should be returned.
-        Assertions.assertEquals(dars.size(), filtered.size());
+        assertEquals(dars.size(), filtered.size());
     }
 
     @Test
@@ -358,7 +359,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to:
-        Assertions.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -374,7 +375,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
-        Assertions.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -390,7 +391,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should contain the ones the user has direct access to
-        Assertions.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -403,7 +404,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As an admin, all consents should be returned.
-        Assertions.assertEquals(elections.size(), filtered.size());
+        assertEquals(elections.size(), filtered.size());
     }
 
     @Test
@@ -422,7 +423,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As a member, only direct-associated consents should be returned.
-        Assertions.assertEquals(memberDatasets.size(), filtered.size());
+        assertEquals(memberDatasets.size(), filtered.size());
     }
 
     @Test
@@ -450,7 +451,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
         // As a member, both direct-associated and unassociated elections should be returned.
-        Assertions.assertEquals(memberDatasets.size() + unassociatedElections.size(),
+        assertEquals(memberDatasets.size() + unassociatedElections.size(),
             filtered.size());
     }
 
@@ -477,7 +478,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
         // As a member, both direct-associated and unassociated elections should be returned.
-        Assertions.assertEquals(unassociatedElections.size(), filtered.size());
+        assertEquals(unassociatedElections.size(), filtered.size());
     }
 
     @Test
@@ -490,7 +491,7 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
-        Assertions.assertEquals(dacsForUser.size(), dacs.size());
+        assertEquals(dacsForUser.size(), dacs.size());
     }
 
     @Test
@@ -503,7 +504,7 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
-        Assertions.assertEquals(dacsForUser.size(), dacs.size());
+        assertEquals(dacsForUser.size(), dacs.size());
     }
 
 

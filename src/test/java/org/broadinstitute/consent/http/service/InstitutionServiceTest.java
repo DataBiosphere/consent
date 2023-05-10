@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -161,8 +162,8 @@ public class InstitutionServiceTest {
         initService();
 
         Institution institution = service.findInstitutionById(anyInt());
-        Assertions.assertEquals(getInstitutions().get(0), institution);
-        Assertions.assertEquals(Collections.emptyList(), institution.getSigningOfficials());
+        assertEquals(getInstitutions().get(0), institution);
+        assertEquals(Collections.emptyList(), institution.getSigningOfficials());
     }
 
     @Test
@@ -180,11 +181,11 @@ public class InstitutionServiceTest {
 
         Institution institution = service.findInstitutionById(anyInt());
         List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
-        Assertions.assertEquals(getInstitutions().get(0), institution);
-        Assertions.assertEquals(1, signingOfficials.size());
-        Assertions.assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
-        Assertions.assertEquals(u.getEmail(), signingOfficials.get(0).email);
-        Assertions.assertEquals(u.getUserId(), signingOfficials.get(0).userId);
+        assertEquals(getInstitutions().get(0), institution);
+        assertEquals(1, signingOfficials.size());
+        assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
+        assertEquals(u.getEmail(), signingOfficials.get(0).email);
+        assertEquals(u.getUserId(), signingOfficials.get(0).userId);
     }
 
     @Test

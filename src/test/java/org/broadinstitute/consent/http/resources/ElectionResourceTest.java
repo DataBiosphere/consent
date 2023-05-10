@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -18,7 +19,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -56,7 +56,7 @@ public class ElectionResourceTest {
     public void testAdvanceElection() {
         String referenceId = UUID.randomUUID().toString();
         Response response = electionResource.advanceElection(referenceId, "Yes");
-        Assertions.assertEquals(OK, response.getStatus());
+        assertEquals(OK, response.getStatus());
     }
 
     @Test
@@ -65,13 +65,13 @@ public class ElectionResourceTest {
         electionResource = new ElectionResource(voteService, electionService);
         String referenceId = UUID.randomUUID().toString();
         Response response = electionResource.advanceElection(referenceId, "Yes");
-        Assertions.assertEquals(NOT_FOUND, response.getStatus());
+        assertEquals(NOT_FOUND, response.getStatus());
     }
 
     @Test
     public void testUpdateElection() {
         Response response = electionResource.updateElection(new Election(), randomInt());
-        Assertions.assertEquals(OK, response.getStatus());
+        assertEquals(OK, response.getStatus());
     }
 
     @Test
@@ -79,13 +79,13 @@ public class ElectionResourceTest {
         when(electionService.updateElectionById(any(), anyInt())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
         Response response = electionResource.updateElection(new Election(), randomInt());
-        Assertions.assertEquals(NOT_FOUND, response.getStatus());
+        assertEquals(NOT_FOUND, response.getStatus());
     }
 
     @Test
     public void testDescribeElectionById() {
         Response response = electionResource.describeElectionById(randomInt());
-        Assertions.assertEquals(OK, response.getStatus());
+        assertEquals(OK, response.getStatus());
     }
 
     @Test
@@ -93,13 +93,13 @@ public class ElectionResourceTest {
         when(electionService.describeElectionById(anyInt())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
         Response response = electionResource.describeElectionById(randomInt());
-        Assertions.assertEquals(NOT_FOUND, response.getStatus());
+        assertEquals(NOT_FOUND, response.getStatus());
     }
 
     @Test
     public void testDescribeElectionByVoteId() {
         Response response = electionResource.describeElectionByVoteId(randomInt());
-        Assertions.assertEquals(OK, response.getStatus());
+        assertEquals(OK, response.getStatus());
     }
 
     @Test
@@ -107,13 +107,13 @@ public class ElectionResourceTest {
         when(electionService.describeElectionByVoteId(anyInt())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
         Response response = electionResource.describeElectionByVoteId(randomInt());
-        Assertions.assertEquals(NOT_FOUND, response.getStatus());
+        assertEquals(NOT_FOUND, response.getStatus());
     }
 
     @Test
     public void testDescribeVotesOnElection() {
         Response response = electionResource.describeVotesOnElection(authUser, randomInt());
-        Assertions.assertEquals(OK, response.getStatus());
+        assertEquals(OK, response.getStatus());
     }
 
     @Test
@@ -121,7 +121,7 @@ public class ElectionResourceTest {
         when(voteService.findVotesByElectionId(any())).thenThrow(new NotFoundException());
         electionResource = new ElectionResource(voteService, electionService);
         Response response = electionResource.describeVotesOnElection(authUser, any());
-        Assertions.assertEquals(NOT_FOUND, response.getStatus());
+        assertEquals(NOT_FOUND, response.getStatus());
     }
 
     private static int randomInt() {

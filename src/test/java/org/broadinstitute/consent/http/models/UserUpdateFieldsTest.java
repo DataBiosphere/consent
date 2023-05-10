@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -7,7 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class UserUpdateFieldsTest {
@@ -31,7 +31,7 @@ public class UserUpdateFieldsTest {
         fields.setUserRoleIds(ALL_ROLE_IDS);
         // If the user has no role ids, then roles to add = all non-ignorable roles
         List<Integer> roleIdsToAdd = fields.getRoleIdsToAdd(List.of());
-        Assertions.assertEquals(NON_IGNORABLE_ROLES, roleIdsToAdd);
+        assertEquals(NON_IGNORABLE_ROLES, roleIdsToAdd);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.sql.Timestamp;
@@ -14,7 +15,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,14 +63,14 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         Timestamp oldTimestamp = new Timestamp(old.getTime());
         assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
         assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
-        Assertions.assertEquals(newDatasetIds, updatedDar.getDatasetIds());
+        assertEquals(newDatasetIds, updatedDar.getDatasetIds());
         DataAccessRequestData updatedData = updatedDar.getData();
-        Assertions.assertEquals(data.getOtherText(), updatedData.getOtherText());
+        assertEquals(data.getOtherText(), updatedData.getOtherText());
 
         DarCollection targetCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-        Assertions.assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
+        assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
 
         // collection should have the same update date as the updated dar
-        Assertions.assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
+        assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
     }
 }

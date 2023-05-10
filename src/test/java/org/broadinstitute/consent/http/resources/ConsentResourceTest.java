@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -19,7 +20,6 @@ import org.broadinstitute.consent.http.service.AuditService;
 import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -70,7 +70,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.createConsent(info, consent, user);
-        Assertions.assertEquals(201, response.getStatus());
+        assertEquals(201, response.getStatus());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.update(consent.getConsentId(), consent, user);
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.delete(UUID.randomUUID().toString());
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.createConsent(info, consent, user);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.update(consent.getConsentId(), consent, user);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -147,7 +147,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.createConsent(info, consent, user);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -163,7 +163,7 @@ public class ConsentResourceTest {
         initResource();
 
         Response response = resource.update(consent.getConsentId(), consent, user);
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -69,17 +70,17 @@ public class AcknowledgementServiceTest {
         initService();
 
         Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys, user);
-        Assertions.assertEquals(1, makeResponse.size());
+        assertEquals(1, makeResponse.size());
         assertTrue(makeResponse.containsKey(key));
-        Assertions.assertEquals(key2Acknowledgement, makeResponse.get(key));
+        assertEquals(key2Acknowledgement, makeResponse.get(key));
 
         Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(user);
-        Assertions.assertEquals(1, lookupResponse.size());
+        assertEquals(1, lookupResponse.size());
         assertTrue(lookupResponse.containsKey(key));
-        Assertions.assertEquals(key2Acknowledgement, lookupResponse.get(key));
+        assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
         Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(user, key);
-        Assertions.assertEquals(singleLookupResponse, key2Acknowledgement);
+        assertEquals(singleLookupResponse, key2Acknowledgement);
 
         acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,7 +33,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Collection<String> ids = consents.stream().map(Consent::getConsentId).toList();
         assertNotNull(consents);
         assertFalse(consents.isEmpty());
-        Assertions.assertEquals(2, consents.size());
+        assertEquals(2, consents.size());
         assertTrue(ids.contains(consent1.getConsentId()));
         assertTrue(ids.contains(consent2.getConsentId()));
     }
@@ -42,7 +43,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         String consentId = consentDAO.checkConsentById(consent.getConsentId());
-        Assertions.assertEquals(consent.getConsentId(), consentId);
+        assertEquals(consent.getConsentId(), consentId);
     }
 
     @Test
@@ -50,7 +51,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         String consentId = consentDAO.getIdByName(consent.getName());
-        Assertions.assertEquals(consent.getConsentId(), consentId);
+        assertEquals(consent.getConsentId(), consentId);
     }
 
     @Test
@@ -58,7 +59,7 @@ public class ConsentDAOTest extends DAOTestHelper {
         Consent consent = createConsent();
 
         Consent foundConsent = consentDAO.findConsentByName(consent.getName());
-        Assertions.assertEquals(consent.getConsentId(), foundConsent.getConsentId());
+        assertEquals(consent.getConsentId(), foundConsent.getConsentId());
     }
 
 
@@ -103,7 +104,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
         Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
         assertNotNull(foundConsent.getName());
-        Assertions.assertEquals("something else", foundConsent.getName());
+        assertEquals("something else", foundConsent.getName());
     }
 
     @Test

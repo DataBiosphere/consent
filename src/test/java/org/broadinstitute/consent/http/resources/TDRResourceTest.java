@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -77,8 +78,8 @@ public class TDRResourceTest {
 
         Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
 
-        Assertions.assertEquals(200, r.getStatus());
-        Assertions.assertEquals(approvedUsers, r.getEntity());
+        assertEquals(200, r.getStatus());
+        assertEquals(approvedUsers, r.getEntity());
     }
 
     @Test
@@ -89,7 +90,7 @@ public class TDRResourceTest {
 
         Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
 
-        Assertions.assertEquals(404, r.getStatus());
+        assertEquals(404, r.getStatus());
     }
 
     @Test
@@ -105,8 +106,8 @@ public class TDRResourceTest {
 
         Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
 
-        Assertions.assertEquals(200, r.getStatus());
-        Assertions.assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
+        assertEquals(200, r.getStatus());
+        assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
     }
 
 
@@ -118,7 +119,7 @@ public class TDRResourceTest {
 
         Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
 
-        Assertions.assertEquals(404, r.getStatus());
+        assertEquals(404, r.getStatus());
     }
 
     // Created response when a new DAR draft is successful
@@ -150,8 +151,8 @@ public class TDRResourceTest {
         String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
 
         Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-        Assertions.assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
-        Assertions.assertEquals(r.getLocation().toString(), expectedUri);
+        assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
+        assertEquals(r.getLocation().toString(), expectedUri);
     }
 
     // Bad Request response (400) when no identifiers are provided
@@ -162,7 +163,7 @@ public class TDRResourceTest {
         initResource();
 
         Response r = resource.createDraftDataAccessRequest(authUser, null, null);
-        Assertions.assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
     }
 
     // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
@@ -189,9 +190,9 @@ public class TDRResourceTest {
         initResource();
 
         Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-        Assertions.assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
+        assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
         Error notFoundError = (Error) r.getEntity();
-        Assertions.assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
+        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
             notFoundError.message());
     }
 

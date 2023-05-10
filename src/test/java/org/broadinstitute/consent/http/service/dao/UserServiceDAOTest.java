@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -35,8 +36,8 @@ public class UserServiceDAOTest extends DAOTestHelper {
         UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
         serviceDAO.insertRoleAndInstitutionTxn(userRole, institution.getId(), testUser.getUserId());
         User fetchedUser = userDAO.findUserById(testUser.getUserId());
-        Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-        Assertions.assertEquals(fetchedUser.getInstitutionId(), institution.getId());
+        assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+        assertEquals(fetchedUser.getInstitutionId(), institution.getId());
     }
 
     @Test
@@ -58,9 +59,9 @@ public class UserServiceDAOTest extends DAOTestHelper {
             });
         } catch (Exception e) {
             User fetchedUser = userDAO.findUserById(testUser.getUserId());
-            Assertions.assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-            Assertions.assertEquals(1, fetchedUser.getRoles().size());
-            Assertions.assertEquals(UserRoles.RESEARCHER.getRoleId(),
+            assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+            assertEquals(1, fetchedUser.getRoles().size());
+            assertEquals(UserRoles.RESEARCHER.getRoleId(),
                 fetchedUser.getRoles().get(0).getRoleId());
             Assertions.assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
             assertTrue(Optional.ofNullable(fetchedUser.getInstitutionId()).isEmpty());

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +24,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -296,10 +296,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
         // Ensure that we have the right number of access and rp elections, i.e. 1 each
         assertFalse(createdElections.isEmpty());
-        Assertions.assertEquals(2, createdElections.size());
-        Assertions.assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+        assertEquals(2, createdElections.size());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
             ElectionType.DATA_ACCESS.getValue())).count());
-        Assertions.assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
             ElectionType.RP.getValue())).count());
 
         // Check that the canceled elections are archived
@@ -358,10 +358,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
         // Ensure that we have the right number of access and rp elections, i.e. 1 each
         assertFalse(createdElections.isEmpty());
-        Assertions.assertEquals(2, createdElections.size());
-        Assertions.assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+        assertEquals(2, createdElections.size());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
             ElectionType.DATA_ACCESS.getValue())).count());
-        Assertions.assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
             ElectionType.RP.getValue())).count());
 
         // Make sure we did not create elections for the DAR/Dataset that the chair does not have access to.

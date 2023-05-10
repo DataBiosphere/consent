@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -19,7 +20,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -74,37 +74,37 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assertions.assertEquals(12, columns.length);
+            assertEquals(12, columns.length);
             if (i == 0) {
-                Assertions.assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
-                Assertions.assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
-                Assertions.assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
-                Assertions.assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
-                Assertions.assertEquals(columns[4], HeaderDAR.DATA_REQUESTER_NAME.getValue());
-                Assertions.assertEquals(columns[5], HeaderDAR.ORGANIZATION.getValue());
-                Assertions.assertEquals(columns[6], HeaderDAR.CODED_VERSION_SDUL.getValue());
-                Assertions.assertEquals(columns[7], HeaderDAR.CODED_VERSION_DAR.getValue());
-                Assertions.assertEquals(columns[8], HeaderDAR.RESEARCH_PURPOSE.getValue());
-                Assertions.assertEquals(columns[9], HeaderDAR.DATE_REQUEST_SUBMISSION.getValue());
-                Assertions.assertEquals(columns[10], HeaderDAR.DATE_REQUEST_APPROVAL.getValue());
-                Assertions.assertEquals(columns[11],
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.DATA_REQUESTER_NAME.getValue());
+                assertEquals(columns[5], HeaderDAR.ORGANIZATION.getValue());
+                assertEquals(columns[6], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[7], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[8], HeaderDAR.RESEARCH_PURPOSE.getValue());
+                assertEquals(columns[9], HeaderDAR.DATE_REQUEST_SUBMISSION.getValue());
+                assertEquals(columns[10], HeaderDAR.DATE_REQUEST_APPROVAL.getValue());
+                assertEquals(columns[11],
                     HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
             }
             if (i == 1) {
-                Assertions.assertEquals(DAR_CODE, columns[0]);
-                Assertions.assertEquals(NAME, columns[1]);
-                Assertions.assertEquals(DS_IDENTIFIER, columns[2]);
-                Assertions.assertEquals(CONSENT_NAME, columns[3]);
-                Assertions.assertEquals(REQUESTER, columns[4]);
-                Assertions.assertEquals(ORGANIZATION, columns[5]);
-                Assertions.assertEquals(columns[6], sDUL.replace("\n", " "));
-                Assertions.assertEquals(columns[7],
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(REQUESTER, columns[4]);
+                assertEquals(ORGANIZATION, columns[5]);
+                assertEquals(columns[6], sDUL.replace("\n", " "));
+                assertEquals(columns[7],
                     TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
-                Assertions.assertEquals(RUS_SUMMARY, columns[8]);
+                assertEquals(RUS_SUMMARY, columns[8]);
             }
             i++;
         }
-        Assertions.assertEquals(2, i);
+        assertEquals(2, i);
     }
 
     @Test
@@ -123,31 +123,31 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assertions.assertEquals(8, columns.length);
+            assertEquals(8, columns.length);
             if (i == 0) {
-                Assertions.assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
-                Assertions.assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
-                Assertions.assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
-                Assertions.assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
-                Assertions.assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
-                Assertions.assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-                Assertions.assertEquals(columns[6],
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[6],
                     HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
-                Assertions.assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
+                assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
             }
             if (i == 1) {
-                Assertions.assertEquals(DAR_CODE, columns[0]);
-                Assertions.assertEquals(NAME, columns[1]);
-                Assertions.assertEquals(DS_IDENTIFIER, columns[2]);
-                Assertions.assertEquals(CONSENT_NAME, columns[3]);
-                Assertions.assertEquals(columns[4], sDUL.replace("\n", " "));
-                Assertions.assertEquals(columns[5],
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(columns[4], sDUL.replace("\n", " "));
+                assertEquals(columns[5],
                     TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
-                Assertions.assertEquals("Yes", columns[7]);
+                assertEquals("Yes", columns[7]);
             }
             i++;
         }
-        Assertions.assertEquals(2, i);
+        assertEquals(2, i);
     }
 
     @Test
@@ -167,31 +167,31 @@ public class DataAccessReportsParserTest {
         while (iterator.hasNext()) {
             String line = iterator.next();
             String[] columns = line.split("\t");
-            Assertions.assertEquals(8, columns.length);
+            assertEquals(8, columns.length);
             if (i == 0) {
-                Assertions.assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
-                Assertions.assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
-                Assertions.assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
-                Assertions.assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
-                Assertions.assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
-                Assertions.assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-                Assertions.assertEquals(columns[6],
+                assertEquals(columns[0], HeaderDAR.DAR_ID.getValue());
+                assertEquals(columns[1], HeaderDAR.DATASET_NAME.getValue());
+                assertEquals(columns[2], HeaderDAR.DATASET_ID.getValue());
+                assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
+                assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
+                assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
+                assertEquals(columns[6],
                     HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
-                Assertions.assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
+                assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
             }
             if (i == 1) {
-                Assertions.assertEquals(DAR_CODE, columns[0]);
-                Assertions.assertEquals(NAME, columns[1]);
-                Assertions.assertEquals(DS_IDENTIFIER, columns[2]);
-                Assertions.assertEquals(CONSENT_NAME, columns[3]);
-                Assertions.assertEquals(columns[4], sDUL.replace("\n", " "));
-                Assertions.assertEquals(columns[5],
+                assertEquals(DAR_CODE, columns[0]);
+                assertEquals(NAME, columns[1]);
+                assertEquals(DS_IDENTIFIER, columns[2]);
+                assertEquals(CONSENT_NAME, columns[3]);
+                assertEquals(columns[4], sDUL.replace("\n", " "));
+                assertEquals(columns[5],
                     TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
-                Assertions.assertEquals("Yes", columns[7]);
+                assertEquals("Yes", columns[7]);
             }
             i++;
         }
-        Assertions.assertEquals(2, i);
+        assertEquals(2, i);
     }
 
     private Election createElection(Date currentDate) {

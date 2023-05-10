@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,7 +38,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         createDraftDataAccessRequest();
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDataAccessRequests();
         assertFalse(newDars.isEmpty());
-        Assertions.assertEquals(collection.getDars().size(), newDars.size());
+        assertEquals(collection.getDars().size(), newDars.size());
     }
 
     @Test
@@ -53,7 +54,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.insertDARDatasetRelation(draft.getReferenceId(), d2.getDataSetId());
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(newDars.isEmpty());
-        Assertions.assertEquals(1, newDars.size());
+        assertEquals(1, newDars.size());
         assertTrue(newDars.get(0).getDraft());
     }
 
@@ -67,7 +68,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftsByUserId(dar.getUserId());
         assertFalse(newDars.isEmpty());
-        Assertions.assertEquals(1, newDars.size());
+        assertEquals(1, newDars.size());
 
         List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(0);
         assertTrue(missingDars.isEmpty());
@@ -80,8 +81,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDarsByUserId(dar.getUserId());
         assertFalse(newDars.isEmpty());
-        Assertions.assertEquals(collection.getDars().size(), newDars.size());
-        Assertions.assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
+        assertEquals(collection.getDars().size(), newDars.size());
+        assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
 
         List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
         assertTrue(missingDars.isEmpty());
@@ -93,7 +94,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(draftDars1.isEmpty());
-        Assertions.assertEquals(1, draftDars1.size());
+        assertEquals(1, draftDars1.size());
 
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
@@ -110,7 +111,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
         List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
         assertFalse(draftDars2.isEmpty());
-        Assertions.assertEquals(1, draftDars2.size());
+        assertEquals(1, draftDars2.size());
     }
 
 
@@ -121,10 +122,10 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
         dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertEquals(true, dar.getDraft());
+        assertEquals(true, dar.getDraft());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, false);
         dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertEquals(false, dar.getDraft());
+        assertEquals(false, dar.getDraft());
     }
 
     @Test
@@ -133,10 +134,10 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
 
         dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertEquals(false, dar.getDraft());
+        assertEquals(false, dar.getDraft());
         dataAccessRequestDAO.updateDraftByReferenceId(dar.referenceId, true);
         dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertEquals(true, dar.getDraft());
+        assertEquals(true, dar.getDraft());
     }
 
     @Test
@@ -166,7 +167,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(referenceIds);
         assertNotNull(dars);
         assertFalse(dars.isEmpty());
-        Assertions.assertEquals(3, dars.size());
+        assertEquals(3, dars.size());
     }
 
     @Test
@@ -179,7 +180,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dar.getData().setValidRestriction(false);
         dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), user.getUserId(), now, now, now, dar.getData());
         DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-        Assertions.assertEquals(rus, updatedDar.getData().getRus());
+        assertEquals(rus, updatedDar.getData().getRus());
         assertFalse(updatedDar.getData().getValidRestriction());
     }
 
@@ -201,7 +202,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest dar = createDataAccessRequestV3();
         DataAccessRequest returned = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         assertNotNull(returned);
-        Assertions.assertEquals(dar.getId(), returned.getId());
+        assertEquals(dar.getId(), returned.getId());
         dataAccessRequestDAO.deleteByCollectionId(dar.getCollectionId());
         DataAccessRequest returnedAfter = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
         Assertions.assertNull(returnedAfter);
@@ -222,21 +223,21 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         DataAccessRequest updatedDar1 = dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId());
         DataAccessRequest updatedDar2 = dataAccessRequestDAO.findByReferenceId(dar2.getReferenceId());
 
-        Assertions.assertEquals(dar1.getReferenceId(), updatedDar1.getReferenceId());
-        Assertions.assertEquals(dar2.getReferenceId(), updatedDar2.getReferenceId());
+        assertEquals(dar1.getReferenceId(), updatedDar1.getReferenceId());
+        assertEquals(dar2.getReferenceId(), updatedDar2.getReferenceId());
 
-        Assertions.assertEquals("Canceled", updatedDar1.getData().getStatus());
-        Assertions.assertEquals("Canceled", updatedDar2.getData().getStatus());
+        assertEquals("Canceled", updatedDar1.getData().getStatus());
+        assertEquals("Canceled", updatedDar2.getData().getStatus());
 
         assertNotNull(updatedDar1.getData().getHmb());
         assertNotNull(updatedDar2.getData().getHmb());
-        Assertions.assertEquals(dar1.getData().getHmb(), updatedDar1.getData().getHmb());
-        Assertions.assertEquals(dar2.getData().getHmb(), updatedDar2.getData().getHmb());
+        assertEquals(dar1.getData().getHmb(), updatedDar1.getData().getHmb());
+        assertEquals(dar2.getData().getHmb(), updatedDar2.getData().getHmb());
 
         assertNotNull(updatedDar1.getData().getMethods());
         assertNotNull(updatedDar2.getData().getMethods());
-        Assertions.assertEquals(dar1.getData().getMethods(), updatedDar1.getData().getMethods());
-        Assertions.assertEquals(dar2.getData().getMethods(), updatedDar2.getData().getMethods());
+        assertEquals(dar1.getData().getMethods(), updatedDar1.getData().getMethods());
+        assertEquals(dar2.getData().getMethods(), updatedDar2.getData().getMethods());
     }
 
     @Test
@@ -247,8 +248,8 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         Integer collectionId = collection.getDarCollectionId();
         dataAccessRequestDAO.updateDraftForCollection(collectionId, referenceId);
         DataAccessRequest updatedDraft = dataAccessRequestDAO.findByReferenceId(referenceId);
-        Assertions.assertEquals(false, updatedDraft.getDraft());
-        Assertions.assertEquals(collectionId, updatedDraft.getCollectionId());
+        assertEquals(false, updatedDraft.getDraft());
+        assertEquals(collectionId, updatedDraft.getCollectionId());
     }
 
     @Test
@@ -258,12 +259,12 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.cancelByReferenceIds(referenceIds);
         DataAccessRequest canceledDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
 
-        Assertions.assertEquals(dar.getReferenceId(), canceledDar.getReferenceId());
-        Assertions.assertEquals("Canceled", canceledDar.getData().getStatus());
+        assertEquals(dar.getReferenceId(), canceledDar.getReferenceId());
+        assertEquals("Canceled", canceledDar.getData().getStatus());
         assertNotNull(canceledDar.getData().getHmb());
-        Assertions.assertEquals(dar.getData().getHmb(), canceledDar.getData().getHmb());
+        assertEquals(dar.getData().getHmb(), canceledDar.getData().getHmb());
         assertNotNull(canceledDar.getData().getMethods());
-        Assertions.assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
+        assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
     }
 
     // local method to create a DAR
@@ -342,7 +343,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         createDAR(user, dataset2, darCode2);
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
-        Assertions.assertEquals(1, returnedDARs.size());
+        assertEquals(1, returnedDARs.size());
     }
 
 
@@ -398,7 +399,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 false);
 
         List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset1.getDataSetId());
-        Assertions.assertEquals(1, dars.size());
+        assertEquals(1, dars.size());
         assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
     }
 
@@ -426,7 +427,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).isEmpty());
 
-        Assertions.assertEquals(0, dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset2.getDataSetId()).size());
+        assertEquals(0, dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset2.getDataSetId()).size());
 
         Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
         Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
@@ -452,13 +453,13 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
-        Assertions.assertEquals(1,
+        assertEquals(1,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).size());
-        Assertions.assertEquals(testDar1.getUserId(),
+        assertEquals(testDar1.getUserId(),
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).get(0));
-        Assertions.assertEquals(1,
+        assertEquals(1,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).size());
-        Assertions.assertEquals(testDar2.getUserId(),
+        assertEquals(testDar2.getUserId(),
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).get(0));
 
         Election e3 = createDataAccessElection(testDar3.getReferenceId(), dataset2.getDataSetId());
@@ -473,7 +474,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
-        Assertions.assertEquals(2,
+        assertEquals(2,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).size());
         assertTrue(
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId()).contains(testDar3.getUserId()));
@@ -506,7 +507,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
-        Assertions.assertEquals(1,
+        assertEquals(1,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).size());
 
         Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -521,7 +522,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
                 now,
                 false);
 
-        Assertions.assertEquals(0,
+        assertEquals(0,
             dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId()).size());
     }
 
@@ -619,7 +620,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
         dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar2.getReferenceId()));
         List<DataAccessRequest> returnedDAR = dataAccessRequestDAO.findByReferenceIds(List.of(testDar1.getReferenceId(), testDar2.getReferenceId(), testDar3.getReferenceId()));
-        Assertions.assertEquals(1, returnedDAR.size());
+        assertEquals(1, returnedDAR.size());
     }
 
     /**

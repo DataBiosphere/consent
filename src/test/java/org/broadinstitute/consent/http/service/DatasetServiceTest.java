@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -103,7 +104,7 @@ public class DatasetServiceTest {
         DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1", 1);
 
         assertNotNull(result);
-        Assertions.assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
+        assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
         assertNotNull(result.getProperties());
         assertFalse(result.getProperties().isEmpty());
     }
@@ -116,7 +117,7 @@ public class DatasetServiceTest {
 
         Collection<DatasetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(Collections.singletonList(1));
         assertNotNull(dataSetsByReceiveOrder);
-        Assertions.assertEquals(dataSetsByReceiveOrder.size(), getDatasetDTOs().size());
+        assertEquals(dataSetsByReceiveOrder.size(), getDatasetDTOs().size());
     }
 
     @Test
@@ -127,7 +128,7 @@ public class DatasetServiceTest {
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
         assertNotNull(dictionaries);
-        Assertions.assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(),
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(),
             getDictionaries().stream().findFirst().orElseThrow().getDisplayOrder());
     }
 
@@ -139,7 +140,7 @@ public class DatasetServiceTest {
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByReceiveOrder();
         assertNotNull(dictionaries);
-        Assertions.assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(),
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(),
             getDictionaries().stream().findFirst().orElseThrow().getReceiveOrder());
     }
 
@@ -251,7 +252,7 @@ public class DatasetServiceTest {
         Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
         assertNotNull(dataset);
-        Assertions.assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+        assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
     }
 
     @Test
@@ -263,7 +264,7 @@ public class DatasetServiceTest {
         Set<String> returned = datasetService.findAllActiveStudyNames();
 
         assertNotNull(returned);
-        Assertions.assertEquals(Set.of("Hi", "Hello"), returned);
+        assertEquals(Set.of("Hi", "Hello"), returned);
     }
 
     @Test
@@ -275,7 +276,7 @@ public class DatasetServiceTest {
         Dataset dataset = datasetService.findDatasetById(1);
 
         assertNotNull(dataset);
-        Assertions.assertEquals(dataset.getName(), getDatasets().get(0).getName());
+        assertEquals(dataset.getName(), getDatasets().get(0).getName());
     }
 
     @Test
@@ -286,7 +287,7 @@ public class DatasetServiceTest {
         List<DatasetProperty> properties = datasetService
                 .processDatasetProperties(1, getDatasetPropertiesDTO());
 
-        Assertions.assertEquals(properties.size(), getDatasetPropertiesDTO().size());
+        assertEquals(properties.size(), getDatasetPropertiesDTO().size());
     }
 
     @Test
@@ -314,7 +315,7 @@ public class DatasetServiceTest {
         List<DatasetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
 
         assertFalse(properties.isEmpty());
-        Assertions.assertEquals(properties.get(0), duplicateProperty);
+        assertEquals(properties.get(0), duplicateProperty);
     }
 
     @Test
@@ -349,7 +350,7 @@ public class DatasetServiceTest {
         when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
         initService();
-        Assertions.assertEquals(d, datasetService.findDatasetByIdentifier("DUOS-000003"));
+        assertEquals(d, datasetService.findDatasetByIdentifier("DUOS-000003"));
     }
 
     @Test
@@ -389,7 +390,7 @@ public class DatasetServiceTest {
         initService();
 
         Optional<Dataset> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-        Assertions.assertEquals(Optional.empty(), notModified);
+        assertEquals(Optional.empty(), notModified);
     }
 
 
@@ -577,7 +578,7 @@ public class DatasetServiceTest {
         initService();
         List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
         assertNotNull(result);
-        Assertions.assertEquals(result.size(), dtos.size());
+        assertEquals(result.size(), dtos.size());
     }
 
     @Test
@@ -610,37 +611,37 @@ public class DatasetServiceTest {
         // query dataset name
         List<Dataset> results = datasetService.searchDatasets("asdf", u);
 
-        Assertions.assertEquals(1, results.size());
+        assertEquals(1, results.size());
         assertTrue(results.contains(ds1));
 
         // query pi name
         results = datasetService.searchDatasets("John", u);
 
-        Assertions.assertEquals(1, results.size());
+        assertEquals(1, results.size());
         assertTrue(results.contains(ds1));
 
         // query ds identifier
         results = datasetService.searchDatasets("DUOS-000280", u);
 
-        Assertions.assertEquals(1, results.size());
+        assertEquals(1, results.size());
         assertTrue(results.contains(ds2));
 
         // query pi name for all of them
         results = datasetService.searchDatasets("Doe", u);
 
-        Assertions.assertEquals(2, results.size());
+        assertEquals(2, results.size());
         assertTrue(results.contains(ds2));
         assertTrue(results.contains(ds1));
 
         // search on two things at once
         results = datasetService.searchDatasets("Doe asdf", u);
 
-        Assertions.assertEquals(1, results.size());
+        assertEquals(1, results.size());
         assertTrue(results.contains(ds1));
 
         // query nonexistent phrase
         results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", u);
-        Assertions.assertEquals(0, results.size());
+        assertEquals(0, results.size());
     }
 
     @Test
@@ -661,13 +662,13 @@ public class DatasetServiceTest {
 
         Set<DatasetDTO> memberResult = datasetService.describeDatasets(0);
         assertNotNull(memberResult);
-        Assertions.assertEquals(memberResult.size(), 0);
+        assertEquals(memberResult.size(), 0);
         Set<DatasetDTO> adminResult = datasetService.describeDatasets(1);
         assertNotNull(adminResult);
-        Assertions.assertEquals(adminResult.size(), dtos.size());
+        assertEquals(adminResult.size(), dtos.size());
         Set<DatasetDTO> chairResult = datasetService.describeDatasets(2);
         assertNotNull(chairResult);
-        Assertions.assertEquals(chairResult.size(), singleDtoSet.size());
+        assertEquals(chairResult.size(), singleDtoSet.size());
     }
 
     @Test
@@ -683,8 +684,8 @@ public class DatasetServiceTest {
 
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
         assertFalse(datasets.isEmpty());
-        Assertions.assertEquals(1, datasets.size());
-        Assertions.assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
+        assertEquals(1, datasets.size());
+        assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
         verify(datasetDAO, times(1)).findAllDatasets();
         verify(datasetDAO, times(0)).getActiveDatasets();
         verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
@@ -709,7 +710,7 @@ public class DatasetServiceTest {
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
         assertFalse(datasets.isEmpty());
         // Test that the two lists of datasets are distinctly combined in the final result
-        Assertions.assertEquals(3, datasets.size());
+        assertEquals(3, datasets.size());
         assertTrue(datasets.contains(d1));
         assertTrue(datasets.contains(d2));
         assertTrue(datasets.contains(d3));
@@ -733,7 +734,7 @@ public class DatasetServiceTest {
 
         List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
         assertFalse(datasets.isEmpty());
-        Assertions.assertEquals(2, datasets.size());
+        assertEquals(2, datasets.size());
         assertTrue(datasets.contains(d1));
         assertTrue(datasets.contains(d2));
         verify(datasetDAO, times(0)).findAllDatasets();
@@ -761,10 +762,10 @@ public class DatasetServiceTest {
 
         Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
         assertNotNull(datasetResult);
-        Assertions.assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
-        Assertions.assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
-        Assertions.assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
-        Assertions.assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
+        assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
+        assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
+        assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
+        assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
         verify(emailService, times(0)).sendDatasetApprovedMessage(
                 any(),
                 any(),
@@ -823,7 +824,7 @@ public class DatasetServiceTest {
         when(dacDAO.findById(3)).thenReturn(dac);
 
         Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
-        Assertions.assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
         assertTrue(returnedDataset.getDacApproval());
 
         // send approved email
@@ -857,7 +858,7 @@ public class DatasetServiceTest {
         when(dacDAO.findById(3)).thenReturn(dac);
 
         Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
-        Assertions.assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+        assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
         assertFalse(returnedDataset.getDacApproval());
 
         // send denied email

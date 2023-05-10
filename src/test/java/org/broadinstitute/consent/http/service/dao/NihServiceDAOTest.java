@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -16,7 +17,6 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +68,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
         assertTrue(statusProp.isPresent());
-        Assertions.assertEquals(statusProp.get().getPropertyValue(),
+        assertEquals(statusProp.get().getPropertyValue(),
             userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
@@ -76,16 +76,16 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
         assertTrue(expirationProp.isPresent());
-        Assertions.assertEquals(expirationProp.get().getPropertyValue(),
+        assertEquals(expirationProp.get().getPropertyValue(),
             userAccount.getEraExpiration());
 
         // assert that era commons user id is updated appropriately
         User updatedUser = userDAO.findUserById(user.getUserId());
-        Assertions.assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
+        assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
         assertFalse(cards.isEmpty());
-        Assertions.assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
+        assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
                 .findFirst();
         assertTrue(statusProp.isPresent());
-        Assertions.assertEquals(statusProp.get().getPropertyValue(),
+        assertEquals(statusProp.get().getPropertyValue(),
             userAccount.getStatus().toString());
 
         Optional<UserProperty> expirationProp = updatedProps
@@ -118,12 +118,12 @@ public class NihServiceDAOTest extends DAOTestHelper {
                 .filter(userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
                 .findFirst();
         assertTrue(expirationProp.isPresent());
-        Assertions.assertEquals(expirationProp.get().getPropertyValue(),
+        assertEquals(expirationProp.get().getPropertyValue(),
             userAccount.getEraExpiration());
 
         // assert that era commons user id is updated appropriately
         User updatedUser = userDAO.findUserById(user.getUserId());
-        Assertions.assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
+        assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
         // ensure that we did not make any LC updates
         List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());

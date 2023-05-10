@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -19,7 +20,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -71,9 +71,9 @@ public class OAuthAuthenticatorTest {
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
         assertTrue(authUser.isPresent());
-        Assertions.assertEquals(user.getEmail(), authUser.get().getEmail());
-        Assertions.assertEquals(user.getName(), authUser.get().getName());
-        Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
+        assertEquals(user.getEmail(), authUser.get().getEmail());
+        assertEquals(user.getName(), authUser.get().getName());
+        assertEquals(authUser.get().getAuthToken(), bearerToken);
     }
 
     /**
@@ -92,7 +92,7 @@ public class OAuthAuthenticatorTest {
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
         assertTrue(authUser.isPresent());
-        Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
+        assertEquals(authUser.get().getAuthToken(), bearerToken);
     }
 
     /**
@@ -107,7 +107,7 @@ public class OAuthAuthenticatorTest {
 
         Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
         assertTrue(authUser.isPresent());
-        Assertions.assertEquals(authUser.get().getAuthToken(), bearerToken);
+        assertEquals(authUser.get().getAuthToken(), bearerToken);
         verify(samService, times(1)).postRegistrationInfo(any());
     }
 

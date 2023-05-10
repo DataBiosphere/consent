@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -9,7 +10,6 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import javax.ws.rs.core.Response;
 import org.eclipse.jetty.server.Request;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,7 +29,7 @@ public class ErrorResourceTest {
         ErrorResource resource = new ErrorResource();
         when(request.getOriginalURI()).thenReturn("not_found");
         try (Response response = resource.notFound(request)) {
-            Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+            assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
         }
     }
 

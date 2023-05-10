@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,7 +12,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,14 +53,14 @@ public class InstitutionUtilTest {
         Gson builder = util.getGsonBuilder(true);
         String json = builder.toJson(mockInstitution);
         Institution deserialized = new Gson().fromJson(json, Institution.class);
-        Assertions.assertEquals(mockInstitution.getName(), deserialized.getName());
-        Assertions.assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
-        Assertions.assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
-        Assertions.assertEquals(mockInstitution.getCreateDate().toString(),
+        assertEquals(mockInstitution.getName(), deserialized.getName());
+        assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
+        assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
+        assertEquals(mockInstitution.getCreateDate().toString(),
             deserialized.getCreateDate().toString());
-        Assertions.assertEquals(mockInstitution.getUpdateDate().toString(),
+        assertEquals(mockInstitution.getUpdateDate().toString(),
             deserialized.getUpdateDate().toString());
-        Assertions.assertEquals(mockInstitution.getId(), deserialized.getId());
+        assertEquals(mockInstitution.getId(), deserialized.getId());
     }
 
     @Test
@@ -68,6 +68,6 @@ public class InstitutionUtilTest {
         Institution mockInstitution = initMockInstitution();
         Gson builder = util.getGsonBuilder(false);
         String json = builder.toJson(mockInstitution);
-        Assertions.assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
+        assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
     }
 }

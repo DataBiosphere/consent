@@ -1,14 +1,15 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.broadinstitute.consent.http.db.CounterDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
 
 public class CounterServiceTest {
 
@@ -33,6 +34,6 @@ public class CounterServiceTest {
         initService();
 
         Integer seq = service.getNextDarSequence();
-        Assertions.assertEquals(count, seq.intValue());
+        assertEquals(count, seq.intValue());
     }
 }

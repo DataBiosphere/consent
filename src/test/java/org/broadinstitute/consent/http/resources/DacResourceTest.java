@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -34,7 +35,6 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -67,9 +67,9 @@ public class DacResourceTest {
         when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.emptyList());
 
         Response response = dacResource.findAll(authUser, Optional.of(true));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         JsonArray dacs = getListFromEntityString(response.getEntity().toString());
-        Assertions.assertEquals(0, dacs.size());
+        assertEquals(0, dacs.size());
     }
 
     @Test
@@ -81,9 +81,9 @@ public class DacResourceTest {
         when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.singletonList(dac));
 
         Response response = dacResource.findAll(authUser, Optional.of(true));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         JsonArray dacs = getListFromEntityString(response.getEntity().toString());
-        Assertions.assertEquals(1, dacs.size());
+        assertEquals(1, dacs.size());
     }
 
     @Test
@@ -91,9 +91,9 @@ public class DacResourceTest {
         when(dacService.findDacsWithMembersOption(false)).thenReturn(Collections.emptyList());
 
         Response response = dacResource.findAll(authUser, Optional.of(false));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         JsonArray dacs = getListFromEntityString(response.getEntity().toString());
-        Assertions.assertEquals(0, dacs.size());
+        assertEquals(0, dacs.size());
     }
 
     @Test
@@ -109,8 +109,8 @@ public class DacResourceTest {
         when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
-        Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
+        assertEquals(200, response.getStatus());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test
@@ -127,7 +127,7 @@ public class DacResourceTest {
 
         try {
             Response response = dacResource.findAllDacDatasets(authUser, 1);
-            Assertions.assertEquals(404, response.getStatus());
+            assertEquals(404, response.getStatus());
         } catch (Exception e) {
             assertTrue(e instanceof NotFoundException);
         }
@@ -150,8 +150,8 @@ public class DacResourceTest {
         when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
 
         Response response = dacResource.findAllDacDatasets(authUser, 1);
-        Assertions.assertEquals(200, response.getStatus());
-        Assertions.assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
+        assertEquals(200, response.getStatus());
+        assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.createDac(authUser, gson.toJson(dac));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -202,7 +202,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.createDac(authUser, gson.toJson(dac));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -258,7 +258,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.updateDac(authUser, gson.toJson(dac));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -273,7 +273,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.updateDac(authUser, gson.toJson(dac));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -337,7 +337,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.findById(dac.getDacId());
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -361,7 +361,7 @@ public class DacResourceTest {
         when(dacService.findById(1)).thenReturn(dac);
 
         Response response = dacResource.deleteDac(dac.getDacId());
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
 
     }
 
@@ -386,7 +386,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -399,7 +399,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -428,7 +428,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -441,7 +441,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -470,7 +470,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.addDacChair(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -483,7 +483,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.addDacChair(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -512,7 +512,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacChair(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -525,7 +525,7 @@ public class DacResourceTest {
         when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
         Response response = dacResource.removeDacChair(authUser, dac.getDacId(), member.getUserId());
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -548,7 +548,7 @@ public class DacResourceTest {
     public void testApproveDataset_UserNotFound() {
         when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
         Response response = dacResource.approveDataset(authUser, 1, 1, "test");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -560,7 +560,7 @@ public class DacResourceTest {
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
 
         Response response = dacResource.approveDataset(authUser, 1, 1, "test");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -574,7 +574,7 @@ public class DacResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(user);
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "test");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -588,7 +588,7 @@ public class DacResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(user);
         when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{}");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
@@ -605,8 +605,8 @@ public class DacResourceTest {
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
                 .thenReturn(dataset);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
     }
 
     @Test
@@ -626,8 +626,8 @@ public class DacResourceTest {
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
                 .thenReturn(datasetResponse);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        Assertions.assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
     }
 
     @Test
@@ -644,7 +644,7 @@ public class DacResourceTest {
         when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
                 .thenThrow(ForbiddenException.class);
         Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: false}");
-        Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
 

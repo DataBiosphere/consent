@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -68,7 +68,7 @@ public class InstitutionResourceTest {
         initResource();
         Response adminResponse = resource.getInstitutions(authUser);
         String json = adminResponse.getEntity().toString();
-        Assertions.assertEquals(200, adminResponse.getStatus());
+        assertEquals(200, adminResponse.getStatus());
         assertNotNull(json);
     }
 
@@ -80,7 +80,7 @@ public class InstitutionResourceTest {
         initResource();
         Response researcherResponse = resource.getInstitutions(authUser);
         String json = researcherResponse.getEntity().toString();
-        Assertions.assertEquals(200, researcherResponse.getStatus());
+        assertEquals(200, researcherResponse.getStatus());
         assertNotNull(json);
     }
 
@@ -92,7 +92,7 @@ public class InstitutionResourceTest {
         initResource();
         Response adminResponse = resource.getInstitution(authUser, 1);
         String json = adminResponse.getEntity().toString();
-        Assertions.assertEquals(adminResponse.getStatus(), 200);
+        assertEquals(adminResponse.getStatus(), 200);
         assertNotNull(json);
     }
 
@@ -104,7 +104,7 @@ public class InstitutionResourceTest {
         initResource();
         Response researcherResponse = resource.getInstitution(authUser, 1);
         String json = researcherResponse.getEntity().toString();
-        Assertions.assertEquals(200, researcherResponse.getStatus());
+        assertEquals(200, researcherResponse.getStatus());
         assertNotNull(json);
     }
 
@@ -115,7 +115,7 @@ public class InstitutionResourceTest {
         when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
         initResource();
         Response response = resource.getInstitution(authUser, 1);
-        Assertions.assertEquals(404, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 
 
@@ -128,7 +128,7 @@ public class InstitutionResourceTest {
         String requestJson = new Gson().toJson(mockInstitution, Institution.class);
         Response response = resource.createInstitution(authUser, requestJson);
         String json = response.getEntity().toString();
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertNotNull(json);
     }
 
@@ -140,7 +140,7 @@ public class InstitutionResourceTest {
         when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
         initResource();
         Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -151,7 +151,7 @@ public class InstitutionResourceTest {
         when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
         initResource();
         Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -161,7 +161,7 @@ public class InstitutionResourceTest {
         when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
         initResource();
         Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(409, response.getStatus());
+        assertEquals(409, response.getStatus());
     }
 
     @Test
@@ -171,7 +171,7 @@ public class InstitutionResourceTest {
         when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(mockInstitution);
         initResource();
         Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         assertNotNull(response.getEntity().toString());
     }
 
@@ -183,7 +183,7 @@ public class InstitutionResourceTest {
         when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
         initResource();
         Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(404, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -195,7 +195,7 @@ public class InstitutionResourceTest {
         when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
         initResource();
         Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -207,7 +207,7 @@ public class InstitutionResourceTest {
         when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
         initResource();
         Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        Assertions.assertEquals(400, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -215,7 +215,7 @@ public class InstitutionResourceTest {
         when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
         initResource();
         Response response = resource.deleteInstitution(authUser, 1);
-        Assertions.assertEquals(204, response.getStatus());
+        assertEquals(204, response.getStatus());
     }
 
     @Test
@@ -225,6 +225,6 @@ public class InstitutionResourceTest {
         doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
         initResource();
         Response response = resource.deleteInstitution(authUser, 1);
-        Assertions.assertEquals(404, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 }

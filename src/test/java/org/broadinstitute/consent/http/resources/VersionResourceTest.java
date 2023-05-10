@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import javax.ws.rs.core.Response;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -17,7 +18,7 @@ public class VersionResourceTest {
   @Test
   public void testGetVersion() {
     Response response = RESOURCE_EXTENSION.target("/version").request().get();
-    Assertions.assertEquals(200, response.getStatus());
+    assertEquals(200, response.getStatus());
   }
 
 }

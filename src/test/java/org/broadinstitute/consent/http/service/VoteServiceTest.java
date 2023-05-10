@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -185,7 +186,7 @@ public class VoteServiceTest {
         // Chairperson as a dac member
         // Final vote
         // Manual review Agreement vote
-        Assertions.assertEquals(4, votes.size());
+        assertEquals(4, votes.size());
     }
 
     @Test
@@ -196,7 +197,7 @@ public class VoteServiceTest {
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
         assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assertions.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -210,7 +211,7 @@ public class VoteServiceTest {
         // Chairperson as a chair
         // Chairperson as a dac member
         // Final vote
-        Assertions.assertEquals(3, votes.size());
+        assertEquals(3, votes.size());
     }
 
     @Test
@@ -221,7 +222,7 @@ public class VoteServiceTest {
         List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
         assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assertions.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -234,7 +235,7 @@ public class VoteServiceTest {
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        Assertions.assertEquals(2, votes.size());
+        assertEquals(2, votes.size());
     }
 
     @Test
@@ -245,7 +246,7 @@ public class VoteServiceTest {
         List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
         assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assertions.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test
@@ -258,7 +259,7 @@ public class VoteServiceTest {
         // Should create 2 votes:
         // Chairperson as a chair
         // Chairperson as a dac member
-        Assertions.assertEquals(2, votes.size());
+        assertEquals(2, votes.size());
     }
 
     @Test
@@ -269,7 +270,7 @@ public class VoteServiceTest {
         List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
         assertFalse(votes.isEmpty());
         // Should create 1 member vote
-        Assertions.assertEquals(1, votes.size());
+        assertEquals(1, votes.size());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -11,7 +12,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.ConsentApplication;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -39,7 +39,7 @@ public class StatusResourceTest {
         StatusResource statusResource = initStatusResource(checks);
 
         Response response = statusResource.getStatus();
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -51,7 +51,7 @@ public class StatusResourceTest {
         StatusResource statusResource = initStatusResource(checks);
 
         Response response = statusResource.getStatus();
-        Assertions.assertEquals(500, response.getStatus());
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class StatusResourceTest {
 
         Response response = statusResource.getStatus();
         // A failing ontology check should not fail the status
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -79,10 +79,10 @@ public class StatusResourceTest {
         StatusResource statusResource = initStatusResource(checks);
 
         Response response = statusResource.getStatus();
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         @SuppressWarnings("rawtypes")
         LinkedHashMap content = (LinkedHashMap) response.getEntity();
-        Assertions.assertEquals(Boolean.FALSE, content.get(StatusResource.DEGRADED));
+        assertEquals(Boolean.FALSE, content.get(StatusResource.DEGRADED));
     }
 
     @Test
@@ -97,10 +97,10 @@ public class StatusResourceTest {
 
         Response response = statusResource.getStatus();
         // A failing sam check should not fail the status
-        Assertions.assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
         // A failing sam check should mark the system as degraded
         @SuppressWarnings("rawtypes")
         LinkedHashMap content = (LinkedHashMap) response.getEntity();
-        Assertions.assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));
+        assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));
     }
 }
