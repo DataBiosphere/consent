@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -319,11 +320,9 @@ public class UserServiceTest {
         u.setRoles(roles);
         when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createUser(u);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -333,11 +332,9 @@ public class UserServiceTest {
         u.setRoles(roles);
         u.setDisplayName(null);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createUser(u);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -358,11 +355,9 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
         u.setRoles(roles);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createUser(u);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -371,11 +366,9 @@ public class UserServiceTest {
         List<UserRole> roles = List.of(generateRole(UserRoles.MEMBER.getRoleId()));
         u.setRoles(roles);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createUser(u);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -383,11 +376,9 @@ public class UserServiceTest {
         User u = generateUser();
         u.setEmail(null);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createUser(u);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -445,11 +436,9 @@ public class UserServiceTest {
         when(userDAO.findUserById(any())).thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findUserById(u.getUserId());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -489,11 +478,9 @@ public class UserServiceTest {
         when(userDAO.findUserByEmail(any())).thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findUserByEmail(u.getEmail());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -514,11 +501,9 @@ public class UserServiceTest {
     public void testDeleteUserFailure() {
         when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -543,22 +528,18 @@ public class UserServiceTest {
     @Test
     public void testFindUsersByInstitutionIdNullId() {
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.findUsersByInstitutionId(null);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
     public void testFindUsersByInstitutionIdNullInstitution() {
         doThrow(new NotFoundException()).when(institutionDAO).findInstitutionById(anyInt());
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findUsersByInstitutionId(1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -597,11 +578,9 @@ public class UserServiceTest {
         User u = generateUser();
         u.setInstitutionId(null);
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test

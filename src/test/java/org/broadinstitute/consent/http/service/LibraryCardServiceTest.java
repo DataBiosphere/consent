@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -154,11 +154,9 @@ public class LibraryCardServiceTest {
 
         LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
         payload.setUserEmail("differentemail");
-        try {
+        assertThrows(ConsentConflictException.class, () -> {
             service.createLibraryCard(payload, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof ConsentConflictException);
-        }
+        });
     }
 
     @Test
@@ -173,11 +171,9 @@ public class LibraryCardServiceTest {
 
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
         when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.singletonList(savedCard));
-        try {
+        assertThrows(ConsentConflictException.class, () -> {
             service.createLibraryCard(payload, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof ConsentConflictException);
-        }
+        });
     }
 
     @Test
@@ -195,11 +191,9 @@ public class LibraryCardServiceTest {
 
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
         when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.singletonList(savedCard));
-        try {
+        assertThrows(ConsentConflictException.class, () -> {
             service.createLibraryCard(payload, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof ConsentConflictException);
-        }
+        });
     }
 
     @Test
@@ -211,11 +205,9 @@ public class LibraryCardServiceTest {
         LibraryCard payload = testLibraryCard(institution.getId(), null);
         when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
 
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createLibraryCard(payload, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -233,11 +225,9 @@ public class LibraryCardServiceTest {
                 .thenReturn(user);
 
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.createLibraryCard(libraryCard, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -245,11 +235,9 @@ public class LibraryCardServiceTest {
     public void testCreateLibraryCardNullPayload() {
         User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.createLibraryCard(null, adminUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -259,11 +247,9 @@ public class LibraryCardServiceTest {
         LibraryCard card = testLibraryCard(2, 2);
         card.setInstitutionId(2);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.createLibraryCard(card, soUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -298,11 +284,9 @@ public class LibraryCardServiceTest {
                 .thenReturn(null);
 
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -317,11 +301,9 @@ public class LibraryCardServiceTest {
                 .thenReturn(libraryCard);
 
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -336,11 +318,9 @@ public class LibraryCardServiceTest {
         doNothing().when(libraryCardDAO).deleteLibraryCardById(any());
 
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.deleteLibraryCardById(libraryCard.getId());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -348,11 +328,9 @@ public class LibraryCardServiceTest {
         when(libraryCardDAO.findLibraryCardById(any()))
                 .thenReturn(null);
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findLibraryCardById(1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test

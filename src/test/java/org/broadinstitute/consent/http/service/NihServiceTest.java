@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
@@ -55,11 +55,9 @@ public class NihServiceTest {
     @Test
     public void testAuthenticateNih_InvalidUser() {
         initService();
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -88,21 +86,17 @@ public class NihServiceTest {
         when(userDAO.findUserById(any())).thenReturn(user);
         nihUserAccount.setNihUsername("");
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.authenticateNih(nihUserAccount, authUser, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
     public void testAuthenticateNih_BadRequestNullAccount() {
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.authenticateNih(null, authUser, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -110,11 +104,9 @@ public class NihServiceTest {
         NIHUserAccount account = new NIHUserAccount();
         account.setStatus(true);
         initService();
-        try {
+        assertThrows(BadRequestException.class, () -> {
             service.authenticateNih(account, authUser, 1);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -113,11 +113,9 @@ public class SamDAOTest implements WithMockServer {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-        try {
+        assertThrows(BadRequestException.class, () -> {
             samDAO.getRegistrationInfo(authUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof BadRequestException);
-        }
+        });
     }
 
     @Test
@@ -126,11 +124,9 @@ public class SamDAOTest implements WithMockServer {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-        try {
+        assertThrows(NotAuthorizedException.class, () -> {
             samDAO.getRegistrationInfo(authUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotAuthorizedException);
-        }
+        });
     }
 
     @Test
@@ -139,11 +135,9 @@ public class SamDAOTest implements WithMockServer {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-        try {
+        assertThrows(ForbiddenException.class, () -> {
             samDAO.getRegistrationInfo(authUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof ForbiddenException);
-        }
+        });
     }
 
     @Test
@@ -153,11 +147,9 @@ public class SamDAOTest implements WithMockServer {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-        try {
+        assertThrows(NotFoundException.class, () -> {
             samDAO.getRegistrationInfo(authUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -166,11 +158,9 @@ public class SamDAOTest implements WithMockServer {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-        try {
+        assertThrows(ConsentConflictException.class, () -> {
             samDAO.getRegistrationInfo(authUser);
-        } catch (Exception e) {
-            assertTrue(e instanceof ConsentConflictException);
-        }
+        });
     }
 
     @Test

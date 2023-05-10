@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
@@ -138,11 +138,9 @@ public class SupportRequestServiceTest {
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-        try {
+        assertThrows(ServerErrorException.class, () -> {
             service.postTicketToSupport(generateTicket());
-        } catch (Exception e) {
-            assertTrue(e instanceof ServerErrorException);
-        }
+        });
     }
 
     @Test

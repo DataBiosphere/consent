@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
@@ -133,11 +134,9 @@ public class NihServiceDAOTest extends DAOTestHelper {
     @Test
     public void testUpdateUserNihStatus_nullAccount() {
         User user = createUser();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             serviceDAO.updateUserNihStatus(user, null);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test

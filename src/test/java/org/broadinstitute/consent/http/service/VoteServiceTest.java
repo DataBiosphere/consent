@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -128,11 +129,9 @@ public class VoteServiceTest {
         Vote v = setUpTestVote(false, false);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.updateVote(v, 11, "test");
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -337,11 +336,9 @@ public class VoteServiceTest {
 
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateVotesWithValue(List.of(v), true, "rationale");
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
 
@@ -365,11 +362,9 @@ public class VoteServiceTest {
 
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateVotesWithValue(List.of(v), true, "rationale");
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -493,11 +488,9 @@ public class VoteServiceTest {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -512,11 +505,9 @@ public class VoteServiceTest {
         when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
         initService();
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
@@ -905,20 +896,15 @@ public class VoteServiceTest {
         spy(emailService);
 
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-            Assertions.fail(
-                "service.notifyCustodiansOfApprovedDatasets should fail in this condition");
-        } catch (Exception e) {
-            verify(emailService, times(0)).sendDataCustodianApprovalMessage(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-            );
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
+        verify(emailService, times(0)).sendDataCustodianApprovalMessage(
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
     }
 
     private void setUpUserAndElectionVotes(UserRoles userRoles) {

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -114,11 +115,9 @@ public class MatchServiceTest {
         when(matchDAO.findMatchById(m.getId())).thenReturn(null);
         initService();
 
-        try {
+        assertThrows(NotFoundException.class, () -> {
             service.findMatchById(m.getId());
-        } catch (Exception e) {
-            assertTrue(e instanceof NotFoundException);
-        }
+        });
     }
 
     @Test
@@ -185,22 +184,18 @@ public class MatchServiceTest {
     public void testSingleEntitiesMatchV3EmptyDataset() {
         DataAccessRequest dar = new DataAccessRequest();
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.singleEntitiesMatchV3(null, dar);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
     public void testSingleEntitiesMatchV3EmptyDar() {
         Dataset dataset = new Dataset();
         initService();
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             service.singleEntitiesMatchV3(dataset, null);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-        }
+        });
     }
 
     @Test
