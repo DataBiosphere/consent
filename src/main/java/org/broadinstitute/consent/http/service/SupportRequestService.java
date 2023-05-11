@@ -8,6 +8,9 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import jakarta.ws.rs.ServerErrorException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -17,10 +20,6 @@ import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-
-import javax.ws.rs.ServerErrorException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 public class SupportRequestService implements ConsentLogger {
 

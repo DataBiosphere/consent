@@ -6,9 +6,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
+import jakarta.ws.rs.core.Response;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import javax.ws.rs.core.Response;
 import org.eclipse.jetty.server.Request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

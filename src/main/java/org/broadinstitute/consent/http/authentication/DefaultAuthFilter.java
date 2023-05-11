@@ -1,13 +1,12 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import java.security.Principal;
+import javax.annotation.Priority;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Priority;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import java.security.Principal;
 
 @Priority(1000)
 public class DefaultAuthFilter<P extends Principal> extends AuthFilter<String, P> {

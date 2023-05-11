@@ -7,10 +7,10 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import jakarta.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
