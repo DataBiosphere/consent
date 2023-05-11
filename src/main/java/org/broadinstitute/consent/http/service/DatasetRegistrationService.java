@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
+import javax.servlet.Registration;
 import javax.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
+
+import static org.bouncycastle.asn1.x500.style.RFC4519Style.name;
 
 /**
  * Specialized service class which specifically handles
@@ -85,6 +88,51 @@ public class DatasetRegistrationService {
 
         List<Integer> createdDatasetIds = datasetServiceDAO.insertDatasets(datasetInserts);
         return datasetDAO.findDatasetsByIdList(createdDatasetIds);
+    }
+
+    /**
+     * This method
+     *
+     * @param dataset
+     * @param user      The User creating these datasets
+     * @param files     Map of files, where the key is the name of the field
+     * @return List of created Datasets from the provided registration schema
+     */
+    public Dataset updateDatasetRegistrationProperties(Dataset dataset,
+                                                       DatasetRegistrationSchemaV1 registration,
+                                                       User user,
+                                                       Map<String, FormDataBodyPart> files) {
+
+        List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
+
+        // get blob named nihInstitutionalCertification
+        FormDataBodyPart nihInstitutionalCertification = files.get(name);
+
+        // upload blob to GCS (see `uploadFile` function)
+        BlobId nihInstituionalCertificationId = null;
+        try {
+            nihInstituionalCertificationId = uploadFile(nihInstitutionalCertification);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // update existing FSO object on the dataset OR create new one
+        FileStorageObject nihFSO = new FileStorageObject();
+        nihFSO.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+        nihFSO.setFileName(nihInstitutionalCertification.getContentDisposition().getFileName());
+        nihFSO.setMediaType(nihInstitutionalCertification.getMediaType().toString());
+        nihFSO.setBlobId(nihInstituionalCertificationId);
+        nihFSO.setCreateUserId(user.getUserId());
+
+        // Update or create the above ^ objects in the database
+        Integer updatedDataset = null;
+        try {
+            updatedDataset = datasetServiceDAO.updateDataset(datasetUpdates);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return datasetDAO.findDatasetById(updatedDataset);
+
     }
 
     private BlobId uploadFile(FormDataBodyPart file) throws IOException {

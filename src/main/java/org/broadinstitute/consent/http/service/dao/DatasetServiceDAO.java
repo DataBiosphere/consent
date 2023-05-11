@@ -31,12 +31,77 @@ public class DatasetServiceDAO {
         this.datasetDAO = datasetDAO;
     }
 
+    public record DatasetUpdate(Integer datasetId,
+                                String name,
+                                Integer dacId,
+                                DataUse dataUse,
+                                Integer userId,
+                                List<DatasetProperty> props,
+                                List<FileStorageObject> files) {
+    }
+
+
     public record DatasetInsert(String name,
                                 Integer dacId,
                                 DataUse dataUse,
                                 Integer userId,
                                 List<DatasetProperty> props,
                                 List<FileStorageObject> files) {
+    }
+
+    public Integer updateDataset(DatasetUpdate updates) throws SQLException {
+        final Integer updatedDataset = null;
+
+        jdbi.useHandle(
+                handle -> {
+                    // By default, new connections are set to auto-commit which breaks our rollback strategy.
+                    // Turn that off for this connection. This will not affect existing or new connections and
+                    // only applies to the current one in this handle.
+                    handle.getConnection().setAutoCommit(false);
+
+                    for (DatasetUpdate update : updates) {
+                        Integer datasetUpdatesNew = executeUpdateDatasetWithFiles(
+                                handle,
+                                update.datasetId(),
+                                update.name(),
+                                update.dacId(),
+                                update.userId(),
+                                update.props(),
+                                update.files());
+
+                        updatedDataset.add(datasetUpdatesNew);
+                    }
+
+                    handle.commit();
+                }
+        );
+        return updatedDataset;
+    }
+
+    public Integer executeUpdateDatasetWithFiles(Handle handle,
+                                                 Integer datasetId,
+                                                 String name,
+                                                 Integer dacId,
+                                                 Integer userId,
+                                                 List<DatasetProperty> properties,
+                                                 List<FileStorageObject> uploadedFiles) {
+        // update dataset
+        Integer datasetUpdate = datasetDAO.updateDatasetNew(
+                datasetId,
+                name,
+                new Timestamp(new Date().getTime()),
+                userId,
+                false,
+                dacId
+        );
+
+        // insert properties
+        executeSynchronizeDatasetProperties(handle, datasetUpdate, properties);
+
+        // files
+        executeInsertFilesForDataset(handle, uploadedFiles, userId, datasetUpdate);
+
+        return datasetUpdate;
     }
 
     public List<Integer> insertDatasets(List<DatasetInsert> inserts) throws SQLException {

@@ -48,6 +48,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
@@ -168,7 +169,6 @@ public class DatasetResource extends Resource {
                                 + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
             }
 
-
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
             User user = userService.findUserByEmail(authUser.getEmail());
 
@@ -210,6 +210,53 @@ public class DatasetResource extends Resource {
         }
 
         return files;
+    }
+
+    /**
+     * This endpoint updates the dataset.
+     *
+     */
+    @PUT
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("/v3/{datasetId}")
+    @RolesAllowed({ADMIN, CHAIRPERSON})
+    public Response updateDatasetByRegistrationSchema(
+            @Auth AuthUser authUser,
+            @PathParam("datasetId") Integer datasetId,
+            FormDataMultiPart multipart,
+            @FormDataParam("dataset") String json) {
+
+        // Validate dataset object
+        try {
+            Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
+            if (!errors.isEmpty()) {
+                throw new BadRequestException(
+                        "Invalid schema:\n"
+                                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
+            }
+
+            DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
+            User user = userService.findUserByEmail(authUser.getEmail());
+
+            Dataset dataset = datasetService.findDatasetById(datasetId);
+            if (Objects.isNull(dataset)) {
+                throw new BadRequestException("Dataset is required");
+            }
+
+            // key: field name (not file name), value: file body part
+            Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+            try {
+                Dataset updatedDataset = datasetRegistrationService.updateDatasetRegistrationProperties(dataset, registration, user, files);
+                return Response.ok().entity(updatedDataset).build();
+            } catch (Exception e) {
+                return createExceptionResponse(e);
+            }
+        }
+        catch (Exception e) {
+                return createExceptionResponse(e);
+            }
     }
 
     @PUT
