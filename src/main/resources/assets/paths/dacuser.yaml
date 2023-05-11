@@ -1,0 +1,31 @@
+post:
+  summary: Create User
+  requestBody:
+    description: Creates a User
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            displayName:
+              type: string
+            email:
+              type: string
+            emailPreference:
+              type: boolean
+            roles:
+              type: array
+              items:
+                $ref: '../schemas/UserRole.yaml'
+  tags:
+    - User
+  responses:
+    200:
+      description: Returns the created user.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/User.yaml'
+    400:
+      description: Malformed user entity.
