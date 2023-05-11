@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.mail;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -9,7 +10,6 @@ import java.io.Writer;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -52,7 +52,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -61,7 +61,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendReminderMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -70,7 +70,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -79,7 +79,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendNewDARRequests(TO, ID, TYPE, template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -88,7 +88,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -97,7 +97,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 
@@ -106,7 +106,7 @@ public class SendGridAPITest {
         try {
             sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
         } catch (Exception e) {
-            Assertions.fail("Should not throw exception");
+            fail("Should not throw exception");
         }
     }
 

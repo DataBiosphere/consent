@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -42,7 +43,6 @@ import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -97,7 +97,7 @@ public class DataAccessRequestResourceVersion2Test {
                     new DataAccessRequestResourceVersion2(
                             dataAccessRequestService, emailService, gcsService, userService, matchService);
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
     }
 
@@ -116,7 +116,7 @@ public class DataAccessRequestResourceVersion2Test {
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
             doNothing().when(emailService).sendNewDARCollectionMessage(any());
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
@@ -140,7 +140,7 @@ public class DataAccessRequestResourceVersion2Test {
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
             doNothing().when(emailService).sendNewDARCollectionMessage(any());
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
@@ -177,7 +177,7 @@ public class DataAccessRequestResourceVersion2Test {
             when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.updateByReferenceId(authUser, "", "{}");
@@ -194,7 +194,7 @@ public class DataAccessRequestResourceVersion2Test {
             when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
             doNothing().when(matchService).reprocessMatchesForPurpose(any());
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.updateByReferenceId(authUser, "", "{}");
@@ -208,7 +208,7 @@ public class DataAccessRequestResourceVersion2Test {
             when(userService.findUserByEmail(any())).thenReturn(user);
             when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
         } catch (Exception e) {
-            Assertions.fail("Initialization Exception: " + e.getMessage());
+            fail("Initialization Exception: " + e.getMessage());
         }
         initResource();
         Response response = resource.createDraftDataAccessRequest(authUser, info, "");

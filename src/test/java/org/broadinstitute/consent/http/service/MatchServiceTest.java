@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
@@ -38,7 +39,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -312,7 +312,7 @@ public class MatchServiceTest {
         try {
             service.reprocessMatchesForConsent(m.getConsent());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -324,7 +324,7 @@ public class MatchServiceTest {
         try {
             service.reprocessMatchesForPurpose(m.getPurpose());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -29,7 +30,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -221,7 +221,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.asyncPostRegistrationInfo(authUser);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -238,7 +238,7 @@ public class SamDAOTest implements WithMockServer {
             String text = samDAO.getToSText();
             assertEquals(mockText, text);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -257,7 +257,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.postTosAcceptedStatus(authUser);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -276,7 +276,7 @@ public class SamDAOTest implements WithMockServer {
         try {
             samDAO.removeTosAcceptedStatus(authUser);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 }

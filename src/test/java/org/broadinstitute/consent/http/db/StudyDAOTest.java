@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -19,7 +20,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class StudyDAOTest extends DAOTestHelper {
@@ -146,7 +146,7 @@ public class StudyDAOTest extends DAOTestHelper {
                 assertEquals(PropertyType.Number, prop.getType());
                 assertEquals(1, prop.getValue());
             } else {
-                Assertions.fail("Unexpected property");
+                fail("Unexpected property");
             }
         });
     }

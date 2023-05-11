@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -45,7 +46,6 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -156,7 +156,7 @@ public class DacServiceTest {
         try {
             service.updateDac("name", "description", 1);
         } catch (Exception e) {
-            Assertions.fail("Update should not fail");
+            fail("Update should not fail");
         }
     }
 
@@ -168,7 +168,7 @@ public class DacServiceTest {
         try {
             service.updateDac("name", "description", "test@email.com", 1);
         } catch (Exception e) {
-            Assertions.fail("Update should not fail");
+            fail("Update should not fail");
         }
     }
 
@@ -181,7 +181,7 @@ public class DacServiceTest {
         try {
             service.deleteDac(1);
         } catch (Exception e) {
-            Assertions.fail("Delete should not fail");
+            fail("Delete should not fail");
         }
     }
 
@@ -252,7 +252,7 @@ public class DacServiceTest {
         try {
             service.removeDacMember(role, member, dac);
         } catch (Exception e) {
-            Assertions.fail();
+            fail();
         }
         verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
@@ -273,7 +273,7 @@ public class DacServiceTest {
         try {
             service.removeDacMember(role, chair1, dac);
         } catch (Exception e) {
-            Assertions.fail();
+            fail();
         }
         verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());

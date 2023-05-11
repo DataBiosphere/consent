@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -197,7 +197,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         generateDatasetElectionForCollection(c);
         DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
         if (Objects.isNull(dar)) {
-            Assertions.fail("DAR was not created in collection");
+            fail("DAR was not created in collection");
         }
         dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
         dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getUserId(), new Date(), new Date(), new Date(), dar.getData());
@@ -217,7 +217,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         DarCollection c = createDarCollection();
         DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
         if (Objects.isNull(dar)) {
-            Assertions.fail("DAR was not created in collection");
+            fail("DAR was not created in collection");
         }
         User user = userDAO.findUserById(dar.getUserId());
         Institution institution = createInstitution();

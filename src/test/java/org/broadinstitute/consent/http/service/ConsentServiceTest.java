@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -21,7 +22,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.joda.time.DateTimeField;
 import org.joda.time.Instant;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -110,7 +110,7 @@ public class ConsentServiceTest {
         try {
             consent = service.retrieve("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assertions.fail(unknownIdentifierException.getMessage());
+            fail(unknownIdentifierException.getMessage());
         }
         assertNotNull(consent);
         assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
@@ -128,7 +128,7 @@ public class ConsentServiceTest {
         try {
             consent = service.getByName("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assertions.fail(unknownIdentifierException.getMessage());
+            fail(unknownIdentifierException.getMessage());
         }
 
         assertNotNull(consent);

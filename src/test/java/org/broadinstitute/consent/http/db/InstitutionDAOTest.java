@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Date;
 import java.util.List;
@@ -11,7 +12,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 
@@ -42,7 +42,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
                     userId,
                     institution.getCreateDate()
             );
-            Assertions.fail("CREATE should fail due to UNIQUE constraint violation (name)");
+            fail("CREATE should fail due to UNIQUE constraint violation (name)");
             //JBDI wraps ALL SQL exceptions under the generic class UnableToExecuteStatementException
             //Test is specifically looking for UNIQUE constraint violations, so I need to catch and unwrap the error to confirm
         } catch (Exception e) {
@@ -86,7 +86,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
                     secondInstitution.getOrganizationType().getValue(),
                     secondInstitution.getUpdateUserId(),
                     secondInstitution.getUpdateDate());
-            Assertions.fail("UPDATE should fail due to UNIQUE constraint violation (name)");
+            fail("UPDATE should fail due to UNIQUE constraint violation (name)");
         } catch (Exception e) {
             assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
         }

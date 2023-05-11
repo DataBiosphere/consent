@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -53,7 +54,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -393,7 +393,7 @@ public class DatasetServiceTest {
         try {
             datasetService.updateDatasetDataUse(u, 1, dataUse);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -418,7 +418,7 @@ public class DatasetServiceTest {
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         try {
             datasetService.updateDatasetDataUse(u, 1, dataUse);
-            Assertions.fail(
+            fail(
                 "Should have thrown an exception on datasetService.updateDatasetDataUse()");
         } catch (IllegalArgumentException e) {
             assertTrue(true);

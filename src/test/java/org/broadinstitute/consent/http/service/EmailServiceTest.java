@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,7 +29,6 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -101,7 +101,7 @@ public class EmailServiceTest {
         try {
             service.sendNewResearcherMessage(user, so);
         } catch (Exception e) {
-            Assertions.fail("Should not fail sending message: " + e);
+            fail("Should not fail sending message: " + e);
         }
 
         verify(sendGridAPI, times(1)).sendNewResearcherLibraryRequestMessage(any(), any());

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -48,7 +49,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -109,7 +109,7 @@ public class VoteServiceTest {
         try {
             service.advanceVotes(Collections.singletonList(v), true, "New Rationale");
         } catch (Exception e) {
-            Assertions.fail("Should not error: " + e.getMessage());
+            fail("Should not error: " + e.getMessage());
         }
     }
 
@@ -309,7 +309,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, null);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -412,7 +412,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -432,7 +432,7 @@ public class VoteServiceTest {
         try {
             service.updateVotesWithValue(List.of(v), true, "rationale");
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -448,7 +448,7 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -472,7 +472,7 @@ public class VoteServiceTest {
         try {
             service.updateRationaleByVoteIds(List.of(1), "rationale");
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -848,7 +848,7 @@ public class VoteServiceTest {
                     any()
             );
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 

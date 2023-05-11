@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -16,7 +17,6 @@ import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ public class HttpClientUtilTest implements WithMockServer {
             try {
                 clientUtil.getCachedResponse(new HttpGet(statusUrl));
             } catch (Exception e) {
-                Assertions.fail(e.getMessage());
+                fail(e.getMessage());
             }
         });
         mockServerClient.verify(request(), VerificationTimes.exactly(1));
@@ -92,7 +92,7 @@ public class HttpClientUtilTest implements WithMockServer {
             try {
                 clientUtil.getCachedResponse(new HttpGet(statusUrl));
             } catch (Exception e) {
-                Assertions.fail(e.getMessage());
+                fail(e.getMessage());
             }
         });
         mockServerClient.verify(request(), VerificationTimes.exactly(count));

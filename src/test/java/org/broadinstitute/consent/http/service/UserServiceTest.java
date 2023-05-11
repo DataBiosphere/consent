@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
@@ -48,7 +49,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -143,7 +143,7 @@ public class UserServiceTest {
             assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
         verify(userDAO, times(1)).updateDisplayName(any(), any());
@@ -183,7 +183,7 @@ public class UserServiceTest {
             assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
         verify(userDAO, never()).updateDisplayName(any(), any());
@@ -224,7 +224,7 @@ public class UserServiceTest {
             assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
         verify(userDAO, never()).updateDisplayName(any(), any());
@@ -263,7 +263,7 @@ public class UserServiceTest {
             assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
             service.updateUserFieldsById(fields, user.getUserId());
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
         // We added 3 user property values, we should have props for them:
         verify(userDAO, never()).updateDisplayName(any(), any());
@@ -287,7 +287,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -306,7 +306,7 @@ public class UserServiceTest {
         try {
             service.createUser(u);
         } catch (Exception e) {
-            Assertions.fail(e.getMessage());
+            fail(e.getMessage());
         }
 
         assertEquals(institutionId, u.getInstitutionId());
@@ -493,7 +493,7 @@ public class UserServiceTest {
         try {
             service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
         } catch (Exception e) {
-            Assertions.fail("Should not fail: " + e.getMessage());
+            fail("Should not fail: " + e.getMessage());
         }
     }
 
