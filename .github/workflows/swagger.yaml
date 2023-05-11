@@ -6,7 +6,7 @@ on:
 jobs:
   test_swagger_editor_validator_remote:
     runs-on: ubuntu-latest
-    name: Swagger Editor Validator Remote
+    name: Swagger Editor Validator
 
     steps:
       - uses: actions/checkout@v2
