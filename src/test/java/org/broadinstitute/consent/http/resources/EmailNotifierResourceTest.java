@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.service.EmailService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+
+import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.service.EmailService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class EmailNotifierResourceTest {
 
@@ -20,7 +19,7 @@ public class EmailNotifierResourceTest {
 
     private EmailNotifierResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         doNothing().when(emailService).sendReminderMessage(any());

@@ -1,6 +1,25 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -16,38 +35,15 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DarCollectionResourceTest {
     private final AuthUser authUser = new AuthUser("test@test.com");
-    private final List<UserRole> researcherRole = new ArrayList(List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())
-    ));
+    private final List<UserRole> researcherRole = List.of(
+            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole);
     private final List<UserRole> signingOfficialRole = List.of(
             new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
@@ -57,8 +53,6 @@ public class DarCollectionResourceTest {
 
     @Mock
     private DataAccessRequestService dataAccessRequestService;
-    @Mock
-    private DatasetService datasetService;
     @Mock
     private DarCollectionService darCollectionService;
     @Mock
@@ -84,17 +78,7 @@ public class DarCollectionResourceTest {
         return collection;
     }
 
-    private Set<Dataset> mockDatasetsForResearcherCollection() {
-        Set<Dataset> datasets = new HashSet<>();
-        for (int i = 1; i < 3; i++) {
-            Dataset newDataset = new Dataset();
-            newDataset.setDataSetId(i);
-            datasets.add(newDataset);
-        }
-        return datasets;
-    }
-
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -333,10 +317,11 @@ public class DarCollectionResourceTest {
     @Test
     public void testGetCollectionByIdMultipleRoles() {
         UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-        researcher.addRole(chairRole);
+        UserRole researcherRole = new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+        User user = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(chairRole, researcherRole));
         DarCollection collection = mockDarCollection();
-        collection.setCreateUser(researcher);
-        collection.setCreateUserId(researcher.getUserId());
+        collection.setCreateUser(user);
+        collection.setCreateUserId(user.getUserId());
 
         Dataset dataSet = new Dataset();
         dataSet.setDataSetId(3);

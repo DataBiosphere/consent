@@ -1,7 +1,39 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -25,41 +57,9 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DatasetResourceTest {
 
@@ -94,7 +94,7 @@ public class DatasetResourceTest {
 
     private DatasetResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -148,43 +148,54 @@ public class DatasetResourceTest {
         assertEquals(result, response.getEntity());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNoJson() {
         initResource();
-        resource.createDataset(authUser, uriInfo, "");
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, "");
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNoProperties() {
         initResource();
-        resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetNullName() {
         String json = createPropertiesJson("Dataset Name", null);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetEmptyName() {
         String json = createPropertiesJson("Dataset Name", "");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetMissingName() {
         String json = createPropertiesJson("Property", "test");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetInvalidProperty() {
         List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
         invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
@@ -193,10 +204,13 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(invalidProperties);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateDatasetDuplicateProperties() {
         List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
         duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
@@ -206,10 +220,12 @@ public class DatasetResourceTest {
         String json = createPropertiesJson(duplicateProperties);
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+        assertThrows(BadRequestException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
-    @Test(expected = ClientErrorException.class)
+    @Test
     public void testCreateDatasetNameInUse() {
         Dataset inUse = new Dataset();
         when(datasetService.getDatasetByName("test")).thenReturn(inUse);
@@ -217,7 +233,10 @@ public class DatasetResourceTest {
         String json = createPropertiesJson("Dataset Name", "test");
 
         initResource();
-        resource.createDataset(authUser, uriInfo, json);
+
+        assertThrows(ClientErrorException.class, () -> {
+            resource.createDataset(authUser, uriInfo, json);
+        });
     }
 
     @Test
@@ -359,10 +378,13 @@ public class DatasetResourceTest {
         assertEquals(200, response.getStatus());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testValidateDatasetNameNotFound() {
         initResource();
-        resource.validateDatasetName("test");
+
+        assertThrows(NotFoundException.class, () -> {
+            resource.validateDatasetName("test");
+        });
     }
 
     @Test

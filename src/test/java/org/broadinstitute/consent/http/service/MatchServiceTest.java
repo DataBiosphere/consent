@@ -1,41 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
@@ -46,6 +16,35 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.ConsentDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+
 @SuppressWarnings({"unchecked", "resource"})
 public class MatchServiceTest {
     @Mock
@@ -54,8 +53,6 @@ public class MatchServiceTest {
     DatasetDAO datasetDAO;
     @Mock
     private ServicesConfiguration config;
-    @Mock
-    private ElectionDAO electionDAO;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
     @Mock
@@ -80,11 +77,11 @@ public class MatchServiceTest {
                 useRestrictionConverter);
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws UnknownIdentifierException, IOException {
         openMocks(this);
     }
@@ -112,13 +109,15 @@ public class MatchServiceTest {
         verify(matchDAO, atLeastOnce()).findMatchById(any());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testFindMatchByIdNotFound() {
         Match m = createMatchObject();
         when(matchDAO.findMatchById(m.getId())).thenReturn(null);
         initService();
 
-        service.findMatchById(m.getId());
+        assertThrows(NotFoundException.class, () -> {
+            service.findMatchById(m.getId());
+        });
     }
 
     @Test
@@ -181,18 +180,22 @@ public class MatchServiceTest {
         verify(dataAccessRequestDAO, atLeastOnce()).findAllDataAccessRequests();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testSingleEntitiesMatchV3EmptyDataset() {
         DataAccessRequest dar = new DataAccessRequest();
         initService();
-        service.singleEntitiesMatchV3(null, dar);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.singleEntitiesMatchV3(null, dar);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testSingleEntitiesMatchV3EmptyDar() {
         Dataset dataset = new Dataset();
         initService();
-        service.singleEntitiesMatchV3(dataset, null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.singleEntitiesMatchV3(dataset, null);
+        });
     }
 
     @Test

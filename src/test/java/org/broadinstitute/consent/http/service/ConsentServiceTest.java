@@ -1,5 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -9,21 +22,9 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.joda.time.DateTimeField;
 import org.joda.time.Instant;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ConsentServiceTest {
 
@@ -38,7 +39,7 @@ public class ConsentServiceTest {
     @Mock
     UseRestrictionConverter useRestrictionConverter;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -62,8 +63,8 @@ public class ConsentServiceTest {
         initService();
 
         Consent consent = service.create(testConsent);
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(consent.getName(), testConsent.getName());
+        assertNotNull(consent);
+        assertEquals(consent.getName(), testConsent.getName());
     }
 
     @Test
@@ -88,9 +89,9 @@ public class ConsentServiceTest {
         initService();
 
         Consent consent = service.update("test consent", testConsent);
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
-        Assert.assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
+        assertNotNull(consent);
+        assertEquals(getDayOfYear(consent.getLastUpdate()), getDayOfYear(updateDate));
+        assertEquals(getDayOfYear(consent.getSortDate()), getDayOfYear(updateDate));
     }
 
     private DateTimeField getDayOfYear(Timestamp timestamp) {
@@ -109,12 +110,12 @@ public class ConsentServiceTest {
         try {
             consent = service.retrieve("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assert.fail(unknownIdentifierException.getMessage());
+            fail(unknownIdentifierException.getMessage());
         }
-        Assert.assertNotNull(consent);
-        Assert.assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
-        Assert.assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
-        Assert.assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
+        assertNotNull(consent);
+        assertEquals(consent.getConsentId(), this.getTestConsent().getConsentId());
+        assertEquals(consent.getLastElectionArchived(), mockElection.getArchived());
+        assertEquals(consent.getLastElectionStatus(), mockElection.getStatus());
     }
 
     @Test
@@ -127,10 +128,10 @@ public class ConsentServiceTest {
         try {
             consent = service.getByName("test consent");
         } catch (UnknownIdentifierException unknownIdentifierException) {
-            Assert.fail(unknownIdentifierException.getMessage());
+            fail(unknownIdentifierException.getMessage());
         }
 
-        Assert.assertNotNull(consent);
+        assertNotNull(consent);
     }
 
     private Consent getTestConsent() {

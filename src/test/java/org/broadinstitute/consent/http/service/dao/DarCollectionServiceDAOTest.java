@@ -1,5 +1,14 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -15,24 +24,14 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
     private DarCollectionServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void initService() {
         serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
     }
@@ -70,23 +69,19 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
 
         // RP Elections have Chair and Dac votes
         Optional<Election> rpElectionOption = createdElections.stream().filter(e -> ElectionType.RP.getValue().equals(e.getElectionType())).findFirst();
@@ -94,13 +89,11 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
         assertTrue(createdVotes
                 .stream()
                 .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-                .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue()))
-        );
+                .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
     }
 
     /**
@@ -135,14 +128,20 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(referenceIds.contains(dar2.getReferenceId()));
         // Ensure that we have an access and rp election
         assertFalse(createdElections.isEmpty());
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
         // Ensure that we have primary vote types
         assertFalse(createdVotes.isEmpty());
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
 
         // Make sure that we DID create elections for the additional DAR/Dataset combination
         List<Election> additionalCreatedElections =
@@ -180,14 +179,20 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         assertTrue(referenceIds.contains(dar.get().getReferenceId()));
         // Ensure that we have an access and rp election
         assertFalse(createdElections.isEmpty());
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
         // Ensure that we have primary vote types
         assertFalse(createdVotes.isEmpty());
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
     }
 
     /**
@@ -233,14 +238,20 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
 
         // Ensure that we have an access and rp election
         assertFalse(createdElections.isEmpty());
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-        assertTrue(createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
+        assertTrue(
+            createdElections.stream().anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
         // Ensure that we have primary vote types
         assertFalse(createdVotes.isEmpty());
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-        assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+        assertTrue(
+            createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
 
         // Make sure we did not create elections for the DAR/Dataset that the chair does not have access to.
         List<Election> nonCreatedElections =
@@ -286,8 +297,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         // Ensure that we have the right number of access and rp elections, i.e. 1 each
         assertFalse(createdElections.isEmpty());
         assertEquals(2, createdElections.size());
-        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())).count());
-        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+            ElectionType.DATA_ACCESS.getValue())).count());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+            ElectionType.RP.getValue())).count());
 
         // Check that the canceled elections are archived
         List<Election> canceledElections = electionDAO.findElectionsByIds(canceledElectionIds);
@@ -346,8 +359,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
         // Ensure that we have the right number of access and rp elections, i.e. 1 each
         assertFalse(createdElections.isEmpty());
         assertEquals(2, createdElections.size());
-        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())).count());
-        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(ElectionType.RP.getValue())).count());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+            ElectionType.DATA_ACCESS.getValue())).count());
+        assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
+            ElectionType.RP.getValue())).count());
 
         // Make sure we did not create elections for the DAR/Dataset that the chair does not have access to.
         List<Election> nonCreatedElections =

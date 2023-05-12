@@ -1,30 +1,29 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 import com.google.api.client.http.HttpStatusCodes;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
-
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 public class HttpClientUtilTest implements WithMockServer {
 
@@ -36,17 +35,17 @@ public class HttpClientUtilTest implements WithMockServer {
 
     private final String statusUrl = String.format("http://%s:%s/", container.getHost(), container.getServerPort());
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         container.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         container.stop();
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
@@ -114,12 +113,9 @@ public class HttpClientUtilTest implements WithMockServer {
                 .respond(response()
                         .withStatusCode(200)
                         .withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
-        try {
+        assertThrows(RequestFailedException.class, () -> {
             clientUtil.getHttpResponse(new HttpGet(statusUrl));
-            fail("The above request should have thrown an exception");
-        } catch (Exception e) {
-            assertTrue(e instanceof RequestFailedException);
-        }
+        });
     }
 
 }

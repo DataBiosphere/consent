@@ -1,9 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.ConsentDAO;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -24,28 +40,10 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class ElectionServiceTest {
 
@@ -64,13 +62,9 @@ public class ElectionServiceTest {
     @Mock
     private DatasetDAO dataSetDAO;
     @Mock
-    private DatasetAssociationDAO datasetAssociationDAO;
-    @Mock
     private DataAccessRequestService dataAccessRequestService;
     @Mock
     private DataAccessRequestDAO dataAccessRequestDAO;
-    @Mock
-    private DarCollectionDAO darCollectionDAO;
     @Mock
     private EmailService emailService;
 
@@ -89,7 +83,7 @@ public class ElectionServiceTest {
     private static Vote sampleVoteMember;
     private static Vote sampleVoteRP;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         String referenceId = "CONS-1";
 
@@ -168,7 +162,7 @@ public class ElectionServiceTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         openMocks(this);
         bunchOfDoNothings();
@@ -335,7 +329,7 @@ public class ElectionServiceTest {
         assertNotNull(election);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDescribeDataRequestElection_Throws() {
         when(electionDAO.getElectionWithFinalVoteByReferenceIdAndType(sampleElection1.getReferenceId(), sampleElection1.getElectionType()))
                 .thenReturn(null);
@@ -343,7 +337,9 @@ public class ElectionServiceTest {
                 .thenReturn(null);
         initService();
 
-        Election election = service.describeDataRequestElection(sampleElection1.getReferenceId());
+        assertThrows(NotFoundException.class, () -> {
+            service.describeDataRequestElection(sampleElection1.getReferenceId());
+        });
     }
 
     @Test
@@ -355,13 +351,15 @@ public class ElectionServiceTest {
         assertEquals(sampleElection1.getElectionId(), election.getElectionId());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDescribeElectionByVoteId_Throws() {
         when(electionDAO.findElectionByVoteId(1))
                 .thenReturn(null);
         initService();
 
-        Election election = service.describeElectionByVoteId(sampleElection1.getElectionId());
+        assertThrows(NotFoundException.class, () -> {
+            service.describeElectionByVoteId(sampleElection1.getElectionId());
+        });
     }
 
     @Test

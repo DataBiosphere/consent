@@ -1,6 +1,30 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
@@ -25,33 +49,9 @@ import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class UserServiceTest {
 
@@ -94,7 +94,7 @@ public class UserServiceTest {
 
     private UserService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -313,24 +313,28 @@ public class UserServiceTest {
         assertEquals(u.getUserId(), libraryCard.getUserId());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserDuplicateEmail() {
         User u = generateUser();
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         when(userDAO.findUserByEmail(any())).thenReturn(u);
         initService();
-        service.createUser(u);
+        assertThrows(BadRequestException.class, () -> {
+            service.createUser(u);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserNoDisplayName() {
         User u = generateUser();
         List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
         u.setRoles(roles);
         u.setDisplayName(null);
         initService();
-        service.createUser(u);
+        assertThrows(BadRequestException.class, () -> {
+            service.createUser(u);
+        });
     }
 
     @Test
@@ -341,33 +345,40 @@ public class UserServiceTest {
         initService();
         User user = service.createUser(u);
         assertFalse(user.getRoles().isEmpty());
-        assertEquals(UserRoles.RESEARCHER.getRoleId(), user.getRoles().get(0).getRoleId());
+        assertEquals(UserRoles.RESEARCHER.getRoleId(),
+            user.getRoles().get(0).getRoleId());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserInvalidRoleCase1() {
         User u = generateUser();
         List<UserRole> roles = List.of(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
         u.setRoles(roles);
         initService();
-        service.createUser(u);
+        assertThrows(BadRequestException.class, () -> {
+            service.createUser(u);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserInvalidRoleCase2() {
         User u = generateUser();
         List<UserRole> roles = List.of(generateRole(UserRoles.MEMBER.getRoleId()));
         u.setRoles(roles);
         initService();
-        service.createUser(u);
+        assertThrows(BadRequestException.class, () -> {
+            service.createUser(u);
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testCreateUserNoEmail() {
         User u = generateUser();
         u.setEmail(null);
         initService();
-        service.createUser(u);
+        assertThrows(BadRequestException.class, () -> {
+            service.createUser(u);
+        });
     }
 
     @Test
@@ -419,13 +430,15 @@ public class UserServiceTest {
         assertEquals(2, u.getRoles().size());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testFindUserByIdNotFound() {
         User u = generateUser();
         when(userDAO.findUserById(any())).thenReturn(null);
         initService();
 
-        service.findUserById(u.getUserId());
+        assertThrows(NotFoundException.class, () -> {
+            service.findUserById(u.getUserId());
+        });
     }
 
     @Test
@@ -459,13 +472,15 @@ public class UserServiceTest {
         assertEquals(2, u.getRoles().size());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testFindUserByEmailNotFound() {
         User u = generateUser();
         when(userDAO.findUserByEmail(any())).thenReturn(null);
         initService();
 
-        service.findUserByEmail(u.getEmail());
+        assertThrows(NotFoundException.class, () -> {
+            service.findUserByEmail(u.getEmail());
+        });
     }
 
     @Test
@@ -482,11 +497,13 @@ public class UserServiceTest {
         }
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDeleteUserFailure() {
         when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
         initService();
-        service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+        assertThrows(NotFoundException.class, () -> {
+            service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+        });
     }
 
     @Test
@@ -508,17 +525,21 @@ public class UserServiceTest {
         assertEquals(0, users.size());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testFindUsersByInstitutionIdNullId() {
         initService();
-        service.findUsersByInstitutionId(null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.findUsersByInstitutionId(null);
+        });
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testFindUsersByInstitutionIdNullInstitution() {
         doThrow(new NotFoundException()).when(institutionDAO).findInstitutionById(anyInt());
         initService();
-        service.findUsersByInstitutionId(1);
+        assertThrows(NotFoundException.class, () -> {
+            service.findUsersByInstitutionId(1);
+        });
     }
 
     @Test
@@ -552,12 +573,14 @@ public class UserServiceTest {
         assertEquals(2, users.size());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testGetUsersAsRoleSO_NoInstitution() {
         User u = generateUser();
         u.setInstitutionId(null);
         initService();
-        service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
+        assertThrows(NotFoundException.class, () -> {
+            service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
+        });
     }
 
     @Test
@@ -609,9 +632,12 @@ public class UserServiceTest {
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
-        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
-        assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
+        assertTrue(
+            userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(
+            userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(
+            userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
     }
 
     @Test
@@ -632,8 +658,10 @@ public class UserServiceTest {
         initService();
         JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId());
         assertNotNull(userJson);
-        assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-        assertTrue(userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(
+            userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+        assertTrue(
+            userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
         assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
     }
 

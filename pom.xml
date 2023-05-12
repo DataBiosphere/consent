@@ -21,6 +21,7 @@
     <swagger.ui.version>4.14.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
+    <junit.version>5.9.3</junit.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -48,9 +49,9 @@
             </configuration>
             <dependencies>
               <dependency>
-                <groupId>org.apache.maven.surefire</groupId>
-                <artifactId>surefire-junit4</artifactId>
-                <version>${surefire.version}</version>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
               </dependency>
             </dependencies>
           </plugin>
@@ -75,9 +76,9 @@
             </configuration>
             <dependencies>
               <dependency>
-                <groupId>org.apache.maven.surefire</groupId>
-                <artifactId>surefire-junit4</artifactId>
-                <version>${surefire.version}</version>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
               </dependency>
             </dependencies>
           </plugin>
@@ -510,7 +511,7 @@
 
     <dependency>
       <groupId>au.com.dius.pact.consumer</groupId>
-      <artifactId>junit</artifactId>
+      <artifactId>junit5</artifactId>
       <version>${pact.version}</version>
       <scope>test</scope>
     </dependency>
@@ -523,9 +524,9 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 

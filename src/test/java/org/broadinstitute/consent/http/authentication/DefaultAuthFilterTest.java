@@ -1,23 +1,23 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.DefaultUnauthorizedHandler;
 import io.dropwizard.auth.UnauthorizedHandler;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Spy;
-
+import java.util.Optional;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Spy;
 
 public class DefaultAuthFilterTest {
 
@@ -38,18 +38,20 @@ public class DefaultAuthFilterTest {
             .setUnauthorizedHandler(unauthorizedHandler)
             .buildAuthFilter();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
         when(requestContext.getUriInfo()).thenReturn(uriInfo);
     }
 
-    @Test(expected = WebApplicationException.class)
-    public void testUnauthorizedUrl() throws Exception {
+    @Test
+    public void testUnauthorizedUrl() {
         when(uriInfo.getPath()).thenReturn("/something");
         when(headers.getFirst("Authorization")).thenReturn(null);
-        filter.filter(requestContext);
+        assertThrows(WebApplicationException.class, () -> {
+            filter.filter(requestContext);
+        });
     }
 
     @Test

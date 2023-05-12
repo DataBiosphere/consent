@@ -1,5 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -9,19 +20,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Test;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.Test;
 
 public class StudyDAOTest extends DAOTestHelper {
 
@@ -173,7 +172,8 @@ public class StudyDAOTest extends DAOTestHelper {
 
         Study study = studyDAO.findStudyById(id);
 
-        assertEquals(fso.getFileStorageObjectId(), study.getAlternativeDataSharingPlan().getFileStorageObjectId());
+        assertEquals(fso.getFileStorageObjectId(),
+            study.getAlternativeDataSharingPlan().getFileStorageObjectId());
         assertEquals(fso.getBlobId(), study.getAlternativeDataSharingPlan().getBlobId());
 
     }
@@ -204,7 +204,8 @@ public class StudyDAOTest extends DAOTestHelper {
         Study found = studyDAO.findStudyById(study.getStudyId());
 
         assertEquals(altFile, found.getAlternativeDataSharingPlan());
-        assertEquals(altFile.getBlobId(), found.getAlternativeDataSharingPlan().getBlobId());
+        assertEquals(altFile.getBlobId(),
+            found.getAlternativeDataSharingPlan().getBlobId());
     }
 
     @Test
@@ -249,7 +250,8 @@ public class StudyDAOTest extends DAOTestHelper {
         Study found = studyDAO.findStudyById(study.getStudyId());
 
         // returns last updated file
-        assertEquals(altFileIdCreatedSecond, found.getAlternativeDataSharingPlan().getFileStorageObjectId());
+        assertEquals(altFileIdCreatedSecond,
+            found.getAlternativeDataSharingPlan().getFileStorageObjectId());
     }
 
     @Test

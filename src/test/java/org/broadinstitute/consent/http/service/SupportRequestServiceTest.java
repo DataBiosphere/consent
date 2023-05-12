@@ -1,6 +1,17 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 import com.google.api.client.http.HttpStatusCodes;
+import java.util.List;
+import javax.ws.rs.ServerErrorException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -12,10 +23,10 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
@@ -23,18 +34,6 @@ import org.mockserver.model.HttpError;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
-
-import javax.ws.rs.ServerErrorException;
-import java.util.List;
-
-import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
 
 public class SupportRequestServiceTest {
 
@@ -53,17 +52,17 @@ public class SupportRequestServiceTest {
 
     private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         container.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         container.stop();
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
@@ -133,13 +132,15 @@ public class SupportRequestServiceTest {
         service.postTicketToSupport(ticket);
     }
 
-    @Test(expected = ServerErrorException.class)
-    public void testPostTicketToSupportServerError() throws Exception {
+    @Test
+    public void testPostTicketToSupportServerError() {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-        service.postTicketToSupport(generateTicket());
+        assertThrows(ServerErrorException.class, () -> {
+            service.postTicketToSupport(generateTicket());
+        });
     }
 
     @Test

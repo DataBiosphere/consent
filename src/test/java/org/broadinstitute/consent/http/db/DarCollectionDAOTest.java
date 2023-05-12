@@ -1,5 +1,22 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Consent;
@@ -14,27 +31,9 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 
 public class DarCollectionDAOTest extends DAOTestHelper {
@@ -77,7 +76,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         assertTrue(elections.size() > 0);
         List<Election> datasetElections = getDatasetElectionsFromElection(elections);
         assertEquals(0, datasetElections.size());
-        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
+        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
+            p.getUserId()));
     }
 
     @Test
@@ -88,7 +88,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         assertEquals(1, allAfter.size());
         List<UserProperty> userProperties = allAfter.get(0).getCreateUser().getProperties();
         assertFalse(userProperties.isEmpty());
-        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
+        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
+            p.getUserId()));
     }
 
     @Test
@@ -145,7 +146,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         List<UserProperty> userProperties = returned.getCreateUser().getProperties();
         assertFalse(userProperties.isEmpty());
-        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(), p.getUserId()));
+        userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
+            p.getUserId()));
 
         assertNull(returned.getCreateUser().getLibraryCards());
     }
@@ -243,13 +245,15 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         try {
             darCollectionDAO.insertDarCollection("darCode", 0, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
         try {
             darCollectionDAO.insertDarCollection("darCode", userId, new Date());
             darCollectionDAO.insertDarCollection("darCode", userId, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -273,13 +277,15 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         try {
             darCollectionDAO.updateDarCollection(0, userId, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
         try {
             DarCollection collection = createDarCollection();
             darCollectionDAO.updateDarCollection(collection.getDarCollectionId(), 0, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -289,7 +295,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         collection.getDars().keySet().forEach(k -> dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(k));
         dataAccessRequestDAO.deleteByCollectionId(collection.getDarCollectionId());
         darCollectionDAO.deleteByCollectionId(collection.getDarCollectionId());
-        assertNull(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()));
+        assertNull(
+            darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()));
     }
 
     @Test
@@ -297,7 +304,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         try {
             darCollectionDAO.deleteByCollectionId(RandomUtils.nextInt(100, 1000));
         } catch (Exception e) {
-            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -424,8 +432,10 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "DESC", user.getUserId(), "");
 
         assertEquals(2, collectionsResult.size());
-        assertEquals(collections.get(0).getDarCode(), collectionsResult.get(0).getDarCode());
-        assertEquals(collections.get(1).getDarCode(), collectionsResult.get(1).getDarCode());
+        assertEquals(collections.get(0).getDarCode(),
+            collectionsResult.get(0).getDarCode());
+        assertEquals(collections.get(1).getDarCode(),
+            collectionsResult.get(1).getDarCode());
         assertEquals(1, collectionsResult.get(0).getDars().size());
         assertEquals(1, collectionsResult.get(1).getDars().size());
     }
@@ -445,8 +455,10 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
         List<DarCollection> collectionsResult = darCollectionDAO.getFilteredListForResearcher("dar_code", "ASC", user.getUserId(), "");
         assertEquals(2, collectionsResult.size());
-        assertEquals(collections.get(0).getDarCode(), collectionsResult.get(0).getDarCode());
-        assertEquals(collections.get(1).getDarCode(), collectionsResult.get(1).getDarCode());
+        assertEquals(collections.get(0).getDarCode(),
+            collectionsResult.get(0).getDarCode());
+        assertEquals(collections.get(1).getDarCode(),
+            collectionsResult.get(1).getDarCode());
         assertEquals(1, collectionsResult.get(0).getDars().size());
         assertEquals(1, collectionsResult.get(1).getDars().size());
     }

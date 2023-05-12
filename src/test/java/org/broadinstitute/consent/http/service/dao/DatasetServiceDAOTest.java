@@ -1,6 +1,15 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -13,24 +22,14 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DatasetServiceDAOTest extends DAOTestHelper {
 
     private DatasetServiceDAO serviceDAO;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO);
     }
@@ -93,8 +92,10 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
         assertNotNull(created.getNihInstitutionalCertificationFile());
 
-        assertEquals(file1.getFileName(), created.getNihInstitutionalCertificationFile().getFileName());
-        assertEquals(file1.getBlobId(), created.getNihInstitutionalCertificationFile().getBlobId());
+        assertEquals(file1.getFileName(),
+            created.getNihInstitutionalCertificationFile().getFileName());
+        assertEquals(file1.getBlobId(),
+            created.getNihInstitutionalCertificationFile().getBlobId());
     }
 
 
@@ -333,7 +334,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         assertNotNull(s.getAlternativeDataSharingPlan());
 
         assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
-        assertEquals(file.getFileName(), s.getAlternativeDataSharingPlan().getFileName());
-        assertEquals(file.getCategory(), s.getAlternativeDataSharingPlan().getCategory());
+        assertEquals(file.getFileName(),
+            s.getAlternativeDataSharingPlan().getFileName());
+        assertEquals(file.getCategory(),
+            s.getAlternativeDataSharingPlan().getCategory());
     }
 }

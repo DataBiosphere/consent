@@ -1,7 +1,33 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -17,34 +43,9 @@ import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestResourceVersion2Test {
 
@@ -82,7 +83,7 @@ public class DataAccessRequestResourceVersion2Test {
 
     private DataAccessRequestResourceVersion2 resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -119,7 +120,7 @@ public class DataAccessRequestResourceVersion2Test {
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -143,7 +144,7 @@ public class DataAccessRequestResourceVersion2Test {
         }
         initResource();
         Response response = resource.createDataAccessRequest(authUser, info, "");
-        assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+        assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -155,13 +156,16 @@ public class DataAccessRequestResourceVersion2Test {
         assertEquals(200, response.getStatus());
     }
 
-    @Test(expected = ForbiddenException.class)
+    @Test
     public void testGetByReferenceIdForbidden() {
         when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
         when(userService.findUserByEmail(any())).thenReturn(mockUser);
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
         initResource();
-        resource.getByReferenceId(authUser, "");
+
+        assertThrows(ForbiddenException.class, () -> {
+            resource.getByReferenceId(authUser, "");
+        });
     }
 
     @Test
@@ -344,11 +348,13 @@ public class DataAccessRequestResourceVersion2Test {
         when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
         initResource();
 
-        assertEquals(200, resource.getCollaborationDocument(chairpersonUser, "").getStatus());
+        assertEquals(200,
+            resource.getCollaborationDocument(chairpersonUser, "").getStatus());
         assertEquals(200, resource.getCollaborationDocument(adminUser, "").getStatus());
         assertEquals(200, resource.getCollaborationDocument(memberUser, "").getStatus());
         assertEquals(200, resource.getCollaborationDocument(authUser, "").getStatus());
-        assertEquals(403, resource.getCollaborationDocument(anotherUser, "").getStatus());
+        assertEquals(403,
+            resource.getCollaborationDocument(anotherUser, "").getStatus());
     }
 
     @Test

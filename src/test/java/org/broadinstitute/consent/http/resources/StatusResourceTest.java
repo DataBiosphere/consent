@@ -1,30 +1,29 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import org.broadinstitute.consent.http.ConsentApplication;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.ConsentApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class StatusResourceTest {
 
     @Mock
     private HealthCheckRegistry healthChecks;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        openMocks(this);
     }
 
     private StatusResource initStatusResource(SortedMap<String, Result> checks) {

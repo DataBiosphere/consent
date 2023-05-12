@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.util.gson;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.models.Vote;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class GsonUtilTest {
     @Test
@@ -86,7 +85,8 @@ public class GsonUtilTest {
         assertEquals(2, parsedJsonObj.size());
         assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
         assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
-        assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(), parsedJsonObj.get("instant").getAsLong());
+        assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
+            parsedJsonObj.get("instant").getAsLong());
 
         assertFalse(parsedJsonObj.has("transientField"));
     }

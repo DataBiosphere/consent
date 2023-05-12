@@ -1,6 +1,33 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
 import com.google.gson.Gson;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -19,32 +46,9 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DacServiceTest {
 
@@ -68,7 +72,7 @@ public class DacServiceTest {
     @Mock
     private VoteService voteService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -82,7 +86,7 @@ public class DacServiceTest {
         when(dacDAO.findAll()).thenReturn(Collections.emptyList());
         initService();
 
-        Assert.assertTrue(service.findAll().isEmpty());
+        assertTrue(service.findAll().isEmpty());
     }
 
     @Test
@@ -91,7 +95,7 @@ public class DacServiceTest {
         when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
         initService();
 
-        Assert.assertTrue(service.findAllDacsWithMembers().isEmpty());
+        assertTrue(service.findAllDacsWithMembers().isEmpty());
     }
 
     @Test
@@ -101,15 +105,15 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacs = service.findAllDacsWithMembers();
-        Assert.assertFalse(dacs.isEmpty());
-        Assert.assertEquals(dacs.size(), getDacs().size());
+        assertFalse(dacs.isEmpty());
+        assertEquals(dacs.size(), getDacs().size());
         List<Dac> dacsWithMembers = dacs.
                 stream().
                 filter(d -> !d.getChairpersons().isEmpty()).
                 filter(d -> !d.getMembers().isEmpty()).
                 toList();
-        Assert.assertFalse(dacsWithMembers.isEmpty());
-        Assert.assertEquals(1, dacsWithMembers.size());
+        assertFalse(dacsWithMembers.isEmpty());
+        assertEquals(1, dacsWithMembers.size());
     }
 
     @Test
@@ -121,9 +125,9 @@ public class DacServiceTest {
         initService();
 
         Dac dac = service.findById(dacId);
-        Assert.assertNotNull(dac);
-        Assert.assertFalse(dac.getChairpersons().isEmpty());
-        Assert.assertFalse(dac.getMembers().isEmpty());
+        assertNotNull(dac);
+        assertFalse(dac.getChairpersons().isEmpty());
+        assertFalse(dac.getMembers().isEmpty());
     }
 
     @Test
@@ -132,7 +136,7 @@ public class DacServiceTest {
         initService();
 
         Integer dacId = service.createDac("name", "description");
-        Assert.assertEquals(getDacs().get(0).getDacId(), dacId);
+        assertEquals(getDacs().get(0).getDacId(), dacId);
     }
 
     @Test
@@ -141,7 +145,7 @@ public class DacServiceTest {
         initService();
 
         Integer dacId = service.createDac("name", "description", "email@test.com");
-        Assert.assertEquals(getDacs().get(0).getDacId(), dacId);
+        assertEquals(getDacs().get(0).getDacId(), dacId);
     }
 
     @Test
@@ -152,7 +156,7 @@ public class DacServiceTest {
         try {
             service.updateDac("name", "description", 1);
         } catch (Exception e) {
-            Assert.fail("Update should not fail");
+            fail("Update should not fail");
         }
     }
 
@@ -164,7 +168,7 @@ public class DacServiceTest {
         try {
             service.updateDac("name", "description", "test@email.com", 1);
         } catch (Exception e) {
-            Assert.fail("Update should not fail");
+            fail("Update should not fail");
         }
     }
 
@@ -177,7 +181,7 @@ public class DacServiceTest {
         try {
             service.deleteDac(1);
         } catch (Exception e) {
-            Assert.fail("Delete should not fail");
+            fail("Delete should not fail");
         }
     }
 
@@ -189,8 +193,8 @@ public class DacServiceTest {
         initService();
 
         List<Dataset> returned = service.findDatasetsByDacId(1);
-        Assert.assertNotNull(returned);
-        Assert.assertEquals(datasets, returned);
+        assertNotNull(returned);
+        assertEquals(datasets, returned);
     }
 
     @Test
@@ -200,8 +204,8 @@ public class DacServiceTest {
         initService();
 
         List<User> users = service.findMembersByDacId(1);
-        Assert.assertNotNull(users);
-        Assert.assertFalse(users.isEmpty());
+        assertNotNull(users);
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -229,8 +233,8 @@ public class DacServiceTest {
 
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         User user1 = service.addDacMember(role, user, dac);
-        Assert.assertNotNull(user1);
-        Assert.assertFalse(user1.getRoles().isEmpty());
+        assertNotNull(user1);
+        assertFalse(user1.getRoles().isEmpty());
         verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(), anyBoolean());
     }
 
@@ -248,7 +252,7 @@ public class DacServiceTest {
         try {
             service.removeDacMember(role, member, dac);
         } catch (Exception e) {
-            Assert.fail();
+            fail();
         }
         verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
@@ -269,13 +273,13 @@ public class DacServiceTest {
         try {
             service.removeDacMember(role, chair1, dac);
         } catch (Exception e) {
-            Assert.fail();
+            fail();
         }
         verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
         verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testRemoveDacChairFailure() {
         Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
         Dac dac = getDacs().get(0);
@@ -286,9 +290,11 @@ public class DacServiceTest {
         doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
         initService();
 
-        service.removeDacMember(role, chair, dac);
-        verify(dacDAO, times(0)).removeDacMember(anyInt());
-        verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+        assertThrows(BadRequestException.class, () -> {
+            service.removeDacMember(role, chair, dac);
+            verify(dacDAO, times(0)).removeDacMember(anyInt());
+            verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+        });
     }
 
     @Test
@@ -296,7 +302,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        Assert.assertTrue(service.isAuthUserAdmin(getUser()));
+        assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -304,7 +310,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        Assert.assertFalse(service.isAuthUserAdmin(getUser()));
+        assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -312,7 +318,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
         initService();
 
-        Assert.assertTrue(service.isAuthUserAdmin(getUser()));
+        assertTrue(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -320,7 +326,7 @@ public class DacServiceTest {
         when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
         initService();
 
-        Assert.assertFalse(service.isAuthUserAdmin(getUser()));
+        assertFalse(service.isAuthUserAdmin(getUser()));
     }
 
     @Test
@@ -336,7 +342,7 @@ public class DacServiceTest {
 
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, user);
         // As an admin, all docs should be returned.
-        Assert.assertEquals(dars.size(), filtered.size());
+        assertEquals(dars.size(), filtered.size());
     }
 
     @Test
@@ -352,7 +358,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to:
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -368,7 +374,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should only contain the ones the user has direct access to
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -384,7 +390,7 @@ public class DacServiceTest {
         List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
         // Filtered documents should contain the ones the user has direct access to
-        Assert.assertEquals(memberDataSets.size(), filtered.size());
+        assertEquals(memberDataSets.size(), filtered.size());
     }
 
     @Test
@@ -397,7 +403,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As an admin, all consents should be returned.
-        Assert.assertEquals(elections.size(), filtered.size());
+        assertEquals(elections.size(), filtered.size());
     }
 
     @Test
@@ -416,7 +422,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
         // As a member, only direct-associated consents should be returned.
-        Assert.assertEquals(memberDatasets.size(), filtered.size());
+        assertEquals(memberDatasets.size(), filtered.size());
     }
 
     @Test
@@ -444,7 +450,8 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
         // As a member, both direct-associated and unassociated elections should be returned.
-        Assert.assertEquals(memberDatasets.size() + unassociatedElections.size(), filtered.size());
+        assertEquals(memberDatasets.size() + unassociatedElections.size(),
+            filtered.size());
     }
 
     @Test
@@ -470,7 +477,7 @@ public class DacServiceTest {
 
         Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
         // As a member, both direct-associated and unassociated elections should be returned.
-        Assert.assertEquals(unassociatedElections.size(), filtered.size());
+        assertEquals(unassociatedElections.size(), filtered.size());
     }
 
     @Test
@@ -483,7 +490,7 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
-        Assert.assertEquals(dacsForUser.size(), dacs.size());
+        assertEquals(dacsForUser.size(), dacs.size());
     }
 
     @Test
@@ -496,7 +503,7 @@ public class DacServiceTest {
         initService();
 
         List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
-        Assert.assertEquals(dacsForUser.size(), dacs.size());
+        assertEquals(dacsForUser.size(), dacs.size());
     }
 
 

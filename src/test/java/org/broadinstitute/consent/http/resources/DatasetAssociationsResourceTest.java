@@ -1,21 +1,20 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.google.api.client.http.HttpStatusCodes;
+import java.util.Collections;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.service.DatasetAssociationService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class DatasetAssociationsResourceTest {
 
@@ -24,9 +23,9 @@ public class DatasetAssociationsResourceTest {
 
     private DatasetAssociationsResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
         when(service.createDatasetUsersAssociation(any(), any())).thenReturn(Collections.emptyList());
         when(service.findDataOwnersRelationWithDataset(any())).thenReturn(Collections.emptyMap());
         when(service.updateDatasetAssociations(any(), any())).thenReturn(Collections.emptyList());
@@ -40,7 +39,7 @@ public class DatasetAssociationsResourceTest {
     public void testAssociateDatasetWithUsers() {
         initResource();
         Response response = resource.associateDatasetWithUsers(RandomUtils.nextInt(1, 100), Collections.emptyList());
-        Assert.assertEquals(201, response.getStatus());
+        assertEquals(201, response.getStatus());
     }
 
     @Test
@@ -48,7 +47,7 @@ public class DatasetAssociationsResourceTest {
         when(service.createDatasetUsersAssociation(any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.associateDatasetWithUsers(RandomUtils.nextInt(1, 100), Collections.emptyList());
-        Assert.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
     @Test
@@ -56,21 +55,21 @@ public class DatasetAssociationsResourceTest {
         when(service.createDatasetUsersAssociation(any(), any())).thenThrow(new BadRequestException());
         initResource();
         Response response = resource.associateDatasetWithUsers(RandomUtils.nextInt(1, 100), Collections.emptyList());
-        Assert.assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
 
     @Test
     public void testGetDatasetAssociations() {
         initResource();
         Response response = resource.getDatasetAssociations(RandomUtils.nextInt(1, 100));
-        Assert.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
     public void testUpdateDatasetAssociations() {
         initResource();
         Response response = resource.updateDatasetAssociations(RandomUtils.nextInt(1, 100), Collections.emptyList());
-        Assert.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
     @Test
@@ -78,7 +77,7 @@ public class DatasetAssociationsResourceTest {
         when(service.updateDatasetAssociations(any(), any())).thenThrow(new NotFoundException());
         initResource();
         Response response = resource.updateDatasetAssociations(RandomUtils.nextInt(1, 100), Collections.emptyList());
-        Assert.assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
 
 }
