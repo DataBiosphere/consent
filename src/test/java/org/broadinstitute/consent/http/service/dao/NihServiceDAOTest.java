@@ -150,11 +150,9 @@ public class NihServiceDAOTest extends DAOTestHelper {
         userAccount.setStatus(true);
         userAccount.setNihUsername("NEW_ID");
         userAccount.setEraExpiration("new expiration");
-        try {
+        assertThrows(Exception.class, () -> {
             serviceDAO.updateUserNihStatus(user, userAccount);
-        } catch (Exception e) {
-            assertTrue(true);
-        }
+        });
     }
 
 }
