@@ -41,242 +41,250 @@ import org.testcontainers.containers.MockServerContainer;
 
 public class SamDAOTest implements WithMockServer {
 
-    private SamDAO samDAO;
+  private SamDAO samDAO;
 
-    private MockServerClient mockServerClient;
+  private MockServerClient mockServerClient;
 
-    @Mock
-    private AuthUser authUser;
+  @Mock
+  private AuthUser authUser;
 
-    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+  private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    @BeforeAll
-    public static void setUp() {
-        container.start();
+  @BeforeAll
+  public static void setUp() {
+    container.start();
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    container.stop();
+  }
+
+  @BeforeEach
+  public void init() {
+    openMocks(this);
+    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+    mockServerClient.reset();
+    ServicesConfiguration config = new ServicesConfiguration();
+    config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    samDAO = new SamDAO(config);
+  }
+
+  @Test
+  public void testGetResourceTypes() throws Exception {
+    ResourceType resourceType = new ResourceType()
+        .setName(RandomStringUtils.random(10, true, true))
+        .setReuseIds(RandomUtils.nextBoolean());
+    List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
+    Gson gson = new Gson();
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(gson.toJson(mockResponseList)));
+
+    List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
+    assertFalse(resourceTypeList.isEmpty());
+    assertEquals(mockResponseList.size(), resourceTypeList.size());
+  }
+
+  @Test
+  public void testGetRegistrationInfo() throws Exception {
+    UserStatusInfo userInfo = new UserStatusInfo()
+        .setAdminEnabled(RandomUtils.nextBoolean())
+        .setUserEmail("test@test.org")
+        .setUserSubjectId(RandomStringUtils.random(10, false, true))
+        .setEnabled(RandomUtils.nextBoolean());
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(userInfo.toString()));
+
+    UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
+    assertNotNull(authUserUserInfo);
+    assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
+    assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
+    assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
+  }
+
+  @Test
+  public void testGetRegistrationInfoBadRequest() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
+    assertThrows(BadRequestException.class, () -> {
+      samDAO.getRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testNotAuthorized() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
+    assertThrows(NotAuthorizedException.class, () -> {
+      samDAO.getRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testForbidden() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    assertThrows(ForbiddenException.class, () -> {
+      samDAO.getRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testNotFound() {
+    setDebugLogging();
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    assertThrows(NotFoundException.class, () -> {
+      samDAO.getRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testConflict() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
+    assertThrows(ConsentConflictException.class, () -> {
+      samDAO.getRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testGetSelfDiagnostics() throws Exception {
+    UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
+        .setAdminEnabled(RandomUtils.nextBoolean())
+        .setEnabled(RandomUtils.nextBoolean())
+        .setInAllUsersGroup(RandomUtils.nextBoolean())
+        .setInGoogleProxyGroup(RandomUtils.nextBoolean())
+        .setTosAccepted(RandomUtils.nextBoolean());
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(diagnostics.toString()));
+
+    UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
+    assertNotNull(userDiagnostics);
+    assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
+    assertEquals(diagnostics.getInAllUsersGroup(),
+        userDiagnostics.getInAllUsersGroup());
+    assertEquals(diagnostics.getInGoogleProxyGroup(),
+        userDiagnostics.getInGoogleProxyGroup());
+  }
+
+  @Test
+  public void testPostRegistrationInfo() throws Exception {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
+        .setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(status.toString()));
+
+    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
+    assertNotNull(userStatus);
+  }
+
+  /**
+   * This test doesn't technically work due to some sort of async issue. The response is terminated
+   * before the http request can finish executing. The response completes as expected in the
+   * non-async case (see #testPostRegistrationInfo()). In practice, the async calls work as
+   * expected.
+   */
+  @Test
+  public void testAsyncPostRegistrationInfo() {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
+        .setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(status.toString()));
+
+    try {
+      samDAO.asyncPostRegistrationInfo(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @AfterAll
-    public static void tearDown() {
-        container.stop();
+  @Test
+  public void testGetToSText() {
+    String mockText = "Plain Text";
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType()))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(mockText));
+
+    try {
+      String text = samDAO.getToSText();
+      assertEquals(mockText, text);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @BeforeEach
-    public void init() {
-        openMocks(this);
-        mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-        mockServerClient.reset();
-        ServicesConfiguration config = new ServicesConfiguration();
-        config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
-        samDAO = new SamDAO(config);
+  @Test
+  public void testPostTosAcceptedStatus() {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
+        .setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(tosResponse.toString()));
+
+    try {
+      samDAO.postTosAcceptedStatus(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @Test
-    public void testGetResourceTypes() throws Exception {
-        ResourceType resourceType = new ResourceType()
-                .setName(RandomStringUtils.random(10, true, true))
-                .setReuseIds(RandomUtils.nextBoolean());
-        List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
-        Gson gson = new Gson();
-        mockServerClient.when(request())
-                .respond(response()
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(gson.toJson(mockResponseList)));
+  @Test
+  public void testRemoveTosAcceptedStatus() {
+    TosResponse.Enabled enabled = new TosResponse.Enabled()
+        .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true)
+        .setLdap(true);
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(tosResponse.toString()));
 
-        List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
-        assertFalse(resourceTypeList.isEmpty());
-        assertEquals(mockResponseList.size(), resourceTypeList.size());
+    try {
+      samDAO.removeTosAcceptedStatus(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
-
-    @Test
-    public void testGetRegistrationInfo() throws Exception {
-        UserStatusInfo userInfo = new UserStatusInfo()
-                .setAdminEnabled(RandomUtils.nextBoolean())
-                .setUserEmail("test@test.org")
-                .setUserSubjectId(RandomStringUtils.random(10, false, true))
-                .setEnabled(RandomUtils.nextBoolean());
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(userInfo.toString()));
-
-        UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
-        assertNotNull(authUserUserInfo);
-        assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
-        assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
-        assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
-    }
-
-    @Test
-    public void testGetRegistrationInfoBadRequest() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-        assertThrows(BadRequestException.class, () -> {
-            samDAO.getRegistrationInfo(authUser);
-        });
-    }
-
-    @Test
-    public void testNotAuthorized() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-        assertThrows(NotAuthorizedException.class, () -> {
-            samDAO.getRegistrationInfo(authUser);
-        });
-    }
-
-    @Test
-    public void testForbidden() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-        assertThrows(ForbiddenException.class, () -> {
-            samDAO.getRegistrationInfo(authUser);
-        });
-    }
-
-    @Test
-    public void testNotFound() {
-        setDebugLogging();
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-        assertThrows(NotFoundException.class, () -> {
-            samDAO.getRegistrationInfo(authUser);
-        });
-    }
-
-    @Test
-    public void testConflict() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-        assertThrows(ConsentConflictException.class, () -> {
-            samDAO.getRegistrationInfo(authUser);
-        });
-    }
-
-    @Test
-    public void testGetSelfDiagnostics() throws Exception {
-        UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
-                .setAdminEnabled(RandomUtils.nextBoolean())
-                .setEnabled(RandomUtils.nextBoolean())
-                .setInAllUsersGroup(RandomUtils.nextBoolean())
-                .setInGoogleProxyGroup(RandomUtils.nextBoolean())
-                .setTosAccepted(RandomUtils.nextBoolean());
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(diagnostics.toString()));
-
-        UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
-        assertNotNull(userDiagnostics);
-        assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
-        assertEquals(diagnostics.getInAllUsersGroup(),
-            userDiagnostics.getInAllUsersGroup());
-        assertEquals(diagnostics.getInGoogleProxyGroup(),
-            userDiagnostics.getInGoogleProxyGroup());
-    }
-
-    @Test
-    public void testPostRegistrationInfo() throws Exception {
-        UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
-        UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
-        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-                        .withBody(status.toString()));
-
-        UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
-        assertNotNull(userStatus);
-    }
-
-    /**
-     * This test doesn't technically work due to some sort of async issue.
-     * The response is terminated before the http request can finish executing.
-     * The response completes as expected in the non-async case (see #testPostRegistrationInfo()).
-     * In practice, the async calls work as expected.
-     */
-    @Test
-    public void testAsyncPostRegistrationInfo() {
-        UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
-        UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
-        UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-                        .withBody(status.toString()));
-
-        try {
-            samDAO.asyncPostRegistrationInfo(authUser);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testGetToSText() {
-        String mockText = "Plain Text";
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType()))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(mockText));
-
-        try {
-            String text = samDAO.getToSText();
-            assertEquals(mockText, text);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testPostTosAcceptedStatus() {
-        TosResponse.Enabled enabled = new TosResponse.Enabled()
-                .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true).setLdap(true);
-        UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
-        TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(tosResponse.toString()));
-
-        try {
-            samDAO.postTosAcceptedStatus(authUser);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testRemoveTosAcceptedStatus() {
-        TosResponse.Enabled enabled = new TosResponse.Enabled()
-                .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true).setLdap(true);
-        UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
-        TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-        mockServerClient.when(request())
-                .respond(response()
-                        .withHeader(Header.header("Content-Type", "application/json"))
-                        .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                        .withBody(tosResponse.toString()));
-
-        try {
-            samDAO.removeTosAcceptedStatus(authUser);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
+  }
 }

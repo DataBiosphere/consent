@@ -20,76 +20,77 @@ import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
 public class ElasticSearchHealthCheckTest implements WithMockServer {
-    private ElasticSearchHealthCheck healthCheck;
-    private ElasticSearchConfiguration config;
-    private MockServerClient mockServerClient;
 
-    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+  private ElasticSearchHealthCheck healthCheck;
+  private ElasticSearchConfiguration config;
+  private MockServerClient mockServerClient;
 
-    @BeforeAll
-    public static void setUp() {
-        container.start();
+  private static final MockServerContainer container = new MockServerContainer(IMAGE);
+
+  @BeforeAll
+  public static void setUp() {
+    container.start();
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    container.stop();
+  }
+
+  @BeforeEach
+  public void init() {
+    openMocks(this);
+
+    config = new ElasticSearchConfiguration();
+    config.setServers(Collections.singletonList("localhost"));
+    config.setPort(container.getServerPort());
+
+    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+    mockServerClient.reset();
+  }
+
+  private void initHealthCheck(String status, Integer statusCode) {
+    try {
+      String stringResponse = "{ \"status\": \"" + status + "\" }";
+      mockServerClient.when(request()).respond(response()
+          .withStatusCode(statusCode)
+          .withBody(stringResponse));
+
+      healthCheck = new ElasticSearchHealthCheck(config);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @AfterAll
-    public static void tearDown() {
-        container.stop();
-    }
+  @Test
+  public void testCheckSuccessGreen() throws Exception {
+    initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
-    @BeforeEach
-    public void init() {
-        openMocks(this);
+    HealthCheck.Result result = healthCheck.check();
+    assertTrue(result.isHealthy());
+  }
 
-        config = new ElasticSearchConfiguration();
-        config.setServers(Collections.singletonList("localhost"));
-        config.setPort(container.getServerPort());
+  @Test
+  public void testCheckSuccessYellow() throws Exception {
+    initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
 
-        mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-        mockServerClient.reset();
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertTrue(result.isHealthy());
+  }
 
-    private void initHealthCheck(String status, Integer statusCode) {
-        try {
-            String stringResponse = "{ \"status\": \"" + status + "\" }";
-            mockServerClient.when(request()).respond(response()
-                    .withStatusCode(statusCode)
-                    .withBody(stringResponse));
+  @Test
+  public void testCheckFailureRed() throws Exception {
+    initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
 
-            healthCheck = new ElasticSearchHealthCheck(config);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 
-    @Test
-    public void testCheckSuccessGreen() throws Exception {
-        initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
+  @Test
+  public void testCheckServerFailure() throws Exception {
+    initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
 
-        HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
-    }
-
-    @Test
-    public void testCheckSuccessYellow() throws Exception {
-        initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
-
-        HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
-    }
-
-    @Test
-    public void testCheckFailureRed() throws Exception {
-        initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
-
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
-
-    @Test
-    public void testCheckServerFailure() throws Exception {
-        initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 }

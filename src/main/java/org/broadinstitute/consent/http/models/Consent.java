@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.sql.Timestamp;
 
 /**
@@ -12,196 +11,197 @@ import java.sql.Timestamp;
 
 public class Consent {
 
-    @JsonProperty
-    public String consentId;
+  @JsonProperty
+  public String consentId;
 
-    @JsonProperty
-    public String lastElectionStatus;
+  @JsonProperty
+  public String lastElectionStatus;
 
-    @JsonProperty
-    public Boolean lastElectionArchived;
+  @JsonProperty
+  public Boolean lastElectionArchived;
 
-    @JsonProperty
-    public Boolean requiresManualReview;
+  @JsonProperty
+  public Boolean requiresManualReview;
 
-    @JsonProperty
-    public String dataUseLetter;
+  @JsonProperty
+  public String dataUseLetter;
 
-    @JsonProperty
-    public String name;
+  @JsonProperty
+  public String name;
 
-    @JsonProperty
-    public String dulName;
+  @JsonProperty
+  public String dulName;
 
-    @JsonProperty
-    public Timestamp createDate;
+  @JsonProperty
+  public Timestamp createDate;
 
-    @JsonProperty
-    public Timestamp lastUpdate;
+  @JsonProperty
+  public Timestamp lastUpdate;
 
-    @JsonProperty
-    public Timestamp sortDate;
+  @JsonProperty
+  public Timestamp sortDate;
 
-    @JsonProperty
-    public String translatedUseRestriction;
+  @JsonProperty
+  public String translatedUseRestriction;
 
-    @JsonProperty
-    public DataUse dataUse;
+  @JsonProperty
+  public DataUse dataUse;
 
-    @JsonProperty
-    public String groupName;
+  @JsonProperty
+  public String groupName;
 
-    @JsonProperty
-    public boolean updateStatus;
+  @JsonProperty
+  public boolean updateStatus;
 
-    public Consent() {
-    }
+  public Consent() {
+  }
 
-    public Consent(Boolean requiresManualReview, String dataUseLetter,
-                   String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate, String groupName) {
-        this.requiresManualReview = requiresManualReview;
-        this.dataUseLetter = dataUseLetter;
-        this.name = name;
-        this.createDate = createDate;
-        this.sortDate = sortDate;
-        this.lastUpdate = lastUpdate;
-        this.groupName = groupName;
-    }
+  public Consent(Boolean requiresManualReview, String dataUseLetter,
+      String name, Timestamp createDate, Timestamp sortDate, Timestamp lastUpdate,
+      String groupName) {
+    this.requiresManualReview = requiresManualReview;
+    this.dataUseLetter = dataUseLetter;
+    this.name = name;
+    this.createDate = createDate;
+    this.sortDate = sortDate;
+    this.lastUpdate = lastUpdate;
+    this.groupName = groupName;
+  }
 
-    @JsonProperty
-    public Timestamp getCreateDate() {
-        return createDate;
-    }
+  @JsonProperty
+  public Timestamp getCreateDate() {
+    return createDate;
+  }
 
-    @JsonProperty
-    public void setCreateDate(Timestamp createDate) {
-        this.createDate = createDate;
-    }
+  @JsonProperty
+  public void setCreateDate(Timestamp createDate) {
+    this.createDate = createDate;
+  }
 
-    @JsonProperty
-    public Timestamp getLastUpdate() {
-        return lastUpdate;
-    }
+  @JsonProperty
+  public Timestamp getLastUpdate() {
+    return lastUpdate;
+  }
 
-    @JsonProperty
-    public void setLastUpdate(Timestamp lastUpdate) {
-        this.lastUpdate = lastUpdate;
-    }
+  @JsonProperty
+  public void setLastUpdate(Timestamp lastUpdate) {
+    this.lastUpdate = lastUpdate;
+  }
 
-    @JsonProperty
-    public Timestamp getSortDate() {
-        return sortDate;
-    }
+  @JsonProperty
+  public Timestamp getSortDate() {
+    return sortDate;
+  }
 
-    @JsonProperty
-    public void setSortDate(Timestamp sortDate) {
-        this.sortDate = sortDate;
-    }
+  @JsonProperty
+  public void setSortDate(Timestamp sortDate) {
+    this.sortDate = sortDate;
+  }
 
-    @JsonProperty
-    public String getDataUseLetter() {
-        return dataUseLetter;
-    }
+  @JsonProperty
+  public String getDataUseLetter() {
+    return dataUseLetter;
+  }
 
-    @JsonProperty
-    public void setDataUseLetter(String dataUseLetter) {
-        this.dataUseLetter = dataUseLetter;
-    }
+  @JsonProperty
+  public void setDataUseLetter(String dataUseLetter) {
+    this.dataUseLetter = dataUseLetter;
+  }
 
-    @JsonProperty
-    public Boolean getRequiresManualReview() {
-        return requiresManualReview;
-    }
+  @JsonProperty
+  public Boolean getRequiresManualReview() {
+    return requiresManualReview;
+  }
 
-    @JsonProperty
-    public void setRequiresManualReview(Boolean requiresManualReview) {
-        this.requiresManualReview = requiresManualReview;
-    }
+  @JsonProperty
+  public void setRequiresManualReview(Boolean requiresManualReview) {
+    this.requiresManualReview = requiresManualReview;
+  }
 
-    @JsonProperty
-    public String getName() {
-        return name;
-    }
+  @JsonProperty
+  public String getName() {
+    return name;
+  }
 
-    @JsonProperty
-    public void setName(String name) {
-        this.name = name;
-    }
+  @JsonProperty
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    @JsonProperty
-    public String getConsentId() {
-        return consentId;
-    }
+  @JsonProperty
+  public String getConsentId() {
+    return consentId;
+  }
 
-    @JsonProperty
-    public void setConsentId(String consentId) {
-        this.consentId = consentId;
-    }
+  @JsonProperty
+  public void setConsentId(String consentId) {
+    this.consentId = consentId;
+  }
 
-    @JsonProperty
-    public String getDulName() {
-        return dulName;
-    }
+  @JsonProperty
+  public String getDulName() {
+    return dulName;
+  }
 
-    @JsonProperty
-    public void setDulName(String dulName) {
-        this.dulName = dulName;
-    }
+  @JsonProperty
+  public void setDulName(String dulName) {
+    this.dulName = dulName;
+  }
 
-    @JsonProperty
-    public String getTranslatedUseRestriction() {
-        return translatedUseRestriction;
-    }
+  @JsonProperty
+  public String getTranslatedUseRestriction() {
+    return translatedUseRestriction;
+  }
 
-    @JsonProperty
-    public void setTranslatedUseRestriction(String translatedUseRestriction) {
-        this.translatedUseRestriction = translatedUseRestriction;
-    }
+  @JsonProperty
+  public void setTranslatedUseRestriction(String translatedUseRestriction) {
+    this.translatedUseRestriction = translatedUseRestriction;
+  }
 
-    @JsonProperty
-    public DataUse getDataUse() {
-        return dataUse;
-    }
+  @JsonProperty
+  public DataUse getDataUse() {
+    return dataUse;
+  }
 
-    @JsonProperty
-    public void setDataUse(DataUse dataUse) {
-        this.dataUse = dataUse;
-    }
+  @JsonProperty
+  public void setDataUse(DataUse dataUse) {
+    this.dataUse = dataUse;
+  }
 
-    @JsonProperty
-    public String getGroupName() {
-        return groupName;
-    }
+  @JsonProperty
+  public String getGroupName() {
+    return groupName;
+  }
 
-    @JsonProperty
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
-    }
+  @JsonProperty
+  public void setGroupName(String groupName) {
+    this.groupName = groupName;
+  }
 
-    public String getLastElectionStatus() {
-        return lastElectionStatus;
-    }
+  public String getLastElectionStatus() {
+    return lastElectionStatus;
+  }
 
-    @JsonProperty
-    public void setLastElectionStatus(String lastElectionStatus) {
-        this.lastElectionStatus = lastElectionStatus;
-    }
+  @JsonProperty
+  public void setLastElectionStatus(String lastElectionStatus) {
+    this.lastElectionStatus = lastElectionStatus;
+  }
 
-    public Boolean getLastElectionArchived() {
-        return lastElectionArchived;
-    }
+  public Boolean getLastElectionArchived() {
+    return lastElectionArchived;
+  }
 
-    public void setLastElectionArchived(Boolean lastElectionArchived) {
-        this.lastElectionArchived = lastElectionArchived;
-    }
+  public void setLastElectionArchived(Boolean lastElectionArchived) {
+    this.lastElectionArchived = lastElectionArchived;
+  }
 
-    public boolean getUpdated() {
-        return updateStatus;
-    }
+  public boolean getUpdated() {
+    return updateStatus;
+  }
 
-    @JsonProperty
-    public void setUpdated(boolean updateStatus) {
-        this.updateStatus = updateStatus;
-    }
+  @JsonProperty
+  public void setUpdated(boolean updateStatus) {
+    this.updateStatus = updateStatus;
+  }
 }
 

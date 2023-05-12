@@ -12,40 +12,40 @@ import org.owasp.fileio.FileValidator;
 
 public class ResourceTest {
 
-    @Test
-    public void testValidateFileDetails() {
-        Long maxSize = new FileValidator().getMaxFileUploadSize();
-        Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
-        FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-        when(fileDetail.getFileName()).thenReturn("temp.txt");
-        when(fileDetail.getSize()).thenReturn(maxSize);
-        try {
-            abstractResource.validateFileDetails(fileDetail);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+  @Test
+  public void testValidateFileDetails() {
+    Long maxSize = new FileValidator().getMaxFileUploadSize();
+    Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+    when(fileDetail.getFileName()).thenReturn("temp.txt");
+    when(fileDetail.getSize()).thenReturn(maxSize);
+    try {
+      abstractResource.validateFileDetails(fileDetail);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @Test
-    public void testValidateFileDetailsFileName() {
-        Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
-        FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-        when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
-        assertThrows(IllegalArgumentException.class, () -> {
-            abstractResource.validateFileDetails(fileDetail);
-        });
-    }
+  @Test
+  public void testValidateFileDetailsFileName() {
+    Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+    when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
+    assertThrows(IllegalArgumentException.class, () -> {
+      abstractResource.validateFileDetails(fileDetail);
+    });
+  }
 
-    @Test
-    public void testValidateFileDetailsFileSize() {
-        Long maxSize = new FileValidator().getMaxFileUploadSize();
-        Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
-        FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-        when(fileDetail.getFileName()).thenReturn("temp.txt");
-        when(fileDetail.getSize()).thenReturn(maxSize + 1);
-        assertThrows(IllegalArgumentException.class, () -> {
-            abstractResource.validateFileDetails(fileDetail);
-        });
-    }
+  @Test
+  public void testValidateFileDetailsFileSize() {
+    Long maxSize = new FileValidator().getMaxFileUploadSize();
+    Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+    when(fileDetail.getFileName()).thenReturn("temp.txt");
+    when(fileDetail.getSize()).thenReturn(maxSize + 1);
+    assertThrows(IllegalArgumentException.class, () -> {
+      abstractResource.validateFileDetails(fileDetail);
+    });
+  }
 
 }

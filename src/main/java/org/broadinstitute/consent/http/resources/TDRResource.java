@@ -36,117 +36,121 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/tdr")
 public class TDRResource extends Resource {
 
-    private final TDRService tdrService;
-    private final DatasetService datasetService;
-    private final UserService userService;
-    private final DataAccessRequestService darService;
+  private final TDRService tdrService;
+  private final DatasetService datasetService;
+  private final UserService userService;
+  private final DataAccessRequestService darService;
 
 
-    @Inject
-    public TDRResource(TDRService tdrService, DatasetService datasetService,
-                       UserService userService, DataAccessRequestService darService) {
-        this.datasetService = datasetService;
-        this.tdrService = tdrService;
-        this.userService = userService;
-        this.darService = darService;
+  @Inject
+  public TDRResource(TDRService tdrService, DatasetService datasetService,
+      UserService userService, DataAccessRequestService darService) {
+    this.datasetService = datasetService;
+    this.tdrService = tdrService;
+    this.userService = userService;
+    this.darService = darService;
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/{identifier}/approved/users")
+  public Response getApprovedUsers(@Auth AuthUser authUser,
+      @PathParam("identifier") String identifier) {
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
+      if (Objects.isNull(dataset)) {
+        throw new NotFoundException("Could not find dataset " + identifier);
+      }
+
+      ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(dataset);
+      return Response.ok(approvedUsers).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
+  }
 
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    @Path("/{identifier}/approved/users")
-    public Response getApprovedUsers(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
-        try {
-            Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
-            if (Objects.isNull(dataset)) {
-                throw new NotFoundException("Could not find dataset " + identifier);
-            }
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/{identifier}")
+  public Response getDatasetByIdentifier(@Auth AuthUser authUser,
+      @PathParam("identifier") String identifier) {
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
+      if (Objects.isNull(dataset)) {
+        throw new NotFoundException("Could not find dataset " + identifier);
+      }
 
-            ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(dataset);
-            return Response.ok(approvedUsers).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
+      return Response.ok(unmarshal(dataset)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/dar/draft")
+  @PermitAll
+  public Response createDraftDataAccessRequest(
+      @Auth AuthUser authUser,
+      @QueryParam("identifiers") String identifiers,
+      @QueryParam("projectTitle") String projectTitle) {
+    try {
+      // Ensure that the user is a registered DUOS and SAM user
+      User user = userService.findOrCreateUser(authUser);
+      if (Objects.isNull(identifiers) || identifiers.isBlank()) {
+        throw new BadRequestException("No dataset identifiers were provided");
+      } else {
+        List<String> identifierList = Arrays.stream(identifiers.split(","))
+            .map(String::trim)
+            .filter(identifier -> !identifier.isBlank())
+            // this will filter duplicate identifier strings, ex. "DUOS-000594, DUOS-000594"
+            .distinct()
+            .toList();
+        List<Integer> aliasList = identifierList
+            .stream()
+            .map(Dataset::parseIdentifierToAlias)
+            // this will filter duplicate aliases, ex. "593, 593"
+            .distinct()
+            .toList();
+        List<Dataset> datasets = tdrService.getDatasetsByIdentifier(aliasList);
+        List<Integer> datasetAliases = datasets.stream().map(Dataset::getAlias).toList();
+        // Check that we were able to find a dataset id for all identifiers provided
+        if (aliasList.size() != datasets.size()) {
+          // isolate a list of identifier strings that were not matched to datasets
+          List<String> notFoundIdentifiers = identifierList
+              .stream()
+              .filter(identifier -> !datasetAliases.contains(
+                  Dataset.parseIdentifierToAlias(identifier)))
+              .toList();
+          // throw a NFE to let the client know which identifiers were NOT found so they can rectify their request
+          throw new NotFoundException(
+              "Invalid dataset identifiers were provided: " + notFoundIdentifiers);
         }
-    }
-
-    @GET
-    @Produces("application/json")
-    @PermitAll
-    @Path("/{identifier}")
-    public Response getDatasetByIdentifier(@Auth AuthUser authUser, @PathParam("identifier") String identifier) {
-        try {
-            Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
-            if (Objects.isNull(dataset)) {
-                throw new NotFoundException("Could not find dataset " + identifier);
-            }
-
-            return Response.ok(unmarshal(dataset)).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
+        List<Integer> datasetIds = datasets
+            .stream()
+            .map(Dataset::getDataSetId)
+            .toList();
+        DataAccessRequest newDar = new DataAccessRequest();
+        newDar.setCreateDate(new Timestamp(new Date().getTime()));
+        DataAccessRequestData data = new DataAccessRequestData();
+        String referenceId = UUID.randomUUID().toString();
+        newDar.setReferenceId(referenceId);
+        data.setReferenceId(referenceId);
+        if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
+          data.setProjectTitle(projectTitle);
         }
+        newDar.setData(data);
+        newDar.setDatasetIds(datasetIds);
+        DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
+        // URI should return the new DAR url
+        URI uri = UriBuilder.fromPath("api/dar/v2/" + result.getReferenceId()).build();
+        return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+      }
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
-
-    @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    @Path("/dar/draft")
-    @PermitAll
-    public Response createDraftDataAccessRequest(
-            @Auth AuthUser authUser,
-            @QueryParam("identifiers") String identifiers,
-            @QueryParam("projectTitle") String projectTitle) {
-        try {
-            // Ensure that the user is a registered DUOS and SAM user
-            User user = userService.findOrCreateUser(authUser);
-            if (Objects.isNull(identifiers) || identifiers.isBlank()) {
-                throw new BadRequestException("No dataset identifiers were provided");
-            } else {
-                List<String> identifierList = Arrays.stream(identifiers.split(","))
-                        .map(String::trim)
-                        .filter(identifier -> !identifier.isBlank())
-                        // this will filter duplicate identifier strings, ex. "DUOS-000594, DUOS-000594"
-                        .distinct()
-                        .toList();
-                List<Integer> aliasList = identifierList
-                        .stream()
-                        .map(Dataset::parseIdentifierToAlias)
-                        // this will filter duplicate aliases, ex. "593, 593"
-                        .distinct()
-                        .toList();
-                List<Dataset> datasets = tdrService.getDatasetsByIdentifier(aliasList);
-                List<Integer> datasetAliases = datasets.stream().map(Dataset::getAlias).toList();
-                // Check that we were able to find a dataset id for all identifiers provided
-                if (aliasList.size() != datasets.size()) {
-                    // isolate a list of identifier strings that were not matched to datasets
-                    List<String> notFoundIdentifiers = identifierList
-                            .stream()
-                            .filter(identifier -> !datasetAliases.contains(Dataset.parseIdentifierToAlias(identifier)))
-                            .toList();
-                    // throw a NFE to let the client know which identifiers were NOT found so they can rectify their request
-                    throw new NotFoundException("Invalid dataset identifiers were provided: " + notFoundIdentifiers);
-                }
-                List<Integer> datasetIds = datasets
-                        .stream()
-                        .map(Dataset::getDataSetId)
-                        .toList();
-                DataAccessRequest newDar = new DataAccessRequest();
-                newDar.setCreateDate(new Timestamp(new Date().getTime()));
-                DataAccessRequestData data = new DataAccessRequestData();
-                String referenceId = UUID.randomUUID().toString();
-                newDar.setReferenceId(referenceId);
-                data.setReferenceId(referenceId);
-                if (!Objects.isNull(projectTitle) && !projectTitle.isBlank()) {
-                    data.setProjectTitle(projectTitle);
-                }
-                newDar.setData(data);
-                newDar.setDatasetIds(datasetIds);
-                DataAccessRequest result = darService.insertDraftDataAccessRequest(user, newDar);
-                // URI should return the new DAR url
-                URI uri = UriBuilder.fromPath("api/dar/v2/" + result.getReferenceId()).build();
-                return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
-            }
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
-    }
+  }
 }

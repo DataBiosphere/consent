@@ -16,32 +16,32 @@ import org.mockito.Mock;
 
 public class ErrorResourceTest {
 
-    @Mock
-    private Request request;
+  @Mock
+  private Request request;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testNotFound() {
-        ErrorResource resource = new ErrorResource();
-        when(request.getOriginalURI()).thenReturn("not_found");
-        try (Response response = resource.notFound(request)) {
-            assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-        }
+  @Test
+  public void testNotFound() {
+    ErrorResource resource = new ErrorResource();
+    when(request.getOriginalURI()).thenReturn("not_found");
+    try (Response response = resource.notFound(request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
+  }
 
-    @Test
-    public void testNotFoundDecoded() {
-        String unicode = "¥";
-        String encoded = URLEncoder.encode(unicode, Charset.defaultCharset());
-        ErrorResource resource = new ErrorResource();
-        when(request.getOriginalURI()).thenReturn(encoded);
-        try (Response response = resource.notFound(request)) {
-            assertTrue(response.getEntity().toString().contains(unicode));
-        }
+  @Test
+  public void testNotFoundDecoded() {
+    String unicode = "¥";
+    String encoded = URLEncoder.encode(unicode, Charset.defaultCharset());
+    ErrorResource resource = new ErrorResource();
+    when(request.getOriginalURI()).thenReturn(encoded);
+    try (Response response = resource.notFound(request)) {
+      assertTrue(response.getEntity().toString().contains(unicode));
     }
+  }
 
 }

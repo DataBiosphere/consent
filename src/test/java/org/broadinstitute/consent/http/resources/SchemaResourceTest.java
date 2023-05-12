@@ -10,17 +10,17 @@ import org.junit.jupiter.api.Test;
 public class SchemaResourceTest {
 
 
-    private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
+  private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
 
-    @Test
-    public void testGetDatasetRegistrationSchemaV1() {
-        SchemaResource resource = new SchemaResource();
+  @Test
+  public void testGetDatasetRegistrationSchemaV1() {
+    SchemaResource resource = new SchemaResource();
 
-        Response response = resource.getDatasetRegistrationSchemaV1();
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    Response response = resource.getDatasetRegistrationSchemaV1();
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
 
-        Object body = response.getEntity();
-        assertEquals(jsonSchemaUtil.getDatasetRegistrationSchemaV1(), body.toString());
-    }
+    Object body = response.getEntity();
+    assertEquals(jsonSchemaUtil.getDatasetRegistrationSchemaV1(), body.toString());
+  }
 
 }

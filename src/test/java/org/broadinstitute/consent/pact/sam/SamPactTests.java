@@ -297,7 +297,9 @@ public class SamPactTests {
         assertNotNull(tosResponse);
       }
     } catch (Exception e) {
-      ClassicHttpResponse response = (ClassicHttpResponse) Request.delete(mockServer.getUrl() + "/" + ServicesConfiguration.REGISTER_TOS_PATH).execute().returnResponse();
+      ClassicHttpResponse response = (ClassicHttpResponse) Request.delete(
+              mockServer.getUrl() + "/" + ServicesConfiguration.REGISTER_TOS_PATH).execute()
+          .returnResponse();
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
     }
   }

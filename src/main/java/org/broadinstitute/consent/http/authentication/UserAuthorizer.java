@@ -12,25 +12,25 @@ import org.broadinstitute.consent.http.models.AuthUser;
 
 public class UserAuthorizer implements Authorizer<AuthUser> {
 
-    private UserRoleDAO userRoleDAO;
+  private UserRoleDAO userRoleDAO;
 
-    UserAuthorizer(UserRoleDAO userRoleDAO) {
-        this.userRoleDAO = userRoleDAO;
-    }
+  UserAuthorizer(UserRoleDAO userRoleDAO) {
+    this.userRoleDAO = userRoleDAO;
+  }
 
-    @Override
-    public boolean authorize(AuthUser user, String role, ContainerRequestContext context) {
-        boolean authorize = false;
-        if (StringUtils.isNotEmpty(role)) {
-            List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
-            List<String> existentRole = roles.stream()
-                    .filter(r -> r.equalsIgnoreCase(role))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            if (CollectionUtils.isNotEmpty(existentRole)) {
-                authorize = true;
-            }
-        }
-        return authorize;
+  @Override
+  public boolean authorize(AuthUser user, String role, ContainerRequestContext context) {
+    boolean authorize = false;
+    if (StringUtils.isNotEmpty(role)) {
+      List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
+      List<String> existentRole = roles.stream()
+          .filter(r -> r.equalsIgnoreCase(role))
+          .collect(Collectors.toCollection(ArrayList::new));
+      if (CollectionUtils.isNotEmpty(existentRole)) {
+        authorize = true;
+      }
     }
+    return authorize;
+  }
 
 }

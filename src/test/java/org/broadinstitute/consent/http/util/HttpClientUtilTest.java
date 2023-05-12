@@ -27,95 +27,96 @@ import org.testcontainers.containers.MockServerContainer;
 
 public class HttpClientUtilTest implements WithMockServer {
 
-    private HttpClientUtil clientUtil;
+  private HttpClientUtil clientUtil;
 
-    private MockServerClient mockServerClient;
+  private MockServerClient mockServerClient;
 
-    private static final MockServerContainer container = new MockServerContainer(IMAGE);
+  private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    private final String statusUrl = String.format("http://%s:%s/", container.getHost(), container.getServerPort());
+  private final String statusUrl = String.format("http://%s:%s/", container.getHost(),
+      container.getServerPort());
 
-    @BeforeAll
-    public static void setUp() {
-        container.start();
-    }
+  @BeforeAll
+  public static void setUp() {
+    container.start();
+  }
 
-    @AfterAll
-    public static void tearDown() {
-        container.stop();
-    }
+  @AfterAll
+  public static void tearDown() {
+    container.stop();
+  }
 
-    @BeforeEach
-    public void init() {
-        openMocks(this);
-        mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-        mockServerClient.reset();
-        ServicesConfiguration configuration = new ServicesConfiguration();
-        configuration.setTimeoutSeconds(1);
-        clientUtil = new HttpClientUtil(configuration);
-    }
+  @BeforeEach
+  public void init() {
+    openMocks(this);
+    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
+    mockServerClient.reset();
+    ServicesConfiguration configuration = new ServicesConfiguration();
+    configuration.setTimeoutSeconds(1);
+    clientUtil = new HttpClientUtil(configuration);
+  }
 
-    /**
-     * Test that the cache works normally
-     */
-    @Test
-    public void testGetCachedResponse_case1() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withStatusCode(200));
-        IntStream.range(3, 10).forEach(i -> {
-            try {
-                clientUtil.getCachedResponse(new HttpGet(statusUrl));
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
-        });
-        mockServerClient.verify(request(), VerificationTimes.exactly(1));
-    }
+  /**
+   * Test that the cache works normally
+   */
+  @Test
+  public void testGetCachedResponse_case1() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(200));
+    IntStream.range(3, 10).forEach(i -> {
+      try {
+        clientUtil.getCachedResponse(new HttpGet(statusUrl));
+      } catch (Exception e) {
+        fail(e.getMessage());
+      }
+    });
+    mockServerClient.verify(request(), VerificationTimes.exactly(1));
+  }
 
-    /**
-     * Test that when the cache is expired, all calls are made to external servers
-     */
-    @Test
-    public void testGetCachedResponse_case2() {
-        ServicesConfiguration configuration = new ServicesConfiguration();
-        configuration.setTimeoutSeconds(1);
-        // Setting the cache to 0 effectively means no caching
-        configuration.setCacheExpireMinutes(0);
-        clientUtil = new HttpClientUtil(configuration);
-        mockServerClient.when(request())
-                .respond(response()
-                        .withStatusCode(200));
+  /**
+   * Test that when the cache is expired, all calls are made to external servers
+   */
+  @Test
+  public void testGetCachedResponse_case2() {
+    ServicesConfiguration configuration = new ServicesConfiguration();
+    configuration.setTimeoutSeconds(1);
+    // Setting the cache to 0 effectively means no caching
+    configuration.setCacheExpireMinutes(0);
+    clientUtil = new HttpClientUtil(configuration);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(200));
 
-        int count = RandomUtils.nextInt(5, 10);
-        IntStream.range(0, count).forEach(i -> {
-            try {
-                clientUtil.getCachedResponse(new HttpGet(statusUrl));
-            } catch (Exception e) {
-                fail(e.getMessage());
-            }
-        });
-        mockServerClient.verify(request(), VerificationTimes.exactly(count));
-    }
+    int count = RandomUtils.nextInt(5, 10);
+    IntStream.range(0, count).forEach(i -> {
+      try {
+        clientUtil.getCachedResponse(new HttpGet(statusUrl));
+      } catch (Exception e) {
+        fail(e.getMessage());
+      }
+    });
+    mockServerClient.verify(request(), VerificationTimes.exactly(count));
+  }
 
-    @Test
-    public void testGetHttpResponseUnderTimeout() throws Exception {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withStatusCode(200));
-        SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
-    }
+  @Test
+  public void testGetHttpResponseUnderTimeout() throws Exception {
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(200));
+    SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
+  }
 
-    @Test
-    public void testGetHttpResponseOverTimeout() {
-        mockServerClient.when(request())
-                .respond(response()
-                        .withStatusCode(200)
-                        .withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
-        assertThrows(RequestFailedException.class, () -> {
-            clientUtil.getHttpResponse(new HttpGet(statusUrl));
-        });
-    }
+  @Test
+  public void testGetHttpResponseOverTimeout() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(200)
+            .withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
+    assertThrows(RequestFailedException.class, () -> {
+      clientUtil.getHttpResponse(new HttpGet(statusUrl));
+    });
+  }
 
 }

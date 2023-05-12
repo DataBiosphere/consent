@@ -17,40 +17,42 @@ import org.mockito.Mock;
 
 public class UserAuthorizerTest {
 
-    private UserAuthorizer authorizer;
-    @Mock
-    UserRoleDAO userRoleDAO;
-    @Mock
-    AuthUser authorizedUser;
-    @Mock
-    AuthUser unauthorizedUser;
-    @Mock
-    ContainerRequestContext context;
+  private UserAuthorizer authorizer;
+  @Mock
+  UserRoleDAO userRoleDAO;
+  @Mock
+  AuthUser authorizedUser;
+  @Mock
+  AuthUser unauthorizedUser;
+  @Mock
+  ContainerRequestContext context;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-        when(authorizedUser.getEmail()).thenReturn("Authorized User");
-        when(unauthorizedUser.getEmail()).thenReturn("Unauthorized User");
-        when(userRoleDAO.findRoleNamesByUserEmail("Authorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
-        when(userRoleDAO.findRoleNamesByUserEmail("Unauthorized User")).thenReturn(Collections.singletonList(getChairpersonRole().getName()));
-        authorizer = new UserAuthorizer(userRoleDAO);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+    when(authorizedUser.getEmail()).thenReturn("Authorized User");
+    when(unauthorizedUser.getEmail()).thenReturn("Unauthorized User");
+    when(userRoleDAO.findRoleNamesByUserEmail("Authorized User")).thenReturn(
+        Collections.singletonList(getChairpersonRole().getName()));
+    when(userRoleDAO.findRoleNamesByUserEmail("Unauthorized User")).thenReturn(
+        Collections.singletonList(getChairpersonRole().getName()));
+    authorizer = new UserAuthorizer(userRoleDAO);
+  }
 
-    @Test
-    public void testAuthorizeNotAuthorized() {
-        assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER, context));
-    }
+  @Test
+  public void testAuthorizeNotAuthorized() {
+    assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER, context));
+  }
 
-    @Test
-    public void testAuthorizeAuthorized() {
-        assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
-    }
+  @Test
+  public void testAuthorizeAuthorized() {
+    assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
+  }
 
-    /* Helper Methods */
+  /* Helper Methods */
 
-    private UserRole getChairpersonRole() {
-        return new UserRole(1, "CHAIRPERSON");
-    }
+  private UserRole getChairpersonRole() {
+    return new UserRole(1, "CHAIRPERSON");
+  }
 
 }

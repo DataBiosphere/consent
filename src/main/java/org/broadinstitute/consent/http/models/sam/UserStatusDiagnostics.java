@@ -7,59 +7,59 @@ import com.google.gson.Gson;
  */
 public class UserStatusDiagnostics {
 
-    private Boolean adminEnabled;
-    private Boolean enabled;
-    private Boolean inAllUsersGroup;
-    private Boolean inGoogleProxyGroup;
-    private Boolean tosAccepted;
+  private Boolean adminEnabled;
+  private Boolean enabled;
+  private Boolean inAllUsersGroup;
+  private Boolean inGoogleProxyGroup;
+  private Boolean tosAccepted;
 
-    public Boolean getAdminEnabled() {
-        return adminEnabled;
-    }
+  public Boolean getAdminEnabled() {
+    return adminEnabled;
+  }
 
-    public UserStatusDiagnostics setAdminEnabled(Boolean adminEnabled) {
-        this.adminEnabled = adminEnabled;
-        return this;
-    }
+  public UserStatusDiagnostics setAdminEnabled(Boolean adminEnabled) {
+    this.adminEnabled = adminEnabled;
+    return this;
+  }
 
-    public Boolean getEnabled() {
-        return enabled;
-    }
+  public Boolean getEnabled() {
+    return enabled;
+  }
 
-    public UserStatusDiagnostics setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-        return this;
-    }
+  public UserStatusDiagnostics setEnabled(Boolean enabled) {
+    this.enabled = enabled;
+    return this;
+  }
 
-    public Boolean getInAllUsersGroup() {
-        return inAllUsersGroup;
-    }
+  public Boolean getInAllUsersGroup() {
+    return inAllUsersGroup;
+  }
 
-    public UserStatusDiagnostics setInAllUsersGroup(Boolean inAllUsersGroup) {
-        this.inAllUsersGroup = inAllUsersGroup;
-        return this;
-    }
+  public UserStatusDiagnostics setInAllUsersGroup(Boolean inAllUsersGroup) {
+    this.inAllUsersGroup = inAllUsersGroup;
+    return this;
+  }
 
-    public Boolean getInGoogleProxyGroup() {
-        return inGoogleProxyGroup;
-    }
+  public Boolean getInGoogleProxyGroup() {
+    return inGoogleProxyGroup;
+  }
 
-    public UserStatusDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
-        this.inGoogleProxyGroup = inGoogleProxyGroup;
-        return this;
-    }
+  public UserStatusDiagnostics setInGoogleProxyGroup(Boolean inGoogleProxyGroup) {
+    this.inGoogleProxyGroup = inGoogleProxyGroup;
+    return this;
+  }
 
-    public Boolean getTosAccepted() {
-        return tosAccepted;
-    }
+  public Boolean getTosAccepted() {
+    return tosAccepted;
+  }
 
-    public UserStatusDiagnostics setTosAccepted(Boolean tosAccepted) {
-        this.tosAccepted = tosAccepted;
-        return this;
-    }
+  public UserStatusDiagnostics setTosAccepted(Boolean tosAccepted) {
+    this.tosAccepted = tosAccepted;
+    return this;
+  }
 
-    @Override
-    public String toString() {
-        return new Gson().toJson(this);
-    }
+  @Override
+  public String toString() {
+    return new Gson().toJson(this);
+  }
 }

@@ -7,22 +7,22 @@ import org.broadinstitute.consent.http.models.AuthUser;
 
 public class TestOAuthAuthenticator implements Authenticator<String, AuthUser> {
 
-    private final List<String> acceptableCredentials;
+  private final List<String> acceptableCredentials;
 
-    public TestOAuthAuthenticator(List<String> acceptableCredentials) {
-        this.acceptableCredentials = acceptableCredentials;
-    }
+  public TestOAuthAuthenticator(List<String> acceptableCredentials) {
+    this.acceptableCredentials = acceptableCredentials;
+  }
 
-    @Override
-    public Optional<AuthUser> authenticate(String credentials) {
-        if (acceptableCredentials.contains(credentials)) {
-            GenericUser genericUser = new GenericUser();
-            genericUser.setEmail(credentials);
-            genericUser.setName(credentials);
-            AuthUser user = new AuthUser(genericUser);
-            return Optional.of(user);
-        }
-        return Optional.empty();
+  @Override
+  public Optional<AuthUser> authenticate(String credentials) {
+    if (acceptableCredentials.contains(credentials)) {
+      GenericUser genericUser = new GenericUser();
+      genericUser.setEmail(credentials);
+      genericUser.setName(credentials);
+      AuthUser user = new AuthUser(genericUser);
+      return Optional.of(user);
     }
+    return Optional.empty();
+  }
 
 }

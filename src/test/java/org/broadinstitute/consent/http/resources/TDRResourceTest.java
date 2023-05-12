@@ -31,179 +31,177 @@ import org.mockito.Mock;
 
 public class TDRResourceTest {
 
-    @Mock
-    private TDRService tdrService;
+  @Mock
+  private TDRService tdrService;
 
-    @Mock
-    private DatasetService datasetService;
+  @Mock
+  private DatasetService datasetService;
 
-    @Mock
-    private UserService userService;
+  @Mock
+  private UserService userService;
 
-    @Mock
-    private DataAccessRequestService darService;
+  @Mock
+  private DataAccessRequestService darService;
 
-    private final AuthUser authUser = new AuthUser("test@test.com");
-    private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
+  private final AuthUser authUser = new AuthUser("test@test.com");
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
 
-    private TDRResource resource;
+  private TDRResource resource;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
+
+  private void initResource() {
+    try {
+      resource = new TDRResource(tdrService, datasetService, userService, darService);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
     }
+  }
 
-    private void initResource() {
-        try {
-            resource = new TDRResource(tdrService, datasetService, userService, darService);
-        } catch (Exception e) {
-            fail("Initialization Exception: " + e.getMessage());
-        }
-    }
+  @Test
+  public void testGetApprovedUsersForDataset() {
+    List<ApprovedUser> users = List.of(
+        new ApprovedUser("asdf1@gmail.com"),
+        new ApprovedUser("asdf2@gmail.com"));
+    ApprovedUsers approvedUsers = new ApprovedUsers(users);
 
-    @Test
-    public void testGetApprovedUsersForDataset() {
-        List<ApprovedUser> users = List.of(
-                new ApprovedUser("asdf1@gmail.com"),
-                new ApprovedUser("asdf2@gmail.com"));
-        ApprovedUsers approvedUsers = new ApprovedUsers(users);
+    Dataset d = new Dataset();
 
-        Dataset d = new Dataset();
+    when(tdrService.getApprovedUsersForDataset(d)).thenReturn(approvedUsers);
+    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
 
+    initResource();
 
-        when(tdrService.getApprovedUsersForDataset(d)).thenReturn(approvedUsers);
-        when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
+    Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
 
-        initResource();
+    assertEquals(200, r.getStatus());
+    assertEquals(approvedUsers, r.getEntity());
+  }
 
-        Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
+  @Test
+  public void testGetApprovedUsersForDataset404() {
+    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
 
-        assertEquals(200, r.getStatus());
-        assertEquals(approvedUsers, r.getEntity());
-    }
+    initResource();
 
-    @Test
-    public void testGetApprovedUsersForDataset404() {
-        when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
+    Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
 
-        initResource();
+    assertEquals(404, r.getStatus());
+  }
 
-        Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
+  @Test
+  public void testGetDatasetByIdentifier() {
 
-        assertEquals(404, r.getStatus());
-    }
+    Dataset d = new Dataset();
+    d.setName("test");
 
-    @Test
-    public void testGetDatasetByIdentifier() {
+    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
 
-        Dataset d = new Dataset();
-        d.setName("test");
+    initResource();
 
+    Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
 
-        when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
-
-        initResource();
-
-        Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
-
-        assertEquals(200, r.getStatus());
-        assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
-    }
+    assertEquals(200, r.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
+  }
 
 
-    @Test
-    public void testGetDatasetByIdentifier404() {
-        when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
+  @Test
+  public void testGetDatasetByIdentifier404() {
+    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
 
-        initResource();
+    initResource();
 
-        Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
+    Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
 
-        assertEquals(404, r.getStatus());
-    }
+    assertEquals(404, r.getStatus());
+  }
 
-    // Created response when a new DAR draft is successful
-    @Test
-    public void testCreateDraftDataAccessRequest() throws Exception {
-        String identifiers = "DUOS-00001, DUOS-00002";
-        List<Integer> identifierList = Arrays.stream(identifiers.split(","))
-                .map(String::trim)
-                .filter(identifier -> !identifier.isBlank())
-                .map(Dataset::parseIdentifierToAlias)
-                .toList();
+  // Created response when a new DAR draft is successful
+  @Test
+  public void testCreateDraftDataAccessRequest() throws Exception {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+        .map(String::trim)
+        .filter(identifier -> !identifier.isBlank())
+        .map(Dataset::parseIdentifierToAlias)
+        .toList();
 
-        Dataset d1 = new Dataset();
-        d1.setDataSetId(1);
-        d1.setAlias(1);
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setAlias(1);
 
-        Dataset d2 = new Dataset();
-        d2.setDataSetId(2);
-        d2.setAlias(2);
+    Dataset d2 = new Dataset();
+    d2.setDataSetId(2);
+    d2.setAlias(2);
 
-        DataAccessRequest newDar = generateDataAccessRequest();
+    DataAccessRequest newDar = generateDataAccessRequest();
 
-        when(userService.findOrCreateUser(any())).thenReturn(user);
-        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
-        when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
+    when(userService.findOrCreateUser(any())).thenReturn(user);
+    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
 
-        initResource();
+    initResource();
 
-        String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
+    String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-        assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
-        assertEquals(r.getLocation().toString(), expectedUri);
-    }
+    Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
+    assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
+    assertEquals(r.getLocation().toString(), expectedUri);
+  }
 
-    // Bad Request response (400) when no identifiers are provided
-    @Test
-    public void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
-        when(userService.findOrCreateUser(any())).thenReturn(user);
+  // Bad Request response (400) when no identifiers are provided
+  @Test
+  public void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
+    when(userService.findOrCreateUser(any())).thenReturn(user);
 
-        initResource();
+    initResource();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, null, null);
-        assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
-    }
+    Response r = resource.createDraftDataAccessRequest(authUser, null, null);
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
+  }
 
-    // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
-    @Test
-    public void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
-        String identifiers = "DUOS-00001, DUOS-00002";
-        List<Integer> identifierList = Arrays.stream(identifiers.split(","))
-                .map(String::trim)
-                .filter(identifier -> !identifier.isBlank())
-                .map(Dataset::parseIdentifierToAlias)
-                .toList();
+  // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
+  @Test
+  public void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+        .map(String::trim)
+        .filter(identifier -> !identifier.isBlank())
+        .map(Dataset::parseIdentifierToAlias)
+        .toList();
 
-        Dataset d1 = new Dataset();
-        d1.setDataSetId(1);
-        d1.setAlias(1);
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setAlias(1);
 
-        Dataset d2 = new Dataset();
-        d2.setDataSetId(2);
-        d2.setAlias(2);
+    Dataset d2 = new Dataset();
+    d2.setDataSetId(2);
+    d2.setAlias(2);
 
-        when(userService.findOrCreateUser(any())).thenReturn(user);
-        when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1));
+    when(userService.findOrCreateUser(any())).thenReturn(user);
+    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1));
 
-        initResource();
+    initResource();
 
-        Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-        assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
-        Error notFoundError = (Error) r.getEntity();
-        assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
-            notFoundError.message());
-    }
+    Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
+    assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
+    Error notFoundError = (Error) r.getEntity();
+    assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
+        notFoundError.message());
+  }
 
-    private DataAccessRequest generateDataAccessRequest() {
-        DataAccessRequest dar = new DataAccessRequest();
-        DataAccessRequestData data = new DataAccessRequestData();
-        dar.setReferenceId(UUID.randomUUID().toString());
-        data.setReferenceId(dar.getReferenceId());
-        dar.setDatasetIds(Arrays.asList(1, 2));
-        dar.setData(data);
-        dar.setUserId(user.getUserId());
-        return dar;
-    }
+  private DataAccessRequest generateDataAccessRequest() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    data.setReferenceId(dar.getReferenceId());
+    dar.setDatasetIds(Arrays.asList(1, 2));
+    dar.setData(data);
+    dar.setUserId(user.getUserId());
+    return dar;
+  }
 }

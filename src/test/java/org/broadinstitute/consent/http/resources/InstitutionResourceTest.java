@@ -27,204 +27,210 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class InstitutionResourceTest {
-    private final AuthUser authUser = new AuthUser("test@test.com");
-    private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    private final List<UserRole> researcherRoles = Collections.singletonList(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles);
-    private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRoles);
 
-    @Mock
-    private InstitutionService institutionService;
-    @Mock
-    private UserService userService;
+  private final AuthUser authUser = new AuthUser("test@test.com");
+  private final List<UserRole> adminRoles = Collections.singletonList(
+      new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+  private final List<UserRole> researcherRoles = Collections.singletonList(
+      new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
+      adminRoles);
+  private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
+      researcherRoles);
 
-    private InstitutionResource resource;
+  @Mock
+  private InstitutionService institutionService;
+  @Mock
+  private UserService userService;
 
-    private Institution mockInstitutionSetup() {
-        Institution mockInstitution = new Institution();
-        mockInstitution.setName("Test Name");
-        mockInstitution.setCreateDate(new Date());
-        mockInstitution.setCreateUserId(1);
-        mockInstitution.setUpdateDate(new Date());
-        mockInstitution.setUpdateUserId(1);
-        mockInstitution.setId(1);
-        return mockInstitution;
-    }
+  private InstitutionResource resource;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  private Institution mockInstitutionSetup() {
+    Institution mockInstitution = new Institution();
+    mockInstitution.setName("Test Name");
+    mockInstitution.setCreateDate(new Date());
+    mockInstitution.setCreateUserId(1);
+    mockInstitution.setUpdateDate(new Date());
+    mockInstitution.setUpdateUserId(1);
+    mockInstitution.setId(1);
+    return mockInstitution;
+  }
 
-    private void initResource() {
-        resource = new InstitutionResource(userService, institutionService);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testGetInstitutionsForAdmin() {
-        List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.findAllInstitutions()).thenReturn(institutions);
-        initResource();
-        Response adminResponse = resource.getInstitutions(authUser);
-        String json = adminResponse.getEntity().toString();
-        assertEquals(200, adminResponse.getStatus());
-        assertNotNull(json);
-    }
+  private void initResource() {
+    resource = new InstitutionResource(userService, institutionService);
+  }
 
-    @Test
-    public void testGetInstitutionsForNonAdmin() {
-        List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
-        when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
-        when(institutionService.findAllInstitutions()).thenReturn(institutions);
-        initResource();
-        Response researcherResponse = resource.getInstitutions(authUser);
-        String json = researcherResponse.getEntity().toString();
-        assertEquals(200, researcherResponse.getStatus());
-        assertNotNull(json);
-    }
+  @Test
+  public void testGetInstitutionsForAdmin() {
+    List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findAllInstitutions()).thenReturn(institutions);
+    initResource();
+    Response adminResponse = resource.getInstitutions(authUser);
+    String json = adminResponse.getEntity().toString();
+    assertEquals(200, adminResponse.getStatus());
+    assertNotNull(json);
+  }
 
-    @Test
-    public void testGetInstitutionAdmin() {
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-        initResource();
-        Response adminResponse = resource.getInstitution(authUser, 1);
-        String json = adminResponse.getEntity().toString();
-        assertEquals(adminResponse.getStatus(), 200);
-        assertNotNull(json);
-    }
+  @Test
+  public void testGetInstitutionsForNonAdmin() {
+    List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
+    when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
+    when(institutionService.findAllInstitutions()).thenReturn(institutions);
+    initResource();
+    Response researcherResponse = resource.getInstitutions(authUser);
+    String json = researcherResponse.getEntity().toString();
+    assertEquals(200, researcherResponse.getStatus());
+    assertNotNull(json);
+  }
 
-    @Test
-    public void testGetInstitutionNonAdmin() {
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
-        when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-        initResource();
-        Response researcherResponse = resource.getInstitution(authUser, 1);
-        String json = researcherResponse.getEntity().toString();
-        assertEquals(200, researcherResponse.getStatus());
-        assertNotNull(json);
-    }
+  @Test
+  public void testGetInstitutionAdmin() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    initResource();
+    Response adminResponse = resource.getInstitution(authUser, 1);
+    String json = adminResponse.getEntity().toString();
+    assertEquals(adminResponse.getStatus(), 200);
+    assertNotNull(json);
+  }
 
-    @Test
-    public void testGetInstitutionFail() {
-        Exception error = new NotFoundException("Institution not found");
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.getInstitution(authUser, 1);
-        assertEquals(404, response.getStatus());
-    }
+  @Test
+  public void testGetInstitutionNonAdmin() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
+    when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    initResource();
+    Response researcherResponse = resource.getInstitution(authUser, 1);
+    String json = researcherResponse.getEntity().toString();
+    assertEquals(200, researcherResponse.getStatus());
+    assertNotNull(json);
+  }
+
+  @Test
+  public void testGetInstitutionFail() {
+    Exception error = new NotFoundException("Institution not found");
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.getInstitution(authUser, 1);
+    assertEquals(404, response.getStatus());
+  }
 
 
-    @Test
-    public void testCreateInstitution() {
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
-        initResource();
-        String requestJson = new Gson().toJson(mockInstitution, Institution.class);
-        Response response = resource.createInstitution(authUser, requestJson);
-        String json = response.getEntity().toString();
-        assertEquals(200, response.getStatus());
-        assertNotNull(json);
-    }
+  @Test
+  public void testCreateInstitution() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
+    initResource();
+    String requestJson = new Gson().toJson(mockInstitution, Institution.class);
+    Response response = resource.createInstitution(authUser, requestJson);
+    String json = response.getEntity().toString();
+    assertEquals(200, response.getStatus());
+    assertNotNull(json);
+  }
 
-    @Test
-    public void testCreateInstitutionNullName() {
-        Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        assertEquals(400, response.getStatus());
-    }
+  @Test
+  public void testCreateInstitutionNullName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
 
-    @Test
-    public void testCreateInstitutionBlankName() {
-        Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        assertEquals(400, response.getStatus());
-    }
+  @Test
+  public void testCreateInstitutionBlankName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
 
-    @Test
-    public void testCreateInstitutionDuplicate() {
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
-        initResource();
-        Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
-        assertEquals(409, response.getStatus());
-    }
+  @Test
+  public void testCreateInstitutionDuplicate() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
+    initResource();
+    Response response = resource.createInstitution(authUser, new Gson().toJson(mockInstitution));
+    assertEquals(409, response.getStatus());
+  }
 
-    @Test
-    public void testUpdateInstitution() {
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(mockInstitution);
-        initResource();
-        Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        assertEquals(200, response.getStatus());
-        assertNotNull(response.getEntity().toString());
-    }
+  @Test
+  public void testUpdateInstitution() {
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
+        mockInstitution);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(200, response.getStatus());
+    assertNotNull(response.getEntity().toString());
+  }
 
-    @Test
-    public void testUpdateInstitutionNotFound() {
-        Exception error = new NotFoundException("Institution not found");
-        Institution mockInstitution = mockInstitutionSetup();
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        assertEquals(404, response.getStatus());
-    }
+  @Test
+  public void testUpdateInstitutionNotFound() {
+    Exception error = new NotFoundException("Institution not found");
+    Institution mockInstitution = mockInstitutionSetup();
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(404, response.getStatus());
+  }
 
-    @Test
-    public void testUpdateInstiutionNullName() {
-        Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
-        Institution mockInstitution = mockInstitutionSetup();
-        mockInstitution.setName(null);
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        assertEquals(400, response.getStatus());
-    }
+  @Test
+  public void testUpdateInstiutionNullName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setName(null);
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
 
-    @Test
-    public void testUpdateInstiutionBlankName() {
-        Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
-        Institution mockInstitution = mockInstitutionSetup();
-        mockInstitution.setName("");
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
-        initResource();
-        Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
-        assertEquals(400, response.getStatus());
-    }
+  @Test
+  public void testUpdateInstiutionBlankName() {
+    Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setName("");
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
+    initResource();
+    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    assertEquals(400, response.getStatus());
+  }
 
-    @Test
-    public void testDeleteInstitution() {
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        initResource();
-        Response response = resource.deleteInstitution(authUser, 1);
-        assertEquals(204, response.getStatus());
-    }
+  @Test
+  public void testDeleteInstitution() {
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    initResource();
+    Response response = resource.deleteInstitution(authUser, 1);
+    assertEquals(204, response.getStatus());
+  }
 
-    @Test
-    public void testDeleteInstitutionNotFound() {
-        Exception error = new NotFoundException("Institution not found");
-        when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
-        doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
-        initResource();
-        Response response = resource.deleteInstitution(authUser, 1);
-        assertEquals(404, response.getStatus());
-    }
+  @Test
+  public void testDeleteInstitutionNotFound() {
+    Exception error = new NotFoundException("Institution not found");
+    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+    doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
+    initResource();
+    Response response = resource.deleteInstitution(authUser, 1);
+    assertEquals(404, response.getStatus());
+  }
 }

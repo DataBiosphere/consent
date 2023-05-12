@@ -14,14 +14,14 @@ import org.eclipse.jetty.server.Request;
 @Path("error")
 public class ErrorResource {
 
-    @GET
-    @Path("404")
-    @Produces("application/json")
-    public Response notFound(@Context HttpServletRequest request) {
-        String originalUri = ((Request) request).getOriginalURI();
-        String decodedUri = URLDecoder.decode(originalUri, Charset.defaultCharset());
-        String msg = String.format("Unable to find requested path: '%s'", decodedUri);
-        Error error = new Error(msg, 404);
-        return Response.status(error.code()).entity(error).build();
-    }
+  @GET
+  @Path("404")
+  @Produces("application/json")
+  public Response notFound(@Context HttpServletRequest request) {
+    String originalUri = ((Request) request).getOriginalURI();
+    String decodedUri = URLDecoder.decode(originalUri, Charset.defaultCharset());
+    String msg = String.format("Unable to find requested path: '%s'", decodedUri);
+    Error error = new Error(msg, 404);
+    return Response.status(error.code()).entity(error).build();
+  }
 }

@@ -1,58 +1,59 @@
 package org.broadinstitute.consent.http.models;
 
 public class Collaborator {
-    private Boolean approverStatus;
-    private String email;
-    private String eraCommonsId;
-    private String name;
-    private String title;
-    private String uuid;
 
-    public Boolean getApproverStatus() {
-        return approverStatus;
-    }
+  private Boolean approverStatus;
+  private String email;
+  private String eraCommonsId;
+  private String name;
+  private String title;
+  private String uuid;
 
-    public void setApproverStatus(Boolean approverStatus) {
-        this.approverStatus = approverStatus;
-    }
+  public Boolean getApproverStatus() {
+    return approverStatus;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public void setApproverStatus(Boolean approverStatus) {
+    this.approverStatus = approverStatus;
+  }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public String getEraCommonsId() {
-        return eraCommonsId;
-    }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-    public void setEraCommonsId(String eraCommonsId) {
-        this.eraCommonsId = eraCommonsId;
-    }
+  public String getEraCommonsId() {
+    return eraCommonsId;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setEraCommonsId(String eraCommonsId) {
+    this.eraCommonsId = eraCommonsId;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getTitle() {
-        return title;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public String getUuid() {
-        return uuid;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 }

@@ -10,20 +10,20 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(CounterMapper.class)
 public interface CounterDAO extends Transactional<CounterDAO> {
 
-    @SqlUpdate("INSERT INTO counter (name, count) VALUES (:name, :count) ")
-    void addCounter(@Bind("name") String name, @Bind("count") Integer count);
+  @SqlUpdate("INSERT INTO counter (name, count) VALUES (:name, :count) ")
+  void addCounter(@Bind("name") String name, @Bind("count") Integer count);
 
-    @SqlQuery(
-            " WITH m AS ( "
-                    + "    UPDATE counter SET count = subquery.max_count + 1 "
-                    + "    FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery "
-                    + "    WHERE name = :name "
-                    + "    RETURNING * "
-                    + " ) "
-                    + " SELECT MAX(count) FROM m WHERE name = :name ")
-    Integer incrementCountByName(@Bind("name") String name);
+  @SqlQuery(
+      " WITH m AS ( "
+          + "    UPDATE counter SET count = subquery.max_count + 1 "
+          + "    FROM (SELECT MAX(count) as max_count FROM counter WHERE name = :name) AS subquery "
+          + "    WHERE name = :name "
+          + "    RETURNING * "
+          + " ) "
+          + " SELECT MAX(count) FROM m WHERE name = :name ")
+  Integer incrementCountByName(@Bind("name") String name);
 
-    @SuppressWarnings("SqlWithoutWhere")
-    @SqlUpdate("DELETE FROM counter")
-    void deleteAll();
+  @SuppressWarnings("SqlWithoutWhere")
+  @SqlUpdate("DELETE FROM counter")
+  void deleteAll();
 }

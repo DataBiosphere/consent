@@ -22,65 +22,66 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    @Inject
-    public DACUserResource(UserService userService) {
-        this.userService = userService;
+  @Inject
+  public DACUserResource(UserService userService) {
+    this.userService = userService;
+  }
+
+  @POST
+  @Consumes("application/json")
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  public Response createDACUser(@Context UriInfo info, String json) {
+    try {
+      User user = userService.createUser(new User(json));
+      // Update email preference
+      getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
+          userService.updateEmailPreference(aBoolean, user.getUserId())
+      );
+      URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+      return Response.created(uri).entity(user).build();
+    } catch (Exception e) {
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
     }
+  }
 
-    @POST
-    @Consumes("application/json")
-    @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-    public Response createDACUser(@Context UriInfo info, String json) {
-        try {
-            User user = userService.createUser(new User(json));
-            // Update email preference
-            getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
-                    userService.updateEmailPreference(aBoolean, user.getUserId())
-            );
-            URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
-            return Response.created(uri).entity(user).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+  /**
+   * Convenience method to find the email preference from legacy json structure.
+   *
+   * @param json Raw json string from client
+   * @return Optional value of the "emailPreference" boolean value set in either the legacy json or
+   * the new DacUser model.
+   */
+  private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
+    String memberName = "emailPreference";
+    Optional<Boolean> aBoolean = Optional.empty();
+    try {
+      JsonElement updateUser = JsonParser.parseString(json).getAsJsonObject();
+      if (updateUser != null && !updateUser.isJsonNull()) {
+        JsonObject userObj = updateUser.getAsJsonObject();
+        if (userObj.has(memberName) && !userObj.get(memberName).isJsonNull()) {
+          aBoolean = Optional.of(userObj.get(memberName).getAsBoolean());
+        } else if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
+          List<JsonElement> rolesElements = new ArrayList<>();
+          userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
+          List<Boolean> emailPrefs = rolesElements.
+              stream().
+              filter(e -> e.getAsJsonObject().has(memberName)).
+              map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
+              distinct().
+              toList();
+          // In practice, there should only be a single email preference value, if any.
+          if (emailPrefs.size() == 1) {
+            aBoolean = Optional.of(emailPrefs.get(0));
+          }
         }
+      }
+    } catch (Exception e) {
+      logWarn("Unable to extract email preference from: " + json + " : " + e.getMessage());
     }
-
-    /**
-     * Convenience method to find the email preference from legacy json structure.
-     *
-     * @param json Raw json string from client
-     * @return Optional value of the "emailPreference" boolean value set in either the legacy json
-     * or the new DacUser model.
-     */
-    private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
-        String memberName = "emailPreference";
-        Optional<Boolean> aBoolean = Optional.empty();
-        try {
-            JsonElement updateUser = JsonParser.parseString(json).getAsJsonObject();
-            if (updateUser != null && !updateUser.isJsonNull()) {
-                JsonObject userObj = updateUser.getAsJsonObject();
-                if (userObj.has(memberName) && !userObj.get(memberName).isJsonNull()) {
-                    aBoolean = Optional.of(userObj.get(memberName).getAsBoolean());
-                } else if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
-                    List<JsonElement> rolesElements = new ArrayList<>();
-                    userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
-                    List<Boolean> emailPrefs = rolesElements.
-                            stream().
-                            filter(e -> e.getAsJsonObject().has(memberName)).
-                            map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
-                            distinct().
-                            toList();
-                    // In practice, there should only be a single email preference value, if any.
-                    if (emailPrefs.size() == 1) {
-                        aBoolean = Optional.of(emailPrefs.get(0));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logWarn("Unable to extract email preference from: " + json + " : " + e.getMessage());
-        }
-        return aBoolean;
-    }
+    return aBoolean;
+  }
 
 }
