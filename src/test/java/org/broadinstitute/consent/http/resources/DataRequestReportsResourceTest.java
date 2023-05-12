@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

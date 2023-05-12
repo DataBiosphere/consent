@@ -302,26 +302,7 @@ paths:
         500:
           description: Internal Server Error
   /api/dacuser:
-    post:
-      summary: Create User
-      description: Creates a User
-      parameters:
-        - name: dac
-          in: body
-          required: true
-          schema:
-            $ref: '#/components/schemas/User'
-      tags:
-        - User
-      responses:
-        200:
-          description: Returns the created user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        400:
-          description: Malformed user entity.
+    $ref: './paths/dacuser.yaml'
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
   /api/dar/v2/{referenceId}:
