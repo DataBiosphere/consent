@@ -12,18 +12,19 @@ import org.mockito.Mock;
 
 public class ClosedDatasetElectionMessageTest {
 
-    @Mock
-    Writer template;
+  @Mock
+  Writer template;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testMessageSubject() throws MessagingException {
-        Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessage("to@address.com", "from@address.com", template, "SomeReferenceId", "Some Type");
-        assertEquals("Report of closed Dataset elections.", message.getSubject());
-    }
+  @Test
+  public void testMessageSubject() throws MessagingException {
+    Mail message = new ClosedDatasetElectionMessage().closedDatasetElectionMessage("to@address.com",
+        "from@address.com", template, "SomeReferenceId", "Some Type");
+    assertEquals("Report of closed Dataset elections.", message.getSubject());
+  }
 
 }

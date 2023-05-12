@@ -11,22 +11,22 @@ import org.broadinstitute.consent.http.service.EmailService;
 @Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
 
-    private final EmailService emailService;
+  private final EmailService emailService;
 
-    @Inject
-    public EmailNotifierResource(EmailService emailService) {
-        this.emailService = emailService;
-    }
+  @Inject
+  public EmailNotifierResource(EmailService emailService) {
+    this.emailService = emailService;
+  }
 
-    @POST
-    @Path("/reminderMessage/{voteId}")
-    @RolesAllowed({ADMIN, CHAIRPERSON})
-    public Response sendReminderMessage(@PathParam("voteId") String voteId) {
-        try {
-            emailService.sendReminderMessage(Integer.valueOf(voteId));
-            return Response.ok().build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
+  @POST
+  @Path("/reminderMessage/{voteId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response sendReminderMessage(@PathParam("voteId") String voteId) {
+    try {
+      emailService.sendReminderMessage(Integer.valueOf(voteId));
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
+  }
 }

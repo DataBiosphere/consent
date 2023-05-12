@@ -14,39 +14,39 @@ import org.mockito.Mock;
 
 public class TosResourceTest {
 
-    @Mock
-    private SamService service;
+  @Mock
+  private SamService service;
 
-    private TosResource resource;
+  private TosResource resource;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    private void initResource() {
-        resource = new TosResource(service);
-    }
+  private void initResource() {
+    resource = new TosResource(service);
+  }
 
-    @Test
-    public void testGetToSText() throws Exception {
-        String mockText = "Plain Text";
-        when(service.getToSText()).thenReturn(mockText);
-        initResource();
+  @Test
+  public void testGetToSText() throws Exception {
+    String mockText = "Plain Text";
+    when(service.getToSText()).thenReturn(mockText);
+    initResource();
 
-        Response response = resource.getToSText();
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        assertEquals(mockText, response.getEntity().toString());
-    }
+    Response response = resource.getToSText();
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(mockText, response.getEntity().toString());
+  }
 
-    @Test
-    public void testGetDuosToSText() throws Exception {
-        String mockText = "Sample Terra ToS";
-        when(service.getToSText()).thenReturn(mockText);
-        initResource();
+  @Test
+  public void testGetDuosToSText() throws Exception {
+    String mockText = "Sample Terra ToS";
+    when(service.getToSText()).thenReturn(mockText);
+    initResource();
 
-        Response response = resource.getDUOSToSText();
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-        assertTrue(response.getEntity().toString().contains("DUOS"));
-    }
+    Response response = resource.getDUOSToSText();
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertTrue(response.getEntity().toString().contains("DUOS"));
+  }
 }

@@ -12,20 +12,21 @@ import org.mockito.Mock;
 
 public class DisabledDatasetMessageTest {
 
-    @Mock
-    Writer template;
+  @Mock
+  Writer template;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testMessageSubject() throws MessagingException {
-        Mail message = new DisabledDatasetMessage().disabledDatasetMessage("to@address.com", "from@address.com", template, "DAR-123", "SomeType");
-        assertEquals(
-            "Datasets not available for Data Access Request Application id: DAR-123.",
-            message.getSubject());
-    }
+  @Test
+  public void testMessageSubject() throws MessagingException {
+    Mail message = new DisabledDatasetMessage().disabledDatasetMessage("to@address.com",
+        "from@address.com", template, "DAR-123", "SomeType");
+    assertEquals(
+        "Datasets not available for Data Access Request Application id: DAR-123.",
+        message.getSubject());
+  }
 
 }

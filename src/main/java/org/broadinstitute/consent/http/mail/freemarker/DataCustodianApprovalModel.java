@@ -1,57 +1,57 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import java.util.List;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
-import java.util.List;
-
 public class DataCustodianApprovalModel {
-    List<DatasetMailDTO> datasets;
-    String dataDepositorName;
-    String darCode;
-    String researcherEmail;
 
-    public DataCustodianApprovalModel(List<DatasetMailDTO> datasets,
-                                      String dataDepositorName, String darCode, String researcherEmail) {
-        this.datasets = datasets;
-        this.dataDepositorName = dataDepositorName;
-        this.darCode = darCode;
-        this.researcherEmail = researcherEmail;
-    }
+  List<DatasetMailDTO> datasets;
+  String dataDepositorName;
+  String darCode;
+  String researcherEmail;
 
-    public List<DatasetMailDTO> getDatasets() {
-        return datasets;
-    }
+  public DataCustodianApprovalModel(List<DatasetMailDTO> datasets,
+      String dataDepositorName, String darCode, String researcherEmail) {
+    this.datasets = datasets;
+    this.dataDepositorName = dataDepositorName;
+    this.darCode = darCode;
+    this.researcherEmail = researcherEmail;
+  }
 
-    public DataCustodianApprovalModel setDatasets(List<DatasetMailDTO> datasets) {
-        this.datasets = datasets;
-        return this;
-    }
+  public List<DatasetMailDTO> getDatasets() {
+    return datasets;
+  }
 
-    public String getDataDepositorName() {
-        return dataDepositorName;
-    }
+  public DataCustodianApprovalModel setDatasets(List<DatasetMailDTO> datasets) {
+    this.datasets = datasets;
+    return this;
+  }
 
-    public DataCustodianApprovalModel setDataDepositorName(String dataDepositorName) {
-        this.dataDepositorName = dataDepositorName;
-        return this;
-    }
+  public String getDataDepositorName() {
+    return dataDepositorName;
+  }
 
-    public String getDarCode() {
-        return darCode;
-    }
+  public DataCustodianApprovalModel setDataDepositorName(String dataDepositorName) {
+    this.dataDepositorName = dataDepositorName;
+    return this;
+  }
 
-    public DataCustodianApprovalModel setDarCode(String darCode) {
-        this.darCode = darCode;
-        return this;
-    }
+  public String getDarCode() {
+    return darCode;
+  }
 
-    public String getResearcherEmail() {
-        return researcherEmail;
-    }
+  public DataCustodianApprovalModel setDarCode(String darCode) {
+    this.darCode = darCode;
+    return this;
+  }
 
-    public DataCustodianApprovalModel setResearcherEmail(String researcherEmail) {
-        this.researcherEmail = researcherEmail;
-        return this;
-    }
+  public String getResearcherEmail() {
+    return researcherEmail;
+  }
+
+  public DataCustodianApprovalModel setResearcherEmail(String researcherEmail) {
+    this.researcherEmail = researcherEmail;
+    return this;
+  }
 
 }

@@ -42,464 +42,493 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class VoteService implements ConsentLogger {
 
-    private final UserDAO userDAO;
-    private final DarCollectionDAO darCollectionDAO;
-    private final DataAccessRequestDAO dataAccessRequestDAO;
-    private final DatasetAssociationDAO datasetAssociationDAO;
-    private final DatasetDAO datasetDAO;
-    private final ElectionDAO electionDAO;
-    private final EmailService emailService;
-    private final UseRestrictionConverter useRestrictionConverter;
-    private final VoteDAO voteDAO;
-    private final VoteServiceDAO voteServiceDAO;
+  private final UserDAO userDAO;
+  private final DarCollectionDAO darCollectionDAO;
+  private final DataAccessRequestDAO dataAccessRequestDAO;
+  private final DatasetAssociationDAO datasetAssociationDAO;
+  private final DatasetDAO datasetDAO;
+  private final ElectionDAO electionDAO;
+  private final EmailService emailService;
+  private final UseRestrictionConverter useRestrictionConverter;
+  private final VoteDAO voteDAO;
+  private final VoteServiceDAO voteServiceDAO;
 
-    @Inject
-    public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-                       DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
-                       EmailService emailService, UseRestrictionConverter useRestrictionConverter,
-                       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
-        this.userDAO = userDAO;
-        this.darCollectionDAO = darCollectionDAO;
-        this.dataAccessRequestDAO = dataAccessRequestDAO;
-        this.datasetAssociationDAO = datasetAssociationDAO;
-        this.datasetDAO = datasetDAO;
-        this.electionDAO = electionDAO;
-        this.emailService = emailService;
-        this.useRestrictionConverter = useRestrictionConverter;
-        this.voteDAO = voteDAO;
-        this.voteServiceDAO = voteServiceDAO;
+  @Inject
+  public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO,
+      DataAccessRequestDAO dataAccessRequestDAO,
+      DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
+      EmailService emailService, UseRestrictionConverter useRestrictionConverter,
+      VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
+    this.userDAO = userDAO;
+    this.darCollectionDAO = darCollectionDAO;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
+    this.datasetAssociationDAO = datasetAssociationDAO;
+    this.datasetDAO = datasetDAO;
+    this.electionDAO = electionDAO;
+    this.emailService = emailService;
+    this.useRestrictionConverter = useRestrictionConverter;
+    this.voteDAO = voteDAO;
+    this.voteServiceDAO = voteServiceDAO;
+  }
+
+  /**
+   * Find all votes for a reference id. This can find votes for multiple elections as there are
+   * usually multiple forms of election per thing being voted upon.
+   *
+   * @param referenceId The reference id for the election.
+   * @return Collection of votes for the given reference id
+   */
+  public Collection<Vote> findVotesByReferenceId(String referenceId) {
+    return voteDAO.findVotesByReferenceId(referenceId);
+  }
+
+  /**
+   * Find all votes for an election id.
+   *
+   * @param electionId The election id for the election.
+   * @return Collection of votes on the election specified by the election id
+   */
+  public List<Vote> findVotesByElectionId(Integer electionId) {
+    Election election = electionDAO.findElectionById(electionId);
+    if (election == null) {
+      throw new NotFoundException();
     }
+    return voteDAO.findVotesByElectionId(electionId);
+  }
 
-    /**
-     * Find all votes for a reference id. This can find votes for multiple elections as there
-     * are usually multiple forms of election per thing being voted upon.
-     *
-     * @param referenceId The reference id for the election.
-     * @return Collection of votes for the given reference id
-     */
-    public Collection<Vote> findVotesByReferenceId(String referenceId) {
-        return voteDAO.findVotesByReferenceId(referenceId);
+
+  /**
+   * s Update votes such that they have the provided value and rationale.
+   *
+   * @param voteList  Collection of votes to advance
+   * @param voteValue The new vote value
+   * @param rationale The new rationale
+   */
+  public void advanceVotes(Collection<Vote> voteList, boolean voteValue, String rationale) {
+    Date now = new Date();
+    voteList.forEach(v -> {
+      v.setUpdateDate(now);
+      v.setCreateDate(now);
+      v.setVote(voteValue);
+      v.setRationale(rationale);
+      updateVote(v);
+    });
+  }
+
+  /**
+   * @param vote Vote to update
+   * @return The updated Vote
+   */
+  public Vote updateVote(Vote vote) {
+    validateVote(vote);
+    Date now = new Date();
+    voteDAO.updateVote(
+        vote.getVote(),
+        vote.getRationale(),
+        Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
+        vote.getVoteId(),
+        vote.getIsReminderSent(),
+        vote.getElectionId(),
+        Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
+        vote.getHasConcerns()
+    );
+    return voteDAO.findVoteById(vote.getVoteId());
+  }
+
+
+  public Vote updateVote(Vote rec, Integer voteId, String referenceId)
+      throws IllegalArgumentException {
+    if (voteDAO.checkVoteById(referenceId, voteId) == null) {
+      notFoundException(voteId);
     }
+    Vote vote = voteDAO.findVoteById(voteId);
+    Date updateDate = rec.getVote() == null ? null : new Date();
+    String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
+    voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false, vote.getElectionId(),
+        vote.getCreateDate(), rec.getHasConcerns());
+    return voteDAO.findVoteById(voteId);
+  }
 
-    /**
-     * Find all votes for an election id.
-     *
-     * @param electionId The election id for the election.
-     * @return Collection of votes on the election specified by the election id
-     */
-    public List<Vote> findVotesByElectionId(Integer electionId) {
-        Election election = electionDAO.findElectionById(electionId);
-        if (election == null) {
-            throw new NotFoundException();
+  /**
+   * Create votes for an election
+   *
+   * @param election       The Election
+   * @param electionType   The Election type
+   * @param isManualReview Is this a manual review election
+   * @return List of votes
+   */
+  @SuppressWarnings("DuplicatedCode")
+  public List<Vote> createVotes(Election election, ElectionType electionType,
+      Boolean isManualReview) {
+    Dac dac = electionDAO.findDacForElection(election.getElectionId());
+    Set<User> users;
+    if (dac != null) {
+      users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
+    } else {
+      users = userDAO.findNonDacUsersEnabledToVote();
+    }
+    List<Vote> votes = new ArrayList<>();
+    if (users != null) {
+      for (User user : users) {
+        votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
+      }
+    }
+    return votes;
+  }
+
+  /**
+   * Create election votes for a user
+   *
+   * @param user           DACUser
+   * @param election       Election
+   * @param electionType   ElectionType
+   * @param isManualReview Is election manual review
+   * @return List of created votes
+   */
+  public List<Vote> createVotesForUser(User user, Election election, ElectionType electionType,
+      Boolean isManualReview) {
+    Dac dac = electionDAO.findDacForElection(election.getElectionId());
+    List<Vote> votes = new ArrayList<>();
+    Integer dacVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(),
+        VoteType.DAC.getValue());
+    votes.add(voteDAO.findVoteById(dacVoteId));
+    if (isDacChairPerson(dac, user)) {
+      Integer chairVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(),
+          VoteType.CHAIRPERSON.getValue());
+      votes.add(voteDAO.findVoteById(chairVoteId));
+      // Requires Chairperson role to create a final and agreement vote in the Data Access case
+      if (electionType.equals(ElectionType.DATA_ACCESS)) {
+        Integer finalVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(),
+            VoteType.FINAL.getValue());
+        votes.add(voteDAO.findVoteById(finalVoteId));
+        if (!isManualReview) {
+          Integer agreementVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(),
+              VoteType.AGREEMENT.getValue());
+          votes.add(voteDAO.findVoteById(agreementVoteId));
         }
-        return voteDAO.findVotesByElectionId(electionId);
+      }
     }
+    return votes;
+  }
 
+  /**
+   * Create Votes for a data owner election
+   *
+   * @param election Election
+   * @return Votes for the election
+   */
+  @SuppressWarnings("UnusedReturnValue")
+  public List<Vote> createDataOwnersReviewVotes(Election election) {
+    List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataSet(
+        election.getDataSetId());
+    voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
+    return voteDAO.findVotesByElectionIdAndType(election.getElectionId(),
+        VoteType.DATA_OWNER.getValue());
+  }
 
-    /**
-     * s
-     * Update votes such that they have the provided value and rationale.
-     *
-     * @param voteList  Collection of votes to advance
-     * @param voteValue The new vote value
-     * @param rationale The new rationale
-     */
-    public void advanceVotes(Collection<Vote> voteList, boolean voteValue, String rationale) {
-        Date now = new Date();
-        voteList.forEach(v -> {
-            v.setUpdateDate(now);
-            v.setCreateDate(now);
-            v.setVote(voteValue);
-            v.setRationale(rationale);
-            updateVote(v);
-        });
+  public List<Vote> findVotesByIds(List<Integer> voteIds) {
+    if (voteIds.isEmpty()) {
+      return Collections.emptyList();
     }
+    return voteDAO.findVotesByIds(voteIds);
+  }
 
-    /**
-     * @param vote Vote to update
-     * @return The updated Vote
-     */
-    public Vote updateVote(Vote vote) {
-        validateVote(vote);
-        Date now = new Date();
-        voteDAO.updateVote(
-                vote.getVote(),
-                vote.getRationale(),
-                Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
-                vote.getVoteId(),
-                vote.getIsReminderSent(),
-                vote.getElectionId(),
-                Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
-                vote.getHasConcerns()
-        );
-        return voteDAO.findVoteById(vote.getVoteId());
+  /**
+   * Delete any votes in Open elections for the specified user in the specified Dac.
+   *
+   * @param dac  The Dac we are restricting elections to
+   * @param user The Dac member we are deleting votes for
+   */
+  public void deleteOpenDacVotesForUser(Dac dac, User user) {
+    List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
+        map(Election::getElectionId).
+        collect(Collectors.toList());
+    if (!openElectionIds.isEmpty()) {
+      List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
+          filter(v -> v.getUserId().equals(user.getUserId())).
+          map(Vote::getVoteId).
+          collect(Collectors.toList());
+      if (!openUserVoteIds.isEmpty()) {
+        voteDAO.removeVotesByIds(openUserVoteIds);
+      }
     }
+  }
 
-
-    public Vote updateVote(Vote rec, Integer voteId, String referenceId) throws IllegalArgumentException {
-        if (voteDAO.checkVoteById(referenceId, voteId) == null) notFoundException(voteId);
-        Vote vote = voteDAO.findVoteById(voteId);
-        Date updateDate = rec.getVote() == null ? null : new Date();
-        String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-        voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false, vote.getElectionId(), vote.getCreateDate(), rec.getHasConcerns());
-        return voteDAO.findVoteById(voteId);
-    }
-
-    /**
-     * Create votes for an election
-     *
-     * @param election       The Election
-     * @param electionType   The Election type
-     * @param isManualReview Is this a manual review election
-     * @return List of votes
-     */
-    @SuppressWarnings("DuplicatedCode")
-    public List<Vote> createVotes(Election election, ElectionType electionType, Boolean isManualReview) {
-        Dac dac = electionDAO.findDacForElection(election.getElectionId());
-        Set<User> users;
-        if (dac != null) {
-            users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
-        } else {
-            users = userDAO.findNonDacUsersEnabledToVote();
-        }
-        List<Vote> votes = new ArrayList<>();
-        if (users != null) {
-            for (User user : users) {
-                votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
-            }
-        }
-        return votes;
-    }
-
-    /**
-     * Create election votes for a user
-     *
-     * @param user           DACUser
-     * @param election       Election
-     * @param electionType   ElectionType
-     * @param isManualReview Is election manual review
-     * @return List of created votes
-     */
-    public List<Vote> createVotesForUser(User user, Election election, ElectionType electionType, Boolean isManualReview) {
-        Dac dac = electionDAO.findDacForElection(election.getElectionId());
-        List<Vote> votes = new ArrayList<>();
-        Integer dacVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.DAC.getValue());
-        votes.add(voteDAO.findVoteById(dacVoteId));
-        if (isDacChairPerson(dac, user)) {
-            Integer chairVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.CHAIRPERSON.getValue());
-            votes.add(voteDAO.findVoteById(chairVoteId));
-            // Requires Chairperson role to create a final and agreement vote in the Data Access case
-            if (electionType.equals(ElectionType.DATA_ACCESS)) {
-                Integer finalVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.FINAL.getValue());
-                votes.add(voteDAO.findVoteById(finalVoteId));
-                if (!isManualReview) {
-                    Integer agreementVoteId = voteDAO.insertVote(user.getUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
-                    votes.add(voteDAO.findVoteById(agreementVoteId));
-                }
-            }
-        }
-        return votes;
-    }
-
-    /**
-     * Create Votes for a data owner election
-     *
-     * @param election Election
-     * @return Votes for the election
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    public List<Vote> createDataOwnersReviewVotes(Election election) {
-        List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataSet(election.getDataSetId());
-        voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
-        return voteDAO.findVotesByElectionIdAndType(election.getElectionId(), VoteType.DATA_OWNER.getValue());
-    }
-
-    public List<Vote> findVotesByIds(List<Integer> voteIds) {
-        if (voteIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return voteDAO.findVotesByIds(voteIds);
-    }
-
-    /**
-     * Delete any votes in Open elections for the specified user in the specified Dac.
-     *
-     * @param dac  The Dac we are restricting elections to
-     * @param user The Dac member we are deleting votes for
-     */
-    public void deleteOpenDacVotesForUser(Dac dac, User user) {
-        List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
-                map(Election::getElectionId).
-                collect(Collectors.toList());
-        if (!openElectionIds.isEmpty()) {
-            List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
-                    filter(v -> v.getUserId().equals(user.getUserId())).
-                    map(Vote::getVoteId).
-                    collect(Collectors.toList());
-            if (!openUserVoteIds.isEmpty()) {
-                voteDAO.removeVotesByIds(openUserVoteIds);
-            }
-        }
-    }
-
-    /**
-     * Update vote values. 'FINAL' votes impact elections so matching elections marked as
-     * ElectionStatus.CLOSED as well. Approved 'FINAL' votes trigger an approval email to
-     * researchers.
-     *
-     * @param votes     List of Votes to update
-     * @param voteValue Value to update the votes to
-     * @param rationale Value to update the rationales to. Only update if non-null.
-     * @return The updated Vote
-     * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
-     */
-    public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale) throws IllegalArgumentException {
-        validateVotesCanUpdate(votes);
+  /**
+   * Update vote values. 'FINAL' votes impact elections so matching elections marked as
+   * ElectionStatus.CLOSED as well. Approved 'FINAL' votes trigger an approval email to
+   * researchers.
+   *
+   * @param votes     List of Votes to update
+   * @param voteValue Value to update the votes to
+   * @param rationale Value to update the rationales to. Only update if non-null.
+   * @return The updated Vote
+   * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
+   */
+  public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale)
+      throws IllegalArgumentException {
+    validateVotesCanUpdate(votes);
+    try {
+      List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+      if (voteValue) {
         try {
-            List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
-            if (voteValue) {
-                try {
-                    sendDatasetApprovalNotifications(updatedVotes);
-                } catch (Exception e) {
-                    // We can recover from email errors, log it and don't fail the overall process.
-                    String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString).collect(Collectors.joining(","));
-                    String message = "Error notifying researchers and custodians for votes: [" + voteIds + "]: " + e.getMessage();
-                    logException(message, e);
-                }
-            }
-            return updatedVotes;
-        } catch (SQLException e) {
-            throw new IllegalArgumentException("Unable to update election votes.");
+          sendDatasetApprovalNotifications(updatedVotes);
+        } catch (Exception e) {
+          // We can recover from email errors, log it and don't fail the overall process.
+          String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString)
+              .collect(Collectors.joining(","));
+          String message =
+              "Error notifying researchers and custodians for votes: [" + voteIds + "]: "
+                  + e.getMessage();
+          logException(message, e);
         }
+      }
+      return updatedVotes;
+    } catch (SQLException e) {
+      throw new IllegalArgumentException("Unable to update election votes.");
     }
+  }
 
-    /**
-     * Review all positive, FINAL votes and send a notification to the researcher and data
-     * custodians describing the approved access to datasets on their Data Access Request.
-     *
-     * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of
-     *              elections for datasets that all have the same data use restriction in a single
-     *              DarCollection. This method is flexible enough to send email for any number of
-     *              unrelated elections in various DarCollections.
-     */
-    public void sendDatasetApprovalNotifications(List<Vote> votes) {
+  /**
+   * Review all positive, FINAL votes and send a notification to the researcher and data custodians
+   * describing the approved access to datasets on their Data Access Request.
+   *
+   * @param votes List of Vote objects. In practice, this will be a batch of votes for a group of
+   *              elections for datasets that all have the same data use restriction in a single
+   *              DarCollection. This method is flexible enough to send email for any number of
+   *              unrelated elections in various DarCollections.
+   */
+  public void sendDatasetApprovalNotifications(List<Vote> votes) {
 
-        List<Integer> finalElectionIds = votes.stream()
-                .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election
-                .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
-                .map(Vote::getElectionId)
-                .distinct()
-                .collect(Collectors.toList());
+    List<Integer> finalElectionIds = votes.stream()
+        .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election
+        .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
+        .map(Vote::getElectionId)
+        .distinct()
+        .collect(Collectors.toList());
 
-        List<Election> finalElections = finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
+    List<Election> finalElections =
+        finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
 
-        List<String> finalElectionReferenceIds = finalElections.stream()
-                .map(Election::getReferenceId)
-                .distinct()
-                .collect(Collectors.toList());
+    List<String> finalElectionReferenceIds = finalElections.stream()
+        .map(Election::getReferenceId)
+        .distinct()
+        .collect(Collectors.toList());
 
-        List<Integer> collectionIds = finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
-                .findByReferenceIds(finalElectionReferenceIds).stream()
-                .map(DataAccessRequest::getCollectionId)
-                .collect(Collectors.toList());
+    List<Integer> collectionIds =
+        finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
+            .findByReferenceIds(finalElectionReferenceIds).stream()
+            .map(DataAccessRequest::getCollectionId)
+            .collect(Collectors.toList());
 
-        List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
-                darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
+    List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
+        darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
-        List<Integer> datasetIds = finalElections.stream()
-                .map(Election::getDataSetId)
-                .collect(Collectors.toList());
-        List<Dataset> datasets = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+    List<Integer> datasetIds = finalElections.stream()
+        .map(Election::getDataSetId)
+        .collect(Collectors.toList());
+    List<Dataset> datasets =
+        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-        // For each dar collection, email the researcher summarizing the approved datasets in that collection
-        collections.forEach(c -> {
-            // Get the datasets in this collection that have been approved
-            List<Integer> collectionDatasetIds = c.getDars().values().stream()
-                    .map(DataAccessRequest::getDatasetIds)
-                    .flatMap(List::stream)
-                    .distinct()
-                    .toList();
-            List<Dataset> approvedDatasetsInCollection = datasets.stream()
-                    .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
-                    .toList();
+    // For each dar collection, email the researcher summarizing the approved datasets in that collection
+    collections.forEach(c -> {
+      // Get the datasets in this collection that have been approved
+      List<Integer> collectionDatasetIds = c.getDars().values().stream()
+          .map(DataAccessRequest::getDatasetIds)
+          .flatMap(List::stream)
+          .distinct()
+          .toList();
+      List<Dataset> approvedDatasetsInCollection = datasets.stream()
+          .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
+          .toList();
 
-            if (!approvedDatasetsInCollection.isEmpty()) {
-                String darCode = c.getDarCode();
-                User researcher = userDAO.findUserById(c.getCreateUserId());
-                Integer researcherId = researcher.getUserId();
-                List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection
-                        .stream()
-                        .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-                        .toList();
+      if (!approvedDatasetsInCollection.isEmpty()) {
+        String darCode = c.getDarCode();
+        User researcher = userDAO.findUserById(c.getCreateUserId());
+        Integer researcherId = researcher.getUserId();
+        List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection
+            .stream()
+            .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+            .toList();
 
-                // Get all Data Use translations, distinctly in the case that there are several with the same
-                // data use, and then conjoin them for email display.
-                List<DataUse> dataUses = approvedDatasetsInCollection.stream()
-                        .map(Dataset::getDataUse)
-                        .toList();
-                List<String> dataUseTranslations = dataUses.stream()
-                        .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
-                        .distinct()
-                        .collect(Collectors.toList());
-                String translation = String.join(";", dataUseTranslations);
+        // Get all Data Use translations, distinctly in the case that there are several with the same
+        // data use, and then conjoin them for email display.
+        List<DataUse> dataUses = approvedDatasetsInCollection.stream()
+            .map(Dataset::getDataUse)
+            .toList();
+        List<String> dataUseTranslations = dataUses.stream()
+            .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
+            .distinct()
+            .collect(Collectors.toList());
+        String translation = String.join(";", dataUseTranslations);
 
-                try {
-                    emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs, translation);
-                } catch (Exception e) {
-                    logException("Error sending researcher dar approved email: " + e.getMessage(), e);
-                }
-                try {
-                    notifyCustodiansOfApprovedDatasets(approvedDatasetsInCollection, researcher, darCode);
-                } catch (Exception e) {
-                    logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
-                }
-            }
+        try {
+          emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
+              translation);
+        } catch (Exception e) {
+          logException("Error sending researcher dar approved email: " + e.getMessage(), e);
+        }
+        try {
+          notifyCustodiansOfApprovedDatasets(approvedDatasetsInCollection, researcher, darCode);
+        } catch (Exception e) {
+          logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
+        }
+      }
+    });
+  }
+
+  /**
+   * Notify all data submitters, custodians, depositors, and owners of a dataset approval.
+   *
+   * @param datasets   Requested datasets
+   * @param researcher The approved researcher
+   * @param darCode    The DAR Collection Code
+   * @throws IllegalArgumentException when there are no custodians or depositors to notify
+   */
+  protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher,
+      String darCode) throws IllegalArgumentException {
+    Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
+    // Find all the custodians, data owners, and data submitters to notify for each dataset
+    datasets.forEach(d -> {
+      // Data Submitter
+      if (Objects.nonNull(d.getCreateUserId())) {
+        User submitter = userDAO.findUserById(d.getCreateUserId());
+        if (Objects.nonNull(submitter)) {
+          custodianMap.putIfAbsent(submitter, new HashSet<>());
+          custodianMap.get(submitter).add(d);
+        }
+      }
+      // Data Custodians and Data Depositor
+      List<String> custodianEmails = d.getProperties()
+          .stream()
+          .filter(p ->
+              (Objects.nonNull(p.getSchemaProperty()) && p.getSchemaProperty()
+                  .equalsIgnoreCase("dataCustodianEmail")) ||
+                  p.getPropertyName().equalsIgnoreCase("Data Depositor"))
+          .map(DatasetProperty::getPropertyValueAsString)
+          .distinct()
+          .toList();
+      if (!custodianEmails.isEmpty()) {
+        userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
+          custodianMap.putIfAbsent(u, new HashSet<>());
+          custodianMap.get(u).add(d);
         });
-    }
-
-    /**
-     * Notify all data submitters, custodians, depositors, and owners of a dataset approval.
-     *
-     * @param datasets   Requested datasets
-     * @param researcher The approved researcher
-     * @param darCode    The DAR Collection Code
-     * @throws IllegalArgumentException when there are no custodians or depositors to notify
-     */
-    protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher, String darCode) throws IllegalArgumentException {
-        Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
-        // Find all the custodians, data owners, and data submitters to notify for each dataset
-        datasets.forEach(d -> {
-            // Data Submitter
-            if (Objects.nonNull(d.getCreateUserId())) {
-                User submitter = userDAO.findUserById(d.getCreateUserId());
-                if (Objects.nonNull(submitter)) {
-                    custodianMap.putIfAbsent(submitter, new HashSet<>());
-                    custodianMap.get(submitter).add(d);
-                }
-            }
-            // Data Custodians and Data Depositor
-            List<String> custodianEmails = d.getProperties()
-                    .stream()
-                    .filter(p ->
-                            (Objects.nonNull(p.getSchemaProperty()) && p.getSchemaProperty().equalsIgnoreCase("dataCustodianEmail")) ||
-                                    p.getPropertyName().equalsIgnoreCase("Data Depositor"))
-                    .map(DatasetProperty::getPropertyValueAsString)
-                    .distinct()
-                    .toList();
-            if (!custodianEmails.isEmpty()) {
-                userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
-                    custodianMap.putIfAbsent(u, new HashSet<>());
-                    custodianMap.get(u).add(d);
-                });
-            }
-            // Data Owners
-            List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
-            if (!ownerUserIds.isEmpty()) {
-                userDAO.findUsers(ownerUserIds).forEach(u -> {
-                    custodianMap.putIfAbsent(u, new HashSet<>());
-                    custodianMap.get(u).add(d);
-                });
-            } else {
-                logWarn("Unable to find dataset owner associations for dataset identifier: " + d.getDatasetIdentifier());
-            }
+      }
+      // Data Owners
+      List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
+      if (!ownerUserIds.isEmpty()) {
+        userDAO.findUsers(ownerUserIds).forEach(u -> {
+          custodianMap.putIfAbsent(u, new HashSet<>());
+          custodianMap.get(u).add(d);
         });
-        if (custodianMap.isEmpty()) {
-            String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier).collect(Collectors.joining(", "));
-            throw new IllegalArgumentException("No submitters, custodians, owners, or depositors found for provided dataset identifiers: " + identifiers);
-        }
-        // For each custodian, notify them of their approved datasets
-        for (Map.Entry<User, HashSet<Dataset>> entry : custodianMap.entrySet()) {
-            List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
-                    .stream()
-                    .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-                    .toList();
-            try {
-                emailService.sendDataCustodianApprovalMessage(
-                        entry.getKey(),
-                        darCode,
-                        datasetMailDTOs,
-                        entry.getKey().getDisplayName(),
-                        researcher.getEmail());
-            } catch (Exception e) {
-                logException("Error sending custodian approval email: " + e.getMessage(), e);
-            }
-        }
+      } else {
+        logWarn("Unable to find dataset owner associations for dataset identifier: "
+            + d.getDatasetIdentifier());
+      }
+    });
+    if (custodianMap.isEmpty()) {
+      String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier)
+          .collect(Collectors.joining(", "));
+      throw new IllegalArgumentException(
+          "No submitters, custodians, owners, or depositors found for provided dataset identifiers: "
+              + identifiers);
+    }
+    // For each custodian, notify them of their approved datasets
+    for (Map.Entry<User, HashSet<Dataset>> entry : custodianMap.entrySet()) {
+      List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
+          .stream()
+          .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+          .toList();
+      try {
+        emailService.sendDataCustodianApprovalMessage(
+            entry.getKey(),
+            darCode,
+            datasetMailDTOs,
+            entry.getKey().getDisplayName(),
+            researcher.getEmail());
+      } catch (Exception e) {
+        logException("Error sending custodian approval email: " + e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
+   * The Rationale for RP Votes can be updated for any election status. The Rationale for DataAccess
+   * Votes can only be updated for OPEN elections. Votes for elections of other types are not
+   * updatable through this method.
+   *
+   * @param voteIds   List of vote ids for DataAccess and RP elections
+   * @param rationale The rationale to update
+   * @return List of updated votes
+   * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
+   */
+  public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
+      throws IllegalArgumentException {
+    List<Vote> votes = voteDAO.findVotesByIds(voteIds);
+    validateVotesCanUpdate(votes);
+    voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+    return findVotesByIds(voteIds);
+  }
+
+  private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
+    List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
+        .map(Vote::getElectionId)
+        .collect(Collectors.toList()));
+
+    // If there are any DataAccess elections in a non-open state, throw an error
+    List<Election> nonOpenAccessElections = elections.stream()
+        .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
+        .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
+        .toList();
+    if (!nonOpenAccessElections.isEmpty()) {
+      throw new IllegalArgumentException(
+          "There are non-open Data Access elections for provided votes");
     }
 
-    /**
-     * The Rationale for RP Votes can be updated for any election status.
-     * The Rationale for DataAccess Votes can only be updated for OPEN elections.
-     * Votes for elections of other types are not updatable through this method.
-     *
-     * @param voteIds   List of vote ids for DataAccess and RP elections
-     * @param rationale The rationale to update
-     * @return List of updated votes
-     * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
-     */
-    public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale) throws IllegalArgumentException {
-        List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-        validateVotesCanUpdate(votes);
-        voteDAO.updateRationaleByVoteIds(voteIds, rationale);
-        return findVotesByIds(voteIds);
+    // If there are non-DataAccess or non-RP elections, throw an error
+    List<Election> disallowedElections = elections.stream()
+        .filter(election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
+        .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
+        .toList();
+    if (!disallowedElections.isEmpty()) {
+      throw new IllegalArgumentException(
+          "There are non-Data Access/RP elections for provided votes");
     }
+  }
 
-    private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
-        List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
-                .map(Vote::getElectionId)
-                .collect(Collectors.toList()));
-
-        // If there are any DataAccess elections in a non-open state, throw an error
-        List<Election> nonOpenAccessElections = elections.stream()
-                .filter(election -> election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-                .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
-                .toList();
-        if (!nonOpenAccessElections.isEmpty()) {
-            throw new IllegalArgumentException("There are non-open Data Access elections for provided votes");
-        }
-
-        // If there are non-DataAccess or non-RP elections, throw an error
-        List<Election> disallowedElections = elections.stream()
-                .filter(election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-                .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
-                .toList();
-        if (!disallowedElections.isEmpty()) {
-            throw new IllegalArgumentException("There are non-Data Access/RP elections for provided votes");
-        }
+  private boolean isDacChairPerson(Dac dac, User user) {
+    if (dac != null) {
+      return user.getRoles().
+          stream().
+          anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+              Objects.nonNull(userRole.getDacId()) &&
+              userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) &&
+              userRole.getDacId().equals(dac.getDacId()));
     }
+    return user.getRoles().
+        stream().
+        anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
+            userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+  }
 
-    private boolean isDacChairPerson(Dac dac, User user) {
-        if (dac != null) {
-            return user.getRoles().
-                    stream().
-                    anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
-                            Objects.nonNull(userRole.getDacId()) &&
-                            userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) &&
-                            userRole.getDacId().equals(dac.getDacId()));
-        }
-        return user.getRoles().
-                stream().
-                anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
-                        userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
+  /**
+   * Convenience method to ensure Vote non-nullable values are populated
+   *
+   * @param vote The Vote to validate
+   */
+  private void validateVote(Vote vote) {
+    if (Objects.isNull(vote) ||
+        Objects.isNull(vote.getVoteId()) ||
+        Objects.isNull(vote.getUserId()) ||
+        Objects.isNull(vote.getElectionId())) {
+      throw new IllegalArgumentException("Invalid vote: " + vote);
     }
+    if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
+      throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
+    }
+  }
 
-    /**
-     * Convenience method to ensure Vote non-nullable values are populated
-     *
-     * @param vote The Vote to validate
-     */
-    private void validateVote(Vote vote) {
-        if (Objects.isNull(vote) ||
-                Objects.isNull(vote.getVoteId()) ||
-                Objects.isNull(vote.getUserId()) ||
-                Objects.isNull(vote.getElectionId())) {
-            throw new IllegalArgumentException("Invalid vote: " + vote);
-        }
-        if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
-            throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
-        }
-    }
-
-    private void notFoundException(Integer voteId) {
-        throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
-    }
+  private void notFoundException(Integer voteId) {
+    throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
+  }
 }

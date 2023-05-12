@@ -20,47 +20,48 @@ import org.broadinstitute.consent.http.service.SummaryService;
 @Path("api/consent/cases")
 public class ConsentCasesResource extends Resource {
 
-    private final SummaryService summaryService;
+  private final SummaryService summaryService;
 
-    @Inject
-    public ConsentCasesResource(SummaryService summaryService) {
-        this.summaryService = summaryService;
-    }
+  @Inject
+  public ConsentCasesResource(SummaryService summaryService) {
+    this.summaryService = summaryService;
+  }
 
-    @GET
-    @Path("/summary")
-    @PermitAll
-    public Response getConsentSummaryCases(@Auth AuthUser authUser) {
-        Summary summary = summaryService.describeConsentSummaryCases();
-        return Response.ok().entity(summary).build();
-    }
+  @GET
+  @Path("/summary")
+  @PermitAll
+  public Response getConsentSummaryCases(@Auth AuthUser authUser) {
+    Summary summary = summaryService.describeConsentSummaryCases();
+    return Response.ok().entity(summary).build();
+  }
 
-    @GET
-    @Path("/summary/file")
-    @Produces("text/plain")
-    @PermitAll
-    public Response getConsentSummaryDetailFile(@QueryParam("type") String type, @Auth AuthUser authUser) {
-        try {
-            if (Objects.isNull(type)) {
-                type = ElectionType.DATA_ACCESS.getValue();
-            }
-            List<? extends SummaryDetail> details = new ArrayList<>();
-            if (type.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-                details = summaryService.describeConsentSummaryDetail();
-            } else if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
-                details = summaryService.listDataAccessRequestSummaryDetails();
-            }
-            if (!details.isEmpty()) {
-                StringBuilder detailsBuilder = new StringBuilder();
-                detailsBuilder.append(details.get(0).headers()).append(System.lineSeparator());
-                details.forEach(d -> detailsBuilder.append(d.toString()).append(System.lineSeparator()));
-                return Response.ok(detailsBuilder.toString()).build();
-            }
-            return Response.ok().build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
+  @GET
+  @Path("/summary/file")
+  @Produces("text/plain")
+  @PermitAll
+  public Response getConsentSummaryDetailFile(@QueryParam("type") String type,
+      @Auth AuthUser authUser) {
+    try {
+      if (Objects.isNull(type)) {
+        type = ElectionType.DATA_ACCESS.getValue();
+      }
+      List<? extends SummaryDetail> details = new ArrayList<>();
+      if (type.equals(ElectionType.TRANSLATE_DUL.getValue())) {
+        details = summaryService.describeConsentSummaryDetail();
+      } else if (type.equals(ElectionType.DATA_ACCESS.getValue())) {
+        details = summaryService.listDataAccessRequestSummaryDetails();
+      }
+      if (!details.isEmpty()) {
+        StringBuilder detailsBuilder = new StringBuilder();
+        detailsBuilder.append(details.get(0).headers()).append(System.lineSeparator());
+        details.forEach(d -> detailsBuilder.append(d.toString()).append(System.lineSeparator()));
+        return Response.ok(detailsBuilder.toString()).build();
+      }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
+  }
 
 
 }

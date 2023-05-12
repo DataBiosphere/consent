@@ -19,39 +19,40 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/nih")
 public class NihAccountResource extends Resource {
 
-    private final NihService nihService;
-    private final UserService userService;
+  private final NihService nihService;
+  private final UserService userService;
 
-    @Inject
-    public NihAccountResource(NihService nihService, UserService userService) {
-        this.nihService = nihService;
-        this.userService = userService;
-    }
+  @Inject
+  public NihAccountResource(NihService nihService, UserService userService) {
+    this.nihService = nihService;
+    this.userService = userService;
+  }
 
-    @POST
-    @Produces("application/json")
-    @PermitAll
-    public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
-        try {
-            nihService.validateNihUserAccount(nihAccount, authUser);
-            User user = userService.findUserByEmail(authUser.getEmail());
-            List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser, user.getUserId());
-            return Response.ok(authUserProps).build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
+  @POST
+  @Produces("application/json")
+  @PermitAll
+  public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
+    try {
+      nihService.validateNihUserAccount(nihAccount, authUser);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser,
+          user.getUserId());
+      return Response.ok(authUserProps).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
+  }
 
-    @DELETE
-    @Produces("application/json")
-    @PermitAll
-    public Response deleteNihAccount(@Auth AuthUser user) {
-        try {
-            User dacUser = userService.findUserByEmail(user.getEmail());
-            nihService.deleteNihAccountById(dacUser.getUserId());
-            return Response.ok().build();
-        } catch (Exception e) {
-            return createExceptionResponse(e);
-        }
+  @DELETE
+  @Produces("application/json")
+  @PermitAll
+  public Response deleteNihAccount(@Auth AuthUser user) {
+    try {
+      User dacUser = userService.findUserByEmail(user.getEmail());
+      nihService.deleteNihAccountById(dacUser.getUserId());
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
+  }
 }

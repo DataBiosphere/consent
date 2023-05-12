@@ -21,67 +21,70 @@ import org.mockito.Mock;
 
 public class MatchResourceTest {
 
-    @Mock
-    private MatchService service;
+  @Mock
+  private MatchService service;
 
-    @Mock
-    private AuthUser authUser;
+  @Mock
+  private AuthUser authUser;
 
-    private MatchResource resource;
+  private MatchResource resource;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    private void initResource() {
-        resource = new MatchResource(service);
-    }
+  private void initResource() {
+    resource = new MatchResource(service);
+  }
 
-    @Test
-    public void testGetMatchesForPurpose() {
-        when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
-        initResource();
+  @Test
+  public void testGetMatchesForPurpose() {
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
+    initResource();
 
-        Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
-                UUID.randomUUID().toString());
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+        UUID.randomUUID().toString());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
 
-    @Test
-    public void testGetMatchesForPurpose_EmptyParam() {
-        initResource();
-        Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
+  @Test
+  public void testGetMatchesForPurpose_EmptyParam() {
+    initResource();
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
 
-    @Test
-    public void testGetMatchesForPurpose_CommaSeparatedBlanks() {
-        initResource();
-        Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, " , , ,");
-        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
+  @Test
+  public void testGetMatchesForPurpose_CommaSeparatedBlanks() {
+    initResource();
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+        " , , ,");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
 
-    @Test
-    public void testGetMatchesForPurpose_PartialValidIds() {
-        Match match = new Match();
-        match.setId(2);
-        when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(List.of(match));
-        initResource();
+  @Test
+  public void testGetMatchesForPurpose_PartialValidIds() {
+    Match match = new Match();
+    match.setId(2);
+    when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
+        List.of(match));
+    initResource();
 
-        Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "3, , 5, ");
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+        "3, , 5, ");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
 
-    @Test
-    public void testReprocessPurposeMatches() {
-        doNothing().when(service).reprocessMatchesForPurpose(any());
-        when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
-        initResource();
+  @Test
+  public void testReprocessPurposeMatches() {
+    doNothing().when(service).reprocessMatchesForPurpose(any());
+    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
+    initResource();
 
-        Response response = resource.reprocessPurposeMatches(authUser,
-                UUID.randomUUID().toString());
-        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
+    Response response = resource.reprocessPurposeMatches(authUser,
+        UUID.randomUUID().toString());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
 
 }

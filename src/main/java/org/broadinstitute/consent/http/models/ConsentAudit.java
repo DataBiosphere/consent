@@ -4,41 +4,42 @@ import java.util.Date;
 
 public class ConsentAudit {
 
-    private String modifiedObjectId;
+  private String modifiedObjectId;
 
-    private String modifiedTable;
+  private String modifiedTable;
 
-    private String changeAction;
+  private String changeAction;
 
-    private long modifiedByUserId;
+  private long modifiedByUserId;
 
-    private Date modificationDate;
+  private Date modificationDate;
 
-    public ConsentAudit(String modifiedObjectId, String modifiedTable, String changeAction, int modifiedByUserId, Date modificationDate) {
-        this.modifiedObjectId = modifiedObjectId;
-        this.modifiedTable = modifiedTable;
-        this.changeAction = changeAction;
-        this.modifiedByUserId = modifiedByUserId;
-        this.modificationDate = modificationDate;
-    }
+  public ConsentAudit(String modifiedObjectId, String modifiedTable, String changeAction,
+      int modifiedByUserId, Date modificationDate) {
+    this.modifiedObjectId = modifiedObjectId;
+    this.modifiedTable = modifiedTable;
+    this.changeAction = changeAction;
+    this.modifiedByUserId = modifiedByUserId;
+    this.modificationDate = modificationDate;
+  }
 
-    public String getModifiedObjectId() {
-        return modifiedObjectId;
-    }
+  public String getModifiedObjectId() {
+    return modifiedObjectId;
+  }
 
-    public String getModifiedTable() {
-        return modifiedTable;
-    }
+  public String getModifiedTable() {
+    return modifiedTable;
+  }
 
-    public String getChangeAction() {
-        return changeAction;
-    }
+  public String getChangeAction() {
+    return changeAction;
+  }
 
-    public long getModifiedByUserId() {
-        return modifiedByUserId;
-    }
+  public long getModifiedByUserId() {
+    return modifiedByUserId;
+  }
 
-    public Date getModificationDate() {
-        return modificationDate;
-    }
+  public Date getModificationDate() {
+    return modificationDate;
+  }
 }

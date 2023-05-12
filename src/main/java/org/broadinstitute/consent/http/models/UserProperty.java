@@ -6,88 +6,93 @@ import com.google.common.base.Objects;
 
 public class UserProperty {
 
-    public static final String QUERY_FIELDS_WITH_UP_PREFIX =
-            " up.propertyid AS up_property_id, " +
-                    " up.userid AS up_user_id, " +
-                    " up.propertykey AS up_property_key, " +
-                    " up.propertyvalue AS up_property_value ";
+  public static final String QUERY_FIELDS_WITH_UP_PREFIX =
+      " up.propertyid AS up_property_id, " +
+          " up.userid AS up_user_id, " +
+          " up.propertykey AS up_property_key, " +
+          " up.propertyvalue AS up_property_value ";
 
-    @JsonProperty
-    private Integer propertyId;
+  @JsonProperty
+  private Integer propertyId;
 
-    @JsonProperty
-    private Integer userId;
+  @JsonProperty
+  private Integer userId;
 
-    @JsonProperty
-    private String propertyKey;
+  @JsonProperty
+  private String propertyKey;
 
-    @JsonProperty
-    private String propertyValue;
+  @JsonProperty
+  private String propertyValue;
 
 
-    public UserProperty() {
+  public UserProperty() {
+  }
+
+  public UserProperty(Integer propertyId, Integer userId, String propertyKey,
+      String propertyValue) {
+    this.propertyId = propertyId;
+    this.userId = userId;
+    this.propertyKey = propertyKey;
+    this.propertyValue = propertyValue;
+  }
+
+  public UserProperty(Integer userId, String propertyKey, String propertyValue) {
+    this.userId = userId;
+    this.propertyKey = propertyKey;
+    this.propertyValue = propertyValue;
+  }
+
+  public UserProperty(Integer userId, String propertyKey) {
+    this.userId = userId;
+    this.propertyKey = propertyKey;
+  }
+
+  public Integer getPropertyId() {
+    return propertyId;
+  }
+
+  public void setPropertyId(Integer propertyId) {
+    this.propertyId = propertyId;
+  }
+
+  public String getPropertyKey() {
+    return propertyKey;
+  }
+
+  public void setPropertyKey(String propertyKey) {
+    this.propertyKey = propertyKey;
+  }
+
+  public String getPropertyValue() {
+    return propertyValue;
+  }
+
+  public void setPropertyValue(String propertyValue) {
+    this.propertyValue = propertyValue;
+  }
+
+  public Integer getUserId() {
+    return userId;
+  }
+
+  public void setUserId(Integer userId) {
+    this.userId = userId;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public UserProperty(Integer propertyId, Integer userId, String propertyKey, String propertyValue) {
-        this.propertyId = propertyId;
-        this.userId = userId;
-        this.propertyKey = propertyKey;
-        this.propertyValue = propertyValue;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
+    UserProperty property = (UserProperty) o;
+    return Objects.equal(propertyId, property.propertyId);
+  }
 
-    public UserProperty(Integer userId, String propertyKey, String propertyValue) {
-        this.userId = userId;
-        this.propertyKey = propertyKey;
-        this.propertyValue = propertyValue;
-    }
-
-    public UserProperty(Integer userId, String propertyKey) {
-        this.userId = userId;
-        this.propertyKey = propertyKey;
-    }
-
-    public Integer getPropertyId() {
-        return propertyId;
-    }
-
-    public void setPropertyId(Integer propertyId) {
-        this.propertyId = propertyId;
-    }
-
-    public String getPropertyKey() {
-        return propertyKey;
-    }
-
-    public void setPropertyKey(String propertyKey) {
-        this.propertyKey = propertyKey;
-    }
-
-    public String getPropertyValue() {
-        return propertyValue;
-    }
-
-    public void setPropertyValue(String propertyValue) {
-        this.propertyValue = propertyValue;
-    }
-
-    public Integer getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserProperty property = (UserProperty) o;
-        return Objects.equal(propertyId, property.propertyId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(propertyId);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(propertyId);
+  }
 }

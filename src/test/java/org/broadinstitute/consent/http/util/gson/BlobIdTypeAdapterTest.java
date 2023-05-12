@@ -10,29 +10,29 @@ import org.junit.jupiter.api.Test;
 
 public class BlobIdTypeAdapterTest {
 
-    @Test
-    public void testBlobIdTypeAdapter() {
-        BlobId randomId = BlobId.of(
-                RandomStringUtils.randomAlphabetic(10),
-                RandomStringUtils.randomAlphabetic(10));
-        String randomIdUri = randomId.toGsUtilUri();
-        boolean failsSerialization = false;
-        boolean failsDeserialization = false;
-        BlobIdTypeAdapter adapter = new BlobIdTypeAdapter();
+  @Test
+  public void testBlobIdTypeAdapter() {
+    BlobId randomId = BlobId.of(
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10));
+    String randomIdUri = randomId.toGsUtilUri();
+    boolean failsSerialization = false;
+    boolean failsDeserialization = false;
+    BlobIdTypeAdapter adapter = new BlobIdTypeAdapter();
 
-        try {
-            JsonElement elem = adapter.serialize(randomId, null, null);
-        } catch (RuntimeException rte) {
-            failsSerialization = true;
-        }
-        assertTrue(failsSerialization);
-        JsonPrimitive primitive = new JsonPrimitive(randomIdUri);
-        try {
-            BlobId returnedId = adapter.deserialize(primitive, null, null);
-        } catch (RuntimeException rte) {
-            failsDeserialization = true;
-        }
-
-        assertTrue(failsDeserialization);
+    try {
+      JsonElement elem = adapter.serialize(randomId, null, null);
+    } catch (RuntimeException rte) {
+      failsSerialization = true;
     }
+    assertTrue(failsSerialization);
+    JsonPrimitive primitive = new JsonPrimitive(randomIdUri);
+    try {
+      BlobId returnedId = adapter.deserialize(primitive, null, null);
+    } catch (RuntimeException rte) {
+      failsDeserialization = true;
+    }
+
+    assertTrue(failsDeserialization);
+  }
 }

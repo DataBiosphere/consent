@@ -18,182 +18,184 @@ import org.broadinstitute.consent.http.models.User;
 
 public class LibraryCardService {
 
-    private final LibraryCardDAO libraryCardDAO;
-    private final InstitutionDAO institutionDAO;
-    private final UserDAO userDAO;
+  private final LibraryCardDAO libraryCardDAO;
+  private final InstitutionDAO institutionDAO;
+  private final UserDAO userDAO;
 
-    @Inject
-    public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO, UserDAO userDAO) {
-        this.libraryCardDAO = libraryCardDAO;
-        this.institutionDAO = institutionDAO;
-        this.userDAO = userDAO;
+  @Inject
+  public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO,
+      UserDAO userDAO) {
+    this.libraryCardDAO = libraryCardDAO;
+    this.institutionDAO = institutionDAO;
+    this.userDAO = userDAO;
+  }
+
+  public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
+    throwIfNull(libraryCard);
+    Boolean isAdmin = checkIsAdmin(user);
+    //If user is not an admin, use user's institutionId rather than the value provided in the payload
+    if (!isAdmin && !libraryCard.getInstitutionId().equals(user.getInstitutionId())) {
+      throw new BadRequestException("Card payload not valid");
+    }
+    checkIfCardExists(libraryCard);
+    checkForValidInstitution(libraryCard.getInstitutionId());
+    LibraryCard processedCard = processUserOnNewLC(libraryCard);
+    Date createDate = new Date();
+    Integer id = libraryCardDAO.insertLibraryCard(
+        processedCard.getUserId(),
+        processedCard.getInstitutionId(),
+        processedCard.getEraCommonsId(),
+        processedCard.getUserName(),
+        processedCard.getUserEmail(),
+        processedCard.getCreateUserId(),
+        createDate
+    );
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  public LibraryCard updateLibraryCard(LibraryCard libraryCard, Integer id, Integer userId) {
+    LibraryCard updateCard = libraryCardDAO.findLibraryCardById(id);
+    throwIfNull(updateCard);
+    checkUserId(userId);
+    checkForValidUser(libraryCard.getUserId());
+    checkForValidInstitution(libraryCard.getInstitutionId());
+
+    Date updateDate = new Date();
+    libraryCardDAO.updateLibraryCardById(
+        id,
+        libraryCard.getUserId(),
+        libraryCard.getInstitutionId(),
+        libraryCard.getEraCommonsId(),
+        libraryCard.getUserName(),
+        libraryCard.getUserEmail(),
+        userId,
+        updateDate
+    );
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  public void deleteLibraryCardById(Integer id) {
+    LibraryCard card = findLibraryCardById(id);
+    throwIfNull(card);
+    libraryCardDAO.deleteLibraryCardById(id);
+  }
+
+  public List<LibraryCard> findAllLibraryCards() {
+    return libraryCardDAO.findAllLibraryCards();
+  }
+
+  public List<LibraryCard> findLibraryCardsByUserId(Integer userId) {
+    return libraryCardDAO.findLibraryCardsByUserId(userId);
+  }
+
+  public List<LibraryCard> findLibraryCardsByInstitutionId(Integer institutionId) {
+    return libraryCardDAO.findLibraryCardsByInstitutionId(institutionId);
+  }
+
+  public LibraryCard findLibraryCardById(Integer libraryCardId) {
+    LibraryCard libraryCard = libraryCardDAO.findLibraryCardById(libraryCardId);
+    throwIfNull(libraryCard);
+    return libraryCard;
+  }
+
+  private void checkForValidInstitution(Integer institutionId) {
+    checkInstitutionId(institutionId);
+    Institution institution = institutionDAO.findInstitutionById(institutionId);
+
+    if (Objects.isNull(institution)) {
+      throw new IllegalArgumentException("Invalid Institution Id");
+    }
+  }
+
+  private void checkForValidUser(Integer userId) {
+    if (Objects.isNull(userId)) {
+      return;
     }
 
-    public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
-        throwIfNull(libraryCard);
-        Boolean isAdmin = checkIsAdmin(user);
-        //If user is not an admin, use user's institutionId rather than the value provided in the payload
-        if (!isAdmin && !libraryCard.getInstitutionId().equals(user.getInstitutionId())) {
-            throw new BadRequestException("Card payload not valid");
+    User user = userDAO.findUserById(userId);
+    if (Objects.isNull(user)) {
+      throw new IllegalArgumentException("Invalid User Id");
+    }
+  }
+
+  private void checkInstitutionId(Integer institutionId) {
+    if (Objects.isNull(institutionId)) {
+      throw new IllegalArgumentException("Institution ID is a required parameter");
+    }
+  }
+
+  private void checkUserId(Integer userId) {
+    if (Objects.isNull(userId)) {
+      throw new IllegalArgumentException("User ID is a required parameter");
+    }
+  }
+
+  private void throwIfNull(LibraryCard libraryCard) {
+    if (Objects.isNull(libraryCard)) {
+      throw new NotFoundException("LibraryCard not found.");
+    }
+  }
+
+  //helper method for create method, checks to see if card already exists
+  private void checkIfCardExists(LibraryCard payload) {
+    Integer userId = payload.getUserId();
+    String email = payload.getUserEmail();
+    Integer institutionId = payload.getInstitutionId();
+    Optional<LibraryCard> foundCard;
+    List<LibraryCard> results;
+
+    if (Objects.nonNull(payload.getUserId())) {
+      results = libraryCardDAO.findLibraryCardsByUserId(userId);
+    } else if (Objects.nonNull(email)) {
+      results = libraryCardDAO.findAllLibraryCardsByUserEmail(email);
+    } else {
+      throw new BadRequestException();
+    }
+    foundCard = results.stream().filter(card -> {
+      Boolean sameUserId = Objects.nonNull(userId) && card.getUserId().equals(userId);
+      Boolean sameUserEmail = Objects.nonNull(email) && card.getUserEmail().equalsIgnoreCase(email);
+      Boolean sameInstitution = card.getInstitutionId().equals(institutionId);
+      return (sameUserId || sameUserEmail) && sameInstitution;
+    }).findFirst();
+
+    if (foundCard.isPresent()) {
+      throw new ConsentConflictException();
+    }
+  }
+
+  //Helper method to process user data on create LC payload
+  //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
+  private LibraryCard processUserOnNewLC(LibraryCard card) {
+    if (Objects.isNull(card.getUserId())) {
+      if (Objects.isNull(card.getUserEmail())) {
+        throw new BadRequestException();
+      } else {
+        //If a user is found, update the card to have the correct userId associated
+        User user = userDAO.findUserByEmail(card.getUserEmail());
+        if (!Objects.isNull(user)) {
+          Integer userId = user.getUserId();
+          card.setUserId(userId);
         }
-        checkIfCardExists(libraryCard);
-        checkForValidInstitution(libraryCard.getInstitutionId());
-        LibraryCard processedCard = processUserOnNewLC(libraryCard);
-        Date createDate = new Date();
-        Integer id = libraryCardDAO.insertLibraryCard(
-                processedCard.getUserId(),
-                processedCard.getInstitutionId(),
-                processedCard.getEraCommonsId(),
-                processedCard.getUserName(),
-                processedCard.getUserEmail(),
-                processedCard.getCreateUserId(),
-                createDate
-        );
-        return libraryCardDAO.findLibraryCardById(id);
+      }
+    } else {
+      //check if userId exists
+      User user = userDAO.findUserById(card.getUserId());
+      if (Objects.isNull(user)) {
+        throw new NotFoundException();
+      }
+      if (Objects.nonNull(user.getEmail()) && !(user.getEmail()
+          .equalsIgnoreCase(card.getUserEmail()))) {
+        //throw error here, user is trying to associate incorrect userId with email
+        throw new ConsentConflictException();
+      }
+      card.setUserName(user.getDisplayName());
     }
+    return card;
+  }
 
-    public LibraryCard updateLibraryCard(LibraryCard libraryCard, Integer id, Integer userId) {
-        LibraryCard updateCard = libraryCardDAO.findLibraryCardById(id);
-        throwIfNull(updateCard);
-        checkUserId(userId);
-        checkForValidUser(libraryCard.getUserId());
-        checkForValidInstitution(libraryCard.getInstitutionId());
-
-        Date updateDate = new Date();
-        libraryCardDAO.updateLibraryCardById(
-                id,
-                libraryCard.getUserId(),
-                libraryCard.getInstitutionId(),
-                libraryCard.getEraCommonsId(),
-                libraryCard.getUserName(),
-                libraryCard.getUserEmail(),
-                userId,
-                updateDate
-        );
-        return libraryCardDAO.findLibraryCardById(id);
-    }
-
-    public void deleteLibraryCardById(Integer id) {
-        LibraryCard card = findLibraryCardById(id);
-        throwIfNull(card);
-        libraryCardDAO.deleteLibraryCardById(id);
-    }
-
-    public List<LibraryCard> findAllLibraryCards() {
-        return libraryCardDAO.findAllLibraryCards();
-    }
-
-    public List<LibraryCard> findLibraryCardsByUserId(Integer userId) {
-        return libraryCardDAO.findLibraryCardsByUserId(userId);
-    }
-
-    public List<LibraryCard> findLibraryCardsByInstitutionId(Integer institutionId) {
-        return libraryCardDAO.findLibraryCardsByInstitutionId(institutionId);
-    }
-
-    public LibraryCard findLibraryCardById(Integer libraryCardId) {
-        LibraryCard libraryCard = libraryCardDAO.findLibraryCardById(libraryCardId);
-        throwIfNull(libraryCard);
-        return libraryCard;
-    }
-
-    private void checkForValidInstitution(Integer institutionId) {
-        checkInstitutionId(institutionId);
-        Institution institution = institutionDAO.findInstitutionById(institutionId);
-
-        if (Objects.isNull(institution)) {
-            throw new IllegalArgumentException("Invalid Institution Id");
-        }
-    }
-
-    private void checkForValidUser(Integer userId) {
-        if (Objects.isNull(userId)) {
-            return;
-        }
-
-        User user = userDAO.findUserById(userId);
-        if (Objects.isNull(user)) {
-            throw new IllegalArgumentException("Invalid User Id");
-        }
-    }
-
-    private void checkInstitutionId(Integer institutionId) {
-        if (Objects.isNull(institutionId)) {
-            throw new IllegalArgumentException("Institution ID is a required parameter");
-        }
-    }
-
-    private void checkUserId(Integer userId) {
-        if (Objects.isNull(userId)) {
-            throw new IllegalArgumentException("User ID is a required parameter");
-        }
-    }
-
-    private void throwIfNull(LibraryCard libraryCard) {
-        if (Objects.isNull(libraryCard)) {
-            throw new NotFoundException("LibraryCard not found.");
-        }
-    }
-
-    //helper method for create method, checks to see if card already exists
-    private void checkIfCardExists(LibraryCard payload) {
-        Integer userId = payload.getUserId();
-        String email = payload.getUserEmail();
-        Integer institutionId = payload.getInstitutionId();
-        Optional<LibraryCard> foundCard;
-        List<LibraryCard> results;
-
-        if (Objects.nonNull(payload.getUserId())) {
-            results = libraryCardDAO.findLibraryCardsByUserId(userId);
-        } else if (Objects.nonNull(email)) {
-            results = libraryCardDAO.findAllLibraryCardsByUserEmail(email);
-        } else {
-            throw new BadRequestException();
-        }
-        foundCard = results.stream().filter(card -> {
-            Boolean sameUserId = Objects.nonNull(userId) && card.getUserId().equals(userId);
-            Boolean sameUserEmail = Objects.nonNull(email) && card.getUserEmail().equalsIgnoreCase(email);
-            Boolean sameInstitution = card.getInstitutionId().equals(institutionId);
-            return (sameUserId || sameUserEmail) && sameInstitution;
-        }).findFirst();
-
-        if (foundCard.isPresent()) {
-            throw new ConsentConflictException();
-        }
-    }
-
-    //Helper method to process user data on create LC payload
-    //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
-    private LibraryCard processUserOnNewLC(LibraryCard card) {
-        if (Objects.isNull(card.getUserId())) {
-            if (Objects.isNull(card.getUserEmail())) {
-                throw new BadRequestException();
-            } else {
-                //If a user is found, update the card to have the correct userId associated
-                User user = userDAO.findUserByEmail(card.getUserEmail());
-                if (!Objects.isNull(user)) {
-                    Integer userId = user.getUserId();
-                    card.setUserId(userId);
-                }
-            }
-        } else {
-            //check if userId exists
-            User user = userDAO.findUserById(card.getUserId());
-            if (Objects.isNull(user)) {
-                throw new NotFoundException();
-            }
-            if (Objects.nonNull(user.getEmail()) && !(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
-                //throw error here, user is trying to associate incorrect userId with email
-                throw new ConsentConflictException();
-            }
-            card.setUserName(user.getDisplayName());
-        }
-        return card;
-    }
-
-    private Boolean checkIsAdmin(User user) {
-        return user.getRoles()
-                .stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
-    }
+  private Boolean checkIsAdmin(User user) {
+    return user.getRoles()
+        .stream()
+        .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
+  }
 }

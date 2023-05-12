@@ -16,39 +16,39 @@ import org.junit.jupiter.api.Test;
 
 public class ConsentAuditDAOTest extends DAOTestHelper {
 
-    @Test
-    public void testInsertWorkspaceAudit() {
-        ConsentAudit audit = createConsentAudit();
+  @Test
+  public void testInsertWorkspaceAudit() {
+    ConsentAudit audit = createConsentAudit();
 
-        consentAuditDAO.insertWorkspaceAudit(audit);
+    consentAuditDAO.insertWorkspaceAudit(audit);
 
-        List<String> consentIds = consentAuditDAO.findAllObjectIds();
-        assertFalse(consentIds.isEmpty());
-        assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
-    }
+    List<String> consentIds = consentAuditDAO.findAllObjectIds();
+    assertFalse(consentIds.isEmpty());
+    assertEquals(audit.getModifiedObjectId(), consentIds.get(0));
+  }
 
-    @Test
-    public void testBatchInsertWorkspaceAudit() {
-        List<ConsentAudit> audits =
-                List.of(createConsentAudit(), createConsentAudit(), createConsentAudit());
-        List<String> auditObjectIds =
-                audits.stream().map(ConsentAudit::getModifiedObjectId).collect(Collectors.toList());
+  @Test
+  public void testBatchInsertWorkspaceAudit() {
+    List<ConsentAudit> audits =
+        List.of(createConsentAudit(), createConsentAudit(), createConsentAudit());
+    List<String> auditObjectIds =
+        audits.stream().map(ConsentAudit::getModifiedObjectId).collect(Collectors.toList());
 
-        consentAuditDAO.batchInsertWorkspaceAudit(audits);
+    consentAuditDAO.batchInsertWorkspaceAudit(audits);
 
-        List<String> consentIds = consentAuditDAO.findAllObjectIds();
-        assertFalse(consentIds.isEmpty());
-        auditObjectIds.forEach(id -> assertTrue(consentIds.contains(id)));
-    }
+    List<String> consentIds = consentAuditDAO.findAllObjectIds();
+    assertFalse(consentIds.isEmpty());
+    auditObjectIds.forEach(id -> assertTrue(consentIds.contains(id)));
+  }
 
-    private ConsentAudit createConsentAudit() {
-        User user = createUser();
-        Consent consent = createConsent();
-        return new ConsentAudit(
-                consent.getConsentId(),
-                AuditTable.CONSENT.getValue(),
-                AuditActions.CREATE.getValue(),
-                user.getUserId(),
-                new Date());
-    }
+  private ConsentAudit createConsentAudit() {
+    User user = createUser();
+    Consent consent = createConsent();
+    return new ConsentAudit(
+        consent.getConsentId(),
+        AuditTable.CONSENT.getValue(),
+        AuditActions.CREATE.getValue(),
+        user.getUserId(),
+        new Date());
+  }
 }

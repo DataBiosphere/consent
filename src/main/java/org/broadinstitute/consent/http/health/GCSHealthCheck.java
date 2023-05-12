@@ -6,24 +6,25 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 
 public class GCSHealthCheck extends HealthCheck {
 
-    private final GCSService store;
+  private final GCSService store;
 
-    public GCSHealthCheck(GCSService store) {
-        this.store = store;
+  public GCSHealthCheck(GCSService store) {
+    this.store = store;
+  }
+
+  @Override
+  protected Result check() {
+
+    Bucket bucket;
+
+    try {
+      bucket = store.getRootBucketWithMetadata();
+    } catch (Exception e) {
+      return Result.unhealthy("GCS bucket unreachable or does not exist: " + e.getMessage());
     }
 
-    @Override
-    protected Result check() {
-
-        Bucket bucket;
-
-        try {
-            bucket = store.getRootBucketWithMetadata();
-        } catch (Exception e) {
-            return Result.unhealthy("GCS bucket unreachable or does not exist: " + e.getMessage());
-        }
-
-        return (bucket != null) ? Result.healthy() : Result.unhealthy("GCS bucket unreachable or does not exist.");
-    }
+    return (bucket != null) ? Result.healthy()
+        : Result.unhealthy("GCS bucket unreachable or does not exist.");
+  }
 
 }

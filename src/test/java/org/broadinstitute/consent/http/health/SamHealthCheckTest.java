@@ -19,80 +19,80 @@ import org.mockito.Mock;
 
 public class SamHealthCheckTest {
 
-    @Mock
-    private HttpClientUtil clientUtil;
+  @Mock
+  private HttpClientUtil clientUtil;
 
-    @Mock
-    private SimpleResponse response;
+  @Mock
+  private SimpleResponse response;
 
-    @Mock
-    private ServicesConfiguration servicesConfiguration;
+  @Mock
+  private ServicesConfiguration servicesConfiguration;
 
-    private SamHealthCheck healthCheck;
+  private SamHealthCheck healthCheck;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    private void initHealthCheck(boolean configOk) {
-        String okResponse = """
-                {
-                  "ok": true,
-                  "systems": {
-                    "GooglePubSub": {"ok": true},
-                    "Database": {"ok": true},
-                    "GoogleGroups": {"ok": true},
-                    "GoogleIam": {"ok": true},
-                    "OpenDJ": {"ok": true}
-                  }
-                }
-                """;
-        try {
-            when(response.entity())
-                    .thenReturn(okResponse);
-            when(clientUtil.getCachedResponse(any())).thenReturn(response);
-            if (configOk) {
-                when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
-            }
-            healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
-        } catch (Exception e) {
-            fail(e.getMessage());
+  private void initHealthCheck(boolean configOk) {
+    String okResponse = """
+        {
+          "ok": true,
+          "systems": {
+            "GooglePubSub": {"ok": true},
+            "Database": {"ok": true},
+            "GoogleGroups": {"ok": true},
+            "GoogleIam": {"ok": true},
+            "OpenDJ": {"ok": true}
+          }
         }
+        """;
+    try {
+      when(response.entity())
+          .thenReturn(okResponse);
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      if (configOk) {
+        when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      }
+      healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    @Test
-    public void testCheckSuccess() throws Exception {
-        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-        initHealthCheck(true);
+  @Test
+  public void testCheckSuccess() throws Exception {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    initHealthCheck(true);
 
-        HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertTrue(result.isHealthy());
+  }
 
-    @Test
-    public void testCheckFailure() throws Exception {
-        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-        initHealthCheck(true);
+  @Test
+  public void testCheckFailure() throws Exception {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    initHealthCheck(true);
 
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 
-    @Test
-    public void testCheckException() throws Exception {
-        initHealthCheck(true);
+  @Test
+  public void testCheckException() throws Exception {
+    initHealthCheck(true);
 
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 
-    @Test
-    public void testConfigException() throws Exception {
-        doThrow(new RuntimeException()).when(servicesConfiguration).getSamUrl();
-        initHealthCheck(false);
+  @Test
+  public void testConfigException() throws Exception {
+    doThrow(new RuntimeException()).when(servicesConfiguration).getSamUrl();
+    initHealthCheck(false);
 
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 }

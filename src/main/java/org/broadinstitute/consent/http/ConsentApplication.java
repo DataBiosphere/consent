@@ -113,176 +113,200 @@ import org.slf4j.LoggerFactory;
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
+  private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
-    public static final String GCS_CHECK = "google-cloud-storage";
-    public static final String ES_CHECK = "elastic-search";
-    public static final String ONTOLOGY_CHECK = "ontology";
-    public static final String SAM_CHECK = "sam";
-    public static final String SG_CHECK = "sendgrid";
+  public static final String GCS_CHECK = "google-cloud-storage";
+  public static final String ES_CHECK = "elastic-search";
+  public static final String ONTOLOGY_CHECK = "ontology";
+  public static final String SAM_CHECK = "sam";
+  public static final String SG_CHECK = "sendgrid";
 
-    public static void main(String[] args) throws Exception {
-        LOGGER.info("Starting Consent Application");
-        try {
-            String dsn = System.getProperties().getProperty("sentry.dsn");
-            if (StringUtils.isNotBlank(dsn)) {
-                Sentry.init(config -> {
-                    config.setDsn(dsn);
-                    config.setDiagnosticLevel(SentryLevel.ERROR);
-                    config.setServerName("Consent");
-                    config.addContextTag("Consent");
-                    config.addInAppInclude("org.broadinstitute");
-                });
-                Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
-            } else {
-                LOGGER.error("Unable to bootstrap sentry logging.");
-            }
-        } catch (Exception e) {
-            LOGGER.error("Exception loading sentry properties: " + e.getMessage());
-        }
-        new ConsentApplication().run(args);
-        LOGGER.info("Consent Application Started");
+  public static void main(String[] args) throws Exception {
+    LOGGER.info("Starting Consent Application");
+    try {
+      String dsn = System.getProperties().getProperty("sentry.dsn");
+      if (StringUtils.isNotBlank(dsn)) {
+        Sentry.init(config -> {
+          config.setDsn(dsn);
+          config.setDiagnosticLevel(SentryLevel.ERROR);
+          config.setServerName("Consent");
+          config.addContextTag("Consent");
+          config.addInAppInclude("org.broadinstitute");
+        });
+        Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+      } else {
+        LOGGER.error("Unable to bootstrap sentry logging.");
+      }
+    } catch (Exception e) {
+      LOGGER.error("Exception loading sentry properties: " + e.getMessage());
+    }
+    new ConsentApplication().run(args);
+    LOGGER.info("Consent Application Started");
+  }
+
+  @Override
+  public void run(ConsentConfiguration config, Environment env) {
+
+    try {
+      initializeLiquibase(config);
+    } catch (LiquibaseException | SQLException e) {
+      LOGGER.error("Exception initializing liquibase: " + e);
     }
 
-    @Override
-    public void run(ConsentConfiguration config, Environment env) {
+    // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
+    final Injector injector = Guice.createInjector(new ConsentModule(config, env));
 
-        try {
-            initializeLiquibase(config);
-        } catch (LiquibaseException | SQLException e) {
-            LOGGER.error("Exception initializing liquibase: " + e);
-        }
+    // Clients
+    final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
 
-        // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
-        final Injector injector = Guice.createInjector(new ConsentModule(config, env));
+    // Services
+    final ConsentService consentService = injector.getProvider(ConsentService.class).get();
+    final DarCollectionService darCollectionService = injector.getProvider(
+        DarCollectionService.class).get();
+    final DacService dacService = injector.getProvider(DacService.class).get();
+    final DataAccessRequestService dataAccessRequestService = injector.getProvider(
+        DataAccessRequestService.class).get();
+    final DatasetAssociationService datasetAssociationService = injector.getProvider(
+        DatasetAssociationService.class).get();
+    final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
+    final ElectionService electionService = injector.getProvider(ElectionService.class).get();
+    final EmailService emailService = injector.getProvider(EmailService.class).get();
+    final GCSService gcsService = injector.getProvider(GCSService.class).get();
+    final InstitutionService institutionService = injector.getProvider(InstitutionService.class)
+        .get();
+    final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
+    final UserService userService = injector.getProvider(UserService.class).get();
+    final VoteService voteService = injector.getProvider(VoteService.class).get();
+    final AuditService auditService = injector.getProvider(AuditService.class).get();
+    final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
+    final MatchService matchService = injector.getProvider(MatchService.class).get();
+    final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
+    final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
+        .get();
+    final SamService samService = injector.getProvider(SamService.class).get();
+    final SupportRequestService supportRequestService = injector.getProvider(
+        SupportRequestService.class).get();
+    final TDRService tdrService = injector.getProvider(TDRService.class).get();
+    final AcknowledgementService acknowledgementService = injector.getProvider(
+        AcknowledgementService.class).get();
+    final DatasetRegistrationService datasetRegistrationService = injector.getProvider(
+        DatasetRegistrationService.class).get();
 
-        // Clients
-        final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
+    System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    configureCors(env);
 
-        // Services
-        final ConsentService consentService = injector.getProvider(ConsentService.class).get();
-        final DarCollectionService darCollectionService = injector.getProvider(DarCollectionService.class).get();
-        final DacService dacService = injector.getProvider(DacService.class).get();
-        final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
-        final DatasetAssociationService datasetAssociationService = injector.getProvider(DatasetAssociationService.class).get();
-        final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
-        final ElectionService electionService = injector.getProvider(ElectionService.class).get();
-        final EmailService emailService = injector.getProvider(EmailService.class).get();
-        final GCSService gcsService = injector.getProvider(GCSService.class).get();
-        final InstitutionService institutionService = injector.getProvider(InstitutionService.class).get();
-        final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
-        final UserService userService = injector.getProvider(UserService.class).get();
-        final VoteService voteService = injector.getProvider(VoteService.class).get();
-        final AuditService auditService = injector.getProvider(AuditService.class).get();
-        final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
-        final MatchService matchService = injector.getProvider(MatchService.class).get();
-        final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
-        final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class).get();
-        final SamService samService = injector.getProvider(SamService.class).get();
-        final SupportRequestService supportRequestService = injector.getProvider(SupportRequestService.class).get();
-        final TDRService tdrService = injector.getProvider(TDRService.class).get();
-        final AcknowledgementService acknowledgementService = injector.getProvider(AcknowledgementService.class).get();
-        final DatasetRegistrationService datasetRegistrationService = injector.getProvider(DatasetRegistrationService.class).get();
+    env.jersey().register(JerseyGsonProvider.class);
 
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-        configureCors(env);
+    // Health Checks
+    env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
+    env.healthChecks()
+        .register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
+    env.healthChecks().register(ONTOLOGY_CHECK,
+        new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
+    env.healthChecks()
+        .register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
+    env.healthChecks()
+        .register(SG_CHECK, new SendGridHealthCheck(clientUtil, config.getMailConfiguration()));
 
-        env.jersey().register(JerseyGsonProvider.class);
+    final NihService nihService = injector.getProvider(NihService.class).get();
+    // Custom Error handling. Expand to include other codes when necessary
+    final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+    errorHandler.addErrorPage(404, "/error/404");
+    env.getApplicationContext().setErrorHandler(errorHandler);
+    env.jersey().register(ResponseServerFilter.class);
+    env.jersey().register(ErrorResource.class);
 
-        // Health Checks
-        env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
-        env.healthChecks().register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-        env.healthChecks().register(ONTOLOGY_CHECK, new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
-        env.healthChecks().register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
-        env.healthChecks().register(SG_CHECK, new SendGridHealthCheck(clientUtil, config.getMailConfiguration()));
+    // Register standard application resources.
+    env.jersey().register(
+        new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
+            userService, matchService));
+    env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
+        datasetRegistrationService));
+    env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
+    env.jersey()
+        .register(new ConsentResource(auditService, userService, consentService, matchService));
+    env.jersey().register(new ConsentCasesResource(summaryService));
+    env.jersey().register(new DacResource(dacService, userService, datasetService));
+    env.jersey().register(new DACUserResource(userService));
+    env.jersey().register(
+        new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
+    env.jersey().register(new DataRequestCasesResource(summaryService));
+    env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
+    env.jersey().register(new ElectionResource(voteService, electionService));
+    env.jersey().register(new EmailNotifierResource(emailService));
+    env.jersey().register(new InstitutionResource(userService, institutionService));
+    env.jersey().register(new LibraryCardResource(userService, libraryCardService));
+    env.jersey().register(new MatchResource(matchService));
+    env.jersey().register(new MetricsResource(metricsService));
+    env.jersey().register(new NihAccountResource(nihService, userService));
+    env.jersey().register(new SamResource(samService, userService));
+    env.jersey().register(new SchemaResource());
+    env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
+    env.jersey().register(new StatusResource(env.healthChecks()));
+    env.jersey().register(
+        new UserResource(samService, userService, datasetService, supportRequestService,
+            acknowledgementService));
+    env.jersey().register(new TosResource(samService));
+    env.jersey().register(injector.getInstance(VersionResource.class));
+    env.jersey().register(new VoteResource(userService, voteService, electionService));
+    env.jersey().register(new LivenessResource());
+    env.jersey().register(
+        new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
+    env.jersey().register(new MailResource(emailService));
 
-        final NihService nihService = injector.getProvider(NihService.class).get();
-        // Custom Error handling. Expand to include other codes when necessary
-        final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
-        errorHandler.addErrorPage(404, "/error/404");
-        env.getApplicationContext().setErrorHandler(errorHandler);
-        env.jersey().register(ResponseServerFilter.class);
-        env.jersey().register(ErrorResource.class);
+    // Authentication filters
+    final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
+    AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<AuthUser>()
+        .setAuthenticator(new DefaultAuthenticator())
+        .setRealm(" ")
+        .buildAuthFilter();
+    List<AuthFilter> filters = List.of(
+        defaultAuthFilter,
+        new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
+    env.jersey().register(RolesAllowedDynamicFeature.class);
+    env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
+  }
 
-        // Register standard application resources.
-        env.jersey().register(new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService, userService, matchService));
-        env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService, datasetRegistrationService));
-        env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-        env.jersey().register(new ConsentResource(auditService, userService, consentService, matchService));
-        env.jersey().register(new ConsentCasesResource(summaryService));
-        env.jersey().register(new DacResource(dacService, userService, datasetService));
-        env.jersey().register(new DACUserResource(userService));
-        env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
-        env.jersey().register(new DataRequestCasesResource(summaryService));
-        env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
-        env.jersey().register(new ElectionResource(voteService, electionService));
-        env.jersey().register(new EmailNotifierResource(emailService));
-        env.jersey().register(new InstitutionResource(userService, institutionService));
-        env.jersey().register(new LibraryCardResource(userService, libraryCardService));
-        env.jersey().register(new MatchResource(matchService));
-        env.jersey().register(new MetricsResource(metricsService));
-        env.jersey().register(new NihAccountResource(nihService, userService));
-        env.jersey().register(new SamResource(samService, userService));
-        env.jersey().register(new SchemaResource());
-        env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-        env.jersey().register(new StatusResource(env.healthChecks()));
-        env.jersey().register(new UserResource(samService, userService, datasetService, supportRequestService, acknowledgementService));
-        env.jersey().register(new TosResource(samService));
-        env.jersey().register(injector.getInstance(VersionResource.class));
-        env.jersey().register(new VoteResource(userService, voteService, electionService));
-        env.jersey().register(new LivenessResource());
-        env.jersey().register(new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
-        env.jersey().register(new MailResource(emailService));
+  @Override
+  public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
+    bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
+    bootstrap.addBundle(new MultiPartBundle());
+    bootstrap.addBundle(new JdbiExceptionsBundle());
+  }
 
-        // Authentication filters
-        final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
-        AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<AuthUser>()
-                .setAuthenticator(new DefaultAuthenticator())
-                .setRealm(" ")
-                .buildAuthFilter();
-        List<AuthFilter> filters = List.of(
-                defaultAuthFilter,
-                new OAuthCustomAuthFilter(authenticator, userRoleDAO));
-        env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
-        env.jersey().register(RolesAllowedDynamicFeature.class);
-        env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
+  private void configureCors(Environment environment) {
+    Dynamic filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+    filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+    filter.setInitParameter("allowedOrigins", "*");
+    filter.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD,PATCH");
+    filter.setInitParameter("allowedHeaders",
+        "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires,X-App-ID");
+    filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
+    filter.setInitParameter("allowCredentials", "true");
+  }
+
+  private void initializeLiquibase(ConsentConfiguration config)
+      throws LiquibaseException, SQLException {
+    Connection connection = DriverManager.getConnection(
+        config.getDataSourceFactory().getUrl(),
+        config.getDataSourceFactory().getUser(),
+        config.getDataSourceFactory().getPassword()
+    );
+    Database database = DatabaseFactory.getInstance()
+        .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+    Liquibase liquibase = new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(),
+        database);
+    liquibase.update(new Contexts(), new LabelExpression());
+  }
+
+  private String liquibaseFile() {
+    String changeLogFile = System.getenv("CONSENT_CHANGELOG_FILE");
+    if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
+      changeLogFile = "changelog-master.xml";
     }
-
-    @Override
-    public void initialize(Bootstrap<ConsentConfiguration> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
-        bootstrap.addBundle(new MultiPartBundle());
-        bootstrap.addBundle(new JdbiExceptionsBundle());
-    }
-
-    private void configureCors(Environment environment) {
-        Dynamic filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-        filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        filter.setInitParameter("allowedOrigins", "*");
-        filter.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD,PATCH");
-        filter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires,X-App-ID");
-        filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
-        filter.setInitParameter("allowCredentials", "true");
-    }
-
-    private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException, SQLException {
-        Connection connection = DriverManager.getConnection(
-                config.getDataSourceFactory().getUrl(),
-                config.getDataSourceFactory().getUser(),
-                config.getDataSourceFactory().getPassword()
-        );
-        Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-        Liquibase liquibase = new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
-        liquibase.update(new Contexts(), new LabelExpression());
-    }
-
-    private String liquibaseFile() {
-        String changeLogFile = System.getenv("CONSENT_CHANGELOG_FILE");
-        if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
-            changeLogFile = "changelog-master.xml";
-        }
-        LOGGER.info("Initializing db with: " + changeLogFile);
-        return changeLogFile;
-    }
+    LOGGER.info("Initializing db with: " + changeLogFile);
+    return changeLogFile;
+  }
 
 }

@@ -20,55 +20,55 @@ import org.mockito.Mockito;
 
 public class OAuthCustomAuthFilterTest {
 
-    @Mock
-    ContainerRequestContext requestContext;
-    @Mock
-    MultivaluedMap<String, String> headers;
-    @Mock
-    UriInfo uriInfo;
-    @Mock
-    OAuthAuthenticator authenticator;
-    @Mock
-    UserRoleDAO userRoleDAO;
+  @Mock
+  ContainerRequestContext requestContext;
+  @Mock
+  MultivaluedMap<String, String> headers;
+  @Mock
+  UriInfo uriInfo;
+  @Mock
+  OAuthAuthenticator authenticator;
+  @Mock
+  UserRoleDAO userRoleDAO;
 
-    Optional principal;
+  Optional principal;
 
-    AuthFilter filter;
+  AuthFilter filter;
 
-    AuthUser user;
+  AuthUser user;
 
-    GenericUser genericUser;
+  GenericUser genericUser;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-        when(requestContext.getHeaders()).thenReturn(headers);
-        when(requestContext.getUriInfo()).thenReturn(uriInfo);
-        when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
-        when(authenticator.authenticate(notNull())).thenReturn(principal);
-        filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
-        genericUser = new GenericUser();
-        genericUser.setName("Test User");
-        genericUser.setEmail("test@gmail.com");
-        user = new AuthUser(genericUser);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+    when(requestContext.getHeaders()).thenReturn(headers);
+    when(requestContext.getUriInfo()).thenReturn(uriInfo);
+    when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
+    when(authenticator.authenticate(notNull())).thenReturn(principal);
+    filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    genericUser = new GenericUser();
+    genericUser.setName("Test User");
+    genericUser.setEmail("test@gmail.com");
+    user = new AuthUser(genericUser);
+  }
 
-    @Test
-    public void testFilterSuccessful() throws Exception {
-        principal = Optional.of(user);
-        when(uriInfo.getPath()).thenReturn("api/something");
-        when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-        filter.filter(requestContext);
-    }
+  @Test
+  public void testFilterSuccessful() throws Exception {
+    principal = Optional.of(user);
+    when(uriInfo.getPath()).thenReturn("api/something");
+    when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
+    filter.filter(requestContext);
+  }
 
 
-    @Test
-    public void testFilterExceptionBadCredentials() {
-        principal = Optional.empty();
-        when(uriInfo.getPath()).thenReturn("api/something");
-        when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-        assertThrows(WebApplicationException.class, () -> {
-            filter.filter(requestContext);
-        });
-    }
+  @Test
+  public void testFilterExceptionBadCredentials() {
+    principal = Optional.empty();
+    when(uriInfo.getPath()).thenReturn("api/something");
+    when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
+    assertThrows(WebApplicationException.class, () -> {
+      filter.filter(requestContext);
+    });
+  }
 }

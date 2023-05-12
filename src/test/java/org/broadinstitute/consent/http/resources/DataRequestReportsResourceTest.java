@@ -11,40 +11,41 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class DataRequestReportsResourceTest {
-    @Mock
-    private DataAccessRequestService darService;
 
-    private DataRequestReportsResource resource;
+  @Mock
+  private DataAccessRequestService darService;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-        resource = new DataRequestReportsResource(darService);
-    }
+  private DataRequestReportsResource resource;
 
-    @Test
-    public void testDownloadApprovedDARsSuccess() throws Exception {
-        Response response = resource.downloadApprovedDARs();
-        assertEquals(200, response.getStatus());
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+    resource = new DataRequestReportsResource(darService);
+  }
 
-    @Test
-    public void testDownloadApprovedDARsError() throws Exception {
-        doThrow(new RuntimeException()).when(darService).createApprovedDARDocument();
-        Response response = resource.downloadApprovedDARs();
-        assertEquals(500, response.getStatus());
-    }
+  @Test
+  public void testDownloadApprovedDARsSuccess() throws Exception {
+    Response response = resource.downloadApprovedDARs();
+    assertEquals(200, response.getStatus());
+  }
 
-    @Test
-    public void testDownloadReviewedDARsSuccess() throws Exception {
-        Response response = resource.downloadReviewedDARs();
-        assertEquals(200, response.getStatus());
-    }
+  @Test
+  public void testDownloadApprovedDARsError() throws Exception {
+    doThrow(new RuntimeException()).when(darService).createApprovedDARDocument();
+    Response response = resource.downloadApprovedDARs();
+    assertEquals(500, response.getStatus());
+  }
 
-    @Test
-    public void testDownloadReviewedDARsError() throws Exception {
-        doThrow(new RuntimeException()).when(darService).createReviewedDARDocument();
-        Response response = resource.downloadReviewedDARs();
-        assertEquals(500, response.getStatus());
-    }
+  @Test
+  public void testDownloadReviewedDARsSuccess() throws Exception {
+    Response response = resource.downloadReviewedDARs();
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testDownloadReviewedDARsError() throws Exception {
+    doThrow(new RuntimeException()).when(darService).createReviewedDARDocument();
+    Response response = resource.downloadReviewedDARs();
+    assertEquals(500, response.getStatus());
+  }
 }

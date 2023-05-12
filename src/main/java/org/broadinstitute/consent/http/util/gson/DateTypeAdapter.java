@@ -7,25 +7,25 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-
 import java.lang.reflect.Type;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 
 public class DateTypeAdapter
-        implements JsonSerializer<Date>, JsonDeserializer<Date> {
-    @Override
-    public JsonElement serialize(Date src, Type srcType, JsonSerializationContext context) {
-        return new JsonPrimitive(src.getTime());
-    }
+    implements JsonSerializer<Date>, JsonDeserializer<Date> {
 
-    @Override
-    public Date deserialize(JsonElement json, Type type, JsonDeserializationContext context)
-            throws JsonParseException {
-        try {
-            return new Date(json.getAsLong());
-        } catch (DateTimeParseException e) {
-            throw new JsonParseException(e.getMessage());
-        }
+  @Override
+  public JsonElement serialize(Date src, Type srcType, JsonSerializationContext context) {
+    return new JsonPrimitive(src.getTime());
+  }
+
+  @Override
+  public Date deserialize(JsonElement json, Type type, JsonDeserializationContext context)
+      throws JsonParseException {
+    try {
+      return new Date(json.getAsLong());
+    } catch (DateTimeParseException e) {
+      throw new JsonParseException(e.getMessage());
     }
+  }
 }
