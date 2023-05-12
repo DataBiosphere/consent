@@ -4,6 +4,21 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
 import freemarker.template.TemplateException;
+import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.io.Writer;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.mail.MessagingException;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -24,22 +39,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-
-import javax.annotation.Nullable;
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.io.Writer;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EmailService {
 

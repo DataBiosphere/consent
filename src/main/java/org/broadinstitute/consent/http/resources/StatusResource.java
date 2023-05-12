@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import org.broadinstitute.consent.http.ConsentApplication;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import org.broadinstitute.consent.http.ConsentApplication;
 
 @Path("status")
 public class StatusResource extends Resource {

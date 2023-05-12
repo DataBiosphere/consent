@@ -7,9 +7,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.Collections;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.junit.jupiter.api.BeforeEach;

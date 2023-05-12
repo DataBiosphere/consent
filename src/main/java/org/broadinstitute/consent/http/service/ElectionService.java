@@ -2,6 +2,19 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
+import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.mail.MessagingException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -19,20 +32,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.mail.MessagingException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ElectionService {
 

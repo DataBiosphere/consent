@@ -11,15 +11,14 @@ import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import jakarta.ws.rs.BadRequestException;
+import java.nio.charset.Charset;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.BadRequestException;
-import java.nio.charset.Charset;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 public class JsonSchemaUtil {
 

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -23,6 +22,9 @@ import org.junit.jupiter.api.Test;
 public class ConsentAssociationTest {
     private static final ObjectMapper MAPPER = Jackson.newObjectMapper();
 
+    private static final String CONSENT_ASSOCIATION = """
+        {"associationType":"sample","elements":["SM-5678","SM-1234"]}""";
+
     private static ConsentAssociation buildConsentAssociation(String atype, String... elements) {
         final ArrayList<String> elem_list = new ArrayList<>();
         Collections.addAll(elem_list, elements);
@@ -32,15 +34,14 @@ public class ConsentAssociationTest {
     @Test
     public void serializesToJSON() throws Exception {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        assertEquals(MAPPER.writeValueAsString(consent_association),
-            fixture("fixtures/consentassociation.json"));
+        assertEquals(MAPPER.writeValueAsString(consent_association), CONSENT_ASSOCIATION);
     }
 
     @Test
     public void deserializesFromJSON() throws JsonProcessingException {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
         assertEquals(
-            MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class),
+            MAPPER.readValue(CONSENT_ASSOCIATION, ConsentAssociation.class),
             consent_association);
     }
 

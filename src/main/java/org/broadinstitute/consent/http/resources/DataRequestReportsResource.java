@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import javax.annotation.security.PermitAll;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 
 @Path("api/dataRequest")
 public class DataRequestReportsResource extends Resource {

@@ -2,19 +2,18 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Objects;
-import java.util.Optional;
 
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {

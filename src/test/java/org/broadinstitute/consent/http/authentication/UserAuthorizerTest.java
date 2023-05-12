@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import jakarta.ws.rs.container.ContainerRequestContext;
 import java.util.Collections;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -23,6 +24,8 @@ public class UserAuthorizerTest {
     AuthUser authorizedUser;
     @Mock
     AuthUser unauthorizedUser;
+    @Mock
+    ContainerRequestContext context;
 
     @BeforeEach
     public void setUp() {
@@ -36,12 +39,12 @@ public class UserAuthorizerTest {
 
     @Test
     public void testAuthorizeNotAuthorized() {
-        assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER));
+        assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER, context));
     }
 
     @Test
     public void testAuthorizeAuthorized() {
-        assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON));
+        assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
     }
 
     /* Helper Methods */
