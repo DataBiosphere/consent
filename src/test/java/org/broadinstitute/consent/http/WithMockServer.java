@@ -1,12 +1,7 @@
 package org.broadinstitute.consent.http;
 
-import org.apache.commons.lang3.StringUtils;
-import org.mockserver.configuration.ConfigurationProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
-import org.testcontainers.containers.MockServerContainer;
-import org.testcontainers.utility.DockerImageName;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockserver.configuration.ConfigurationProperties.javaLoggerLogLevel;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -14,9 +9,13 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.LogManager;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.mockserver.configuration.ConfigurationProperties.javaLoggerLogLevel;
+import org.apache.commons.lang3.StringUtils;
+import org.mockserver.configuration.ConfigurationProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+import org.testcontainers.containers.MockServerContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public interface WithMockServer {
 

@@ -1,5 +1,23 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -20,27 +38,9 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class MetricsServiceTest {
 
@@ -64,7 +64,7 @@ public class MetricsServiceTest {
 
     private MetricsService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }
@@ -111,19 +111,21 @@ public class MetricsServiceTest {
         initService();
         DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-        assertEquals(metrics.getDars().get(0).projectTitle, dars.get(0).getData().getProjectTitle());
+        assertEquals(metrics.getDars().get(0).projectTitle,
+            dars.get(0).getData().getProjectTitle());
         assertEquals(metrics.getDars().get(0).darCode, collection.getDarCode());
         assertEquals(metrics.getElections(), election);
         assertEquals(metrics.getDataset(), dataset.iterator().next());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testGenerateDatasetMetricsNotFound() {
         when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
 
         initService();
-        service.generateDatasetMetrics(1);
-
+        assertThrows(NotFoundException.class, () -> {
+            service.generateDatasetMetrics(1);
+        });
     }
 
     private void initializeMetricsDAOCalls(int darCount, int datasetCount) {

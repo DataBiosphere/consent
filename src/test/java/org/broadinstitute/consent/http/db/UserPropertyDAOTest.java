@@ -1,14 +1,15 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
-
-import java.util.List;
 
 public class UserPropertyDAOTest extends DAOTestHelper {
 
@@ -37,7 +38,7 @@ public class UserPropertyDAOTest extends DAOTestHelper {
                         UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
                         UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-        Assert.assertEquals(0, props.size());
+        assertEquals(0, props.size());
 
         userPropertyDAO.insertAll(List.of(
                 suggestedInstitution,
@@ -51,13 +52,13 @@ public class UserPropertyDAOTest extends DAOTestHelper {
                         UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
                         UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-        Assert.assertEquals(2, props.size());
+        assertEquals(2, props.size());
 
-        Assert.assertTrue(props.stream().anyMatch((p) ->
+        assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
                         && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
 
-        Assert.assertTrue(props.stream().anyMatch((p) ->
+        assertTrue(props.stream().anyMatch((p) ->
                 (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
                         && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
     }

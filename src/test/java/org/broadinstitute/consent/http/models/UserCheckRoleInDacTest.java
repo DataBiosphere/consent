@@ -1,15 +1,15 @@
 package org.broadinstitute.consent.http.models;
 
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.junit.jupiter.api.Test;
 
 public class UserCheckRoleInDacTest {
 
+    @Test
     public void testCheckIfUserHasRole_RoleNotFound() {
         User user = new User();
         UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());

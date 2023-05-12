@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 
@@ -20,7 +21,6 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
 
         reduceStudy(study, rowView);
     }
-
 
     public void reduceStudy(Study study, RowView rowView) {
 
@@ -43,9 +43,8 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
                     StudyProperty prop = new StudyProperty();
                     prop.setStudyPropertyId(studyPropertyId);
                     prop.setStudyId(studyId);
-                    prop.setStudyId(study.getStudyId());
                     prop.setValue(propType.coerce(propVal));
-                    prop.setName(keyName);
+                    prop.setKey(keyName);
                     prop.setType(propType);
 
                     study.addProperty(prop);
@@ -53,6 +52,8 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
                     // do nothing.
                 }
             }
+        } else if (Objects.isNull(study.getProperties())) {
+            study.setProperties(new HashSet<>());
         }
 
         if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class)

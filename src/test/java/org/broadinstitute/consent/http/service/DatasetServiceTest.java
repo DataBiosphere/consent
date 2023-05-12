@@ -1,5 +1,39 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -20,44 +54,10 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class DatasetServiceTest {
 
@@ -84,7 +84,7 @@ public class DatasetServiceTest {
     @Mock
     private EmailService emailService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
@@ -130,7 +130,8 @@ public class DatasetServiceTest {
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
         assertNotNull(dictionaries);
-        assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(), getDictionaries().stream().findFirst().orElseThrow().getDisplayOrder());
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(),
+            getDictionaries().stream().findFirst().orElseThrow().getDisplayOrder());
     }
 
     @Test
@@ -141,7 +142,8 @@ public class DatasetServiceTest {
 
         Collection<Dictionary> dictionaries = datasetService.describeDictionaryByReceiveOrder();
         assertNotNull(dictionaries);
-        assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(), getDictionaries().stream().findFirst().orElseThrow().getReceiveOrder());
+        assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(),
+            getDictionaries().stream().findFirst().orElseThrow().getReceiveOrder());
     }
 
     @Test
@@ -164,16 +166,20 @@ public class DatasetServiceTest {
         datasetService.findDatasetsByDacIds(List.of(1, 2, 3));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testFindDatasetsByDacIdsEmptyList() {
         initService();
-        datasetService.findDatasetsByDacIds(Collections.emptyList());
+        assertThrows(BadRequestException.class, () -> {
+            datasetService.findDatasetsByDacIds(Collections.emptyList());
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testFindDatasetsByDacIdsNullList() {
         initService();
-        datasetService.findDatasetsByDacIds(null);
+        assertThrows(BadRequestException.class, () -> {
+            datasetService.findDatasetsByDacIds(null);
+        });
     }
 
     @Test
@@ -184,16 +190,20 @@ public class DatasetServiceTest {
         datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testFindDatasetListByDacIdsEmptyList() {
         initService();
-        datasetService.findDatasetListByDacIds(Collections.emptyList());
+        assertThrows(BadRequestException.class, () -> {
+            datasetService.findDatasetListByDacIds(Collections.emptyList());
+        });
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testFindDatasetListByDacIdsNullList() {
         initService();
-        datasetService.findDatasetListByDacIds(null);
+        assertThrows(BadRequestException.class, () -> {
+            datasetService.findDatasetListByDacIds(null);
+        });
     }
 
     @Test
@@ -311,11 +321,13 @@ public class DatasetServiceTest {
         assertFalse(datasetDTO.getProperties().isEmpty());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testGetDatasetDTONotFound() {
         when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(Collections.emptySet());
         initService();
-        datasetService.getDatasetDTO(1);
+        assertThrows(NotFoundException.class, () -> {
+            datasetService.getDatasetDTO(1);
+        });
     }
 
     @Test
@@ -406,7 +418,8 @@ public class DatasetServiceTest {
         DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
         try {
             datasetService.updateDatasetDataUse(u, 1, dataUse);
-            fail("Should have thrown an exception on datasetService.updateDatasetDataUse()");
+            fail(
+                "Should have thrown an exception on datasetService.updateDatasetDataUse()");
         } catch (IllegalArgumentException e) {
             assertTrue(true);
         }
@@ -529,7 +542,7 @@ public class DatasetServiceTest {
         assertNotNull(result);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateConsentForDatasetNullDataUse() {
         DatasetDTO dataSetDTO = getDatasetDTO();
         dataSetDTO.setDataUse(null);
@@ -537,7 +550,9 @@ public class DatasetServiceTest {
         when(consentDAO.findConsentById(anyString())).thenReturn(consent);
         initService();
 
-        datasetService.createConsentForDataset(dataSetDTO);
+        assertThrows(IllegalArgumentException.class, () -> {
+            datasetService.createConsentForDataset(dataSetDTO);
+        });
     }
 
     @Test
@@ -744,24 +759,28 @@ public class DatasetServiceTest {
         );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testApprovedDataset_AlreadyApproved_FalseSubmission() {
         Dataset dataset = new Dataset();
         User user = new User();
         dataset.setDacApproval(true);
         initService();
 
-        datasetService.approveDataset(dataset, user, false);
+        assertThrows(IllegalArgumentException.class, () -> {
+            datasetService.approveDataset(dataset, user, false);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testApprovedDataset_AlreadyApproved_NullSubmission() {
         Dataset dataset = new Dataset();
         User user = new User();
         dataset.setDacApproval(true);
         initService();
 
-        datasetService.approveDataset(dataset, user, null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            datasetService.approveDataset(dataset, user, null);
+        });
     }
 
     @Test

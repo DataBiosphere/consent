@@ -1,16 +1,11 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -20,13 +15,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class FreeMarkerTemplateHelperTest {
 
@@ -35,7 +34,7 @@ public class FreeMarkerTemplateHelperTest {
     @Mock
     private FreeMarkerConfiguration freeMarkerConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         openMocks(this);
         when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
@@ -49,8 +48,10 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User", sampleDatasets().stream().map(ds -> ds.getObjectId()).collect(Collectors.toList()), "entityId", "serverUrl");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Disabled Datasets Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello DatasetTemp User,"));
+        assertTrue(
+            parsedTemplate.title().equals("Broad Data Use Oversight System - Disabled Datasets Notification"));
+        assertTrue(
+            parsedTemplate.getElementById("userName").text().equals("Hello DatasetTemp User,"));
         assertTrue(templateString.contains("DS-101"));
         assertTrue(templateString.contains("DS-102"));
         assertTrue(templateString.contains("DS-103"));
@@ -61,8 +62,10 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getNewCaseTemplate("NewCase User", "DARELECTION-1", "DAR-1", "localhost:1234");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Case Notification"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello NewCase User,"));
+        assertTrue(
+            parsedTemplate.title().equals("Broad Data Use Oversight System - New Case Notification"));
+        assertTrue(
+            parsedTemplate.getElementById("userName").text().equals("Hello NewCase User,"));
     }
 
     @Test
@@ -70,8 +73,10 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getReminderTemplate("Reminder User", "DARELECTION-1", "DAR-1", "localhost:1234");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Vote Reminder"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Reminder User,"));
+        assertTrue(
+            parsedTemplate.title().equals("Broad Data Use Oversight System - Vote Reminder"));
+        assertTrue(
+            parsedTemplate.getElementById("userName").text().equals("Hello Reminder User,"));
     }
 
     @Test
@@ -79,7 +84,8 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertEquals("Broad Data Use Oversight System - New Data Access Request", parsedTemplate.title());
+        assertEquals("Broad Data Use Oversight System - New Data Access Request",
+            parsedTemplate.title());
         Element userNameElement = parsedTemplate.getElementById("userName");
         assertNotNull(userNameElement);
         assertNotNull(userNameElement.text());
@@ -91,8 +97,10 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "DarCode", "SomeType", "localhost:1234");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - Closed Dataset Elections"));
-        assertTrue(parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
+        assertTrue(
+            parsedTemplate.title().equals("Broad Data Use Oversight System - Closed Dataset Elections"));
+        assertTrue(
+            parsedTemplate.getElementById("userName").text().equals("Hello Admin,"));
     }
 
     @Test
@@ -101,19 +109,18 @@ public class FreeMarkerTemplateHelperTest {
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
 
-        assertTrue(parsedTemplate.title().equals("Broad Data Use Oversight System - New Researcher Library Request"));
-
         assertTrue(
-                parsedTemplate
-                        .getElementById("content")
-                        .text()
-                        .contains("A researcher from your institution, John Doe, has registered in DUOS"));
+            parsedTemplate.title().equals("Broad Data Use Oversight System - New Researcher Library Request"));
 
-        assertTrue(
-                parsedTemplate
-                        .getElementById("serverUrl")
-                        .attr("href")
-                        .equals("http://localhost:8000/#/"));
+        assertTrue(parsedTemplate
+                .getElementById("content")
+                .text()
+                .contains("A researcher from your institution, John Doe, has registered in DUOS"));
+
+        assertTrue(parsedTemplate
+                .getElementById("serverUrl")
+                .attr("href")
+                .equals("http://localhost:8000/#/"));
 
         // no unspecified values
         assertFalse(templateString.contains("${"));
@@ -125,12 +132,13 @@ public class FreeMarkerTemplateHelperTest {
         Writer template = helper.getDataCustodianApprovalTemplate(datasetMailDTOs, "Depositor", "Dar Code", "researcher@email.com");
         String templateString = template.toString();
         final Document parsedTemplate = getAsHtmlDoc(templateString);
-        assertEquals("Broad Data Use Oversight System - Researcher - DAR Approved Notification", parsedTemplate.title());
-        assertTrue(
-                parsedTemplate
-                        .getElementById("content")
-                        .text()
-                        .contains("researcher@email.com was approved by the DAC for the following datasets"));
+        assertEquals(
+            "Broad Data Use Oversight System - Researcher - DAR Approved Notification",
+            parsedTemplate.title());
+        assertTrue(parsedTemplate
+                .getElementById("content")
+                .text()
+                .contains("researcher@email.com was approved by the DAC for the following datasets"));
         // no unspecified values
         assertFalse(templateString.contains("${"));
     }

@@ -1,15 +1,14 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.networknt.schema.ValidationMessage;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.util.Set;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class JsonSchemaUtilTest {
 
@@ -43,7 +42,7 @@ public class JsonSchemaUtilTest {
             """;
 
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         schemaUtil = new JsonSchemaUtil();
     }
@@ -826,16 +825,18 @@ public class JsonSchemaUtilTest {
 
 
     private void assertNoErrors(Set<ValidationMessage> errors) {
-        assertTrue(String.format("Should be empty, instead was: %s", errors.stream().map(ValidationMessage::toString).toList()), errors.isEmpty());
+        assertTrue(errors.isEmpty(),
+            String.format("Should be empty, instead was: %s", errors.stream().map(
+                ValidationMessage::toString).toList()));
     }
 
     private void assertHasErrors(Set<ValidationMessage> errors) {
-        assertFalse("Should have errored, instead was empty.", errors.isEmpty());
+        assertFalse(errors.isEmpty(), "Should have errored, instead was empty.");
     }
 
     private void assertFieldHasError(Set<ValidationMessage> errors, String field) {
         assertTrue(
-                String.format("Field %s should have errored", field),
-                errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)));
+            errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)),
+            String.format("Field %s should have errored", field));
     }
 }

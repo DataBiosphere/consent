@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.jackson.Jackson;
-import org.broadinstitute.consent.http.models.ConsentAssociation;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static io.dropwizard.testing.FixtureHelpers.fixture;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.models.ConsentAssociation;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit Tests for ConsentAssociation object.
@@ -33,13 +32,16 @@ public class ConsentAssociationTest {
     @Test
     public void serializesToJSON() throws Exception {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        assertEquals(MAPPER.writeValueAsString(consent_association), fixture("fixtures/consentassociation.json"));
+        assertEquals(MAPPER.writeValueAsString(consent_association),
+            fixture("fixtures/consentassociation.json"));
     }
 
     @Test
     public void deserializesFromJSON() throws JsonProcessingException {
         final ConsentAssociation consent_association = buildConsentAssociation("sample", "SM-1234", "SM-5678");
-        assertEquals(MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class), consent_association);
+        assertEquals(
+            MAPPER.readValue(fixture("fixtures/consentassociation.json"), ConsentAssociation.class),
+            consent_association);
     }
 
     @Test

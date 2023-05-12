@@ -1,22 +1,21 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.util.Collections;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 public class MetricsResourceTest {
 
@@ -29,9 +28,9 @@ public class MetricsResourceTest {
 
     private MetricsResource resource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        openMocks(this);
     }
 
     private void initResource() {
@@ -46,7 +45,8 @@ public class MetricsResourceTest {
         Response response = resource.getDarMetricsData();
         assertEquals(200, response.getStatus());
         assertFalse(response.getEntity().toString().isEmpty());
-        assertTrue(response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
+        assertTrue(
+            response.getEntity().toString().contains(service.getHeaderRow(Type.DAR)));
     }
 
     @Test

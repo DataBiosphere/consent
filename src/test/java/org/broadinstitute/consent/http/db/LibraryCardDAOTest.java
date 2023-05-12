@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-
-import java.util.Date;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class LibraryCardDAOTest extends DAOTestHelper {
 
@@ -33,17 +32,20 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         try {
             libraryCardDAO.insertLibraryCard(0, institutionId, stringValue, stringValue, stringValue, userId, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
         try {
             libraryCardDAO.insertLibraryCard(userId, 0, stringValue, stringValue, stringValue, userId, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
         try {
             libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue, stringValue, 0, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -71,7 +73,8 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         try {
             libraryCardDAO.updateLibraryCardById(0, userId, institutionId, newValue, newValue, newValue, userId, new Date());
         } catch (Exception e) {
-            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -88,7 +91,8 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         try {
             libraryCardDAO.deleteLibraryCardById(RandomUtils.nextInt(1, 1000));
         } catch (Exception e) {
-            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+            assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+                ((PSQLException) e.getCause()).getSQLState());
         }
     }
 
@@ -163,7 +167,8 @@ public class LibraryCardDAOTest extends DAOTestHelper {
         LibraryCard card = createLibraryCard(user);
         assertEquals("value", card.getEraCommonsId());
         libraryCardDAO.updateEraCommonsForUser(user.getUserId(), "newEraCommonsId");
-        assertEquals("newEraCommonsId", libraryCardDAO.findLibraryCardById(card.getId()).getEraCommonsId());
+        assertEquals("newEraCommonsId",
+            libraryCardDAO.findLibraryCardById(card.getId()).getEraCommonsId());
     }
 
     @Test

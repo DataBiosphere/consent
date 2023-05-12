@@ -1,22 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.gson.Gson;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
@@ -24,6 +9,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.gson.Gson;
+import java.util.Optional;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.service.sam.SamService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class OAuthAuthenticatorTest {
 
@@ -44,7 +43,7 @@ public class OAuthAuthenticatorTest {
 
     private OAuthAuthenticator oAuthAuthenticator;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

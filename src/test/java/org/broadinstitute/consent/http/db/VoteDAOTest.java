@@ -1,5 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -12,21 +24,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class VoteDAOTest extends DAOTestHelper {
 
@@ -39,8 +37,8 @@ public class VoteDAOTest extends DAOTestHelper {
         Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
         List<Vote> votes = voteDAO.findVotesByReferenceId(election.getReferenceId());
-        Assert.assertFalse(votes.isEmpty());
-        Assert.assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+        assertFalse(votes.isEmpty());
+        assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
     }
 
     @Test
@@ -73,7 +71,8 @@ public class VoteDAOTest extends DAOTestHelper {
         List<Vote> foundVotes = voteDAO.findVotesByIds(voteIds);
         assertNotNull(foundVotes);
         assertFalse(foundVotes.isEmpty());
-        assertTrue(foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
+        assertTrue(
+            foundVotes.stream().map(Vote::getVoteId).toList().containsAll(voteIds));
     }
 
     @Test
@@ -247,7 +246,7 @@ public class VoteDAOTest extends DAOTestHelper {
 
         Vote vote = voteDAO.findVoteById(v.getVoteId());
         assertNotNull(vote);
-        Assert.assertNull(vote.getVote());
+        assertNull(vote.getVote());
     }
 
     @Test
@@ -265,13 +264,13 @@ public class VoteDAOTest extends DAOTestHelper {
         voteDAO.updateVote(true, rationale, now, v.getVoteId(), true,
                 election.getElectionId(), now, true);
         Vote vote = voteDAO.findVoteById(v.getVoteId());
-        Assert.assertTrue(vote.getVote());
-        Assert.assertTrue(vote.getHasConcerns());
-        Assert.assertTrue(vote.getIsReminderSent());
-        Assert.assertEquals(vote.getRationale(), rationale);
+        assertTrue(vote.getVote());
+        assertTrue(vote.getHasConcerns());
+        assertTrue(vote.getIsReminderSent());
+        assertEquals(vote.getRationale(), rationale);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Assert.assertEquals(sdf.format(vote.getCreateDate()), sdf.format(now));
-        Assert.assertEquals(sdf.format(vote.getUpdateDate()), sdf.format(now));
+        assertEquals(sdf.format(vote.getCreateDate()), sdf.format(now));
+        assertEquals(sdf.format(vote.getUpdateDate()), sdf.format(now));
     }
 
     @Test

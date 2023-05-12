@@ -1,26 +1,25 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
-import org.eclipse.jetty.server.Request;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.ws.rs.core.Response;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+
+import com.google.api.client.http.HttpStatusCodes;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import javax.ws.rs.core.Response;
+import org.eclipse.jetty.server.Request;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 public class ErrorResourceTest {
 
     @Mock
     private Request request;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
     }

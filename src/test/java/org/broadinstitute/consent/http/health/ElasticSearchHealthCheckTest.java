@@ -1,24 +1,23 @@
 package org.broadinstitute.consent.http.health;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.api.client.http.HttpStatusCodes;
-import org.broadinstitute.consent.http.WithMockServer;
-import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.testcontainers.containers.MockServerContainer;
-
-import java.util.Collections;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.google.api.client.http.HttpStatusCodes;
+import java.util.Collections;
+import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockserver.client.MockServerClient;
+import org.testcontainers.containers.MockServerContainer;
 
 public class ElasticSearchHealthCheckTest implements WithMockServer {
     private ElasticSearchHealthCheck healthCheck;
@@ -27,17 +26,17 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
 
     private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         container.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         container.stop();
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         openMocks(this);
 

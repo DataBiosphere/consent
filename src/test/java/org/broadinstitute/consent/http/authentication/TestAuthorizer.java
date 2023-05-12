@@ -1,9 +1,8 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.Authorizer;
-import org.broadinstitute.consent.http.models.AuthUser;
-
 import java.util.Map;
+import org.broadinstitute.consent.http.models.AuthUser;
 
 public class TestAuthorizer implements Authorizer<AuthUser> {
 

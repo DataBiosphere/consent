@@ -1,24 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_CSS;
 import static org.broadinstitute.consent.http.resources.SwaggerResource.MEDIA_TYPE_JS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SwaggerResourceTest {
 
     private SwaggerResource swaggerResource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         GoogleOAuth2Config config = new GoogleOAuth2Config();
         config.setClientId(RandomStringUtils.random(10, true, true));
@@ -54,17 +54,17 @@ public class SwaggerResourceTest {
     @Test
     public void testNotFound() {
         Response response = swaggerResource.content("foo/bar.txt");
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     @Test
     public void testImageNotFound() {
         Response response = swaggerResource.content("foo/bar.png");
-        assertEquals(response.getStatus(), Response.Status.NOT_FOUND.getStatusCode());
+        assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
     }
 
     private boolean checkStatusAndHeader(Response response, String header) {
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getStatus(), Status.OK.getStatusCode());
         String headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
         return headerObject.contains(header);
     }

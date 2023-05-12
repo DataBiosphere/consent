@@ -1,17 +1,16 @@
 package org.broadinstitute.consent.http.models;
 
 
-import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.junit.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class DatasetTests {
 

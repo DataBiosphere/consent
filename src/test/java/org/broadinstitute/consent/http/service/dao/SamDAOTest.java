@@ -1,7 +1,22 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.MockitoAnnotations.openMocks;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
@@ -14,30 +29,15 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.MediaType;
 import org.testcontainers.containers.MockServerContainer;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 public class SamDAOTest implements WithMockServer {
 
@@ -50,17 +50,17 @@ public class SamDAOTest implements WithMockServer {
 
     private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         container.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         container.stop();
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         openMocks(this);
         mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
@@ -107,50 +107,60 @@ public class SamDAOTest implements WithMockServer {
         assertEquals(userInfo.getUserSubjectId(), authUserUserInfo.getUserSubjectId());
     }
 
-    @Test(expected = BadRequestException.class)
-    public void testGetRegistrationInfoBadRequest() throws Exception {
+    @Test
+    public void testGetRegistrationInfoBadRequest() {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-        samDAO.getRegistrationInfo(authUser);
+        assertThrows(BadRequestException.class, () -> {
+            samDAO.getRegistrationInfo(authUser);
+        });
     }
 
-    @Test(expected = NotAuthorizedException.class)
-    public void testNotAuthorized() throws Exception {
+    @Test
+    public void testNotAuthorized() {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-        samDAO.getRegistrationInfo(authUser);
+        assertThrows(NotAuthorizedException.class, () -> {
+            samDAO.getRegistrationInfo(authUser);
+        });
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void testForbidden() throws Exception {
+    @Test
+    public void testForbidden() {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-        samDAO.getRegistrationInfo(authUser);
+        assertThrows(ForbiddenException.class, () -> {
+            samDAO.getRegistrationInfo(authUser);
+        });
     }
 
-    @Test(expected = NotFoundException.class)
-    public void testNotFound() throws Exception {
+    @Test
+    public void testNotFound() {
         setDebugLogging();
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-        samDAO.getRegistrationInfo(authUser);
+        assertThrows(NotFoundException.class, () -> {
+            samDAO.getRegistrationInfo(authUser);
+        });
     }
 
-    @Test(expected = ConsentConflictException.class)
-    public void testConflict() throws Exception {
+    @Test
+    public void testConflict() {
         mockServerClient.when(request())
                 .respond(response()
                         .withHeader(Header.header("Content-Type", "application/json"))
                         .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-        samDAO.getRegistrationInfo(authUser);
+        assertThrows(ConsentConflictException.class, () -> {
+            samDAO.getRegistrationInfo(authUser);
+        });
     }
 
     @Test
@@ -170,8 +180,10 @@ public class SamDAOTest implements WithMockServer {
         UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
         assertNotNull(userDiagnostics);
         assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
-        assertEquals(diagnostics.getInAllUsersGroup(), userDiagnostics.getInAllUsersGroup());
-        assertEquals(diagnostics.getInGoogleProxyGroup(), userDiagnostics.getInGoogleProxyGroup());
+        assertEquals(diagnostics.getInAllUsersGroup(),
+            userDiagnostics.getInAllUsersGroup());
+        assertEquals(diagnostics.getInGoogleProxyGroup(),
+            userDiagnostics.getInGoogleProxyGroup());
     }
 
     @Test

@@ -1,24 +1,22 @@
 package org.broadinstitute.consent.http.authentication;
 
-import io.dropwizard.auth.AuthFilter;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
+import io.dropwizard.auth.AuthFilter;
+import java.util.Optional;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import java.util.Optional;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
+import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 public class OAuthCustomAuthFilterTest {
 
@@ -41,7 +39,7 @@ public class OAuthCustomAuthFilterTest {
 
     GenericUser genericUser;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         when(requestContext.getHeaders()).thenReturn(headers);
@@ -69,11 +67,8 @@ public class OAuthCustomAuthFilterTest {
         principal = Optional.empty();
         when(uriInfo.getPath()).thenReturn("api/something");
         when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-        try {
+        assertThrows(WebApplicationException.class, () -> {
             filter.filter(requestContext);
-            fail("Filter should have failed");
-        } catch (Exception e) {
-            assertTrue(e instanceof WebApplicationException);
-        }
+        });
     }
 }

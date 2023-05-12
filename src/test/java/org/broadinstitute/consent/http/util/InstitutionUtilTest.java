@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.gson.Gson;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InstitutionUtilTest {
     private final List<UserRole> adminRoles = Collections.singletonList(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
@@ -35,7 +34,7 @@ public class InstitutionUtilTest {
         return mockInstitution;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         util = new InstitutionUtil();
     }
@@ -57,8 +56,10 @@ public class InstitutionUtilTest {
         assertEquals(mockInstitution.getName(), deserialized.getName());
         assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
         assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
-        assertEquals(mockInstitution.getCreateDate().toString(), deserialized.getCreateDate().toString());
-        assertEquals(mockInstitution.getUpdateDate().toString(), deserialized.getUpdateDate().toString());
+        assertEquals(mockInstitution.getCreateDate().toString(),
+            deserialized.getCreateDate().toString());
+        assertEquals(mockInstitution.getUpdateDate().toString(),
+            deserialized.getUpdateDate().toString());
         assertEquals(mockInstitution.getId(), deserialized.getId());
     }
 

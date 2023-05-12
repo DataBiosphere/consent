@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
-
-import java.util.Date;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class InstitutionDAOTest extends DAOTestHelper {
 
@@ -43,7 +42,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
                     userId,
                     institution.getCreateDate()
             );
-            Assert.fail("CREATE should fail due to UNIQUE constraint violation (name)");
+            fail("CREATE should fail due to UNIQUE constraint violation (name)");
             //JBDI wraps ALL SQL exceptions under the generic class UnableToExecuteStatementException
             //Test is specifically looking for UNIQUE constraint violations, so I need to catch and unwrap the error to confirm
         } catch (Exception e) {
@@ -66,7 +65,8 @@ public class InstitutionDAOTest extends DAOTestHelper {
         assertEquals(newValue, updated.getOrgChartUrl());
         assertEquals(newValue, updated.getVerificationUrl());
         assertEquals(newValue, updated.getVerificationFilename());
-        assertEquals(OrganizationType.FOR_PROFIT.getValue(), updated.getOrganizationType().getValue());
+        assertEquals(OrganizationType.FOR_PROFIT.getValue(),
+            updated.getOrganizationType().getValue());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
                     secondInstitution.getOrganizationType().getValue(),
                     secondInstitution.getUpdateUserId(),
                     secondInstitution.getUpdateDate());
-            Assert.fail("UPDATE should fail due to UNIQUE constraint violation (name)");
+            fail("UPDATE should fail due to UNIQUE constraint violation (name)");
         } catch (Exception e) {
             assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
         }
@@ -107,9 +107,12 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institutionFromDAO = institutionDAO.findInstitutionById(id);
         assertEquals(institutionFromDAO.getId(), institution.getId());
         assertEquals(institutionFromDAO.getName(), institution.getName());
-        assertEquals(institutionFromDAO.getItDirectorName(), institution.getItDirectorName());
-        assertEquals(institutionFromDAO.getItDirectorEmail(), institution.getItDirectorEmail());
-        assertEquals(institutionFromDAO.getCreateUserId(), institution.getCreateUserId());
+        assertEquals(institutionFromDAO.getItDirectorName(),
+            institution.getItDirectorName());
+        assertEquals(institutionFromDAO.getItDirectorEmail(),
+            institution.getItDirectorEmail());
+        assertEquals(institutionFromDAO.getCreateUserId(),
+            institution.getCreateUserId());
         assertEquals(institutionFromDAO.getCreateDate(), institution.getCreateDate());
     }
 
@@ -136,7 +139,8 @@ public class InstitutionDAOTest extends DAOTestHelper {
         Institution institution = instituteListUpdated.get(0);
         assertEquals(1, institution.getSigningOfficials().size());
         assertEquals(user.getInstitutionId(), institution.getId());
-        assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).displayName);
+        assertEquals(user.getDisplayName(),
+            institution.getSigningOfficials().get(0).displayName);
     }
 
     @Test

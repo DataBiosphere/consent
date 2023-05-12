@@ -1,20 +1,19 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.broadinstitute.consent.http.enumeration.FileCategory;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.time.Instant;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.Test;
 
 public class FileStorageObjectTest {
 
@@ -33,11 +32,13 @@ public class FileStorageObjectTest {
 
         assertEquals(3, fsoJsonObject.size());
         assertTrue(fsoJsonObject.has("createDate"));
-        assertEquals(fso.getCreateDate().toEpochMilli(), fsoJsonObject.get("createDate").getAsLong());
+        assertEquals(fso.getCreateDate().toEpochMilli(),
+            fsoJsonObject.get("createDate").getAsLong());
         assertTrue(fsoJsonObject.has("fileName"));
         assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
         assertTrue(fsoJsonObject.has("category"));
-        assertEquals(fso.getCategory().getValue(), fsoJsonObject.get("category").getAsString());
+        assertEquals(fso.getCategory().getValue(),
+            fsoJsonObject.get("category").getAsString());
 
         // should not have these fields ever
         assertFalse(fsoJsonObject.has("blobId"));

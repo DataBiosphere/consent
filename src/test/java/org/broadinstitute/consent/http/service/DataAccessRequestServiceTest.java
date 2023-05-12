@@ -1,5 +1,31 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotFoundException;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -24,39 +50,14 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 public class DataAccessRequestServiceTest {
 
@@ -89,7 +90,7 @@ public class DataAccessRequestServiceTest {
 
     private DataAccessRequestService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         doNothings();
@@ -119,6 +120,7 @@ public class DataAccessRequestServiceTest {
         DataAccessRequest dar = generateDataAccessRequest();
         dar.addDatasetIds(List.of(1, 2, 3));
         User user = new User(1, "email@test.org", "Display Name", new Date());
+        user.setLibraryCards(List.of(new LibraryCard()));
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
         doNothing().when(dataAccessRequestDAO).updateDraftByReferenceId(any(), any());
@@ -136,7 +138,8 @@ public class DataAccessRequestServiceTest {
         dar.setCreateDate(new Timestamp(1000));
         dar.setSortDate(new Timestamp(1000));
         dar.setReferenceId("id");
-        User user = new User(1, "email@test.org", "Display Name", new Date());
+        User user = new User(1, "email@test.org", "Display Name", new Date());        user.setLibraryCards(List.of(new LibraryCard()));
+        user.setLibraryCards(List.of(new LibraryCard()));
         when(counterService.getNextDarSequence()).thenReturn(1);
         when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
         when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
@@ -145,6 +148,26 @@ public class DataAccessRequestServiceTest {
         initService();
         DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
         assertNotNull(newDar);
+    }
+
+    @Test
+    public void testCreateDataAccessRequest_FailsIfNoLibraryCard() {
+        DataAccessRequest dar = generateDataAccessRequest();
+        dar.addDatasetIds(List.of(1, 2, 3));
+        dar.setCreateDate(new Timestamp(1000));
+        dar.setSortDate(new Timestamp(1000));
+        dar.setReferenceId("id");
+        User user = new User(1, "email@test.org", "Display Name", new Date());        user.setLibraryCards(List.of(new LibraryCard()));
+        user.setLibraryCards(List.of());
+        when(counterService.getNextDarSequence()).thenReturn(1);
+        when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+        when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+        when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class))).thenReturn(RandomUtils.nextInt(1,100));
+        doNothing().when(dataAccessRequestDAO).insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class), any(Date.class), any(Date.class), any(DataAccessRequestData.class));
+        initService();
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDataAccessRequest(user, dar);
+        });
     }
 
     @Test
@@ -195,8 +218,7 @@ public class DataAccessRequestServiceTest {
 
         initService();
 
-        assertEquals(List.of(user1, user2),
-                service.getUsersApprovedForDataset(d));
+        assertEquals(List.of(user1, user2), service.getUsersApprovedForDataset(d));
     }
 
     @Test
@@ -216,11 +238,13 @@ public class DataAccessRequestServiceTest {
         assertNotNull(dar);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInsertDraftDataAccessRequestFailure() {
         initService();
-        DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
-        assertNotNull(dar);
+        assertThrows(IllegalArgumentException.class, () -> {
+            DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
+            assertNotNull(dar);
+        });
     }
 
     @Test
@@ -439,22 +463,26 @@ public class DataAccessRequestServiceTest {
         assertEquals(dar, foundDar);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testFindByReferenceId_NotFound() {
         initService();
         when(dataAccessRequestDAO.findByReferenceId(any())).thenThrow(new NotFoundException());
-        service.findByReferenceId("referenceId");
+        assertThrows(NotFoundException.class, () -> {
+            service.findByReferenceId("referenceId");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateDraftDarFromCanceledCollection_NoDars() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
         initService();
-        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateDraftDarFromCanceledCollection_NoDarData() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
@@ -462,10 +490,12 @@ public class DataAccessRequestServiceTest {
         newDar.setReferenceId(UUID.randomUUID().toString());
         sourceCollection.addDar(newDar);
         initService();
-        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
@@ -477,10 +507,12 @@ public class DataAccessRequestServiceTest {
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.addDar(dar);
         initService();
-        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateDraftDarFromCanceledCollection_NoDatasets() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
@@ -493,10 +525,12 @@ public class DataAccessRequestServiceTest {
         dar.setReferenceId(data.getReferenceId());
         sourceCollection.addDar(dar);
         initService();
-        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
         User user = new User();
         DarCollection sourceCollection = new DarCollection();
@@ -510,7 +544,9 @@ public class DataAccessRequestServiceTest {
         sourceCollection.addDar(dar);
         when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
         initService();
-        service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.createDraftDarFromCanceledCollection(user, sourceCollection);
+        });
     }
 
     @Test
@@ -580,7 +616,7 @@ public class DataAccessRequestServiceTest {
         service.deleteByReferenceId(user, referenceId);
     }
 
-    @Test(expected = NotAcceptableException.class)
+    @Test
     public void testDeleteByReferenceIdResearcherFailure() {
         String referenceId = UUID.randomUUID().toString();
         User user = new User();
@@ -597,10 +633,12 @@ public class DataAccessRequestServiceTest {
         doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
         initService();
 
-        service.deleteByReferenceId(user, referenceId);
+        assertThrows(NotAcceptableException.class, () -> {
+            service.deleteByReferenceId(user, referenceId);
+        });
     }
 
-    private class LongerThanTwo implements ArgumentMatcher<String> {
+    private static class LongerThanTwo implements ArgumentMatcher<String> {
 
         @Override
         public boolean matches(String argument) {

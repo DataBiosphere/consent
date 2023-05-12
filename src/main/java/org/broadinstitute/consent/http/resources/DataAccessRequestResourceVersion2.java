@@ -90,6 +90,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
             @Auth AuthUser authUser, @Context UriInfo info, String dar) {
         try {
             User user = findUserByEmail(authUser.getEmail());
+            if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+                throw new IllegalArgumentException("User must have a library card to create a DAR.");
+            }
+
             DataAccessRequest payload = populateDarFromJsonString(user, dar);
             DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
             Integer collectionId = newDar.getCollectionId();

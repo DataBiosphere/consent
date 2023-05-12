@@ -1,5 +1,17 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -10,20 +22,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class DacDAOTest extends DAOTestHelper {
 
@@ -49,7 +48,7 @@ public class DacDAOTest extends DAOTestHelper {
             consentDAO.insertConsentAssociation(c.getConsentId(), ASSOCIATION_TYPE_TEST, ds.getDataSetId());
         }
         List<Dac> dacList = dacDAO.findAll();
-        Assert.assertEquals(count, dacList.size());
+        assertEquals(count, dacList.size());
     }
 
     @Test
@@ -59,7 +58,7 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
 
         List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
-        Assert.assertEquals(1, dacs.size());
+        assertEquals(1, dacs.size());
     }
 
     @Test
@@ -76,7 +75,7 @@ public class DacDAOTest extends DAOTestHelper {
             dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member2.getUserId(), dac.getDacId());
         }
         List<User> allUsers = dacDAO.findAllDACUserMemberships();
-        Assert.assertEquals(6, allUsers.size());
+        assertEquals(6, allUsers.size());
     }
 
     @Test
@@ -87,7 +86,7 @@ public class DacDAOTest extends DAOTestHelper {
 
         Set<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
         assertFalse(users.isEmpty());
-        Assert.assertEquals(1, users.size());
+        assertEquals(1, users.size());
     }
 
     @Test
@@ -103,7 +102,7 @@ public class DacDAOTest extends DAOTestHelper {
                 "Test_" + RandomStringUtils.random(20, true, true),
                 new Date());
         Dac dac = dacDAO.findById(id);
-        Assert.assertEquals(id, dac.getDacId());
+        assertEquals(id, dac.getDacId());
     }
 
     @Test
@@ -113,7 +112,7 @@ public class DacDAOTest extends DAOTestHelper {
                 "Test_" + RandomStringUtils.random(20, true, true),
                 new Date());
         Dac dac = dacDAO.findById(id);
-        Assert.assertEquals(dac.getDacId(), id);
+        assertEquals(dac.getDacId(), id);
     }
 
     @Test
@@ -123,8 +122,8 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.updateDac(newValue, newValue, new Date(), dac.getDacId());
         Dac updatedDac = dacDAO.findById(dac.getDacId());
 
-        Assert.assertEquals(updatedDac.getName(), newValue);
-        Assert.assertEquals(updatedDac.getDescription(), newValue);
+        assertEquals(updatedDac.getName(), newValue);
+        assertEquals(updatedDac.getDescription(), newValue);
     }
 
     @Test
@@ -135,9 +134,9 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.updateDac(newValue, newValue, newEmail, new Date(), dac.getDacId());
         Dac updatedDac = dacDAO.findById(dac.getDacId());
 
-        Assert.assertEquals(updatedDac.getName(), newValue);
-        Assert.assertEquals(updatedDac.getDescription(), newValue);
-        Assert.assertEquals(updatedDac.getEmail(), newEmail);
+        assertEquals(updatedDac.getName(), newValue);
+        assertEquals(updatedDac.getDescription(), newValue);
+        assertEquals(updatedDac.getEmail(), newEmail);
     }
 
     @Test
@@ -157,11 +156,11 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testDeleteDac() {
         Dac dac = insertDacWithEmail();
-        Assert.assertNotNull(dac.getDacId());
+        assertNotNull(dac.getDacId());
 
         dacDAO.deleteDac(dac.getDacId());
         Dac deletedDac = dacDAO.findById(dac.getDacId());
-        Assert.assertNull(deletedDac);
+        assertNull(deletedDac);
     }
 
     @Test
@@ -179,9 +178,9 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
         List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-        Assert.assertNotNull(dacMembers);
+        assertNotNull(dacMembers);
         assertFalse(dacMembers.isEmpty());
-        Assert.assertEquals(dacMembers.size(), 4);
+        assertEquals(dacMembers.size(), 4);
     }
 
     @Test
@@ -199,14 +198,14 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
         List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
-        Assert.assertNotNull(chairs);
+        assertNotNull(chairs);
         assertFalse(chairs.isEmpty());
-        Assert.assertEquals(chairs.size(), 1);
+        assertEquals(chairs.size(), 1);
 
         List<User> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
-        Assert.assertNotNull(members);
+        assertNotNull(members);
         assertFalse(members.isEmpty());
-        Assert.assertEquals(members.size(), 3);
+        assertEquals(members.size(), 3);
     }
 
     @Test
@@ -218,8 +217,8 @@ public class DacDAOTest extends DAOTestHelper {
         List<UserRole> memberRoles = dacDAO.findUserRolesForUser(user.getUserId());
         assertFalse(memberRoles.isEmpty());
         UserRole userRole = memberRoles.get(0);
-        Assert.assertEquals(userRole.getDacId(), dac.getDacId());
-        Assert.assertEquals(userRole.getRoleId(), roleId);
+        assertEquals(userRole.getDacId(), dac.getDacId());
+        assertEquals(userRole.getRoleId(), roleId);
     }
 
     @Test
@@ -231,8 +230,8 @@ public class DacDAOTest extends DAOTestHelper {
         List<UserRole> chairRoles = dacDAO.findUserRolesForUser(user.getUserId());
         assertFalse(chairRoles.isEmpty());
         UserRole userRole = chairRoles.get(0);
-        Assert.assertEquals(userRole.getDacId(), dac.getDacId());
-        Assert.assertEquals(userRole.getRoleId(), roleId);
+        assertEquals(userRole.getDacId(), dac.getDacId());
+        assertEquals(userRole.getRoleId(), roleId);
     }
 
     @Test
@@ -253,13 +252,11 @@ public class DacDAOTest extends DAOTestHelper {
     @Test
     public void testGetRoleById() {
         Role chair = dacDAO.getRoleById(UserRoles.CHAIRPERSON.getRoleId());
-        Assert.assertEquals(
-                chair.getName().toLowerCase(),
-                UserRoles.CHAIRPERSON.getRoleName().toLowerCase());
+        assertEquals(chair.getName().toLowerCase(),
+            UserRoles.CHAIRPERSON.getRoleName().toLowerCase());
         Role member = dacDAO.getRoleById(UserRoles.MEMBER.getRoleId());
-        Assert.assertEquals(
-                member.getName().toLowerCase(),
-                UserRoles.MEMBER.getRoleName().toLowerCase());
+        assertEquals(member.getName().toLowerCase(),
+            UserRoles.MEMBER.getRoleName().toLowerCase());
     }
 
     @Test
@@ -268,7 +265,7 @@ public class DacDAOTest extends DAOTestHelper {
         User chair = createUser(); // Creates a user with researcher role; UserRole #1
         dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId()); // ; UserRole #2
         List<UserRole> userRoles = dacDAO.findUserRolesForUser(chair.getUserId()).stream().distinct().toList();
-        Assert.assertEquals(userRoles.size(), 2);
+        assertEquals(userRoles.size(), 2);
     }
 
     @Test
@@ -280,7 +277,7 @@ public class DacDAOTest extends DAOTestHelper {
         dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member.getUserId(), dac.getDacId()); // ; UserRole #4
         List<Integer> userIds = Arrays.asList(chair.getUserId(), member.getUserId());
         List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds).stream().distinct().toList();
-        Assert.assertEquals(userRoles.size(), 4);
+        assertEquals(userRoles.size(), 4);
     }
 
     @Test

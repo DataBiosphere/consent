@@ -1,5 +1,15 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -14,18 +24,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.Test;
-
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
@@ -736,7 +735,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
         summary.getElections().entrySet()
                 .forEach((e) -> assertEquals(electionId, e.getKey()));
-        summary.getVotes().forEach((v) -> assertTrue(targetVotes.contains(v.getVoteId())));
+        summary.getVotes().forEach((v) -> assertTrue(
+            targetVotes.contains(v.getVoteId())));
         assertEquals(1, summary.getDatasetCount());
     }
 
