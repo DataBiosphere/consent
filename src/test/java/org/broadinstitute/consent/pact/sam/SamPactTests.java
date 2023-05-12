@@ -104,10 +104,11 @@ public class SamPactTests {
     samDAO = new SamDAO(config);
   }
 
-  // Pacts
-  // RequestResponsePact methods define an expectation that Consent has of Sam. This expectation
-  // will be published to a Pact Broker so that if our expectation differs from what is published,
-  // we'll be notified via GitHub Action runs.
+  /* Pacts
+   * RequestResponsePact methods define an expectation that Consent has of Sam. This expectation
+   * will be published to a Pact Broker so that if our expectation differs from what is published,
+   * we'll be notified via GitHub Action runs.
+   */
 
   @Pact(consumer = CONSUMER_NAME)
   public RequestResponsePact getResourceTypes(PactDslWithProvider builder) {
