@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.bouncycastle.asn1.x500.style.RFC4519Style.name;
+
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -95,6 +97,51 @@ public class DatasetRegistrationService {
             studyInsert,
             datasetInserts);
     return datasetDAO.findDatasetsByIdList(createdDatasetIds);
+  }
+
+  /**
+   * This method
+   *
+   * @param dataset
+   * @param user      The User creating these datasets
+   * @param files     Map of files, where the key is the name of the field
+   * @return List of created Datasets from the provided registration schema
+   */
+  public Dataset updateDatasetRegistrationProperties(Dataset dataset,
+      DatasetRegistrationSchemaV1 registration,
+      User user,
+      Map<String, FormDataBodyPart> files) {
+
+    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
+
+    // get blob named nihInstitutionalCertification
+    FormDataBodyPart nihInstitutionalCertification = files.get(name);
+
+    // upload blob to GCS (see `uploadFile` function)
+    BlobId nihInstituionalCertificationId = null;
+    try {
+      nihInstituionalCertificationId = uploadFile(nihInstitutionalCertification);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    // update existing FSO object on the dataset OR create new one
+    FileStorageObject nihFSO = new FileStorageObject();
+    nihFSO.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    nihFSO.setFileName(nihInstitutionalCertification.getContentDisposition().getFileName());
+    nihFSO.setMediaType(nihInstitutionalCertification.getMediaType().toString());
+    nihFSO.setBlobId(nihInstituionalCertificationId);
+    nihFSO.setCreateUserId(user.getUserId());
+
+    // Update or create the above ^ objects in the database
+    Integer updatedDataset = null;
+    try {
+      updatedDataset = datasetServiceDAO.updateDataset(datasetUpdates);
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+    return datasetDAO.findDatasetById(updatedDataset);
+
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
