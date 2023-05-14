@@ -15,43 +15,43 @@ import org.mockito.Mock;
 
 public class GCSHealthCheckTest {
 
-    private GCSHealthCheck healthCheck;
+  private GCSHealthCheck healthCheck;
 
-    @Mock
-    private GCSService store;
+  @Mock
+  private GCSService store;
 
-    @Mock
-    private Bucket bucket;
+  @Mock
+  private Bucket bucket;
 
-    @BeforeEach
-    public void setUpClass() {
-        openMocks(this);
-        healthCheck = new GCSHealthCheck(store);
-    }
+  @BeforeEach
+  public void setUpClass() {
+    openMocks(this);
+    healthCheck = new GCSHealthCheck(store);
+  }
 
-    @Test
-    public void testBucketExists() {
-        when(store.getRootBucketWithMetadata()).thenReturn(bucket);
+  @Test
+  public void testBucketExists() {
+    when(store.getRootBucketWithMetadata()).thenReturn(bucket);
 
-        HealthCheck.Result result = healthCheck.execute();
-        assertTrue(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.execute();
+    assertTrue(result.isHealthy());
+  }
 
-    @Test
-    public void testBucketMissing() {
-        when(store.getRootBucketWithMetadata()).thenReturn(null);
+  @Test
+  public void testBucketMissing() {
+    when(store.getRootBucketWithMetadata()).thenReturn(null);
 
-        HealthCheck.Result result = healthCheck.execute();
-        assertFalse(result.isHealthy());
-        assertTrue(result.getMessage().contains("GCS bucket unreachable"));
-    }
+    HealthCheck.Result result = healthCheck.execute();
+    assertFalse(result.isHealthy());
+    assertTrue(result.getMessage().contains("GCS bucket unreachable"));
+  }
 
-    @Test
-    public void testException() {
-        doThrow(new RuntimeException()).when(store).getRootBucketWithMetadata();
+  @Test
+  public void testException() {
+    doThrow(new RuntimeException()).when(store).getRootBucketWithMetadata();
 
-        HealthCheck.Result result = healthCheck.execute();
-        assertFalse(result.isHealthy());
-        assertTrue(result.getMessage().contains("GCS bucket unreachable"));
-    }
+    HealthCheck.Result result = healthCheck.execute();
+    assertFalse(result.isHealthy());
+    assertTrue(result.getMessage().contains("GCS bucket unreachable"));
+  }
 }

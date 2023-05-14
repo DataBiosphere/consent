@@ -17,56 +17,56 @@ import org.junit.jupiter.api.Test;
 
 public class FileStorageObjectTest {
 
-    @Test
-    public void testFileStorageObjectGsonSerialization() {
-        FileStorageObject fso = new FileStorageObject();
+  @Test
+  public void testFileStorageObjectGsonSerialization() {
+    FileStorageObject fso = new FileStorageObject();
 
-        fso.setFileName("asdf");
-        fso.setBlobId(BlobId.of("sensitive", "information")); // should not be serialized
-        fso.setCreateDate(Instant.now());
-        fso.setCategory(FileCategory.IRB_COLLABORATION_LETTER);
-        fso.setUploadedFile(new ByteArrayInputStream(new byte[]{})); // should not be serialized
+    fso.setFileName("asdf");
+    fso.setBlobId(BlobId.of("sensitive", "information")); // should not be serialized
+    fso.setCreateDate(Instant.now());
+    fso.setCategory(FileCategory.IRB_COLLABORATION_LETTER);
+    fso.setUploadedFile(new ByteArrayInputStream(new byte[]{})); // should not be serialized
 
-        Gson gson = GsonUtil.buildGson();
-        JsonObject fsoJsonObject = gson.fromJson(gson.toJson(fso), JsonObject.class);
+    Gson gson = GsonUtil.buildGson();
+    JsonObject fsoJsonObject = gson.fromJson(gson.toJson(fso), JsonObject.class);
 
-        assertEquals(3, fsoJsonObject.size());
-        assertTrue(fsoJsonObject.has("createDate"));
-        assertEquals(fso.getCreateDate().toEpochMilli(),
-            fsoJsonObject.get("createDate").getAsLong());
-        assertTrue(fsoJsonObject.has("fileName"));
-        assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
-        assertTrue(fsoJsonObject.has("category"));
-        assertEquals(fso.getCategory().getValue(),
-            fsoJsonObject.get("category").getAsString());
+    assertEquals(3, fsoJsonObject.size());
+    assertTrue(fsoJsonObject.has("createDate"));
+    assertEquals(fso.getCreateDate().toEpochMilli(),
+        fsoJsonObject.get("createDate").getAsLong());
+    assertTrue(fsoJsonObject.has("fileName"));
+    assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
+    assertTrue(fsoJsonObject.has("category"));
+    assertEquals(fso.getCategory().getValue(),
+        fsoJsonObject.get("category").getAsString());
 
-        // should not have these fields ever
-        assertFalse(fsoJsonObject.has("blobId"));
-        assertFalse(fsoJsonObject.has("uploadedFile"));
+    // should not have these fields ever
+    assertFalse(fsoJsonObject.has("blobId"));
+    assertFalse(fsoJsonObject.has("uploadedFile"));
 
-    }
+  }
 
-    @Test
-    public void testFileStorageObjectGsonDeserialization_no_BlobId() {
+  @Test
+  public void testFileStorageObjectGsonDeserialization_no_BlobId() {
 
-        JsonObject jsonObject = new JsonObject();
+    JsonObject jsonObject = new JsonObject();
 
-        jsonObject.add("fileName", new JsonPrimitive("asdf"));
-        jsonObject.add("blobId", new JsonPrimitive(BlobId.of("abcd", "hjkl").toGsUtilUri()));
-        jsonObject.add("uploadedFile", new JsonPrimitive("content"));
+    jsonObject.add("fileName", new JsonPrimitive("asdf"));
+    jsonObject.add("blobId", new JsonPrimitive(BlobId.of("abcd", "hjkl").toGsUtilUri()));
+    jsonObject.add("uploadedFile", new JsonPrimitive("content"));
 
-        FileStorageObject fso = GsonUtil.buildGson().fromJson(jsonObject, FileStorageObject.class);
+    FileStorageObject fso = GsonUtil.buildGson().fromJson(jsonObject, FileStorageObject.class);
 
-        assertEquals("asdf", fso.getFileName());
-        assertNull(fso.getBlobId());
-        assertNull(fso.getUploadedFile());
-    }
+    assertEquals("asdf", fso.getFileName());
+    assertNull(fso.getBlobId());
+    assertNull(fso.getUploadedFile());
+  }
 
-    @Test
-    public void testFileStorageObjectDeserializationFromString_no_BlobId() {
-        String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
+  @Test
+  public void testFileStorageObjectDeserializationFromString_no_BlobId() {
+    String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
 
-        FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
-        assertNull(fso.getBlobId());
-    }
+    FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
+    assertNull(fso.getBlobId());
+  }
 }

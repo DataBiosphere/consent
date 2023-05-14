@@ -25,51 +25,52 @@ import org.mockito.Mock;
 
 public class ResearcherServiceTest {
 
-    @Mock
-    private UserPropertyDAO userPropertyDAO;
+  @Mock
+  private UserPropertyDAO userPropertyDAO;
 
-    @Mock
-    private UserDAO userDAO;
+  @Mock
+  private UserDAO userDAO;
 
-    private ResearcherService service;
+  private ResearcherService service;
 
-    private AuthUser authUser;
+  private AuthUser authUser;
 
-    private User user;
+  private User user;
 
-    @BeforeEach
-    public void setUp() {
-        GenericUser genericUser = new GenericUser();
-        genericUser.setName("Test User");
-        genericUser.setEmail("test@gmail.com");
-        authUser = new AuthUser(genericUser);
-        user = new User();
-        user.setEmail(authUser.getEmail());
-        user.setUserId(RandomUtils.nextInt(1, 10));
-        user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    GenericUser genericUser = new GenericUser();
+    genericUser.setName("Test User");
+    genericUser.setEmail("test@gmail.com");
+    authUser = new AuthUser(genericUser);
+    user = new User();
+    user.setEmail(authUser.getEmail());
+    user.setUserId(RandomUtils.nextInt(1, 10));
+    user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    openMocks(this);
+  }
 
-    private void initService() {
-        service = new ResearcherService(userPropertyDAO, userDAO);
-    }
+  private void initService() {
+    service = new ResearcherService(userPropertyDAO, userDAO);
+  }
 
-    @Test
-    public void testUpdateProperties() {
-        when(userDAO.findUserById(any())).thenReturn(user);
-        when(userDAO.findUserByEmail(any())).thenReturn(user);
-        when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(List.of());
-        doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
-        doNothing().when(userPropertyDAO).insertAll(any());
-        initService();
-        Map<String, String> props = new HashMap<>();
-        props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
-        props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
-        props.put(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue(), "suggestion");
-        props.put(UserFields.ERA_STATUS.getValue(), "suggestion");
-        props.put(UserFields.ERA_EXPIRATION_DATE.getValue(), "suggestion");
-        List<UserProperty> userProps = service.updateProperties(props, authUser, true);
-        assertTrue(userProps.isEmpty());
-    }
+  @Test
+  public void testUpdateProperties() {
+    when(userDAO.findUserById(any())).thenReturn(user);
+    when(userDAO.findUserByEmail(any())).thenReturn(user);
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+        List.of());
+    doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
+    doNothing().when(userPropertyDAO).insertAll(any());
+    initService();
+    Map<String, String> props = new HashMap<>();
+    props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
+    props.put(UserFields.SUGGESTED_INSTITUTION.getValue(), "suggestion");
+    props.put(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue(), "suggestion");
+    props.put(UserFields.ERA_STATUS.getValue(), "suggestion");
+    props.put(UserFields.ERA_EXPIRATION_DATE.getValue(), "suggestion");
+    List<UserProperty> userProps = service.updateProperties(props, authUser, true);
+    assertTrue(userProps.isEmpty());
+  }
 
 }

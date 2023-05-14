@@ -5,10 +5,13 @@
 
 ## Directory-based project format
 *.iml
-.idea/
+.idea/*
 /*.iml
 .vscode/
 .metals/
+
+## Do not ignore project based code styles
+!.idea/codeStyles
 
 ## File-based project format
 *.ipr

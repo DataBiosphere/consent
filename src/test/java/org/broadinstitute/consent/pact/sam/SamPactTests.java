@@ -16,11 +16,11 @@ import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.google.api.client.http.HttpStatusCodes;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -297,7 +297,9 @@ public class SamPactTests {
         assertNotNull(tosResponse);
       }
     } catch (Exception e) {
-      ClassicHttpResponse response = (ClassicHttpResponse) Request.delete(mockServer.getUrl() + "/" + ServicesConfiguration.REGISTER_TOS_PATH).execute().returnResponse();
+      ClassicHttpResponse response = (ClassicHttpResponse) Request.delete(
+              mockServer.getUrl() + "/" + ServicesConfiguration.REGISTER_TOS_PATH).execute()
+          .returnResponse();
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
     }
   }

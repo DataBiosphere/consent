@@ -34,126 +34,127 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 /**
- * This class can be used to functionally test email notifications as well as unit test.
- * To enable functional tests, configure MailService with correct values (i.e. is active, sendgrid key, etc.)
+ * This class can be used to functionally test email notifications as well as unit test. To enable
+ * functional tests, configure MailService with correct values (i.e. is active, sendgrid key, etc.)
  * Functional test emails will be directed to the private google group:
  * https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
 public class EmailServiceTest {
 
-    private EmailService service;
+  private EmailService service;
 
-    @Mock
-    private DarCollectionDAO collectionDAO;
+  @Mock
+  private DarCollectionDAO collectionDAO;
 
-    @Mock
-    private ConsentDAO consentDAO;
+  @Mock
+  private ConsentDAO consentDAO;
 
-    @Mock
-    private VoteDAO voteDAO;
+  @Mock
+  private VoteDAO voteDAO;
 
-    @Mock
-    private ElectionDAO electionDAO;
+  @Mock
+  private ElectionDAO electionDAO;
 
-    @Mock
-    private UserDAO userDAO;
+  @Mock
+  private UserDAO userDAO;
 
-    @Mock
-    private MailMessageDAO emailDAO;
-    private SendGridAPI sendGridAPI;
+  @Mock
+  private MailMessageDAO emailDAO;
+  private SendGridAPI sendGridAPI;
 
-    FreeMarkerTemplateHelper templateHelper;
+  FreeMarkerTemplateHelper templateHelper;
 
 
-    private final static String serverUrl = "http://localhost:8000/#/";
+  private final static String serverUrl = "http://localhost:8000/#/";
 
-    @BeforeEach
-    public void setUp() {
+  @BeforeEach
+  public void setUp() {
+  }
+
+  private void initService() {
+    boolean serviceActive = false;
+
+    openMocks(this);
+    MailConfiguration mConfig = new MailConfiguration();
+    mConfig.setActivateEmailNotifications(serviceActive);
+    mConfig.setGoogleAccount("");
+    mConfig.setSendGridApiKey("");
+    sendGridAPI = spy(new SendGridAPI(mConfig, userDAO));
+
+    FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
+    fmConfig.setDefaultEncoding("UTF-8");
+    fmConfig.setTemplateDirectory("/freemarker");
+    templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
+    service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
+        emailDAO, sendGridAPI, templateHelper, serverUrl);
+  }
+
+  @Test
+  public void testSendNewResearcherEmail() throws Exception {
+    initService();
+    User user = new User();
+    user.setUserId(1234);
+    user.setDisplayName("John Doe");
+
+    User so = new User();
+    user.setEmail("fake_email@asdf.com");
+    try {
+      service.sendNewResearcherMessage(user, so);
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
     }
 
-    private void initService() {
-        boolean serviceActive = false;
+    verify(sendGridAPI, times(1)).sendNewResearcherLibraryRequestMessage(any(), any());
+    verify(templateHelper, times(1)).getNewResearcherLibraryRequestTemplate("John Doe", serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("1234"),
+        eq(null),
+        eq(1234),
+        eq(EmailType.NEW_RESEARCHER.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
 
-        openMocks(this);
-        MailConfiguration mConfig = new MailConfiguration();
-        mConfig.setActivateEmailNotifications(serviceActive);
-        mConfig.setGoogleAccount("");
-        mConfig.setSendGridApiKey("");
-        sendGridAPI = spy(new SendGridAPI(mConfig, userDAO));
+  @Test
+  public void testFetchEmails() {
+    List<MailMessage> mailMessages = generateMailMessageList();
+    initService();
+    when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
+    assertEquals(2,
+        service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
+  }
 
-        FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
-        fmConfig.setDefaultEncoding("UTF-8");
-        fmConfig.setTemplateDirectory("/freemarker");
-        templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
-        service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
-                emailDAO, sendGridAPI, templateHelper, serverUrl);
-    }
+  @Test
+  public void testFetchEmailsByCreateDate() {
+    List<MailMessage> mailMessages = generateMailMessageList();
+    initService();
+    Date startDate = new Date();
+    Date endDate = new Date();
+    when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
+        mailMessages);
+    assertEquals(2,
+        service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
+  }
 
-    @Test
-    public void testSendNewResearcherEmail() throws Exception {
-        initService();
-        User user = new User();
-        user.setUserId(1234);
-        user.setDisplayName("John Doe");
+  private List<MailMessage> generateMailMessageList() {
+    return Collections.nCopies(2, generateMailMessage());
+  }
 
-        User so = new User();
-        user.setEmail("fake_email@asdf.com");
-        try {
-            service.sendNewResearcherMessage(user, so);
-        } catch (Exception e) {
-            fail("Should not fail sending message: " + e);
-        }
-
-        verify(sendGridAPI, times(1)).sendNewResearcherLibraryRequestMessage(any(), any());
-        verify(templateHelper, times(1)).getNewResearcherLibraryRequestTemplate("John Doe", serverUrl);
-        verify(emailDAO, times(1)).insert(
-                eq("1234"),
-                eq(null),
-                eq(1234),
-                eq(EmailType.NEW_RESEARCHER.getTypeInt()),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-        );
-    }
-
-    @Test
-    public void testFetchEmails() {
-        List<MailMessage> mailMessages = generateMailMessageList();
-        initService();
-        when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        assertEquals(2,
-            service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
-    }
-
-    @Test
-    public void testFetchEmailsByCreateDate() {
-        List<MailMessage> mailMessages = generateMailMessageList();
-        initService();
-        Date startDate = new Date();
-        Date endDate = new Date();
-        when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(mailMessages);
-        assertEquals(2,
-            service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
-    }
-
-    private List<MailMessage> generateMailMessageList() {
-        return Collections.nCopies(2, generateMailMessage());
-    }
-
-    private MailMessage generateMailMessage() {
-        return new MailMessage(
-                RandomUtils.nextInt(),
-                RandomUtils.nextInt(),
-                RandomUtils.nextInt(),
-                RandomStringUtils.randomAlphanumeric(10),
-                new Date(),
-                RandomStringUtils.randomAlphanumeric(10),
-                RandomStringUtils.randomAlphanumeric(10),
-                RandomUtils.nextInt(),
-                new Date()
-        );
-    }
+  private MailMessage generateMailMessage() {
+    return new MailMessage(
+        RandomUtils.nextInt(),
+        RandomUtils.nextInt(),
+        RandomUtils.nextInt(),
+        RandomStringUtils.randomAlphanumeric(10),
+        new Date(),
+        RandomStringUtils.randomAlphanumeric(10),
+        RandomStringUtils.randomAlphanumeric(10),
+        RandomUtils.nextInt(),
+        new Date()
+    );
+  }
 }

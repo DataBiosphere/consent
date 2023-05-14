@@ -1,32 +1,31 @@
 package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerConfiguration {
 
-    @NotNull
-    public String templateDirectory;
+  @NotNull
+  public String templateDirectory;
 
-    @NotNull
-    public String defaultEncoding;
+  @NotNull
+  public String defaultEncoding;
 
-    public String getTemplateDirectory() {
-        return templateDirectory;
-    }
+  public String getTemplateDirectory() {
+    return templateDirectory;
+  }
 
-    public void setTemplateDirectory(String templateDirectory) {
-        this.templateDirectory = templateDirectory;
-    }
+  public void setTemplateDirectory(String templateDirectory) {
+    this.templateDirectory = templateDirectory;
+  }
 
-    public String getDefaultEncoding() {
-        return defaultEncoding;
-    }
+  public String getDefaultEncoding() {
+    return defaultEncoding;
+  }
 
-    public void setDefaultEncoding(String defaultEncoding) {
-        this.defaultEncoding = defaultEncoding;
-    }
+  public void setDefaultEncoding(String defaultEncoding) {
+    this.defaultEncoding = defaultEncoding;
+  }
 
 }
