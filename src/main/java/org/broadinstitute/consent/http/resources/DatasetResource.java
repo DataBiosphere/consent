@@ -209,9 +209,14 @@ public class DatasetResource extends Resource {
                                 + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
             }
 
+            // get registration
             DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
-            User user = userService.findUserByEmail(authUser.getEmail());
 
+            // find user
+            User user = userService.findUserByEmail(authUser.getEmail());
+            Integer userId = user.getUserId();
+
+            // get dataset id and check that it exists
             Dataset dataset = datasetService.findDatasetById(datasetId);
             if (Objects.isNull(dataset)) {
                 throw new BadRequestException("Dataset is required");
@@ -221,7 +226,7 @@ public class DatasetResource extends Resource {
             Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
             try {
-                Dataset updatedDataset = datasetRegistrationService.updateDatasetRegistrationProperties(dataset, registration, user, files);
+                Dataset updatedDataset = DatasetService.updateDatasetRegistrationProperties(dataset, datasetId, userId, user, files);
                 return Response.ok().entity(updatedDataset).build();
             } catch (Exception e) {
                 return createExceptionResponse(e);

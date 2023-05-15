@@ -7,12 +7,15 @@ import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -30,6 +33,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.Alternativ
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -100,17 +104,13 @@ public class DatasetRegistrationService {
   }
 
   /**
-   * This method
+   * This method uploads files for dataset updates
    *
-   * @param dataset
    * @param user      The User creating these datasets
    * @param files     Map of files, where the key is the name of the field
-   * @return List of created Datasets from the provided registration schema
+   * @return          Updated dataset
    */
-  public Dataset updateDatasetRegistrationProperties(Dataset dataset,
-      DatasetRegistrationSchemaV1 registration,
-      User user,
-      Map<String, FormDataBodyPart> files) {
+  public Dataset fileUploadUpdateDataset(User user, Map<String, FormDataBodyPart> files) {
 
     List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
 
@@ -134,14 +134,13 @@ public class DatasetRegistrationService {
     nihFSO.setCreateUserId(user.getUserId());
 
     // Update or create the above ^ objects in the database
-    Integer updatedDataset = null;
+    List<Integer> updatedDataset = null;
     try {
       updatedDataset = datasetServiceDAO.updateDataset(datasetUpdates);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
-    return datasetDAO.findDatasetById(updatedDataset);
-
+    return (Dataset) datasetDAO.findDatasetsByIdList(updatedDataset);
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
@@ -168,6 +167,8 @@ public class DatasetRegistrationService {
         uploadFilesForStudy(files, uploadedFileCache, user)
     );
   }
+
+
 
   /*
   Upload all relevant files to GCS and create relevant

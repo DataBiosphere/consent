@@ -188,8 +188,8 @@ public class DatasetServiceDAO {
     }
   }
 
-  public Integer updateDataset(DatasetUpdate updates) throws SQLException {
-    final Integer updatedDataset = null;
+  public List<Integer> updateDataset(List<DatasetUpdate> updates) throws SQLException {
+    final List<Integer> updatedDataset = null;
 
     jdbi.useHandle(
         handle -> {
@@ -238,7 +238,7 @@ public class DatasetServiceDAO {
     executeSynchronizeDatasetProperties(handle, datasetUpdate, properties);
 
     // files
-    executeInsertFiles(handle, uploadedFiles, userId, datasetUpdate);
+    executeInsertFiles(handle, uploadedFiles, userId, datasetUpdate.toString());
 
     return datasetUpdate;
   }

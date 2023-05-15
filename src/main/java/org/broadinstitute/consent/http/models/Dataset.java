@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Dataset {
@@ -166,6 +167,10 @@ public class Dataset {
 
   public Set<DatasetProperty> getProperties() {
     return properties;
+  }
+
+  public List<DatasetProperty> getProps() {
+    return (List<DatasetProperty>) properties;
   }
 
   public void setProperties(Set<DatasetProperty> properties) {
