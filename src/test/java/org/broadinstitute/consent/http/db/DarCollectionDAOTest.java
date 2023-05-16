@@ -213,10 +213,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getUserId(), new Date(),
         new Date(), new Date(), dar.getData());
     Dac dac = createDac();
-    Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
 
     List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(
         List.of(dac.getDacId()));
@@ -680,7 +677,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     User user = createUser();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user,
+    DarCollection collection = createDarCollectionWithDatasets(user,
         Collections.singletonList(dataset));
     createDarCollection();
     String testTerm = generateTestTerm(collection.getDarCode());
@@ -699,9 +696,9 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
     Dataset secondDataset = createDatasetWithDac(dac.getDacId());
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user,
+    DarCollection collection = createDarCollectionWithDatasets(user,
         Collections.singletonList(dataset));
-    DarCollection negativeCollection = createDarCollectionWithDatasetsAndConsentAssociation(user,
+    DarCollection negativeCollection = createDarCollectionWithDatasets(user,
         Collections.singletonList(secondDataset));
     assertTrue(collection.getDars().values().stream().findAny().isPresent());
     DataAccessRequest targetDar = collection.getDars().values().stream().findAny().get();
@@ -723,7 +720,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     User user = createUser();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(user,
+    DarCollection collection = createDarCollectionWithDatasets(user,
         Collections.singletonList(dataset));
     createDarCollection();
     String testTerm = generateTestTerm(user.getDisplayName());
@@ -891,9 +888,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     Dac dac = createDAC();
     Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
-
     DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(
         collectionId);
 

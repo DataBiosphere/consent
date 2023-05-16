@@ -56,20 +56,21 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   String orderStatement = " ORDER BY <sortField> <sortOrder>";
 
   /**
-   * DAC -> Consent -> Consent Association -> Dataset -> DAR -> DAR Collection
+   * DAC -> Dataset -> DAR Collection
    *
    * @param dacIds List of DAC Ids to find DARCollections for.
    * @return All DARCollection Ids for which there is a dataset owned by any of the DACs
    */
-  @SqlQuery(" SELECT distinct c.collection_id "
-      + " FROM dar_collection c "
-      + "   INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id " +
-      "      AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) "
-      + "   INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-      + "   INNER JOIN consent_associations ca ON ca.dataset_id = dd.dataset_id "
-      + "   INNER JOIN consents consent ON consent.consent_id = ca.consent_id "
-      + "   INNER JOIN dataset ds ON ca.dataset_id = ds.dataset_id "
-      + "      AND ds.dac_id IN (<dacIds>) ")
+  @SqlQuery("""
+        SELECT distinct c.collection_id
+        FROM dar_collection c
+        INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id
+          AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived'
+          OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)
+        INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+        INNER JOIN dataset ds ON dd.dataset_id = ds.dataset_id
+        AND ds.dac_id IN (<dacIds>)
+      """)
   List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   @SqlQuery(
