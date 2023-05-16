@@ -1,21 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.bouncycastle.asn1.x500.style.RFC4519Style.name;
-
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -33,7 +28,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.Alternativ
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -90,9 +84,7 @@ public class DatasetRegistrationService {
       }
     } catch (IOException e) {
       // uploading files to GCS failed. rollback files...
-      uploadedFileCache.values().forEach((id) -> {
-        gcsService.deleteDocument(id.getName());
-      });
+      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
       throw e;
     }
 
@@ -101,46 +93,6 @@ public class DatasetRegistrationService {
             studyInsert,
             datasetInserts);
     return datasetDAO.findDatasetsByIdList(createdDatasetIds);
-  }
-
-  /**
-   * This method uploads files for dataset updates
-   *
-   * @param user      The User creating these datasets
-   * @param files     Map of files, where the key is the name of the field
-   * @return          Updated dataset
-   */
-  public Dataset fileUploadUpdateDataset(User user, Map<String, FormDataBodyPart> files) {
-
-    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
-
-    // get blob named nihInstitutionalCertification
-    FormDataBodyPart nihInstitutionalCertification = files.get(name);
-
-    // upload blob to GCS (see `uploadFile` function)
-    BlobId nihInstituionalCertificationId = null;
-    try {
-      nihInstituionalCertificationId = uploadFile(nihInstitutionalCertification);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    // update existing FSO object on the dataset OR create new one
-    FileStorageObject nihFSO = new FileStorageObject();
-    nihFSO.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
-    nihFSO.setFileName(nihInstitutionalCertification.getContentDisposition().getFileName());
-    nihFSO.setMediaType(nihInstitutionalCertification.getMediaType().toString());
-    nihFSO.setBlobId(nihInstituionalCertificationId);
-    nihFSO.setCreateUserId(user.getUserId());
-
-    // Update or create the above ^ objects in the database
-    List<Integer> updatedDataset = null;
-    try {
-      updatedDataset = datasetServiceDAO.updateDataset(datasetUpdates);
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
-    return (Dataset) datasetDAO.findDatasetsByIdList(updatedDataset);
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
@@ -168,7 +120,68 @@ public class DatasetRegistrationService {
     );
   }
 
+  /**
+   * This method
+   *
+   * @param user    The User creating these datasets
+   * @param files   Map of files, where the key is the name of the field
+   * @return List of created Datasets from the provided registration schema
+   */
+  public List<Dataset> updateDatasetRegistrationProperties(
+      DatasetRegistrationSchemaV1 registration,
+      Integer datasetId,
+      User user,
+      Map<String, FormDataBodyPart> files) throws IOException, SQLException {
 
+    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
+    Map<String, BlobId> uploadedFileCache = new HashMap<>();
+
+    try {
+      for (int consentGroupIdx = 0; consentGroupIdx < registration.getConsentGroups().size();
+          consentGroupIdx++) {
+        datasetUpdates.add(
+            createDatasetUpdate(registration, user, files, uploadedFileCache, consentGroupIdx));
+      }
+    } catch (IOException e) {
+      // uploading files to GCS failed. rollback files...
+      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
+      throw e;
+    }
+
+    // Update or create the objects in the database
+    List<Integer> updateDatasets =
+        datasetServiceDAO.updateDataset(datasetUpdates);
+    return datasetDAO.findDatasetsByIdList(updateDatasets);
+  }
+
+  /*
+  Upload all relevant files to GCS and create relevant
+   */
+  private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
+      DatasetRegistrationSchemaV1 registration,
+      User user,
+      Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache,
+      Integer consentGroupIdx) throws IOException {
+    ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
+
+    if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
+        && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
+      throw new NotFoundException("Could not find DAC");
+    }
+
+    List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
+    List<FileStorageObject> fileStorageObjects = uploadFilesForDataset(files, uploadedFileCache,
+        consentGroupIdx, user);
+
+    return new DatasetServiceDAO.DatasetUpdate(
+        consentGroup.getConsentGroupName(),
+        consentGroup.getDataAccessCommitteeId(),
+        user.getUserId(),
+        props,
+        fileStorageObjects
+    );
+  }
 
   /*
   Upload all relevant files to GCS and create relevant

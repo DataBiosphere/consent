@@ -259,64 +259,9 @@ public class DatasetService {
    *
    * @param dataset
    * @param datasetId
-   * @param user      The User creating these datasets
-   * @param files     Map of files, where the key is the name of the field
+   * @param userId
    * @return List of created Datasets from the provided registration schema
    */
-
-  public Optional<Dataset> updateDatasetRegistrationProperties(Dataset dataset,
-      Integer datasetId, User user, Integer userId, Map<String, FormDataBodyPart> files) {
-    Timestamp now = new Timestamp(new Date().getTime());
-
-    // Make sure dataset is valid to be updated
-    if (Objects.isNull(dataset.getDatasetName())) {
-      throw new IllegalArgumentException("Dataset 'Name' cannot be null");
-    }
-    if (Objects.isNull(dataset.getNeedsApproval())) {
-      throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-    }
-
-    // find dataset to be updated, set properties to old
-    Dataset old = findDatasetById(datasetId);
-    Set<DatasetProperty> oldProperties = old.getProperties();
-
-    // find future properties and process properties
-    List<DatasetProperty> updateDatasetProps = dataset.getProps();
-    List<DatasetProperty> updateDatasetProperties = processDatasetProps(datasetId,
-        updateDatasetProps);
-
-    // call func to upload files
-    Dataset updatedWIthFiles = DatasetRegistrationService.fileUploadUpdateDataset(user, files);
-
-    // add, update, and delete props
-    List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
-        .filter(p -> oldProperties.stream()
-            .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
-        .collect(Collectors.toList());
-
-    List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
-        .filter(p -> oldProperties.stream()
-            .noneMatch(p::equals))
-        .collect(Collectors.toList());
-
-    List<DatasetProperty> propertiesToDelete = oldProperties.stream()
-        .filter(op -> updateDatasetProperties.stream()
-            .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
-        ).collect(Collectors.toList());
-
-    // if no additions, updates, deletions -> return empty
-    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-        .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
-      return Optional.empty();
-    }
-
-    // update & return updated dataset
-    updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
-    datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
-        dataset.getNeedsApproval(), dataset.getDacId());
-    Dataset updatedDataset = findDatasetById(datasetId);
-    return Optional.of(updatedDataset);
-  }
 
   public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
     Timestamp now = new Timestamp(new Date().getTime());

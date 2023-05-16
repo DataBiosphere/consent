@@ -54,10 +54,8 @@ public class DatasetServiceDAO {
 
   }
 
-  public record DatasetUpdate(Integer datasetId,
-                              String name,
+  public record DatasetUpdate(String name,
                               Integer dacId,
-                              DataUse dataUse,
                               Integer userId,
                               List<DatasetProperty> props,
                               List<FileStorageObject> files) {
@@ -189,7 +187,7 @@ public class DatasetServiceDAO {
   }
 
   public List<Integer> updateDataset(List<DatasetUpdate> updates) throws SQLException {
-    final List<Integer> updatedDataset = null;
+    final List<Integer> updatedDataset = new ArrayList<>();
 
     jdbi.useHandle(
         handle -> {
@@ -201,7 +199,6 @@ public class DatasetServiceDAO {
           for (DatasetUpdate update : updates) {
             Integer datasetUpdatesNew = executeUpdateDatasetWithFiles(
                 handle,
-                update.datasetId(),
                 update.name(),
                 update.dacId(),
                 update.userId(),
@@ -218,7 +215,6 @@ public class DatasetServiceDAO {
   }
 
   public Integer executeUpdateDatasetWithFiles(Handle handle,
-      Integer datasetId,
       String name,
       Integer dacId,
       Integer userId,
@@ -226,7 +222,6 @@ public class DatasetServiceDAO {
       List<FileStorageObject> uploadedFiles) {
     // update dataset
     Integer datasetUpdate = datasetDAO.updateDatasetNew(
-        datasetId,
         name,
         new Timestamp(new Date().getTime()),
         userId,

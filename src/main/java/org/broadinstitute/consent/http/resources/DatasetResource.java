@@ -28,7 +28,6 @@ import org.json.JSONObject;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
@@ -214,7 +213,6 @@ public class DatasetResource extends Resource {
 
             // find user
             User user = userService.findUserByEmail(authUser.getEmail());
-            Integer userId = user.getUserId();
 
             // get dataset id and check that it exists
             Dataset dataset = datasetService.findDatasetById(datasetId);
@@ -226,7 +224,7 @@ public class DatasetResource extends Resource {
             Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
             try {
-                Dataset updatedDataset = DatasetService.updateDatasetRegistrationProperties(dataset, datasetId, userId, user, files);
+                List<Dataset> updatedDataset = DatasetRegistrationService.updateDatasetRegistrationProperties(registration, datasetId, user, files);
                 return Response.ok().entity(updatedDataset).build();
             } catch (Exception e) {
                 return createExceptionResponse(e);
