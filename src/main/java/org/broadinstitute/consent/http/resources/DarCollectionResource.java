@@ -33,14 +33,14 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
 
-    private final DarCollectionService darCollectionService;
-    private final UserService userService;
+  private final DarCollectionService darCollectionService;
+  private final UserService userService;
 
-    @Inject
-    public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
-        this.darCollectionService = darCollectionService;
-        this.userService = userService;
-    }
+  @Inject
+  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
+    this.darCollectionService = darCollectionService;
+    this.userService = userService;
+  }
 
   @Deprecated
   @GET
@@ -293,15 +293,15 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-    private void validateCollectionIsCanceled(DarCollection collection) {
-        boolean isCanceled =
-                collection.getDars().values().stream()
-                        .anyMatch(
-                                d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
-        if (!isCanceled) {
-            throw new BadRequestException();
-        }
+  private void validateCollectionIsCanceled(DarCollection collection) {
+    boolean isCanceled =
+        collection.getDars().values().stream()
+            .anyMatch(
+                d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
+    if (!isCanceled) {
+      throw new BadRequestException();
     }
+  }
 
   private void isCollectionPresent(DarCollection collection) {
     if (Objects.isNull(collection)) {
