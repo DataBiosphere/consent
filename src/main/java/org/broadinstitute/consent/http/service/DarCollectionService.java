@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
@@ -413,95 +412,6 @@ public class DarCollectionService {
         .stream()
         .map(Dataset::getDataSetId)
         .collect(Collectors.toList());
-  }
-
-  public List<DarCollection> getAllCollections() {
-    return addDatasetsToCollections(darCollectionDAO.findAllDARCollections(), List.of());
-  }
-
-  public List<DarCollection> getCollectionsForUserByRoleName(User user, String roleName) {
-    List<DarCollection> collections = new ArrayList<>();
-    UserRoles selectedRole = UserRoles.getUserRoleFromName(roleName);
-    if (Objects.nonNull(selectedRole) && user.hasUserRole(selectedRole)) {
-      switch (selectedRole) {
-        case ADMIN:
-          collections.addAll(getAllCollections());
-          break;
-        case CHAIRPERSON:
-        case MEMBER:
-          collections.addAll(getCollectionsByUserDacs(user, true));
-          break;
-        case SIGNINGOFFICIAL:
-          collections.addAll(getCollectionsByUserInstitution(user));
-          break;
-        default:
-          collections.addAll(getCollectionsForUser(user));
-      }
-    } else {
-      collections.addAll(getCollectionsForUser(user));
-    }
-    return collections.stream().filter(collection -> !containsCanceledDars(collection))
-        .collect(Collectors.toList());
-  }
-
-  private boolean containsCanceledDars(DarCollection collection) {
-    return collection.getDars().values().stream().anyMatch(DataAccessRequest::isCanceled);
-  }
-
-  /**
-   * Find all DAR Collections by the user's associated DACs
-   *
-   * @param user                    The User
-   * @param filterByUserDacDatasets Specifies whether to filter on user-DAC-datasets
-   * @return List<DarCollection>
-   */
-  public List<DarCollection> getCollectionsByUserDacs(User user, Boolean filterByUserDacDatasets) {
-    List<Integer> dacIds = user.getRoles().stream()
-        .map(UserRole::getDacId)
-        .filter(Objects::nonNull)
-        .distinct()
-        .collect(Collectors.toList());
-    List<Integer> collectionIds = dacIds.isEmpty() ?
-        Collections.emptyList() :
-        darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-    List<Integer> userDatasetsIds = filterByUserDacDatasets ?
-        datasetDAO.findDatasetsByAuthUserEmail(user.getEmail()).stream()
-            .map(Dataset::getDataSetId)
-            .collect(Collectors.toList()) :
-        Collections.emptyList();
-    if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(
-          darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), userDatasetsIds);
-    }
-    return Collections.emptyList();
-  }
-
-  /**
-   * Find all DAR Collections by the user's associated Institution
-   *
-   * @param user The User
-   * @return List<DarCollection>
-   * @throws IllegalArgumentException If the user does not have a valid institution
-   */
-  public List<DarCollection> getCollectionsByUserInstitution(User user)
-      throws IllegalArgumentException {
-    if (Objects.isNull(user.getInstitutionId())) {
-      logger.warn("User does not have a valid institution: " + user.getEmail());
-      throw new IllegalArgumentException("User does not have a valid institution");
-    }
-    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(
-        user.getInstitutionId());
-    if (!collectionIds.isEmpty()) {
-      return addDatasetsToCollections(
-          darCollectionDAO.findDARCollectionByCollectionIds(collectionIds), List.of());
-    }
-    return Collections.emptyList();
-  }
-
-  public List<DarCollection> getCollectionsForUser(User user) {
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(
-        user.getUserId());
-    return addDatasetsToCollections(collections, List.of());
   }
 
   public void deleteByCollectionId(User user, Integer collectionId)

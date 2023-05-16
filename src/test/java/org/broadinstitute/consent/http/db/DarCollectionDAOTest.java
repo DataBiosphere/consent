@@ -5,15 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -25,7 +22,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -198,51 +194,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionIdsByDacIds() {
-    // Set up a DAR Collection with a DAR, Dataset, Consent, Consent Association,
-    // and DAC in such a way that all are connected via the dataset id.
-    Dataset dataset = createDataset();
-    DarCollection c = createDarCollection();
-    generateDatasetElectionForCollection(c);
-    DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
-    if (Objects.isNull(dar)) {
-      fail("DAR was not created in collection");
-    }
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
-    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.getUserId(), new Date(),
-        new Date(), new Date(), dar.getData());
-    Dac dac = createDac();
-    Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
-
-    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(
-        List.of(dac.getDacId()));
-    assertFalse(collectionIds.isEmpty());
-    assertEquals(c.getDarCollectionId(), collectionIds.get(0));
-  }
-
-  @Test
-  public void testFindDARCollectionIdsByInstitutionId() {
-    // Set up a DAR Collection with a DAR, User, and Institution
-    DarCollection c = createDarCollection();
-    DataAccessRequest dar = new ArrayList<>(c.getDars().values()).get(0);
-    if (Objects.isNull(dar)) {
-      fail("DAR was not created in collection");
-    }
-    User user = userDAO.findUserById(dar.getUserId());
-    Institution institution = createInstitution();
-    user.setInstitutionId(institution.getId());
-    userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
-
-    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(
-        institution.getId());
-    assertFalse(collectionIds.isEmpty());
-    assertEquals(c.getDarCollectionId(), collectionIds.get(0));
-  }
-
-  @Test
   public void testInsertDARCollection() {
     List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
     assertTrue(allBefore.isEmpty());
@@ -324,63 +275,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     }
   }
 
-  @Test
-  public void testFindAllDARCollectionsCreatedByUserId_NegativeDatasetElection() {
-    DarCollection collection = createDarCollection();
-    generateDatasetElectionForCollection(collection);
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(
-        collection.getCreateUserId());
-    assertEquals(1, collections.size());
-    DarCollection targetCollection = collections.get(0);
-    List<Election> elections = getElectionsFromCollection(targetCollection);
-    List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-    assertTrue(datasetElections.isEmpty());
-  }
-
-  @Test
-  public void testFindAllDARCollectionsCreatedByUserId() {
-    DarCollection collection = createDarCollectionMultipleUserProperties();
-    Map<String, DataAccessRequest> dars = collection.getDars();
-    createDarCollection(); //create new collection associated with different user
-    Integer userId = collection.getCreateUserId();
-    List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(
-        userId);
-    assertEquals(1, collectionResult.size());
-    assertEquals(userId, collectionResult.get(0).getCreateUserId());
-
-    DarCollection collectionRecord = collectionResult.get(0);
-    List<Election> electionList = dars.values().stream()
-        .map(d -> d.getElections().values())
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-
-    assertEquals(1, electionList.size());
-    List<String> referenceIds = collectionRecord.getDars().values().stream()
-        .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
-
-    assertTrue(referenceIds.contains(electionList.get(0).getReferenceId()));
-
-    List<UserProperty> userProperties = collectionResult.get(0).getCreateUser().getProperties();
-    assertFalse(userProperties.isEmpty());
-    userProperties.forEach(p -> assertEquals(userId, p.getUserId()));
-  }
-
-  @Test
-  public void testFindAllDARCollectionsCreatedByUserIdWithMultipleProperties() {
-    DarCollection collection = createDarCollectionMultipleUserProperties();
-    createDarCollection(); //create new collection associated with different user
-    Integer userId = collection.getCreateUserId();
-    List<DarCollection> collectionResult = darCollectionDAO.findDARCollectionsCreatedByUserId(
-        userId);
-    assertEquals(1, collectionResult.size());
-
-    DarCollection collectionRecord = collectionResult.get(0);
-    List<UserProperty> userProperties = collectionRecord.getCreateUser().getProperties();
-    assertFalse(userProperties.isEmpty());
-    userProperties.forEach(p -> assertEquals(userId, p.getUserId()));
-  }
-
   // local method to create a test DAR
   public DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
     Timestamp now = new Timestamp(new Date().getTime());
@@ -443,43 +337,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     return List.of(user, now, dataset, collectionId, testDar, dac, testDarCollection);
   }
 
-  // findDARCollectionIdsByDacIds should exclude archived collections
-  @Test
-  public void testFindDARCollectionIdsByDacIdsArchived() {
-    User user = createUserWithInstitution();
-
-    List<Object> newDarCollection = createDarCollectionWithDataset(user);
-    DataAccessRequest testDar = (DataAccessRequest) newDarCollection.get(4);
-    Dac dac = (Dac) newDarCollection.get(5);
-    DarCollection testDarCollection = (DarCollection) newDarCollection.get(6);
-
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-
-    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(
-        List.of(dac.getDacId()));
-
-    assertTrue(collectionIds.isEmpty());
-    assertFalse(collectionIds.contains(testDarCollection));
-  }
-
-  // findDARCollectionIdsByInstitutionId should exclude archived collections
-  @Test
-  public void testFindDARCollectionIdsByInsitutionIdArchived() {
-    User user = createUserWithInstitution();
-
-    List<Object> newDarCollection = createDarCollectionWithDataset(user);
-    DataAccessRequest testDar = (DataAccessRequest) newDarCollection.get(4);
-    DarCollection testDarCollection = (DarCollection) newDarCollection.get(6);
-
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-
-    List<Integer> collectionIds = darCollectionDAO.findDARCollectionIdsByInstitutionId(
-        user.getInstitutionId());
-
-    assertTrue(collectionIds.isEmpty());
-    assertFalse(collectionIds.contains(testDarCollection));
-  }
-
   // findDARCollectionByCollectionIds should exclude archived collections
   @Test
   public void testFindDARCollectionIdsByCollectionIdsArchived() {
@@ -521,28 +378,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
 
     List<DarCollection> returnedCollections = darCollectionDAO.findAllDARCollections();
-
-    assertEquals(1, returnedCollections.size());
-    assertFalse(returnedCollections.contains(testDarCollection1));
-    assertTrue(returnedCollections.contains(testDarCollection2));
-  }
-
-  // findDARCollectionsCreatedByUserId should exclude archived collections
-  @Test
-  public void testFindDARCollectionsCreatedByUserIdArchived() {
-    User user = createUserWithInstitution();
-
-    List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
-    List<Object> newDarCollection2 = createDarCollectionWithDataset(user);
-
-    DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
-    DarCollection testDarCollection1 = (DarCollection) newDarCollection1.get(6);
-    DarCollection testDarCollection2 = (DarCollection) newDarCollection2.get(6);
-
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
-
-    List<DarCollection> returnedCollections = darCollectionDAO.findDARCollectionsCreatedByUserId(
-        user.getUserId());
 
     assertEquals(1, returnedCollections.size());
     assertFalse(returnedCollections.contains(testDarCollection1));

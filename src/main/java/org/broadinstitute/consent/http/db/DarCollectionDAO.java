@@ -52,32 +52,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
 
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
-  /**
-   * DAC -> Consent -> Consent Association -> Dataset -> DAR -> DAR Collection
-   *
-   * @param dacIds List of DAC Ids to find DARCollections for.
-   * @return All DARCollection Ids for which there is a dataset owned by any of the DACs
-   */
-  @SqlQuery(" SELECT distinct c.collection_id "
-      + " FROM dar_collection c "
-      + "   INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id " +
-      "      AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) "
-      + "   INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-      + "   INNER JOIN consent_associations ca ON ca.dataset_id = dd.dataset_id "
-      + "   INNER JOIN consents consent ON consent.consent_id = ca.consent_id "
-      + "   INNER JOIN dataset ds ON ca.dataset_id = ds.dataset_id "
-      + "      AND ds.dac_id IN (<dacIds>) ")
-  List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
-
-  @SqlQuery(
-      " SELECT distinct c.collection_id "
-          + " FROM dar_collection c"
-          + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
-          + " INNER JOIN users u ON dar.user_id = u.user_id"
-          + " WHERE u.institution_id = :institutionId "
-          + " AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)")
-  List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
-
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
@@ -133,40 +107,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery("SELECT c.*, dd.dataset_id, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-      Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
-      UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
-      + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-      + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
-      + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-      + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
-      + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
-      + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest "
-      + "FROM dar_collection c "
-      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + "LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-      + "INNER JOIN users u ON c.create_user_id = u.user_id "
-      + "LEFT JOIN user_property up ON u.user_id = up.userid "
-      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "LEFT JOIN ("
-      + "  SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
-      + "   FROM election "
-      + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
-      + ") AS e "
-      + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
-      + "WHERE c.create_user_id = :userId "
-      + " AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
-  )
-  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given

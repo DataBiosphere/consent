@@ -13,7 +13,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -82,70 +81,6 @@ public class DarCollectionResourceTest {
   @BeforeEach
   public void setUp() {
     openMocks(this);
-  }
-
-  @Test
-  public void testGetCollectionsForResearcher() {
-    List<DarCollection> mockCollectionsList = new ArrayList<>();
-    mockCollectionsList.add(mockDarCollection());
-    mockCollectionsList.add(mockDarCollection());
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getCollectionsForUser(any(User.class))).thenReturn(
-        mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForResearcher(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdmin() {
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.ADMIN.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdminWithoutProperRole() {
-    // Test that a user who has access cannot access as a role they do not have.
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdminWithSORole() {
-    // Test that a user who has access can access as a different role they have.
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(),
-        List.of(adminRole, soRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test

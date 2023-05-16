@@ -42,38 +42,6 @@ public class DarCollectionResource extends Resource {
     this.userService = userService;
   }
 
-  @Deprecated
-  @GET
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsForResearcher(@Auth AuthUser authUser) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<DarCollection> collections = darCollectionService.getCollectionsForUser(user);
-      return Response.ok().entity(collections).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated
-  @GET
-  @Path("role/{roleName}")
-  @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
-  public Response getCollectionsForUserByRole(@Auth AuthUser authUser,
-      @PathParam("roleName") String roleName) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user,
-          roleName);
-      return Response.ok().entity(collections).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @GET
   @Path("role/{roleName}/summary")
   @Produces("application/json")
