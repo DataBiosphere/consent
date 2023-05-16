@@ -328,7 +328,8 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   public void testFindAllDARCollectionsCreatedByUserId_NegativeDatasetElection() {
     DarCollection collection = createDarCollection();
     generateDatasetElectionForCollection(collection);
-    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(collection.getCreateUserId());
+    List<DarCollection> collections = darCollectionDAO.findDARCollectionsCreatedByUserId(
+        collection.getCreateUserId());
     assertEquals(1, collections.size());
     DarCollection targetCollection = collections.get(0);
     List<Election> elections = getElectionsFromCollection(targetCollection);
@@ -380,19 +381,19 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     userProperties.forEach(p -> assertEquals(userId, p.getUserId()));
   }
 
-    // local method to create a test DAR
-    public DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
-        Timestamp now = new Timestamp(new Date().getTime());
-        DataAccessRequest testDar = new DataAccessRequest();
-        testDar.setCollectionId(collectionId);
-        testDar.setReferenceId(UUID.randomUUID().toString());
-        testDar.setUserId(user.getUserId());
-        testDar.setCreateDate(now);
-        testDar.setSortDate(now);
-        testDar.setSubmissionDate(now);
-        testDar.setUpdateDate(now);
-        DataAccessRequestData contents = new DataAccessRequestData();
-        testDar.setData(contents);
+  // local method to create a test DAR
+  public DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
+    Timestamp now = new Timestamp(new Date().getTime());
+    DataAccessRequest testDar = new DataAccessRequest();
+    testDar.setCollectionId(collectionId);
+    testDar.setReferenceId(UUID.randomUUID().toString());
+    testDar.setUserId(user.getUserId());
+    testDar.setCreateDate(now);
+    testDar.setSortDate(now);
+    testDar.setSubmissionDate(now);
+    testDar.setUpdateDate(now);
+    DataAccessRequestData contents = new DataAccessRequestData();
+    testDar.setData(contents);
 
     dataAccessRequestDAO.insertDataAccessRequest(
         testDar.getCollectionId(),
