@@ -497,26 +497,6 @@ paths:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
 
-  /api/dar:
-    post:
-      summary: createdDataAccessRequest
-      description: |
-        DEPRECATED: Use POST /api/dar/v2
-        Creates a Data Access Request
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a DAR, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: Returns the created Data Access Request, json file.
-        500:
-          description: Internal Server Error.
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases
