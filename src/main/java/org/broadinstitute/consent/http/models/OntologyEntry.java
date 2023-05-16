@@ -4,44 +4,44 @@ import java.util.List;
 
 public class OntologyEntry {
 
-    String id;
-    String label;
-    String definition;
-    List<String> synonyms;
+  String id;
+  String label;
+  String definition;
+  List<String> synonyms;
 
-    public OntologyEntry() {
-    }
+  public OntologyEntry() {
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public String getLabel() {
-        return label;
-    }
+  public String getLabel() {
+    return label;
+  }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
+  public void setLabel(String label) {
+    this.label = label;
+  }
 
-    public String getDefinition() {
-        return definition;
-    }
+  public String getDefinition() {
+    return definition;
+  }
 
-    public void setDefinition(String definition) {
-        this.definition = definition;
-    }
+  public void setDefinition(String definition) {
+    this.definition = definition;
+  }
 
-    public List<String> getSynonyms() {
-        return synonyms;
-    }
+  public List<String> getSynonyms() {
+    return synonyms;
+  }
 
-    public void setSynonyms(List<String> synonyms) {
-        this.synonyms = synonyms;
-    }
+  public void setSynonyms(List<String> synonyms) {
+    this.synonyms = synonyms;
+  }
 
 }

@@ -13,53 +13,53 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class UserPropertyDAOTest extends DAOTestHelper {
 
-    @Test
-    public void testFindResearcherProperties() {
-        User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+  @Test
+  public void testFindResearcherProperties() {
+    User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
-        UserProperty suggestedInstitution = new UserProperty();
-        suggestedInstitution.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-        suggestedInstitution.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        suggestedInstitution.setUserId(user.getUserId());
+    UserProperty suggestedInstitution = new UserProperty();
+    suggestedInstitution.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
+    suggestedInstitution.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    suggestedInstitution.setUserId(user.getUserId());
 
-        UserProperty suggestedSigningOfficial = new UserProperty();
-        suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-        suggestedSigningOfficial.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        suggestedSigningOfficial.setUserId(user.getUserId());
+    UserProperty suggestedSigningOfficial = new UserProperty();
+    suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
+    suggestedSigningOfficial.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    suggestedSigningOfficial.setUserId(user.getUserId());
 
-        UserProperty notPresent = new UserProperty();
-        notPresent.setPropertyKey("nonExistentKey");
-        notPresent.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-        notPresent.setUserId(user.getUserId());
+    UserProperty notPresent = new UserProperty();
+    notPresent.setPropertyKey("nonExistentKey");
+    notPresent.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    notPresent.setUserId(user.getUserId());
 
-        List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-                user.getUserId(),
-                List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
-                        UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
-                        UserFields.ERA_EXPIRATION_DATE.getValue()));
+    List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+        user.getUserId(),
+        List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
+            UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
+            UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-        assertEquals(0, props.size());
+    assertEquals(0, props.size());
 
-        userPropertyDAO.insertAll(List.of(
-                suggestedInstitution,
-                suggestedSigningOfficial,
-                notPresent
-        ));
+    userPropertyDAO.insertAll(List.of(
+        suggestedInstitution,
+        suggestedSigningOfficial,
+        notPresent
+    ));
 
-        props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-                user.getUserId(),
-                List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
-                        UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
-                        UserFields.ERA_EXPIRATION_DATE.getValue()));
+    props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+        user.getUserId(),
+        List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
+            UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
+            UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-        assertEquals(2, props.size());
+    assertEquals(2, props.size());
 
-        assertTrue(props.stream().anyMatch((p) ->
-                (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
-                        && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
+    assertTrue(props.stream().anyMatch((p) ->
+        (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
+            && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
 
-        assertTrue(props.stream().anyMatch((p) ->
-                (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
-                        && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
-    }
+    assertTrue(props.stream().anyMatch((p) ->
+        (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
+            && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
+  }
 }

@@ -5,16 +5,16 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 
 public class CounterService {
 
-    private final CounterDAO counterDAO;
-    public static final String DAR_COUNTER = "DAR";
+  private final CounterDAO counterDAO;
+  public static final String DAR_COUNTER = "DAR";
 
-    @Inject
-    public CounterService(CounterDAO counterDAO) {
-        this.counterDAO = counterDAO;
-    }
+  @Inject
+  public CounterService(CounterDAO counterDAO) {
+    this.counterDAO = counterDAO;
+  }
 
-    public Integer getNextDarSequence() {
-        return counterDAO.incrementCountByName(DAR_COUNTER);
-    }
+  public Integer getNextDarSequence() {
+    return counterDAO.incrementCountByName(DAR_COUNTER);
+  }
 
 }

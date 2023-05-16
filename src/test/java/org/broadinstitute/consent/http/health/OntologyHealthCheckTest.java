@@ -19,68 +19,68 @@ import org.mockito.Mock;
 
 public class OntologyHealthCheckTest {
 
-    @Mock
-    private HttpClientUtil clientUtil;
+  @Mock
+  private HttpClientUtil clientUtil;
 
-    @Mock
-    private SimpleResponse response;
+  @Mock
+  private SimpleResponse response;
 
-    @Mock
-    private ServicesConfiguration servicesConfiguration;
+  @Mock
+  private ServicesConfiguration servicesConfiguration;
 
-    private OntologyHealthCheck healthCheck;
+  private OntologyHealthCheck healthCheck;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
+
+  private void initHealthCheck(boolean configOk) {
+    try {
+      when(response.entity()).thenReturn("{}");
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      if (configOk) {
+        when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
+      }
+      healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
     }
+  }
 
-    private void initHealthCheck(boolean configOk) {
-        try {
-            when(response.entity()).thenReturn("{}");
-            when(clientUtil.getCachedResponse(any())).thenReturn(response);
-            if (configOk) {
-                when(servicesConfiguration.getOntologyURL()).thenReturn("http://localhost:8000/");
-            }
-            healthCheck = new OntologyHealthCheck(clientUtil, servicesConfiguration);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
+  @Test
+  public void testCheckSuccess() {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    initHealthCheck(true);
 
-    @Test
-    public void testCheckSuccess() {
-        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-        initHealthCheck(true);
+    HealthCheck.Result result = healthCheck.check();
+    assertTrue(result.isHealthy());
+  }
 
-        HealthCheck.Result result = healthCheck.check();
-        assertTrue(result.isHealthy());
-    }
+  @Test
+  public void testCheckFailure() {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    initHealthCheck(true);
 
-    @Test
-    public void testCheckFailure() {
-        when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-        initHealthCheck(true);
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+  @Test
+  public void testCheckException() {
+    doThrow(new RuntimeException()).when(response).code();
+    initHealthCheck(true);
 
-    @Test
-    public void testCheckException() {
-        doThrow(new RuntimeException()).when(response).code();
-        initHealthCheck(true);
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+  @Test
+  public void testConfigException() {
+    doThrow(new RuntimeException()).when(servicesConfiguration).getOntologyURL();
+    initHealthCheck(false);
 
-    @Test
-    public void testConfigException() {
-        doThrow(new RuntimeException()).when(servicesConfiguration).getOntologyURL();
-        initHealthCheck(false);
-
-        HealthCheck.Result result = healthCheck.check();
-        assertFalse(result.isHealthy());
-    }
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+  }
 }

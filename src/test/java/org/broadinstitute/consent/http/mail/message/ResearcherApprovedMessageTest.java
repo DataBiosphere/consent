@@ -12,18 +12,19 @@ import org.mockito.Mock;
 
 public class ResearcherApprovedMessageTest {
 
-    @Mock
-    Writer template;
+  @Mock
+  Writer template;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testMessageSubject() throws MessagingException {
-        Mail message = new ResearcherApprovedMessage().researcherApprovedMessage("to@address.com", "from@address.com", template, "DAR-123");
-        assertEquals("Your DUOS Data Access Request Results", message.getSubject());
-    }
+  @Test
+  public void testMessageSubject() throws MessagingException {
+    Mail message = new ResearcherApprovedMessage().researcherApprovedMessage("to@address.com",
+        "from@address.com", template, "DAR-123");
+    assertEquals("Your DUOS Data Access Request Results", message.getSubject());
+  }
 
 }

@@ -21,244 +21,260 @@ import org.mockito.Mock;
 
 public class SupportTicketCreatorTest {
 
-    private SupportTicketCreator supportTicketCreator;
+  private SupportTicketCreator supportTicketCreator;
 
-    @Mock
-    private InstitutionDAO institutionDAO;
+  @Mock
+  private InstitutionDAO institutionDAO;
 
-    @Mock
-    private UserDAO userDAO;
+  @Mock
+  private UserDAO userDAO;
 
-    @Mock
-    private ServicesConfiguration configuration;
+  @Mock
+  private ServicesConfiguration configuration;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-        this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
-        String supportRequestUrl = RandomStringUtils.randomAlphabetic(10);
-        when(configuration.postSupportRequestUrl()).thenReturn(supportRequestUrl);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+    this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
+    String supportRequestUrl = RandomStringUtils.randomAlphabetic(10);
+    when(configuration.postSupportRequestUrl()).thenReturn(supportRequestUrl);
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SuggestedInstitution() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SuggestedInstitution() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
-        UserUpdateFields updateFields = new UserUpdateFields();
-        updateFields.setSuggestedInstitution(suggestedInstitution);
+    String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    updateFields.setSuggestedInstitution(suggestedInstitution);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName, supportRequest.getRequester().getName());
-        assertEquals(email, supportRequest.getRequester().getEmail());
-        assertEquals(displayName + " user updates: New Institution Request",
-            supportRequest.getSubject());
-        assertEquals(360000669472L, supportRequest.getTicketFormId());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName, supportRequest.getRequester().getName());
+    assertEquals(email, supportRequest.getRequester().getEmail());
+    assertEquals(displayName + " user updates: New Institution Request",
+        supportRequest.getSubject());
+    assertEquals(360000669472L, supportRequest.getTicketFormId());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- requested a new institution: %s",
-                user.getDisplayName(),
-                user.getEmail(),
-                suggestedInstitution);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-        assertTrue(
-            customFields.contains(new CustomRequestField(360012744292L, displayName)));
-        assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
-        assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- requested a new institution: %s",
+        user.getDisplayName(),
+        user.getEmail(),
+        suggestedInstitution);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(
+            new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+    assertTrue(
+        customFields.contains(new CustomRequestField(360012744292L, displayName)));
+    assertTrue(customFields.contains(new CustomRequestField(360012782111L, email)));
+    assertTrue(customFields.contains(new CustomRequestField(360018545031L, email)));
 
-        String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: " + configuration.postSupportRequestUrl();
-        assertEquals(commentBody, supportRequest.getComment().getBody());
-    }
+    String commentBody = expectedDescription + "\n\n------------------\nSubmitted from: "
+        + configuration.postSupportRequestUrl();
+    assertEquals(commentBody, supportRequest.getComment().getBody());
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SuggestedSigningOfficial() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SuggestedSigningOfficial() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
-        UserUpdateFields updateFields = new UserUpdateFields();
-        updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
+    String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName + " user updates: New Signing Official Request",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName + " user updates: New Signing Official Request",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- requested a new signing official: %s",
-                user.getDisplayName(),
-                user.getEmail(),
-                suggestedSigningOfficial);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- requested a new signing official: %s",
+        user.getDisplayName(),
+        user.getEmail(),
+        suggestedSigningOfficial);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        UserUpdateFields updateFields = new UserUpdateFields();
-        updateFields.setInstitutionId(1);
-        Institution institution = new Institution();
-        String institutionName = RandomStringUtils.randomAlphabetic(10);
-        institution.setName(institutionName);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    updateFields.setInstitutionId(1);
+    Institution institution = new Institution();
+    String institutionName = RandomStringUtils.randomAlphabetic(10);
+    institution.setName(institutionName);
 
-        when(institutionDAO.findInstitutionById(1)).thenReturn(institution);
+    when(institutionDAO.findInstitutionById(1)).thenReturn(institution);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName + " user updates: Institution Selection",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName + " user updates: Institution Selection",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- selected an existing institution: %s",
-                user.getDisplayName(),
-                user.getEmail(),
-                institutionName);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- selected an existing institution: %s",
+        user.getDisplayName(),
+        user.getEmail(),
+        institutionName);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        UserUpdateFields updateFields = new UserUpdateFields();
-        int institutionId = RandomUtils.nextInt();
-        updateFields.setInstitutionId(institutionId);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    int institutionId = RandomUtils.nextInt();
+    updateFields.setInstitutionId(institutionId);
 
-        when(institutionDAO.findInstitutionById(institutionId)).thenReturn(null);
+    when(institutionDAO.findInstitutionById(institutionId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName + " user updates: Institution Selection",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName + " user updates: Institution Selection",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- attempted to select institution with id %s (not found)",
-                user.getDisplayName(),
-                user.getEmail(),
-                institutionId);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- attempted to select institution with id %s (not found)",
+        user.getDisplayName(),
+        user.getEmail(),
+        institutionId);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficial() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficial() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        UserUpdateFields updateFields = new UserUpdateFields();
-        updateFields.setSelectedSigningOfficialId(1);
-        User signingOfficial = new User();
-        signingOfficial.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-        signingOfficial.setEmail(RandomStringUtils.randomAlphabetic(10));
+    UserUpdateFields updateFields = new UserUpdateFields();
+    updateFields.setSelectedSigningOfficialId(1);
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    signingOfficial.setEmail(RandomStringUtils.randomAlphabetic(10));
 
-        when(userDAO.findUserById(1)).thenReturn(signingOfficial);
+    when(userDAO.findUserById(1)).thenReturn(signingOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName + " user updates: Signing Official Selection",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName + " user updates: Signing Official Selection",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- selected an existing signing official: %s, %s",
-                user.getDisplayName(),
-                user.getEmail(),
-                signingOfficial.getDisplayName(),
-                signingOfficial.getEmail());
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- selected an existing signing official: %s, %s",
+        user.getDisplayName(),
+        user.getEmail(),
+        signingOfficial.getDisplayName(),
+        signingOfficial.getEmail());
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(
+            new CustomRequestField(360012744452L, SupportRequestType.TASK.getValue())));
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficialNotFound() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficialNotFound() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        UserUpdateFields updateFields = new UserUpdateFields();
-        int signingOfficialId = RandomUtils.nextInt();
-        updateFields.setSelectedSigningOfficialId(signingOfficialId);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    int signingOfficialId = RandomUtils.nextInt();
+    updateFields.setSelectedSigningOfficialId(signingOfficialId);
 
-        when(userDAO.findUserById(signingOfficialId)).thenReturn(null);
+    when(userDAO.findUserById(signingOfficialId)).thenReturn(null);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(displayName + " user updates: Signing Official Selection",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(displayName + " user updates: Signing Official Selection",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("User %s [%s] has:\n- attempted to select signing official with id %s (not found)",
-                user.getDisplayName(),
-                user.getEmail(),
-                signingOfficialId);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format(
+        "User %s [%s] has:\n- attempted to select signing official with id %s (not found)",
+        user.getDisplayName(),
+        user.getEmail(),
+        signingOfficialId);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 
-    @Test
-    public void testCreateInstitutionSOSupportTicket_MultipleFields() {
-        String displayName = RandomStringUtils.randomAlphabetic(10);
-        String email = RandomStringUtils.randomAlphabetic(10);
-        User user = new User();
-        user.setDisplayName(displayName);
-        user.setEmail(email);
+  @Test
+  public void testCreateInstitutionSOSupportTicket_MultipleFields() {
+    String displayName = RandomStringUtils.randomAlphabetic(10);
+    String email = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setDisplayName(displayName);
+    user.setEmail(email);
 
-        UserUpdateFields updateFields = new UserUpdateFields();
-        String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
-        updateFields.setSuggestedInstitution(suggestedInstitution);
-        String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
-        updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
+    UserUpdateFields updateFields = new UserUpdateFields();
+    String suggestedInstitution = RandomStringUtils.randomAlphabetic(10);
+    updateFields.setSuggestedInstitution(suggestedInstitution);
+    String suggestedSigningOfficial = RandomStringUtils.randomAlphabetic(10);
+    updateFields.setSuggestedSigningOfficial(suggestedSigningOfficial);
 
-        SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields, user);
-        SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-        assertEquals(
-            displayName + " user updates: New Institution Request, New Signing Official Request",
-            supportRequest.getSubject());
+    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
+        user);
+    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    assertEquals(
+        displayName + " user updates: New Institution Request, New Signing Official Request",
+        supportRequest.getSubject());
 
-        String expectedDescription = String.format("""
-                        User %s [%s] has:
-                        - requested a new institution: %s
-                        - requested a new signing official: %s""",
-                user.getDisplayName(),
-                user.getEmail(),
-                suggestedInstitution,
-                suggestedSigningOfficial);
-        List<CustomRequestField> customFields = supportRequest.getCustomFields();
-        assertEquals(5, customFields.size());
-        assertTrue(
-            customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-    }
+    String expectedDescription = String.format("""
+            User %s [%s] has:
+            - requested a new institution: %s
+            - requested a new signing official: %s""",
+        user.getDisplayName(),
+        user.getEmail(),
+        suggestedInstitution,
+        suggestedSigningOfficial);
+    List<CustomRequestField> customFields = supportRequest.getCustomFields();
+    assertEquals(5, customFields.size());
+    assertTrue(
+        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
+  }
 }

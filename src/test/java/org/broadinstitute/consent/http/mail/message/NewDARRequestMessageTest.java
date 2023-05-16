@@ -12,19 +12,20 @@ import org.mockito.Mock;
 
 public class NewDARRequestMessageTest {
 
-    @Mock
-    Writer template;
+  @Mock
+  Writer template;
 
-    @BeforeEach
-    public void setUp() {
-        openMocks(this);
-    }
+  @BeforeEach
+  public void setUp() {
+    openMocks(this);
+  }
 
-    @Test
-    public void testMessageSubject() throws MessagingException {
-        Mail message = new NewDARRequestMessage().newDARRequestMessage("to@address.com", "from@address.com", template, "DAR-123", "Data Use Limitations");
-        assertEquals("Create an election for Data Access Request id: DAR-123.",
-            message.getSubject());
-    }
+  @Test
+  public void testMessageSubject() throws MessagingException {
+    Mail message = new NewDARRequestMessage().newDARRequestMessage("to@address.com",
+        "from@address.com", template, "DAR-123", "Data Use Limitations");
+    assertEquals("Create an election for Data Access Request id: DAR-123.",
+        message.getSubject());
+  }
 
 }
