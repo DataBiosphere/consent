@@ -59,9 +59,9 @@ public class DarCollectionResourceTest {
   @Mock
   private UserService userService;
 
-    private void initResource() {
-        resource = new DarCollectionResource(darCollectionService, userService);
-    }
+  private void initResource() {
+    resource = new DarCollectionResource(darCollectionService, userService);
+  }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
     DataAccessRequest dar = new DataAccessRequest();
