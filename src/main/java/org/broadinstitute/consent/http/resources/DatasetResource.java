@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -530,6 +531,20 @@ public class DatasetResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = datasetService.searchDatasets(query, user);
       return Response.ok().entity(unmarshal(datasets)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/search/index")
+  @Consumes("application/json")
+  @Produces("application/json")
+  public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
+      return Response.ok().entity(unmarshal(List.of(datasetSearchTerm))).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
