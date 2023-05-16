@@ -15,6 +15,14 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration.Dynamic;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -96,15 +104,6 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration.Dynamic;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Top-level entry point to the entire application.
@@ -213,7 +212,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         env.jersey().register(new ConsentCasesResource(summaryService));
         env.jersey().register(new DacResource(dacService, userService, datasetService));
         env.jersey().register(new DACUserResource(userService));
-        env.jersey().register(new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
+        env.jersey().register(new DarCollectionResource(darCollectionService, userService));
         env.jersey().register(new DataRequestCasesResource(summaryService));
         env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
         env.jersey().register(new ElectionResource(voteService, electionService));

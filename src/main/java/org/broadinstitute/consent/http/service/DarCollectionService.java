@@ -1,7 +1,25 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.NotAuthorizedException;
+import javax.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -21,34 +39,12 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.PaginationResponse;
-import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 public class DarCollectionService {
 
@@ -489,74 +485,6 @@ public class DarCollectionService {
         return addDatasetsToCollections(collections, List.of());
     }
 
-    /*
-      Role based queries for Collection, this method should be utilized for search queries and pagination requests
-    */
-    public PaginationResponse<DarCollection> queryCollectionsByFiltersAndUserRoles(User user, PaginationToken token, String roleName) {
-        List<Integer> dacIds = getDacIdsFromUser(user);
-        Integer unfilteredCount = getCountForUnfilteredQueryByRole(user, roleName);
-        if (unfilteredCount == 0) {
-            createEmptyPaginationResponse(unfilteredCount);
-        }
-        token.setUnfilteredCount(unfilteredCount);
-
-        List<DarCollection> filteredCollections = getFilteredCollectionsByUserRole(user, roleName, token, dacIds);
-        if (filteredCollections.isEmpty()) {
-            return createEmptyPaginationResponse(0);
-        }
-        token.setFilteredCount(filteredCollections.size());
-        List<DarCollection> slicedCollections = new ArrayList<>();
-        if (token.getStartIndex() <= token.getEndIndex()) {
-            slicedCollections = filteredCollections.subList(token.getStartIndex(), token.getEndIndex());
-        } else {
-            logger.warn(String.format("Invalid pagination state: startIndex %s endIndex: %s", token.getStartIndex(), token.getEndIndex()));
-        }
-        List<PaginationToken> orderedTokens = token.createListOfPaginationTokensFromSelf();
-        List<String> orderedTokenStrings = orderedTokens.stream().map(PaginationToken::toBase64).collect(Collectors.toList());
-        return new PaginationResponse<DarCollection>()
-                .setUnfilteredCount(token.getUnfilteredCount())
-                .setFilteredCount(token.getFilteredCount())
-                .setFilteredPageCount(orderedTokens.size())
-                .setResults(slicedCollections)
-                .setPaginationTokens(orderedTokenStrings);
-    }
-
-    //Helper function for queryCollectionsByFilterAndUserRoles
-    //Function verifies user role permission and executes query via DAO methods
-    private List<DarCollection> getFilteredCollectionsByUserRole(User user, String userRole, PaginationToken token, List<Integer> dacIds) {
-        String sortOrder = Objects.isNull(token.getSortDirection()) ? DarCollection.defaultTokenSortOrder : token.getSortDirection();
-        String sortField = Objects.isNull(token.getSortField()) ? DarCollection.defaultTokenSortField : token.getSortField();
-        String filterTerm = Objects.isNull(token.getFilterTerm()) ? "" : token.getFilterTerm();
-        List<DarCollection> collections;
-        List<Integer> collectionIds;
-
-        switch (userRole) {
-            case Resource.ADMIN:
-                collections = darCollectionDAO.getFilteredCollectionsForAdmin(sortField, sortOrder, filterTerm);
-                break;
-            case Resource.SIGNINGOFFICIAL:
-                collections = darCollectionDAO.getFilteredCollectionsForSigningOfficial(sortField, sortOrder, user.getInstitutionId(), filterTerm);
-                break;
-            case Resource.CHAIRPERSON:
-            case Resource.MEMBER:
-                collectionIds = darCollectionDAO.findDARCollectionIdsByDacIds(dacIds);
-                collections = darCollectionDAO.getFilteredCollectionsForDACByCollectionIds(sortField, sortOrder, collectionIds, filterTerm);
-                break;
-            default:
-                collections = darCollectionDAO.getFilteredListForResearcher(sortField, sortOrder, user.getUserId(), filterTerm);
-        }
-
-        return addDatasetsToCollections(collections, List.of());
-    }
-
-    private List<Integer> getDacIdsFromUser(User user) {
-        return user.getRoles().stream()
-                .map(UserRole::getDacId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
     public void deleteByCollectionId(User user, Integer collectionId) throws NotAcceptableException, NotAuthorizedException, NotFoundException {
         DarCollection coll = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
         if (coll == null) {
@@ -615,33 +543,6 @@ public class DarCollectionService {
 
     }
 
-    //Helper method for queryCollectionsByFiltersAndUserRoles
-    //Verifies user role and determines unfiltered count total via DAO methods
-    private Integer getCountForUnfilteredQueryByRole(User user, String userRole) {
-        Integer size = 0;
-
-        switch (userRole) {
-            case Resource.ADMIN:
-                size = darCollectionDAO.returnUnfilteredCollectionCount(); //Make new query to count specific query
-                break;
-            case Resource.SIGNINGOFFICIAL:
-                size = darCollectionDAO.returnUnfilteredCountForInstitution(user.getInstitutionId()); //make new query to only get count
-                break;
-            case Resource.CHAIRPERSON:
-            case Resource.MEMBER:
-                List<Integer> dacIds = user.getRoles()
-                        .stream()
-                        .map(UserRole::getDacId)
-                        .distinct()
-                        .collect(Collectors.toList());
-                size = (Integer) darCollectionDAO.findDARCollectionIdsByDacIds(dacIds).size();
-                break;
-            default:
-                size = darCollectionDAO.returnUnfilteredResearcherCollectionCount(user.getUserId());
-        }
-        return size;
-    }
-
     public DarCollection getByReferenceId(String referenceId) {
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
         if (Objects.isNull(collection)) {
@@ -698,15 +599,6 @@ public class DarCollectionService {
         }
         // There were no datasets to add, so we return the original list
         return collections;
-    }
-
-    private PaginationResponse<DarCollection> createEmptyPaginationResponse(Integer unfilteredCount) {
-        return new PaginationResponse<DarCollection>()
-                .setUnfilteredCount(unfilteredCount)
-                .setFilteredCount(0)
-                .setFilteredPageCount(1) //should this be 0 or 1?
-                .setResults(Collections.emptyList())
-                .setPaginationTokens(Collections.emptyList());
     }
 
     /**

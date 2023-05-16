@@ -31,10 +31,6 @@ paths:
     $ref: './paths/collection.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
-  /api/collections/role/{roleName}/paginated:
-    $ref: './paths/collectionsByToken.yaml'
-  /api/collections/role/{roleName}/query:
-    $ref: './paths/collectionsByQuery.yaml'
   /api/collections/role/{roleName}:
     $ref: './paths/collectionsByRoleName.yaml'
   /api/collections/role/{roleName}/summary:
