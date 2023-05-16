@@ -504,10 +504,11 @@ public class DarCollectionService {
     return addDatasetsToCollections(collections, List.of());
   }
 
-  public void deleteByCollectionId(User user, Integer collectionId) throws NotAcceptableException, NotAuthorizedException, NotFoundException {
+  public void deleteByCollectionId(User user, Integer collectionId)
+      throws NotAcceptableException, NotAuthorizedException, NotFoundException {
     DarCollection coll = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     if (coll == null) {
-        throw new NotFoundException("DAR Collection does not exist at that id.");
+      throw new NotFoundException("DAR Collection does not exist at that id.");
     }
 
     // ensure the user is capable of deleting the collection
@@ -568,9 +569,11 @@ public class DarCollectionService {
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
     if (Objects.isNull(collection)) {
-      throw new NotFoundException("Collection with the reference id of " + referenceId + " was not found");
+      throw new NotFoundException(
+          "Collection with the reference id of " + referenceId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(Collections.singletonList(collection), List.of());
+    List<DarCollection> populatedCollections = addDatasetsToCollections(
+        Collections.singletonList(collection), List.of());
     return populatedCollections.stream().findFirst().orElse(null);
   }
 
@@ -628,21 +631,21 @@ public class DarCollectionService {
     return collections;
   }
 
-    /**
-     * Cancel a DarCollection as a researcher.
-     * <p>
-     * If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
-     * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to
-     * ultimately decline or cancel the elections for the collection.
-     *
-     * @param collection The DarCollection
-     * @return The canceled DarCollection
-     */
-    public DarCollection cancelDarCollectionAsResearcher(DarCollection collection) {
-        Collection<DataAccessRequest> dars = collection.getDars().values();
-        List<String> referenceIds = dars.stream()
-                .map(DataAccessRequest::getReferenceId)
-                .collect(Collectors.toList());
+  /**
+   * Cancel a DarCollection as a researcher.
+   * <p>
+   * If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
+   * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately
+   * decline or cancel the elections for the collection.
+   *
+   * @param collection The DarCollection
+   * @return The canceled DarCollection
+   */
+  public DarCollection cancelDarCollectionAsResearcher(DarCollection collection) {
+    Collection<DataAccessRequest> dars = collection.getDars().values();
+    List<String> referenceIds = dars.stream()
+        .map(DataAccessRequest::getReferenceId)
+        .collect(Collectors.toList());
 
     if (referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
