@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -254,15 +253,6 @@ public class DatasetService {
     return datasetDAO.findDatasetById(id);
   }
 
-  /**
-   * This method
-   *
-   * @param dataset
-   * @param datasetId
-   * @param userId
-   * @return List of created Datasets from the provided registration schema
-   */
-
   public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
     Timestamp now = new Timestamp(new Date().getTime());
 
@@ -340,27 +330,6 @@ public class DatasetService {
     }
     return result;
   }
-
-  public List<DatasetProperty> processDatasetProps(Integer datasetId,
-      List<DatasetProperty> properties) {
-    Date now = new Date();
-    List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
-    List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-        .collect(Collectors.toList());
-
-    return properties.stream()
-        .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
-            .equals(DATASET_NAME_KEY))
-        .map(p ->
-            new DatasetProperty(datasetId,
-                dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                p.getPropertyValue().toString(),
-                PropertyType.String,
-                now)
-        )
-        .collect(Collectors.toList());
-  }
-
 
   @Deprecated // Use synchronizeDatasetProperties() instead
   public List<DatasetProperty> processDatasetProperties(Integer datasetId,
