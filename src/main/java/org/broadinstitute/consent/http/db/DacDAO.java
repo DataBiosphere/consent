@@ -205,17 +205,17 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   /**
    * Find the Dacs for these datasets.
-   * <p>
-   * DACs -> Consents -> Consent Associations -> DataSets
    *
    * @param datasetIds The list of dataset ids
    * @return All DACs that corresponds to the provided dataset ids
    */
   @RegisterRowMapper(DacMapper.class)
-  @SqlQuery(
-      "SELECT d.*, ds.dataset_id FROM dac d "
-          + " INNER JOIN dataset ds ON d.dac_id = ds.dac_id "
-          + " WHERE ds.dataset_id IN (<datasetIds>) ")
+  @SqlQuery("""
+      SELECT d.*, ds.dataset_id
+      FROM dac d
+      INNER JOIN dataset ds ON d.dac_id = ds.dac_id
+      WHERE ds.dataset_id IN (<datasetIds>)
+      """)
   Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
 
 }

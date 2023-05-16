@@ -460,14 +460,6 @@ public class DAOTestHelper {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
-  protected LibraryCard createLCForUnregisteredUser(Integer institutionId) {
-    Integer createUserId = createUser().getUserId();
-    String email = RandomStringUtils.randomAlphabetic(10);
-    Integer id = libraryCardDAO.insertLibraryCard(null, institutionId, null, null, email,
-        createUserId, new Date());
-    return libraryCardDAO.findLibraryCardById(id);
-  }
-
   //overloaded method, helper for INDEX SQL call
   //createInstitution called outside of helper for institution reference/data checks
   protected LibraryCard createLibraryCardForIndex(Integer institutionId) {

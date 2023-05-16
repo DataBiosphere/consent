@@ -449,38 +449,22 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
    * @return Dac for this election
    */
   @UseRowMapper(DacMapper.class)
-  @SqlQuery("SELECT d0.* FROM ( " +
-      "   SELECT d1.*, e1.election_id FROM dac d1 " +
-      "     INNER JOIN dataset ds1 on d1.dac_id = ds1.dac_id " +
-      "     INNER JOIN election e1 ON e1.dataset_id = ds1.dataset_id AND e1.election_id = :electionId "
-      +
-      " UNION " +
-      "   select d2.*, e2.election_id FROM dac d2 " +
-      "     INNER JOIN dataset ds2 ON d2.dac_id = ds2.dac_id " +
-      "     INNER JOIN consent_associations a2 ON a2.dataset_id = ds2.dataset_id " +
-      "     INNER JOIN election e2 ON e2.reference_id = a2.consent_id AND e2.election_id = :electionId "
-      +
-      " ) as d0 limit 1 ")
-  // `select * from (...) limit 1` syntax is an hsqldb limitation
+  @SqlQuery("""
+      SELECT d.* FROM dac d
+      INNER JOIN dataset ds on d.dac_id = ds.dac_id
+      INNER JOIN election e on ds.dataset_id = e.dataset_id
+      WHERE e.election_id = :electionId
+      """)
   Dac findDacForElection(@Bind("electionId") Integer electionId);
 
-  @SqlQuery(
-      "SELECT d.*, e.election_id as election_id "
-          + "FROM election e "
-          + "INNER JOIN accesselection_consentelection a ON a.access_election_id = e.election_id "
-          + "INNER JOIN election ce ON a.consent_election_id = ce.election_id "
-          + "INNER JOIN consent_associations ca ON ce.reference_id = ca.consent_id "
-          + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
-          + "INNER JOIN dac d on d.dac_id = ds.dac_id "
-          + "WHERE e.election_id IN (<electionIds>) "
-          + "UNION "
-          + "SELECT d.*, e.election_id "
-          + "FROM dac d "
-          + "INNER JOIN dataset data ON d.dac_id = data.dac_id "
-          + "INNER JOIN election e "
-          + "ON e.dataset_id = data.dataset_id "
-          + "WHERE e.election_id IN (<electionIds>)"
-  )
+  @SqlQuery("""
+      SELECT d.*, e.election_id
+      FROM dac d
+      INNER JOIN dataset data ON d.dac_id = data.dac_id
+      INNER JOIN election e
+      ON e.dataset_id = data.dataset_id
+      WHERE e.election_id IN (<electionIds>)
+      """)
   @UseRowMapper(DacMapper.class)
   List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
@@ -491,14 +475,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
    * @return List of elections associated to the Dac
    */
   @UseRowMapper(SimpleElectionMapper.class)
-  @SqlQuery("SELECT e1.* FROM election e1 " +
-      "   INNER JOIN dataset ds1 on ds1.dac_id = :dacId AND ds1.dataset_id = e1.dataset_id " +
-      "   WHERE LOWER(e1.status) = 'open' " +
-      " UNION " +
-      " SELECT e2.* FROM election e2 " +
-      "   INNER JOIN consent_associations ca2 ON ca2.consent_id = e2.reference_id " +
-      "   INNER JOIN dataset ds1 ON ds1.dac_id = :dacId " +
-      "   WHERE LOWER(e2.status) = 'open' ")
+  @SqlQuery("""
+         SELECT e1.* FROM election e1
+         INNER JOIN dataset ds1 on ds1.dac_id = :dacId AND ds1.dataset_id = e1.dataset_id
+         WHERE LOWER(e1.status) = 'open'
+      """)
   List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 
 }
