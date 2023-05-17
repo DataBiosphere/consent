@@ -328,9 +328,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     Dac dac = createDAC();
     Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
-
     DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(
         collectionId);
 
