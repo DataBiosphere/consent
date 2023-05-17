@@ -121,13 +121,13 @@ public class DatasetRegistrationService {
   }
 
   /**
-   * This method
+   * This method takes an instance of a dataset registration schema and updates the dataset.
    *
    * @param user    The User creating these datasets
    * @param files   Map of files, where the key is the name of the field
    * @return List of created Datasets from the provided registration schema
    */
-  public Dataset updateDatasetRegistrationProperties(
+  public Dataset updateDataset(
       DatasetRegistrationSchemaV1 registration,
       Integer datasetId,
       User user,
@@ -150,32 +150,6 @@ public class DatasetRegistrationService {
     Integer updateDataset =
         datasetServiceDAO.updateDataset(datasetUpdates);
     return datasetDAO.findDatasetById(updateDataset);
-  }
-
-  /*
-  Upload all relevant files to GCS and create relevant
-   */
-  private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
-      Integer datasetId,
-      DatasetRegistrationSchemaV1 registration,
-      User user,
-      Map<String, FormDataBodyPart> files,
-      Map<String, BlobId> uploadedFileCache) throws IOException {
-
-    ConsentGroup consentGroup = registration.getConsentGroups().get(0);
-    List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
-
-
-    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
-
-    return new DatasetServiceDAO.DatasetUpdate(
-        consentGroup.getConsentGroupName(),
-        consentGroup.getDataAccessCommitteeId(),
-        user.getUserId(),
-        datasetId,
-        props,
-        fileStorageObjects
-    );
   }
 
   /*
@@ -204,6 +178,29 @@ public class DatasetRegistrationService {
         consentGroup.getDataAccessCommitteeId(),
         dataUse,
         user.getUserId(),
+        props,
+        fileStorageObjects
+    );
+  }
+
+  private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
+      Integer datasetId,
+      DatasetRegistrationSchemaV1 registration,
+      User user,
+      Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache) throws IOException {
+
+    ConsentGroup consentGroup = registration.getConsentGroups().get(0);
+    List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
+
+
+    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
+
+    return new DatasetServiceDAO.DatasetUpdate(
+        consentGroup.getConsentGroupName(),
+        consentGroup.getDataAccessCommitteeId(),
+        user.getUserId(),
+        datasetId,
         props,
         fileStorageObjects
     );
