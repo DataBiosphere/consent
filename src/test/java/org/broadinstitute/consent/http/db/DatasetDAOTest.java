@@ -676,8 +676,6 @@ public class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
     datasetDAO.updateDatasetDacId(datasetTwo.getDataSetId(), dacTwo.getDacId());
 
-    createConsentAndAssociationWithDatasetId(dataset.getDataSetId());
-    createConsentAndAssociationWithDatasetId(datasetTwo.getDataSetId());
     List<Integer> datasetIds = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
     Set<DatasetDTO> datasets = datasetDAO.findDatasetsByDacIds(
         List.of(dac.getDacId(), dacTwo.getDacId()));
@@ -695,8 +693,6 @@ public class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
     datasetDAO.updateDatasetDacId(datasetTwo.getDataSetId(), dacTwo.getDacId());
 
-    createConsentAndAssociationWithDatasetId(dataset.getDataSetId());
-    createConsentAndAssociationWithDatasetId(datasetTwo.getDataSetId());
     List<Integer> datasetIds = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
     List<Dataset> datasets = datasetDAO.findDatasetListByDacIds(
         List.of(dac.getDacId(), dacTwo.getDacId()));
@@ -835,7 +831,6 @@ public class DatasetDAOTest extends DAOTestHelper {
       datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dacId);
       createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(),
           user.getUserId(), darSubCode);
-      createConsentAndAssociationWithDatasetId(dataset.getDataSetId());
     });
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
