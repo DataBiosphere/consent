@@ -224,7 +224,7 @@ public class DatasetResource extends Resource {
             Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
             try {
-                List<Dataset> updatedDataset = DatasetRegistrationService.updateDatasetRegistrationProperties(registration, datasetId, user, files);
+                Dataset updatedDataset = datasetRegistrationService.updateDatasetRegistrationProperties(registration, datasetId, user, files);
                 return Response.ok().entity(updatedDataset).build();
             } catch (Exception e) {
                 return createExceptionResponse(e);

@@ -127,21 +127,19 @@ public class DatasetRegistrationService {
    * @param files   Map of files, where the key is the name of the field
    * @return List of created Datasets from the provided registration schema
    */
-  public List<Dataset> updateDatasetRegistrationProperties(
+  public Dataset updateDatasetRegistrationProperties(
       DatasetRegistrationSchemaV1 registration,
       Integer datasetId,
       User user,
       Map<String, FormDataBodyPart> files) throws IOException, SQLException {
 
-    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
 
+    DatasetServiceDAO.DatasetUpdate datasetUpdates;
+
     try {
-      for (int consentGroupIdx = 0; consentGroupIdx < registration.getConsentGroups().size();
-          consentGroupIdx++) {
-        datasetUpdates.add(
-            createDatasetUpdate(registration, user, files, uploadedFileCache, consentGroupIdx));
-      }
+      datasetUpdates = createDatasetUpdate(datasetId, registration, user, files, uploadedFileCache);
+
     } catch (IOException e) {
       // uploading files to GCS failed. rollback files...
       uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
@@ -149,35 +147,32 @@ public class DatasetRegistrationService {
     }
 
     // Update or create the objects in the database
-    List<Integer> updateDatasets =
+    Integer updateDataset =
         datasetServiceDAO.updateDataset(datasetUpdates);
-    return datasetDAO.findDatasetsByIdList(updateDatasets);
+    return datasetDAO.findDatasetById(updateDataset);
   }
 
   /*
   Upload all relevant files to GCS and create relevant
    */
   private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
+      Integer datasetId,
       DatasetRegistrationSchemaV1 registration,
       User user,
       Map<String, FormDataBodyPart> files,
-      Map<String, BlobId> uploadedFileCache,
-      Integer consentGroupIdx) throws IOException {
-    ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
+      Map<String, BlobId> uploadedFileCache) throws IOException {
 
-    if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
-        && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
-      throw new NotFoundException("Could not find DAC");
-    }
-
+    ConsentGroup consentGroup = registration.getConsentGroups().get(0);
     List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
-    List<FileStorageObject> fileStorageObjects = uploadFilesForDataset(files, uploadedFileCache,
-        consentGroupIdx, user);
+
+
+    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
 
     return new DatasetServiceDAO.DatasetUpdate(
         consentGroup.getConsentGroupName(),
         consentGroup.getDataAccessCommitteeId(),
         user.getUserId(),
+        datasetId,
         props,
         fileStorageObjects
     );
@@ -271,6 +266,21 @@ public class DatasetRegistrationService {
 
   }
 
+  private List<FileStorageObject> uploadFilesForDatasetUpdate(Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache,
+      User user) throws IOException {
+    List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
+
+    if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME))) {
+      consentGroupFSOs.add(uploadFile(
+          files, uploadedFileCache, user,
+          String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME),
+          FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
+    }
+
+    return consentGroupFSOs;
+  }
+
   /**
    * Uploads the files related to the Dataset Registration's study object to Google Cloud and
    * returns references to them as FileStorageObjects.
@@ -344,7 +354,6 @@ public class DatasetRegistrationService {
        */
       Function<ConsentGroup, Object> getField
   ) {
-
     /**
      * Converts a field on the given registration to a DatasetProperty.
      *

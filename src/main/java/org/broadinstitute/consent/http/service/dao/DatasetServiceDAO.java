@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -55,6 +56,7 @@ public class DatasetServiceDAO {
   }
 
   public record DatasetUpdate(String name,
+                              Integer datasetId,
                               Integer dacId,
                               Integer userId,
                               List<DatasetProperty> props,
@@ -186,9 +188,8 @@ public class DatasetServiceDAO {
     }
   }
 
-  public List<Integer> updateDataset(List<DatasetUpdate> updates) throws SQLException {
-    final List<Integer> updatedDataset = new ArrayList<>();
-
+  public Integer updateDataset(DatasetUpdate updates) throws SQLException {
+    AtomicReference<Integer> updatedDataset = new AtomicReference<>();
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -196,26 +197,24 @@ public class DatasetServiceDAO {
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
 
-          for (DatasetUpdate update : updates) {
-            Integer datasetUpdatesNew = executeUpdateDatasetWithFiles(
-                handle,
-                update.name(),
-                update.dacId(),
-                update.userId(),
-                update.props(),
-                update.files());
-
-            updatedDataset.add(datasetUpdatesNew);
-          }
+          updatedDataset.set(executeUpdateDatasetWithFiles(
+              handle,
+              updates.name(),
+              updates.datasetId(),
+              updates.dacId(),
+              updates.userId(),
+              updates.props(),
+              updates.files()));
 
           handle.commit();
         }
     );
-    return updatedDataset;
+    return updatedDataset.get();
   }
 
   public Integer executeUpdateDatasetWithFiles(Handle handle,
       String name,
+      Integer datasetId,
       Integer dacId,
       Integer userId,
       List<DatasetProperty> properties,
@@ -226,14 +225,15 @@ public class DatasetServiceDAO {
         new Timestamp(new Date().getTime()),
         userId,
         false,
-        dacId
+        dacId,
+        datasetId
     );
 
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetUpdate, properties);
 
     // files
-    executeInsertFiles(handle, uploadedFiles, userId, datasetUpdate.toString());
+    executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
 
     return datasetUpdate;
   }
