@@ -215,9 +215,9 @@ public class DatasetResource extends Resource {
             User user = userService.findUserByEmail(authUser.getEmail());
 
             // get dataset id and check that it exists
-            Dataset dataset = datasetService.findDatasetById(datasetId);
-            if (Objects.isNull(dataset)) {
-                throw new BadRequestException("Dataset is required");
+            Dataset datasetExists = datasetService.findDatasetById(datasetId);
+            if (Objects.isNull(datasetExists)) {
+              throw new NotFoundException("Could not find the dataset with id: " + datasetId);
             }
 
             // key: field name (not file name), value: file body part
