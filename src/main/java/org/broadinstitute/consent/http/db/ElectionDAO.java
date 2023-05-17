@@ -476,9 +476,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
    */
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("""
-         SELECT e1.* FROM election e1
-         INNER JOIN dataset ds1 on ds1.dac_id = :dacId AND ds1.dataset_id = e1.dataset_id
-         WHERE LOWER(e1.status) = 'open'
+      SELECT e1.* FROM election e1
+      INNER JOIN dataset ds1 on ds1.dac_id = :dacId AND ds1.dataset_id = e1.dataset_id
+      WHERE LOWER(e1.status) = 'open'
       """)
   List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
 
