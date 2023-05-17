@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.ws.rs.BadRequestException;
@@ -16,8 +15,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -29,58 +26,20 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.PaginationResponse;
-import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
 
-  private final DataAccessRequestService dataAccessRequestService;
   private final DarCollectionService darCollectionService;
   private final UserService userService;
 
   @Inject
-  public DarCollectionResource(DataAccessRequestService dataAccessRequestService,
-      DarCollectionService darCollectionService, UserService userService) {
-    this.dataAccessRequestService = dataAccessRequestService;
+  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
     this.darCollectionService = darCollectionService;
     this.userService = userService;
-  }
-
-  @Deprecated
-  @GET
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsForResearcher(@Auth AuthUser authUser) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<DarCollection> collections = darCollectionService.getCollectionsForUser(user);
-      return Response.ok().entity(collections).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated
-  @GET
-  @Path("role/{roleName}")
-  @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL})
-  public Response getCollectionsForUserByRole(@Auth AuthUser authUser,
-      @PathParam("roleName") String roleName) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      List<DarCollection> collections = darCollectionService.getCollectionsForUserByRoleName(user,
-          roleName);
-      return Response.ok().entity(collections).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
   }
 
   @GET
@@ -302,53 +261,6 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  @GET
-  @Path("role/{roleName}/query")
-  @Consumes("application/json")
-  @PermitAll
-  public Response queryCollectionsByFiltersAndUserRoles(
-      @Auth AuthUser authUser,
-      @PathParam("roleName") String roleName,
-      @QueryParam("sortOrder") String sortOrder,
-      @QueryParam("filterTerm") String filterTerm,
-      @QueryParam("sortField") String sortField,
-      @QueryParam("pageSize") int pageSize
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      PaginationToken token = new PaginationToken(1, pageSize, sortField, sortOrder, filterTerm,
-          DarCollection.acceptableSortFields, DarCollection.defaultTokenSortField);
-      PaginationResponse<DarCollection> response = darCollectionService.queryCollectionsByFiltersAndUserRoles(
-          user, token, roleName);
-      return Response.ok().entity(response).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("role/{roleName}/paginated")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  public Response getCollectionsByToken(
-      @Auth AuthUser authUser,
-      @QueryParam("token") String token,
-      @PathParam("roleName") String roleName
-  ) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      String json = getDecodedJson(token);
-      PaginationToken paginationToken = convertJsonToPaginationToken(json);
-      PaginationResponse<DarCollection> paginationResponse = darCollectionService.queryCollectionsByFiltersAndUserRoles(
-          user, paginationToken, roleName);
-      return Response.ok().entity(paginationResponse).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   private void validateCollectionIsCanceled(DarCollection collection) {
     boolean isCanceled =
         collection.getDars().values().stream()
@@ -376,22 +288,4 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  private String getDecodedJson(String token) {
-    if (Objects.isNull(token) || token.isEmpty()) {
-      throw new BadRequestException("Token must be provided");
-    }
-    try {
-      return new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      throw new BadRequestException("Invalid pagination token");
-    }
-  }
-
-  private PaginationToken convertJsonToPaginationToken(String json) {
-    try {
-      return new Gson().fromJson(json, PaginationToken.class);
-    } catch (Exception e) {
-      throw new BadRequestException("Invalid pagination token");
-    }
-  }
 }
