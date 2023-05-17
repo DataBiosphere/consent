@@ -1043,6 +1043,108 @@ public class DatasetResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
+  @Test
+  public void testUpdateDatasetSuccess_new() throws SQLException, IOException {
+    Dataset preexistingDataset = new Dataset();
+    String json = createPropertiesJson("Dataset Name", "test");
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
+        preexistingDataset);
+    when(authUser.getGenericUser()).thenReturn(genericUser);
+    when(genericUser.getEmail()).thenReturn("email@email.com");
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(user.getUserId()).thenReturn(1);
+    when(user.hasUserRole(any())).thenReturn(true);
+
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("file/with&$invalid*^chars\\.txt")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
+    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, json);
+    assertEquals(200, response.getStatus());
+    assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+  }
+
+  @Test
+  public void testUpdateDatasetNoJson_new() {
+    initResource();
+    Response response = resource.updateDataset(authUser, uriInfo, 1, "");
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetNoProperties_new() {
+    initResource();
+    Response response = resource.updateDataset(authUser, uriInfo, 1, "{\"properties\":[]}");
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetIdNotFound_new() {
+    String json = createPropertiesJson("Dataset Name", "test");
+    when(datasetService.findDatasetById(anyInt())).thenReturn(null);
+
+    initResource();
+    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetInvalidProperty_new() {
+    List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
+    invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
+    when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
+
+    Dataset preexistingDataset = new Dataset();
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    String json = createPropertiesJson(invalidProperties);
+
+    initResource();
+    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetDuplicateProperties_new() {
+    List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
+    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
+    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
+    when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
+
+    Dataset preexistingDataset = new Dataset();
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    String json = createPropertiesJson(duplicateProperties);
+
+    initResource();
+    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetNoContent_new() {
+    Dataset preexistingDataset = new Dataset();
+    String json = createPropertiesJson("Dataset Name", "test");
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
+    when(authUser.getGenericUser()).thenReturn(genericUser);
+    when(genericUser.getEmail()).thenReturn("email@email.com");
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(user.getUserId()).thenReturn(1);
+    when(user.hasUserRole(any())).thenReturn(true);
+    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+    when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
+    initResource();
+    Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, json);
+    assertEquals(204, responseNoContent.getStatus());
+  }
+
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
    *
