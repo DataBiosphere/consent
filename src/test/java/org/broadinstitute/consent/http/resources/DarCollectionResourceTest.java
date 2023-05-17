@@ -13,7 +13,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -29,8 +28,6 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.PaginationResponse;
-import org.broadinstitute.consent.http.models.PaginationToken;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
@@ -62,8 +59,7 @@ public class DarCollectionResourceTest {
   private UserService userService;
 
   private void initResource() {
-    resource = new DarCollectionResource(dataAccessRequestService, darCollectionService,
-        userService);
+    resource = new DarCollectionResource(darCollectionService, userService);
   }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
@@ -85,70 +81,6 @@ public class DarCollectionResourceTest {
   @BeforeEach
   public void setUp() {
     openMocks(this);
-  }
-
-  @Test
-  public void testGetCollectionsForResearcher() {
-    List<DarCollection> mockCollectionsList = new ArrayList<>();
-    mockCollectionsList.add(mockDarCollection());
-    mockCollectionsList.add(mockDarCollection());
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getCollectionsForUser(any(User.class))).thenReturn(
-        mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForResearcher(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdmin() {
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.ADMIN.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdminWithoutProperRole() {
-    // Test that a user who has access cannot access as a role they do not have.
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsForUserByRoleAdminWithSORole() {
-    // Test that a user who has access can access as a different role they have.
-    List<DarCollection> mockCollectionsList = List.of(mockDarCollection());
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    UserRole soRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    User admin = new User(1, authUser.getEmail(), "Display Name", new Date(),
-        List.of(adminRole, soRole));
-
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
-    when(darCollectionService.getAllCollections()).thenReturn(mockCollectionsList);
-    initResource();
-
-    Response response = resource.getCollectionsForUserByRole(authUser,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
@@ -410,20 +342,6 @@ public class DarCollectionResourceTest {
   }
 
   @Test
-  public void testQueryCollectionsByFiltersAndUserRoles() {
-    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.queryCollectionsByFiltersAndUserRoles(any(User.class),
-        any(PaginationToken.class), anyString()))
-        .thenReturn(paginationResponse);
-    initResource();
-
-    Response response = resource.queryCollectionsByFiltersAndUserRoles(authUser, "researcher",
-        "DESC", "filterTerm", "projectTitle", 10);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
   public void testCancelDarCollection_InternalErrorStatus() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getUserId());
@@ -511,43 +429,6 @@ public class DarCollectionResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
-  @Test
-  public void testGetCollectionsByToken_InvalidToken() {
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    initResource();
-    Response response = resource.getCollectionsByToken(authUser, "badTokenString", "researcher");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsByToken_NullToken() {
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    initResource();
-    Response response = resource.getCollectionsByToken(authUser, null, "researcher");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsByToken_EmptyStringToken() {
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    initResource();
-    Response response = resource.getCollectionsByToken(authUser, "", "researcher");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  public void testGetCollectionsByToken() {
-    PaginationResponse<DarCollection> paginationResponse = new PaginationResponse<>();
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.queryCollectionsByFiltersAndUserRoles(any(User.class),
-        any(PaginationToken.class), anyString()))
-        .thenReturn(paginationResponse);
-    initResource();
-
-    String token = "eyJwYWdlIjoyLCJwYWdlU2l6ZSI6MSwic29ydEZpZWxkIjoiZGFyX2NvZGUiLCJzb3J0RGlyZWN0aW9uIjoiREVTQyIsImZpbHRlcmVkQ291bnQiOjQsImZpbHRlcmVkUGFnZUNvdW50Ijo0LCJ1bmZpbHRlcmVkQ291bnQiOjQsImFjY2VwdGFibGVTb3J0RmllbGRzIjp7InByb2plY3RUaXRsZSI6InByb2plY3RUaXRsZSIsInJlc2VhcmNoZXIiOiJyZXNlYXJjaGVyIiwiaW5zdGl0dXRpb24iOiJpbnN0aXR1dGlvbl9uYW1lIiwiZGFyQ29kZSI6ImRhcl9jb2RlIn19";
-    Response response = resource.getCollectionsByToken(authUser, token, "researcher");
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
 
   @Test
   public void testResubmitDarCollection_CollectionNotFound() {
