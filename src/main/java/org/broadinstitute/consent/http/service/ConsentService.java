@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import javax.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
