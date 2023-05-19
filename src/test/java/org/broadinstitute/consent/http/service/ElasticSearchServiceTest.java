@@ -69,12 +69,6 @@ public class ElasticSearchServiceTest {
         dacDAO, userDAO);
   }
 
-  // test:
-  // - to dataset term one dataset WITH USERS and ALL PROPS filled out
-  // - toUser on its own
-  // - to dataset term multiple datasets with less than all properties, one with no dac
-  // - approved users
-
   @Test
   public void testToDatasetTermComplete() {
     Dataset dataset = new Dataset();
