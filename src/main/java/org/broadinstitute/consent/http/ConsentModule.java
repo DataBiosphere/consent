@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
@@ -66,6 +67,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -426,6 +428,18 @@ public class ConsentModule extends AbstractModule {
         providesElectionDAO(),
         providesDataAccessRequestDAO(),
         providesVoteService());
+  }
+
+  @Provides
+  ElasticSearchService providesElasticSearchService() {
+    return new ElasticSearchService(
+        ElasticSearchSupport.createClient(config.getElasticSearchConfiguration()),
+        providesUseRestrictionConverter(),
+        providesDatasetDAO(),
+        providesDataAccessRequestDAO(),
+        providesDacDAO(),
+        providesUserDAO()
+    );
   }
 
   @Provides

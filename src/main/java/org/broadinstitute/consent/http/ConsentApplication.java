@@ -84,6 +84,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.InstitutionService;
@@ -191,6 +192,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         AcknowledgementService.class).get();
     final DatasetRegistrationService datasetRegistrationService = injector.getProvider(
         DatasetRegistrationService.class).get();
+    final ElasticSearchService elasticSearchService = injector.getProvider(
+        ElasticSearchService.class).get();
 
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
     configureCors(env);
