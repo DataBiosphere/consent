@@ -43,17 +43,20 @@ post:
       description: Internal Error (something went wrong processing a valid input)
 
 put:
-  summary: Updates a dataset from a valid datasetIntake object
-  description: Updates a dataset from a valid datasetIntake object
+  summary: Updates a dataset from a valid DatasetUpdate object
+  description: Updates a dataset from a valid DatasetUpdate object
   requestBody:
-    description: to do
+    description: Returns the updated dataset. A dataset must already exist, but files can be either
+                 updated or created if they don't already exist.
     content:
       multipart/form-data:
         schema:
           type: object
           properties:
             dataset:
-              description: uses datasetIntake record class to be adjusted specifically for this endpoint.
+              description: uses DatasetUpdate record class which has the values and properties of the 
+                           dataset that can be updated. The purpose of this class is to allow for 
+                           specific adjustments for this endpoint.
               type: object
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
@@ -67,7 +70,7 @@ put:
         - Dataset
       responses:
         201:
-          description: Successfully updated Datasets from Registration instance
+          description: Successfully updated Datasets
           content:
             application/json:
               schema:
