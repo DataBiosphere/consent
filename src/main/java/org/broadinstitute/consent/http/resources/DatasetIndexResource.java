@@ -4,6 +4,7 @@ package org.broadinstitute.consent.http.resources;
 import io.dropwizard.auth.Auth;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -52,7 +53,7 @@ public class DatasetIndexResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN})
   @Path("{datasetId}")
-  public Response indexDataset(@Auth AuthUser authUser, Integer datasetId) {
+  public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
       Dataset dataset = datasetService.findDatasetById(datasetId);
       DatasetTerm term = esService.toDatasetTerm(dataset);
