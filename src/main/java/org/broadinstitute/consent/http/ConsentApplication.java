@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersio
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
 import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
+import org.broadinstitute.consent.http.resources.DatasetIndexResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.ElectionResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
@@ -223,6 +224,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(
         new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
             userService, matchService));
+    env.jersey().register(new DatasetIndexResource(datasetService, elasticSearchService, userService));
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService));
     env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));

@@ -639,6 +639,15 @@ paths:
               schema:
                 type: string
                 format: binary
+  /api/dataset/index:
+    post:
+      summary: Index all datasets into Elastic Search
+      description: Index all datasets into Elastic Search
+      tags:
+        - Admin
+      responses:
+        200:
+          description: Datasets indexing operation was successful
   /api/dataset:
     get:
       summary: Get Datasets
