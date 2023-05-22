@@ -1077,7 +1077,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetNoJson_new() {
+  public void testUpdateDatasetWithNoJson() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1093,8 +1093,12 @@ public class DatasetResourceTest {
     assertEquals(400, response.getStatus());
   }
 
+  /**
+   * tests the case that there are no updates to dataset properties, should result in success
+   */
   @Test
-  public void testUpdateDatasetNoProperties_new() {
+  public void testUpdateDatasetWithNoProperties() {
+    Dataset dataset = new Dataset();
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1105,9 +1109,10 @@ public class DatasetResourceTest {
 
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
-    assertEquals(400, response.getStatus());
+    assertEquals(200, response.getStatus());
   }
 
   @Test
@@ -1157,23 +1162,6 @@ public class DatasetResourceTest {
 
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  private String createPropsForUpdateJson(Integer datasetId,
-                                          Integer propertyKey,
-                                          String schemaProperty,
-                                          String propertyValue,
-                                          PropertyType type,
-                                          Date createDate) {
-    List<DatasetProperty> jsonProperties = new ArrayList<>();
-    jsonProperties.add(new DatasetProperty(datasetId, propertyKey, schemaProperty, propertyValue, type, createDate));
-    return createPropertiesJson(jsonProperties);
-  }
-
-  private String createPropsJson(List<DatasetProperty> properties) {
-    Dataset json = new Dataset();
-    json.setProperties(properties);
-    return new Gson().toJson(json);
   }
 
 
