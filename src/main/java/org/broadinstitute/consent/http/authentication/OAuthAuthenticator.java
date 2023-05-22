@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.authentication;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -61,16 +61,17 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       }
       return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
     } catch (NotFoundException e) {
+      Gson gson = new Gson();
       // Try to post the user to Sam if they have not registered previously
       try {
         UserStatus userStatus = samService.postRegistrationInfo(authUser);
         if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
           authUser.setEmail(userStatus.getUserInfo().getUserEmail());
         } else {
-          throw new ServerErrorException("User not able to be registered", 500);
+          logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
       } catch (Exception exc) {
-        logException("User not able to be registered: '" + authUser.getEmail(), exc);
+        logException("AuthUser not able to be registered: '" + gson.toJson(authUser), exc);
       }
     } catch (Throwable e) {
       logException("Exception retrieving Sam user info for '" + authUser.getEmail() + "'",
