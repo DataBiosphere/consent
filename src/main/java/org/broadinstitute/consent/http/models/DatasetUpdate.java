@@ -14,6 +14,14 @@ public record DatasetUpdate (
     Boolean publicVisibility
 ){
 
+  public String getName() {
+    return this.name;
+  }
+
+  public Integer getDacId() {
+    return this.dacId;
+  }
+
   public List<DatasetProperty> getDatasetProperties() {
     return this.datasetProperties;
   }
