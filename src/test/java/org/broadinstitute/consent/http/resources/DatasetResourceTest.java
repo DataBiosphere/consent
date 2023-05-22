@@ -30,12 +30,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
@@ -1045,7 +1047,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetSuccess_new() throws SQLException, IOException {
+  public void testupdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
@@ -1069,7 +1071,7 @@ public class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, json);
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(200, response.getStatus());
     assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
   }
@@ -1087,7 +1089,7 @@ public class DatasetResourceTest {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
-    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, "");
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "");
     assertEquals(400, response.getStatus());
   }
 
@@ -1104,12 +1106,12 @@ public class DatasetResourceTest {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
-    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
     assertEquals(400, response.getStatus());
   }
 
   @Test
-  public void testUpdateDatasetIdNotFound_new() {
+  public void testUpdateDatasetWIthDatasetIdNotFound() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1124,7 +1126,7 @@ public class DatasetResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(null);
 
     initResource();
-    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, json);
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(404, response.getStatus());
   }
 
@@ -1153,8 +1155,25 @@ public class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    Response response = resource.updateDatasetByRegistrationSchema(authUser, 1, formDataMultiPart, json);
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  private String createPropsForUpdateJson(Integer datasetId,
+                                          Integer propertyKey,
+                                          String schemaProperty,
+                                          String propertyValue,
+                                          PropertyType type,
+                                          Date createDate) {
+    List<DatasetProperty> jsonProperties = new ArrayList<>();
+    jsonProperties.add(new DatasetProperty(datasetId, propertyKey, schemaProperty, propertyValue, type, createDate));
+    return createPropertiesJson(jsonProperties);
+  }
+
+  private String createPropsJson(List<DatasetProperty> properties) {
+    Dataset json = new Dataset();
+    json.setProperties(properties);
+    return new Gson().toJson(json);
   }
 
 

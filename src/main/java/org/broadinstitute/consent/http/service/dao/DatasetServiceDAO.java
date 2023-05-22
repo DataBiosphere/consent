@@ -188,8 +188,7 @@ public class DatasetServiceDAO {
     }
   }
 
-  public Integer updateDataset(DatasetUpdate updates) throws SQLException {
-    AtomicReference<Integer> updatedDataset = new AtomicReference<>();
+  public void updateDataset(DatasetUpdate updates) throws SQLException {
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -197,19 +196,18 @@ public class DatasetServiceDAO {
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
 
-          updatedDataset.set(executeUpdateDatasetWithFiles(
+          executeUpdateDatasetWithFiles(
               handle,
               updates.name(),
               updates.datasetId(),
               updates.dacId(),
               updates.userId(),
               updates.props(),
-              updates.files()));
+              updates.files());
 
           handle.commit();
         }
     );
-    return updatedDataset.get();
   }
 
   public Integer executeUpdateDatasetWithFiles(Handle handle,
@@ -220,7 +218,7 @@ public class DatasetServiceDAO {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles) {
     // update dataset
-    Integer datasetUpdate = datasetDAO.updateDatasetNew(
+    Integer datasetUpdate = datasetDAO.updateDatasetByDatasetId(
         name,
         new Timestamp(new Date().getTime()),
         userId,

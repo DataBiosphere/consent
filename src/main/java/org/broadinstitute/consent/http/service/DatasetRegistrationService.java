@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -128,9 +129,9 @@ public class DatasetRegistrationService {
    * @return List of created Datasets from the provided registration schema
    */
   public Dataset updateDataset(
-      DatasetRegistrationSchemaV1 registration,
       Integer datasetId,
       User user,
+      DatasetUpdate update,
       Map<String, FormDataBodyPart> files) throws IOException, SQLException {
 
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
@@ -138,7 +139,7 @@ public class DatasetRegistrationService {
     DatasetServiceDAO.DatasetUpdate datasetUpdates;
 
     try {
-      datasetUpdates = createDatasetUpdate(datasetId, registration, user, files, uploadedFileCache);
+      datasetUpdates = createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
 
     } catch (IOException e) {
       // uploading files to GCS failed. rollback files...
@@ -147,9 +148,8 @@ public class DatasetRegistrationService {
     }
 
     // Update or create the objects in the database
-    Integer updateDataset =
-        datasetServiceDAO.updateDataset(datasetUpdates);
-    return datasetDAO.findDatasetById(updateDataset);
+    datasetServiceDAO.updateDataset(datasetUpdates);
+    return datasetDAO.findDatasetById(datasetId);
   }
 
   /*
@@ -185,20 +185,18 @@ public class DatasetRegistrationService {
 
   private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
       Integer datasetId,
-      DatasetRegistrationSchemaV1 registration,
       User user,
+      DatasetUpdate datasetUpdate,
       Map<String, FormDataBodyPart> files,
       Map<String, BlobId> uploadedFileCache) throws IOException {
 
-    ConsentGroup consentGroup = registration.getConsentGroups().get(0);
-    List<DatasetProperty> props = convertConsentGroupToDatasetProperties(consentGroup);
-
+    List<DatasetProperty> props = datasetUpdate.getDatasetProperties();
 
     List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
 
     return new DatasetServiceDAO.DatasetUpdate(
-        consentGroup.getConsentGroupName(),
-        consentGroup.getDataAccessCommitteeId(),
+        datasetUpdate.getName(),
+        datasetUpdate.getDacId(),
         user.getUserId(),
         datasetId,
         props,
@@ -600,5 +598,4 @@ public class DatasetRegistrationService {
         .map(Optional::get)
         .toList();
   }
-
 }

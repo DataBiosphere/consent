@@ -43,8 +43,8 @@ post:
       description: Internal Error (something went wrong processing a valid input)
 
 put:
-  summary: Updates a dataset from a valid dataset registration JsonSchema object
-  description: Updates a dataset from a valid dataset registration JsonSchema object
+  summary: Updates a dataset from a valid datasetIntake object
+  description: Updates a dataset from a valid datasetIntake object
   requestBody:
     description: to do
     content:
@@ -53,15 +53,14 @@ put:
           type: object
           properties:
             dataset:
-              description: Required dataset registration json schema instance
+              description: uses datasetIntake record class to be adjusted specifically for this endpoint.
               type: object
-              $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
               format: binary
             consentGroups[0].nihInstitutionalCertificationFile:
-              description: Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
+              description: Certification file
               type: string
               format: binary
       tags:
@@ -77,5 +76,7 @@ put:
                   $ref: '../schemas/Dataset.yaml'
         400:
           description: Bad Request (invalid input)
+        404:
+          description: Dataset Id not found
         500:
           description: Internal Error (something went wrong processing a valid input)

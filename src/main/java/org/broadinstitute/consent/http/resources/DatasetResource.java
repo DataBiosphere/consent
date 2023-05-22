@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -230,44 +231,34 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/v3/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response updateDatasetByRegistrationSchema(
+  public Response updateByDatasetUpdate(
       @Auth AuthUser authUser,
       @PathParam("datasetId") Integer datasetId,
       FormDataMultiPart multipart,
       @FormDataParam("dataset") String json) {
 
-    // Validate dataset object
-    try {
-      Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
-      if (!errors.isEmpty()) {
-        throw new BadRequestException(
-            "Invalid schema:\n"
-                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
-      }
+    DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
 
-      // get registration
-      DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(json);
+    // add validation of json here
 
-      // find user
-      User user = userService.findUserByEmail(authUser.getEmail());
-
-      // get dataset id and check that it exists
-      Dataset datasetExists = datasetService.findDatasetById(datasetId);
-      if (Objects.isNull(datasetExists)) {
-        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
-      }
-
-      // key: field name (not file name), value: file body part
-      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-
-      try {
-        Dataset updatedDataset = datasetRegistrationService.updateDataset(registration, datasetId, user, files);
-        return Response.ok().entity(updatedDataset).build();
-      } catch (Exception e) {
-        return createExceptionResponse(e);
-      }
+    if (Objects.isNull(update)) {
+      throw new BadRequestException("Dataset is required");
     }
-    catch (Exception e) {
+
+    Dataset datasetExists = datasetService.findDatasetById(datasetId);
+    if (Objects.isNull(datasetExists)) {
+      throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+    }
+
+    User user = userService.findUserByEmail(authUser.getEmail());
+
+    // key: field name (not file name), value: file body part
+    Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+    try {
+      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update, files);
+      return Response.ok().entity(updatedDataset).build();
+    } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }
