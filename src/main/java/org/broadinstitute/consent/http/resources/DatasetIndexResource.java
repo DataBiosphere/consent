@@ -48,4 +48,19 @@ public class DatasetIndexResource extends Resource {
     }
   }
 
+  @POST
+  @Produces("application/json")
+  @RolesAllowed({ADMIN})
+  @Path("{datasetId}")
+  public Response indexDataset(@Auth AuthUser authUser, Integer datasetId) {
+    try {
+      Dataset dataset = datasetService.findDatasetById(datasetId);
+      DatasetTerm term = esService.toDatasetTerm(dataset);
+      esService.indexDatasets(List.of(term));
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
 }

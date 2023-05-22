@@ -648,6 +648,22 @@ paths:
       responses:
         200:
           description: Datasets indexing operation was successful
+  /api/dataset/index/{datasetId}:
+    post:
+      summary: Index all datasets into Elastic Search
+      description: Index all datasets into Elastic Search
+      tags:
+        - Admin
+      parameters:
+        - name: datasetId
+          in: path
+          description: ID of the Dataset
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Datasets indexing operation was successful
   /api/dataset:
     get:
       summary: Get Datasets
