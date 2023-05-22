@@ -7,22 +7,14 @@ public class DatasetTerm {
 
   private Integer datasetId;
   private String datasetIdentifier;
-  private String description;
-  private String studyName;
-  private Integer studyId;
   private Integer participantCount;
-  private String phenotype;
-  private String species;
-  private String piName;
-  private UserTerm dataSubmitter;
-  private String dataCustodian;
   private DataUseSummary dataUse;
-  private List<String> dataTypes;
   private String dataLocation;
-  private String dacName;
+  private String url;
+  private Integer dacId;
   private Boolean openAccess;
-  private Boolean publicVisibility;
   private List<UserTerm> approvedUsers;
+  private StudyTerm study;
 
   public Integer getDatasetId() {
     return datasetId;
@@ -40,29 +32,6 @@ public class DatasetTerm {
     this.datasetIdentifier = datasetIdentifier;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getStudyName() {
-    return studyName;
-  }
-
-  public void setStudyName(String studyName) {
-    this.studyName = studyName;
-  }
-
-  public Integer getStudyId() {
-    return studyId;
-  }
-
-  public void setStudyId(Integer studyId) {
-    this.studyId = studyId;
-  }
 
   public Integer getParticipantCount() {
     return participantCount;
@@ -72,45 +41,6 @@ public class DatasetTerm {
     this.participantCount = participantCount;
   }
 
-  public String getPhenotype() {
-    return phenotype;
-  }
-
-  public void setPhenotype(String phenotype) {
-    this.phenotype = phenotype;
-  }
-
-  public String getSpecies() {
-    return species;
-  }
-
-  public void setSpecies(String species) {
-    this.species = species;
-  }
-
-  public String getPiName() {
-    return piName;
-  }
-
-  public void setPiName(String piName) {
-    this.piName = piName;
-  }
-
-  public UserTerm getDataSubmitter() {
-    return dataSubmitter;
-  }
-
-  public void setDataSubmitter(UserTerm dataSubmitter) {
-    this.dataSubmitter = dataSubmitter;
-  }
-
-  public String getDataCustodian() {
-    return dataCustodian;
-  }
-
-  public void setDataCustodian(String dataCustodian) {
-    this.dataCustodian = dataCustodian;
-  }
 
   public DataUseSummary getDataUse() {
     return dataUse;
@@ -118,14 +48,6 @@ public class DatasetTerm {
 
   public void setDataUse(DataUseSummary dataUse) {
     this.dataUse = dataUse;
-  }
-
-  public List<String> getDataTypes() {
-    return dataTypes;
-  }
-
-  public void setDataTypes(List<String> dataTypes) {
-    this.dataTypes = dataTypes;
   }
 
   public String getDataLocation() {
@@ -136,12 +58,20 @@ public class DatasetTerm {
     this.dataLocation = dataLocation;
   }
 
-  public String getDacName() {
-    return dacName;
+  public String getUrl() {
+    return url;
   }
 
-  public void setDacName(String dacName) {
-    this.dacName = dacName;
+  public void setUrl(String url) {
+    this.url = url;
+  }
+
+  public Integer getDacId() {
+    return dacId;
+  }
+
+  public void setDacId(Integer dacId) {
+    this.dacId = dacId;
   }
 
   public Boolean getOpenAccess() {
@@ -152,19 +82,19 @@ public class DatasetTerm {
     this.openAccess = openAccess;
   }
 
-  public Boolean getPublicVisibility() {
-    return publicVisibility;
-  }
-
-  public void setPublicVisibility(Boolean publicVisibility) {
-    this.publicVisibility = publicVisibility;
-  }
-
   public List<UserTerm> getApprovedUsers() {
     return approvedUsers;
   }
 
   public void setApprovedUsers(List<UserTerm> approvedUsers) {
     this.approvedUsers = approvedUsers;
+  }
+
+  public StudyTerm getStudy() {
+    return study;
+  }
+
+  public void setStudy(StudyTerm study) {
+    this.study = study;
   }
 }

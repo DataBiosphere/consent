@@ -14,12 +14,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
@@ -41,10 +41,10 @@ public class ElasticSearchServiceTest {
   private ElasticSearchService service;
 
   @Mock
-  ElasticsearchClient esClient;
+  private ElasticsearchClient esClient;
 
   @Mock
-  UseRestrictionConverter useRestrictionConverter;
+  private UseRestrictionConverter useRestrictionConverter;
 
   @Mock
   private DacDAO dacDAO;
@@ -56,7 +56,10 @@ public class ElasticSearchServiceTest {
   private DatasetDAO datasetDAO;
 
   @Mock
-  DataAccessRequestDAO dataAccessRequestDAO;
+  private ElasticSearchConfiguration esConfig;
+
+  @Mock
+  private DataAccessRequestDAO dataAccessRequestDAO;
 
   @BeforeEach
   public void setUp() {
@@ -64,7 +67,7 @@ public class ElasticSearchServiceTest {
   }
 
   private void initService() {
-    service = new ElasticSearchService(esClient, useRestrictionConverter, datasetDAO,
+    service = new ElasticSearchService(esClient, esConfig, useRestrictionConverter, datasetDAO,
         dataAccessRequestDAO,
         dacDAO, userDAO);
   }
@@ -117,22 +120,18 @@ public class ElasticSearchServiceTest {
 
     dataset.setProperties(Set.of(openAccessProp, dataLocationProp));
 
-    Dac dac = new Dac();
-    dac.setName(RandomStringUtils.randomAlphabetic(10));
-
     User dataSubmitter = new User();
-    dataSubmitter.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    dataSubmitter.setUserId(9);
 
     User approvedUser1 = new User();
-    approvedUser1.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    approvedUser1.setUserId(10);
     User approvedUser2 = new User();
-    approvedUser2.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    approvedUser2.setUserId(11);
 
     DataUseSummary dataUseSummary = new DataUseSummary();
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
 
-    when(dacDAO.findById(any())).thenReturn(dac);
     when(userDAO.findUserById(study.getCreateUserId())).thenReturn(dataSubmitter);
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
         List.of(1, 2));
@@ -144,31 +143,31 @@ public class ElasticSearchServiceTest {
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
-    assertEquals(study.getDescription(), term.getDescription());
-    assertEquals(study.getName(), term.getStudyName());
-    assertEquals(study.getStudyId(), term.getStudyId());
-    assertEquals(phenotypeProperty.getValue(), term.getPhenotype());
-    assertEquals(speciesProperty.getValue(), term.getSpecies());
-    assertEquals(study.getPiName(), term.getPiName());
+    assertEquals(study.getDescription(), term.getStudy().getDescription());
+    assertEquals(study.getName(), term.getStudy().getStudyName());
+    assertEquals(study.getStudyId(), term.getStudy().getStudyId());
+    assertEquals(phenotypeProperty.getValue(), term.getStudy().getPhenotype());
+    assertEquals(speciesProperty.getValue(), term.getStudy().getSpecies());
+    assertEquals(study.getPiName(), term.getStudy().getPiName());
     assertEquals(
-        dataSubmitter.getDisplayName(),
-        term.getDataSubmitter().getDisplayName());
-    assertEquals(dataCustodianEmailProperty.getValue(), term.getDataCustodian());
+        dataSubmitter.getUserId(),
+        term.getStudy().getDataSubmitter().getUserId());
+    assertEquals(dataCustodianEmailProperty.getValue(), term.getStudy().getDataCustodian());
 
     assertEquals(dataUseSummary, term.getDataUse());
 
-    assertEquals(study.getDataTypes(), term.getDataTypes());
+    assertEquals(study.getDataTypes(), term.getStudy().getDataTypes());
     assertEquals(dataLocationProp.getPropertyValue(), term.getDataLocation());
-    assertEquals(dac.getName(), term.getDacName());
+    assertEquals(dataset.getDacId(), term.getDacId());
     assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
-    assertEquals(study.getPublicVisibility(), term.getPublicVisibility());
+    assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
 
     assertEquals(
-        approvedUser1.getDisplayName(),
-        term.getApprovedUsers().get(0).getDisplayName());
+        approvedUser1.getUserId(),
+        term.getApprovedUsers().get(0).getUserId());
     assertEquals(
-        approvedUser2.getDisplayName(),
-        term.getApprovedUsers().get(1).getDisplayName());
+        approvedUser2.getUserId(),
+        term.getApprovedUsers().get(1).getUserId());
 
   }
 
@@ -214,11 +213,6 @@ public class ElasticSearchServiceTest {
     UserTerm term = service.toUserTerm(user);
 
     assertEquals(user.getUserId(), term.getUserId());
-    assertEquals(
-        List.of("Example Role 1", "Example Role 2"),
-        term.getRoles());
-    assertEquals(user.getEmail(), term.getEmail());
-    assertEquals(user.getDisplayName(), term.getDisplayName());
   }
 
   @Captor
@@ -230,9 +224,12 @@ public class ElasticSearchServiceTest {
 
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
-    term1.setStudyName("Some study");
     DatasetTerm term2 = new DatasetTerm();
     term2.setDatasetId(2);
+
+    String datasetIndexName = RandomStringUtils.randomAlphabetic(10);
+
+    when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
 
     initService();
     service.indexDatasets(List.of(term1, term2));
@@ -243,12 +240,12 @@ public class ElasticSearchServiceTest {
 
     expectedBr.operations(op -> op
         .index(idx -> idx
-            .index("datasets")
+            .index(datasetIndexName)
             .id(term1.getDatasetId().toString())
             .document(term1))
     ).operations(op -> op
         .index(idx -> idx
-            .index("datasets")
+            .index(datasetIndexName)
             .id(term2.getDatasetId().toString())
             .document(term2))
     );
