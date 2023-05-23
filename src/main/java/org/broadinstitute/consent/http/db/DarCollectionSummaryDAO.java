@@ -96,7 +96,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
 
-              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
+              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name, " +
+              "dac.name as dac_name " +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -113,6 +114,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               "ON e.reference_id = dar.reference_id " +
               "INNER JOIN dar_dataset dd " +
               "ON dar.reference_id = dd.reference_id " +
+              "INNER JOIN dataset dataset on dataset.datasetid = dd.dataset_id " +
+              "INNER JOIN dac dac on dac.dac_id = dataset.dac_id " +
               "WHERE (e.latest = e.election_id OR e.election_id IS NULL) " +
               "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) "
       )

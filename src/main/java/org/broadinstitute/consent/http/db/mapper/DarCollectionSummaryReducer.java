@@ -56,6 +56,10 @@ public class DarCollectionSummaryReducer implements
         summary.addVote(vote);
       }
 
+      if (hasColumn(rowView, "dac_name", String.class)) {
+        summary.addDacName(rowView.getColumn("dac_name", String.class));
+      }
+
     } catch (NoSuchMapperException e) {
       //ignore these exceptions, just means there's no elections and votes on the collection for this query
     }
