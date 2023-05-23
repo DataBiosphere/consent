@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 import javax.annotation.security.PermitAll;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -96,7 +95,7 @@ public class SamResource extends Resource {
   @PermitAll
   public Response postSelfTos(@Auth AuthUser authUser) {
     try {
-      // Ensure that the user is a registered DUOS and SAM user before accepting ToS:
+      // Ensure that the user is a registered DUOS user before accepting ToS:
       try {
         userService.findUserByEmail(authUser.getEmail());
       } catch (NotFoundException nfe) {
@@ -104,13 +103,6 @@ public class SamResource extends Resource {
         user.setEmail(authUser.getEmail());
         user.setDisplayName(authUser.getName());
         userService.createUser(user);
-      }
-      try {
-        samService.postRegistrationInfo(authUser);
-      } catch (ConsentConflictException cce) {
-        // no-op in the case of conflicts.
-      } catch (Exception e) {
-        return createExceptionResponse(e);
       }
       TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
       return Response.ok().entity(tosResponse).build();
