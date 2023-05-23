@@ -114,7 +114,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               "ON e.reference_id = dar.reference_id " +
               "INNER JOIN dar_dataset dd " +
               "ON dar.reference_id = dd.reference_id " +
-              "INNER JOIN dataset dataset on dataset.datasetid = dd.dataset_id " +
+              "INNER JOIN dataset dataset on dataset.dataset_id = dd.dataset_id " +
               "INNER JOIN dac dac on dac.dac_id = dataset.dac_id " +
               "WHERE (e.latest = e.election_id OR e.election_id IS NULL) " +
               "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) "

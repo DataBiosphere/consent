@@ -227,7 +227,9 @@ public class DarCollectionSummary {
     if (Objects.isNull(this.dacNames)) {
       this.dacNames = new ArrayList<>();
     }
-    this.dacNames.add(dacName);
+    if (!this.dacNames.contains(dacName)) {
+      this.dacNames.add(dacName);
+    }
   }
 
   @Override
