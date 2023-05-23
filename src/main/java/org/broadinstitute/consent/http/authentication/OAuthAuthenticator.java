@@ -52,12 +52,16 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   private AuthUser getUserWithStatusInfo(AuthUser authUser) {
     try {
       UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
-      // safety check in case the call to generic user (i.e. Google) failed.
-      if (Objects.isNull(authUser.getEmail())) {
-        authUser.setEmail(userStatusInfo.getUserEmail());
-      }
-      if (Objects.isNull(authUser.getName())) {
-        authUser.setName(userStatusInfo.getUserEmail());
+      if (Objects.nonNull(userStatusInfo)) {
+        // safety check in case the call to generic user (i.e. Google) failed.
+        if (Objects.isNull(authUser.getEmail())) {
+          authUser.setEmail(userStatusInfo.getUserEmail());
+        }
+        if (Objects.isNull(authUser.getName())) {
+          authUser.setName(userStatusInfo.getUserEmail());
+        }
+      } else {
+        logWarn("Error getting user status info back from Sam for user: " + authUser.getEmail());
       }
       return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
     } catch (NotFoundException e) {
