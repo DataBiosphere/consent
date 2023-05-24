@@ -224,11 +224,10 @@ public class DatasetResource extends Resource {
 
   /**
    * This endpoint updates the dataset.
-   *
    */
   @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
   @Path("/v3/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response updateByDatasetUpdate(
