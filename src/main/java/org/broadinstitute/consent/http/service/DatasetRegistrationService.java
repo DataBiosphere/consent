@@ -264,16 +264,16 @@ public class DatasetRegistrationService {
   private List<FileStorageObject> uploadFilesForDatasetUpdate(Map<String, FormDataBodyPart> files,
       Map<String, BlobId> uploadedFileCache,
       User user) throws IOException {
-    List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
+    List<FileStorageObject> updateDatasetFSOs = new ArrayList<>();
 
     if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME))) {
-      consentGroupFSOs.add(uploadFile(
+      updateDatasetFSOs.add(uploadFile(
           files, uploadedFileCache, user,
           String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME),
           FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
     }
 
-    return consentGroupFSOs;
+    return updateDatasetFSOs;
   }
 
   /**

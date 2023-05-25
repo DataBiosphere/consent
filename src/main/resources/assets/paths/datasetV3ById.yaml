@@ -37,7 +37,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Dataset.yaml'
+            $ref: '../schemas/DatasetUpdate.yaml'
     400:
       description: Bad Request (invalid input)
     404:
