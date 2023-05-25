@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -178,6 +179,11 @@ public class ConsentModule extends AbstractModule {
   @Provides
   Client providesClient() {
     return client;
+  }
+
+  @Provides
+  HttpClientUtil providesHttpClientUtil() {
+    return new HttpClientUtil(config.getServicesConfiguration());
   }
 
   @Provides
@@ -600,7 +606,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   SamDAO providesSamDAO() {
-    return new SamDAO(config.getServicesConfiguration());
+    return new SamDAO(providesHttpClientUtil(), config.getServicesConfiguration());
   }
 
   @Provides

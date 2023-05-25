@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,7 +102,7 @@ public class SamPactTests {
   private void initSamDAO(MockServer mockServer) {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setSamUrl(mockServer.getUrl() + "/");
-    samDAO = new SamDAO(config);
+    samDAO = new SamDAO(new HttpClientUtil(config), config);
   }
 
   /* Pacts
