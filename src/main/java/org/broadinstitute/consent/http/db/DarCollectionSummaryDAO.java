@@ -55,45 +55,13 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
-      SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
-        i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
-        (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name
-      FROM dar_collection c
-      INNER JOIN users u
-        ON u.user_id = c.create_user_id
-      LEFT JOIN institution i
-        ON i.institution_id = u.institution_id
-      INNER JOIN data_access_request dar
-        ON dar.collection_id = c.collection_id
-      LEFT JOIN (
-        SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
-        FROM election
-        WHERE LOWER(election.election_type) = 'dataaccess'
-      ) AS e
-        ON e.reference_id = dar.reference_id 
-      INNER JOIN dar_dataset dd
-        ON dar.reference_id = dd.reference_id
-      WHERE u.institution_id = :institutionId
-        AND (e.latest = e.election_id OR e.election_id IS NULL)
-        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )     
-      """)
-  List<DarCollectionSummary> getDarCollectionSummariesForSO(
-      @Bind("institutionId") Integer institutionId);
-
-  @RegisterBeanMapper(value = DarCollectionSummary.class)
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = Election.class)
-  @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery
       (
           "SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name, "
               +
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-
-              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name, " +
-              "dac.name as dac_name " +
+              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -110,11 +78,42 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               "ON e.reference_id = dar.reference_id " +
               "INNER JOIN dar_dataset dd " +
               "ON dar.reference_id = dd.reference_id " +
-              "LEFT JOIN dataset dataset on dataset.dataset_id = dd.dataset_id " +
-              "LEFT JOIN dac dac on dac.dac_id = dataset.dac_id " +
-              "WHERE (e.latest = e.election_id OR e.election_id IS NULL) " +
+              "WHERE u.institution_id = :institutionId " +
+              "AND (e.latest = e.election_id OR e.election_id IS NULL) " +
               "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) "
       )
+  List<DarCollectionSummary> getDarCollectionSummariesForSO(
+      @Bind("institutionId") Integer institutionId);
+
+  @RegisterBeanMapper(value = DarCollectionSummary.class)
+  @RegisterBeanMapper(value = DarCollection.class)
+  @RegisterBeanMapper(value = Election.class)
+  @UseRowReducer(DarCollectionSummaryReducer.class)
+  @SqlQuery("""
+      SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
+        i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
+        (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name,
+        dac.name as dac_name
+      FROM dar_collection c
+      INNER JOIN users u
+        ON u.user_id = c.create_user_id
+      LEFT JOIN institution i
+        ON i.institution_id = u.institution_id
+      INNER JOIN data_access_request dar
+        ON dar.collection_id = c.collection_id
+      LEFT JOIN (
+        SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
+        FROM election
+        WHERE LOWER(election.election_type) = 'dataaccess'
+      ) AS e
+        ON e.reference_id = dar.reference_id
+      INNER JOIN dar_dataset dd
+        ON dar.reference_id = dd.reference_id
+      LEFT JOIN dataset dataset on dataset.dataset_id = dd.dataset_id
+      LEFT JOIN dac dac on dac.dac_id = dataset.dac_id
+      WHERE (e.latest = e.election_id OR e.election_id IS NULL)
+        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+      """)
   List<DarCollectionSummary> getDarCollectionSummariesForAdmin();
 
   @RegisterBeanMapper(value = DarCollectionSummary.class)
