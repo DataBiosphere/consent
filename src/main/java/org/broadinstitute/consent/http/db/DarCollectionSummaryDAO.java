@@ -55,8 +55,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery
-      ("""
+  @SqlQuery("""
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
         i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
         (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name
@@ -75,7 +74,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         ON e.reference_id = dar.reference_id 
       INNER JOIN dar_dataset dd
         ON dar.reference_id = dd.reference_id
-        WHERE u.institution_id = :institutionId
+      WHERE u.institution_id = :institutionId
         AND (e.latest = e.election_id OR e.election_id IS NULL)
         AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )     
       """)
