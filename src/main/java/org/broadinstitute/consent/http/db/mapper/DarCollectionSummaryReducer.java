@@ -25,16 +25,17 @@ public class DarCollectionSummaryReducer implements
     Integer datasetId;
     String darStatus;
     String darReferenceId;
-    String dacName;
+
     try {
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
       if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
       }
 
-      dacName = rowView.getColumn("dac_name", String.class);
-      if (Objects.nonNull(dacName)) {
-        summary.addDacName(dacName);
+      if (hasColumn(rowView, "dac_name", String.class)) {
+        if (Objects.nonNull(rowView.getColumn("dac_name", String.class))) {
+          summary.addDacName(rowView.getColumn("dac_name", String.class));
+        }
       }
 
       try {
