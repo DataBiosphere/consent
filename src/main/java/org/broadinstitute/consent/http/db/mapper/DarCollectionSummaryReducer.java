@@ -25,14 +25,16 @@ public class DarCollectionSummaryReducer implements
     Integer datasetId;
     String darStatus;
     String darReferenceId;
+    String dacName;
     try {
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
       if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
       }
 
-      if (hasColumn(rowView, "dac_name", String.class)) {
-        summary.addDacName(rowView.getColumn("dac_name", String.class));
+      dacName = rowView.getColumn("dac_name", String.class);
+      if (Objects.nonNull(dacName)) {
+        summary.addDacName(dacName);
       }
 
       try {
@@ -49,25 +51,24 @@ public class DarCollectionSummaryReducer implements
         //ignore exception, it means dar_status and dar_reference_id wasn't included for this query
       }
 
-      try{
+      try {
         election = rowView.getRow(Election.class);
         if (Objects.nonNull(election.getElectionId())) {
           summary.addElection(election);
           summary.addDatasetId(election.getDataSetId());
         }
       } catch (MappingException e) {
-
+        // Indicates that we do not have an election for this summary
       }
 
-      try{
+      try {
         vote = rowView.getRow(Vote.class);
         if (Objects.nonNull(vote.getVoteId())) {
           summary.addVote(vote);
         }
       } catch (MappingException e) {
-
+        // Indicates that we do not have an election for this summary
       }
-
 
     } catch (NoSuchMapperException e) {
       //ignore these exceptions, just means there's no elections and votes on the collection for this query

@@ -95,20 +95,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name,
         dac.name as dac_name
       FROM dar_collection c
-      INNER JOIN users u
-        ON u.user_id = c.create_user_id
-      LEFT JOIN institution i
-        ON i.institution_id = u.institution_id
-      INNER JOIN data_access_request dar
-        ON dar.collection_id = c.collection_id
+      INNER JOIN users u ON u.user_id = c.create_user_id
+      LEFT JOIN institution i ON i.institution_id = u.institution_id
+      INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
         FROM election
         WHERE LOWER(election.election_type) = 'dataaccess'
-      ) AS e
-        ON e.reference_id = dar.reference_id
-      INNER JOIN dar_dataset dd
-        ON dar.reference_id = dd.reference_id
+      ) AS e ON e.reference_id = dar.reference_id
+      INNER JOIN dar_dataset dd ON dar.reference_id = dd.reference_id
       LEFT JOIN dataset dataset on dataset.dataset_id = dd.dataset_id
       LEFT JOIN dac dac on dac.dac_id = dataset.dac_id
       WHERE (e.latest = e.election_id OR e.election_id IS NULL)
