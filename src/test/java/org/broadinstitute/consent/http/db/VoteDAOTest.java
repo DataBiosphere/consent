@@ -502,4 +502,9 @@ public class VoteDAOTest extends DAOTestHelper {
     assertEquals(chair.getUserId(), voteUsers.get(0).getUserId());
   }
 
+  private Vote createChairpersonVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
 }

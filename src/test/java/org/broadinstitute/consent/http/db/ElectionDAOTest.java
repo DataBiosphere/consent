@@ -1679,4 +1679,9 @@ public class ElectionDAOTest extends DAOTestHelper {
     return voteDAO.findVoteById(voteId);
   }
 
+  private Vote createChairpersonVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
 }
