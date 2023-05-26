@@ -95,7 +95,8 @@ public class SamDAO implements ConsentLogger {
       if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
         throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
       } else {
-        String errorMsg = String.format("Error posting user registration information to Sam. Status Code [%s]; Status Message [%s];  ",
+        String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
+          authUser.getEmail(),
           response.getStatusCode(),
           response.getStatusMessage());
         Exception e = new Exception(body);
