@@ -11,10 +11,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -26,6 +28,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -472,6 +475,46 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private LibraryCard createLibraryCard(User user) {
+    Integer institutionId = createInstitution().getId();
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
   }
 
 }

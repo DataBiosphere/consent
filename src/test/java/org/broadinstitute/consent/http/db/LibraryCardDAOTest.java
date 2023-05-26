@@ -241,5 +241,13 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
+  private LibraryCard createLibraryCard(User user) {
+    Integer institutionId = createInstitution().getId();
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
 }
 

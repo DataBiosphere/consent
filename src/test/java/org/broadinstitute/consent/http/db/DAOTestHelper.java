@@ -33,8 +33,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -323,38 +321,6 @@ public class DAOTestHelper {
     return user;
   }
 
-  private Institution createInstitution() {
-    User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        createUser.getUserId(),
-        createUser.getCreateDate());
-    Institution institution = institutionDAO.findInstitutionById(id);
-    User updateUser = createUser();
-    institutionDAO.updateInstitutionById(
-        id,
-        institution.getName(),
-        institution.getItDirectorEmail(),
-        institution.getItDirectorName(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date()
-    );
-    return institutionDAO.findInstitutionById(id);
-  }
-
   private Dataset createDataset() {
     return createDatasetWithDac(null);
   }
@@ -369,14 +335,6 @@ public class DAOTestHelper {
         dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
-  }
-
-  protected LibraryCard createLibraryCard(User user) {
-    Integer institutionId = createInstitution().getId();
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
-        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
-    return libraryCardDAO.findLibraryCardById(id);
   }
 
   /**
