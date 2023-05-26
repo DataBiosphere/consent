@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -322,14 +321,6 @@ public class DAOTestHelper {
     User user = createUserWithRole(roleId);
     dacDAO.addDacMember(roleId, user.getUserId(), dacId);
     return user;
-  }
-
-  protected Dac createDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
-        new Date());
-    return dacDAO.findById(id);
   }
 
   protected Institution createInstitution() {
