@@ -212,7 +212,13 @@ public class DAOTestHelper {
     return userDAO.findUserById(userId);
   }
 
-  protected User createUserWithInstitution() {
+  /**
+   * This method creates a number of DARs under a DarCollection and only returns the last DAR
+   * created.
+   *
+   * @return Last DataAccessRequest of a DarCollection
+   */
+  protected DataAccessRequest createDataAccessRequestV3() {
     int i1 = RandomUtils.nextInt(5, 10);
     String email = RandomStringUtils.randomAlphabetic(i1);
     String name = RandomStringUtils.randomAlphabetic(10);
@@ -230,17 +236,7 @@ public class DAOTestHelper {
         new Date());
     userDAO.updateUser(name, userId, institutionId);
     userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
-  /**
-   * This method creates a number of DARs under a DarCollection and only returns the last DAR
-   * created.
-   *
-   * @return Last DataAccessRequest of a DarCollection
-   */
-  protected DataAccessRequest createDataAccessRequestV3() {
-    User user = createUserWithInstitution();
+    User user = userDAO.findUserById(userId);
     String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
