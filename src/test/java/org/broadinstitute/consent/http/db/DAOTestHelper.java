@@ -463,8 +463,8 @@ public class DAOTestHelper {
     return createDataAccessRequest(user.getUserId(), collection_id, darCode);
   }
 
-  protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
-      int datasetId, int userId, String darCode) {
+  private DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
+      int datasetId, int userId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
     String referenceId = RandomStringUtils.randomAlphanumeric(20);
@@ -548,7 +548,7 @@ public class DAOTestHelper {
     datasets
         .forEach(dataset -> {
           DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId,
-              dataset.getDataSetId(), user.getUserId(), darCode);
+              dataset.getDataSetId(), user.getUserId());
           Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
               dataset.getDataSetId());
           Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());

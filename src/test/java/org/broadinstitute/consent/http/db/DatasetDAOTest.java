@@ -26,6 +26,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -826,11 +828,10 @@ public class DatasetDAOTest extends DAOTestHelper {
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     IntStream.range(0, datasets.size()).forEach(index -> {
-      String darSubCode = darCode + "-A-" + index;
       Dataset dataset = datasets.get(index);
       datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dacId);
       createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDataSetId(),
-          user.getUserId(), darSubCode);
+          user.getUserId());
     });
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
@@ -955,6 +956,17 @@ public class DatasetDAOTest extends DAOTestHelper {
     );
 
     return studyDAO.findStudyById(id);
+  }
+
+  private DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
+      int datasetId, int userId) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
+    String referenceId = RandomStringUtils.randomAlphanumeric(20);
+    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
+        new Date(), new Date(), new Date(), data);
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
 }
