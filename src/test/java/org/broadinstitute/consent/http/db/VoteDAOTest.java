@@ -13,13 +13,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -505,6 +508,46 @@ public class VoteDAOTest extends DAOTestHelper {
   private Vote createChairpersonVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
     return voteDAO.findVoteById(voteId);
+  }
+
+  private DarCollection createDarCollectionWithDatasets(User user,
+      List<Dataset> datasets) {
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    datasets
+        .forEach(dataset -> {
+          DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId,
+              dataset.getDataSetId(), user.getUserId());
+          Election cancelled = createCanceledAccessElection(dar.getReferenceId(),
+              dataset.getDataSetId());
+          Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+          createFinalVote(user.getUserId(), cancelled.getElectionId());
+          createFinalVote(user.getUserId(), access.getElectionId());
+        });
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+  }
+
+  private DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
+      int datasetId, int userId) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
+    String referenceId = RandomStringUtils.randomAlphanumeric(20);
+    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
+        new Date(), new Date(), new Date(), data);
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Election createCanceledAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CANCELED.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
   }
 
 }
