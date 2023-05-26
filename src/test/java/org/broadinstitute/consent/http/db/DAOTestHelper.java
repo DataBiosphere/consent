@@ -7,7 +7,6 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -24,7 +23,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetEntry;
-import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -302,17 +300,6 @@ public class DAOTestHelper {
       createDataAccessRequest(user.getUserId(), collection_id, darCode);
     }
     return createDataAccessRequest(user.getUserId(), collection_id, darCode);
-  }
-
-  private void createDatasetProperties(Integer datasetId) {
-    List<DatasetProperty> list = new ArrayList<>();
-    DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
-    dsp.setPropertyKey(1);
-    dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
-    list.add(dsp);
-    datasetDAO.insertDatasetProperties(list);
   }
 
   /**
