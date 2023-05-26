@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -107,6 +108,20 @@ public class DatasetAssociationDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private User createUserWithRole(Integer roleId) {
+    int i1 = RandomUtils.nextInt(5, 10);
+    int i2 = RandomUtils.nextInt(5, 10);
+    int i3 = RandomUtils.nextInt(3, 5);
+    String email = RandomStringUtils.randomAlphabetic(i1) +
+        "@" +
+        RandomStringUtils.randomAlphabetic(i2) +
+        "." +
+        RandomStringUtils.randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
   }
 
 }
