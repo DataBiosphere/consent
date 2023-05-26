@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -349,4 +350,13 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(file.getCategory(),
         s.getAlternativeDataSharingPlan().getCategory());
   }
+
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
 }

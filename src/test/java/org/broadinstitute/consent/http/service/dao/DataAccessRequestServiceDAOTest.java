@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -13,7 +14,10 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,4 +79,28 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     // collection should have the same update date as the updated dar
     assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
   }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
 }

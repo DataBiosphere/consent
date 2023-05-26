@@ -7,14 +7,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -144,4 +150,28 @@ public class VoteServiceDAOTest extends DAOTestHelper {
       assertTrue(requestVoteIds.contains(v.getVoteId()));
     });
   }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
 }

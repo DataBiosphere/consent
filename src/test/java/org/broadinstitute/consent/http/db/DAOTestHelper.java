@@ -355,7 +355,7 @@ public class DAOTestHelper {
     return institutionDAO.findInstitutionById(id);
   }
 
-  protected Dataset createDataset() {
+  private Dataset createDataset() {
     return createDatasetWithDac(null);
   }
 
