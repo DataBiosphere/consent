@@ -185,5 +185,15 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
   }
+
+  private LibraryCard createLibraryCardForIndex(Integer institutionId) {
+    Integer userId = createUser().getUserId();
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
+        stringValue,
+        userId, new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
 }
 

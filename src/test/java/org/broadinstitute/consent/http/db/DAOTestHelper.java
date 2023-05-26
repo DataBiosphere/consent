@@ -449,17 +449,6 @@ public class DAOTestHelper {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
-  //overloaded method, helper for INDEX SQL call
-  //createInstitution called outside of helper for institution reference/data checks
-  protected LibraryCard createLibraryCardForIndex(Integer institutionId) {
-    Integer userId = createUser().getUserId();
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
-        stringValue,
-        userId, new Date());
-    return libraryCardDAO.findLibraryCardById(id);
-  }
-
   /**
    * This method creates a number of DARs under a DarCollection and only returns the last DAR
    * created.
