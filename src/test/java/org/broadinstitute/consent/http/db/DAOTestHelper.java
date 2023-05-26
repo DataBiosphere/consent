@@ -50,14 +50,11 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class DAOTestHelper {
 
   public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
-  private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
@@ -277,7 +274,7 @@ public class DAOTestHelper {
 
   protected Match createMatch() {
     DataAccessRequest dar = createDataAccessRequestV3();
-    Dac dac = createDac();
+    createDac();
     Dataset dataset = createDataset();
     Integer matchId =
         matchDAO.insertMatch(
@@ -464,15 +461,6 @@ public class DAOTestHelper {
       createDataAccessRequest(user.getUserId(), collection_id, darCode);
     }
     return createDataAccessRequest(user.getUserId(), collection_id, darCode);
-  }
-
-  protected Integer createDataAccessRequestUserWithInstitute() {
-    User user = createUserWithInstitution();
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    createDataAccessRequest(user.getUserId(), collectionId, darCode);
-    return user.getInstitutionId();
   }
 
   protected DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
