@@ -229,11 +229,6 @@ public class DAOTestHelper {
     return electionDAO.findElectionById(electionId);
   }
 
-  protected Vote createDacVote(Integer userId, Integer electionId) {
-    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
-    return voteDAO.findVoteById(voteId);
-  }
-
   protected Vote createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
     return voteDAO.findVoteById(voteId);

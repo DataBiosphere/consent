@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -172,6 +173,11 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Vote createDacVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+    return voteDAO.findVoteById(voteId);
   }
 
 }

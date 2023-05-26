@@ -586,4 +586,9 @@ public class VoteDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
+  private Vote createDacVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
 }

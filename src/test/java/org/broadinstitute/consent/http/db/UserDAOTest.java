@@ -19,6 +19,7 @@ import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 
 public class UserDAOTest extends DAOTestHelper {
@@ -551,6 +553,11 @@ public class UserDAOTest extends DAOTestHelper {
     Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
         stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Vote createDacVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+    return voteDAO.findVoteById(voteId);
   }
 
 }
