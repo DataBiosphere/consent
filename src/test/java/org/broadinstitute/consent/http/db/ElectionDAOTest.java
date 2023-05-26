@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -1682,6 +1683,15 @@ public class ElectionDAOTest extends DAOTestHelper {
   private Vote createChairpersonVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
     return voteDAO.findVoteById(voteId);
+  }
+
+  private DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
+    for (int i = 0; i < 4; i++) {
+      createDataAccessRequest(userId, collectionId, darCode);
+    }
+    return createDataAccessRequest(userId, collectionId, darCode);
   }
 
 }
