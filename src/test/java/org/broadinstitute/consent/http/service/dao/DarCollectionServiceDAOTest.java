@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -450,6 +452,21 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private DataAccessRequest createDarForCollection(User user, Integer collectionId,
+      Dataset dataset) {
+    Date now = new Date();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
+        now, now, now, data);
+    dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
+    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
 
 }

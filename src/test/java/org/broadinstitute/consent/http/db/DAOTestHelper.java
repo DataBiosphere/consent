@@ -414,21 +414,6 @@ public class DAOTestHelper {
     return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
   }
 
-  protected DataAccessRequest createDarForCollection(User user, Integer collectionId,
-      Dataset dataset) {
-    Date now = new Date();
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    DataAccessRequestData data = new DataAccessRequestData();
-    dar.setData(data);
-    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
-        now, now, now, data);
-    dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
-    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
-    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-  }
-
   private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
     Integer electionId = electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
