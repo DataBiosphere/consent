@@ -14,8 +14,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -506,6 +508,38 @@ public class UserDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
   }
 
 }

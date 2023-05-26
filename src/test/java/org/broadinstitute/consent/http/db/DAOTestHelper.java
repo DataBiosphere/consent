@@ -323,7 +323,7 @@ public class DAOTestHelper {
     return user;
   }
 
-  protected Institution createInstitution() {
+  private Institution createInstitution() {
     User createUser = createUser();
     Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
         "itDirectorName",
