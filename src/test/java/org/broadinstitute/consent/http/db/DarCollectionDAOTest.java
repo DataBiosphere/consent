@@ -620,4 +620,15 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     return voteDAO.findVoteById(voteId);
   }
 
+  private Election createDataAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
 }

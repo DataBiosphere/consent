@@ -1848,4 +1848,15 @@ public class ElectionDAOTest extends DAOTestHelper {
     return electionDAO.findElectionById(electionId);
   }
 
+  private Election createDataAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
 }

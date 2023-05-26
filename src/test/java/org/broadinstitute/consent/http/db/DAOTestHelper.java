@@ -15,15 +15,12 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetEntry;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -190,24 +187,6 @@ public class DAOTestHelper {
        entity. When testing, if you need a specific modification to an object, call
        dao methods directly to do any manipulation.
      */
-
-  /**
-   * Create a DataAccess Election with "Open" status.
-   *
-   * @param referenceId A DAR's reference id
-   * @param datasetId   A dataset id
-   * @return DataAccess Election
-   */
-  protected Election createDataAccessElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
-    return electionDAO.findElectionById(electionId);
-  }
 
   /**
    * Creates a user with default role of Researcher and random user properties
