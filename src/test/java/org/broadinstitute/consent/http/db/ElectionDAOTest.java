@@ -766,7 +766,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(ElectionStatus.OPEN.getValue(), before.getStatus());
     assertNull(before.getLastUpdate());
-    assertEquals(null, before.getFinalAccessVote());
+    assertNull(before.getFinalAccessVote());
 
     electionDAO.updateElectionById(
         before.getElectionId(),
@@ -1440,7 +1440,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testGetOpenElectionByReferenceId_NoElection() {
 
     Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    createDatasetWithDac(dac.getDacId());
 
     DataAccessRequest dar = createDataAccessRequestV3();
     String referenceId = dar.getReferenceId();
@@ -1673,5 +1673,10 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertTrue(found.contains(e3));
   }
 
+  private Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+    voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+    return voteDAO.findVoteById(voteId);
+  }
 
 }
