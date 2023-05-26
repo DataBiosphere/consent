@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -321,10 +320,6 @@ public class DAOTestHelper {
     return user;
   }
 
-  private Dataset createDataset() {
-    return createDatasetWithDac(null);
-  }
-
   protected Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
     String name = "Name_" + RandomStringUtils.random(20, true, true);
@@ -372,35 +367,6 @@ public class DAOTestHelper {
         data
     );
     return dataAccessRequestDAO.findByReferenceId(referenceId);
-  }
-
-  protected DarCollection createDarCollection() {
-    User user = createUserWithInstitution();
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
-    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
-        dataset.getDataSetId());
-    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    createFinalVote(user.getUserId(), cancelled.getElectionId());
-    createFinalVote(user.getUserId(), access.getElectionId());
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
-  }
-
-  private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.CANCELED.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
-    return electionDAO.findElectionById(electionId);
   }
 
   private void createDatasetProperties(Integer datasetId) {

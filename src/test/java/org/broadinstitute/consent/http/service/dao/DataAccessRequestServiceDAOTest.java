@@ -8,8 +8,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -17,7 +21,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,6 +107,63 @@ public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private DarCollection createDarCollection() {
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
+        dataset.getDataSetId());
+    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    createFinalVote(user.getUserId(), cancelled.getElectionId());
+    createFinalVote(user.getUserId(), access.getElectionId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
+  private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CANCELED.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  /**
+   * Creates a new user, dataset, data access request, and dar collection
+   *
+   * @return Populated DataAccessRequest
+   */
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
+      String darCode) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    DatasetEntry entry = new DatasetEntry();
+    entry.setKey("key");
+    entry.setValue("value");
+    entry.setLabel("label");
+    data.setDatasets(List.of(entry));
+    data.setHmb(true);
+    data.setMethods(false);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
 }

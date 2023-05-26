@@ -561,4 +561,22 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     return electionDAO.findElectionById(electionId);
   }
 
+  private DarCollection createDarCollection() {
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
+        dataset.getDataSetId());
+    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    createFinalVote(user.getUserId(), cancelled.getElectionId());
+    createFinalVote(user.getUserId(), access.getElectionId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
 }

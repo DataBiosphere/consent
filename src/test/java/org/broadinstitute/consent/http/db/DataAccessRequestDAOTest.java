@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -704,6 +706,58 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
         now, now, now, now,
         data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private DarCollection createDarCollection() {
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
+        dataset.getDataSetId());
+    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    createFinalVote(user.getUserId(), cancelled.getElectionId());
+    createFinalVote(user.getUserId(), access.getElectionId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
+  private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CANCELED.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
   }
 
 }
