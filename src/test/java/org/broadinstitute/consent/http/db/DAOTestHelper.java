@@ -392,28 +392,6 @@ public class DAOTestHelper {
     return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
   }
 
-  protected DarCollection createDarCollectionMultipleUserProperties() {
-    User user = createUser();
-    Integer userId = user.getUserId();
-    createUserProperty(userId, UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-    createUserProperty(userId, UserFields.SUGGESTED_INSTITUTION.getValue());
-    createUserProperty(userId, UserFields.ERA_STATUS.getValue());
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
-    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
-        dataset.getDataSetId());
-    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
-    createFinalVote(user.getUserId(), cancelled.getElectionId());
-    createFinalVote(user.getUserId(), access.getElectionId());
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
-  }
-
   private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
     Integer electionId = electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
@@ -423,14 +401,6 @@ public class DAOTestHelper {
         datasetId
     );
     return electionDAO.findElectionById(electionId);
-  }
-
-  private void createUserProperty(Integer userId, String field) {
-    UserProperty property = new UserProperty();
-    property.setPropertyKey(field);
-    property.setPropertyValue(UUID.randomUUID().toString());
-    property.setUserId(userId);
-    userPropertyDAO.insertAll(List.of(property));
   }
 
   private void createDatasetProperties(Integer datasetId) {
