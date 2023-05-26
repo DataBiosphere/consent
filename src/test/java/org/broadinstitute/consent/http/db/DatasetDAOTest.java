@@ -969,4 +969,15 @@ public class DatasetDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
 }

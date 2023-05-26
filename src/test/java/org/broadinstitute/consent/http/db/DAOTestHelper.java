@@ -364,17 +364,6 @@ public class DAOTestHelper {
     return institutionDAO.findInstitutionById(id);
   }
 
-  protected void createDatasetProperties(Integer datasetId) {
-    List<DatasetProperty> list = new ArrayList<>();
-    DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
-    dsp.setPropertyKey(1);
-    dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
-    list.add(dsp);
-    datasetDAO.insertDatasetProperties(list);
-  }
-
   protected Dataset createDataset() {
     return createDatasetWithDac(null);
   }
@@ -547,6 +536,17 @@ public class DAOTestHelper {
     property.setPropertyValue(UUID.randomUUID().toString());
     property.setUserId(userId);
     userPropertyDAO.insertAll(List.of(property));
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
   }
 
 }
