@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -183,6 +184,17 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   private Vote createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
     return voteDAO.findVoteById(voteId);
+  }
+
+  private Election createRPElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.RP.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
   }
 
 }

@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
@@ -317,6 +319,17 @@ public class MatchDAOTest extends DAOTestHelper {
         "Everything",
         "Group");
     return consentDAO.findConsentById(consentId);
+  }
+
+  private Election createRPElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.RP.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
   }
 
 }

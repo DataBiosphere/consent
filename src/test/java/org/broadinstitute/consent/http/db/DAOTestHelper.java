@@ -209,17 +209,6 @@ public class DAOTestHelper {
     return electionDAO.findElectionById(electionId);
   }
 
-  protected Election createRPElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.RP.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
-    return electionDAO.findElectionById(electionId);
-  }
-
   /**
    * Creates a user with default role of Researcher and random user properties
    *
