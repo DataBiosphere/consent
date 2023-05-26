@@ -7,7 +7,6 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,9 +23,6 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
@@ -289,18 +285,6 @@ public class DAOTestHelper {
     User user = createUserWithRole(roleId);
     dacDAO.addDacMember(roleId, user.getUserId(), dacId);
     return user;
-  }
-
-  protected Dataset createDatasetWithDac(Integer dacId) {
-    User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
-        dataUse.toString(), dacId);
-    createDatasetProperties(id);
-    return datasetDAO.findDatasetById(id);
   }
 
   /**

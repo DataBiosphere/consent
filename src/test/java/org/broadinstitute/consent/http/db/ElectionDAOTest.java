@@ -1825,4 +1825,16 @@ public class ElectionDAOTest extends DAOTestHelper {
     return voteDAO.findVoteById(voteId);
   }
 
+  private Dataset createDatasetWithDac(Integer dacId) {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), dacId);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
 }
