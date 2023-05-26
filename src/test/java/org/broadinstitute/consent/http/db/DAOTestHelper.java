@@ -371,17 +371,6 @@ public class DAOTestHelper {
     return datasetDAO.findDatasetById(id);
   }
 
-  protected LibraryCard createLibraryCard() {
-    Integer institutionId = createInstitution().getId();
-    String email = RandomStringUtils.randomAlphabetic(11);
-    Integer userId = userDAO.insertUser(email, "displayName", new Date());
-    userDAO.updateUser(email, userId, institutionId);
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
-        stringValue, userId, new Date());
-    return libraryCardDAO.findLibraryCardById(id);
-  }
-
   protected LibraryCard createLibraryCard(User user) {
     Integer institutionId = createInstitution().getId();
     String stringValue = "value";

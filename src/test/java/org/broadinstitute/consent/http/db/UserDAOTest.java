@@ -542,4 +542,15 @@ public class UserDAOTest extends DAOTestHelper {
     return institutionDAO.findInstitutionById(id);
   }
 
+  private LibraryCard createLibraryCard() {
+    Integer institutionId = createInstitution().getId();
+    String email = RandomStringUtils.randomAlphabetic(11);
+    Integer userId = userDAO.insertUser(email, "displayName", new Date());
+    userDAO.updateUser(email, userId, institutionId);
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
+        stringValue, userId, new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
 }
