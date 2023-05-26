@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -301,6 +302,21 @@ public class MatchDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
   }
 
 }

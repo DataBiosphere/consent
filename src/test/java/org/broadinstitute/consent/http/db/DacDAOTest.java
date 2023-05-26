@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -390,6 +391,21 @@ public class DacDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
   }
 
 }

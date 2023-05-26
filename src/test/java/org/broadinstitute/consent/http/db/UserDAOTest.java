@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -558,6 +559,21 @@ public class UserDAOTest extends DAOTestHelper {
   private Vote createDacVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
     return voteDAO.findVoteById(voteId);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
   }
 
 }

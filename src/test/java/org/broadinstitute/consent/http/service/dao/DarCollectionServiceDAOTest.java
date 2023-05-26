@@ -469,4 +469,19 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
 
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
 }

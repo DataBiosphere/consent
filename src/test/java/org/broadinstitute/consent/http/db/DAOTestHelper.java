@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -232,22 +231,6 @@ public class DAOTestHelper {
   protected Vote createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
     return voteDAO.findVoteById(voteId);
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  protected Consent createConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        "{\"generalUse\": true }",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Everything",
-        "Group");
-    return consentDAO.findConsentById(consentId);
   }
 
   /**
