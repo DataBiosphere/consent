@@ -204,6 +204,42 @@ public class SamDAOTest implements WithMockServer {
     assertNotNull(userStatus);
   }
 
+  @Test
+  public void testPostRegistrationInfo_Conflict() {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
+        .setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT)
+            .withBody(status.toString()));
+
+    assertThrows(ConsentConflictException.class, () -> {
+      samDAO.postRegistrationInfo(authUser);
+    });
+  }
+
+  @Test
+  public void testPostRegistrationInfo_Error() {
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
+        .setLdap(true);
+    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+            .withBody(status.toString()));
+
+    assertThrows(Exception.class, () -> {
+      samDAO.postRegistrationInfo(authUser);
+    });
+  }
+
   /**
    * This test doesn't technically work due to some sort of async issue. The response is terminated
    * before the http request can finish executing. The response completes as expected in the
