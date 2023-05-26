@@ -180,4 +180,9 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     return voteDAO.findVoteById(voteId);
   }
 
+  private Vote createFinalVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
 }

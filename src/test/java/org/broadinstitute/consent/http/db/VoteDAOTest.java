@@ -607,4 +607,9 @@ public class VoteDAOTest extends DAOTestHelper {
     return consentDAO.findConsentById(consentId);
   }
 
+  private Vote createFinalVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
 }
