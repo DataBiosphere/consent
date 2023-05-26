@@ -589,4 +589,10 @@ public class UserDAOTest extends DAOTestHelper {
     return electionDAO.findElectionById(electionId);
   }
 
+  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
 }

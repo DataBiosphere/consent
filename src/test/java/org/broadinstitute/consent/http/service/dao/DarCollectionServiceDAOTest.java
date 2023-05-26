@@ -496,4 +496,10 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(id);
   }
 
+  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
 }

@@ -247,12 +247,6 @@ public class DAOTestHelper {
     return userDAO.findUserById(userId);
   }
 
-  protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
   /**
    * This method creates a number of DARs under a DarCollection and only returns the last DAR
    * created.
