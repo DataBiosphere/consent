@@ -760,4 +760,24 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
+  private DataAccessRequest createDraftDataAccessRequest() {
+    User user = createUser();
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId,
+        user.getUserId(),
+        now,
+        now,
+        now,
+        now,
+        data
+    );
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
 }
