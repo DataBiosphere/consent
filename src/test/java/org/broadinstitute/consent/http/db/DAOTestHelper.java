@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -37,7 +36,6 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
-import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
@@ -259,21 +257,6 @@ public class DAOTestHelper {
         "Everything",
         "Group");
     return consentDAO.findConsentById(consentId);
-  }
-
-  protected Match createMatch() {
-    DataAccessRequest dar = createDataAccessRequestV3();
-    createDac();
-    Dataset dataset = createDataset();
-    Integer matchId =
-        matchDAO.insertMatch(
-            dataset.getDatasetIdentifier(),
-            dar.getReferenceId(),
-            RandomUtils.nextBoolean(),
-            false,
-            new Date(),
-            MatchAlgorithm.V3.getVersion());
-    return matchDAO.findMatchById(matchId);
   }
 
   /**

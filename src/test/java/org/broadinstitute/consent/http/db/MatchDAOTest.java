@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
@@ -248,6 +249,21 @@ public class MatchDAOTest extends DAOTestHelper {
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
     assertEquals(0, foundMatch.getFailureReasons().size());
+  }
+
+  private Match createMatch() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    createDac();
+    Dataset dataset = createDataset();
+    Integer matchId =
+        matchDAO.insertMatch(
+            dataset.getDatasetIdentifier(),
+            dar.getReferenceId(),
+            RandomUtils.nextBoolean(),
+            false,
+            new Date(),
+            MatchAlgorithm.V3.getVersion());
+    return matchDAO.findMatchById(matchId);
   }
 
 }
