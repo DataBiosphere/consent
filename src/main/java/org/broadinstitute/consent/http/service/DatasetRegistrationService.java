@@ -266,10 +266,10 @@ public class DatasetRegistrationService {
       User user) throws IOException {
     List<FileStorageObject> updateDatasetFSOs = new ArrayList<>();
 
-    if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME))) {
+    if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0))) {
       updateDatasetFSOs.add(uploadFile(
           files, uploadedFileCache, user,
-          String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME),
+          String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0),
           FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
     }
 
