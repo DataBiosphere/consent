@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -544,6 +545,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer userTwoId = userTwo.getUserId();
     Dataset dataset = createDataset(userOneId);
     Dataset datasetTwo = createDataset(userTwoId);
+    Integer dacOne = createDac().getDacId();
+    Integer dacTwo = createDac().getDacId();
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -567,7 +570,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
-    List<Integer> targetDatasetsDacIds = List.of(dataset.getDacId(), datasetTwo.getDacId());
+    List<Integer> targetDatasetsDacIds = List.of(dacOne, dacTwo);
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
@@ -577,8 +580,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
       assertEquals(1, s.getDacNames().size());
-      s.getDacNames().stream()
-          .forEach((dac) -> assertTrue(targetDatasetsDacIds.contains(dac)));
+      s.getDacNames().forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
 
       Integer electionId;
 
@@ -608,6 +610,8 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Dataset datasetTwo = createDataset(userTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
+    Integer dacOne = createDac().getDacId();
+    Integer dacTwo = createDac().getDacId();
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
     DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId);
 
@@ -616,7 +620,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         datasetTwo.getDataSetId());
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
-    List<Integer> targetDatasetsDacIds = List.of(dataset.getDacId(), datasetTwo.getDacId());
+    List<Integer> targetDatasetsDacIds = List.of(dacOne, dacTwo);
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
@@ -625,8 +629,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       s.getDatasetIds().stream()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
       assertEquals(1, s.getDacNames().size());
-      s.getDacNames().stream()
-          .forEach((dac) -> assertTrue(targetDatasetsDacIds.contains(dac)));
+      s.getDacNames().forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
       s.getDarStatuses().values()
           .forEach((st) -> assertTrue(st.equalsIgnoreCase("test")));
       assertEquals(0, s.getElections().size());
