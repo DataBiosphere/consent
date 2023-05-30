@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -40,6 +41,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
@@ -105,6 +107,51 @@ public class DarCollectionService {
     } else {
       summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
     }
+  }
+
+  /**
+   * This is a slightly different approach to calculating summary status for a Chairperson than
+   * we do in `DarCollectionService.determineCollectionStatus`. Chairs need to see the "Canceled"
+   * status for elections that they have canceled as opposed to the "Completed" status that the
+   * other version calculates. The status needs to be filtered based on the datasets they have
+   * access to as opposed to elections on ALL datasets that might exist within the DAR Collection.
+   *
+   * @param summary DarCollectionSummary
+   * @param chairDatasets Pre-filtered list of datasets accessible to the chairperson user
+   * @return DarCollectionStatus
+   */
+  protected DarCollectionStatus getCollectionStatusFromSummaryForChair(DarCollectionSummary summary, List<Dataset> chairDatasets) {
+    // If there are no elections, status is unreviewed
+    // If there are any open elections, status is in process
+    // If all elections are canceled, status is canceled
+    // If all elections are closed, status is complete
+    if (summary.getElections().isEmpty()) {
+      return DarCollectionStatus.UNREVIEWED;
+    }
+    List<Integer> chairDatasetIds = chairDatasets.stream().map(Dataset::getDataSetId).toList();
+    List<String> electionStatuses = summary.getElections().values().stream()
+        .filter(e -> chairDatasetIds.contains(e.getDataSetId()))
+        .map(Election::getStatus).distinct().toList();
+    List<String> completedStatuses = Stream.of(ElectionStatus.CLOSED, ElectionStatus.FINAL)
+        .map(ElectionStatus::getValue).toList();
+    // The case where all statuses are the same - we know the overall summary status:
+    if (electionStatuses.size() == 1) {
+      String electionStatus = electionStatuses.get(0);
+      if (electionStatus.equalsIgnoreCase(ElectionStatus.CANCELED.getValue())) {
+        return DarCollectionStatus.CANCELED;
+      }
+      if (completedStatuses.contains(electionStatus)) {
+        return DarCollectionStatus.COMPLETE;
+      }
+    } else {
+      // There are elections in a mixed state for this summary - make a determination on completeness
+      //noinspection SimplifyStreamApiCallChains
+      if (electionStatuses.stream().allMatch(completedStatuses::contains)) {
+        return DarCollectionStatus.COMPLETE;
+      }
+    }
+    // Default status
+    return DarCollectionStatus.IN_PROCESS;
   }
 
   private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
@@ -220,25 +267,58 @@ public class DarCollectionService {
   }
 
 
-  private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
+  /**
+   * Iterate over all summaries and set the correct statuses based on what datasets/elections
+   * the chairperson has access to.
+   *
+   * @param user The Chairperson User
+   * @param summaries List of DAR Collection Summaries to process
+   */
+  private void processDarCollectionSummariesForChair(User user, List<DarCollectionSummary> summaries) {
+    List<Integer> allDatasetIds = summaries.stream()
+      .map(DarCollectionSummary::getDatasetIds)
+      .flatMap(Set::stream)
+      .distinct()
+      .toList();
+    // All datasets in all of the DAR Collections
+    List<Dataset> allDatasets = datasetDAO.findDatasetsByIdList(allDatasetIds);
+    List<Integer> chairDacIds = user.getRoles().stream()
+      .map(UserRole::getDacId)
+      .filter(Objects::nonNull)
+      .distinct()
+      .toList();
+    // Datasets filtered by user's DAC associations
+    List<Dataset> chairDatasets = allDatasets.stream()
+      .filter(d -> chairDacIds.contains(d.getDacId()))
+      .toList();
+    List<Integer> chairDatasetIds = chairDatasets.stream()
+      .filter(d -> chairDacIds.contains(d.getDacId()))
+      .map(Dataset::getDataSetId)
+      .toList();
     summaries.forEach(s -> {
       //if there are no elections, only show open
       //if there is any closed or canceled elections, or if some datasets dont have an election, show open
       //if there are any open elections, show cancel and vote
       Map<String, Integer> statusCount = new HashMap<>();
-      Map<Integer, Election> elections = s.getElections();
-      if (elections.size() == 0) {
+      Map<Integer, Election> electionMap = s.getElections();
+      // Filter election map by user's DAC
+      List<Election> chairElections = electionMap
+        .values()
+        .stream()
+        .filter(election -> chairDatasetIds.contains(election.getDataSetId()))
+        .toList();
+      if (chairElections.size() == 0) {
         s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
         s.addAction(DarCollectionActions.OPEN.getValue());
       } else {
-        if (elections.size() < s.getDatasetCount()) {
+        if (chairElections.size() < s.getDatasetCount()) {
           s.addAction(DarCollectionActions.OPEN.getValue());
         }
-        elections.values().forEach(election -> {
+        chairElections.forEach(election -> {
           String statusString = election.getStatus();
           updateStatusCount(statusCount, statusString);
           ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
-          switch (status) {
+          switch (Objects.requireNonNull(status)) {
             case CLOSED:
             case CANCELED:
               s.addAction(DarCollectionActions.OPEN.getValue());
@@ -255,8 +335,7 @@ public class DarCollectionService {
         if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
           s.addAction(DarCollectionActions.CANCEL.getValue());
         }
-
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+        s.setStatus(getCollectionStatusFromSummaryForChair(s, chairDatasets).getValue());
       }
     });
   }
@@ -284,30 +363,30 @@ public class DarCollectionService {
     UserRoles role = UserRoles.getUserRoleFromName(userRole);
     Integer userId = user.getUserId();
     List<Integer> datasetIds;
-    switch (role) {
-      case ADMIN:
+    switch (Objects.requireNonNull(role)) {
+      case ADMIN -> {
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
         processDarCollectionSummariesForAdmin(summaries);
-        break;
-      case SIGNINGOFFICIAL:
+      }
+      case SIGNINGOFFICIAL -> {
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
         processDarCollectionSummariesForSO(summaries);
-        break;
-      case CHAIRPERSON:
-        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-            .map(d -> d.getDataSetId())
+      }
+      case CHAIRPERSON -> {
+        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+            .map(Dataset::getDataSetId)
             .collect(Collectors.toList());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
-        processDarCollectionSummariesForChair(summaries);
-        break;
-      case MEMBER:
-        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-            .map(d -> d.getDataSetId())
+        processDarCollectionSummariesForChair(user, summaries);
+      }
+      case MEMBER -> {
+        datasetIds = datasetDAO.findDatasetsByUserId(userId).stream()
+            .map(Dataset::getDataSetId)
             .collect(Collectors.toList());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForMember(summaries, userId);
-        break;
-      case RESEARCHER:
+      }
+      case RESEARCHER -> {
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
         processDarCollectionSummariesForResearcher(summaries);
         List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
@@ -317,9 +396,9 @@ public class DarCollectionService {
             .filter(Objects::nonNull)
             .toList()
         );
-        break;
-      default:
-        break;
+      }
+      default -> {
+      }
     }
     return summaries;
   }
@@ -355,7 +434,7 @@ public class DarCollectionService {
               .collect(Collectors.toList());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
               datasetIds, collectionId);
-          processDarCollectionSummariesForChair(List.of(summary));
+          processDarCollectionSummariesForChair(user, List.of(summary));
           break;
         case MEMBER:
           datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
