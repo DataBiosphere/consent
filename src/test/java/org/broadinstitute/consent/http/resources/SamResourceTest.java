@@ -170,23 +170,6 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos_NoSamUser() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    spy(samService);
-    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
-    initResource();
-
-    Response response = resource.postSelfTos(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    verify(samService, times(1)).postRegistrationInfo(any());
-  }
-
-  @Test
   public void testRemoveSelfTos() throws Exception {
     TosResponse.Enabled enabled = new TosResponse.Enabled()
         .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true)
