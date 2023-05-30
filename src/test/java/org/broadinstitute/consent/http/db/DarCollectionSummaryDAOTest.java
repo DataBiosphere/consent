@@ -567,6 +567,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
+    List<Integer> targetDatasetsDacIds = List.of(dataset.getDacId(), datasetTwo.getDacId());
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
@@ -575,6 +576,9 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       s.getDatasetIds().stream()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
+      assertEquals(1, s.getDacNames().size());
+      s.getDacNames().stream()
+          .forEach((dac) -> assertTrue(targetDatasetsDacIds.contains(dac)));
       Integer electionId;
 
       if (s.getDarCollectionId() == collectionOneId) {
