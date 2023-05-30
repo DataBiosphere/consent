@@ -579,6 +579,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDacNames().size());
       s.getDacNames().stream()
           .forEach((dac) -> assertTrue(targetDatasetsDacIds.contains(dac)));
+
       Integer electionId;
 
       if (s.getDarCollectionId() == collectionOneId) {
@@ -615,6 +616,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         datasetTwo.getDataSetId());
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
+    List<Integer> targetDatasetsDacIds = List.of(dataset.getDacId(), datasetTwo.getDacId());
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
@@ -622,6 +624,9 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetIds().size());
       s.getDatasetIds().stream()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
+      assertEquals(1, s.getDacNames().size());
+      s.getDacNames().stream()
+          .forEach((dac) -> assertTrue(targetDatasetsDacIds.contains(dac)));
       s.getDarStatuses().values()
           .forEach((st) -> assertTrue(st.equalsIgnoreCase("test")));
       assertEquals(0, s.getElections().size());
