@@ -1066,9 +1066,9 @@ public class DatasetResourceTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
