@@ -11,17 +11,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
+import org.broadinstitute.consent.http.enumeration.UserFields;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetEntry;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -417,6 +428,228 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(
         collectionId);
     assertNull(returnedCollection);
+  }
+
+  /**
+   * Creates a new user, dataset, data access request, and dar collection
+   *
+   * @return Populated DataAccessRequest
+   */
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
+      String darCode) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    DatasetEntry entry = new DatasetEntry();
+    entry.setKey("key");
+    entry.setValue("value");
+    entry.setLabel("label");
+    data.setDatasets(List.of(entry));
+    data.setHmb(true);
+    data.setMethods(false);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
+  private LibraryCard createLibraryCard(User user) {
+    Integer institutionId = createInstitution().getId();
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
+  }
+
+  private DarCollection createDarCollectionMultipleUserProperties() {
+    User user = createUser();
+    Integer userId = user.getUserId();
+    createUserProperty(userId, UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
+    createUserProperty(userId, UserFields.SUGGESTED_INSTITUTION.getValue());
+    createUserProperty(userId, UserFields.ERA_STATUS.getValue());
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
+        dataset.getDataSetId());
+    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    createFinalVote(user.getUserId(), cancelled.getElectionId());
+    createFinalVote(user.getUserId(), access.getElectionId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
+  private void createUserProperty(Integer userId, String field) {
+    UserProperty property = new UserProperty();
+    property.setPropertyKey(field);
+    property.setPropertyValue(UUID.randomUUID().toString());
+    property.setUserId(userId);
+    userPropertyDAO.insertAll(List.of(property));
+  }
+
+  private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CANCELED.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private DarCollection createDarCollection() {
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
+        dataset.getDataSetId());
+    Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    createFinalVote(user.getUserId(), cancelled.getElectionId());
+    createFinalVote(user.getUserId(), access.getElectionId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
+  private DataAccessRequest createDraftDataAccessRequest() {
+    User user = createUser();
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId,
+        user.getUserId(),
+        now,
+        now,
+        now,
+        now,
+        data
+    );
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
+  private Vote createFinalVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private Election createDataAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private User createUserWithInstitution() {
+    int i1 = RandomUtils.nextInt(5, 10);
+    String email = RandomStringUtils.randomAlphabetic(i1);
+    String name = RandomStringUtils.randomAlphabetic(10);
+    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        userId,
+        new Date());
+    userDAO.updateUser(name, userId, institutionId);
+    userRoleDAO.insertSingleUserRole(7, userId);
+    return userDAO.findUserById(userId);
   }
 
 }
