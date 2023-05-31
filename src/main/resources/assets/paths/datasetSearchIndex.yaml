@@ -1,0 +1,21 @@
+post:
+  summary: Search Datasets
+  description: Returns all datasets matching a search query.
+  requestBody:
+    description: Search query
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: A list of Datasets
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object

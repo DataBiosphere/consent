@@ -706,6 +706,21 @@ public class DatasetResourceTest {
   }
 
   @Test
+  public void testSearchDatasetIndex() {
+    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(0);
+
+    initResource();
+
+    String query = "{ \"dataUse\": [\"HMB\"] }";
+    Response response = resource.searchDatasetIndex(authUser, query);
+
+    assertEquals(200, response.getStatus());
+    assertTrue(response.getEntity().toString().length() > 2);
+  }
+
+  @Test
   public void testUpdateNeedsReviewDataSetsSuccess() {
     Dataset dataSet = new Dataset();
     when(datasetService.updateNeedsReviewDatasets(any(), any())).thenReturn(dataSet);
