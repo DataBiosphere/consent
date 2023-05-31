@@ -6,17 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Role;
@@ -356,6 +360,64 @@ public class DacDAOTest extends DAOTestHelper {
         testEmail,
         new Date());
     return dacDAO.findById(id);
+  }
+
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
+  private Dataset createDatasetWithDac(Integer dacId) {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), dacId);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
   }
 
 }
