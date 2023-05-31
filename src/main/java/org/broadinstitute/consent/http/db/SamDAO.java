@@ -4,6 +4,7 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.FutureCallback;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
@@ -88,12 +90,20 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
-    if (!response.isSuccessStatusCode()) {
-      logException(
-          "Error posting user registration information to Sam: " + response.getStatusMessage(),
-          new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-    }
     String body = response.parseAsString();
+    if (!response.isSuccessStatusCode()) {
+      if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
+        throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
+      } else {
+        String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
+          authUser.getEmail(),
+          response.getStatusCode(),
+          response.getStatusMessage());
+        Exception e = new Exception(body);
+        logException(errorMsg, new Exception(body));
+        throw e;
+      }
+    }
     return new Gson().fromJson(body, UserStatus.class);
   }
 
@@ -112,8 +122,7 @@ public class SamDAO implements ConsentLogger {
 
           @Override
           public void onFailure(@NonNull Throwable throwable) {
-            logException(throwable.getMessage(),
-                new ServerErrorException(throwable.getMessage(), 500));
+            logWarn("Async Post Registration Failure for user: " + authUser.getEmail() + "; " + throwable.getMessage());
           }
         },
         listeningExecutorService);

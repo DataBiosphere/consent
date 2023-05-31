@@ -159,6 +159,12 @@ public class ConsentGroup {
   @JsonPropertyDescription("Free text field for entering URL of data")
   private URI url;
   /**
+   * # of Participants (Required)
+   */
+  @JsonProperty("numberOfParticipants")
+  @JsonPropertyDescription("# of Participants")
+  private Integer numberOfParticipants;
+  /**
    * List of File Types
    */
   @JsonProperty("fileTypes")
@@ -485,6 +491,14 @@ public class ConsentGroup {
     this.url = url;
   }
 
+  public Integer getNumberOfParticipants() {
+    return numberOfParticipants;
+  }
+
+  public void setNumberOfParticipants(Integer numberOfParticipants) {
+    this.numberOfParticipants = numberOfParticipants;
+  }
+
   /**
    * List of File Types
    */
@@ -586,6 +600,10 @@ public class ConsentGroup {
     sb.append('=');
     sb.append(((this.url == null) ? "<null>" : this.url));
     sb.append(',');
+    sb.append("numberOfParticipants");
+    sb.append('=');
+    sb.append(((this.numberOfParticipants == null) ? "<null>" : this.numberOfParticipants));
+    sb.append(',');
     sb.append("fileTypes");
     sb.append('=');
     sb.append(((this.fileTypes == null) ? "<null>" : this.fileTypes));
@@ -612,6 +630,8 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.otherPrimary == null) ? 0 : this.otherPrimary.hashCode()));
     result = ((result * 31) + ((this.gs == null) ? 0 : this.gs.hashCode()));
     result = ((result * 31) + ((this.url == null) ? 0 : this.url.hashCode()));
+    result = ((result * 31) + ((this.numberOfParticipants == null) ? 0
+        : this.numberOfParticipants.hashCode()));
     result = ((result * 31) + ((this.fileTypes == null) ? 0 : this.fileTypes.hashCode()));
     result = ((result * 31) + ((this.diseaseSpecificUse == null) ? 0
         : this.diseaseSpecificUse.hashCode()));
