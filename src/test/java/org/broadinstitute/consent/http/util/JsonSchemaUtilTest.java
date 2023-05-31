@@ -30,9 +30,9 @@ public class JsonSchemaUtilTest {
         "consentGroups": [{
           "fileTypes": [{
             "fileType": "Arrays",
-            "functionalEquivalence": "equivalence",
-            "numberOfParticipants": 2
+            "functionalEquivalence": "equivalence"
           }],
+          "numberOfParticipants": 2,
           "consentGroupName": "name",
           "generalResearchUse": true,
           "dataAccessCommitteeId": 1,
@@ -104,9 +104,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -142,9 +142,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -177,9 +177,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -204,9 +204,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -233,9 +233,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -274,9 +274,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -312,9 +312,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -339,9 +339,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -366,9 +366,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -413,9 +413,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "openAccess": true,
             "url": "https://asdf.com"
@@ -439,9 +439,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "openAccess": false,
             "poa": true,
@@ -466,9 +466,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "hmb": true,
             "url": "https://asdf.com"
@@ -606,9 +606,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "diseaseSpecificUse": [],
             "dataAccessCommitteeId": 1,
@@ -633,9 +633,10 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
-            }],                "consentGroupName": "name",
+              "functionalEquivalence": "equivalence"
+            }],
+            "numberOfParticipants": 2,
+            "consentGroupName": "name",
             "diseaseSpecificUse": ["something!"],
             "dataAccessCommitteeId": 1,
             "url": "https://asdf.com"
@@ -668,9 +669,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name!",
             "generalResearchUse": true,
             "hmb": true,
@@ -696,9 +697,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name!",
             "diseaseSpecificUse": ["some disease"],
             "openAccess": true,
@@ -733,9 +734,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -760,9 +761,9 @@ public class JsonSchemaUtilTest {
           "consentGroups": [{
             "fileTypes": [{
               "fileType": "Arrays",
-              "functionalEquivalence": "equivalence",
-              "numberOfParticipants": 2
+              "functionalEquivalence": "equivalence"
             }],
+            "numberOfParticipants": 2,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -803,9 +804,9 @@ public class JsonSchemaUtilTest {
            "consentGroups": [{
              "fileTypes": [{
                "fileType": "Arrays",
-               "functionalEquivalence": "equivalence",
-               "numberOfParticipants": 2
+               "functionalEquivalence": "equivalence"
              }],
+             "numberOfParticipants": 2,
              "consentGroupName": "",
              "generalResearchUse": true,
              "dataAccessCommitteeId": 1,

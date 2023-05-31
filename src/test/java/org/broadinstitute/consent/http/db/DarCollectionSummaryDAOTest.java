@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -76,6 +77,13 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20),
         new Timestamp(System.currentTimeMillis()), userId, null, false,
         new DataUseBuilder().setGeneralUse(true).build().toString(), null);
+    return datasetDAO.findDatasetById(datasetId);
+  }
+
+  private Dataset createDatasetWithDac(Integer userId, Integer dacId) {
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20),
+        new Timestamp(System.currentTimeMillis()), userId, null, false,
+        new DataUseBuilder().setGeneralUse(true).build().toString(), dacId);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -541,12 +549,16 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
+    Dac dacOne = createDac();
+    Dac dacTwo = createDac();
+    Integer dacOneId = dacOne.getDacId();
+    Integer dacTwoId = dacTwo.getDacId();
+    String dacOneName = dacOne.getName();
+    String dacTwoName = dacTwo.getName();
     Integer userOneId = userOne.getUserId();
     Integer userTwoId = userTwo.getUserId();
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
-    Integer dacOne = createDac().getDacId();
-    Integer dacTwo = createDac().getDacId();
+    Dataset dataset = createDatasetWithDac(userOneId, dacOneId);
+    Dataset datasetTwo = createDatasetWithDac(userTwoId, dacTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
@@ -570,30 +582,28 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
-    List<Integer> targetDatasetsDacIds = List.of(dacOne, dacTwo);
+    List<String> targetDatasetsDacIds = List.of(dacOneName, dacTwoName);
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
     summaries.forEach((s) -> {
       assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
+      s.getDatasetIds()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
 
       assertEquals(1, s.getDacNames().size());
-      s.getDacNames().forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
+      s.getDacNames()
+          .forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
 
       Integer electionId;
 
-      if (s.getDarCollectionId() == collectionOneId) {
+      if (Objects.equals(s.getDarCollectionId(), collectionOneId)) {
         electionId = collectionOneElection.getElectionId();
       } else {
         electionId = collectionTwoElection.getElectionId();
       }
 
-      s.getElections().entrySet().stream()
-          .forEach((e) -> {
-            assertEquals(electionId, e.getKey());
-          });
+      s.getElections().forEach((key, value) -> assertEquals(electionId, key));
       assertEquals(1, s.getDatasetCount());
     });
   }
@@ -605,13 +615,16 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     User userTwo = createUserForTest();
     Integer userOneId = userOne.getUserId();
     Integer userTwoId = userTwo.getUserId();
-
-    Dataset dataset = createDataset(userOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dac dacOne = createDac();
+    Dac dacTwo = createDac();
+    Integer dacOneId = dacOne.getDacId();
+    Integer dacTwoId = dacTwo.getDacId();
+    String dacOneName = dacOne.getName();
+    String dacTwoName = dacTwo.getName();
+    Dataset dataset = createDatasetWithDac(userOneId, dacOneId);
+    Dataset datasetTwo = createDatasetWithDac(userTwoId, dacTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
-    Integer dacOne = createDac().getDacId();
-    Integer dacTwo = createDac().getDacId();
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
     DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId);
 
@@ -620,7 +633,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
         datasetTwo.getDataSetId());
 
     List<Integer> targetDatasets = List.of(dataset.getDataSetId(), datasetTwo.getDataSetId());
-    List<Integer> targetDatasetsDacIds = List.of(dacOne, dacTwo);
+    List<String> targetDatasetsDacIds = List.of(dacOneName, dacTwoName);
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
     assertEquals(2, summaries.size());
@@ -628,8 +641,11 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
       assertEquals(1, s.getDatasetIds().size());
       s.getDatasetIds().stream()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
+
       assertEquals(1, s.getDacNames().size());
-      s.getDacNames().forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
+      s.getDacNames()
+          .forEach((dacId) -> assertTrue(targetDatasetsDacIds.contains(dacId)));
+
       s.getDarStatuses().values()
           .forEach((st) -> assertTrue(st.equalsIgnoreCase("test")));
       assertEquals(0, s.getElections().size());
