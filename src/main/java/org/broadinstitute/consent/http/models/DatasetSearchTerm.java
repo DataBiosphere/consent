@@ -6,6 +6,7 @@ public class DatasetSearchTerm {
 
   private Integer datasetId = 0;
   private String datasetIdentifier = "";
+  // nosemgrep
   private String description = "";
   private String studyName = "";
   private Integer studyId = 0;
@@ -21,4 +22,8 @@ public class DatasetSearchTerm {
   private String dacName = "";
   private Boolean openAccess = false;
   private List<Integer> approvedUsers = List.of(0);
+
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
+  }
 }

@@ -715,6 +715,9 @@ public class DatasetResourceTest {
 
     String query = "{ \"dataUse\": [\"HMB\"] }";
     Response response = resource.searchDatasetIndex(authUser, query);
+
+    assertEquals(200, response.getStatus());
+    assertTrue(response.getEntity().toString().length() > 2);
   }
 
   @Test

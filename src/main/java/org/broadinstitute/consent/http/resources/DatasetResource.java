@@ -543,8 +543,15 @@ public class DatasetResource extends Resource {
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
-      return Response.ok().entity(unmarshal(List.of(datasetSearchTerm))).build();
+      List<DatasetSearchTerm> datasetSearchTerms = new ArrayList<>();
+      /* return up to 8 semi-random but consistent number of results for a specific query */
+      var numResults = query.hashCode() & 0x7L;
+      for (int i = 0; i < numResults; i++) {
+        DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
+        datasetSearchTerm.setDatasetId(i);
+        datasetSearchTerms.add(datasetSearchTerm);
+      }
+      return Response.ok().entity(unmarshal(datasetSearchTerms)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
