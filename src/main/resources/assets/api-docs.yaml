@@ -488,36 +488,9 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
-  /api/dar/progress_report/{parentReferenceId}:
-    post:
-      summary: Create a new DAR progress report
-      description: Create a new DAR progress report
-      parameters:
-        - name: parentReferenceId
-          in: path
-          description: The referenceId of the Data Access Request
-          required: true
-          schema:
-            type: string
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
-      requestBody:
-        content:
-          required: true
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                collaboratorRequiredFile:
-                  type: string
-                  format: binary
-                ethicsApprovalRequiredFile:
-                  type: string
-                  format: binary
+
+  /api/dar/v2/progress_report/{parentReferenceId}:
+    $ref: './paths/progressReport.yaml'
 
   /api/dataRequest/cases/summary/DataAccess:
     get:

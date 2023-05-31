@@ -1,0 +1,35 @@
+post:
+  summary: Create a new DAR progress report
+  description: Create a new DAR progress report
+  tags:
+    - Data Access Request
+  parameters:
+    - name: parentReferenceId
+      in: path
+      description: The referenceId of the Data Access Request
+      required: true
+      schema:
+        type: string
+  requestBody:
+    content:
+      required: true
+      application/json:
+        schema:
+          $ref: '../schemas/DataAccessRequest.yaml'
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            collaboratorRequiredFile:
+              type: string
+              format: binary
+            ethicsApprovalRequiredFile:
+              type: string
+              format: binary
+  responses:
+    200:
+      description: Returns the Data Access Request with progress report
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessRequest.yaml'
