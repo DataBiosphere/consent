@@ -71,7 +71,6 @@ public class ElasticSearchService implements ConsentLogger {
         "PUT",
         "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
-    System.out.print(String.join("", bulkApiCall) + "\n");
     bulkRequest.setEntity(new NStringEntity(
         String.join("", bulkApiCall) + "\n",
         ContentType.DEFAULT_BINARY));
