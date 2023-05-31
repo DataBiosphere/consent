@@ -120,7 +120,12 @@ public class ElasticSearchServiceTest {
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue("some location");
 
-    dataset.setProperties(Set.of(openAccessProp, dataLocationProp));
+    DatasetProperty numParticipantsProp = new DatasetProperty();
+    numParticipantsProp.setSchemaProperty("numberOfParticipants");
+    numParticipantsProp.setPropertyType(PropertyType.Number);
+    numParticipantsProp.setPropertyValue(20);
+
+    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
 
     User dataSubmitter = new User();
     dataSubmitter.setUserId(9);
@@ -163,6 +168,8 @@ public class ElasticSearchServiceTest {
     assertEquals(dataset.getDacId(), term.getDacId());
     assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
     assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
+
+    assertEquals(numParticipantsProp.getPropertyValue(), term.getParticipantCount());
 
     assertEquals(
         approvedUser1.getUserId(),

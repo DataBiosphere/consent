@@ -167,8 +167,11 @@ public class ElasticSearchService implements ConsentLogger {
         datasetProperty -> term.setOpenAccess((Boolean) datasetProperty.getPropertyValue())
     );
 
-    // TODO: unsure how to get number of participants; there could
-    // be multiple if there are multiple file types
+    findDatasetProperty(
+        dataset.getProperties(), "numberOfParticipants"
+    ).ifPresent(
+        datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
+    );
 
     findDatasetProperty(
         dataset.getProperties(), "url"
