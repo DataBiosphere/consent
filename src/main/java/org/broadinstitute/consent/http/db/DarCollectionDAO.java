@@ -14,7 +14,6 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
-import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -52,34 +51,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           " LEFT JOIN vote v ON v.electionid = e.election_id ";
 
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
-
-  String orderStatement = " ORDER BY <sortField> <sortOrder>";
-
-  /**
-   * DAC -> Consent -> Consent Association -> Dataset -> DAR -> DAR Collection
-   *
-   * @param dacIds List of DAC Ids to find DARCollections for.
-   * @return All DARCollection Ids for which there is a dataset owned by any of the DACs
-   */
-  @SqlQuery(" SELECT distinct c.collection_id "
-      + " FROM dar_collection c "
-      + "   INNER JOIN data_access_request dar ON dar.collection_id = c.collection_id " +
-      "      AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) "
-      + "   INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-      + "   INNER JOIN consent_associations ca ON ca.dataset_id = dd.dataset_id "
-      + "   INNER JOIN consents consent ON consent.consent_id = ca.consent_id "
-      + "   INNER JOIN dataset ds ON ca.dataset_id = ds.dataset_id "
-      + "      AND ds.dac_id IN (<dacIds>) ")
-  List<Integer> findDARCollectionIdsByDacIds(@BindList("dacIds") List<Integer> dacIds);
-
-  @SqlQuery(
-      " SELECT distinct c.collection_id "
-          + " FROM dar_collection c"
-          + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id"
-          + " INNER JOIN users u ON dar.user_id = u.user_id"
-          + " WHERE u.institution_id = :institutionId "
-          + " AND (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL)")
-  List<Integer> findDARCollectionIdsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -136,40 +107,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
   )
   List<DarCollection> findAllDARCollections();
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery("SELECT c.*, dd.dataset_id, " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-      Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
-      UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
-      + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-      + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
-      + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-      + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data, "
-      + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
-      + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest "
-      + "FROM dar_collection c "
-      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + "LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
-      + "INNER JOIN users u ON c.create_user_id = u.user_id "
-      + "LEFT JOIN user_property up ON u.user_id = up.userid "
-      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "LEFT JOIN ("
-      + "  SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
-      + "   FROM election "
-      + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
-      + ") AS e "
-      + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
-      + "WHERE c.create_user_id = :userId "
-      + " AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
-  )
-  List<DarCollection> findDARCollectionsCreatedByUserId(@Bind("userId") Integer researcherId);
 
   /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given
@@ -319,93 +256,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
-  String coreCountQuery = "SELECT COUNT(DISTINCT c.collection_id) "
-      + "FROM dar_collection c "
-      + "INNER JOIN users u ON u.user_id = c.create_user_id "
-      + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-      + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-      + " WHERE (LOWER((dar.data #>> '{}')::jsonb->>'status')!='archived' OR (dar.data #>> '{}')::jsonb->>'status' IS NULL) ";
-
-  //Count methods for unfiltered results listed below
-  //DAC version is not included since a method that returns collectionIds for a DAC already exists
-  @SqlQuery(coreCountQuery)
-  Integer returnUnfilteredCollectionCount();
-
-  @SqlQuery(
-      coreCountQuery + "AND c.create_user_id = :userId")
-  Integer returnUnfilteredResearcherCollectionCount(@Bind("userId") Integer userId);
-
-  @SqlQuery(coreCountQuery + "AND u.institution_id = :institutionId")
-  Integer returnUnfilteredCountForInstitution(@Bind("institutionId") Integer institutionId);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-      + " WHERE (" + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
-  List<DarCollection> getFilteredCollectionsForAdmin(
-      @Define("sortField") String sortField,
-      @Define("sortOrder") String sortOrder,
-      @Bind("filterTerm") String filterTerm
-  );
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-      + " WHERE u.institution_id = :institutionId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
-  List<DarCollection> getFilteredCollectionsForSigningOfficial(
-      @Define("sortField") String sortField,
-      @Define("sortOrder") String sortOrder,
-      @Bind("institutionId") Integer institutionId,
-      @Bind("filterTerm") String filterTerm);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-      + " WHERE c.create_user_id = :userId AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") "
-      + archiveFilterQuery + orderStatement)
-  List<DarCollection> getFilteredListForResearcher(
-      @Define("sortField") String sortField,
-      @Define("sortOrder") String sortOrder,
-      @Bind("userId") Integer userId,
-      @Bind("filterTerm") String filterTerm);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @RegisterBeanMapper(value = Vote.class, prefix = "v")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(getCollectionAndDars
-      + " WHERE c.collection_id IN (<collectionIds>) AND ("
-      + DarCollection.FILTER_TERMS_QUERY + ") " + archiveFilterQuery + orderStatement)
-  List<DarCollection> getFilteredCollectionsForDACByCollectionIds(
-      @Define("sortField") String sortField,
-      @Define("sortOrder") String sortOrder,
-      @BindList("collectionIds") List<Integer> collectionIds,
-      @Bind("filterTerm") String filterTerm
-  );
 }
 
 

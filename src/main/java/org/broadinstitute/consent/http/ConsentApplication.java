@@ -232,7 +232,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DacResource(dacService, userService, datasetService));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
-        new DarCollectionResource(dataAccessRequestService, darCollectionService, userService));
+        new DarCollectionResource(darCollectionService, userService));
     env.jersey().register(new DataRequestCasesResource(summaryService));
     env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
     env.jersey().register(new ElectionResource(voteService, electionService));
