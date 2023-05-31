@@ -87,6 +87,14 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(datasetId);
   }
 
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
   private Election createElection(String type, String status, String referenceId,
       Integer datasetId) {
     Integer electionId = electionDAO.insertElection(type, status, new Date(), referenceId,
