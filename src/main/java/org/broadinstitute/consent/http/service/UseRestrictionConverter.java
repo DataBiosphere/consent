@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -189,7 +188,7 @@ public class UseRestrictionConverter {
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
     WebTarget target = client.target(
         servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    Response response = target.request(MediaType.APPLICATION_JSON)
+    Response response = target.request("application/x-ndjson")
         .post(Entity.json(dataUse.toString()));
     if (response.getStatus() == 200) {
       try {
@@ -203,19 +202,19 @@ public class UseRestrictionConverter {
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
-    WebTarget target = client.target(
-        servicesConfiguration.getOntologyURL() + "translate/summary");
-    Response response = target.request(MediaType.APPLICATION_JSON)
-        .post(Entity.json(dataUse.toString()));
-    if (response.getStatus() == 200) {
-      try {
-        return response.readEntity(DataUseSummary.class);
-      } catch (Exception e) {
-        LOGGER.error("Error parsing response from Ontology service: " + e);
-      }
-    }
-    LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
-    return null;
+//    WebTarget target = client.target(
+//        servicesConfiguration.getOntologyURL() + "translate/summary");
+//    Response response = target.request(MediaType.APPLICATION_JSON)
+//        .post(Entity.json(dataUse.toString()));
+//    if (response.getStatus() == 200) {
+//     try {
+//        return response.readEntity(DataUseSummary.class);
+//      } catch (Exception e) {
+//        LOGGER.error("Error parsing response from Ontology service: " + e);
+//      }
+//    }
+//    LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
+    return new DataUseSummary();
 
   }
 

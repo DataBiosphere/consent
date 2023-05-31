@@ -64,16 +64,17 @@ public class ElasticSearchService implements ConsentLogger {
 
     datasets.forEach((dsTerm) -> {
       bulkApiCall.add(bulkHeader.formatted(dsTerm.getDatasetId()));
-      bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm));
+      bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
     });
 
     Request bulkRequest = new Request(
         "PUT",
-        "/" + esConfig.getDatasetIndexName());
+        "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
+    System.out.print(String.join("", bulkApiCall) + "\n");
     bulkRequest.setEntity(new NStringEntity(
-        String.join("\n", bulkApiCall),
-        ContentType.APPLICATION_JSON));
+        String.join("", bulkApiCall) + "\n",
+        ContentType.DEFAULT_BINARY));
 
     return esClient.performRequest(bulkRequest);
   }
