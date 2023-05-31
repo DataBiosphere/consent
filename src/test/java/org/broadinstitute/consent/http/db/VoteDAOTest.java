@@ -490,7 +490,7 @@ public class VoteDAOTest extends DAOTestHelper {
     User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     Dataset dataset = createDatasetWithDac(dac.getDacId());
     // This creates an election and votes for the user passed in as the creator
-    DarCollection collection = createDarCollectionWithDatasetsAndConsentAssociation(chair,
+    DarCollection collection = createDarCollectionWithDatasets(chair,
         List.of(dataset));
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());

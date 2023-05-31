@@ -1,13 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -22,10 +22,14 @@ import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
-  private final ElasticsearchClient esClient;
+  private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -34,7 +38,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final UseRestrictionConverter useRestrictionConverter;
 
   public ElasticSearchService(
-      ElasticsearchClient esClient,
+      RestClient esClient,
       ElasticSearchConfiguration esConfig,
       UseRestrictionConverter useRestrictionConverter,
       DatasetDAO datasetDAO,
@@ -50,23 +54,34 @@ public class ElasticSearchService implements ConsentLogger {
     this.userDAO = userDAO;
   }
 
-  public BulkResponse indexDatasets(List<DatasetTerm> datasets) throws IOException {
-    BulkRequest.Builder br = new BulkRequest.Builder();
 
-    for (DatasetTerm dataset : datasets) {
-      br.operations(op -> op
-          .index(idx -> idx
-              .index(esConfig.getDatasetIndexName())
-              .id(dataset.getDatasetId().toString())
-              .document(dataset)
-          )
-      );
-    }
+  private static final String bulkHeader = """
+      { "index": {"_type": "dataset", "_id": "%d"} }
+      """;
 
-    return esClient.bulk(br.build());
+  public Response indexDatasets(List<DatasetTerm> datasets) throws IOException {
+    List<String> bulkApiCall = new ArrayList<>();
+
+    datasets.forEach((dsTerm) -> {
+      bulkApiCall.add(bulkHeader.formatted(dsTerm.getDatasetId()));
+      bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
+    });
+
+    Request bulkRequest = new Request(
+        "PUT",
+        "/" + esConfig.getDatasetIndexName() + "/_bulk");
+
+    bulkRequest.setEntity(new NStringEntity(
+        String.join("", bulkApiCall) + "\n",
+        ContentType.DEFAULT_BINARY));
+
+    return esClient.performRequest(bulkRequest);
   }
 
   public UserTerm toUserTerm(User user) {
+    if (Objects.isNull(user)) {
+      return null;
+    }
 
     UserTerm term = new UserTerm();
 
@@ -76,6 +91,10 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public StudyTerm toStudyTerm(Study study) {
+    if (Objects.isNull(study)) {
+      return null;
+    }
+
     StudyTerm term = new StudyTerm();
 
     term.setDescription(study.getDescription());
@@ -103,13 +122,19 @@ public class ElasticSearchService implements ConsentLogger {
         prop -> term.setDataCustodian((String) prop.getValue())
     );
 
-    User dataSubmitter = userDAO.findUserById(study.getCreateUserId());
-    term.setDataSubmitter(toUserTerm(dataSubmitter));
+    if (Objects.nonNull(study.getCreateUserId())) {
+      User dataSubmitter = userDAO.findUserById(study.getCreateUserId());
+      term.setDataSubmitter(toUserTerm(dataSubmitter));
+    }
 
     return term;
   }
 
   public DatasetTerm toDatasetTerm(Dataset dataset) {
+    if (Objects.isNull(dataset)) {
+      return null;
+    }
+
     DatasetTerm term = new DatasetTerm();
 
     term.setDatasetId(dataset.getDataSetId());
@@ -132,7 +157,9 @@ public class ElasticSearchService implements ConsentLogger {
       term.setApprovedUsers(approvedUserTerms);
     }
 
-    term.setDataUse(useRestrictionConverter.translateDataUseSummary(dataset.getDataUse()));
+    if (Objects.nonNull(dataset.getDataUse())) {
+      term.setDataUse(useRestrictionConverter.translateDataUseSummary(dataset.getDataUse()));
+    }
 
     findDatasetProperty(
         dataset.getProperties(), "openAccess"
@@ -140,8 +167,11 @@ public class ElasticSearchService implements ConsentLogger {
         datasetProperty -> term.setOpenAccess((Boolean) datasetProperty.getPropertyValue())
     );
 
-    // TODO: unsure how to get number of participants; there could
-    // be multiple if there are multiple file types
+    findDatasetProperty(
+        dataset.getProperties(), "numberOfParticipants"
+    ).ifPresent(
+        datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
+    );
 
     findDatasetProperty(
         dataset.getProperties(), "url"
@@ -163,11 +193,16 @@ public class ElasticSearchService implements ConsentLogger {
     return
         props
             .stream()
+            .filter((p) -> Objects.nonNull(p.getSchemaProperty()))
             .filter((p) -> p.getSchemaProperty().equals(schemaProp))
             .findFirst();
   }
 
   Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
+    if (Objects.isNull(props)) {
+      return Optional.empty();
+    }
+
     return
         props
             .stream()

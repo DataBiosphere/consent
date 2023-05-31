@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,7 +68,7 @@ public class SamDAOTest implements WithMockServer {
     mockServerClient.reset();
     ServicesConfiguration config = new ServicesConfiguration();
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
-    samDAO = new SamDAO(config);
+    samDAO = new SamDAO(new HttpClientUtil(config), config);
   }
 
   @Test

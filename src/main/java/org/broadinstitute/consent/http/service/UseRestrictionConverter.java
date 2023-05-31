@@ -189,7 +189,7 @@ public class UseRestrictionConverter {
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
     WebTarget target = client.target(
         servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    Response response = target.request(MediaType.APPLICATION_JSON)
+    Response response = target.request("application/x-ndjson")
         .post(Entity.json(dataUse.toString()));
     if (response.getStatus() == 200) {
       try {
@@ -216,7 +216,6 @@ public class UseRestrictionConverter {
     }
     LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
     return null;
-
   }
 
   public Map<String, Object> parseAsMap(String str) {

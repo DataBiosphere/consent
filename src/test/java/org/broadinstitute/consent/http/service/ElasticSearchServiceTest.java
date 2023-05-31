@@ -1,16 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -20,6 +18,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
@@ -30,6 +29,8 @@ import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -41,7 +42,7 @@ public class ElasticSearchServiceTest {
   private ElasticSearchService service;
 
   @Mock
-  private ElasticsearchClient esClient;
+  private RestClient esClient;
 
   @Mock
   private UseRestrictionConverter useRestrictionConverter;
@@ -79,6 +80,7 @@ public class ElasticSearchServiceTest {
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setDacId(1);
+    dataset.setDataUse(new DataUse());
 
     Study study = new Study();
     study.setName(RandomStringUtils.randomAlphabetic(10));
@@ -118,7 +120,12 @@ public class ElasticSearchServiceTest {
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue("some location");
 
-    dataset.setProperties(Set.of(openAccessProp, dataLocationProp));
+    DatasetProperty numParticipantsProp = new DatasetProperty();
+    numParticipantsProp.setSchemaProperty("numberOfParticipants");
+    numParticipantsProp.setPropertyType(PropertyType.Number);
+    numParticipantsProp.setPropertyValue(20);
+
+    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
 
     User dataSubmitter = new User();
     dataSubmitter.setUserId(9);
@@ -162,6 +169,8 @@ public class ElasticSearchServiceTest {
     assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
     assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
 
+    assertEquals(numParticipantsProp.getPropertyValue(), term.getParticipantCount());
+
     assertEquals(
         approvedUser1.getUserId(),
         term.getApprovedUsers().get(0).getUserId());
@@ -184,14 +193,12 @@ public class ElasticSearchServiceTest {
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
     when(userDAO.findUsers(any())).thenReturn(List.of());
-    when(useRestrictionConverter.translateDataUseSummary(any())).thenReturn(new DataUseSummary());
 
     initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
-    assertNotNull(term.getDataUse());
   }
 
   @Test
@@ -216,7 +223,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Captor
-  ArgumentCaptor<BulkRequest> bulkRequest;
+  ArgumentCaptor<Request> request;
 
   @Test
   public void testIndexDatasets() throws IOException {
@@ -234,25 +241,20 @@ public class ElasticSearchServiceTest {
     initService();
     service.indexDatasets(List.of(term1, term2));
 
-    verify(esClient).bulk(bulkRequest.capture());
+    verify(esClient).performRequest(request.capture());
 
-    BulkRequest.Builder expectedBr = new BulkRequest.Builder();
+    Request capturedRequest = request.getValue();
 
-    expectedBr.operations(op -> op
-        .index(idx -> idx
-            .index(datasetIndexName)
-            .id(term1.getDatasetId().toString())
-            .document(term1))
-    ).operations(op -> op
-        .index(idx -> idx
-            .index(datasetIndexName)
-            .id(term2.getDatasetId().toString())
-            .document(term2))
-    );
-
-    assertEquals(
-        expectedBr.build().toString(),
-        bulkRequest.getValue().toString());
-
+    assertEquals("PUT", capturedRequest.getMethod());
+    assertEquals("""
+            { "index": {"_type": "dataset", "_id": "1"} }
+            {"datasetId":1}
+            { "index": {"_type": "dataset", "_id": "2"} }
+            {"datasetId":2}
+                        
+            """,
+        new String(capturedRequest.getEntity().getContent().readAllBytes(),
+            StandardCharsets.UTF_8));
   }
+
 }

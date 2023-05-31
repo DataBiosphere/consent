@@ -25,8 +25,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -42,8 +42,11 @@ public class HttpClientUtil implements ConsentLogger {
 
   private final LoadingCache<URI, SimpleResponse> cache;
 
+  private final HttpClient httpClient;
+
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
+    httpClient = HttpClients.createDefault();
     CacheLoader<URI, SimpleResponse> loader = new CacheLoader<>() {
       @Override
       public SimpleResponse load(URI uri) throws Exception {
@@ -83,16 +86,14 @@ public class HttpClientUtil implements ConsentLogger {
    * @throws IOException The exception
    */
   public SimpleResponse getHttpResponse(HttpGet request) throws IOException {
-    try (final CloseableHttpClient httpclient = HttpClients.createDefault()) {
-      final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
-          configuration.getPoolSize());
-      executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
-      return httpclient.execute(request, httpResponse ->
-          new SimpleResponse(
-              httpResponse.getCode(),
-              IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset()))
-      );
-    }
+    final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
+        configuration.getPoolSize());
+    executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
+    return httpClient.execute(request, httpResponse ->
+        new SimpleResponse(
+            httpResponse.getCode(),
+            IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset()))
+    );
   }
 
   public HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
