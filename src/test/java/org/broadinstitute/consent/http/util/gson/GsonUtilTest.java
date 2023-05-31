@@ -11,9 +11,9 @@ import com.google.gson.JsonObject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class GsonUtilTest {
 
