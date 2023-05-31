@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class UserPropertyDAOTest extends DAOTestHelper {
 
@@ -69,9 +69,9 @@ public class UserPropertyDAOTest extends DAOTestHelper {
     int i1 = RandomUtils.nextInt(5, 10);
     int i2 = RandomUtils.nextInt(5, 10);
     int i3 = RandomUtils.nextInt(3, 5);
-    String email = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(i1) +
+    String email = RandomStringUtils.randomAlphabetic(i1) +
         "@" +
-        org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(i2) +
+        RandomStringUtils.randomAlphabetic(i2) +
         "." +
         org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(i3);
     Integer userId = userDAO.insertUser(email, "display name", new Date());
