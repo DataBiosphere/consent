@@ -56,6 +56,7 @@ public class DataUse {
   private String genomicSummaryResults;
   private Boolean collaborationInvestigators;
   private String publicationMoratorium;
+  private Boolean openAccess;
 
   public Boolean getGeneralUse() {
     return generalUse;
@@ -360,6 +361,10 @@ public class DataUse {
   public void setPublicationMoratorium(String publicationMoratorium) {
     this.publicationMoratorium = publicationMoratorium;
   }
+
+  public Boolean getOpenAccess() { return openAccess; }
+
+  public void setOpenAccess(Boolean openAccess) { this.openAccess = openAccess; }
 
   @Override
   public String toString() {

@@ -330,6 +330,59 @@ public class Dataset {
       if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
         matchTerms.addAll(dataUse.getDiseaseRestrictions());
       }
+
+      if(Objects.nonNull(dataUse.getOpenAccess())
+      && dataUse.getOpenAccess()){
+        matchTerms.add("openAccess");
+      }
+    }
+
+    return queryTerms
+        .stream()
+        .filter(Objects::nonNull)
+        // all terms must match at least one thing
+        .allMatch((q) ->
+            matchTerms
+                .stream()
+                .filter(Objects::nonNull)
+                .map(String::toLowerCase)
+                .anyMatch(
+                    (t) -> t.contains(q)
+                ));
+  }
+
+  public boolean isStringMatchWithOpenAccess(@NonNull String query, @NonNull Boolean openAccess) {
+    String lowerCaseQuery = query.toLowerCase();
+    List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
+
+    List<String> matchTerms = new ArrayList<>();
+    matchTerms.add(this.getName());
+    matchTerms.add(this.getDatasetIdentifier());
+
+    if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
+      List<String> propVals = getProperties()
+          .stream()
+          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+          .map(DatasetProperty::getPropertyValueAsString)
+          .map(String::toLowerCase)
+          .toList();
+      matchTerms.addAll(propVals);
+    }
+
+    if (Objects.nonNull(dataUse)) {
+      if (Objects.nonNull(dataUse.getEthicsApprovalRequired())
+          && dataUse.getEthicsApprovalRequired()) {
+        matchTerms.add("irb");
+      }
+
+      if (Objects.nonNull(dataUse.getCollaboratorRequired())
+          && dataUse.getCollaboratorRequired()) {
+        matchTerms.add("collaborator");
+      }
+
+      if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
+        matchTerms.addAll(dataUse.getDiseaseRestrictions());
+      }
     }
 
     return queryTerms
