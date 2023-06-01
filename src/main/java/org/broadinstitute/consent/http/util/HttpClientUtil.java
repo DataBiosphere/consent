@@ -154,7 +154,7 @@ public class HttpClientUtil implements ConsentLogger {
         };
       }
     } catch (IOException e) {
-      throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+      throw new ServerErrorException("Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
     throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
   }

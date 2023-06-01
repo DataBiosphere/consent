@@ -189,7 +189,7 @@ public class UseRestrictionConverter {
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
     WebTarget target = client.target(
         servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    Response response = target.request("application/x-ndjson")
+    Response response = target.request(MediaType.APPLICATION_JSON)
         .post(Entity.json(dataUse.toString()));
     if (response.getStatus() == 200) {
       try {

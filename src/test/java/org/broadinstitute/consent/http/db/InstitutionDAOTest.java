@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -169,4 +171,58 @@ public class InstitutionDAOTest extends DAOTestHelper {
     institutionDAO.deleteAllInstitutionsByUser(userId);
     assertNull(institutionDAO.findInstitutionById(institution.getId()));
   }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
+  }
+
+  private User createUserWithInstitution() {
+    int i1 = RandomUtils.nextInt(5, 10);
+    String email = RandomStringUtils.randomAlphabetic(i1);
+    String name = RandomStringUtils.randomAlphabetic(10);
+    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        userId,
+        new Date());
+    userDAO.updateUser(name, userId, institutionId);
+    userRoleDAO.insertSingleUserRole(7, userId);
+    return userDAO.findUserById(userId);
+  }
+
 }

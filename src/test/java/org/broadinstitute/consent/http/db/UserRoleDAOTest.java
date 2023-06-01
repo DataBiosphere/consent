@@ -8,11 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -65,7 +68,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
         findRoles().
         stream().
         map(Role::getName).
-        collect(Collectors.toList());
+        toList();
     roleNames.forEach(r -> assertNotNull(userRoleDAO.findRoleIdByName(r)));
     assertNull(userRoleDAO.findRoleIdByName("Not a real role"));
   }
@@ -141,6 +144,20 @@ public class UserRoleDAOTest extends DAOTestHelper {
     UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getUserId(),
         UserRoles.DATAOWNER.getRoleId());
     assertNotNull(userRole);
+  }
+
+  private User createUserWithRole(Integer roleId) {
+    int i1 = RandomUtils.nextInt(5, 10);
+    int i2 = RandomUtils.nextInt(5, 10);
+    int i3 = RandomUtils.nextInt(3, 5);
+    String email = RandomStringUtils.randomAlphabetic(i1) +
+        "@" +
+        RandomStringUtils.randomAlphabetic(i2) +
+        "." +
+        RandomStringUtils.randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
   }
 
 }

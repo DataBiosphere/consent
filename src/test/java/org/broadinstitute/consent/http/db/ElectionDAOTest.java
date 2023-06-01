@@ -6,20 +6,33 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetEntry;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
@@ -766,7 +779,7 @@ public class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(ElectionStatus.OPEN.getValue(), before.getStatus());
     assertNull(before.getLastUpdate());
-    assertEquals(null, before.getFinalAccessVote());
+    assertNull(before.getFinalAccessVote());
 
     electionDAO.updateElectionById(
         before.getElectionId(),
@@ -1440,7 +1453,7 @@ public class ElectionDAOTest extends DAOTestHelper {
   public void testGetOpenElectionByReferenceId_NoElection() {
 
     Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
+    createDatasetWithDac(dac.getDacId());
 
     DataAccessRequest dar = createDataAccessRequestV3();
     String referenceId = dar.getReferenceId();
@@ -1673,5 +1686,197 @@ public class ElectionDAOTest extends DAOTestHelper {
     assertTrue(found.contains(e3));
   }
 
+  private Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+    voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private Vote createChairpersonVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
+    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
+    for (int i = 0; i < 4; i++) {
+      createDataAccessRequest(userId, collectionId, darCode);
+    }
+    return createDataAccessRequest(userId, collectionId, darCode);
+  }
+
+  /**
+   * Creates a new user, dataset, data access request, and dar collection
+   *
+   * @return Populated DataAccessRequest
+   */
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
+      String darCode) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    DatasetEntry entry = new DatasetEntry();
+    entry.setKey("key");
+    entry.setValue("value");
+    entry.setLabel("label");
+    data.setDatasets(List.of(entry));
+    data.setHmb(true);
+    data.setMethods(false);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
+  private LibraryCard createLibraryCard(User user) {
+    Integer institutionId = createInstitution().getId();
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
+  private Vote createFinalVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private Dataset createDatasetWithDac(Integer dacId) {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), dacId);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private Election createRPElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.RP.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private Election createDataAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
+  private User createUserWithRole(Integer roleId) {
+    int i1 = RandomUtils.nextInt(5, 10);
+    int i2 = RandomUtils.nextInt(5, 10);
+    int i3 = RandomUtils.nextInt(3, 5);
+    String email = RandomStringUtils.randomAlphabetic(i1) +
+        "@" +
+        RandomStringUtils.randomAlphabetic(i2) +
+        "." +
+        RandomStringUtils.randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
+  }
 
 }
