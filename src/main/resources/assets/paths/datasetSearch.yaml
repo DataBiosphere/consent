@@ -13,9 +13,9 @@ get:
       description: Open Access
       required: false
       schema:
-        type:
-          type: boolean
-          enum: [true, false]
+        type: boolean
+        required: false
+        default: false
   tags:
     - Dataset
   responses:
