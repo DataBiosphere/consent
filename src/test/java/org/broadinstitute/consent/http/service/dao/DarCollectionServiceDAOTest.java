@@ -5,10 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -19,7 +23,11 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -414,4 +422,98 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     return createDarForCollection(user, collection.getDarCollectionId(), dataset);
   }
+
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
+  private DataAccessRequest createDarForCollection(User user, Integer collectionId,
+      Dataset dataset) {
+    Date now = new Date();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
+        now, now, now, data);
+    dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
+    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
+  private Dataset createDatasetWithDac(Integer dacId) {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), dacId);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
+  private User createUserWithRole(Integer roleId) {
+    int i1 = RandomUtils.nextInt(5, 10);
+    int i2 = RandomUtils.nextInt(5, 10);
+    int i3 = RandomUtils.nextInt(3, 5);
+    String email = RandomStringUtils.randomAlphabetic(i1) +
+        "@" +
+        RandomStringUtils.randomAlphabetic(i2) +
+        "." +
+        RandomStringUtils.randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
+  }
+
 }

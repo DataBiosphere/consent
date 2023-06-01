@@ -665,6 +665,8 @@ paths:
           description: Server error.
   /api/dataset/search:
     $ref: './paths/datasetSearch.yaml'
+  /api/dataset/search/index:
+    $ref: './paths/datasetSearchIndex.yaml'
   /api/dataset/autocomplete/{partial}:
     get:
       deprecated: true

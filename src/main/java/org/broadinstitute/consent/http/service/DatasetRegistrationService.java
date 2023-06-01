@@ -555,6 +555,9 @@ public class DatasetRegistrationService {
             return null;
           }),
       new DatasetPropertyExtractor(
+          "Number Of Participants", "numberOfParticipants", PropertyType.Number,
+          ConsentGroup::getNumberOfParticipants),
+      new DatasetPropertyExtractor(
           "File Types", "fileTypes", PropertyType.Json,
           (consentGroup) -> {
             if (Objects.nonNull(consentGroup.getFileTypes())) {

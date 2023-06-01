@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
@@ -578,6 +579,27 @@ public class DatasetResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = datasetService.searchDatasets(query, user);
       return Response.ok().entity(unmarshal(datasets)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/search/index")
+  @Consumes("application/json")
+  @Produces("application/json")
+  public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      List<DatasetSearchTerm> datasetSearchTerms = new ArrayList<>();
+      /* return up to 8 semi-random but consistent number of results for a specific query */
+      var numResults = query.hashCode() & 0x7L;
+      for (int i = 0; i < numResults; i++) {
+        DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
+        datasetSearchTerm.setDatasetId(i);
+        datasetSearchTerms.add(datasetSearchTerm);
+      }
+      return Response.ok().entity(unmarshal(datasetSearchTerms)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
