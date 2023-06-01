@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
@@ -43,6 +44,8 @@ public class DarCollectionSummary {
 
   @JsonProperty
   private int datasetCount;
+
+  private List<String> dacNames;
 
   private Integer researcherId;
   private Integer institutionId;
@@ -210,6 +213,23 @@ public class DarCollectionSummary {
 
   public Map<String, String> getDarStatuses() {
     return darStatuses;
+  }
+
+  public List<String> getDacNames() {
+    return dacNames;
+  }
+
+  public void setDacNames(List<String> dacNames) {
+    this.dacNames = dacNames;
+  }
+
+  public void addDacName(String dacName) {
+    if (Objects.isNull(this.dacNames)) {
+      this.dacNames = new ArrayList<>();
+    }
+    if (!this.dacNames.contains(dacName)) {
+      this.dacNames.add(dacName);
+    }
   }
 
   @Override
