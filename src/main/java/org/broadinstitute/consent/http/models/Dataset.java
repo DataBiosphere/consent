@@ -330,11 +330,6 @@ public class Dataset {
       if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
         matchTerms.addAll(dataUse.getDiseaseRestrictions());
       }
-
-      if(Objects.nonNull(dataUse.getOpenAccess())
-      && dataUse.getOpenAccess()){
-        matchTerms.add("openAccess");
-      }
     }
 
     return queryTerms
@@ -382,6 +377,13 @@ public class Dataset {
 
       if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
         matchTerms.addAll(dataUse.getDiseaseRestrictions());
+      }
+
+      if (openAccess){
+        if(Objects.nonNull(dataUse.getOpenAccess())
+            && dataUse.getOpenAccess()){
+          matchTerms.add("openAccess");
+        }
       }
     }
 
