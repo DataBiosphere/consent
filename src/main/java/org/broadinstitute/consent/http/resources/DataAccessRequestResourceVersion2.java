@@ -303,7 +303,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   public Response postProgressReport(
       @Auth AuthUser authUser,
       @PathParam("parentReferenceId") String parentReferenceId,
-      String dar,
+      @FormDataParam("dar") String dar,
       @FormDataParam("collaboratorRequiredFile") InputStream collabInputStream,
       @FormDataParam("collaboratorRequiredFile") FormDataContentDisposition collabFileDetails,
       @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,

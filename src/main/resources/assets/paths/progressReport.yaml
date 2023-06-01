@@ -11,15 +11,15 @@ post:
       schema:
         type: string
   requestBody:
+    required: true
     content:
-      required: true
-      application/json:
-        schema:
-          $ref: '../schemas/DataAccessRequest.yaml'
       multipart/form-data:
         schema:
           type: object
           properties:
+            dar:
+              schema:
+                $ref: '../schemas/DataAccessRequest.yaml'
             collaboratorRequiredFile:
               type: string
               format: binary
