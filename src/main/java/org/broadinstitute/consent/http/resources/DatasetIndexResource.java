@@ -8,6 +8,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -41,7 +42,18 @@ public class DatasetIndexResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> allDatasets = datasetService.findAllDatasetsByUser(user);
-      List<DatasetTerm> allTerms = allDatasets.stream().map(esService::toDatasetTerm).toList();
+      List<DatasetTerm> allTerms = allDatasets
+        .stream()
+        .map(d -> {
+          try {
+            return esService.toDatasetTerm(d);
+          } catch (Exception e) {
+            logWarn("Unable to map dataset id " + d.getDataSetId() + " to a term: " + e.getMessage());
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
+        .toList();
       esService.indexDatasets(allTerms);
       return Response.ok().build();
     } catch (Exception e) {
