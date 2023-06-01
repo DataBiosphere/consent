@@ -7,22 +7,35 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 
 public class UserDAOTest extends DAOTestHelper {
@@ -471,4 +484,151 @@ public class UserDAOTest extends DAOTestHelper {
     assertTrue(found.getRoles().stream().anyMatch(chairperson2::equals));
     assertTrue(found.getRoles().contains(chairperson2));
   }
+
+  private Dac createDac() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    return dacDAO.findById(id);
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private void createDatasetProperties(Integer datasetId) {
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+  }
+
+  private Institution createInstitution() {
+    User createUser = createUser();
+    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        createUser.getUserId(),
+        createUser.getCreateDate());
+    Institution institution = institutionDAO.findInstitutionById(id);
+    User updateUser = createUser();
+    institutionDAO.updateInstitutionById(
+        id,
+        institution.getName(),
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        updateUser.getUserId(),
+        new Date()
+    );
+    return institutionDAO.findInstitutionById(id);
+  }
+
+  private LibraryCard createLibraryCard() {
+    Integer institutionId = createInstitution().getId();
+    String email = RandomStringUtils.randomAlphabetic(11);
+    Integer userId = userDAO.insertUser(email, "displayName", new Date());
+    userDAO.updateUser(email, userId, institutionId);
+    String stringValue = "value";
+    Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
+        stringValue, userId, new Date());
+    return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Vote createDacVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private Consent createConsent() {
+    String consentId = UUID.randomUUID().toString();
+    consentDAO.insertConsent(consentId,
+        false,
+        "{\"generalUse\": true }",
+        "dul",
+        consentId,
+        "dulName",
+        new Date(),
+        new Date(),
+        "Everything",
+        "Group");
+    return consentDAO.findConsentById(consentId);
+  }
+
+  private Election createDataAccessElection(String referenceId, Integer datasetId) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
+  private User createUserWithRole(Integer roleId) {
+    int i1 = RandomUtils.nextInt(5, 10);
+    int i2 = RandomUtils.nextInt(5, 10);
+    int i3 = RandomUtils.nextInt(3, 5);
+    String email = RandomStringUtils.randomAlphabetic(i1) +
+        "@" +
+        RandomStringUtils.randomAlphabetic(i2) +
+        "." +
+        RandomStringUtils.randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
+  }
+
+  private User createUserWithInstitution() {
+    int i1 = RandomUtils.nextInt(5, 10);
+    String email = RandomStringUtils.randomAlphabetic(i1);
+    String name = RandomStringUtils.randomAlphabetic(10);
+    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        userId,
+        new Date());
+    userDAO.updateUser(name, userId, institutionId);
+    userRoleDAO.insertSingleUserRole(7, userId);
+    return userDAO.findUserById(userId);
+  }
+
 }

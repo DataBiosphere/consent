@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class DatasetTests {
 

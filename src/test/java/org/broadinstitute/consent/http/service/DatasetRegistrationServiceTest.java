@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -51,7 +52,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class DatasetRegistrationServiceTest {
 
@@ -205,6 +205,8 @@ public class DatasetRegistrationServiceTest {
     List<DatasetProperty> datasetProps = inserts.get(0).props();
     assertContainsDatasetProperty(datasetProps, "dataLocation",
         schema.getConsentGroups().get(0).getDataLocation().value());
+    assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
+        schema.getConsentGroups().get(0).getNumberOfParticipants());
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
     assertContainsDatasetProperty(datasetProps, "url",
@@ -265,6 +267,8 @@ public class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
     assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
+    assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
+        schema.getConsentGroups().get(0).getNumberOfParticipants());
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
   }
@@ -358,6 +362,8 @@ public class DatasetRegistrationServiceTest {
         schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(props, "openAccess",
         schema.getConsentGroups().get(0).getOpenAccess());
+    assertContainsDatasetProperty(props, "numberOfParticipants",
+        schema.getConsentGroups().get(0).getNumberOfParticipants());
 
     // assert on all the same properties, but for the second dataset
 
@@ -378,6 +384,9 @@ public class DatasetRegistrationServiceTest {
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
     assertContainsDatasetProperty(props2, "openAccess",
         schema.getConsentGroups().get(1).getOpenAccess());
+    assertContainsDatasetProperty(props2, "numberOfParticipants",
+        schema.getConsentGroups().get(1).getNumberOfParticipants());
+
 
   }
 
@@ -566,7 +575,7 @@ public class DatasetRegistrationServiceTest {
     FileTypeObject fileType = new FileTypeObject();
     fileType.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType.setNumberOfParticipants(new Random().nextInt());
+    consentGroup.setNumberOfParticipants(new Random().nextInt());
     consentGroup.setFileTypes(List.of(fileType));
     consentGroup.setDataAccessCommitteeId(new Random().nextInt());
 
@@ -594,7 +603,7 @@ public class DatasetRegistrationServiceTest {
     FileTypeObject fileType = new FileTypeObject();
     fileType.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType.setNumberOfParticipants(new Random().nextInt());
+    consentGroup.setNumberOfParticipants(new Random().nextInt());
     consentGroup.setFileTypes(List.of(fileType));
 
     schemaV1.setConsentGroups(List.of(consentGroup));
@@ -621,7 +630,7 @@ public class DatasetRegistrationServiceTest {
     FileTypeObject fileType1 = new FileTypeObject();
     fileType1.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType1.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType1.setNumberOfParticipants(new Random().nextInt());
+    consentGroup1.setNumberOfParticipants(new Random().nextInt());
     consentGroup1.setFileTypes(List.of(fileType1));
     consentGroup1.setDataAccessCommitteeId(new Random().nextInt());
     consentGroup1.setOpenAccess(false);
@@ -632,7 +641,7 @@ public class DatasetRegistrationServiceTest {
     FileTypeObject fileType2 = new FileTypeObject();
     fileType2.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType2.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType2.setNumberOfParticipants(new Random().nextInt());
+    consentGroup2.setNumberOfParticipants(new Random().nextInt());
     consentGroup2.setFileTypes(List.of(fileType2));
     consentGroup2.setOpenAccess(true);
 
@@ -691,14 +700,13 @@ public class DatasetRegistrationServiceTest {
     ConsentGroup consentGroup = new ConsentGroup();
     consentGroup.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
     consentGroup.setGeneralResearchUse(true);
+    consentGroup.setNumberOfParticipants(new Random().nextInt());
     FileTypeObject fileType1 = new FileTypeObject();
     fileType1.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType1.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType1.setNumberOfParticipants(new Random().nextInt());
     FileTypeObject fileType2 = new FileTypeObject();
     fileType2.setFileType(FileTypeObject.FileType.PHENOTYPE);
     fileType2.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
-    fileType2.setNumberOfParticipants(new Random().nextInt());
     consentGroup.setFileTypes(List.of(fileType1, fileType2));
     consentGroup.setUrl(URI.create("https://asdf.gov"));
     consentGroup.setMor(false);

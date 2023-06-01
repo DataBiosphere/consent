@@ -243,16 +243,12 @@ required:
       functionalEquivalence:
         type: string
         description: Functional Equivalence
-      numberOfParticipants:
-        type: number
-        description: Number of Participants
     required:
       - fileType
       - functionalEquivalence
-      - numberOfParticipants
   consentGroup:
     type: object
-    description: | 
+    description: |
       Each Consent Group will be translated into a separate dataset
       Required fields include the `consentGroupName` and any one of 
       `generalResearchUse`, `hmb`, or `diseaseSpecificUse`.
@@ -260,6 +256,9 @@ required:
       consentGroupName:
         type: string
         description: Consent Group Name
+      numberOfParticipants:
+        type: number
+        description: Number of Participants
       generalResearchUse:
         type: boolean
         description: General Research Use
@@ -334,3 +333,4 @@ required:
     required:
       - consentGroupName
       - fileTypes
+      - numberOfParticipants

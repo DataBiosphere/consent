@@ -29,12 +29,6 @@ public class FileTypeObject {
   @JsonProperty("functionalEquivalence")
   @JsonPropertyDescription("Functional Equivalence")
   private String functionalEquivalence;
-  /**
-   * # of Participants (Required)
-   */
-  @JsonProperty("numberOfParticipants")
-  @JsonPropertyDescription("# of Participants")
-  private Integer numberOfParticipants;
 
   /**
    * File Type
@@ -68,22 +62,6 @@ public class FileTypeObject {
     this.functionalEquivalence = functionalEquivalence;
   }
 
-  /**
-   * # of Participants (Required)
-   */
-  @JsonProperty("numberOfParticipants")
-  public Integer getNumberOfParticipants() {
-    return numberOfParticipants;
-  }
-
-  /**
-   * # of Participants (Required)
-   */
-  @JsonProperty("numberOfParticipants")
-  public void setNumberOfParticipants(Integer numberOfParticipants) {
-    this.numberOfParticipants = numberOfParticipants;
-  }
-
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -97,10 +75,6 @@ public class FileTypeObject {
     sb.append('=');
     sb.append(((this.functionalEquivalence == null) ? "<null>" : this.functionalEquivalence));
     sb.append(',');
-    sb.append("numberOfParticipants");
-    sb.append('=');
-    sb.append(((this.numberOfParticipants == null) ? "<null>" : this.numberOfParticipants));
-    sb.append(',');
     if (sb.charAt((sb.length() - 1)) == ',') {
       sb.setCharAt((sb.length() - 1), ']');
     } else {
@@ -112,8 +86,6 @@ public class FileTypeObject {
   @Override
   public int hashCode() {
     int result = 1;
-    result = ((result * 31) + ((this.numberOfParticipants == null) ? 0
-        : this.numberOfParticipants.hashCode()));
     result = ((result * 31) + ((this.functionalEquivalence == null) ? 0
         : this.functionalEquivalence.hashCode()));
     result = ((result * 31) + ((this.fileType == null) ? 0 : this.fileType.hashCode()));
@@ -129,13 +101,10 @@ public class FileTypeObject {
       return false;
     }
     FileTypeObject rhs = ((FileTypeObject) other);
-    return ((((this.numberOfParticipants == rhs.numberOfParticipants) || (
-        (this.numberOfParticipants != null) && this.numberOfParticipants.equals(
-            rhs.numberOfParticipants))) && (
-        (this.functionalEquivalence == rhs.functionalEquivalence) || (
-            (this.functionalEquivalence != null) && this.functionalEquivalence.equals(
-                rhs.functionalEquivalence)))) && ((this.fileType == rhs.fileType) || (
-        (this.fileType != null) && this.fileType.equals(rhs.fileType))));
+    return (((this.functionalEquivalence == rhs.functionalEquivalence) || (
+        (this.functionalEquivalence != null) && this.functionalEquivalence.equals(
+            rhs.functionalEquivalence)))) && ((this.fileType == rhs.fileType) || (
+        (this.fileType != null) && this.fileType.equals(rhs.fileType)));
   }
 
 
