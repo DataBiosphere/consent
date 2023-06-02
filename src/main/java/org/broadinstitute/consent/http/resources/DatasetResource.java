@@ -245,10 +245,6 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Dataset is required");
       }
 
-      if (Objects.isNull(update.getDatasetProperties()) || update.getDatasetProperties().isEmpty()) {
-        throw new BadRequestException("Dataset must contain required properties");
-      }
-
       Dataset datasetExists = datasetService.findDatasetById(datasetId);
       if (Objects.isNull(datasetExists)) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);

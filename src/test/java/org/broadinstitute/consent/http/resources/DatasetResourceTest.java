@@ -1109,7 +1109,7 @@ public class DatasetResourceTest {
   }
 
   /**
-   * tests the case that there are no dataset properties, should result in failure
+   * tests the case that there are no updates to the dataset properties, should result in success
    */
   @Test
   public void testUpdateDatasetWithNoProperties() {
@@ -1127,7 +1127,7 @@ public class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
-    assertEquals(400, response.getStatus());
+    assertEquals(200, response.getStatus());
   }
 
   @Test
@@ -1147,7 +1147,7 @@ public class DatasetResourceTest {
 
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(400, response.getStatus());
+    assertEquals(404, response.getStatus());
   }
 
   @Test
