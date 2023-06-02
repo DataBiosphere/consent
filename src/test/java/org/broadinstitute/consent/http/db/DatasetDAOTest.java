@@ -95,6 +95,75 @@ public class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testFindPublicDatasets_positive() {
+    Dataset ds1 = insertDataset();
+    Study s1 = insertStudyWithProperties();
+
+    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
+
+    Dataset ds2 = insertDataset();
+    Study s2 = insertStudyWithProperties();
+
+    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
+
+    List<Dataset> datasets = datasetDAO.findPublicDatasets();
+
+    assertEquals(2, datasets.size());
+
+    assertTrue(
+        datasets
+            .stream()
+            .map(Dataset::getDataSetId)
+            .toList()
+            .containsAll(
+                List.of(
+                    ds1.getDataSetId(),
+                    ds2.getDataSetId()
+                )));
+
+
+  }
+
+  @Test
+  public void testFindPublicDatasets_negative() {
+    Dataset ds1 = insertDataset();
+    Study s1 = insertPrivateStudyWithProperties();
+
+    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
+
+    Dataset ds2 = insertDataset();
+    Study s2 = insertPrivateStudyWithProperties();
+
+    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
+
+    List<Dataset> datasets = datasetDAO.findPublicDatasets();
+
+    assertEquals(0, datasets.size());
+
+  }
+
+  @Test
+  public void testFindPublicDatasets_no_study() {
+    Dataset ds1 = insertDataset();
+    Dataset ds2 = insertDataset();
+
+    List<Dataset> datasets = datasetDAO.findPublicDatasets();
+
+    assertEquals(2, datasets.size());
+
+    assertTrue(
+        datasets
+            .stream()
+            .map(Dataset::getDataSetId)
+            .toList()
+            .containsAll(
+                List.of(
+                    ds1.getDataSetId(),
+                    ds2.getDataSetId()
+                )));
+  }
+
+  @Test
   public void testFindDatasetByIdWithDacAndConsentNotDeletable() {
     User user = createUser();
     Dataset d1 = insertDataset();
@@ -929,6 +998,46 @@ public class DatasetDAOTest extends DAOTestHelper {
     );
     String piName = RandomStringUtils.randomAlphabetic(20);
     Boolean publicVisibility = true;
+
+    Integer id = studyDAO.insertStudy(
+        name,
+        description,
+        piName,
+        dataTypes,
+        publicVisibility,
+        u.getUserId(),
+        Instant.now(),
+        UUID.randomUUID()
+    );
+
+    studyDAO.insertStudyProperty(
+        id,
+        "prop1",
+        PropertyType.String.toString(),
+        "asdf"
+    );
+
+    studyDAO.insertStudyProperty(
+        id,
+        "prop2",
+        PropertyType.Number.toString(),
+        "1"
+    );
+
+    return studyDAO.findStudyById(id);
+  }
+
+  private Study insertPrivateStudyWithProperties() {
+    User u = createUser();
+
+    String name = RandomStringUtils.randomAlphabetic(20);
+    String description = RandomStringUtils.randomAlphabetic(20);
+    List<String> dataTypes = List.of(
+        RandomStringUtils.randomAlphabetic(20),
+        RandomStringUtils.randomAlphabetic(20)
+    );
+    String piName = RandomStringUtils.randomAlphabetic(20);
+    Boolean publicVisibility = false;
 
     Integer id = studyDAO.insertStudy(
         name,

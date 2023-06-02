@@ -301,6 +301,31 @@ public class DatasetResource extends Resource {
     }
   }
 
+//  @GET
+//  @Produces("application/json")
+//  @PermitAll
+//  @Path("/{roleName}")
+//  public Response findDatasetsAccordingToRole(
+//      @Auth AuthUser authUser,
+//      @PathParam("roleName") String roleName) {
+//    try {
+//      User user = userService.findUserByEmail(authUser.getEmail());
+//      List<Dataset> datasets = List.of();
+////      if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
+////        datasets = datasetService.findAllDatasets();
+////      } else if (roleName.equals(UserRoles.CHAIRPERSON.getRoleName())) {
+////        datasets = datasetService.findDatasetsForChair(user);
+////      } else if (roleName.equals(UserRoles.DATASUBMITTER.getRoleName())) {
+////        datasets = datasetService.findDatasetsForDataSubmitter(user);
+////      } else {
+////        datasets = datasetService.findPublicDatasets();
+////      }
+//      return Response.ok(datasets).build();
+//    } catch (Exception e) {
+//      return createExceptionResponse(e);
+//    }
+//  }
+
   @GET
   @Deprecated // Use /v2/{datasetId}
   @Path("/{datasetId}")
@@ -610,6 +635,24 @@ public class DatasetResource extends Resource {
           .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Validate that the user has the actual role name provided. This is useful for determining when a
+   * user hits an endpoint that is permitted to multiple different roles and is requesting a
+   * role-specific view of a data entity.
+   * <p>
+   * In these cases, we need to make sure that the role name provided is a real one and that the
+   * user actually has that role to prevent escalated privilege violations.
+   *
+   * @param user     The User
+   * @param roleName The UserRole name
+   */
+  void validateUserHasRoleName(User user, String roleName) {
+    UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
+    if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
+      throw new BadRequestException("Invalid role selection: " + roleName);
     }
   }
 
