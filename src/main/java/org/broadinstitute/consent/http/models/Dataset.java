@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 
 public class Dataset {
 
@@ -56,6 +57,8 @@ public class Dataset {
 
   private User createUser;
   private Study study;
+
+  private ConsentGroup consentGroup;
 
   public Dataset() {
   }
@@ -380,8 +383,8 @@ public class Dataset {
       }
 
       if (openAccess){
-        if(Objects.nonNull(dataUse.getOpenAccess())
-            && dataUse.getOpenAccess()){
+        if(Objects.nonNull(consentGroup.getOpenAccess())
+            && consentGroup.getOpenAccess()){
           matchTerms.add("openAccess");
         }
       }

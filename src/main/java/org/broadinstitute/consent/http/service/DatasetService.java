@@ -430,12 +430,7 @@ public class DatasetService {
 
   public List<Dataset> searchDatasets(String query, Boolean openAccess, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
-    if (Objects.isNull(openAccess) || (openAccess.equals(false))){
-      return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
-    } else {
-      return datasets.stream().filter(ds -> ds.isStringMatchWithOpenAccess(query, openAccess)).toList();
-    }
-
+    return datasets.stream().filter(ds -> ds.isStringMatchWithOpenAccess(query, openAccess)).toList();
   }
 
   @Deprecated
