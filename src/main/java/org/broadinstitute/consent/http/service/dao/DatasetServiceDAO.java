@@ -210,7 +210,7 @@ public class DatasetServiceDAO {
     );
   }
 
-  public Integer executeUpdateDatasetWithFiles(Handle handle,
+  public void executeUpdateDatasetWithFiles(Handle handle,
       String name,
       Integer datasetId,
       Integer dacId,
@@ -218,7 +218,7 @@ public class DatasetServiceDAO {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles) {
     // update dataset
-    Integer datasetUpdate = datasetDAO.updateDatasetByDatasetId(
+    datasetDAO.updateDatasetByDatasetId(
         name,
         new Timestamp(new Date().getTime()),
         userId,
@@ -228,12 +228,10 @@ public class DatasetServiceDAO {
     );
 
     // insert properties
-    executeSynchronizeDatasetProperties(handle, datasetUpdate, properties);
+    executeSynchronizeDatasetProperties(handle, datasetId, properties);
 
     // files
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
-
-    return datasetUpdate;
   }
 
   // Helper methods to generate Dictionary inserts

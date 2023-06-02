@@ -7,11 +7,8 @@ public record DatasetUpdate (
     Integer datasetId,
     DataUse dataUse,
     Integer dacId,
-    List<DatasetProperty> datasetProperties,
-    String description,
-    List<String> dataTypes,
-    String piName,
-    Boolean publicVisibility
+    List<DatasetProperty> properties,
+    Boolean active
 ){
 
   public String getName() {
@@ -23,7 +20,6 @@ public record DatasetUpdate (
   }
 
   public List<DatasetProperty> getDatasetProperties() {
-    return this.datasetProperties;
+    return this.properties;
   }
-
 }

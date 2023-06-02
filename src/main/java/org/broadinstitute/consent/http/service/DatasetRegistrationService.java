@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -133,6 +134,14 @@ public class DatasetRegistrationService {
       User user,
       DatasetUpdate update,
       Map<String, FormDataBodyPart> files) throws IOException, SQLException {
+
+    if (Objects.isNull(update.getName())) {
+      throw new BadRequestException("Dataset name is required");
+    }
+
+    if (Objects.isNull(update.getDacId())) {
+      throw new BadRequestException("DAC Id is required");
+    }
 
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
 

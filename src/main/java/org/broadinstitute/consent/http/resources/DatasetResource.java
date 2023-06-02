@@ -245,12 +245,8 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Dataset is required");
       }
 
-      if (Objects.isNull(update.getName())) {
-        throw new BadRequestException("Dataset name is required");
-      }
-
-      if (Objects.isNull(update.getDacId())) {
-        throw new BadRequestException("DAC Id is required");
+      if (Objects.isNull(update.getDatasetProperties()) || update.getDatasetProperties().isEmpty()) {
+        throw new BadRequestException("Dataset must contain required properties");
       }
 
       Dataset datasetExists = datasetService.findDatasetById(datasetId);
