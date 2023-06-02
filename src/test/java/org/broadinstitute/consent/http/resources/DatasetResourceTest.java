@@ -1147,7 +1147,7 @@ public class DatasetResourceTest {
 
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(404, response.getStatus());
+    assertEquals(400, response.getStatus());
   }
 
   @Test

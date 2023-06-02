@@ -205,9 +205,9 @@ public class DatasetRegistrationService {
 
     return new DatasetServiceDAO.DatasetUpdate(
         datasetUpdate.getName(),
+        datasetId,
         datasetUpdate.getDacId(),
         user.getUserId(),
-        datasetId,
         props,
         fileStorageObjects
     );
