@@ -64,20 +64,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   @SqlUpdate("""
             UPDATE dataset
-            SET name = :name,
-                update_date = :updateDate,
-                update_user_id = :updateUserId,
-                needs_approval = :needsApproval,
-                dac_id = :dacId
-            WHERE dataset_id = :datasetId
-            """)
-  Integer updateDatasetByDatasetId(
-      @Bind("name") String name,
+      SET name = :datasetName,
+          update_date = :updateDate,
+          update_user_id = :updateUserId,
+          needs_approval = :needsApproval,
+          active = :active,
+          dac_id = :dacId
+      WHERE dataset_id = :datasetId
+      """)
+  void updateDatasetByDatasetId(
+      @Bind("datasetId") Integer datasetId,
+      @Bind("datasetName") String datasetName,
       @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("needsApproval") Boolean needsApproval,
-      @Bind("dacId") Integer updatedDacId,
-      @Bind("datasetId") Integer datasetId);
+      @Bind("active") Boolean active,
+      @Bind("dacId") Integer updatedDacId);
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""

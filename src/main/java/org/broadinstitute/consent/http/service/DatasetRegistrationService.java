@@ -204,10 +204,12 @@ public class DatasetRegistrationService {
     List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
 
     return new DatasetServiceDAO.DatasetUpdate(
-        datasetUpdate.getName(),
         datasetId,
-        datasetUpdate.getDacId(),
+        datasetUpdate.getName(),
         user.getUserId(),
+        datasetUpdate.getNeedsApproval(),
+        datasetUpdate.getActive(),
+        datasetUpdate.getDacId(),
         props,
         fileStorageObjects
     );

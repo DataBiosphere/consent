@@ -55,10 +55,12 @@ public class DatasetServiceDAO {
 
   }
 
-  public record DatasetUpdate(String name,
-                              Integer datasetId,
-                              Integer dacId,
+  public record DatasetUpdate(Integer datasetId,
+                              String name,
                               Integer userId,
+                              Boolean needsApproval,
+                              Boolean active,
+                              Integer dacId,
                               List<DatasetProperty> props,
                               List<FileStorageObject> files) {
   }
@@ -198,10 +200,12 @@ public class DatasetServiceDAO {
 
           executeUpdateDatasetWithFiles(
               handle,
-              updates.name(),
               updates.datasetId(),
-              updates.dacId(),
+              updates.name(),
               updates.userId(),
+              updates.needsApproval(),
+              updates.active(),
+              updates.dacId(),
               updates.props(),
               updates.files());
 
@@ -211,20 +215,23 @@ public class DatasetServiceDAO {
   }
 
   public void executeUpdateDatasetWithFiles(Handle handle,
-      String name,
       Integer datasetId,
-      Integer dacId,
+      String datasetName,
       Integer userId,
+      Boolean needsApproval,
+      Boolean active,
+      Integer dacId,
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles) {
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
-        name,
+        datasetId,
+        datasetName,
         new Timestamp(new Date().getTime()),
         userId,
-        false,
-        dacId,
-        datasetId
+        needsApproval,
+        active,
+        dacId
     );
 
     // insert properties

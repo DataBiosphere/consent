@@ -1072,7 +1072,7 @@ public class DatasetResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);
-    String json = createDatasetRegistrationMock(user);
+    String json = createDataset(user);
 
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
@@ -1109,7 +1109,7 @@ public class DatasetResourceTest {
   }
 
   /**
-   * tests the case that there are no updates to dataset properties, should result in success
+   * tests the case that there are no dataset properties, should result in failure
    */
   @Test
   public void testUpdateDatasetWithNoProperties() {
@@ -1127,7 +1127,7 @@ public class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
-    assertEquals(200, response.getStatus());
+    assertEquals(400, response.getStatus());
   }
 
   @Test
@@ -1217,4 +1217,57 @@ public class DatasetResourceTest {
 
     return String.format(format, user.getUserId());
   }
+
+  /**
+   * Helper method to create a minimally valid instance of a dataset for updating dataset
+   *
+   * @param user The User
+   * @return The Dataset instance
+   */
+  private String createDataset(User user) {
+    String format = """
+        {
+          "dataSetId": 2,
+          "objectId": "SC-10985",
+          "name": "Herman Taylor (U. Miss Med Center) - Jackson Heart Study",
+          "createDate": "Mar 21, 2019",
+          "active": true,
+          "alias": 3,
+          "datasetIdentifier": "DUOS-000003",
+          "dataUse": {
+            "diseaseRestrictions": [
+              "http://purl.obolibrary.org/obo/DOID_602",
+              "http://purl.obolibrary.org/obo/DOID_9351"
+            ],
+            "populationOriginsAncestry": true,
+            "commercialUse": false,
+            "controlSetOption": "No",
+            "gender": "Female",
+            "pediatric": true
+          },
+          "dacId": 5,
+          "consentId": "eac1d4f9-78c9-4c88-9b10-9d692e171b5b",
+          "translatedUseRestriction": "Samples are restricted for use under the following conditions:\\nData use is limited for studying: cancerophobia, diabetes mellitus [DS]\\nFuture use for population origins or ancestry research is prohibited. [POA]\\nCommercial use prohibited. [NCU]\\nData use for methods development research irrespective of the specified data use limitations is not prohibited.\\nFuture use as a control set for diseases other than those specified is prohibited. [NCTRL]\\nData use is limited to research on females. [RS-FM]\\nData use is limited to pediatric research. [RS-PD]",
+          "deletable": false,
+          "properties": [
+            {
+              "dataSetId": 2,
+              "propertyName": "test",
+              "propertyValue": "John Doe",
+              "propertyType": "String"
+            },
+          ],
+          "dacApproval": true,
+          "createUser": {},
+          "study": {
+            "datasetIds": [
+              null
+            ]
+          }
+        }
+        """;
+
+    return String.format(format, user.getUserId());
+  }
+
 }
