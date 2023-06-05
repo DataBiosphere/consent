@@ -53,6 +53,7 @@ public class Dataset {
 
   private Set<DatasetProperty> properties;
 
+  List<String> propertyName;
   private Boolean dacApproval;
 
   private User createUser;
@@ -97,7 +98,7 @@ public class Dataset {
     this.active = active;
   }
 
-  private static String PREFIX = "DUOS-";
+  private static final String PREFIX = "DUOS-";
 
   public Dataset(String objectId) {
     this.objectId = objectId;
@@ -170,6 +171,11 @@ public class Dataset {
   public Set<DatasetProperty> getProperties() {
     return properties;
   }
+
+  public List<String> getPropertyName() {
+    return propertyName;
+  }
+
 
   public void setProperties(Set<DatasetProperty> properties) {
     this.properties = properties;
@@ -300,8 +306,10 @@ public class Dataset {
    *
    * @param query Raw string query
    * @return if the Dataset matched query
+   *
    */
-  public boolean isStringMatch(@NonNull String query) {
+
+  public boolean isStringMatch(@NonNull String query, Boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
@@ -335,7 +343,7 @@ public class Dataset {
       }
     }
 
-    return queryTerms
+    boolean queryT = queryTerms
         .stream()
         .filter(Objects::nonNull)
         // all terms must match at least one thing
@@ -345,63 +353,22 @@ public class Dataset {
                 .filter(Objects::nonNull)
                 .map(String::toLowerCase)
                 .anyMatch(
-                    (t) -> t.contains(q)
-                ));
-  }
-
-  public boolean isStringMatchWithOpenAccess(@NonNull String query, @NonNull Boolean openAccess) {
-    String lowerCaseQuery = query.toLowerCase();
-    List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
-
-    List<String> matchTerms = new ArrayList<>();
-    matchTerms.add(this.getName());
-    matchTerms.add(this.getDatasetIdentifier());
+                    (t) -> t.contains(q))
+                );
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
-      List<String> propVals = getProperties()
+      boolean propValsOpenAccess = getProperties()
           .stream()
-          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
-          .map(DatasetProperty::getPropertyValueAsString)
-          .map(String::toLowerCase)
-          .toList();
-      matchTerms.addAll(propVals);
+          .filter((dp) -> Objects.nonNull(dp.getSchemaProperty()))
+          .map(DatasetProperty::getSchemaProperty)
+          .anyMatch(
+              (term) -> term.contains("openAccess")
+          );
+      if (Objects.isNull(openAccess) || (!openAccess)) {
+        return queryT;
+      } else { return (queryT && propValsOpenAccess); }
     }
-
-    if (Objects.nonNull(dataUse)) {
-      if (Objects.nonNull(dataUse.getEthicsApprovalRequired())
-          && dataUse.getEthicsApprovalRequired()) {
-        matchTerms.add("irb");
-      }
-
-      if (Objects.nonNull(dataUse.getCollaboratorRequired())
-          && dataUse.getCollaboratorRequired()) {
-        matchTerms.add("collaborator");
-      }
-
-      if (Objects.nonNull(dataUse.getDiseaseRestrictions())) {
-        matchTerms.addAll(dataUse.getDiseaseRestrictions());
-      }
-
-      if (openAccess){
-        if(Objects.nonNull(consentGroup.getOpenAccess())
-            && consentGroup.getOpenAccess()){
-          matchTerms.add("openAccess");
-        }
-      }
-    }
-
-    return queryTerms
-        .stream()
-        .filter(Objects::nonNull)
-        // all terms must match at least one thing
-        .allMatch((q) ->
-            matchTerms
-                .stream()
-                .filter(Objects::nonNull)
-                .map(String::toLowerCase)
-                .anyMatch(
-                    (t) -> t.contains(q)
-                ));
+    return queryT;
   }
 
   public Study getStudy() {
