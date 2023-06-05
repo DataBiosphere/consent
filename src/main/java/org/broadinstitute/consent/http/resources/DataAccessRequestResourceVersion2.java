@@ -316,13 +316,18 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(datasetId);
+      if (dataset == null) {
+        throw new NotFoundException("Dataset " + datasetId + " not found");
+      }
       DataUse dataUse = dataset.getDataUse();
-      if (dataUse == null) {
-        throw new BadRequestException("Dataset " + datasetId + " has no data use");
+      if (dataUse == null || dataUse.getCollaboratorRequired() == null
+          || dataUse.getEthicsApprovalRequired() == null) {
+        throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
       }
       if (dataUse.getCollaboratorRequired()) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
-        if (collabFileDetails.getSize() <= 0 && Strings.isNullOrEmpty(parentCollabLocation)) {
+        if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
+            && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
         try {
@@ -334,7 +339,8 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       }
       if (dataUse.getEthicsApprovalRequired()) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
-        if (ethicsFileDetails.getSize() <= 0 && Strings.isNullOrEmpty(parentEthicsLocation)) {
+        if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
+            && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
         try {

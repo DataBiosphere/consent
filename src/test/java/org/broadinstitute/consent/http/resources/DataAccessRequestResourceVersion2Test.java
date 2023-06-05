@@ -13,6 +13,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -352,8 +353,7 @@ public class DataAccessRequestResourceVersion2Test {
     assertEquals(200, response.getStatus());
   }
 
-  private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName)
-      throws IOException {
+  private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName) {
     String name = FilenameUtils.removeExtension(fileName);
     String ext = FilenameUtils.getExtension(fileName);
 
@@ -390,6 +390,177 @@ public class DataAccessRequestResourceVersion2Test {
     Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
     assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testPostProgressReportUserNotAuthorized() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(member);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    initResource();
+
+    assertThrows(ForbiddenException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportMissingParentDar() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    initResource();
+
+    assertThrows(NotFoundException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportNullCollabFile() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = Pair.of(null, null);
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    Dataset dataset = mock(Dataset.class);
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    DataUse dataUseCollabAndEthics = new DataUseBuilder()
+        .setCollaboratorRequired(true)
+        .setEthicsApprovalRequired(true).build();
+    when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportEmptyEthicsFile() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    when(ethicsFile.getRight().getSize()).thenReturn(0L);
+    Dataset dataset = mock(Dataset.class);
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    DataUse dataUseCollabAndEthics = new DataUseBuilder()
+        .setCollaboratorRequired(true)
+        .setEthicsApprovalRequired(true).build();
+    when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportNullDataset() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    when(datasetService.findDatasetById(any())).thenReturn(null);
+    initResource();
+
+    assertThrows(NotFoundException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportNullDataUse() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    Dataset dataset = mock(Dataset.class);
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(dataset.getDataUse()).thenReturn(null);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportNullCollaboratorDataUse() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    Dataset dataset = mock(Dataset.class);
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    DataUse dataUseEthicsOnly = new DataUseBuilder().setEthicsApprovalRequired(true).build();
+    when(dataset.getDataUse()).thenReturn(dataUseEthicsOnly);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
+  public void testPostProgressReportNullEthicsApprovalDataUse() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    Dataset dataset = mock(Dataset.class);
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    DataUse dataUseCollaboratorOnly = new DataUseBuilder().setCollaboratorRequired(true).build();
+    when(dataset.getDataUse()).thenReturn(dataUseCollaboratorOnly);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
   }
 
   @Test
