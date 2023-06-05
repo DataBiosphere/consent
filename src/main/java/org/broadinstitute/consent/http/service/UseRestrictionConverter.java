@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
-import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,22 +193,6 @@ public class UseRestrictionConverter {
     if (response.getStatus() == 200) {
       try {
         return response.readEntity(String.class);
-      } catch (Exception e) {
-        LOGGER.error("Error parsing response from Ontology service: " + e);
-      }
-    }
-    LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
-    return null;
-  }
-
-  public DataUseSummary translateDataUseSummary(DataUse dataUse) {
-    WebTarget target = client.target(
-        servicesConfiguration.getOntologyURL() + "translate/summary");
-    Response response = target.request(MediaType.APPLICATION_JSON)
-        .post(Entity.json(dataUse.toString()));
-    if (response.getStatus() == 200) {
-      try {
-        return response.readEntity(DataUseSummary.class);
       } catch (Exception e) {
         LOGGER.error("Error parsing response from Ontology service: " + e);
       }

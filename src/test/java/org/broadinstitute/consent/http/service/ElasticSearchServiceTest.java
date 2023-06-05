@@ -13,20 +13,14 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
-import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.elasticsearch.client.Request;
@@ -45,16 +39,7 @@ public class ElasticSearchServiceTest {
   private RestClient esClient;
 
   @Mock
-  private UseRestrictionConverter useRestrictionConverter;
-
-  @Mock
-  private DacDAO dacDAO;
-
-  @Mock
-  private UserDAO userDAO;
-
-  @Mock
-  private DatasetDAO datasetDAO;
+  private OntologyService ontologyService;
 
   @Mock
   private ElasticSearchConfiguration esConfig;
@@ -68,9 +53,11 @@ public class ElasticSearchServiceTest {
   }
 
   private void initService() {
-    service = new ElasticSearchService(esClient, esConfig, useRestrictionConverter, datasetDAO,
+    service = new ElasticSearchService(
+        esClient,
+        esConfig,
         dataAccessRequestDAO,
-        dacDAO, userDAO);
+        ontologyService);
   }
 
   @Test
@@ -88,7 +75,7 @@ public class ElasticSearchServiceTest {
     study.setStudyId(12345);
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
-    study.setCreateUserId(15);
+    study.setCreateUserId(9);
     study.setPublicVisibility(true);
 
     StudyProperty phenotypeProperty = new StudyProperty();
@@ -127,23 +114,13 @@ public class ElasticSearchServiceTest {
 
     dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
 
-    User dataSubmitter = new User();
-    dataSubmitter.setUserId(9);
-
-    User approvedUser1 = new User();
-    approvedUser1.setUserId(10);
-    User approvedUser2 = new User();
-    approvedUser2.setUserId(11);
-
     DataUseSummary dataUseSummary = new DataUseSummary();
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
 
-    when(userDAO.findUserById(study.getCreateUserId())).thenReturn(dataSubmitter);
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
-        List.of(1, 2));
-    when(userDAO.findUsers(List.of(1, 2))).thenReturn(List.of(approvedUser1, approvedUser2));
-    when(useRestrictionConverter.translateDataUseSummary(any())).thenReturn(dataUseSummary);
+        List.of(10, 11));
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
 
     initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
@@ -157,8 +134,8 @@ public class ElasticSearchServiceTest {
     assertEquals(speciesProperty.getValue(), term.getStudy().getSpecies());
     assertEquals(study.getPiName(), term.getStudy().getPiName());
     assertEquals(
-        dataSubmitter.getUserId(),
-        term.getStudy().getDataSubmitter().getUserId());
+        study.getCreateUserId(),
+        term.getStudy().getDataSubmitterId());
     assertEquals(dataCustodianEmailProperty.getValue(), term.getStudy().getDataCustodian());
 
     assertEquals(dataUseSummary, term.getDataUse());
@@ -171,12 +148,8 @@ public class ElasticSearchServiceTest {
 
     assertEquals(numParticipantsProp.getPropertyValue(), term.getParticipantCount());
 
-    assertEquals(
-        approvedUser1.getUserId(),
-        term.getApprovedUsers().get(0).getUserId());
-    assertEquals(
-        approvedUser2.getUserId(),
-        term.getApprovedUsers().get(1).getUserId());
+    assertEquals(List.of(10, 11),
+        term.getApprovedUserIds());
 
   }
 
@@ -188,38 +161,14 @@ public class ElasticSearchServiceTest {
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
 
-    when(dacDAO.findById(any())).thenReturn(null);
-    when(userDAO.findUserById(any())).thenReturn(null);
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
-    when(userDAO.findUsers(any())).thenReturn(List.of());
 
     initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
-  }
-
-  @Test
-  public void toUserTerm() {
-    User user = new User();
-
-    user.setUserId(100);
-    user.setEmail(RandomStringUtils.randomAlphabetic(10) + "@gmail.com");
-    user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-
-    user.setRoles(
-        List.of(
-            new UserRole(1, "Example Role 1"),
-            new UserRole(2, "Example Role 2")
-        )
-    );
-
-    initService();
-    UserTerm term = service.toUserTerm(user);
-
-    assertEquals(user.getUserId(), term.getUserId());
   }
 
   @Captor

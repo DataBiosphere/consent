@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
+import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -196,6 +197,11 @@ public class ConsentModule extends AbstractModule {
   @Provides
   UseRestrictionConverter providesUseRestrictionConverter() {
     return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+  }
+
+  @Provides
+  OntologyService providesOntologyService() {
+    return new OntologyService(providesClient(), config.getServicesConfiguration());
   }
 
   @Provides
@@ -441,11 +447,8 @@ public class ConsentModule extends AbstractModule {
     return new ElasticSearchService(
         ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
         config.getElasticSearchConfiguration(),
-        providesUseRestrictionConverter(),
-        providesDatasetDAO(),
         providesDataAccessRequestDAO(),
-        providesDacDAO(),
-        providesUserDAO()
+        providesOntologyService()
     );
   }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import jakarta.ws.rs.HttpMethod;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,18 +10,13 @@ import java.util.Optional;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
-import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -31,27 +27,19 @@ public class ElasticSearchService implements ConsentLogger {
 
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
-  private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
-  private final DacDAO dacDAO;
-  private final UserDAO userDAO;
-  private final UseRestrictionConverter useRestrictionConverter;
+
+  private final OntologyService ontologyService;
 
   public ElasticSearchService(
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
-      UseRestrictionConverter useRestrictionConverter,
-      DatasetDAO datasetDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
-      DacDAO dacDAO,
-      UserDAO userDAO) {
+      OntologyService ontologyService) {
     this.esClient = esClient;
     this.esConfig = esConfig;
-    this.useRestrictionConverter = useRestrictionConverter;
-    this.datasetDAO = datasetDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.dacDAO = dacDAO;
-    this.userDAO = userDAO;
+    this.ontologyService = ontologyService;
   }
 
 
@@ -68,7 +56,7 @@ public class ElasticSearchService implements ConsentLogger {
     });
 
     Request bulkRequest = new Request(
-        "PUT",
+        HttpMethod.PUT,
         "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
     bulkRequest.setEntity(new NStringEntity(
@@ -76,18 +64,6 @@ public class ElasticSearchService implements ConsentLogger {
         ContentType.DEFAULT_BINARY));
 
     return esClient.performRequest(bulkRequest);
-  }
-
-  public UserTerm toUserTerm(User user) {
-    if (Objects.isNull(user)) {
-      return null;
-    }
-
-    UserTerm term = new UserTerm();
-
-    term.setUserId(user.getUserId());
-
-    return term;
   }
 
   public StudyTerm toStudyTerm(Study study) {
@@ -107,24 +83,23 @@ public class ElasticSearchService implements ConsentLogger {
     findStudyProperty(
         study.getProperties(), "phenotypeIndication"
     ).ifPresent(
-        prop -> term.setPhenotype((String) prop.getValue())
+        prop -> term.setPhenotype(prop.getValue().toString())
     );
 
     findStudyProperty(
         study.getProperties(), "species"
     ).ifPresent(
-        prop -> term.setSpecies((String) prop.getValue())
+        prop -> term.setSpecies(prop.getValue().toString())
     );
 
     findStudyProperty(
         study.getProperties(), "dataCustodianEmail"
     ).ifPresent(
-        prop -> term.setDataCustodian((String) prop.getValue())
+        prop -> term.setDataCustodian(prop.getValue().toString())
     );
 
     if (Objects.nonNull(study.getCreateUserId())) {
-      User dataSubmitter = userDAO.findUserById(study.getCreateUserId());
-      term.setDataSubmitter(toUserTerm(dataSubmitter));
+      term.setDataSubmitterId(study.getCreateUserId());
     }
 
     return term;
@@ -146,19 +121,16 @@ public class ElasticSearchService implements ConsentLogger {
 
     term.setDacId(dataset.getDacId());
 
-    Collection<Integer> approvedUserIds =
+    List<Integer> approvedUserIds =
         dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
             dataset.getDataSetId());
 
     if (!approvedUserIds.isEmpty()) {
-      Collection<User> approvedUsers = userDAO.findUsers(approvedUserIds);
-
-      List<UserTerm> approvedUserTerms = approvedUsers.stream().map(this::toUserTerm).toList();
-      term.setApprovedUsers(approvedUserTerms);
+      term.setApprovedUserIds(approvedUserIds);
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {
-      term.setDataUse(useRestrictionConverter.translateDataUseSummary(dataset.getDataUse()));
+      term.setDataUse(ontologyService.translateDataUseSummary(dataset.getDataUse()));
     }
 
     findDatasetProperty(
@@ -176,13 +148,13 @@ public class ElasticSearchService implements ConsentLogger {
     findDatasetProperty(
         dataset.getProperties(), "url"
     ).ifPresent(
-        datasetProperty -> term.setUrl((String) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setUrl(datasetProperty.getPropertyValueAsString())
     );
 
     findDatasetProperty(
         dataset.getProperties(), "dataLocation"
     ).ifPresent(
-        datasetProperty -> term.setDataLocation((String) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setDataLocation(datasetProperty.getPropertyValueAsString())
     );
 
     return term;

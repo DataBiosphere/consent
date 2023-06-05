@@ -13,7 +13,7 @@ public class DatasetTerm {
   private String url;
   private Integer dacId;
   private Boolean openAccess;
-  private List<UserTerm> approvedUsers;
+  private List<Integer> approvedUserIds;
   private StudyTerm study;
 
   public Integer getDatasetId() {
@@ -82,12 +82,12 @@ public class DatasetTerm {
     this.openAccess = openAccess;
   }
 
-  public List<UserTerm> getApprovedUsers() {
-    return approvedUsers;
+  public List<Integer> getApprovedUserIds() {
+    return approvedUserIds;
   }
 
-  public void setApprovedUsers(List<UserTerm> approvedUsers) {
-    this.approvedUsers = approvedUsers;
+  public void setApprovedUserIds(List<Integer> approvedUsers) {
+    this.approvedUserIds = approvedUsers;
   }
 
   public StudyTerm getStudy() {
