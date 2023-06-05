@@ -1,6 +1,6 @@
 put:
   summary: Updates a dataset from a valid DatasetUpdate object
-  description: Updates a dataset from a valid DatasetUpdate object
+  description: Updates a dataset from a valid DatasetUpdate object, returns a full dataset object
   parameters:
     - name: datasetId
       in: path
@@ -17,18 +17,58 @@ put:
           type: object
           properties:
             dataset:
-              description: uses DatasetUpdate record class which has the values and properties of the 
-                           dataset that can be updated. The purpose of this class is to allow for 
-                           specific adjustments for this endpoint.
-              type: object
+              description:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The dataset name
+                  datasetName:
+                    type: string
+                    deprecated: true
+                    description: Legacy value for backwards compatibility, same as the dataset name
+                  dataSetId:
+                    type: integer
+                    format: int32
+                    description: The dataset id, integer format
+                  dacId:
+                    type: string
+                    description: The id of the DAC this dataset belongs to, if defined.
+                  datasetProperties:
+                    type: array
+                    items:
+                      $ref: './DatasetProperty.yaml'
+                    example:
+                      - propertyName: Dataset Name
+                        propertyValue: Dataset Name
+                      - propertyName: Data Type
+                        propertyValue: Whole Genome
+                      - propertyName: Species
+                        propertyValue: Human
+                      - propertyName: Phenotype/Indication
+                        propertyValue: Cardiovascular System Disease
+                      - propertyName: "# of participants"
+                        propertyValue: 20
+                      - propertyName: Description
+                        propertyValue: Description of Dataset
+                      - propertyName: dbGAP
+                        propertyValue: http://...
+                      - propertyName: Data Depositor
+                        propertyValue: NHLBI
+                      - propertyName: Principal Investigator(PI)
+                        propertyValue: NHLBI
+                      - propertyName: Sample Collection ID
+                        propertyValue: SC-000
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
               format: binary
+              $ref: './FileStorageObject.yaml'
             consentGroups[0].nihInstitutionalCertificationFile:
               description: Certification file
               type: string
               format: binary
+              $ref: './FileStorageObject.yaml'
   tags:
     - Dataset
   responses:
@@ -37,7 +77,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: '../schemas/DatasetUpdate.yaml'
+            $ref: '../schemas/Dataset.yaml'
     400:
       description: Bad Request (invalid input)
     404:

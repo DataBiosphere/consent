@@ -145,19 +145,17 @@ public class DatasetRegistrationService {
 
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
 
-    DatasetServiceDAO.DatasetUpdate datasetUpdates;
-
     try {
-      datasetUpdates = createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
+      DatasetServiceDAO.DatasetUpdate datasetUpdates = createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
+
+      // Update or create the objects in the database
+      datasetServiceDAO.updateDataset(datasetUpdates);
 
     } catch (IOException e) {
       // uploading files to GCS failed. rollback files...
       uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
       throw e;
     }
-
-    // Update or create the objects in the database
-    datasetServiceDAO.updateDataset(datasetUpdates);
     return datasetDAO.findDatasetById(datasetId);
   }
 
