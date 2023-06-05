@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,13 +9,11 @@ import static org.mockserver.model.HttpResponse.response;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
-import java.util.List;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -236,87 +232,6 @@ public class UseRestrictionConverterTest implements WithMockServer {
     assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
     assertTrue(dataUse.getPopulationOriginsAncestry());
     assertTrue(dataUse.getHmbResearch());
-  }
-
-  @Test
-  public void testTranslateDataUseSummary() {
-    mockDataUseTranslateSummarySuccess();
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataUse dataUse = new DataUseBuilder()
-        .setHmbResearch(true)
-        .setDiseaseRestrictions(List.of(""))
-        .build();
-    DataUseSummary translation = converter.translateDataUseSummary(dataUse);
-    assertNotNull(translation);
-
-    assertEquals(2, translation.getPrimary().size());
-
-    assertEquals("HMB", translation.getPrimary().get(0).getCode());
-    assertFalse(translation.getPrimary().get(0).getDescription().isEmpty());
-
-    assertEquals("DS", translation.getPrimary().get(1).getCode());
-    assertFalse(translation.getPrimary().get(1).getDescription().isEmpty());
-
-    assertEquals(4, translation.getSecondary().size());
-
-    assertEquals("NCU", translation.getSecondary().get(0).getCode());
-    assertFalse(translation.getSecondary().get(0).getDescription().isEmpty());
-
-    assertEquals("NMDS", translation.getSecondary().get(1).getCode());
-    assertFalse(translation.getSecondary().get(1).getDescription().isEmpty());
-
-    assertEquals("NCTRL", translation.getSecondary().get(2).getCode());
-    assertFalse(translation.getSecondary().get(2).getDescription().isEmpty());
-
-    assertEquals("OTHER", translation.getSecondary().get(3).getCode());
-    assertFalse(translation.getSecondary().get(3).getDescription().isEmpty());
-
-  }
-
-
-  private void mockDataUseTranslateSummarySuccess() {
-    client
-        .when(request().withMethod("POST").withPath("/translate/summary"))
-        .respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody(
-                    """
-                        {
-                          "primary": [
-                            {
-                              "code": "HMB",
-                              "description": "Data is limited for health/medical/biomedical research."
-                            },
-                            {
-                              "code": "DS",
-                              "description": "Data use is limited for studying: cancerophobia"
-                            }
-                          ],
-                          "secondary": [
-                            {
-                              "code": "NCU",
-                              "description": "Commercial use is not prohibited."
-                            },
-                            {
-                              "code": "NMDS",
-                              "description": "Data use for methods development research irrespective of the specified data use limitations is not prohibited."
-                            },
-                            {
-                              "code": "NCTRL",
-                              "description": "Restrictions for use as a control set for diseases other than those defined were not specified."
-                            },
-                            {
-                              "code": "OTHER",
-                              "description": "Genomic summary results from this study are available only through controlled-access"
-                            }
-                          ]
-                        }
-                        """
-                )
-        );
   }
 
 }

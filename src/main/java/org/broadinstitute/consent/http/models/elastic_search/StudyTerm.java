@@ -10,7 +10,7 @@ public class StudyTerm {
   private String phenotype;
   private String species;
   private String piName;
-  private UserTerm dataSubmitter;
+  private Integer dataSubmitterId;
   private String dataCustodian;
   private Boolean publicVisibility;
   private List<String> dataTypes;
@@ -64,13 +64,13 @@ public class StudyTerm {
     this.piName = piName;
   }
 
-  public UserTerm getDataSubmitter() {
-    return dataSubmitter;
+  public Integer getDataSubmitterId() {
+    return dataSubmitterId;
   }
 
-  public void setDataSubmitter(
-      UserTerm dataSubmitter) {
-    this.dataSubmitter = dataSubmitter;
+  public void setDataSubmitterId(
+      Integer dataSubmitterId) {
+    this.dataSubmitterId = dataSubmitterId;
   }
 
   public String getDataCustodian() {
