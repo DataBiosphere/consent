@@ -18,8 +18,8 @@ post:
           type: object
           properties:
             dar:
-              schema:
-                $ref: '../schemas/DataAccessRequest.yaml'
+              type: object
+              description: An object that follows the Data Access Request schema
             collaboratorRequiredFile:
               type: string
               format: binary

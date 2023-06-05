@@ -317,6 +317,9 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(datasetId);
       DataUse dataUse = dataset.getDataUse();
+      if (dataUse == null) {
+        throw new BadRequestException("Dataset " + datasetId + " has no data use");
+      }
       if (dataUse.getCollaboratorRequired()) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
         if (collabFileDetails.getSize() <= 0 && Strings.isNullOrEmpty(parentCollabLocation)) {
