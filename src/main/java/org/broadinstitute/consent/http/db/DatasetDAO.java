@@ -64,13 +64,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   @SqlUpdate("""
             UPDATE dataset
-      SET name = :datasetName,
-          update_date = :updateDate,
-          update_user_id = :updateUserId,
-          needs_approval = :needsApproval,
-          active = :active,
-          dac_id = :dacId
-      WHERE dataset_id = :datasetId
+            SET name = :datasetName,
+                update_date = :updateDate,
+                update_user_id = :updateUserId,
+                needs_approval = :needsApproval,
+                active = :active,
+                dac_id = :dacId
+            WHERE dataset_id = :datasetId
       """)
   void updateDatasetByDatasetId(
       @Bind("datasetId") Integer datasetId,
