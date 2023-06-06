@@ -301,30 +301,31 @@ public class DatasetResource extends Resource {
     }
   }
 
-//  @GET
-//  @Produces("application/json")
-//  @PermitAll
-//  @Path("/{roleName}")
-//  public Response findDatasetsAccordingToRole(
-//      @Auth AuthUser authUser,
-//      @PathParam("roleName") String roleName) {
-//    try {
-//      User user = userService.findUserByEmail(authUser.getEmail());
-//      List<Dataset> datasets = List.of();
-////      if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
-////        datasets = datasetService.findAllDatasets();
-////      } else if (roleName.equals(UserRoles.CHAIRPERSON.getRoleName())) {
-////        datasets = datasetService.findDatasetsForChair(user);
-////      } else if (roleName.equals(UserRoles.DATASUBMITTER.getRoleName())) {
-////        datasets = datasetService.findDatasetsForDataSubmitter(user);
-////      } else {
-////        datasets = datasetService.findPublicDatasets();
-////      }
-//      return Response.ok(datasets).build();
-//    } catch (Exception e) {
-//      return createExceptionResponse(e);
-//    }
-//  }
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/byRole/{roleName}")
+  public Response findDatasetsAccordingToRole(
+      @Auth AuthUser authUser,
+      @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      List<Dataset> datasets;
+      if (roleName.equals(UserRoles.ADMIN.getRoleName())) {
+        datasets = datasetService.findAllDatasets();
+      } else if (roleName.equals(UserRoles.CHAIRPERSON.getRoleName())) {
+        datasets = datasetService.findDatasetsForChairperson(user);
+      } else if (roleName.equals(UserRoles.DATASUBMITTER.getRoleName())) {
+        datasets = datasetService.findDatasetsForDataSubmitter(user);
+      } else {
+        datasets = datasetService.findPublicDatasets();
+      }
+      return Response.ok(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 
   @GET
   @Deprecated // Use /v2/{datasetId}
