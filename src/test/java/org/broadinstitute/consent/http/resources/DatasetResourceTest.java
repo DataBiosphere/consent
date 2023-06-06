@@ -1108,6 +1108,25 @@ public class DatasetResourceTest {
     assertEquals(400, response.getStatus());
   }
 
+  @Test
+  public void testUpdateDatasetWithInvalidJson() {
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    String json = createInvalidDataset(user);
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    initResource();
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
+    assertEquals(400, response.getStatus());
+  }
+
   /**
    * tests the case that there are no updates to the dataset properties, should result in success
    */
@@ -1247,7 +1266,7 @@ public class DatasetResourceTest {
           },
           "dacId": 5,
           "consentId": "eac1d4f9-78c9-4c88-9b10-9d692e171b5b",
-          "translatedUseRestriction": "Samples are restricted for use under the following conditions:\\nData use is limited for studying: cancerophobia, diabetes mellitus [DS]\\nFuture use for population origins or ancestry research is prohibited. [POA]\\nCommercial use prohibited. [NCU]\\nData use for methods development research irrespective of the specified data use limitations is not prohibited.\\nFuture use as a control set for diseases other than those specified is prohibited. [NCTRL]\\nData use is limited to research on females. [RS-FM]\\nData use is limited to pediatric research. [RS-PD]",
+          "translatedUseRestriction": "",
           "deletable": false,
           "properties": [
             {
@@ -1264,6 +1283,22 @@ public class DatasetResourceTest {
               null
             ]
           }
+        }
+        """;
+
+    return String.format(format, user.getUserId());
+  }
+
+  /**
+   * Helper method to create a minimally valid instance of a dataset for updating dataset
+   *
+   * @param user The User
+   * @return The Dataset instance
+   */
+  private String createInvalidDataset(User user) {
+    String format = """
+        {
+          "dataSetId": 2,
         }
         """;
 
