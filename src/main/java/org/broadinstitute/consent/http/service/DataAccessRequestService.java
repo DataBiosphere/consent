@@ -269,7 +269,6 @@ public class DataAccessRequestService {
 
     Date now = new Date();
     long nowTime = now.getTime();
-    DataAccessRequest newDar;
     DataAccessRequestData darData = dataAccessRequest.getData();
     if (Objects.isNull(darData.getCreateDate())) {
       darData.setCreateDate(nowTime);
@@ -286,39 +285,33 @@ public class DataAccessRequestService {
       collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
       darData.setDarCode(darCodeSequence);
     }
+    String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     if (Objects.nonNull(existingDar)) {
+      referenceId = dataAccessRequest.getReferenceId();
       dataAccessRequestDAO.updateDraftForCollection(collectionId,
-          dataAccessRequest.getReferenceId());
+          referenceId);
       dataAccessRequestDAO.updateDataByReferenceId(
-          dataAccessRequest.getReferenceId(),
+          referenceId,
           user.getUserId(),
           new Date(darData.getSortDate()),
           now,
           now,
           darData);
-      newDar = findByReferenceId(dataAccessRequest.getReferenceId());
-      syncDataAccessRequestDatasets(datasetIds, dataAccessRequest.getReferenceId());
     } else {
-      String referenceId = UUID.randomUUID().toString();
-      newDar = insertSubmittedDataAccessRequest(user, referenceId, darData, collectionId, now);
-      syncDataAccessRequestDatasets(datasetIds, referenceId);
+      referenceId = UUID.randomUUID().toString();
+      dataAccessRequestDAO.insertDataAccessRequest(
+          collectionId,
+          referenceId,
+          user.getUserId(),
+          new Date(darData.getCreateDate()),
+          new Date(darData.getSortDate()),
+          now,
+          now,
+          darData);
     }
-    return newDar;
-  }
-
-  public DataAccessRequest insertSubmittedDataAccessRequest(User user, String referencedId,
-      DataAccessRequestData darData, Integer collectionId, Date now) {
-    dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referencedId,
-        user.getUserId(),
-        new Date(darData.getCreateDate()),
-        new Date(darData.getSortDate()),
-        now,
-        now,
-        darData);
-    return findByReferenceId(referencedId);
+    syncDataAccessRequestDatasets(datasetIds, referenceId);
+    return findByReferenceId(referenceId);
   }
 
   /**
