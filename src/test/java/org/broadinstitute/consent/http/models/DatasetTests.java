@@ -139,4 +139,38 @@ public class DatasetTests {
     assertFalse(ds.isStringMatch("asd 122", null));
 
   }
+
+  @Test
+  public void testIsStringMatchOpenAccessTrue() {
+    Dataset ds = new Dataset();
+
+    String value = "true";
+
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setPropertyName("Open Access");
+    dsp.setPropertyValue(value);
+    dsp.setPropertyType(PropertyType.String);
+    dsp.setSchemaProperty("consentGroup.openAccess");
+    ds.setProperties(Set.of(dsp));
+
+    assertTrue(ds.isStringMatch(value, true));
+    assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25), true));
+  }
+
+  @Test
+  public void testIsStringMatchOpenAccessFalse() {
+    Dataset ds = new Dataset();
+
+    String value = "false";
+
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setPropertyName("Open Access");
+    dsp.setPropertyValue(value);
+    dsp.setPropertyType(PropertyType.String);
+    dsp.setSchemaProperty("consentGroup.openAccess");
+    ds.setProperties(Set.of(dsp));
+
+    assertTrue(ds.isStringMatch(value, false));
+    assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25), true));
+  }
 }

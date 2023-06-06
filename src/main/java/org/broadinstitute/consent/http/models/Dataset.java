@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess.OPEN_ACCESS;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -299,16 +303,29 @@ public class Dataset {
     this.deletable = deletable;
   }
 
+  // helper methods for open access string matching
+  public Optional<DatasetProperty> getPropertyByName(String name) {
+    if (Objects.isNull(getProperties()) || getProperties().isEmpty()){
+      return Optional.empty();
+    }
+    return getProperties()
+        .stream()
+        .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+        .filter((dp) -> Objects.equals(dp.getPropertyName(), name))
+        .findFirst();
+  }
+
 
   /**
    * Checks if the Dataset matches a raw search query. Searches on all dataset properties and some
-   * data use properties.
+   * data use properties. Has optional parameter "Open Access" which will search datasets on both
+   * the raw search query and open access.
    *
-   * @param query Raw string query
+   * @param query       Raw string query
+   * @param openAccess  Nullable Boolean for open access
    * @return if the Dataset matched query
    *
    */
-
   public boolean isStringMatch(@NonNull String query, Boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
@@ -316,6 +333,20 @@ public class Dataset {
     List<String> matchTerms = new ArrayList<>();
     matchTerms.add(this.getName());
     matchTerms.add(this.getDatasetIdentifier());
+
+    if (Objects.nonNull(openAccess)) {
+      Optional<DatasetProperty> openAccessProp = getPropertyByName(OPEN_ACCESS.toString());
+
+      if (openAccessProp.isEmpty()){
+        if (openAccess) {
+          return false;
+        }
+      }
+      else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(), openAccess.toString()))
+      {
+        return false;
+      }
+    }
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
       List<String> propVals = getProperties()
@@ -343,7 +374,7 @@ public class Dataset {
       }
     }
 
-    boolean queryT = queryTerms
+    return queryTerms
         .stream()
         .filter(Objects::nonNull)
         // all terms must match at least one thing
@@ -354,21 +385,7 @@ public class Dataset {
                 .map(String::toLowerCase)
                 .anyMatch(
                     (t) -> t.contains(q))
-                );
-
-    if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
-      boolean propValsOpenAccess = getProperties()
-          .stream()
-          .filter((dp) -> Objects.nonNull(dp.getSchemaProperty()))
-          .map(DatasetProperty::getSchemaProperty)
-          .anyMatch(
-              (term) -> term.contains("openAccess")
-          );
-      if (Objects.isNull(openAccess) || (!openAccess)) {
-        return queryT;
-      } else { return (queryT && propValsOpenAccess); }
-    }
-    return queryT;
+        );
   }
 
   public Study getStudy() {
