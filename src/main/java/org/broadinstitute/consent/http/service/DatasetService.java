@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
@@ -37,6 +38,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -58,13 +60,14 @@ public class DatasetService {
   private final DacDAO dacDAO;
   private final UseRestrictionConverter converter;
   private final EmailService emailService;
+  private final StudyDAO studyDAO;
 
   @Inject
   public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
       DatasetDAO dataSetDAO,
       DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
       UseRestrictionConverter converter,
-      EmailService emailService) {
+      EmailService emailService, StudyDAO studyDAO) {
     this.consentDAO = consentDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
@@ -73,6 +76,7 @@ public class DatasetService {
     this.dacDAO = dacDAO;
     this.converter = converter;
     this.emailService = emailService;
+    this.studyDAO = studyDAO;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -247,6 +251,9 @@ public class DatasetService {
 
   public Set<String> findAllActiveStudyNames() {
     return datasetDAO.findAllActiveStudyNames();
+  }
+  public Study findStudyById(Integer id) {
+    return studyDAO.findStudyById(id);
   }
 
   public Dataset findDatasetById(Integer id) {

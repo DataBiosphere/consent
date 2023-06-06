@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -1056,6 +1057,27 @@ public class DatasetResourceTest {
 
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testGetStudy() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setName("asdfasdfasdfasdfasdfasdf");
+    when(datasetService.findStudyById(1)).thenReturn(study);
+    initResource();
+    Response response = resource.getStudyById(1);
+    assertEquals(200, response.getStatus());
+    assertEquals(study, response.getEntity());
+  }
+
+  @Test
+  public void testGetStudyNotFound() {
+    when(datasetService.findStudyById(1)).thenReturn(null);
+
+    initResource();
+    Response response = resource.getStudyById(1);
+    assertEquals(404, response.getStatus());
   }
 
   /**

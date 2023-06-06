@@ -593,6 +593,8 @@ paths:
           description: Dataset not found
   /api/dataset/studyNames:
     $ref: './paths/findAllStudyNames.yaml'
+  /api/dataset/study/{studyId}:
+    $ref: './paths/getStudyBiId.yaml'
   /api/dataset/sample:
     get:
       summary: getDataSetSample

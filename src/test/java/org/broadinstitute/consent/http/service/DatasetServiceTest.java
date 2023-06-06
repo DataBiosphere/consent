@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -84,6 +85,9 @@ public class DatasetServiceTest {
   @Mock
   private EmailService emailService;
 
+  @Mock
+  private StudyDAO studyDAO;
+
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
@@ -91,7 +95,7 @@ public class DatasetServiceTest {
 
   private void initService() {
     datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO,
-        datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService);
+        datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService, studyDAO);
   }
 
   @Test
