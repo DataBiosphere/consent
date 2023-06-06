@@ -9,66 +9,62 @@ put:
       schema:
         type: integer
   requestBody:
-    description: Returns the updated dataset. A dataset must already exist, but files can be either
-                 updated or created if they don't already exist.
     content:
       multipart/form-data:
         schema:
           type: object
           properties:
             dataset:
-              description:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    description: The dataset name
-                  datasetName:
-                    type: string
-                    deprecated: true
-                    description: Legacy value for backwards compatibility, same as the dataset name
-                  dataSetId:
-                    type: integer
-                    format: int32
-                    description: The dataset id, integer format
-                  dacId:
-                    type: string
-                    description: The id of the DAC this dataset belongs to, if defined.
-                  datasetProperties:
-                    type: array
-                    items:
-                      $ref: './DatasetProperty.yaml'
-                    example:
-                      - propertyName: Dataset Name
-                        propertyValue: Dataset Name
-                      - propertyName: Data Type
-                        propertyValue: Whole Genome
-                      - propertyName: Species
-                        propertyValue: Human
-                      - propertyName: Phenotype/Indication
-                        propertyValue: Cardiovascular System Disease
-                      - propertyName: "# of participants"
-                        propertyValue: 20
-                      - propertyName: Description
-                        propertyValue: Description of Dataset
-                      - propertyName: dbGAP
-                        propertyValue: http://...
-                      - propertyName: Data Depositor
-                        propertyValue: NHLBI
-                      - propertyName: Principal Investigator(PI)
-                        propertyValue: NHLBI
-                      - propertyName: Sample Collection ID
-                        propertyValue: SC-000
+              description: A list of updatable dataset properties
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The dataset name
+                datasetName:
+                  type: string
+                  deprecated: true
+                  description: Legacy value for backwards compatibility, same as the dataset name
+                dataSetId:
+                  type: integer
+                  format: int32
+                  description: The dataset id, integer format
+                dacId:
+                  type: string
+                  description: The id of the DAC this dataset belongs to, if defined.
+                datasetProperties:
+                  type: array
+                  items:
+                    $ref: '../schemas/DatasetProperty.yaml'
+                  example:
+                    - propertyName: Dataset Name
+                      propertyValue: Dataset Name
+                    - propertyName: Data Type
+                      propertyValue: Whole Genome
+                    - propertyName: Species
+                      propertyValue: Human
+                    - propertyName: Phenotype/Indication
+                      propertyValue: Cardiovascular System Disease
+                    - propertyName: "# of participants"
+                      propertyValue: 20
+                    - propertyName: Description
+                      propertyValue: Description of Dataset
+                    - propertyName: dbGAP
+                      propertyValue: http://...
+                    - propertyName: Data Depositor
+                      propertyValue: NHLBI
+                    - propertyName: Principal Investigator(PI)
+                      propertyValue: NHLBI
+                    - propertyName: Sample Collection ID
+                      propertyValue: SC-000
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
               format: binary
-              $ref: './FileStorageObject.yaml'
             consentGroups[0].nihInstitutionalCertificationFile:
               description: Certification file
               type: string
               format: binary
-              $ref: './FileStorageObject.yaml'
   tags:
     - Dataset
   responses:
