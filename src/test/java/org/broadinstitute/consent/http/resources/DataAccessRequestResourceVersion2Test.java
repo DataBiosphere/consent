@@ -422,6 +422,22 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
+  public void testPostProgressReportInvalidJson() {
+    String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    initResource();
+
+    assertThrows(BadRequestException.class, () -> {
+      resource.postProgressReport(authUser, "", invalidDar,
+          collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    });
+  }
+
+  @Test
   public void testPostProgressReportNullCollabFile() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();

@@ -431,7 +431,12 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    DataAccessRequestData data;
+    try {
+      data = DataAccessRequestData.fromString(json);
+    } catch (Exception e) {
+      throw new BadRequestException("Unable to parse DAR from JSON string");
+    }
     if (Objects.isNull(data)) {
       data = new DataAccessRequestData();
     }
