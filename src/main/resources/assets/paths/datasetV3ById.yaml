@@ -25,10 +25,6 @@ put:
                   type: string
                   deprecated: true
                   description: Legacy value for backwards compatibility, same as the dataset name
-                dataSetId:
-                  type: integer
-                  format: int32
-                  description: The dataset id, integer format
                 dacId:
                   type: string
                   description: The id of the DAC this dataset belongs to, if defined.
