@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetSearchTerm;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -219,6 +220,45 @@ public class DatasetResource extends Resource {
     }
 
     return files;
+  }
+
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/v3/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response updateByDatasetUpdate(
+      @Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId,
+      FormDataMultiPart multipart,
+      @FormDataParam("dataset") String json) {
+
+    try {
+
+      DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
+
+      if (Objects.isNull(update)) {
+        throw new BadRequestException("Dataset is required");
+      }
+
+      Dataset datasetExists = datasetService.findDatasetById(datasetId);
+      if (Objects.isNull(datasetExists)) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+
+      User user = userService.findUserByEmail(authUser.getEmail());
+
+      // key: field name (not file name), value: file body part
+      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update, files);
+      return Response.ok().entity(updatedDataset).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @PUT

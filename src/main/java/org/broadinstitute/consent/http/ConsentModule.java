@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
@@ -54,6 +55,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
+import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -66,6 +68,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -194,6 +197,11 @@ public class ConsentModule extends AbstractModule {
   @Provides
   UseRestrictionConverter providesUseRestrictionConverter() {
     return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+  }
+
+  @Provides
+  OntologyService providesOntologyService() {
+    return new OntologyService(providesClient(), config.getServicesConfiguration());
   }
 
   @Provides
@@ -432,6 +440,16 @@ public class ConsentModule extends AbstractModule {
         providesElectionDAO(),
         providesDataAccessRequestDAO(),
         providesVoteService());
+  }
+
+  @Provides
+  ElasticSearchService providesElasticSearchService() {
+    return new ElasticSearchService(
+        ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
+        config.getElasticSearchConfiguration(),
+        providesDataAccessRequestDAO(),
+        providesOntologyService()
+    );
   }
 
   @Provides

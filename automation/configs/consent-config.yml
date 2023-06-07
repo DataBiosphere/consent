@@ -54,3 +54,4 @@ elasticSearch:
   servers:
     - localhost
   indexName: iName
+  datasetIndexName: datasetIName
