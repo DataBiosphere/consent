@@ -58,7 +58,6 @@ import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.json.JSONObject;
 
 
 @Path("api/dataset")
@@ -438,7 +437,8 @@ public class DatasetResource extends Resource {
       String msg = "GETing DataSets to download";
       logDebug(msg);
 
-      JSONObject json = new JSONObject();
+      Gson gson = new Gson();
+      HashMap<String, String> datasets = new HashMap<>();
 
       Collection<Dictionary> headers = datasetService.describeDictionaryByReceiveOrder();
 
@@ -453,8 +453,8 @@ public class DatasetResource extends Resource {
       sb.append(END_OF_LINE);
 
       if (CollectionUtils.isEmpty(idList)) {
-        json.put("datasets", sb.toString());
-        return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+        datasets.put("datasets", sb.toString());
+        return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
       }
 
       Collection<DatasetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
@@ -475,8 +475,8 @@ public class DatasetResource extends Resource {
       }
       String tsv = sb.toString();
 
-      json.put("datasets", tsv);
-      return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+      datasets.put("datasets", tsv);
+      return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

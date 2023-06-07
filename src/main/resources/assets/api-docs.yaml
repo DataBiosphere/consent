@@ -489,6 +489,9 @@ paths:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
 
+  /api/dar/v2/progress_report/{parentReferenceId}:
+    $ref: './paths/progressReport.yaml'
+
   /api/dataRequest/cases/summary/DataAccess:
     get:
       summary: getConsentSummaryCases

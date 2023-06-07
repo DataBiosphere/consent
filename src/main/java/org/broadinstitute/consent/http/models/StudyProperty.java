@@ -60,11 +60,13 @@ public class StudyProperty {
       return false;
     }
     StudyProperty that = (StudyProperty) o;
-    return Objects.equals(studyPropertyId, that.studyPropertyId);
+    return Objects.equals(studyPropertyId, that.studyPropertyId)
+        && Objects.equals(studyId, that.studyId) && Objects.equals(key, that.key)
+        && type == that.type && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(studyPropertyId);
+    return Objects.hash(studyPropertyId, studyId, key, type, value);
   }
 }
