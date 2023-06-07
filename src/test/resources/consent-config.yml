@@ -37,9 +37,9 @@ logging:
   loggers:
     "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
 services:
-    localURL: http://localhost:8000/#/
-    ontologyURL: http://localhost:8180/
-    samUrl: https://localhost:8181/
+  localURL: http://localhost:8000/#/
+  ontologyURL: http://localhost:8180/
+  samUrl: https://localhost:8181/
 mailConfiguration:
   activateEmailNotifications: false
   googleAccount: test@gmail.com
@@ -54,6 +54,7 @@ elasticSearch:
   servers:
     - localhost
   indexName: iName
+  datasetIndexName: dataset
 datasets:
   - Melanoma-Regev-Izar-Garraway-DFCI-ICR
   - Melanoma_Regev
