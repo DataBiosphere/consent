@@ -313,6 +313,8 @@ public class Dataset {
    * @return if the Dataset matched query
    *
    */
+
+  // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of comparing strings
   public boolean isDatasetMatch(@NonNull String query, boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
