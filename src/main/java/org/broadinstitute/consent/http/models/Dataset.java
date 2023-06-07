@@ -313,7 +313,7 @@ public class Dataset {
    * @return if the Dataset matched query
    *
    */
-  public boolean isDatasetMatch(@NonNull String query, @NonNull Boolean openAccess) {
+  public boolean isDatasetMatch(@NonNull String query, boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
@@ -333,7 +333,7 @@ public class Dataset {
           return false;
         }
       }
-      else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(), openAccess.toString()))
+      else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(), Boolean.toString(openAccess)))
       {
         return false;
       }

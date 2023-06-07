@@ -529,7 +529,7 @@ public class DatasetResource extends Resource {
   public Response searchDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query,
-      @QueryParam("open") @DefaultValue("false") Boolean openAccess) {
+      @QueryParam("open") @DefaultValue("false") boolean openAccess) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = datasetService.searchDatasets(query, openAccess, user);
