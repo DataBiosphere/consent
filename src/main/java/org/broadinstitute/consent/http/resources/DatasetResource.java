@@ -9,6 +9,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -566,10 +567,13 @@ public class DatasetResource extends Resource {
   @Path("/search")
   @Produces("application/json")
   @PermitAll
-  public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query) {
+  public Response searchDatasets(
+      @Auth AuthUser authUser,
+      @QueryParam("query") String query,
+      @QueryParam("open") @DefaultValue("false") boolean openAccess) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, user);
+      List<Dataset> datasets = datasetService.searchDatasets(query, openAccess, user);
       return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

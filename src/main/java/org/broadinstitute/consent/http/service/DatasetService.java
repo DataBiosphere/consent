@@ -428,9 +428,9 @@ public class DatasetService {
   }
 
 
-  public List<Dataset> searchDatasets(String query, User user) {
+  public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
-    return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
+    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
   }
 
   @Deprecated

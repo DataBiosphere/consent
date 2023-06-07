@@ -29,32 +29,32 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsStringMatchName() {
+  public void testIsDatasetMatchName() {
     String name = RandomStringUtils.randomAlphanumeric(20);
 
     Dataset ds = new Dataset();
     ds.setName(name);
 
-    assertTrue(ds.isStringMatch(name));
-    assertTrue(ds.isStringMatch(name.substring(5, 10)));
-    assertTrue(ds.isStringMatch(name.substring(10, 15)));
+    assertTrue(ds.isDatasetMatch(name, false));
+    assertTrue(ds.isDatasetMatch(name.substring(5, 10), false));
+    assertTrue(ds.isDatasetMatch(name.substring(10, 15), false));
 
-    assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(30)));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(30), false));
   }
 
   @Test
-  public void testIsStringMatchNameCaseIndependent() {
+  public void testIsDatasetMatchNameCaseIndependent() {
     String name = RandomStringUtils.randomAlphabetic(20);
 
     Dataset ds = new Dataset();
     ds.setName(name.toLowerCase());
 
-    assertTrue(ds.isStringMatch(name.toUpperCase()));
-    assertTrue(ds.isStringMatch(name.toUpperCase().substring(7, 14)));
+    assertTrue(ds.isDatasetMatch(name.toUpperCase(), false));
+    assertTrue(ds.isDatasetMatch(name.toUpperCase().substring(7, 14), false));
   }
 
   @Test
-  public void testIsStringMatchDatasetProperty() {
+  public void testIsDatasetMatchDatasetProperty() {
     Dataset ds = new Dataset();
 
     String value = RandomStringUtils.randomAlphanumeric(20);
@@ -64,79 +64,113 @@ public class DatasetTests {
     dsp.setPropertyType(PropertyType.String);
     ds.setProperties(Set.of(dsp));
 
-    assertTrue(ds.isStringMatch(value));
-    assertFalse(ds.isStringMatch(RandomStringUtils.randomAlphanumeric(25)));
+    assertTrue(ds.isDatasetMatch(value, false));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), false));
   }
 
   @Test
-  public void testIsStringMatchIdentifier() {
+  public void testIsDatasetMatchIdentifier() {
     Dataset ds = new Dataset();
     ds.setAlias(1235);
 
-    assertTrue(ds.isStringMatch("DUOS-001235"));
-    assertTrue(ds.isStringMatch("DUOS"));
-    assertTrue(ds.isStringMatch("123"));
-    assertTrue(ds.isStringMatch("001235"));
-    assertFalse(ds.isStringMatch("DUOS-123456"));
+    assertTrue(ds.isDatasetMatch("DUOS-001235", false));
+    assertTrue(ds.isDatasetMatch("DUOS", false));
+    assertTrue(ds.isDatasetMatch("123", false));
+    assertTrue(ds.isDatasetMatch("001235", false));
+    assertFalse(ds.isDatasetMatch("DUOS-123456", false));
   }
 
   @Test
-  public void testIsStringMatchDataUseCommercial() {
+  public void testIsDatasetMatchDataUseCommercial() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isStringMatch("collaborator"));
+    assertFalse(ds.isDatasetMatch("collaborator", false));
 
     DataUse du = new DataUseBuilder().setCollaboratorRequired(true).build();
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isStringMatch("collaborator"));
-    assertTrue(ds.isStringMatch("collab"));
+    assertTrue(ds.isDatasetMatch("collaborator", false));
+    assertTrue(ds.isDatasetMatch("collab", false));
   }
 
   @Test
-  public void testIsStringMatchDataUseIrb() {
+  public void testIsDatasetMatchDataUseIrb() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isStringMatch("irb"));
+    assertFalse(ds.isDatasetMatch("irb", false));
 
     DataUse du = new DataUse();
     du.setEthicsApprovalRequired(true);
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isStringMatch("irb"));
-    assertTrue(ds.isStringMatch("irb"));
+    assertTrue(ds.isDatasetMatch("irb", false));
+    assertTrue(ds.isDatasetMatch("irb", false));
   }
 
   @Test
-  public void testIsStringMatchDataUseDiseases() {
+  public void testIsDatasetMatchDataUseDiseases() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isStringMatch("cancer"));
-    assertFalse(ds.isStringMatch("alzheimers"));
+    assertFalse(ds.isDatasetMatch("cancer", false));
+    assertFalse(ds.isDatasetMatch("alzheimers", false));
 
     DataUse du = new DataUse();
     du.setDiseaseRestrictions(List.of("cancer", "alzheimers"));
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isStringMatch("cancer"));
-    assertTrue(ds.isStringMatch("alzheimers"));
+    assertTrue(ds.isDatasetMatch("cancer", false));
+    assertTrue(ds.isDatasetMatch("alzheimers", false));
   }
 
   @Test
-  public void testIsStringMatchMultipleTerms() {
+  public void testIsDatasetMatchMultipleTerms() {
     Dataset ds = new Dataset();
 
     ds.setName("asdf");
     ds.setAlias(1234);
 
-    assertTrue(ds.isStringMatch("ASD DUOS-001234"));
-    assertTrue(ds.isStringMatch("asdf 123"));
+    assertTrue(ds.isDatasetMatch("ASD DUOS-001234", false));
+    assertTrue(ds.isDatasetMatch("asdf 123", false));
 
-    assertFalse(ds.isStringMatch("asf DUOS-001234"));
-    assertFalse(ds.isStringMatch("asd 122"));
+    assertFalse(ds.isDatasetMatch("asf DUOS-001234", false));
+    assertFalse(ds.isDatasetMatch("asd 122", false));
 
+  }
+
+  @Test
+  public void testIsDatasetMatchOpenAccessTrue() {
+    Dataset ds = new Dataset();
+
+    String value = "true";
+
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setPropertyName("Open Access");
+    dsp.setPropertyValue(value);
+    dsp.setPropertyType(PropertyType.String);
+    dsp.setSchemaProperty("consentGroup.openAccess");
+    ds.setProperties(Set.of(dsp));
+
+    assertTrue(ds.isDatasetMatch(value, true));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), true));
+  }
+
+  @Test
+  public void testIsDatasetMatchOpenAccessFalse() {
+    Dataset ds = new Dataset();
+
+    String value = "false";
+
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setPropertyName("Open Access");
+    dsp.setPropertyValue(value);
+    dsp.setPropertyType(PropertyType.String);
+    dsp.setSchemaProperty("consentGroup.openAccess");
+    ds.setProperties(Set.of(dsp));
+
+    assertTrue(ds.isDatasetMatch(value, false));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), true));
   }
 }
