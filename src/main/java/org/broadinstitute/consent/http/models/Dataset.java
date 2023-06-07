@@ -309,7 +309,7 @@ public class Dataset {
    * the raw search query and open access.
    *
    * @param query       Raw string query
-   * @param openAccess  Nullable Boolean for open access
+   * @param openAccess  Boolean for open access
    * @return if the Dataset matched query
    *
    */
