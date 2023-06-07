@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.cloud.storage.BlobId;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
@@ -35,9 +37,12 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -52,6 +57,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   private final GCSService gcsService;
   private final MatchService matchService;
   private final UserService userService;
+  private final DatasetService datasetService;
 
   @Inject
   public DataAccessRequestResourceVersion2(
@@ -59,12 +65,14 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       EmailService emailService,
       GCSService gcsService,
       UserService userService,
+      DatasetService datasetService,
       MatchService matchService
   ) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailService = emailService;
     this.gcsService = gcsService;
     this.userService = userService;
+    this.datasetService = datasetService;
     this.matchService = matchService;
   }
 
@@ -287,6 +295,66 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/progress_report/{parentReferenceId}")
+  @RolesAllowed({RESEARCHER})
+  public Response postProgressReport(
+      @Auth AuthUser authUser,
+      @PathParam("parentReferenceId") String parentReferenceId,
+      @FormDataParam("dar") String dar,
+      @FormDataParam("collaboratorRequiredFile") InputStream collabInputStream,
+      @FormDataParam("collaboratorRequiredFile") FormDataContentDisposition collabFileDetails,
+      @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
+      @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
+    User user = userService.findUserByEmail(authUser.getEmail());
+    DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
+    checkAuthorizedUpdateUser(user, parentDar);
+    DataAccessRequest payload = populateDarFromJsonString(user, dar);
+    DataAccessRequest childDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+
+    for (Integer datasetId : childDar.getDatasetIds()) {
+      Dataset dataset = datasetService.findDatasetById(datasetId);
+      if (dataset == null) {
+        throw new NotFoundException("Dataset " + datasetId + " not found");
+      }
+      DataUse dataUse = dataset.getDataUse();
+      if (dataUse == null || dataUse.getCollaboratorRequired() == null
+          || dataUse.getEthicsApprovalRequired() == null) {
+        throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
+      }
+      if (dataUse.getCollaboratorRequired()) {
+        String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
+        if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
+            && Strings.isNullOrEmpty(parentCollabLocation)) {
+          throw new BadRequestException("Collaboration document is required");
+        }
+        try {
+          childDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, childDar,
+              collabInputStream, collabFileDetails);
+        } catch (IOException e) {
+          return createExceptionResponse(e);
+        }
+      }
+      if (dataUse.getEthicsApprovalRequired()) {
+        String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
+        if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
+            && Strings.isNullOrEmpty(parentEthicsLocation)) {
+          throw new BadRequestException("Ethics approval document is required");
+        }
+        try {
+          childDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, childDar,
+              ethicsInputStream, ethicsFileDetails);
+        } catch (IOException e) {
+          return createExceptionResponse(e);
+        }
+      }
+    }
+
+    return Response.ok(childDar.convertToSimplifiedDar()).build();
+  }
+
   @GET
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
   @Path("/{referenceId}/collaborationDocument")
@@ -363,7 +431,12 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = DataAccessRequestData.fromString(json);
+    DataAccessRequestData data;
+    try {
+      data = DataAccessRequestData.fromString(json);
+    } catch (Exception e) {
+      throw new BadRequestException("Unable to parse DAR from JSON string");
+    }
     if (Objects.isNull(data)) {
       data = new DataAccessRequestData();
     }
