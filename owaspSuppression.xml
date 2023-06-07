@@ -23,16 +23,8 @@
    ]]></notes>
     <packageUrl regex="true">^pkg:maven/io\.dropwizard\.metrics/metrics\-httpclient5@.*$
     </packageUrl>
-    <cpe>cpe:/a:apache:httpclient</cpe>
-  </suppress>
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: metrics-httpclient5-4.2.18.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/io\.dropwizard\.metrics/metrics\-httpclient5@.*$
-    </packageUrl>
-    <cpe>cpe:/a:apache:httpclient</cpe>
+    <cve>CVE-2020-13956</cve>
+    <cve>CVE-2014-3577</cve>
   </suppress>
   <!-- Test Library -->
   <suppress>
@@ -40,6 +32,6 @@
    file name: xercesImpl-2.12.2.jar
    ]]></notes>
     <packageUrl regex="true">^pkg:maven/xerces/xercesImpl@.*$</packageUrl>
-    <cpe>CVE-2017-10355</cpe>
+    <cve>CVE-2017-10355</cve>
   </suppress>
 </suppressions>
