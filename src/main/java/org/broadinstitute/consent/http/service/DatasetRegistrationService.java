@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -84,9 +86,7 @@ public class DatasetRegistrationService {
       }
     } catch (IOException e) {
       // uploading files to GCS failed. rollback files...
-      uploadedFileCache.values().forEach((id) -> {
-        gcsService.deleteDocument(id.getName());
-      });
+      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
       throw e;
     }
 
@@ -122,6 +122,43 @@ public class DatasetRegistrationService {
     );
   }
 
+  /**
+   * This method takes an instance of a dataset registration schema and updates the dataset.
+   *
+   * @param user    The User creating these datasets
+   * @param files   Map of files, where the key is the name of the field
+   * @return List of created Datasets from the provided registration schema
+   */
+  public Dataset updateDataset(
+      Integer datasetId,
+      User user,
+      DatasetUpdate update,
+      Map<String, FormDataBodyPart> files) throws IOException, SQLException {
+
+    if (Objects.isNull(update.getName())) {
+      throw new BadRequestException("Dataset name is required");
+    }
+
+    if (Objects.isNull(update.getDacId())) {
+      throw new BadRequestException("DAC Id is required");
+    }
+
+    Map<String, BlobId> uploadedFileCache = new HashMap<>();
+
+    try {
+      DatasetServiceDAO.DatasetUpdate datasetUpdates = createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
+
+      // Update or create the objects in the database
+      datasetServiceDAO.updateDataset(datasetUpdates);
+
+    } catch (IOException e) {
+      // uploading files to GCS failed. rollback files...
+      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
+      throw e;
+    }
+    return datasetDAO.findDatasetById(datasetId);
+  }
+
   /*
   Upload all relevant files to GCS and create relevant
    */
@@ -148,6 +185,29 @@ public class DatasetRegistrationService {
         consentGroup.getDataAccessCommitteeId(),
         dataUse,
         user.getUserId(),
+        props,
+        fileStorageObjects
+    );
+  }
+
+  private DatasetServiceDAO.DatasetUpdate createDatasetUpdate(
+      Integer datasetId,
+      User user,
+      DatasetUpdate datasetUpdate,
+      Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache) throws IOException {
+
+    List<DatasetProperty> props = datasetUpdate.getDatasetProperties();
+
+    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
+
+    return new DatasetServiceDAO.DatasetUpdate(
+        datasetId,
+        datasetUpdate.getName(),
+        user.getUserId(),
+        datasetUpdate.getNeedsApproval(),
+        datasetUpdate.getActive(),
+        datasetUpdate.getDacId(),
         props,
         fileStorageObjects
     );
@@ -208,6 +268,21 @@ public class DatasetRegistrationService {
 
     return consentGroupFSOs;
 
+  }
+
+  private List<FileStorageObject> uploadFilesForDatasetUpdate(Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache,
+      User user) throws IOException {
+    List<FileStorageObject> updateDatasetFSOs = new ArrayList<>();
+
+    if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0))) {
+      updateDatasetFSOs.add(uploadFile(
+          files, uploadedFileCache, user,
+          String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0),
+          FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
+    }
+
+    return updateDatasetFSOs;
   }
 
   /**
@@ -283,7 +358,6 @@ public class DatasetRegistrationService {
        */
       Function<ConsentGroup, Object> getField
   ) {
-
     /**
      * Converts a field on the given registration to a DatasetProperty.
      *
@@ -536,5 +610,4 @@ public class DatasetRegistrationService {
         .map(Optional::get)
         .toList();
   }
-
 }

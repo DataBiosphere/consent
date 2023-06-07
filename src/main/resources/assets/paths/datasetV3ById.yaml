@@ -1,0 +1,78 @@
+put:
+  summary: Updates a dataset from a valid DatasetUpdate object
+  description: Updates a dataset from a valid DatasetUpdate object, returns a full dataset object
+  parameters:
+    - name: datasetId
+      in: path
+      description: The Dataset ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            dataset:
+              description: A list of updatable dataset properties
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The dataset name
+                datasetName:
+                  type: string
+                  deprecated: true
+                  description: Legacy value for backwards compatibility, same as the dataset name
+                dacId:
+                  type: string
+                  description: The id of the DAC this dataset belongs to, if defined.
+                datasetProperties:
+                  type: array
+                  items:
+                    $ref: '../schemas/DatasetProperty.yaml'
+                  example:
+                    - propertyName: Dataset Name
+                      propertyValue: Dataset Name
+                    - propertyName: Data Type
+                      propertyValue: Whole Genome
+                    - propertyName: Species
+                      propertyValue: Human
+                    - propertyName: Phenotype/Indication
+                      propertyValue: Cardiovascular System Disease
+                    - propertyName: "# of participants"
+                      propertyValue: 20
+                    - propertyName: Description
+                      propertyValue: Description of Dataset
+                    - propertyName: dbGAP
+                      propertyValue: http://...
+                    - propertyName: Data Depositor
+                      propertyValue: NHLBI
+                    - propertyName: Principal Investigator(PI)
+                      propertyValue: NHLBI
+                    - propertyName: Sample Collection ID
+                      propertyValue: SC-000
+            alternativeDataSharingPlan:
+              description: Optional alternative data sharing plan
+              type: string
+              format: binary
+            consentGroups[0].nihInstitutionalCertificationFile:
+              description: Certification file
+              type: string
+              format: binary
+  tags:
+    - Dataset
+  responses:
+    201:
+      description: Successfully updated Datasets
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    400:
+      description: Bad Request (invalid input)
+    404:
+      description: Dataset Id not found
+    500:
+      description: Internal Error (something went wrong processing a valid input)

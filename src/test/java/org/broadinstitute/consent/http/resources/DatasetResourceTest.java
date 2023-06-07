@@ -30,18 +30,21 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
@@ -1080,6 +1083,143 @@ public class DatasetResourceTest {
     assertEquals(404, response.getStatus());
   }
 
+  @Test
+  public void testupdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
+    Dataset preexistingDataset = new Dataset();
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
+        preexistingDataset);
+    when(authUser.getGenericUser()).thenReturn(genericUser);
+    when(genericUser.getEmail()).thenReturn("email@email.com");
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(user.getUserId()).thenReturn(1);
+    when(user.hasUserRole(any())).thenReturn(true);
+    String json = createDataset(user);
+
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    initResource();
+
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
+    assertEquals(200, response.getStatus());
+    assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+  }
+
+  @Test
+  public void testUpdateDatasetWithNoJson() {
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    initResource();
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "");
+    assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetWithInvalidJson() {
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    String json = createInvalidDataset(user);
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    initResource();
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
+    assertEquals(400, response.getStatus());
+  }
+
+  /**
+   * tests the case that there are no updates to the dataset properties, should result in success
+   */
+  @Test
+  public void testUpdateDatasetWithNoProperties() {
+    Dataset dataset = new Dataset();
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    initResource();
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetWIthDatasetIdNotFound() {
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("validFile.txt")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    String json = createDatasetRegistrationMock(user);
+    when(datasetService.findDatasetById(anyInt())).thenReturn(null);
+
+    initResource();
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateDatasetInvalidFileName() throws SQLException, IOException {
+    Dataset preexistingDataset = new Dataset();
+    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
+        preexistingDataset);
+    when(authUser.getGenericUser()).thenReturn(genericUser);
+    when(genericUser.getEmail()).thenReturn("email@email.com");
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(user.getUserId()).thenReturn(1);
+    when(user.hasUserRole(any())).thenReturn(true);
+    String json = createDatasetRegistrationMock(user);
+
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("\"file/with&$invalid*^chars\\\\.txt\"")
+        .build();
+
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+    initResource();
+
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
    *
@@ -1117,4 +1257,73 @@ public class DatasetResourceTest {
 
     return String.format(format, user.getUserId());
   }
+
+  /**
+   * Helper method to create a minimally valid instance of a dataset for updating dataset
+   *
+   * @param user The User
+   * @return The Dataset instance
+   */
+  private String createDataset(User user) {
+    String format = """
+        {
+          "dataSetId": 2,
+          "objectId": "SC-10985",
+          "name": "Herman Taylor (U. Miss Med Center) - Jackson Heart Study",
+          "createDate": "Mar 21, 2019",
+          "active": true,
+          "alias": 3,
+          "datasetIdentifier": "DUOS-000003",
+          "dataUse": {
+            "diseaseRestrictions": [
+              "http://purl.obolibrary.org/obo/DOID_602",
+              "http://purl.obolibrary.org/obo/DOID_9351"
+            ],
+            "populationOriginsAncestry": true,
+            "commercialUse": false,
+            "controlSetOption": "No",
+            "gender": "Female",
+            "pediatric": true
+          },
+          "dacId": 5,
+          "consentId": "eac1d4f9-78c9-4c88-9b10-9d692e171b5b",
+          "translatedUseRestriction": "",
+          "deletable": false,
+          "properties": [
+            {
+              "dataSetId": 2,
+              "propertyName": "test",
+              "propertyValue": "John Doe",
+              "propertyType": "String"
+            },
+          ],
+          "dacApproval": true,
+          "createUser": {},
+          "study": {
+            "datasetIds": [
+              null
+            ]
+          }
+        }
+        """;
+
+    return String.format(format, user.getUserId());
+  }
+
+  /**
+   * Helper method to create a minimally valid instance of a dataset for updating dataset
+   *
+   * @param user The User
+   * @return The Dataset instance
+   */
+  private String createInvalidDataset(User user) {
+    String format = """
+        {
+          "dataSetId": 2,
+        }
+        """;
+
+    return String.format(format, user.getUserId());
+  }
+
 }

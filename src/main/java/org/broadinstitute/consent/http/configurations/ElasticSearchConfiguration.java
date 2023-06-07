@@ -13,6 +13,9 @@ public class ElasticSearchConfiguration {
   @NotNull
   private List<String> servers;
 
+  @NotNull
+  private String datasetIndexName;
+
   /**
    * This is configurable for testing purposes
    */
@@ -40,5 +43,13 @@ public class ElasticSearchConfiguration {
 
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public String getDatasetIndexName() {
+    return datasetIndexName;
+  }
+
+  public void setDatasetIndexName(String datasetIndexName) {
+    this.datasetIndexName = datasetIndexName;
   }
 }

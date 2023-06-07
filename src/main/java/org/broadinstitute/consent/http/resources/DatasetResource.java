@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetSearchTerm;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -59,7 +60,6 @@ import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.json.JSONObject;
 
 
 @Path("api/dataset")
@@ -221,6 +221,45 @@ public class DatasetResource extends Resource {
     }
 
     return files;
+  }
+
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/v3/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response updateByDatasetUpdate(
+      @Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId,
+      FormDataMultiPart multipart,
+      @FormDataParam("dataset") String json) {
+
+    try {
+
+      DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
+
+      if (Objects.isNull(update)) {
+        throw new BadRequestException("Dataset is required");
+      }
+
+      Dataset datasetExists = datasetService.findDatasetById(datasetId);
+      if (Objects.isNull(datasetExists)) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+
+      User user = userService.findUserByEmail(authUser.getEmail());
+
+      // key: field name (not file name), value: file body part
+      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update, files);
+      return Response.ok().entity(updatedDataset).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @PUT
@@ -430,7 +469,8 @@ public class DatasetResource extends Resource {
       String msg = "GETing DataSets to download";
       logDebug(msg);
 
-      JSONObject json = new JSONObject();
+      Gson gson = new Gson();
+      HashMap<String, String> datasets = new HashMap<>();
 
       Collection<Dictionary> headers = datasetService.describeDictionaryByReceiveOrder();
 
@@ -445,8 +485,8 @@ public class DatasetResource extends Resource {
       sb.append(END_OF_LINE);
 
       if (CollectionUtils.isEmpty(idList)) {
-        json.put("datasets", sb.toString());
-        return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+        datasets.put("datasets", sb.toString());
+        return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
       }
 
       Collection<DatasetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
@@ -467,8 +507,8 @@ public class DatasetResource extends Resource {
       }
       String tsv = sb.toString();
 
-      json.put("datasets", tsv);
-      return Response.ok(json.toString(), MediaType.APPLICATION_JSON).build();
+      datasets.put("datasets", tsv);
+      return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

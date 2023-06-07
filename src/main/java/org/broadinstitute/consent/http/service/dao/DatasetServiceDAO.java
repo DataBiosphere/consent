@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -52,6 +53,16 @@ public class DatasetServiceDAO {
                               List<DatasetProperty> props,
                               List<FileStorageObject> files) {
 
+  }
+
+  public record DatasetUpdate(Integer datasetId,
+                              String name,
+                              Integer userId,
+                              Boolean needsApproval,
+                              Boolean active,
+                              Integer dacId,
+                              List<DatasetProperty> props,
+                              List<FileStorageObject> files) {
   }
 
   /**
@@ -177,6 +188,57 @@ public class DatasetServiceDAO {
           Instant.now()
       );
     }
+  }
+
+  public void updateDataset(DatasetUpdate updates) throws SQLException {
+    jdbi.useHandle(
+        handle -> {
+          // By default, new connections are set to auto-commit which breaks our rollback strategy.
+          // Turn that off for this connection. This will not affect existing or new connections and
+          // only applies to the current one in this handle.
+          handle.getConnection().setAutoCommit(false);
+
+          executeUpdateDatasetWithFiles(
+              handle,
+              updates.datasetId(),
+              updates.name(),
+              updates.userId(),
+              updates.needsApproval(),
+              updates.active(),
+              updates.dacId(),
+              updates.props(),
+              updates.files());
+
+          handle.commit();
+        }
+    );
+  }
+
+  public void executeUpdateDatasetWithFiles(Handle handle,
+      Integer datasetId,
+      String datasetName,
+      Integer userId,
+      Boolean needsApproval,
+      Boolean active,
+      Integer dacId,
+      List<DatasetProperty> properties,
+      List<FileStorageObject> uploadedFiles) {
+    // update dataset
+    datasetDAO.updateDatasetByDatasetId(
+        datasetId,
+        datasetName,
+        new Timestamp(new Date().getTime()),
+        userId,
+        needsApproval,
+        active,
+        dacId
+    );
+
+    // insert properties
+    executeSynchronizeDatasetProperties(handle, datasetId, properties);
+
+    // files
+    executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
   }
 
   // Helper methods to generate Dictionary inserts
