@@ -303,19 +303,6 @@ public class Dataset {
     this.deletable = deletable;
   }
 
-  // helper methods for open access string matching
-  public Optional<DatasetProperty> getPropertyByName(String name) {
-    if (Objects.isNull(getProperties()) || getProperties().isEmpty()){
-      return Optional.empty();
-    }
-    return getProperties()
-        .stream()
-        .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
-        .filter((dp) -> Objects.equals(dp.getPropertyName(), name))
-        .findFirst();
-  }
-
-
   /**
    * Checks if the Dataset matches a raw search query. Searches on all dataset properties and some
    * data use properties. Has optional parameter "Open Access" which will search datasets on both
@@ -326,7 +313,7 @@ public class Dataset {
    * @return if the Dataset matched query
    *
    */
-  public boolean isStringMatch(@NonNull String query, Boolean openAccess) {
+  public boolean isStringMatch(@NonNull String query, @NonNull Boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
@@ -334,8 +321,12 @@ public class Dataset {
     matchTerms.add(this.getName());
     matchTerms.add(this.getDatasetIdentifier());
 
-    if (Objects.nonNull(openAccess)) {
-      Optional<DatasetProperty> openAccessProp = getPropertyByName(OPEN_ACCESS.toString());
+    if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
+      Optional<DatasetProperty> openAccessProp = getProperties()
+          .stream()
+          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+          .filter((dp) -> Objects.equals(dp.getPropertyName(), OPEN_ACCESS.toString()))
+          .findFirst();
 
       if (openAccessProp.isEmpty()){
         if (openAccess) {
@@ -346,9 +337,7 @@ public class Dataset {
       {
         return false;
       }
-    }
 
-    if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
       List<String> propVals = getProperties()
           .stream()
           .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
