@@ -108,6 +108,12 @@
       <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
+        <configuration>
+          <failBuildOnCVSS>1</failBuildOnCVSS>
+          <suppressionFiles>
+            <suppressionFile>owaspSuppression.xml</suppressionFile>
+          </suppressionFiles>
+        </configuration>
         <version>8.2.1</version>
         <executions>
           <execution>
