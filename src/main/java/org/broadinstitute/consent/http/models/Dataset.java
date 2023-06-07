@@ -313,7 +313,7 @@ public class Dataset {
    * @return if the Dataset matched query
    *
    */
-  public boolean isStringMatch(@NonNull String query, @NonNull Boolean openAccess) {
+  public boolean isDatasetMatch(@NonNull String query, @NonNull Boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
