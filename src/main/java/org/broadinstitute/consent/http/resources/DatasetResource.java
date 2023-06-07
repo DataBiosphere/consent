@@ -336,6 +336,7 @@ public class DatasetResource extends Resource {
   @Path("/study/{studyId}")
   @Consumes("application/json")
   @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response getStudyById(@PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.findStudyById(studyId);
@@ -345,7 +346,6 @@ public class DatasetResource extends Resource {
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
-
     }
   }
 

@@ -594,7 +594,7 @@ paths:
   /api/dataset/studyNames:
     $ref: './paths/findAllStudyNames.yaml'
   /api/dataset/study/{studyId}:
-    $ref: './paths/getStudyBiId.yaml'
+    $ref: './paths/studyById.yaml'
   /api/dataset/sample:
     get:
       summary: getDataSetSample
