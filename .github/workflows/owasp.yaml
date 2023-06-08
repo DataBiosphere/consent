@@ -23,6 +23,7 @@ jobs:
           mvn -v
           mvn dependency-check:check --batch-mode
       - name: Archive Report
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: owasp-report
