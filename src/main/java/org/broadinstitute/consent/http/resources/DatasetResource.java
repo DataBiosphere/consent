@@ -380,7 +380,7 @@ public class DatasetResource extends Resource {
     try {
       Study study = datasetService.findStudyById(studyId);
       if (Objects.isNull(study)) {
-        throw new NotFoundException("Could not find the dataset with id: " + studyId.toString());
+        throw new NotFoundException("Could not find the study with id: " + studyId.toString());
       }
       return Response.ok(study).build();
     } catch (Exception e) {
