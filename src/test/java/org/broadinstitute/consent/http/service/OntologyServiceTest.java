@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
@@ -96,6 +97,29 @@ public class OntologyServiceTest implements WithMockServer {
 
   }
 
+
+  @Test
+  public void testTranslateDataUse() {
+    mockDataUseTranslateSuccess();
+    initService();
+
+    DataUse dataUse = new DataUseBuilder()
+        .setHmbResearch(true)
+        .setDiseaseRestrictions(List.of(""))
+        .build();
+    String translation = service.translateDataUse(dataUse, DataUseTranslationType.DATASET);
+
+    assertEquals("""
+        Samples are restricted for use under the following conditions:
+        Data is limited for health/medical/biomedical research. [HMB]
+        Data use is limited for studying: cancerophobia [DS]
+        Commercial use is not prohibited.
+        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
+        Restrictions for use as a control set for diseases other than those defined were not specified.
+        """, translation);
+
+  }
+
   private void mockDataUseTranslateSummarySuccess() {
     client
         .when(request().withMethod("POST").withPath("/translate/summary"))
@@ -137,6 +161,24 @@ public class OntologyServiceTest implements WithMockServer {
                         }
                         """
                 )
+        );
+  }
+
+  private void mockDataUseTranslateSuccess() {
+    client
+        .when(request().withMethod("POST").withPath("/translate?for=dataset"))
+        .respond(
+            response()
+                .withStatusCode(200)
+                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withBody("""
+                    Samples are restricted for use under the following conditions:
+                    Data is limited for health/medical/biomedical research. [HMB]
+                    Data use is limited for studying: cancerophobia [DS]
+                    Commercial use is not prohibited.
+                    Data use for methods development research irrespective of the specified data use limitations is not prohibited.
+                    Restrictions for use as a control set for diseases other than those defined were not specified.
+                    """)
         );
   }
 

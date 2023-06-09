@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -18,7 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -58,13 +58,14 @@ public class DatasetService {
   private final DacDAO dacDAO;
   private final UseRestrictionConverter converter;
   private final EmailService emailService;
+  private final OntologyService ontologyService;
 
   @Inject
   public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
       DatasetDAO dataSetDAO,
       DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
       UseRestrictionConverter converter,
-      EmailService emailService) {
+      EmailService emailService, OntologyService ontologyService) {
     this.consentDAO = consentDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
@@ -73,6 +74,7 @@ public class DatasetService {
     this.dacDAO = dacDAO;
     this.converter = converter;
     this.emailService = emailService;
+    this.ontologyService = ontologyService;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -306,6 +308,19 @@ public class DatasetService {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
+    return datasetDAO.findDatasetById(datasetId);
+  }
+
+  public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    if (Objects.isNull(dataset)) {
+      return null;
+    }
+
+    String translation = ontologyService.translateDataUse(dataset.getDataUse(),
+        DataUseTranslationType.DATASET);
+    datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
+
     return datasetDAO.findDatasetById(datasetId);
   }
 
