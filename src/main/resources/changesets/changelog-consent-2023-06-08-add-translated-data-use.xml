@@ -10,7 +10,8 @@
       SET translated_data_use = (SELECT c.translated_use_restriction AS translated_data_use
                                  FROM consents c
                                         INNER JOIN consent_associations ca ON ca.consent_id = c.consent_id
-                                 WHERE ca.dataset_id = dataset_id)
+                                 WHERE ca.dataset_id = dataset_id
+                                 ORDER BY c.create_date DESC LIMIT 1)
     </sql>
   </changeSet>
 </databaseChangeLog>
