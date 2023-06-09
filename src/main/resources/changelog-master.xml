@@ -1,119 +1,129 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
-    <include file="migrations.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-1.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-3.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-4.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-5.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-6.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-7.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-8.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-9.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-10.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-11.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-12.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-13.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-14.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-15.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-16.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-17.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-18.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-19.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-20.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-21.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-22.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-23.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-24.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-25.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-26.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-27.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-28.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-29.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-30.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-31.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-32.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-33.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-34.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-35.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-36.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-37.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-38.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-39.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-40.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-41.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-42.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-43.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-44.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-45.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-46.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-47.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-48.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-49.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-50.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-51.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-52.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-53.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-54.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-55.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-56.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-57.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-58.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-59.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-60.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-61.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-62.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-63.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-64.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-65.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-66.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-67.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-68.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-69.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-70.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-71.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-72.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-73.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-74.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-75.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-76.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-77.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-78.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-79.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-80.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-81.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-82.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-83.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-84.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-85.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-86.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-87.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-88.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-89.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-90.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-91.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-92.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-93.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-94.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-95.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-96.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-97.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-98.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-99.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-100.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-101.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-102.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-103.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-104.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-105.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2022-12-29-email.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-01-08-election-archive.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-01-09-dac-email.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-02-28-fix-dataset-audit.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-03-07-remove-use-restriction.0.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-03-16-rename-vote-userid.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-04-20-create-study.xml" relativeToChangelogFile="true"/>
-    <include file="changesets/changelog-consent-2023-05-03-add-abstain.xml" relativeToChangelogFile="true"/>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+  <include file="migrations.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-1.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-3.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-4.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-5.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-6.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-7.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-8.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-9.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-10.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-11.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-12.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-13.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-14.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-15.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-16.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-17.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-18.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-19.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-20.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-21.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-22.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-23.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-24.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-25.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-26.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-27.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-28.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-29.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-30.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-31.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-32.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-33.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-34.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-35.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-36.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-37.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-38.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-39.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-40.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-41.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-42.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-43.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-44.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-45.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-46.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-47.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-48.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-49.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-50.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-51.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-52.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-53.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-54.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-55.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-56.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-57.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-58.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-59.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-60.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-61.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-62.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-63.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-64.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-65.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-66.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-67.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-68.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-69.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-70.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-71.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-72.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-73.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-74.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-75.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-76.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-77.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-78.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-79.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-80.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-81.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-82.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-83.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-84.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-85.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-86.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-87.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-88.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-89.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-90.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-91.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-92.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-93.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-94.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-95.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-96.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-97.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-98.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-99.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-100.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-101.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-102.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-103.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-104.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-105.0.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2022-12-29-email.0.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-01-08-election-archive.0.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-01-09-dac-email.0.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-02-28-fix-dataset-audit.0.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-03-07-remove-use-restriction.0.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-03-16-rename-vote-userid.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-04-20-create-study.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-05-03-add-abstain.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-06-08-add-translated-data-use.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

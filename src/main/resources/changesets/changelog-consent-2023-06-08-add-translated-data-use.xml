@@ -1,0 +1,16 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="2023-06-08-add-translated-data-use" author="connorlbark">
+    <addColumn tableName="dataset">
+      <column name="translated_data_use" type="text"/>
+    </addColumn>
+    <sql>
+      UPDATE dataset
+      SET translated_data_use = (SELECT c.translated_use_restriction AS translated_data_use
+                                 FROM consents c
+                                        INNER JOIN consent_associations ca ON ca.consent_id = c.consent_id
+                                 WHERE ca.dataset_id = dataset_id)
+    </sql>
+  </changeSet>
+</databaseChangeLog>
