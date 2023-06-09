@@ -166,11 +166,11 @@ public class OntologyServiceTest implements WithMockServer {
 
   private void mockDataUseTranslateSuccess() {
     client
-        .when(request().withMethod("POST").withPath("/translate?for=dataset"))
+        .when(request().withMethod("POST").withPath("/translate"))
         .respond(
             response()
                 .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
+                .withHeaders(new Header("Content-Type", MediaType.TEXT_PLAIN))
                 .withBody("""
                     Samples are restricted for use under the following conditions:
                     Data is limited for health/medical/biomedical research. [HMB]
