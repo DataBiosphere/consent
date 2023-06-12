@@ -639,24 +639,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  /**
-   * Validate that the user has the actual role name provided. This is useful for determining when a
-   * user hits an endpoint that is permitted to multiple different roles and is requesting a
-   * role-specific view of a data entity.
-   * <p>
-   * In these cases, we need to make sure that the role name provided is a real one and that the
-   * user actually has that role to prevent escalated privilege violations.
-   *
-   * @param user     The User
-   * @param roleName The UserRole name
-   */
-  void validateUserHasRoleName(User user, String roleName) {
-    UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
-    if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
-      throw new BadRequestException("Invalid role selection: " + roleName);
-    }
-  }
-
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return;
