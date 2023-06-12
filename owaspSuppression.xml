@@ -1,44 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-  <!-- DW Testing Library -->
+  <!-- Test Library -->
   <suppress>
     <notes><![CDATA[
-   file name: grizzly-http-client-1.16.jar
+   file name: metrics-httpclient5-4.2.18.jar
    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.glassfish\.grizzly/grizzly\-http\-client@.*$
+    <packageUrl regex="true">^pkg:maven/io\.dropwizard\.metrics/metrics\-httpclient5@.*$
     </packageUrl>
-    <cve>CVE-2021-43138</cve>
-  </suppress>
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: mockserver-1.17.6.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.testcontainers/mockserver@.*$</packageUrl>
-    <cve>CVE-2021-32827</cve>
-  </suppress>
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: mockserver-client-java-5.15.0.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-client\-java@.*$</packageUrl>
-    <cve>CVE-2021-32827</cve>
-  </suppress>
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: mockserver-core-5.15.0.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.mock\-server/mockserver\-core@.*$</packageUrl>
-    <cve>CVE-2021-32827</cve>
-  </suppress>
-  <!-- Dropwizard dependency, cannot address without a DW update -->
-  <suppress>
-    <notes><![CDATA[
-   file name: snakeyaml-1.33.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
-    <vulnerabilityName>CVE-2022-1471</vulnerabilityName>
+    <cpe>cpe:/a:apache:httpclient</cpe>
   </suppress>
 </suppressions>

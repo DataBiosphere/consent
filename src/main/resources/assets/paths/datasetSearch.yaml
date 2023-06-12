@@ -8,6 +8,14 @@ get:
       required: true
       schema:
         type: string
+    - name: open
+      in: query
+      description: Open Access
+      required: false
+      schema:
+        type: boolean
+        required: false
+        default: false
   tags:
     - Dataset
   responses:

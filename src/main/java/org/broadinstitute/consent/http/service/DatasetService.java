@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -19,6 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -428,9 +428,9 @@ public class DatasetService {
   }
 
 
-  public List<Dataset> searchDatasets(String query, User user) {
+  public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
-    return datasets.stream().filter(ds -> ds.isStringMatch(query)).toList();
+    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
   }
 
   @Deprecated

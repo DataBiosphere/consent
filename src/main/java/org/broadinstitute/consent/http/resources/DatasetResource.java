@@ -9,6 +9,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -44,6 +45,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetSearchTerm;
+import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -219,6 +221,45 @@ public class DatasetResource extends Resource {
     }
 
     return files;
+  }
+
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/v3/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response updateByDatasetUpdate(
+      @Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId,
+      FormDataMultiPart multipart,
+      @FormDataParam("dataset") String json) {
+
+    try {
+
+      DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
+
+      if (Objects.isNull(update)) {
+        throw new BadRequestException("Dataset is required");
+      }
+
+      Dataset datasetExists = datasetService.findDatasetById(datasetId);
+      if (Objects.isNull(datasetExists)) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+
+      User user = userService.findUserByEmail(authUser.getEmail());
+
+      // key: field name (not file name), value: file body part
+      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update, files);
+      return Response.ok().entity(updatedDataset).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @PUT
@@ -552,10 +593,13 @@ public class DatasetResource extends Resource {
   @Path("/search")
   @Produces("application/json")
   @PermitAll
-  public Response searchDatasets(@Auth AuthUser authUser, @QueryParam("query") String query) {
+  public Response searchDatasets(
+      @Auth AuthUser authUser,
+      @QueryParam("query") String query,
+      @QueryParam("open") @DefaultValue("false") boolean openAccess) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, user);
+      List<Dataset> datasets = datasetService.searchDatasets(query, openAccess, user);
       return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

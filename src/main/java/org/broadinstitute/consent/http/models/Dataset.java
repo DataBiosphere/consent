@@ -1,13 +1,18 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess.OPEN_ACCESS;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 
 public class Dataset {
 
@@ -52,10 +57,13 @@ public class Dataset {
 
   private Set<DatasetProperty> properties;
 
+  List<String> propertyName;
   private Boolean dacApproval;
 
   private User createUser;
   private Study study;
+
+  private ConsentGroup consentGroup;
 
   public Dataset() {
   }
@@ -94,7 +102,7 @@ public class Dataset {
     this.active = active;
   }
 
-  private static String PREFIX = "DUOS-";
+  private static final String PREFIX = "DUOS-";
 
   public Dataset(String objectId) {
     this.objectId = objectId;
@@ -167,6 +175,11 @@ public class Dataset {
   public Set<DatasetProperty> getProperties() {
     return properties;
   }
+
+  public List<String> getPropertyName() {
+    return propertyName;
+  }
+
 
   public void setProperties(Set<DatasetProperty> properties) {
     this.properties = properties;
@@ -290,15 +303,19 @@ public class Dataset {
     this.deletable = deletable;
   }
 
-
   /**
    * Checks if the Dataset matches a raw search query. Searches on all dataset properties and some
-   * data use properties.
+   * data use properties. Has optional parameter "Open Access" which will search datasets on both
+   * the raw search query and open access.
    *
-   * @param query Raw string query
+   * @param query       Raw string query
+   * @param openAccess  Boolean for open access
    * @return if the Dataset matched query
+   *
    */
-  public boolean isStringMatch(@NonNull String query) {
+
+  // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of comparing strings
+  public boolean isDatasetMatch(@NonNull String query, boolean openAccess) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
@@ -307,6 +324,22 @@ public class Dataset {
     matchTerms.add(this.getDatasetIdentifier());
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
+      Optional<DatasetProperty> openAccessProp = getProperties()
+          .stream()
+          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+          .filter((dp) -> Objects.equals(dp.getPropertyName(), OPEN_ACCESS.toString()))
+          .findFirst();
+
+      if (openAccessProp.isEmpty()){
+        if (openAccess) {
+          return false;
+        }
+      }
+      else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(), Boolean.toString(openAccess)))
+      {
+        return false;
+      }
+
       List<String> propVals = getProperties()
           .stream()
           .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
@@ -342,8 +375,8 @@ public class Dataset {
                 .filter(Objects::nonNull)
                 .map(String::toLowerCase)
                 .anyMatch(
-                    (t) -> t.contains(q)
-                ));
+                    (t) -> t.contains(q))
+        );
   }
 
   public Study getStudy() {
