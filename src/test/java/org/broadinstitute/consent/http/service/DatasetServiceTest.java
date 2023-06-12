@@ -580,7 +580,7 @@ public class DatasetServiceTest {
   }
 
   @Test
-  public void testSearchDatasets() {
+  public void testSearchDatasetsOpenAccessFalse() {
     Dataset ds1 = new Dataset();
     ds1.setName("asdf1234");
     ds1.setAlias(3);
@@ -607,38 +607,83 @@ public class DatasetServiceTest {
     initService();
 
     // query dataset name
-    List<Dataset> results = datasetService.searchDatasets("asdf", u);
+    List<Dataset> results = datasetService.searchDatasets("asdf", false, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query pi name
-    results = datasetService.searchDatasets("John", u);
+    results = datasetService.searchDatasets("John", false, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query ds identifier
-    results = datasetService.searchDatasets("DUOS-000280", u);
+    results = datasetService.searchDatasets("DUOS-000280", false, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds2));
 
     // query pi name for all of them
-    results = datasetService.searchDatasets("Doe", u);
+    results = datasetService.searchDatasets("Doe", false, u);
 
     assertEquals(2, results.size());
     assertTrue(results.contains(ds2));
     assertTrue(results.contains(ds1));
 
     // search on two things at once
-    results = datasetService.searchDatasets("Doe asdf", u);
+    results = datasetService.searchDatasets("Doe asdf",false, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query nonexistent phrase
-    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", u);
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf",false, u);
+    assertEquals(0, results.size());
+  }
+
+  @Test
+  public void testSearchDatasetsOpenAccessTrue() {
+    Dataset ds1 = new Dataset();
+    ds1.setName("string");
+    ds1.setAlias(622);
+    DatasetProperty ds1PI = new DatasetProperty();
+    ds1PI.setPropertyName("Open Access");
+    ds1PI.setPropertyValue("true");
+    ds1PI.setPropertyType(PropertyType.String);
+    ds1.setProperties(Set.of(ds1PI));
+
+    Dataset ds2 = new Dataset();
+    ds2.setName("TESTING NAME");
+    ds2.setAlias(623);
+    DatasetProperty ds2PI = new DatasetProperty();
+    ds2PI.setPropertyName("Open Access");
+    ds2PI.setPropertyValue("true");
+    ds2PI.setPropertyType(PropertyType.String);
+    ds2.setProperties(Set.of(ds2PI));
+
+    User u = new User();
+    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+
+    when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
+
+    initService();
+
+    // query dataset name
+    List<Dataset> results = datasetService.searchDatasets("string", true, u);
+
+    assertEquals(1, results.size());
+    assertTrue(results.contains(ds1));
+
+
+    // query ds identifier
+    results = datasetService.searchDatasets("DUOS-000623", true, u);
+
+    assertEquals(1, results.size());
+    assertTrue(results.contains(ds2));
+
+    // query nonexistent phrase
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf",true, u);
     assertEquals(0, results.size());
   }
 

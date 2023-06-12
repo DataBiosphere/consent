@@ -694,16 +694,34 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasets() {
+  public void testSearchDatasetsOpenAccessFalse() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
+    Boolean openAccess = false;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query");
+    Response response = resource.searchDatasets(authUser, "search query", openAccess);
+
+    assertEquals(200, response.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
+  }
+
+  @Test
+  public void testSearchDatasetsOpenAccessTrue() {
+    Dataset ds = new Dataset();
+    ds.setDataSetId(1);
+    Boolean openAccess = true;
+    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(0);
+    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
+
+    initResource();
+    Response response = resource.searchDatasets(authUser, "search query", openAccess);
 
     assertEquals(200, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());

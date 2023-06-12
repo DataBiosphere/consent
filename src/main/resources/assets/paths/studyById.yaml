@@ -2,13 +2,14 @@ get:
   summary: Get Study by Id
   description: Finds Study and Properties of the Study specified by id.
   parameters:
-    - name: id
+    - name: studyId
       in: path
       description: ID of the Study
       required: true
       schema:
         type: integer
   tags:
+    - Dataset
     - Study
   responses:
     200:
@@ -16,7 +17,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Study.yaml'
+            $ref: '../schemas/StudyWithDatasets.yaml'
     404:
       description: Not Found
     500:
