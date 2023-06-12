@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 
@@ -45,6 +46,7 @@ public class Dataset {
 
   public DataUse dataUse;
 
+  private String translatedDataUse;
   private Integer dacId;
 
   private String consentId;
@@ -295,6 +297,14 @@ public class Dataset {
     this.translatedUseRestriction = translatedUseRestriction;
   }
 
+  public String getTranslatedDataUse() {
+    return translatedDataUse;
+  }
+
+  public void setTranslatedDataUse(String translatedDataUse) {
+    this.translatedDataUse = translatedDataUse;
+  }
+
   public Boolean getDeletable() {
     return deletable;
   }
@@ -308,8 +318,8 @@ public class Dataset {
    * data use properties. Has optional parameter "Open Access" which will search datasets on both
    * the raw search query and open access.
    *
-   * @param query       Raw string query
-   * @param openAccess  Boolean for open access
+   * @param query      Raw string query
+   * @param openAccess Boolean for open access
    * @return if the Dataset matched query
    *
    */
@@ -330,13 +340,12 @@ public class Dataset {
           .filter((dp) -> Objects.equals(dp.getPropertyName(), OPEN_ACCESS.toString()))
           .findFirst();
 
-      if (openAccessProp.isEmpty()){
+      if (openAccessProp.isEmpty()) {
         if (openAccess) {
           return false;
         }
-      }
-      else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(), Boolean.toString(openAccess)))
-      {
+      } else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(),
+          Boolean.toString(openAccess))) {
         return false;
       }
 
@@ -420,5 +429,4 @@ public class Dataset {
   public void setCreateUser(User createUser) {
     this.createUser = createUser;
   }
-
 }
