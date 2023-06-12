@@ -571,7 +571,7 @@ paths:
     $ref: './paths/datasetV3.yaml'
   /api/dataset/v3/{datasetId}:
     $ref: './paths/datasetV3ById.yaml'
-  /api/dataset/byRole/{roleName}:
+  /api/dataset/role/{roleName}:
     $ref: './paths/datasetByRole.yaml'
   /api/dataset/validate:
     get:
