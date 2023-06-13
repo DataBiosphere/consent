@@ -12,6 +12,9 @@ properties:
   match:
     type: boolean
     description: The match condition between the Consent/Dataset and Data Access Request
+  abstain:
+    type: boolean
+    description: Nullable boolean will return true if the decision is abstain
   failed:
     type: boolean
     description: Indicates a system failure or not. If true, the system was not able to
