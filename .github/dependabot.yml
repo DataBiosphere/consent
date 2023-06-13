@@ -11,7 +11,7 @@ updates:
     labels:
       - dependency
     commit-message:
-      prefix: "[DUOS-1740]"
+      prefix: "[DUOS-1740-dependabot]"
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -22,9 +22,5 @@ updates:
       - "@DataBiosphere/DUOS"
     labels:
       - dependency
-    ignore:
-      - dependency-name: broad-dsp-gcr-public/base/jre
-        versions:
-          - ">= 15.pre.alpine.a, < 16"
     commit-message:
-      prefix: "[DUOS-1740]"
+      prefix: "[DUOS-1740-dependabot]"
