@@ -30,6 +30,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
@@ -67,6 +68,9 @@ public class DatasetRegistrationServiceTest {
   private DatasetServiceDAO datasetServiceDAO;
 
   @Mock
+  private StudyDAO studyDAO;
+
+  @Mock
   private GCSService gcsService;
 
   @BeforeEach
@@ -76,7 +80,7 @@ public class DatasetRegistrationServiceTest {
 
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
-        datasetServiceDAO, gcsService);
+        datasetServiceDAO, gcsService, studyDAO);
   }
 
 

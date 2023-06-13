@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -193,6 +194,49 @@ public class DatasetResource extends Resource {
 
       URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
       return Response.created(uri).entity(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/study/{studyId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  /*
+   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * With that object, we can fully update the study/datasets from the provided values.
+   */
+  public Response updateDatasetRegistration(
+      @Auth AuthUser authUser,
+      FormDataMultiPart multipart,
+      @PathParam("studyId") Integer studyId,
+      @FormDataParam("dataset") String json) {
+    try {
+      datasetRegistrationService.findStudyById(studyId);
+      Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
+      if (!errors.isEmpty()) {
+        throw new BadRequestException(
+            "Invalid schema:\n"
+                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
+      }
+
+      DatasetRegistrationSchemaV1 registration = jsonSchemaUtil.deserializeDatasetRegistration(
+          json);
+      User user = userService.findUserByEmail(authUser.getEmail());
+
+      // key: field name (not file name), value: file body part
+      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+      // Update study from registration
+      Study updatedStudy = datasetRegistrationService.updateDatasetsFromRegistration(
+          studyId,
+          registration,
+          user,
+          files);
+      URI uri = UriBuilder.fromPath("/api/dataset/study/" + studyId).build();
+      return Response.created(uri).entity(updatedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

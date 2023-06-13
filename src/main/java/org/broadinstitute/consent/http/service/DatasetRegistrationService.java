@@ -17,6 +17,7 @@ import java.util.function.Function;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -24,6 +25,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
@@ -44,15 +46,33 @@ public class DatasetRegistrationService {
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
+  private final StudyDAO studyDAO;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
-      DatasetServiceDAO datasetServiceDAO, GCSService gcsService) {
+      DatasetServiceDAO datasetServiceDAO, GCSService gcsService, StudyDAO studyDAO) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
+    this.studyDAO = studyDAO;
   }
 
+  public Study findStudyById(Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    if (Objects.isNull(study)) {
+      throw new NotFoundException("Study with ID " + studyId + " is not found");
+    }
+    return study;
+  }
+
+  public Study updateDatasetsFromRegistration(
+      Integer studyId,
+      DatasetRegistrationSchemaV1 registration,
+      User user,
+      Map<String, FormDataBodyPart> files)
+      throws SQLException, IllegalArgumentException, IOException {
+    return null;
+  }
 
   /**
    * This method takes an instance of a dataset registration schema and creates datasets from it.
