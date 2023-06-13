@@ -1550,6 +1550,9 @@ components:
         match:
           type: boolean
           description: True if the entities match, false otherwise.
+        abstain:
+          type: boolean
+          description: Nullable boolean will return true if the decision is abstain
         failed:
           type: boolean
           description: True if the matching process failed, for any reason.
