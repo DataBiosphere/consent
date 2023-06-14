@@ -18,7 +18,7 @@
     <pact.version>4.6.0</pact.version>
     <postgres.version>42.6.0</postgres.version>
     <surefire.version>3.1.2</surefire.version>
-    <swagger.ui.version>4.14.0</swagger.ui.version>
+    <swagger.ui.version>5.0.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.9.3</junit.version>
