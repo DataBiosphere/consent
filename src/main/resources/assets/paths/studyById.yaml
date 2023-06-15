@@ -17,7 +17,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../schemas/StudyWithDatasets.yaml'
+            $ref: '../schemas/Study.yaml'
     404:
       description: Not Found
     500:

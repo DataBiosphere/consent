@@ -27,6 +27,11 @@ properties:
       type: integer
       format: int32
     description: The ids of all of the datasets related to this study.
+  datasets:
+    type: array
+    items:
+      type: './Dataset.yaml'
+    description: All of the datasets related to this study.
   properties:
     type: array
     items:

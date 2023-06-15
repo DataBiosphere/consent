@@ -16,6 +16,7 @@ public class Study {
   private String piName;
   private List<String> dataTypes;
   private Set<Integer> datasetIds;
+  private Set<Dataset> datasetSet;
   private Set<StudyProperty> properties;
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
@@ -110,6 +111,13 @@ public class Study {
     }
 
     this.datasetIds.add(datasetId);
+  }
+
+  public void addDataset(Dataset dataset) {
+    if (Objects.isNull(this.datasetSet)) {
+      this.datasetSet = new HashSet<>();
+    }
+    this.datasetSet.add(dataset);
   }
 
   public Date getCreateDate() {

@@ -382,6 +382,15 @@ public class DatasetResource extends Resource {
       if (Objects.isNull(study)) {
         throw new NotFoundException("Could not find the study with id: " + studyId.toString());
       }
+
+      // get full datasets and add to study
+      Set<Integer> datasetIds = study.getDatasetIds();
+      Set<Dataset> datasetSet = datasetService.getDatasetsByIdSet(datasetIds);
+
+      for ( Dataset dataset : datasetSet ) {
+        study.addDataset(dataset);
+      }
+
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

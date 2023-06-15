@@ -548,5 +548,8 @@ public class DatasetService {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
+  public Set<Dataset> getDatasetsByIdSet(Set<Integer> datasetIds) {
+    return datasetDAO.getDatasetsByIdSet(datasetIds);
+  }
 
 }
