@@ -9,11 +9,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 
 public class Dataset {
 
@@ -321,7 +319,6 @@ public class Dataset {
    * @param query      Raw string query
    * @param openAccess Boolean for open access
    * @return if the Dataset matched query
-   *
    */
 
   // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of comparing strings

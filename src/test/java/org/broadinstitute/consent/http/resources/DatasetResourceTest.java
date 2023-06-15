@@ -30,11 +30,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -1081,7 +1082,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetStudy() {
+  public void testGetStudyByIdNoDatasets() {
     Study study = new Study();
     study.setStudyId(1);
     study.setName("asdfasdfasdfasdfasdfasdf");
@@ -1093,7 +1094,17 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetStudyNotFound() {
+  public void testGetStudyByIdWithDatasets() {
+    Study study = createMockStudy();
+    when(datasetService.findStudyById(12345)).thenReturn(study);
+    initResource();
+    Response response = resource.getStudyById(12345);
+    assertEquals(200, response.getStatus());
+    assertEquals(study, response.getEntity());
+  }
+
+  @Test
+  public void testGetStudyByIdNotFound() {
     when(datasetService.findStudyById(1)).thenReturn(null);
 
     initResource();
@@ -1329,7 +1340,7 @@ public class DatasetResourceTest {
   }
 
   /**
-   * Helper method to create a minimally valid instance of a dataset for updating dataset
+   * Helper method to create a minimally invalid instance of a dataset for updating dataset
    *
    * @param user The User
    * @return The Dataset instance
@@ -1344,4 +1355,36 @@ public class DatasetResourceTest {
     return String.format(format, user.getUserId());
   }
 
+  /*
+  * Study mock
+  */
+  private Study createMockStudy() {
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setStudyId(12345);
+    study.setPiName(RandomStringUtils.randomAlphabetic(10));
+    study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+    study.setCreateUserId(9);
+    study.setPublicVisibility(true);
+
+    StudyProperty phenotypeProperty = new StudyProperty();
+    phenotypeProperty.setKey("phenotypeIndication");
+    phenotypeProperty.setType(PropertyType.String);
+    phenotypeProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    StudyProperty speciesProperty = new StudyProperty();
+    speciesProperty.setKey("species");
+    speciesProperty.setType(PropertyType.String);
+    speciesProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    StudyProperty dataCustodianEmailProperty = new StudyProperty();
+    dataCustodianEmailProperty.setKey("dataCustodianEmail");
+    dataCustodianEmailProperty.setType(PropertyType.String);
+    dataCustodianEmailProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+
+    return study;
+  }
 }
