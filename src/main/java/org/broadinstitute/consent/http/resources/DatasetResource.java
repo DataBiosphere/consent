@@ -384,8 +384,8 @@ public class DatasetResource extends Resource {
       }
 
       // get full datasets and add to study
-      Set<Integer> datasetIds = study.getDatasetIds();
-      Set<Dataset> datasetSet = datasetService.getDatasetsByIdSet(datasetIds);
+      List<Integer> datasetIds = new ArrayList<>(study.getDatasetIds());
+      List<Dataset> datasetSet = datasetService.findDatasetsByIds(datasetIds);
 
       for ( Dataset dataset : datasetSet ) {
         study.addDataset(dataset);
