@@ -386,12 +386,13 @@ public class DatasetResource extends Resource {
       // if datasets exist, get full datasets and add to study
       Set<Integer> datasetIds = study.getDatasetIds();
 
-      if(Objects.nonNull(datasetIds)){
-        List<Integer> datasetIdList = new ArrayList<>(datasetIds);
-        List<Dataset> datasetSet = datasetService.findDatasetsByIds(datasetIdList);
-        for ( Dataset dataset : datasetSet ) {
-          study.addDataset(dataset);
-        }
+      if(Objects.isNull(datasetIds)){
+        throw new NotFoundException("Study has no datasets.");
+      }
+      List<Integer> datasetIdList = new ArrayList<>(datasetIds);
+      List<Dataset> datasetSet = datasetService.findDatasetsByIds(datasetIdList);
+      for (Dataset dataset : datasetSet) {
+        study.addDataset(dataset);
       }
 
       return Response.ok(study).build();

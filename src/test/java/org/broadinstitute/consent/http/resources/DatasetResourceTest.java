@@ -1089,18 +1089,34 @@ public class DatasetResourceTest {
     when(datasetService.findStudyById(1)).thenReturn(study);
     initResource();
     Response response = resource.getStudyById(1);
-    assertEquals(200, response.getStatus());
-    assertEquals(study, response.getEntity());
+    assertEquals(404, response.getStatus());
   }
 
   @Test
   public void testGetStudyByIdWithDatasets() {
-    Study study = createMockStudy();
+    Dataset ds1 = new Dataset();
+    ds1.setDataSetId(1);
+    Dataset ds2 = new Dataset();
+    ds2.setDataSetId(2);
+    Dataset ds3 = new Dataset();
+    ds3.setDataSetId(3);
+    List<Dataset> datasets = List.of(ds1, ds2, ds3);
+
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setStudyId(12345);
+    study.setDatasetIds(Set.of(1, 2, 3));
+
+    List<Integer> datasetIds = new ArrayList<>(study.getDatasetIds());
+
     when(datasetService.findStudyById(12345)).thenReturn(study);
+    when(datasetService.findDatasetsByIds(datasetIds)).thenReturn(datasets);
+
     initResource();
     Response response = resource.getStudyById(12345);
     assertEquals(200, response.getStatus());
-    assertEquals(study, response.getEntity());
+    assertEquals(study.getDatasetIds().size(), datasets.size())
+    ;
   }
 
   @Test
@@ -1359,6 +1375,13 @@ public class DatasetResourceTest {
   * Study mock
   */
   private Study createMockStudy() {
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(100);
+    dataset.setAlias(10);
+    dataset.setDatasetIdentifier();
+    dataset.setDacId(1);
+    dataset.setDataUse(new DataUse());
+
     Study study = new Study();
     study.setName(RandomStringUtils.randomAlphabetic(10));
     study.setDescription(RandomStringUtils.randomAlphabetic(20));
@@ -1384,6 +1407,25 @@ public class DatasetResourceTest {
     dataCustodianEmailProperty.setValue(RandomStringUtils.randomAlphabetic(10));
 
     study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+
+    dataset.setStudy(study);
+
+    DatasetProperty openAccessProp = new DatasetProperty();
+    openAccessProp.setSchemaProperty("openAccess");
+    openAccessProp.setPropertyType(PropertyType.Boolean);
+    openAccessProp.setPropertyValue(true);
+
+    DatasetProperty dataLocationProp = new DatasetProperty();
+    dataLocationProp.setSchemaProperty("dataLocation");
+    dataLocationProp.setPropertyType(PropertyType.String);
+    dataLocationProp.setPropertyValue("some location");
+
+    DatasetProperty numParticipantsProp = new DatasetProperty();
+    numParticipantsProp.setSchemaProperty("numberOfParticipants");
+    numParticipantsProp.setPropertyType(PropertyType.Number);
+    numParticipantsProp.setPropertyValue(20);
+
+    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
 
     return study;
   }
