@@ -383,18 +383,12 @@ public class DatasetResource extends Resource {
         throw new NotFoundException("Could not find the study with id: " + studyId.toString());
       }
 
-      // if datasets exist, get full datasets and add to study
+      // if datasets exist and is not empty, get full datasets and add to study
       Set<Integer> datasetIds = study.getDatasetIds();
-
-      if(Objects.isNull(datasetIds)){
+      if(Objects.isNull(datasetIds) || datasetIds.isEmpty()){
         throw new NotFoundException("Study has no datasets.");
       }
-      List<Integer> datasetIdList = new ArrayList<>(datasetIds);
-      List<Dataset> datasetSet = datasetService.findDatasetsByIds(datasetIdList);
-      for (Dataset dataset : datasetSet) {
-        study.addDataset(dataset);
-      }
-
+      datasetService.addDatasetsToStudy(datasetIds, study);
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

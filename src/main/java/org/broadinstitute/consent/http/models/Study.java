@@ -16,7 +16,7 @@ public class Study {
   private String piName;
   private List<String> dataTypes;
   private Set<Integer> datasetIds;
-  private Set<Dataset> datasetSet;
+  private Set<Dataset> datasets;
   private Set<StudyProperty> properties;
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
@@ -114,10 +114,14 @@ public class Study {
   }
 
   public void addDataset(Dataset dataset) {
-    if (Objects.isNull(this.datasetSet)) {
-      this.datasetSet = new HashSet<>();
+    if (Objects.isNull(this.datasets)) {
+      this.datasets = new HashSet<>();
     }
-    this.datasetSet.add(dataset);
+    this.datasets.add(dataset);
+  }
+
+  public Set<Dataset> getDatasets() {
+    return datasets;
   }
 
   public Date getCreateDate() {
@@ -159,4 +163,5 @@ public class Study {
   public void setUuid(UUID uuid) {
     this.uuid = uuid;
   }
+
 }

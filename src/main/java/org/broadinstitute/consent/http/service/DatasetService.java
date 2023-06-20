@@ -548,4 +548,13 @@ public class DatasetService {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
+  public Study addDatasetsToStudy(Set<Integer> datasetIds, Study study) {
+    List<Integer> datasetIdList = new ArrayList<>(datasetIds);
+    List<Dataset> datasets = findDatasetsByIds(datasetIdList);
+    for (Dataset dataset : datasets) {
+      study.addDataset(dataset);
+    }
+    return study;
+  }
+
 }
