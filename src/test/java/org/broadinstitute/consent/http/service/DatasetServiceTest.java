@@ -918,7 +918,6 @@ public class DatasetServiceTest {
         """;
     when(ontologyService.translateDataUse(ds.getDataUse(),
         DataUseTranslationType.DATASET)).thenReturn(translation);
-    spy(datasetDAO);
 
     initService();
     datasetService.syncDatasetDataUseTranslation(1);
