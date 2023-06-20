@@ -290,7 +290,6 @@ public class ConsentModule extends AbstractModule {
         providesConsentDAO(),
         providesDataAccessRequestDAO(),
         providesDatasetDAO(),
-        providesDatasetServiceDAO(),
         providesUserRoleDAO(),
         providesDacDAO(),
         providesUseRestrictionConverter(),

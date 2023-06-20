@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,6 @@ public class DatasetService {
   private final ConsentDAO consentDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final DatasetServiceDAO datasetServiceDAO;
   private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
   private final UseRestrictionConverter converter;
@@ -62,14 +60,12 @@ public class DatasetService {
 
   @Inject
   public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO dataSetDAO,
-      DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      UseRestrictionConverter converter,
-      EmailService emailService, OntologyService ontologyService) {
+      DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
+      UseRestrictionConverter converter, EmailService emailService,
+      OntologyService ontologyService) {
     this.consentDAO = consentDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
-    this.datasetServiceDAO = datasetServiceDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
     this.converter = converter;
