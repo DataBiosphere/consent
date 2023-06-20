@@ -410,6 +410,18 @@ public class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  public void testTranslatedDataUse() {
+    Dataset d1 = insertDataset();
+
+    String tdu = RandomStringUtils.randomAlphabetic(10);
+    datasetDAO.updateDatasetTranslatedDataUse(d1.getDataSetId(), tdu);
+
+    d1 = datasetDAO.findDatasetById(d1.getDataSetId());
+
+    assertEquals(tdu, d1.getTranslatedDataUse());
+  }
+
+  @Test
   public void testFindDatasetByAlias() {
     Dataset dataset = insertDataset();
 
