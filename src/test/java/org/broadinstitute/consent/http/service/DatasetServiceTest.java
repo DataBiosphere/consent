@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Consent;
@@ -52,7 +53,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -72,9 +72,6 @@ public class DatasetServiceTest {
   private DatasetDAO datasetDAO;
 
   @Mock
-  private DatasetServiceDAO datasetServiceDAO;
-
-  @Mock
   private UserRoleDAO userRoleDAO;
   @Mock
   private DacDAO dacDAO;
@@ -82,6 +79,8 @@ public class DatasetServiceTest {
   private UseRestrictionConverter useRestrictionConverter;
   @Mock
   private EmailService emailService;
+  @Mock
+  private OntologyService ontologyService;
 
   @BeforeEach
   public void setUp() {
@@ -89,8 +88,8 @@ public class DatasetServiceTest {
   }
 
   private void initService() {
-    datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO,
-        datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService);
+    datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO,
+    dacDAO, useRestrictionConverter, emailService, ontologyService);
   }
 
   @Test
@@ -626,13 +625,13 @@ public class DatasetServiceTest {
     assertTrue(results.contains(ds1));
 
     // search on two things at once
-    results = datasetService.searchDatasets("Doe asdf",false, u);
+    results = datasetService.searchDatasets("Doe asdf", false, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query nonexistent phrase
-    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf",false, u);
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", false, u);
     assertEquals(0, results.size());
   }
 
@@ -669,7 +668,6 @@ public class DatasetServiceTest {
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
-
     // query ds identifier
     results = datasetService.searchDatasets("DUOS-000623", true, u);
 
@@ -677,7 +675,7 @@ public class DatasetServiceTest {
     assertTrue(results.contains(ds2));
 
     // query nonexistent phrase
-    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf",true, u);
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", true, u);
     assertEquals(0, results.size());
   }
 
@@ -897,6 +895,39 @@ public class DatasetServiceTest {
         "DAC NAME",
         "DUOS-000001"
     );
+  }
+
+  @Test
+  public void testSyncDataUseTranslation() {
+    Dataset ds = new Dataset();
+    ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    when(datasetDAO.findDatasetById(1)).thenReturn(ds);
+    String translation = """
+        Samples are restricted for use under the following conditions:
+        Data is limited for health/medical/biomedical research. [HMB]
+        Data use is limited for studying: cancerophobia [DS]
+        Commercial use is not prohibited.
+        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
+        Restrictions for use as a control set for diseases other than those defined were not specified.
+        """;
+    when(ontologyService.translateDataUse(ds.getDataUse(),
+        DataUseTranslationType.DATASET)).thenReturn(translation);
+
+    initService();
+    datasetService.syncDatasetDataUseTranslation(1);
+
+    verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
+  }
+
+  @Test
+  public void testSyncDataUseTranslationNotFound() {
+    when(datasetDAO.findDatasetById(1)).thenReturn(null);
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      datasetService.syncDatasetDataUseTranslation(1);
+    });
+
   }
 
   /* Helper functions */

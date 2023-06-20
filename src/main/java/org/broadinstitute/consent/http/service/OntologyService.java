@@ -6,6 +6,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -34,5 +35,22 @@ public class OntologyService implements ConsentLogger {
       logWarn("Error parsing response from Ontology service: " + e);
     }
     return null;
+  }
+
+  public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
+    WebTarget target = client.target(
+        servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
+    try (Response response = target.request(MediaType.TEXT_PLAIN)
+        .post(Entity.json(dataUse.toString()))) {
+      if (response.getStatus() == 200) {
+        return response.readEntity(String.class);
+      }
+
+      throw new RuntimeException(
+          "Error response from Ontology service: " + response.readEntity(String.class));
+    } catch (Exception e) {
+      logWarn("Error parsing response from Ontology service: " + e);
+      throw e;
+    }
   }
 }

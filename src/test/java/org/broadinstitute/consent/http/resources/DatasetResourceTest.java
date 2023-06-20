@@ -1209,6 +1209,23 @@ public class DatasetResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
+  @Test
+  public void testSyncDataUseTranslation() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testSyncDataUseTranslationNotFound() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
 
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
