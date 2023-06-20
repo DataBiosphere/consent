@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,8 +90,6 @@ public class DatasetRegistrationServiceTest {
   public void testInsertCompleteDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
-
-    spy(gcsService);
 
     initService();
 
@@ -225,8 +222,6 @@ public class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
-    spy(gcsService);
-
     initService();
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
@@ -278,9 +273,6 @@ public class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createOpenAccessRegistrationNoDacId(user);
 
-    spy(gcsService);
-    spy(dacDAO);
-
     initService();
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
@@ -302,8 +294,6 @@ public class DatasetRegistrationServiceTest {
   public void testInsertMultipleDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
-
-    spy(gcsService);
 
     initService();
 
@@ -397,7 +387,6 @@ public class DatasetRegistrationServiceTest {
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
     when(dacDAO.findById(any())).thenReturn(null);
-    spy(gcsService);
 
     initService();
     assertThrows(NotFoundException.class, () -> {

@@ -14,7 +14,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -528,7 +527,6 @@ public class DatasetServiceTest {
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
     when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(datasetProps);
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    spy(datasetDAO);
     initService();
 
     Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
@@ -722,7 +720,6 @@ public class DatasetServiceTest {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(dataset));
-    spy(datasetDAO);
     initService();
 
     List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
@@ -748,7 +745,6 @@ public class DatasetServiceTest {
     d2.setDataSetId(3);
     when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
     when(datasetDAO.findDatasetsByAuthUserEmail(any())).thenReturn(List.of(d2, d3));
-    spy(datasetDAO);
     initService();
 
     List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
@@ -774,7 +770,6 @@ public class DatasetServiceTest {
     Dataset d2 = new Dataset();
     d2.setDataSetId(2);
     when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
-    spy(datasetDAO);
     initService();
 
     List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
@@ -801,7 +796,6 @@ public class DatasetServiceTest {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    spy(emailService);
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -860,7 +854,6 @@ public class DatasetServiceTest {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    spy(emailService);
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -894,7 +887,6 @@ public class DatasetServiceTest {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    spy(emailService);
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
 

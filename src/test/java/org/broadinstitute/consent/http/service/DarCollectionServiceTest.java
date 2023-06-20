@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -195,10 +194,7 @@ public class DarCollectionServiceTest {
     collection.setDars(Map.of(dar.getReferenceId(), dar));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
-    initService();
+   initService();
 
     service.cancelDarCollectionAsResearcher(collection);
     verify(electionDAO, times(1)).findLastElectionsByReferenceIds(anyList());
@@ -240,9 +236,6 @@ public class DarCollectionServiceTest {
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
     initService();
 
     service.cancelDarCollectionElectionsAsAdmin(collection);
@@ -271,10 +264,6 @@ public class DarCollectionServiceTest {
     election.setElectionId(1);
     when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    spy(datasetDAO);
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
     initService();
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
@@ -303,10 +292,6 @@ public class DarCollectionServiceTest {
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
     when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of());
-    spy(datasetDAO);
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
     initService();
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
@@ -333,11 +318,6 @@ public class DarCollectionServiceTest {
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(electionDAO.findLastElectionByReferenceIdAndType(any(), any())).thenReturn(election);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
-    spy(darCollectionServiceDAO);
-    spy(electionDAO);
-    spy(voteDAO);
-    spy(emailService);
-    spy(darCollectionDAO);
     initService();
 
     service.createElectionsForDarCollection(user, collection);
@@ -365,10 +345,6 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
 
     Integer collectionId = collection.getDarCollectionId();
-
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
 
     initService();
     System.out.println(collectionId);
@@ -436,11 +412,6 @@ public class DarCollectionServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
 
     Integer collectionId = collection.getDarCollectionId();
-
-    spy(electionDAO);
-    spy(dataAccessRequestDAO);
-    spy(darCollectionDAO);
-    spy(voteDAO);
 
     initService();
     service.deleteByCollectionId(user, collectionId);
