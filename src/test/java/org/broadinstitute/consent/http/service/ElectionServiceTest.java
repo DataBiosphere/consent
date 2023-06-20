@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -288,7 +287,6 @@ public class ElectionServiceTest {
   @Test
   public void testUpdateElectionByIdWithArchival_Closed() {
     when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
-    spy(electionDAO);
     sampleElection1.setStatus(ElectionStatus.CLOSED.getValue());
     initService();
 
@@ -302,7 +300,6 @@ public class ElectionServiceTest {
   @Test
   public void testUpdateElectionByIdWithArchival_Canceled() {
     when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
-    spy(electionDAO);
     sampleElection1.setStatus(ElectionStatus.CANCELED.getValue());
     initService();
 
@@ -316,7 +313,6 @@ public class ElectionServiceTest {
   @Test
   public void testUpdateElectionByIdWithArchival_Final() {
     when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
-    spy(electionDAO);
     sampleElection1.setStatus(ElectionStatus.FINAL.getValue());
     initService();
 
@@ -330,7 +326,6 @@ public class ElectionServiceTest {
   @Test
   public void testUpdateElectionByIdWithArchival_Open() {
     when(electionDAO.findRPElectionByElectionAccessId(any())).thenReturn(1);
-    spy(electionDAO);
     sampleElection1.setStatus(ElectionStatus.OPEN.getValue());
     initService();
 

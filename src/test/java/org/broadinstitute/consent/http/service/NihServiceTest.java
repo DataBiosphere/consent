@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,7 +67,6 @@ public class NihServiceTest {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
-    spy(nihServiceDAO);
     initService();
     try {
       List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser,
