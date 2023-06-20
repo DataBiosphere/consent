@@ -1115,8 +1115,7 @@ public class DatasetResourceTest {
     initResource();
     Response response = resource.getStudyById(12345);
     assertEquals(200, response.getStatus());
-    assertEquals(study.getDatasetIds().size(), datasets.size())
-    ;
+    assertEquals(study.getDatasetIds().size(), datasets.size());
   }
 
   @Test
