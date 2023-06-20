@@ -646,14 +646,9 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @RolesAllowed(ADMIN)
   @Path("/{id}/reprocess/datause")
-  public Response resyncDataUseTranslation(@PathParam("id") Integer id) {
+  public Response syncDataUseTranslation(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
       Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
-
-      if (Objects.isNull(ds)) {
-        return Response.status(Status.NOT_FOUND).build();
-      }
-      
       return Response.ok(ds).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -314,7 +314,7 @@ public class DatasetService {
   public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (Objects.isNull(dataset)) {
-      return null;
+      throw new NotFoundException("Dataset not found");
     }
 
     String translation = ontologyService.translateDataUse(dataset.getDataUse(),

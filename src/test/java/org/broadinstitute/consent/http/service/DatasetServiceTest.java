@@ -925,6 +925,16 @@ public class DatasetServiceTest {
     verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
   }
 
+  @Test
+  public void testSyncDataUseTranslationNotFound() {
+    when(datasetDAO.findDatasetById(1)).thenReturn(null);
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      datasetService.syncDatasetDataUseTranslation(1);
+    });
+
+  }
+
   /* Helper functions */
 
   private List<Dataset> getDatasets() {
