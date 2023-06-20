@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -102,7 +101,6 @@ public class OAuthAuthenticatorTest {
     String bearerToken = "bearer-token";
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
     oAuthAuthenticator = new OAuthAuthenticator(client, samService);
-    spy(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertTrue(authUser.isPresent());

@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -176,8 +175,6 @@ public class ElasticSearchServiceTest {
 
   @Test
   public void testIndexDatasets() throws IOException {
-    spy(esClient);
-
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();

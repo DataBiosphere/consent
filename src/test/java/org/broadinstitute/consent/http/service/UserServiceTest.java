@@ -13,7 +13,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -129,9 +128,6 @@ public class UserServiceTest {
     prop.setPropertyValue("1");
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
         List.of(prop));
-    spy(userDAO);
-    spy(userPropertyDAO);
-    spy(userRoleDAO);
     initService();
     try {
       UserUpdateFields fields = new UserUpdateFields();
@@ -181,9 +177,6 @@ public class UserServiceTest {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
         .thenReturn(List.of()) // first time, no SO id
         .thenReturn(List.of(prop)); // second time, has SO id
-    spy(userDAO);
-    spy(userPropertyDAO);
-    spy(userRoleDAO);
     initService();
     try {
       UserUpdateFields fields = new UserUpdateFields();
@@ -225,9 +218,6 @@ public class UserServiceTest {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
         .thenReturn(List.of(prop1)) // first SO id
         .thenReturn(List.of(prop2)); // second SO id
-    spy(userDAO);
-    spy(userPropertyDAO);
-    spy(userRoleDAO);
     initService();
     try {
       UserUpdateFields fields = new UserUpdateFields();
@@ -267,9 +257,6 @@ public class UserServiceTest {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
         .thenReturn(List.of(prop)) // first SO id
         .thenReturn(List.of(prop)); // second SO id
-    spy(userDAO);
-    spy(userPropertyDAO);
-    spy(userRoleDAO);
     initService();
     try {
       UserUpdateFields fields = new UserUpdateFields();
@@ -742,10 +729,6 @@ public class UserServiceTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    spy(userRoleDAO);
-    spy(libraryCardDAO);
-    spy(userDAO);
 
     initService();
 

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -142,7 +141,6 @@ public class SamResourceTest {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
         .setUserSubjectId("subjectId");
     TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    spy(userService);
     doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
@@ -160,7 +158,6 @@ public class SamResourceTest {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
         .setUserSubjectId("subjectId");
     TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    spy(samService);
     doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
