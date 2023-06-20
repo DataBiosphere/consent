@@ -139,7 +139,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Match'
+                  $ref: './schemas/MatchResult.yaml'
         404:
           description: The consent for the id couldn't be found.
   /api/dac:
@@ -1536,32 +1536,6 @@ components:
       $ref: './schemas/Vote.yaml'
     MatchResult:
       $ref: './schemas/MatchResult.yaml'
-    Match:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int32
-          description: The ID of the entity.
-        consent:
-          type: string
-          description: The matched consent.
-        purpose:
-          type: string
-          description: The matched research purpose.
-        match:
-          type: boolean
-          description: True if the entities match, false otherwise.
-        abstain:
-          type: boolean
-          description: Nullable boolean will return true if the decision is abstain
-        failed:
-          type: boolean
-          description: True if the matching process failed, for any reason.
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the match was created.
     Summary:
       type: object
       properties:

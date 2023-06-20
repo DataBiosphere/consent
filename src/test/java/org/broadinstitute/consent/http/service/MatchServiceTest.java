@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,7 +90,6 @@ public class MatchServiceTest {
   public void testInsertMatches() {
     when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any())).thenReturn(1);
     doNothing().when(matchDAO).insertFailureReason(any(), any());
-    spy(matchDAO);
     initService();
 
     service.insertMatches(List.of(new Match()));
@@ -102,7 +100,6 @@ public class MatchServiceTest {
   public void testFindMatchById() {
     Match m = createMatchObject();
     when(matchDAO.findMatchById(m.getId())).thenReturn(m);
-    spy(matchDAO);
     initService();
 
     Match match = service.findMatchById(m.getId());
@@ -125,7 +122,6 @@ public class MatchServiceTest {
   public void testFindMatchByConsentId() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
-    spy(matchDAO);
     initService();
 
     List<Match> matches = service.findMatchByConsentId(m.getConsent());
@@ -138,7 +134,6 @@ public class MatchServiceTest {
   public void testFindMatchByConsentIdNotFound() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of());
-    spy(matchDAO);
     initService();
 
     List<Match> matches = service.findMatchByConsentId(m.getConsent());
@@ -157,7 +152,6 @@ public class MatchServiceTest {
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
     when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
-    spy(datasetDAO);
     initService();
 
     service.createMatchesForDataAccessRequest(dar);
@@ -173,8 +167,6 @@ public class MatchServiceTest {
     dar.addDatasetId(1);
     when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
-    spy(datasetDAO);
-    spy(dataAccessRequestDAO);
     initService();
 
     service.createMatchesForConsent(m.getConsent());
@@ -297,7 +289,6 @@ public class MatchServiceTest {
   public void testFindMatchesByPurposeId() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByPurposeId(any())).thenReturn(List.of(m));
-    spy(matchDAO);
     initService();
 
     List<Match> matches = service.findMatchesByPurposeId(m.getConsent());
@@ -332,7 +323,6 @@ public class MatchServiceTest {
 
   @Test
   public void testRemoveMatchesForPurpose() {
-    spy(matchDAO);
     initService();
 
     service.removeMatchesForPurpose("DAR-2");
@@ -343,7 +333,6 @@ public class MatchServiceTest {
   @Test
   public void testRemoveMatchesForConsent() {
     Match m = createMatchObject();
-    spy(matchDAO);
     initService();
 
     service.removeMatchesForConsent(m.getConsent());
@@ -356,7 +345,6 @@ public class MatchServiceTest {
     Match m = createMatchObject();
     when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
         List.of(m));
-    spy(matchDAO);
     initService();
     List<Match> matches = service.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of("test"));
