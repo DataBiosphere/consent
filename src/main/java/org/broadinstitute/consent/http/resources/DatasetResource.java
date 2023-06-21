@@ -299,7 +299,8 @@ public class DatasetResource extends Resource {
       // key: field name (not file name), value: file body part
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
-      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update, files);
+      Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update,
+          files);
       return Response.ok().entity(updatedDataset).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -379,6 +380,32 @@ public class DatasetResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+      return Response.ok(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/role/{roleName}")
+  public Response findDatasetsAccordingToRole(
+      @Auth AuthUser authUser,
+      @PathParam("roleName") String roleName) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateUserHasRoleName(user, roleName);
+      UserRoles role = UserRoles.getUserRoleFromName(roleName);
+      if (Objects.isNull(role)) {
+        throw new BadRequestException("Invalid role selection: " + roleName);
+      }
+      List<Dataset> datasets = switch (role) {
+        case ADMIN -> datasetService.findAllDatasets();
+        case CHAIRPERSON -> datasetService.findDatasetsForChairperson(user);
+        case DATASUBMITTER -> datasetService.findDatasetsForDataSubmitter(user);
+        default -> datasetService.findPublicDatasets();
+      };
       return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -680,6 +707,19 @@ public class DatasetResource extends Resource {
     } catch (JsonSyntaxException jse) {
       return createExceptionResponse(
           new BadRequestException("Invalid JSON Syntax: " + dataUseJson));
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  @Path("/{id}/reprocess/datause")
+  public Response syncDataUseTranslation(@Auth AuthUser authUser, @PathParam("id") Integer id) {
+    try {
+      Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
+      return Response.ok(ds).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

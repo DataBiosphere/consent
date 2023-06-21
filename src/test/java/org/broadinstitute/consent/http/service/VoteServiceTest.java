@@ -12,7 +12,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -596,7 +595,6 @@ public class VoteServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.findUserById(any())).thenReturn(researcher);
-    spy(emailService);
 
     initService();
     service.sendDatasetApprovalNotifications(List.of(v1, v2));
@@ -686,7 +684,6 @@ public class VoteServiceTest {
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.findUserById(any())).thenReturn(researcher);
-    spy(emailService);
 
     initService();
     service.sendDatasetApprovalNotifications(List.of(v1, v2));
@@ -732,7 +729,6 @@ public class VoteServiceTest {
     when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
-    spy(emailService);
 
     initService();
     service.sendDatasetApprovalNotifications(List.of(v1));
@@ -783,7 +779,6 @@ public class VoteServiceTest {
     when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
-    spy(emailService);
 
     initService();
     service.sendDatasetApprovalNotifications(List.of(v1));
@@ -844,7 +839,6 @@ public class VoteServiceTest {
         List.of(depositor));
     when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of(3));
     when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
-    spy(emailService);
 
     initService();
     try {
@@ -903,7 +897,6 @@ public class VoteServiceTest {
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
     when(userDAO.findUserByEmail(depositorNotFound.getEmail())).thenReturn(null);
     when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of());
-    spy(emailService);
 
     initService();
     assertThrows(IllegalArgumentException.class, () -> {

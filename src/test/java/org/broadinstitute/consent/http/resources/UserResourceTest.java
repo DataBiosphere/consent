@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -535,7 +534,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -553,7 +551,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -575,7 +572,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -596,7 +592,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -617,7 +612,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -637,7 +631,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -658,7 +651,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -679,7 +671,6 @@ public class UserResourceTest {
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
-    spy(supportRequestService);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());

@@ -139,7 +139,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Match'
+                  $ref: './schemas/MatchResult.yaml'
         404:
           description: The consent for the id couldn't be found.
   /api/dac:
@@ -571,6 +571,8 @@ paths:
     $ref: './paths/datasetV3.yaml'
   /api/dataset/v3/{datasetId}:
     $ref: './paths/datasetV3ById.yaml'
+  /api/dataset/role/{roleName}:
+    $ref: './paths/datasetByRole.yaml'
   /api/dataset/validate:
     get:
       summary: validateDatasetName
@@ -640,6 +642,8 @@ paths:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
     $ref: './paths/datasetByIdDataUse.yaml'
+  /api/dataset/{id}/reprocess/datause:
+    $ref: './paths/datasetReprocessDataUse.yaml'
   /api/dataset/v2/{id}:
     $ref: './paths/datasetByIdV2.yaml'
   /api/dataset/batch:
@@ -1534,32 +1538,6 @@ components:
       $ref: './schemas/Vote.yaml'
     MatchResult:
       $ref: './schemas/MatchResult.yaml'
-    Match:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int32
-          description: The ID of the entity.
-        consent:
-          type: string
-          description: The matched consent.
-        purpose:
-          type: string
-          description: The matched research purpose.
-        match:
-          type: boolean
-          description: True if the entities match, false otherwise.
-        abstain:
-          type: boolean
-          description: Nullable boolean will return true if the decision is abstain
-        failed:
-          type: boolean
-          description: True if the matching process failed, for any reason.
-        createDate:
-          type: string
-          format: date
-          description: Describes the date the match was created.
     Summary:
       type: object
       properties:

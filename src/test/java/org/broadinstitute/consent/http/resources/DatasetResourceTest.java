@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,21 +29,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
@@ -1010,9 +1006,6 @@ public class DatasetResourceTest {
 
   @Test
   public void testCreateDatasetRegistration_multipleFiles() throws SQLException, IOException {
-
-    spy(datasetRegistrationService);
-
     FormDataContentDisposition contentFile = FormDataContentDisposition
         .name("file")
         .fileName("sharing_plan.txt")
@@ -1216,6 +1209,23 @@ public class DatasetResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
+  @Test
+  public void testSyncDataUseTranslation() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testSyncDataUseTranslationNotFound() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
 
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
