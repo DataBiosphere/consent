@@ -552,5 +552,22 @@ public class DatasetService {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
+  public List<Dataset> findAllDatasets() {
+    return datasetDAO.findAllDatasets();
+  }
+
+  public List<Dataset> findDatasetsForChairperson(User user) {
+    List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
+
+    return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
+  }
+
+  public List<Dataset> findDatasetsForDataSubmitter(User user) {
+    return datasetDAO.findDatasetsForDataSubmitter(user.getUserId(), user.getEmail());
+  }
+
+  public List<Dataset> findPublicDatasets() {
+    return datasetDAO.findPublicDatasets();
+  }
 
 }
