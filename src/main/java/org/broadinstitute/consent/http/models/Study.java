@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
+import static com.fasterxml.jackson.databind.ser.std.NumberSerializers.addAll;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -113,11 +116,8 @@ public class Study {
     this.datasetIds.add(datasetId);
   }
 
-  public void addDataset(Dataset dataset) {
-    if (Objects.isNull(this.datasets)) {
-      this.datasets = new HashSet<>();
-    }
-    this.datasets.add(dataset);
+  public void addDatasets(List<Dataset> datasetList) {
+    this.datasets = new HashSet<>(datasetList);
   }
 
   public Set<Dataset> getDatasets() {

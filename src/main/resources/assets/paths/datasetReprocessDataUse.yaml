@@ -1,0 +1,23 @@
+put:
+  summary: Admin Only API to sync the Dataset's Data Use with Ontology
+  description: This endpoint calls ontology with the dataset's DataUse and updates its `dataUseTranslation`
+  parameters:
+    - name: id
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Successfully updated Dataset
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Internal Error

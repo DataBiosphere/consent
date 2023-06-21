@@ -36,6 +36,8 @@ import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -97,6 +99,8 @@ public class DatasetResourceTest {
   private Collection<Dictionary> dictionaries;
 
   private DatasetResource resource;
+
+  private StudyDAO studyDAO;
 
   @BeforeEach
   public void setUp() {
@@ -1082,10 +1086,10 @@ public class DatasetResourceTest {
     Study study = new Study();
     study.setStudyId(1);
     study.setName("asdfasdfasdfasdfasdfasdf");
-    when(datasetService.findStudyById(1)).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
     initResource();
     Response response = resource.getStudyById(1);
-    assertEquals(404, response.getStatus());
+    assertEquals(200, response.getStatus());
   }
 
   @Test
@@ -1105,7 +1109,7 @@ public class DatasetResourceTest {
 
     List<Integer> datasetIds = new ArrayList<>(study.getDatasetIds());
 
-    when(datasetService.findStudyById(12345)).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
     when(datasetService.findDatasetsByIds(datasetIds)).thenReturn(datasets);
 
     initResource();
@@ -1116,7 +1120,7 @@ public class DatasetResourceTest {
 
   @Test
   public void testGetStudyByIdNotFound() {
-    when(datasetService.findStudyById(1)).thenReturn(null);
+    when(datasetService.getStudyWithDatasetsById(1)).thenReturn(null);
 
     initResource();
     Response response = resource.getStudyById(1);
@@ -1258,6 +1262,24 @@ public class DatasetResourceTest {
 
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testSyncDataUseTranslation() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  public void testSyncDataUseTranslationNotFound() {
+    when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
+    initResource();
+
+    Response response = resource.syncDataUseTranslation(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   /**

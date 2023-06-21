@@ -60,6 +60,7 @@ public class DatasetService {
   private final DacDAO dacDAO;
   private final UseRestrictionConverter converter;
   private final EmailService emailService;
+  private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
 
   @Inject
@@ -67,7 +68,7 @@ public class DatasetService {
       DatasetDAO dataSetDAO,
       DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
       UseRestrictionConverter converter,
-      EmailService emailService, StudyDAO studyDAO) {
+      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
     this.consentDAO = consentDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
@@ -76,6 +77,7 @@ public class DatasetService {
     this.dacDAO = dacDAO;
     this.converter = converter;
     this.emailService = emailService;
+    this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
   }
 
@@ -316,6 +318,19 @@ public class DatasetService {
     return datasetDAO.findDatasetById(datasetId);
   }
 
+  public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    if (Objects.isNull(dataset)) {
+      throw new NotFoundException("Dataset not found");
+    }
+
+    String translation = ontologyService.translateDataUse(dataset.getDataUse(),
+        DataUseTranslationType.DATASET);
+    datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
+
+    return datasetDAO.findDatasetById(datasetId);
+  }
+
   private void updateDatasetProperties(List<DatasetProperty> updateProperties,
       List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
     updateProperties.forEach(p -> datasetDAO
@@ -548,13 +563,39 @@ public class DatasetService {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
-  public Study addDatasetsToStudy(Set<Integer> datasetIds, Study study) {
-    List<Integer> datasetIdList = new ArrayList<>(datasetIds);
-    List<Dataset> datasets = findDatasetsByIds(datasetIdList);
-    for (Dataset dataset : datasets) {
-      study.addDataset(dataset);
-    }
-    return study;
+  public List<Dataset> findAllDatasets() {
+    return datasetDAO.findAllDatasets();
   }
 
+  public List<Dataset> findDatasetsForChairperson(User user) {
+    List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
+
+    return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
+  }
+
+  public List<Dataset> findDatasetsForDataSubmitter(User user) {
+    return datasetDAO.findDatasetsForDataSubmitter(user.getUserId(), user.getEmail());
+  }
+
+  public List<Dataset> findPublicDatasets() {
+    return datasetDAO.findPublicDatasets();
+  }
+
+  public Study getStudyWithDatasetsById(Integer studyId) {
+    try {
+      Study study = studyDAO.findStudyById(studyId);
+      if (Objects.isNull(study)) {
+        throw new NotFoundException("Study not found");
+      }
+      if (Objects.nonNull(study.getDatasetIds()) && !study.getDatasetIds().isEmpty()) {
+        List<Dataset> datasets = findDatasetsByIds(new ArrayList<>(study.getDatasetIds()));
+        study.addDatasets(datasets);
+      }
+      return study;
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      throw e;
+    }
+
+  }
 }
