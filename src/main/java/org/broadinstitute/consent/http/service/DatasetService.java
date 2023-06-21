@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -19,11 +18,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.google.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
@@ -37,9 +38,11 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,25 +55,30 @@ public class DatasetService {
   private final ConsentDAO consentDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
+  private final DatasetServiceDAO datasetServiceDAO;
   private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
   private final UseRestrictionConverter converter;
   private final EmailService emailService;
   private final OntologyService ontologyService;
+  private final StudyDAO studyDAO;
 
   @Inject
   public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      UseRestrictionConverter converter, EmailService emailService,
-      OntologyService ontologyService) {
+      DatasetDAO dataSetDAO,
+      DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
+      UseRestrictionConverter converter,
+      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
     this.consentDAO = consentDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
+    this.datasetServiceDAO = datasetServiceDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
     this.converter = converter;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
+    this.studyDAO = studyDAO;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -245,6 +253,9 @@ public class DatasetService {
 
   public Set<String> findAllActiveStudyNames() {
     return datasetDAO.findAllActiveStudyNames();
+  }
+  public Study findStudyById(Integer id) {
+    return studyDAO.findStudyById(id);
   }
 
   public Dataset findDatasetById(Integer id) {
@@ -570,4 +581,21 @@ public class DatasetService {
     return datasetDAO.findPublicDatasets();
   }
 
+  public Study getStudyWithDatasetsById(Integer studyId) {
+    try {
+      Study study = studyDAO.findStudyById(studyId);
+      if (Objects.isNull(study)) {
+        throw new NotFoundException("Study not found");
+      }
+      if (Objects.nonNull(study.getDatasetIds()) && !study.getDatasetIds().isEmpty()) {
+        List<Dataset> datasets = findDatasetsByIds(new ArrayList<>(study.getDatasetIds()));
+        study.addDatasets(datasets);
+      }
+      return study;
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      throw e;
+    }
+
+  }
 }

@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -53,6 +54,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -72,6 +74,9 @@ public class DatasetServiceTest {
   private DatasetDAO datasetDAO;
 
   @Mock
+  private DatasetServiceDAO datasetServiceDAO;
+
+  @Mock
   private UserRoleDAO userRoleDAO;
   @Mock
   private DacDAO dacDAO;
@@ -82,14 +87,17 @@ public class DatasetServiceTest {
   @Mock
   private OntologyService ontologyService;
 
+  @Mock
+  private StudyDAO studyDAO;
+
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
   }
 
   private void initService() {
-    datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO, userRoleDAO,
-    dacDAO, useRestrictionConverter, emailService, ontologyService);
+    datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO,
+        datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService, ontologyService, studyDAO);
   }
 
   @Test

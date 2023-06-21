@@ -3,6 +3,7 @@ get:
   description: Returns a list of all the actively used dataset study names.
   tags:
     - Dataset
+    - Study
   responses:
     200:
       description: dataset id

@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -393,6 +394,19 @@ public class DatasetResource extends Resource {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
       }
       return Response.ok(dataset).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/study/{studyId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response getStudyById(@PathParam("studyId") Integer studyId) {
+    try {
+      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
