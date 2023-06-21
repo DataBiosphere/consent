@@ -406,9 +406,6 @@ public class DatasetResource extends Resource {
   public Response getStudyById(@PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
-      if (Objects.isNull(study)) {
-        throw new NotFoundException("Could not find the study with id: " + studyId.toString());
-      }
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

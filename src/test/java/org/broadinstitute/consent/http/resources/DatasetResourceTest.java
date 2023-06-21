@@ -1120,7 +1120,7 @@ public class DatasetResourceTest {
 
   @Test
   public void testGetStudyByIdNotFound() {
-    when(datasetService.getStudyWithDatasetsById(1)).thenReturn(null);
+    when(datasetService.getStudyWithDatasetsById(1)).thenThrow(new NotFoundException());
 
     initResource();
     Response response = resource.getStudyById(1);
