@@ -457,9 +457,9 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/studyNames")
   @PermitAll
-  public Response findAllActiveStudyNames() {
+  public Response findAllStudyNames() {
     try {
-      Set<String> studyNames = datasetService.findAllActiveStudyNames();
+      Set<String> studyNames = datasetService.findAllStudyNames();
       return Response.ok(studyNames).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

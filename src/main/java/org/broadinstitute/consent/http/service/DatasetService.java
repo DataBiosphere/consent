@@ -251,8 +251,8 @@ public class DatasetService {
     return datasetDAO.getDatasetByName(lowercaseName);
   }
 
-  public Set<String> findAllActiveStudyNames() {
-    return datasetDAO.findAllActiveStudyNames();
+  public Set<String> findAllStudyNames() {
+    return datasetDAO.findAllStudyNames();
   }
   public Study findStudyById(Integer id) {
     return studyDAO.findStudyById(id);

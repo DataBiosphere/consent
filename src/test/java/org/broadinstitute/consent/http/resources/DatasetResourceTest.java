@@ -399,18 +399,18 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testFindAllActiveStudyNamesSuccess() {
-    when(datasetService.findAllActiveStudyNames()).thenReturn(Set.of("Hi", "Hello"));
+  public void testFindAllStudyNamesSuccess() {
+    when(datasetService.findAllStudyNames()).thenReturn(Set.of("Hi", "Hello"));
     initResource();
-    Response response = resource.findAllActiveStudyNames();
+    Response response = resource.findAllStudyNames();
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void testFindAllActiveStudyNamesFail() {
-    when(datasetService.findAllActiveStudyNames()).thenThrow();
+  public void testFindAllStudyNamesFail() {
+    when(datasetService.findAllStudyNames()).thenThrow();
     initResource();
-    Response response = resource.findAllActiveStudyNames();
+    Response response = resource.findAllStudyNames();
     assertEquals(500, response.getStatus());
   }
 
@@ -1211,7 +1211,8 @@ public class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     initResource();
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "{\"properties\":[]}");
+    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart,
+        "{\"properties\":[]}");
     assertEquals(200, response.getStatus());
   }
 
