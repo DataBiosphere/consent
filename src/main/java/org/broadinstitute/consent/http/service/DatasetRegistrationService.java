@@ -125,8 +125,8 @@ public class DatasetRegistrationService {
   /**
    * This method takes an instance of a dataset registration schema and updates the dataset.
    *
-   * @param user    The User creating these datasets
-   * @param files   Map of files, where the key is the name of the field
+   * @param user  The User creating these datasets
+   * @param files Map of files, where the key is the name of the field
    * @return List of created Datasets from the provided registration schema
    */
   public Dataset updateDataset(
@@ -143,10 +143,17 @@ public class DatasetRegistrationService {
       throw new BadRequestException("DAC Id is required");
     }
 
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+
+    if (!Objects.equals(dataset.getDacId(), update.getDacId())) {
+      throw new BadRequestException("DAC Id update is not yet supported");
+    }
+
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
 
     try {
-      DatasetServiceDAO.DatasetUpdate datasetUpdates = createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
+      DatasetServiceDAO.DatasetUpdate datasetUpdates = createDatasetUpdate(datasetId, user, update,
+          files, uploadedFileCache);
 
       // Update or create the objects in the database
       datasetServiceDAO.updateDataset(datasetUpdates);
@@ -199,7 +206,8 @@ public class DatasetRegistrationService {
 
     List<DatasetProperty> props = datasetUpdate.getDatasetProperties();
 
-    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
+    List<FileStorageObject> fileStorageObjects = uploadFilesForDatasetUpdate(files,
+        uploadedFileCache, user);
 
     return new DatasetServiceDAO.DatasetUpdate(
         datasetId,
@@ -358,6 +366,7 @@ public class DatasetRegistrationService {
        */
       Function<ConsentGroup, Object> getField
   ) {
+
     /**
      * Converts a field on the given registration to a DatasetProperty.
      *
