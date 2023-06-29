@@ -28,7 +28,7 @@ put:
                 dacId:
                   type: string
                   description: The id of the DAC this dataset belongs to, if defined.
-                datasetProperties:
+                properties:
                   type: array
                   items:
                     $ref: '../schemas/DatasetProperty.yaml'
