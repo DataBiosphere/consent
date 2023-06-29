@@ -257,12 +257,12 @@ public class DatasetServiceTest {
   }
 
   @Test
-  public void testFindAllActiveStudyNames() {
-    when(datasetDAO.findAllActiveStudyNames())
+  public void testFindStudyNames() {
+    when(datasetDAO.findAllStudyNames())
         .thenReturn(Set.of("Hi", "Hello"));
     initService();
 
-    Set<String> returned = datasetService.findAllActiveStudyNames();
+    Set<String> returned = datasetService.findAllStudyNames();
 
     assertNotNull(returned);
     assertEquals(Set.of("Hi", "Hello"), returned);
