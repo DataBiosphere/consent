@@ -65,6 +65,15 @@ public class DatasetRegistrationService {
     return study;
   }
 
+  /**
+   * This method takes an instance of a dataset registration schema and updates the study and
+   * datasets from it.
+   *
+   * @param registration The DatasetRegistrationSchemaV1.yaml
+   * @param user         The User updating the study
+   * @param files        Map of files, where the key is the name of the field
+   * @return List of created Datasets from the provided registration schema
+   */
   public Study updateDatasetsFromRegistration(
       Integer studyId,
       DatasetRegistrationSchemaV1 registration,

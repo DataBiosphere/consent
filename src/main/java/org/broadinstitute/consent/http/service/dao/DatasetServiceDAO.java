@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -19,6 +18,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -36,6 +36,18 @@ public class DatasetServiceDAO {
   }
 
   public record StudyInsert(String name,
+                            String description,
+                            List<String> dataTypes,
+                            String piName,
+                            Boolean publicVisibility,
+                            Integer userId,
+                            List<StudyProperty> props,
+                            List<FileStorageObject> files) {
+
+  }
+
+  public record StudyUpdate(String name,
+                            Integer studyId,
                             String description,
                             List<String> dataTypes,
                             String piName,
@@ -170,6 +182,40 @@ public class DatasetServiceDAO {
         insert.files,
         insert.userId,
         uuid.toString());
+
+    return studyId;
+  }
+
+  private Integer executeUpdateStudy(Handle handle, StudyUpdate update) {
+    StudyDAO studyDAO = handle.attach(StudyDAO.class);
+    Study study = studyDAO.findStudyById(update.studyId);
+    Integer studyId = studyDAO.updateStudy(
+        update.studyId,
+        update.name,
+        update.description,
+        update.piName,
+        update.dataTypes,
+        update.publicVisibility,
+        update.userId,
+        Instant.now()
+    );
+
+    // TODO: Fix this for insert/update/delete
+    for (StudyProperty prop : update.props) {
+      studyDAO.insertStudyProperty(
+          studyId,
+          prop.getKey(),
+          prop.getType().toString(),
+          prop.getValue().toString()
+      );
+    }
+
+    // TODO: Validate/fix this for insert/update/delete
+    executeInsertFiles(
+        handle,
+        update.files,
+        update.userId,
+        study.getUuid().toString());
 
     return studyId;
   }

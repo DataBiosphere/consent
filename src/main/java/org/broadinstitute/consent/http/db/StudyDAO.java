@@ -68,6 +68,25 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("createDate") Instant createDate,
       @Bind("uuid") UUID uuid);
 
+  @SqlUpdate("""
+          UPDATE study
+          SET name = :name,
+              description = :description,
+              pi_name = :piName,
+              data_types = :dataTypes,
+              public_visibility = :publicVisibility,
+              update_user_id = :updateUserId,
+              update_date = :updateDate
+          WHERE study_id = :studyId
+      """)
+  Integer updateStudy(@Bind("studyId") Integer studyId,
+      @Bind("name") String name,
+      @Bind("description") String description,
+      @Bind("piName") String piName,
+      @Bind("dataTypes") List<String> dataTypes,
+      @Bind("publicVisibility") Boolean publicVisibility,
+      @Bind("updateUserId") Integer updateUserId,
+      @Bind("updateDate") Instant updateDate);
 
   @SqlUpdate("""
           INSERT INTO study_property (
