@@ -21,16 +21,10 @@ properties:
   publicVisibility:
     type: boolean
     description: Whether this study is publicly visible or not.
-  datasetIds:
-    type: array
-    items:
-      type: integer
-      format: int32
-    description: The ids of all of the datasets related to this study.
   datasets:
     type: array
     items:
-      type: './Dataset.yaml'
+      $ref: './Dataset.yaml'
     description: All of the datasets related to this study.
   properties:
     type: array

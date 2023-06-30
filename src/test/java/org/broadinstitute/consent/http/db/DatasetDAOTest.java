@@ -919,7 +919,7 @@ public class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllActiveStudyNames() {
+  public void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
     String ds1Name = RandomStringUtils.randomAlphabetic(20);
     createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, PropertyType.String);
@@ -932,14 +932,14 @@ public class DatasetDAOTest extends DAOTestHelper {
     String ds3Name = RandomStringUtils.randomAlphabetic(15);
     createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, PropertyType.String);
 
-    Set<String> returned = datasetDAO.findAllActiveStudyNames();
+    Set<String> returned = datasetDAO.findAllStudyNames();
 
     assertEquals(3, returned.size());
     assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
   }
 
   @Test
-  public void testFindAllActiveStudyNames_inactive_dataset() {
+  public void testFindAllStudyNamesWithInactiveDataset() {
     Dataset ds1 = insertDataset();
     String ds1Name = RandomStringUtils.randomAlphabetic(20);
     createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, PropertyType.String);
@@ -950,8 +950,8 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     datasetDAO.updateDatasetActive(ds1.getDataSetId(), false);
 
-    Set<String> returned = datasetDAO.findAllActiveStudyNames();
-    assertEquals(1, returned.size());
+    Set<String> returned = datasetDAO.findAllStudyNames();
+    assertEquals(2, returned.size());
     assertTrue(returned.contains(ds2Name));
   }
 

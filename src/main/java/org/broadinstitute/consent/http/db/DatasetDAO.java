@@ -242,40 +242,40 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       Dataset.BASE_QUERY + """
-          WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-            AND d.active = TRUE
-            AND d.dac_approval = TRUE
-      """)
+              WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+                AND d.active = TRUE
+                AND d.dac_approval = TRUE
+          """)
   List<Dataset> findPublicDatasets();
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       Dataset.BASE_QUERY + """
-          WHERE
-            (
-              (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-              AND d.active = TRUE
-              AND d.dac_approval = TRUE
-            )
-            OR d.dac_id IN (<dacIds>)
-      """)
+              WHERE
+                (
+                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+                  AND d.active = TRUE
+                  AND d.dac_approval = TRUE
+                )
+                OR d.dac_id IN (<dacIds>)
+          """)
   List<Dataset> findDatasetsForChairperson(@BindList("dacIds") List<Integer> dacIds);
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       Dataset.BASE_QUERY + """
-          WHERE
-            (
-              (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-              AND d.active = TRUE
-              AND d.dac_approval = TRUE
-            )
-            OR
-            (
-              s.create_user_id = :userId
-              OR (sp.key = 'dataCustodianEmail' AND sp.value LIKE concat('%"', :email, '"%'))
-            )
-      """)
+              WHERE
+                (
+                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+                  AND d.active = TRUE
+                  AND d.dac_approval = TRUE
+                )
+                OR
+                (
+                  s.create_user_id = :userId
+                  OR (sp.key = 'dataCustodianEmail' AND sp.value LIKE concat('%"', :email, '"%'))
+                )
+          """)
   List<Dataset> findDatasetsForDataSubmitter(@Bind("userId") Integer userId,
       @Bind("email") String email);
 
@@ -458,10 +458,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT DISTINCT dp.property_value
           FROM dataset_property dp
-          INNER JOIN dataset d ON dp.dataset_id = d.dataset_id AND d.active = true
+          INNER JOIN dataset d ON dp.dataset_id = d.dataset_id
           WHERE (dp.schema_property = 'studyName')
       """)
-  Set<String> findAllActiveStudyNames();
+  Set<String> findAllStudyNames();
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
