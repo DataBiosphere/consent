@@ -58,6 +58,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
         try {
           DatasetProperty prop = new DatasetProperty();
+          if (hasColumn(rowView, "property_id", Integer.class)) {
+            prop.setPropertyId(rowView.getColumn("property_id", Integer.class));
+          }
           prop.setDataSetId(dataset.getDataSetId());
           prop.setPropertyValue(propType.coerce(propVal));
           prop.setPropertyName(keyName);
