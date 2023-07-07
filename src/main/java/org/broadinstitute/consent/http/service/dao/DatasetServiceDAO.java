@@ -333,20 +333,18 @@ public class DatasetServiceDAO implements ConsentLogger {
           .stream()
           .filter(ep -> ep.getPropertyName().equals(prop.getPropertyName()))
           .toList();
-      if (!matchingProps.isEmpty()) {
-        if (matchingProps.size() > 1) {
-          logWarn(
-              String.format("Multiple properties exist for the same name [%s] for dataset id [%s]",
-                  prop.getPropertyName(), datasetId)
-          );
-        }
-        matchingProps.forEach(existingProp -> {
-          updates.add(
-              createPropertyUpdate(handle, datasetId, prop.getPropertyValueAsString(),
-                  existingProp.getPropertyKey(), existingProp.getPropertyId()));
-
-        });
+      if (matchingProps.size() > 1) {
+        logWarn(
+            String.format("Multiple properties exist for the same name [%s] for dataset id [%s]",
+                prop.getPropertyName(), datasetId)
+        );
       }
+      matchingProps.forEach(existingProp -> {
+        updates.add(
+            createPropertyUpdate(handle, datasetId, prop.getPropertyValueAsString(),
+                existingProp.getPropertyKey(), existingProp.getPropertyId()));
+
+      });
     });
     return updates;
   }
