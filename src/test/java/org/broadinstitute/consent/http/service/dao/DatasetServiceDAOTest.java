@@ -406,7 +406,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     prop4.setPropertyName(RandomStringUtils.randomAlphabetic(10));
     prop4.setPropertyType(PropertyType.String);
     prop4.setPropertyKey(4);
-    prop4.setPropertyValue("new prop3 value");
+    prop4.setPropertyValue("new prop4 value");
     prop4.setDataSetId(dataset.getDataSetId());
     prop4.setCreateDate(new Date());
 
