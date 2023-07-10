@@ -604,6 +604,28 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @POST
+  @Path("/index")
+  @RolesAllowed(ADMIN)
+  public Response indexDatasets() {
+    try {
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/index/{datasetId}")
+  @RolesAllowed(ADMIN)
+  public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
+    try {
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
   @Path("/search")
   @Produces("application/json")
