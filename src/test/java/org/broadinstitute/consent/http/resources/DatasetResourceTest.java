@@ -36,7 +36,6 @@ import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -58,6 +57,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -76,6 +76,9 @@ public class DatasetResourceTest {
   private DatasetService datasetService;
   @Mock
   private DatasetRegistrationService datasetRegistrationService;
+
+  @Mock
+  private ElasticSearchService elasticSearchService;
 
   @Mock
   private UserService userService;
@@ -109,7 +112,7 @@ public class DatasetResourceTest {
 
   private void initResource() {
     resource = new DatasetResource(datasetService, userService, darService,
-        datasetRegistrationService);
+        datasetRegistrationService, elasticSearchService);
   }
 
   private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -1390,8 +1393,8 @@ public class DatasetResourceTest {
   }
 
   /*
-  * Study mock
-  */
+   * Study mock
+   */
   private Study createMockStudy() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
