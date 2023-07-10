@@ -253,6 +253,9 @@ required:
       Required fields include the `consentGroupName` and any one of 
       `generalResearchUse`, `hmb`, or `diseaseSpecificUse`.
     properties:
+      datasetId:
+        type: number
+        description: Dataset Id corresponding to this Consent Group. Required only for updates.
       consentGroupName:
         type: string
         description: Consent Group Name
