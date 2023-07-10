@@ -12,6 +12,9 @@ updates:
       - dependency
     commit-message:
       prefix: "[DUOS-1740-dependabot]"
+    groups:
+      maven-dependencies:
+        patterns: "*"
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -24,3 +27,6 @@ updates:
       - dependency
     commit-message:
       prefix: "[DUOS-1740-dependabot]"
+    groups:
+      docker-dependencies:
+        patterns: "*"
