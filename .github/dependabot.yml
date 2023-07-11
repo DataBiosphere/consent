@@ -14,7 +14,8 @@ updates:
       prefix: "[DUOS-1740-dependabot]"
     groups:
       maven-dependencies:
-        patterns: "*"
+        patterns:
+          - "*"
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -29,4 +30,5 @@ updates:
       prefix: "[DUOS-1740-dependabot]"
     groups:
       docker-dependencies:
-        patterns: "*"
+        patterns:
+          - "*"
