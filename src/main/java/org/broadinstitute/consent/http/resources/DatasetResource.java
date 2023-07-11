@@ -617,8 +617,9 @@ public class DatasetResource extends Resource {
           .map(elasticService::toDatasetTerm)
           .collect(
               Collectors.toList());
-      elasticService.indexDatasets(datasetTerms);
-      return Response.ok().build();
+      var response = elasticService.indexDatasets(datasetTerms);
+      var status = response.getStatusLine().getStatusCode();
+      return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -631,8 +632,9 @@ public class DatasetResource extends Resource {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
       var datasetTerm = elasticService.toDatasetTerm(dataset);
-      elasticService.indexDatasets(List.of(datasetTerm));
-      return Response.ok().build();
+      var response = elasticService.indexDatasets(List.of(datasetTerm));
+      var status = response.getStatusLine().getStatusCode();
+      return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

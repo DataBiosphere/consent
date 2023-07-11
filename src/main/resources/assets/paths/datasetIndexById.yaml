@@ -9,6 +9,7 @@ post:
       schema:
         type: integer
   tags:
+    - Admin
     - Dataset
   responses:
     200:

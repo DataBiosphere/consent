@@ -2,6 +2,7 @@ post:
   summary: Index all datasets
   description: Index all datasets in the system
   tags:
+    - Admin
     - Dataset
   responses:
     200:
