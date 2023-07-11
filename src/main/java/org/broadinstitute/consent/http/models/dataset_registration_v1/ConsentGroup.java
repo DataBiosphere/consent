@@ -14,6 +14,7 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "datasetId",
     "consentGroupName",
     "openAccess",
     "generalResearchUse",
@@ -38,6 +39,12 @@ import java.util.Map;
 })
 public class ConsentGroup {
 
+  /**
+   * Dataset Id
+   */
+  @JsonProperty("datasetId")
+  @JsonPropertyDescription("Dataset Id")
+  private Integer datasetId;
   /**
    * Consent Group Name
    */
@@ -170,6 +177,20 @@ public class ConsentGroup {
   @JsonProperty("fileTypes")
   @JsonPropertyDescription("List of File Types")
   private List<FileTypeObject> fileTypes = new ArrayList<FileTypeObject>();
+
+  /**
+   * Dataset Id
+   */
+  public Integer getDatasetId() {
+    return datasetId;
+  }
+
+  /**
+   * Dataset Id
+   */
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
+  }
 
   /**
    * Consent Group Name
@@ -520,6 +541,10 @@ public class ConsentGroup {
     StringBuilder sb = new StringBuilder();
     sb.append(ConsentGroup.class.getName()).append('@')
         .append(Integer.toHexString(System.identityHashCode(this))).append('[');
+    sb.append("datasetId");
+    sb.append('=');
+    sb.append(((this.datasetId == null) ? "<null>" : this.datasetId));
+    sb.append(',');
     sb.append("consentGroupName");
     sb.append('=');
     sb.append(((this.consentGroupName == null) ? "<null>" : this.consentGroupName));
@@ -635,6 +660,7 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.fileTypes == null) ? 0 : this.fileTypes.hashCode()));
     result = ((result * 31) + ((this.diseaseSpecificUse == null) ? 0
         : this.diseaseSpecificUse.hashCode()));
+    result = ((result * 31) + ((this.datasetId == null) ? 0 : this.datasetId.hashCode()));
     result = ((result * 31) + ((this.consentGroupName == null) ? 0
         : this.consentGroupName.hashCode()));
     result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
@@ -675,8 +701,10 @@ public class ConsentGroup {
         (this.fileTypes == rhs.fileTypes) || ((this.fileTypes != null) && this.fileTypes.equals(
             rhs.fileTypes)))) && ((this.diseaseSpecificUse == rhs.diseaseSpecificUse) || (
         (this.diseaseSpecificUse != null) && this.diseaseSpecificUse.equals(
-            rhs.diseaseSpecificUse)))) && ((this.consentGroupName == rhs.consentGroupName) || (
-        (this.consentGroupName != null) && this.consentGroupName.equals(rhs.consentGroupName))))
+            rhs.diseaseSpecificUse)))) && ((this.datasetId == rhs.datasetId) || (
+        (this.datasetId != null) && this.datasetId.equals(rhs.datasetId))) && (
+        (this.consentGroupName == rhs.consentGroupName) || (
+            (this.consentGroupName != null) && this.consentGroupName.equals(rhs.consentGroupName))))
         && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && (
         (this.npu == rhs.npu) || ((this.npu != null) && this.npu.equals(rhs.npu)))) && (
         (this.dataLocation == rhs.dataLocation) || ((this.dataLocation != null)
