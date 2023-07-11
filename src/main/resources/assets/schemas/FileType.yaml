@@ -1,0 +1,17 @@
+type: object
+properties:
+  fileType:
+    type: string
+    description: File Type
+    enum:
+      - Arrays
+      - Genome
+      - Exome
+      - Survey
+      - Phenotype
+  functionalEquivalence:
+    type: string
+    description: Functional Equivalence
+required:
+  - fileType
+  - functionalEquivalence
