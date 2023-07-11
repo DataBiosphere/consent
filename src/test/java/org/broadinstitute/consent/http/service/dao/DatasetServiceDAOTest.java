@@ -1,21 +1,25 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -23,6 +27,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -349,6 +354,102 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         s.getAlternativeDataSharingPlan().getFileName());
     assertEquals(file.getCategory(),
         s.getAlternativeDataSharingPlan().getCategory());
+  }
+
+  @Test
+  public void testUpdateDatasetWithProps() throws Exception {
+    Dataset dataset = createDataset();
+
+    // Set up two existing props for updating
+    DatasetProperty prop1 = new DatasetProperty();
+    prop1.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+    prop1.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+    prop1.setPropertyType(PropertyType.Number);
+    prop1.setPropertyKey(1);
+    prop1.setPropertyValue(new Random().nextInt());
+    prop1.setDataSetId(dataset.getDataSetId());
+    prop1.setCreateDate(new Date());
+
+    DatasetProperty prop2 = new DatasetProperty();
+    prop2.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+    prop2.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+    prop2.setPropertyType(PropertyType.Date);
+    prop2.setPropertyKey(2);
+    prop2.setPropertyValue("2000-10-20");
+    prop2.setDataSetId(dataset.getDataSetId());
+    prop2.setCreateDate(new Date());
+
+    // Prop for deletion
+    DatasetProperty prop3 = new DatasetProperty();
+    prop3.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+    prop3.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+    prop3.setPropertyType(PropertyType.String);
+    prop3.setPropertyKey(3);
+    prop3.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    prop3.setDataSetId(dataset.getDataSetId());
+    prop3.setCreateDate(new Date());
+
+    datasetDAO.insertDatasetProperties(List.of(prop1, prop2, prop3));
+
+    // Updates to existing props
+    DatasetProperty updateProp1 = new DatasetProperty();
+    updateProp1.setPropertyValue("new prop1 value");
+    updateProp1.setPropertyName(prop1.getPropertyName());
+
+    DatasetProperty updateProp2 = new DatasetProperty();
+    updateProp2.setPropertyValue("new prop2 value");
+    updateProp2.setPropertyName(prop2.getPropertyName());
+
+    // New prop to add as part of the update
+    DatasetProperty prop4 = new DatasetProperty();
+    prop4.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+    prop4.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+    prop4.setPropertyType(PropertyType.String);
+    prop4.setPropertyKey(4);
+    prop4.setPropertyValue("new prop4 value");
+    prop4.setDataSetId(dataset.getDataSetId());
+    prop4.setCreateDate(new Date());
+
+    String newName = "New Name";
+    DatasetUpdate updates = new DatasetUpdate(
+        dataset.getDataSetId(),
+        newName,
+        dataset.getCreateUserId(),
+        true,
+        true,
+        dataset.getDacId(),
+        List.of(updateProp1, updateProp2, prop4),
+        List.of()
+    );
+    serviceDAO.updateDataset(updates);
+
+    // Validate that the dataset props have been updated, deleted, or added:
+    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId());
+    Optional<DatasetProperty> updated1 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst();
+    Optional<DatasetProperty> updated2 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst();
+    Optional<DatasetProperty> deleted3 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop3.getPropertyName())).findFirst();
+    Optional<DatasetProperty> added4 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop4.getPropertyName())).findFirst();
+    assertTrue(updated1.isPresent());
+    assertEquals(updateProp1.getPropertyValueAsString(), updated1.get().getPropertyValueAsString());
+    assertTrue(updated2.isPresent());
+    assertEquals(updateProp2.getPropertyValueAsString(), updated2.get().getPropertyValueAsString());
+    assertFalse(deleted3.isPresent());
+    assertTrue(added4.isPresent());
+    assertEquals(prop4.getPropertyValueAsString(), added4.get().getPropertyValueAsString());
+
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertEquals(newName, updatedDataset.getDatasetName());
+  }
+
+  private Dataset createDataset() {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    return datasetDAO.findDatasetById(id);
   }
 
   private Dac createDac() {

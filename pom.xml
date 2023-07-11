@@ -13,7 +13,7 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.22.0</liquibase.version>
+    <liquibase.version>4.23.0</liquibase.version>
     <dropwizard.version>4.0.0</dropwizard.version>
     <pact.version>4.6.1</pact.version>
     <postgres.version>42.6.0</postgres.version>
@@ -597,7 +597,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>32.0.1-jre</version>
+      <version>32.1.1-jre</version>
     </dependency>
 
     <dependency>
@@ -676,7 +676,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.8.1</version>
+      <version>8.8.2</version>
     </dependency>
 
     <dependency>

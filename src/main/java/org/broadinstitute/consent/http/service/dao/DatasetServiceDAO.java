@@ -20,11 +20,12 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
-public class DatasetServiceDAO {
+public class DatasetServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
   private final DatasetDAO datasetDAO;
@@ -75,6 +76,7 @@ public class DatasetServiceDAO {
                               Integer dacId,
                               List<DatasetProperty> props,
                               List<FileStorageObject> files) {
+
   }
 
   /**
@@ -372,19 +374,30 @@ public class DatasetServiceDAO {
   private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId,
       List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
     List<Update> updates = new ArrayList<>();
-    HashSet<String> existingPropNames = new HashSet<>(
-        existingProps.stream().map(DatasetProperty::getPropertyName).toList());
     // Generate value updates for props that exist
     properties.forEach(prop -> {
-      if (existingPropNames.contains(prop.getPropertyName())) {
-        prop.setDataSetId(datasetId);
-        updates.add(createPropertyUpdate(handle, prop));
+      List<DatasetProperty> matchingProps = existingProps
+          .stream()
+          .filter(ep -> ep.getPropertyName().equals(prop.getPropertyName()))
+          .toList();
+      if (matchingProps.size() > 1) {
+        logWarn(
+            String.format("Multiple properties exist for the same name [%s] for dataset id [%s]",
+                prop.getPropertyName(), datasetId)
+        );
       }
+      matchingProps.forEach(existingProp -> {
+        updates.add(
+            createPropertyUpdate(handle, datasetId, prop.getPropertyValueAsString(),
+                existingProp.getPropertyKey(), existingProp.getPropertyId()));
+
+      });
     });
     return updates;
   }
 
-  private Update createPropertyUpdate(Handle handle, DatasetProperty property) {
+  private Update createPropertyUpdate(Handle handle, Integer datasetId, String propValue,
+      Integer propKey, Integer propId) {
     final String sql = """
             UPDATE dataset_property
             SET property_value = :propertyStringValue
@@ -393,10 +406,10 @@ public class DatasetServiceDAO {
             AND property_id = :propertyId
         """;
     Update insert = handle.createUpdate(sql);
-    insert.bind("datasetId", property.getDataSetId());
-    insert.bind("propertyStringValue", property.getPropertyValueAsString());
-    insert.bind("propertyKey", property.getPropertyKey());
-    insert.bind("propertyId", property.getPropertyId());
+    insert.bind("datasetId", datasetId);
+    insert.bind("propertyStringValue", propValue);
+    insert.bind("propertyKey", propKey);
+    insert.bind("propertyId", propId);
     return insert;
   }
 
