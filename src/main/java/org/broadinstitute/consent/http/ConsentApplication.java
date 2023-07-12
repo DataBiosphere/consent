@@ -226,7 +226,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
             userService, datasetService, matchService));
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
-        datasetRegistrationService));
+        datasetRegistrationService, elasticSearchService));
     env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
     env.jersey()
         .register(new ConsentResource(auditService, userService, consentService, matchService));

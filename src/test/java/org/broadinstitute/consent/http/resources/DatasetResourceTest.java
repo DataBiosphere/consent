@@ -35,8 +35,10 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.http.HttpVersion;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicStatusLine;
 import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -55,9 +57,11 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -76,6 +80,9 @@ public class DatasetResourceTest {
   private DatasetService datasetService;
   @Mock
   private DatasetRegistrationService datasetRegistrationService;
+
+  @Mock
+  private ElasticSearchService elasticService;
 
   @Mock
   private UserService userService;
@@ -109,7 +116,7 @@ public class DatasetResourceTest {
 
   private void initResource() {
     resource = new DatasetResource(datasetService, userService, darService,
-        datasetRegistrationService);
+        datasetRegistrationService, elasticService);
   }
 
   private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -695,6 +702,44 @@ public class DatasetResourceTest {
     initResource();
     Response response = resource.datasetAutocomplete(authUser, "test");
     assertEquals(500, response.getStatus());
+  }
+
+  @Test
+  public void testIndexAllDatasets() throws IOException {
+    List<Dataset> datasets = List.of(new Dataset());
+    DatasetTerm datasetTerm = new DatasetTerm();
+    org.elasticsearch.client.Response elasticResponse = mock(
+        org.elasticsearch.client.Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+
+    when(datasetService.findAllDatasets()).thenReturn(datasets);
+    when(elasticService.toDatasetTerm(any())).thenReturn(datasetTerm);
+    when(elasticService.indexDatasets(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+
+    initResource();
+    Response response = resource.indexDatasets();
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testIndexDataset() throws IOException {
+    Dataset dataset = new Dataset();
+    DatasetTerm datasetTerm = new DatasetTerm();
+    org.elasticsearch.client.Response elasticResponse = mock(
+        org.elasticsearch.client.Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(elasticService.toDatasetTerm(dataset)).thenReturn(datasetTerm);
+    when(elasticService.indexDatasets(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+
+    initResource();
+    Response response = resource.indexDataset(1);
+    assertEquals(200, response.getStatus());
   }
 
   @Test
@@ -1390,8 +1435,8 @@ public class DatasetResourceTest {
   }
 
   /*
-  * Study mock
-  */
+   * Study mock
+   */
   private Study createMockStudy() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
