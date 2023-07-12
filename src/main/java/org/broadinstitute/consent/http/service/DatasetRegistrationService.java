@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -34,6 +35,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
@@ -41,7 +43,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
  * Specialized service class which specifically handles the process of registering a new dataset
  * into the system, i.e. creates new datasets.
  */
-public class DatasetRegistrationService {
+public class DatasetRegistrationService implements ConsentLogger {
 
   private final DatasetDAO datasetDAO;
   private final DacDAO dacDAO;
@@ -83,30 +85,69 @@ public class DatasetRegistrationService {
       throws IllegalArgumentException, IOException {
 
     /*
-     * 1. Update study info
-     * 2. Update existing dataset info
-     * 3. Add new datasets
-     * 4. Delete??? missing datasets
-     * 5. Return updated study.
+     * 1. Update study info √
+     * 2. Update existing dataset info √
+     * 3. Add new datasets √
+     * 4. Delete??? missing datasets ... not doing
+     * 5. Return updated study. √
      */
 
     List<StudyProperty> studyProps = convertRegistrationToStudyProperties(registration);
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
     List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
-    // TODO: Populate
     List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
-    // TODO: Populate
     List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+    // Populate dataset updates and inserts:
+    IntStream.range(0, registration.getConsentGroups().size())
+        .forEach(idx -> {
+          ConsentGroup cg = registration.getConsentGroups().get(idx);
+          if (Objects.nonNull(cg.getDatasetId())) {
+            Dataset existingDataset = datasetDAO.findDatasetById(cg.getDatasetId());
+            try {
+              DatasetUpdate datasetUpdate = new DatasetUpdate(
+                  cg.getConsentGroupName(),
+                  existingDataset.getNeedsApproval(),
+                  existingDataset.getActive(),
+                  existingDataset.getDacId(),
+                  convertConsentGroupToDatasetProperties(cg)
+              );
+              DatasetServiceDAO.DatasetUpdate update = createDatasetUpdate(
+                  cg.getDatasetId(),
+                  user,
+                  datasetUpdate,
+                  files,
+                  uploadedFileCache
+              );
+              datasetUpdates.add(update);
+            } catch (Exception e) {
+              logException(e);
+            }
+          } else {
+            try {
+              DatasetServiceDAO.DatasetInsert insert = createDatasetInsert(
+                  registration,
+                  user,
+                  files,
+                  uploadedFileCache,
+                  idx
+              );
+              datasetInserts.add(insert);
+            } catch (Exception e) {
+              logException(e);
+            }
+          }
+        });
+
     DatasetServiceDAO.StudyUpdate studyUpdate = new StudyUpdate(
-      registration.getStudyName(),
-      studyId,
-      registration.getStudyDescription(),
-      registration.getDataTypes(),
-      registration.getPiName(),
-      registration.getPublicVisibility(),
-      user.getUserId(),
-      studyProps,
-      uploadFiles
+        registration.getStudyName(),
+        studyId,
+        registration.getStudyDescription(),
+        registration.getDataTypes(),
+        registration.getPiName(),
+        registration.getPublicVisibility(),
+        user.getUserId(),
+        studyProps,
+        uploadFiles
     );
 
     return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
