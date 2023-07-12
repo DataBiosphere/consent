@@ -1,0 +1,16 @@
+post:
+  summary: Index dataset by id
+  description: Index a specific dataset in the system
+  parameters:
+    - name: datasetId
+      in: path
+      description: id of the dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Admin
+    - Dataset
+  responses:
+    200:
+      description: The dataset has been indexed

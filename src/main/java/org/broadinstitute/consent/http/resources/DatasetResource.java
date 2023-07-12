@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -71,6 +72,7 @@ public class DatasetResource extends Resource {
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
   private final DataAccessRequestService darService;
+  private final ElasticSearchService elasticService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
@@ -92,11 +94,13 @@ public class DatasetResource extends Resource {
 
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
-      DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService) {
+      DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
+      ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.darService = darService;
     this.datasetRegistrationService = datasetRegistrationService;
+    this.elasticService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
     resetDataSetSampleFileName();
     resetDataSetSampleContent();
@@ -642,6 +646,38 @@ public class DatasetResource extends Resource {
       Integer userId = user.getUserId();
       List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, userId);
       return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/index")
+  @RolesAllowed(ADMIN)
+  public Response indexDatasets() {
+    try {
+      var datasetTerms = datasetService.findAllDatasets().stream()
+          .map(elasticService::toDatasetTerm)
+          .collect(
+              Collectors.toList());
+      var response = elasticService.indexDatasets(datasetTerms);
+      var status = response.getStatusLine().getStatusCode();
+      return Response.status(status).entity(response.getEntity()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/index/{datasetId}")
+  @RolesAllowed(ADMIN)
+  public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
+    try {
+      var dataset = datasetService.findDatasetById(datasetId);
+      var datasetTerm = elasticService.toDatasetTerm(dataset);
+      var response = elasticService.indexDatasets(List.of(datasetTerm));
+      var status = response.getStatusLine().getStatusCode();
+      return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
