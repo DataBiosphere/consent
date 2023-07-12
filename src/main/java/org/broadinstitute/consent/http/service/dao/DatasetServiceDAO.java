@@ -29,11 +29,13 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
   private final DatasetDAO datasetDAO;
+  private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO) {
+  public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO, StudyDAO studyDAO) {
     this.jdbi = jdbi;
     this.datasetDAO = datasetDAO;
+    this.studyDAO = studyDAO;
   }
 
   public record StudyInsert(String name,
@@ -188,7 +190,39 @@ public class DatasetServiceDAO implements ConsentLogger {
     return studyId;
   }
 
-  private Integer executeUpdateStudy(Handle handle, StudyUpdate update) {
+  public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates, List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
+    jdbi.useHandle(
+        handle -> {
+          executeUpdateStudy(handle, studyUpdate);
+          for (DatasetUpdate datasetUpdate : datasetUpdates) {
+            executeUpdateDatasetWithFiles(
+                handle,
+                datasetUpdate.datasetId,
+                datasetUpdate.name,
+                studyUpdate.userId,
+                datasetUpdate.needsApproval,
+                datasetUpdate.active,
+                datasetUpdate.dacId,
+                datasetUpdate.props,
+                studyUpdate.files);
+          }
+          for (DatasetServiceDAO.DatasetInsert insert : datasetInserts) {
+            executeInsertDatasetWithFiles(
+                handle,
+                insert.name,
+                insert.dacId,
+                studyUpdate.studyId,
+                insert.dataUse,
+                studyUpdate.userId,
+                insert.props,
+                studyUpdate.files
+            );
+          }
+        });
+    return studyDAO.findStudyById(studyUpdate.studyId);
+  }
+
+  private void executeUpdateStudy(Handle handle, StudyUpdate update) {
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     Study study = studyDAO.findStudyById(update.studyId);
     Integer studyId = studyDAO.updateStudy(
@@ -218,8 +252,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         update.files,
         update.userId,
         study.getUuid().toString());
-
-    return studyId;
   }
 
   private void executeInsertFiles(Handle handle, List<FileStorageObject> files, Integer userId,

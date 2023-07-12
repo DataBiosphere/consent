@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
@@ -72,15 +73,43 @@ public class DatasetRegistrationService {
    * @param registration The DatasetRegistrationSchemaV1.yaml
    * @param user         The User updating the study
    * @param files        Map of files, where the key is the name of the field
-   * @return List of created Datasets from the provided registration schema
+   * @return The updated Study
    */
   public Study updateDatasetsFromRegistration(
       Integer studyId,
       DatasetRegistrationSchemaV1 registration,
       User user,
       Map<String, FormDataBodyPart> files)
-      throws SQLException, IllegalArgumentException, IOException {
-    return null;
+      throws IllegalArgumentException, IOException {
+
+    /*
+     * 1. Update study info
+     * 2. Update existing dataset info
+     * 3. Add new datasets
+     * 4. Delete??? missing datasets
+     * 5. Return updated study.
+     */
+
+    List<StudyProperty> studyProps = convertRegistrationToStudyProperties(registration);
+    Map<String, BlobId> uploadedFileCache = new HashMap<>();
+    List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
+    // TODO: Populate
+    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
+    // TODO: Populate
+    List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+    DatasetServiceDAO.StudyUpdate studyUpdate = new StudyUpdate(
+      registration.getStudyName(),
+      studyId,
+      registration.getStudyDescription(),
+      registration.getDataTypes(),
+      registration.getPiName(),
+      registration.getPublicVisibility(),
+      user.getUserId(),
+      studyProps,
+      uploadFiles
+    );
+
+    return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
   }
 
   /**

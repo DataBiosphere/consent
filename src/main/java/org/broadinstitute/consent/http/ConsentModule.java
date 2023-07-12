@@ -281,7 +281,8 @@ public class ConsentModule extends AbstractModule {
   DatasetServiceDAO providesDatasetServiceDAO() {
     return new DatasetServiceDAO(
         jdbi,
-        providesDatasetDAO());
+        providesDatasetDAO(),
+        providesStudyDAO());
   }
 
   @Provides
