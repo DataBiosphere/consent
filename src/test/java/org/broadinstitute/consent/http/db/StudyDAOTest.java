@@ -210,8 +210,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated()
-      throws InterruptedException {
+  public void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated() {
     Study study = insertStudyWithProperties();
 
     String fileName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
@@ -292,6 +291,34 @@ public class StudyDAOTest extends DAOTestHelper {
     assertEquals(2, s.getDatasetIds().size());
     assertTrue(s.getDatasetIds().contains(ds1.getDataSetId()));
     assertTrue(s.getDatasetIds().contains(ds2.getDataSetId()));
+  }
+
+  @Test
+  public void testUpdateStudy() {
+    User user = createUser();
+    Study study = insertStudyWithProperties();
+    String newName = "New Name";
+    String newDescription = "New Description";
+    String newPiName = "New PI Name";
+    List<String> newDataTypes = List.of("DT1", "DT2");
+    studyDAO.updateStudy(
+      study.getStudyId(),
+      newName,
+      newDescription,
+      newPiName,
+      newDataTypes,
+      true,
+      user.getUserId(),
+      Instant.now());
+
+    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNotNull(updatedStudy);
+    assertEquals(newName, updatedStudy.getName());
+    assertEquals(newDescription, updatedStudy.getDescription());
+    assertEquals(newPiName, updatedStudy.getPiName());
+    assertEquals(newDataTypes, updatedStudy.getDataTypes());
+    assertTrue(updatedStudy.getPublicVisibility());
+    assertEquals(user.getUserId(), updatedStudy.getUpdateUserId());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

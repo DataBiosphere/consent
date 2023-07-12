@@ -79,7 +79,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
               update_date = :updateDate
           WHERE study_id = :studyId
       """)
-  Integer updateStudy(@Bind("studyId") Integer studyId,
+  void updateStudy(@Bind("studyId") Integer studyId,
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("piName") String piName,

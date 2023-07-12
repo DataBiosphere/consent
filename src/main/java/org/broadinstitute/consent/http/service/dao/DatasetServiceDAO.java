@@ -225,7 +225,7 @@ public class DatasetServiceDAO implements ConsentLogger {
   private void executeUpdateStudy(Handle handle, StudyUpdate update) {
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     Study study = studyDAO.findStudyById(update.studyId);
-    Integer studyId = studyDAO.updateStudy(
+    studyDAO.updateStudy(
         update.studyId,
         update.name,
         update.description,
@@ -239,7 +239,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     // TODO: Fix this for insert/update/delete
     for (StudyProperty prop : update.props) {
       studyDAO.insertStudyProperty(
-          studyId,
+          update.studyId,
           prop.getKey(),
           prop.getType().toString(),
           prop.getValue().toString()
