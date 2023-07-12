@@ -10,8 +10,10 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -19,6 +21,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
@@ -302,14 +305,14 @@ public class StudyDAOTest extends DAOTestHelper {
     String newPiName = "New PI Name";
     List<String> newDataTypes = List.of("DT1", "DT2");
     studyDAO.updateStudy(
-      study.getStudyId(),
-      newName,
-      newDescription,
-      newPiName,
-      newDataTypes,
-      true,
-      user.getUserId(),
-      Instant.now());
+        study.getStudyId(),
+        newName,
+        newDescription,
+        newPiName,
+        newDataTypes,
+        true,
+        user.getUserId(),
+        Instant.now());
 
     Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNotNull(updatedStudy);
@@ -319,6 +322,35 @@ public class StudyDAOTest extends DAOTestHelper {
     assertEquals(newDataTypes, updatedStudy.getDataTypes());
     assertTrue(updatedStudy.getPublicVisibility());
     assertEquals(user.getUserId(), updatedStudy.getUpdateUserId());
+  }
+
+  @Test
+  public void testUpdateStudyProperty() {
+    Study study = insertStudyWithProperties();
+    String newPropStringVal = RandomStringUtils.randomAlphabetic(15);
+    Integer newPropNumberVal = RandomUtils.nextInt(100, 1000);
+    study.getProperties().forEach(p -> {
+      if (p.getType().equals(PropertyType.String)) {
+        studyDAO.updateStudyProperty(
+            study.getStudyId(),
+            p.getKey(),
+            p.getType().toString(),
+            newPropStringVal);
+      }
+      if (p.getType().equals(PropertyType.Number)) {
+        studyDAO.updateStudyProperty(
+            study.getStudyId(),
+            p.getKey(),
+            p.getType().toString(),
+            newPropNumberVal.toString());
+      }
+    });
+
+    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
+    Optional<StudyProperty> stringProp = updatedStudy.getProperties().stream().filter(p -> p.getValue().equals(newPropStringVal)).findFirst();
+    Optional<StudyProperty> numberProp = updatedStudy.getProperties().stream().filter(p -> p.getValue().equals(newPropNumberVal)).findFirst();
+    assertTrue(stringProp.isPresent());
+    assertTrue(numberProp.isPresent());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

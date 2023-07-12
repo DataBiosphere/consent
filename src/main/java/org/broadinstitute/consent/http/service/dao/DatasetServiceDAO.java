@@ -218,6 +218,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                 studyUpdate.files
             );
           }
+          handle.commit();
         });
     return studyDAO.findStudyById(studyUpdate.studyId);
   }

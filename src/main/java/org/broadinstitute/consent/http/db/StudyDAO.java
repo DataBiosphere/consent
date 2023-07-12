@@ -104,4 +104,18 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("type") String type,
       @Bind("value") String value
   );
+
+  @SqlUpdate("""
+          UPDATE study_property
+          SET value = :value
+          WHERE study_id = :studyId
+          AND key = :key
+          AND type = :type
+      """)
+  void updateStudyProperty(
+      @Bind("studyId") Integer studyId,
+      @Bind("key") String key,
+      @Bind("type") String type,
+      @Bind("value") String value
+  );
 }
