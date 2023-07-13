@@ -47,7 +47,7 @@ public class ElasticSearchService implements ConsentLogger {
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
-  public Response indexDatasets(List<DatasetTerm> datasets) throws IOException {
+  public Response indexDatasetTerms(List<DatasetTerm> datasets) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
     datasets.forEach((dsTerm) -> {
@@ -103,6 +103,15 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     return term;
+  }
+
+  public Response indexDataset(Dataset dataset) throws IOException {
+    return indexDatasetTerms(List.of(toDatasetTerm(dataset)));
+  }
+
+  public Response indexDatasets(List<Dataset> datasets) throws IOException {
+    List<DatasetTerm> datasetTerms = datasets.stream().map(this::toDatasetTerm).toList();
+    return indexDatasetTerms(datasetTerms);
   }
 
   public DatasetTerm toDatasetTerm(Dataset dataset) {

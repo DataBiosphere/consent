@@ -613,11 +613,8 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDatasets() {
     try {
-      var datasetTerms = datasetService.findAllDatasets().stream()
-          .map(elasticService::toDatasetTerm)
-          .collect(
-              Collectors.toList());
-      var response = elasticService.indexDatasets(datasetTerms);
+      var datasets = datasetService.findAllDatasets();
+      var response = elasticService.indexDatasets(datasets);
       var status = response.getStatusLine().getStatusCode();
       return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
@@ -631,8 +628,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
-      var datasetTerm = elasticService.toDatasetTerm(dataset);
-      var response = elasticService.indexDatasets(List.of(datasetTerm));
+      var response = elasticService.indexDataset(dataset);
       var status = response.getStatusLine().getStatusCode();
       return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
