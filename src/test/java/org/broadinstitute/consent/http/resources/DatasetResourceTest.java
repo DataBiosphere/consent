@@ -81,7 +81,7 @@ public class DatasetResourceTest {
   private DatasetRegistrationService datasetRegistrationService;
 
   @Mock
-  private ElasticSearchService elasticService;
+  private ElasticSearchService elasticSearchService;
 
   @Mock
   private UserService userService;
@@ -115,7 +115,7 @@ public class DatasetResourceTest {
 
   private void initResource() {
     resource = new DatasetResource(datasetService, userService, darService,
-        datasetRegistrationService, elasticService);
+        datasetRegistrationService, elasticSearchService);
   }
 
   private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -711,7 +711,7 @@ public class DatasetResourceTest {
     BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
     when(datasetService.findAllDatasets()).thenReturn(datasets);
-    when(elasticService.indexDatasets(datasets)).thenReturn(elasticResponse);
+    when(elasticSearchService.indexDatasets(datasets)).thenReturn(elasticResponse);
     when(elasticResponse.getStatusLine()).thenReturn(status);
     when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
 
@@ -728,7 +728,7 @@ public class DatasetResourceTest {
     BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticService.indexDataset(dataset)).thenReturn(elasticResponse);
+    when(elasticSearchService.indexDataset(dataset)).thenReturn(elasticResponse);
     when(elasticResponse.getStatusLine()).thenReturn(status);
     when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
 

@@ -44,16 +44,16 @@ public class DatasetRegistrationService {
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
-  private final ElasticSearchService elasticService;
+  private final ElasticSearchService elasticSearchService;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
       DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
-      ElasticSearchService elasticService) {
+      ElasticSearchService elasticSearchService) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
-    this.elasticService = elasticService;
+    this.elasticSearchService = elasticSearchService;
   }
 
 
@@ -99,7 +99,7 @@ public class DatasetRegistrationService {
             datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
-    elasticService.indexDatasets(datasets);
+    elasticSearchService.indexDatasets(datasets);
     return datasets;
   }
 
@@ -171,7 +171,7 @@ public class DatasetRegistrationService {
     }
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
-    elasticService.indexDataset(updatedDataset);
+    elasticSearchService.indexDataset(updatedDataset);
     return updatedDataset;
   }
 

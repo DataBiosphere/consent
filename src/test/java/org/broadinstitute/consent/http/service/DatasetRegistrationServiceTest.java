@@ -69,7 +69,7 @@ public class DatasetRegistrationServiceTest {
   private GCSService gcsService;
 
   @Mock
-  private ElasticSearchService elasticService;
+  private ElasticSearchService elasticSearchService;
 
   @BeforeEach
   public void setUp() {
@@ -78,7 +78,7 @@ public class DatasetRegistrationServiceTest {
 
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
-        datasetServiceDAO, gcsService, elasticService);
+        datasetServiceDAO, gcsService, elasticSearchService);
   }
 
 
