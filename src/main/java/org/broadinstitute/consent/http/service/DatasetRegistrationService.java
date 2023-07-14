@@ -44,13 +44,16 @@ public class DatasetRegistrationService {
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
+  private final ElasticSearchService elasticSearchService;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
-      DatasetServiceDAO datasetServiceDAO, GCSService gcsService) {
+      DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
+      ElasticSearchService elasticSearchService) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
+    this.elasticSearchService = elasticSearchService;
   }
 
 
@@ -94,7 +97,10 @@ public class DatasetRegistrationService {
         datasetServiceDAO.insertDatasetRegistration(
             studyInsert,
             datasetInserts);
-    return datasetDAO.findDatasetsByIdList(createdDatasetIds);
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
+    elasticSearchService.indexDatasets(datasets);
+    return datasets;
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
@@ -163,7 +169,10 @@ public class DatasetRegistrationService {
       uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
       throw e;
     }
-    return datasetDAO.findDatasetById(datasetId);
+
+    Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
+    elasticSearchService.indexDataset(updatedDataset);
+    return updatedDataset;
   }
 
   /*

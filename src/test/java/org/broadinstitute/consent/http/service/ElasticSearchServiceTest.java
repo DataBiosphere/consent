@@ -185,7 +185,7 @@ public class ElasticSearchServiceTest {
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
 
     initService();
-    service.indexDatasets(List.of(term1, term2));
+    service.indexDatasetTerms(List.of(term1, term2));
 
     verify(esClient).performRequest(request.capture());
 

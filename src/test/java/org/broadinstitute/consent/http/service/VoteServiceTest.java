@@ -71,6 +71,8 @@ public class VoteServiceTest {
   @Mock
   private EmailService emailService;
   @Mock
+  private ElasticSearchService elasticSearchService;
+  @Mock
   private UseRestrictionConverter useRestrictionConverter;
   @Mock
   private VoteDAO voteDAO;
@@ -91,8 +93,8 @@ public class VoteServiceTest {
 
   private void initService() {
     service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO,
-        datasetAssociationDAO, datasetDAO, electionDAO, emailService, useRestrictionConverter,
-        voteDAO, voteServiceDAO);
+        datasetAssociationDAO, datasetDAO, electionDAO, emailService, elasticSearchService,
+        useRestrictionConverter, voteDAO, voteServiceDAO);
   }
 
   @Test
