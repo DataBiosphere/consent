@@ -118,4 +118,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("type") String type,
       @Bind("value") String value
   );
+
+  @SqlUpdate("""
+          DELETE FROM study_property WHERE study_property_id = :studyPropertyId
+      """)
+  void deleteStudyPropertyById(@Bind("studyPropertyId") Integer studyPropertyId);
+
 }

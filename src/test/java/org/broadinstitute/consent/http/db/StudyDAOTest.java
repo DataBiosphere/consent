@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -351,6 +352,19 @@ public class StudyDAOTest extends DAOTestHelper {
     Optional<StudyProperty> numberProp = updatedStudy.getProperties().stream().filter(p -> p.getValue().equals(newPropNumberVal)).findFirst();
     assertTrue(stringProp.isPresent());
     assertTrue(numberProp.isPresent());
+  }
+
+  @Test
+  public void testDeleteStudyProperty() {
+    Study study = insertStudyWithProperties();
+    assertNotNull(study.getProperties());
+    assertFalse(study.getProperties().isEmpty());
+
+    study.getProperties().forEach(p -> {
+      studyDAO.deleteStudyPropertyById(p.getStudyPropertyId());
+    });
+    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(updatedStudy.getProperties());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

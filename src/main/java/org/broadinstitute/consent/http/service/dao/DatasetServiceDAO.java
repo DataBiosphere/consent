@@ -9,11 +9,13 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -190,7 +192,8 @@ public class DatasetServiceDAO implements ConsentLogger {
     return studyId;
   }
 
-  public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates, List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
+  public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates,
+      List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
     jdbi.useHandle(
         handle -> {
           executeUpdateStudy(handle, studyUpdate);
@@ -237,15 +240,35 @@ public class DatasetServiceDAO implements ConsentLogger {
         Instant.now()
     );
 
-    // TODO: Fix this for insert/update/delete
-    for (StudyProperty prop : update.props) {
-      studyDAO.insertStudyProperty(
-          update.studyId,
-          prop.getKey(),
-          prop.getType().toString(),
-          prop.getValue().toString()
-      );
-    }
+    // Handle property inserts and updates
+    Set<StudyProperty> existingStudyProperties = studyDAO.findStudyById(update.studyId)
+        .getProperties();
+    update.props.forEach(p -> {
+      Optional<StudyProperty> existingProp = existingStudyProperties.stream().filter(ep ->
+          p.getKey().equals(ep.getKey()) &&
+              p.getType().equals(ep.getType())).findFirst();
+      if (existingProp.isPresent()) {
+        // Update existing study prop:
+        studyDAO.updateStudyProperty(update.studyId, p.getKey(), p.getType().toString(),
+            p.getValue().toString());
+      } else {
+        // Add new study prop:
+        studyDAO.insertStudyProperty(
+            update.studyId,
+            p.getKey(),
+            p.getType().toString(),
+            p.getValue().toString()
+        );
+      }
+    });
+    // Handle property deletes
+    List<PropertyType> modifiedPropTypes = update.props.stream().map(StudyProperty::getType)
+        .toList();
+    existingStudyProperties.forEach(ep -> {
+      if (!modifiedPropTypes.contains(ep.getType())) {
+        studyDAO.deleteStudyPropertyById(ep.getStudyPropertyId());
+      }
+    });
 
     // TODO: Validate/fix this for insert/update/delete
     executeInsertFiles(
