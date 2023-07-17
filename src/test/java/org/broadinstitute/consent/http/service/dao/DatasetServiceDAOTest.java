@@ -7,13 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
+import com.google.gson.Gson;
+import jakarta.validation.constraints.AssertTrue;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -27,7 +31,10 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -439,6 +446,166 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
     assertEquals(newName, updatedDataset.getDatasetName());
+  }
+
+  @Test
+  public void testUpdateStudyDetails() throws Exception {
+    Study study = createStudy();
+
+    String newStudyName = "New Study Name";
+    String newStudyDescription = "New Study Description";
+    String newPIName = "New PI Name";
+    List<String> newDataTypes = List.of("DT 1", "DT 2", "DT 3");
+    StudyUpdate studyUpdate = new StudyUpdate(
+        newStudyName,
+        study.getStudyId(),
+        newStudyDescription,
+        newDataTypes,
+        newPIName,
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    assertEquals(newStudyName, updatedStudy.getName());
+    assertEquals(newStudyDescription, updatedStudy.getDescription());
+    assertEquals(newPIName, updatedStudy.getPiName());
+    assertEquals(newDataTypes, updatedStudy.getDataTypes());
+  }
+
+  @Test
+  public void testUpdateStudyWithPropUpdates() throws Exception {
+    Study study = createStudy();
+    List<StudyProperty> props = List.copyOf(study.getProperties());
+
+    StudyProperty newProp = new StudyProperty();
+    newProp.setKey(RandomStringUtils.randomAlphabetic(10));
+    newProp.setType(PropertyType.String);
+    newProp.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    String newPropValue = "New Study Prop Value";
+    StudyProperty prop1 = props.get(0);
+    StudyProperty prop2 = props.get(1);
+    prop1.setValue(newPropValue);
+
+    // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.of(newProp, prop1),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    // Updated prop
+    Optional<StudyProperty> updatedProp1 = updatedStudy.getProperties().stream().filter(p -> p.getStudyPropertyId().equals(prop1.getStudyPropertyId())).findFirst();
+    assertTrue(updatedProp1.isPresent());
+    assertEquals(newPropValue, updatedProp1.get().getValue());
+    // Added prop
+    Optional<StudyProperty> addedNewProp = updatedStudy.getProperties().stream().filter(p -> newProp.getValue().equals(p.getValue())).findFirst();
+    assertTrue(addedNewProp.isPresent());
+    // Deleted Prop
+    assertFalse(updatedStudy.getProperties().contains(prop2));
+  }
+
+  @Test
+  public void testUpdateStudyWithDatasetUpdates() throws Exception {
+    Study study = createStudy();
+    Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).get(0);
+
+
+    // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of()
+    );
+
+    String newDatasetName = "New Dataset Name";
+    DatasetUpdate datasetUpdate = new DatasetUpdate(
+        dataset.getDataSetId(),
+        newDatasetName,
+        study.getCreateUserId(),
+        true,
+        !dataset.getActive(),
+        dataset.getDacId(),
+        List.copyOf(dataset.getProperties()),
+        List.of()
+    );
+
+    String newInsertName = "New Dataset Insert Name";
+    DatasetInsert datasetInsert = new DatasetInsert(
+        newInsertName,
+        dataset.getDacId(),
+        new DataUseBuilder().setGeneralUse(true).build(),
+        study.getCreateUserId(),
+        List.of(),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of(datasetInsert));
+    List<Dataset> updatedDatasets = datasetDAO.findDatasetsByIdList(new ArrayList<>(updatedStudy.getDatasetIds()));
+    assertTrue(updatedDatasets.contains(dataset));
+    assertEquals(updatedStudy.getDatasetIds().size(), updatedDatasets.size());
+    assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newDatasetName)));
+    assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newInsertName)));
+  }
+
+
+  /**
+   * Helper method to create a study with two props and one dataset
+   * @return Study
+   * @throws Exception The exception
+   */
+  private Study createStudy() throws Exception {
+    Dac dac = createDac();
+    User user = createUser();
+
+    StudyProperty prop1 = new StudyProperty();
+    prop1.setKey(RandomStringUtils.randomAlphabetic(10));
+    prop1.setType(PropertyType.String);
+    prop1.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    StudyProperty prop2 = new StudyProperty();
+    prop2.setKey(RandomStringUtils.randomAlphabetic(10));
+    prop2.setType(PropertyType.String);
+    prop2.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        List.of(RandomStringUtils.randomAlphabetic(10)),
+        RandomStringUtils.randomAlphabetic(10),
+        true,
+        user.getUserId(),
+        List.of(prop1, prop2),
+        List.of());
+
+    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
+        RandomStringUtils.randomAlphabetic(20),
+        dac.getDacId(),
+        new DataUseBuilder().setGeneralUse(true).build(),
+        user.getUserId(),
+        List.of(),
+        List.of());
+
+    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
+        List.of(datasetInsert));
+    List<Dataset> createdDatasets = datasetDAO.findDatasetsByIdList(createdIds);
+    return createdDatasets.get(0).getStudy();
   }
 
   private Dataset createDataset() {

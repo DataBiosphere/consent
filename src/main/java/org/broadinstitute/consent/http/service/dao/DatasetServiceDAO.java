@@ -193,10 +193,11 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates,
-      List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
+      List<DatasetServiceDAO.DatasetInsert> datasetInserts) throws SQLException {
     jdbi.useHandle(
-        handle -> {
-          executeUpdateStudy(handle, studyUpdate);
+    handle -> {
+      handle.getConnection().setAutoCommit(false);
+      executeUpdateStudy(handle, studyUpdate);
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
                 handle,
@@ -262,10 +263,10 @@ public class DatasetServiceDAO implements ConsentLogger {
       }
     });
     // Handle property deletes
-    List<PropertyType> modifiedPropTypes = update.props.stream().map(StudyProperty::getType)
+    List<String> modifiedPropertyKeys = update.props.stream().map(StudyProperty::getKey).distinct()
         .toList();
     existingStudyProperties.forEach(ep -> {
-      if (!modifiedPropTypes.contains(ep.getType())) {
+      if (!modifiedPropertyKeys.contains(ep.getKey())) {
         studyDAO.deleteStudyPropertyById(ep.getStudyPropertyId());
       }
     });

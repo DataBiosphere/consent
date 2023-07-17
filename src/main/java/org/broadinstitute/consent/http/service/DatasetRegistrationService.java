@@ -82,7 +82,7 @@ public class DatasetRegistrationService implements ConsentLogger {
       DatasetRegistrationSchemaV1 registration,
       User user,
       Map<String, FormDataBodyPart> files)
-      throws IllegalArgumentException, IOException {
+      throws Exception {
 
     /*
      * 1. Update study info √
