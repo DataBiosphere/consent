@@ -1390,7 +1390,6 @@ public class DatasetResourceTest {
           },
           "dacId": 5,
           "consentId": "eac1d4f9-78c9-4c88-9b10-9d692e171b5b",
-          "translatedUseRestriction": "",
           "deletable": false,
           "properties": [
             {

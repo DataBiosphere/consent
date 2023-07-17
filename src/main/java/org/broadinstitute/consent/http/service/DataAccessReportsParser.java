@@ -149,9 +149,8 @@ public class DataAccessReportsParser implements ConsentLogger {
       String sDUL =
           StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n",
               " ") : "";
-      String translatedRestriction =
-          StringUtils.isNotEmpty(dar.getData().getTranslatedUseRestriction()) ? dar.getData()
-              .getTranslatedUseRestriction().replace("<br>", " ") : "";
+      // TODO: See if we can get this from the dataset instead
+      String translatedRestriction = "";
       darWriter.write(
           darCode + DEFAULT_SEPARATOR +
               StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +

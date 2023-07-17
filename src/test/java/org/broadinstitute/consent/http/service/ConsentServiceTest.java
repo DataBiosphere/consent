@@ -36,16 +36,13 @@ public class ConsentServiceTest {
   @Mock
   ElectionDAO electionDAO;
 
-  @Mock
-  UseRestrictionConverter useRestrictionConverter;
-
   @BeforeEach
   public void setUp() {
     openMocks(this);
   }
 
   private void initService() {
-    service = new ConsentService(consentDAO, electionDAO, useRestrictionConverter);
+    service = new ConsentService(consentDAO, electionDAO);
   }
 
   @Test
@@ -58,7 +55,7 @@ public class ConsentServiceTest {
     when(consentDAO.checkConsentById("test consent"))
         .thenReturn("test consent");
     doNothing().when(consentDAO)
-        .insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        .insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any());
     when(consentDAO.findConsentById(any()))
         .thenReturn(testConsent);
     initService();
@@ -84,7 +81,7 @@ public class ConsentServiceTest {
             testConsent.getDataUse().toString(),
             testConsent.getDataUseLetter(), testConsent.getName(), testConsent.getDulName(),
             testConsent.getLastUpdate(),
-            testConsent.getSortDate(), testConsent.getTranslatedUseRestriction(),
+            testConsent.getSortDate(),
             testConsent.getGroupName(), true);
     when(consentDAO.checkConsentById("test consent"))
         .thenReturn("test consent");

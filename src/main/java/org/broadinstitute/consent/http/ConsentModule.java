@@ -248,8 +248,7 @@ public class ConsentModule extends AbstractModule {
   ConsentService providesConsentService() {
     return new ConsentService(
         providesConsentDAO(),
-        providesElectionDAO(),
-        providesUseRestrictionConverter());
+        providesElectionDAO());
   }
 
   @Provides

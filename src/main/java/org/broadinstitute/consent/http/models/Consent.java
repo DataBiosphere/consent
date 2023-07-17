@@ -42,9 +42,6 @@ public class Consent {
   public Timestamp sortDate;
 
   @JsonProperty
-  public String translatedUseRestriction;
-
-  @JsonProperty
   public DataUse dataUse;
 
   @JsonProperty
@@ -146,16 +143,6 @@ public class Consent {
   @JsonProperty
   public void setDulName(String dulName) {
     this.dulName = dulName;
-  }
-
-  @JsonProperty
-  public String getTranslatedUseRestriction() {
-    return translatedUseRestriction;
-  }
-
-  @JsonProperty
-  public void setTranslatedUseRestriction(String translatedUseRestriction) {
-    this.translatedUseRestriction = translatedUseRestriction;
   }
 
   @JsonProperty

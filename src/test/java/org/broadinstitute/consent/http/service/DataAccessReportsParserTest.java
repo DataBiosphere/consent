@@ -206,7 +206,6 @@ public class DataAccessReportsParserTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setDatasetIds(List.of(1));
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
     data.setNonTechRus(RUS_SUMMARY);
     dar.setData(data);
     dar.setSortDate(new Timestamp(currentDate.getTime()));

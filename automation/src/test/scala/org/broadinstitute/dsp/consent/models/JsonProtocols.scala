@@ -208,7 +208,6 @@ object JsonProtocols extends DefaultJsonProtocol {
                 partialDarCode = optionalEntryReader("partialDarCode", fields, _.convertTo[Option[String]], None),
                 restriction = optionalEntryReader("restriction", fields, _ => None, None),
                 validRestriction = optionalEntryReader("validRestriction", fields, _.convertTo[Option[Boolean]], None),
-                translatedUseRestriction = optionalEntryReader("translatedUseRestriction", fields, _.convertTo[Option[String]], None),
                 createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
                 sortDate = optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
                 datasetIds = optionalEntryReader("datasetIds", fields, _.convertTo[Option[Seq[Int]]], None),

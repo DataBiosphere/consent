@@ -91,7 +91,7 @@ public class ConsentSummaryDetail implements SummaryDetail {
     builder.append(TAB);
     builder.append(booleanToString(getElection().getArchived()));
     builder.append(TAB);
-    builder.append(delimiterCheck(getConsent().getTranslatedUseRestriction()));
+    builder.append("");
     builder.append(TAB);
     builder.append(formatLongToDate(getConsent().getCreateDate().getTime()));
     builder.append(TAB);

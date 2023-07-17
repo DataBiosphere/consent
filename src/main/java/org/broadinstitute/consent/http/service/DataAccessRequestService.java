@@ -365,7 +365,7 @@ public class DataAccessRequestService {
                 : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
             dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
                 collection.getDarCode(), profileName, institution, consent.getName(),
-                consent.getTranslatedUseRestriction());
+                "");
           }
         } catch (Exception e) {
           logger.error("Exception generating Approved DAR Document", e);
@@ -401,7 +401,7 @@ public class DataAccessRequestService {
               Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
           if (Objects.nonNull(consent)) {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), consent.getName(), consent.getTranslatedUseRestriction());
+                collection.getDarCode(), consent.getName(), "");
           } else {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
                 collection.getDarCode(), "", "");

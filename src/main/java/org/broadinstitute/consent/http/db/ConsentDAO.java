@@ -39,9 +39,9 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
   @SqlUpdate("""
       INSERT INTO consents
           (consent_id, requires_manual_review, data_use, data_use_letter, active, name, dul_name,
-          create_date, sort_date, translated_use_restriction, group_name)
+          create_date, sort_date, group_name)
       VALUES (:consentId, :requiresManualReview, :dataUse, :dataUseLetter, true, :name,
-          :dulName, :createDate, :sortDate , :translatedUseRestriction, :groupName)
+          :dulName, :createDate, :sortDate, :groupName)
       """)
   void insertConsent(@Bind("consentId") String consentId,
       @Bind("requiresManualReview") Boolean requiresManualReview,
@@ -51,7 +51,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
       @Bind("dulName") String dulName,
       @Bind("createDate") Date createDate,
       @Bind("sortDate") Date sortDate,
-      @Bind("translatedUseRestriction") String translatedUseRestriction,
       @Bind("groupName") String groupName);
 
   @SqlUpdate("DELETE FROM consents WHERE consent_id = :consentId")
@@ -66,7 +65,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
           dul_name = :dulName,
           last_update = :lastUpdate,
           sort_date = :sortDate,
-          translated_use_restriction = :translatedUseRestriction,
           group_name = :groupName,
           updated = :updated
       WHERE consent_id = :consentId
@@ -80,7 +78,6 @@ public interface ConsentDAO extends Transactional<ConsentDAO> {
       @Bind("dulName") String dulName,
       @Bind("lastUpdate") Date createDate,
       @Bind("sortDate") Date sortDate,
-      @Bind("translatedUseRestriction") String translatedUseRestriction,
       @Bind("groupName") String groupName,
       @Bind("updated") Boolean updateStatus);
 

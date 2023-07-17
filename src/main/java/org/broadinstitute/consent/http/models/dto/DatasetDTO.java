@@ -25,9 +25,6 @@ public class DatasetDTO {
   private String consentId;
 
   @JsonProperty
-  private String translatedUseRestriction;
-
-  @JsonProperty
   private Boolean deletable;
 
   @JsonProperty
@@ -95,14 +92,6 @@ public class DatasetDTO {
 
   public void setConsentId(String consentId) {
     this.consentId = consentId;
-  }
-
-  public String getTranslatedUseRestriction() {
-    return translatedUseRestriction;
-  }
-
-  public void setTranslatedUseRestriction(String translatedUseRestriction) {
-    this.translatedUseRestriction = translatedUseRestriction;
   }
 
   public Boolean getDeletable() {

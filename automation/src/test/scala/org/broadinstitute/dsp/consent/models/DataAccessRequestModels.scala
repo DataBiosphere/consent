@@ -97,7 +97,6 @@ object DataAccessRequestModels {
         partialDarCode: Option[String] = None,
         restriction: Option[Any] = None,
         validRestriction: Option[Boolean] = None,
-        translatedUseRestriction: Option[String] = None,
         createDate: Option[Long] = None,
         sortDate: Option[Long] = None,
         datasetIds: Option[Seq[Int]] = None,

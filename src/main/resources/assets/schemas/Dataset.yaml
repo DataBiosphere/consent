@@ -24,9 +24,9 @@ properties:
   consentId:
     type: string
     description: The consent id.
-  translatedUseRestriction:
+  translatedDataUse:
     type: string
-    description: The Use Restriction, readable type
+    description: The Data Use in a readable format
   deletable:
     type: boolean
     description: Describes if this DataSet can be deleted (This information is only given to the Admin).

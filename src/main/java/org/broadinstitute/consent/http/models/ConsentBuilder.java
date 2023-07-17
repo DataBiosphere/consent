@@ -57,11 +57,6 @@ public class ConsentBuilder {
     return this;
   }
 
-  public ConsentBuilder setTranslatedUseRestriction(String translatedUseRestriction) {
-    this.consent.setTranslatedUseRestriction(translatedUseRestriction);
-    return this;
-  }
-
   public ConsentBuilder setDataUse(DataUse dataUse) {
     this.consent.setDataUse(dataUse);
     return this;

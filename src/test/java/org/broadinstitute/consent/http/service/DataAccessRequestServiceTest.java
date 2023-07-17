@@ -46,7 +46,6 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -311,8 +310,6 @@ public class DataAccessRequestServiceTest {
     Consent consent = new Consent();
     consent.setConsentId("CONS-1");
     consent.setName("Consent 1");
-    consent.setTranslatedUseRestriction(
-        new DataUseBuilder().setGeneralUse(true).build().toString());
     when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
     initService();
 

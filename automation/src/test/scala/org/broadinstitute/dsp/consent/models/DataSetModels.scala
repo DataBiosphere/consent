@@ -12,7 +12,6 @@ object DataSetModels {
         dacId: Option[Int] = None,
         dataSetId: Int,
         consentId: String,
-        translatedUseRestriction: Option[String],
         deletable: Option[Boolean],
         properties: Seq[DataSetProperty],
         active: Boolean,
