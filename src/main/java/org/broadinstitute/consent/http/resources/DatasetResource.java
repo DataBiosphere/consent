@@ -72,7 +72,7 @@ public class DatasetResource extends Resource {
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
   private final DataAccessRequestService darService;
-  private final ElasticSearchService elasticService;
+  private final ElasticSearchService elasticSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
@@ -100,7 +100,7 @@ public class DatasetResource extends Resource {
     this.userService = userService;
     this.darService = darService;
     this.datasetRegistrationService = datasetRegistrationService;
-    this.elasticService = elasticSearchService;
+    this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
     resetDataSetSampleFileName();
     resetDataSetSampleContent();
@@ -656,11 +656,8 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDatasets() {
     try {
-      var datasetTerms = datasetService.findAllDatasets().stream()
-          .map(elasticService::toDatasetTerm)
-          .collect(
-              Collectors.toList());
-      var response = elasticService.indexDatasets(datasetTerms);
+      var datasets = datasetService.findAllDatasets();
+      var response = elasticSearchService.indexDatasets(datasets);
       var status = response.getStatusLine().getStatusCode();
       return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {
@@ -674,8 +671,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
-      var datasetTerm = elasticService.toDatasetTerm(dataset);
-      var response = elasticService.indexDatasets(List.of(datasetTerm));
+      var response = elasticSearchService.indexDataset(dataset);
       var status = response.getStatusLine().getStatusCode();
       return Response.status(status).entity(response.getEntity()).build();
     } catch (Exception e) {

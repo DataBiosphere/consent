@@ -49,14 +49,17 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
+  private final ElasticSearchService elasticSearchService;
   private final StudyDAO studyDAO;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
-      DatasetServiceDAO datasetServiceDAO, GCSService gcsService, StudyDAO studyDAO) {
+      DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
+      ElasticSearchService elasticSearchService, StudyDAO studyDAO) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
+    this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
   }
 
@@ -193,7 +196,10 @@ public class DatasetRegistrationService implements ConsentLogger {
         datasetServiceDAO.insertDatasetRegistration(
             studyInsert,
             datasetInserts);
-    return datasetDAO.findDatasetsByIdList(createdDatasetIds);
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
+    elasticSearchService.indexDatasets(datasets);
+    return datasets;
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
@@ -262,7 +268,10 @@ public class DatasetRegistrationService implements ConsentLogger {
       uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
       throw e;
     }
-    return datasetDAO.findDatasetById(datasetId);
+
+    Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
+    elasticSearchService.indexDataset(updatedDataset);
+    return updatedDataset;
   }
 
   /*

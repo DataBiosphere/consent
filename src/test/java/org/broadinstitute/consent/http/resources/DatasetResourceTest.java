@@ -57,7 +57,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -82,7 +81,7 @@ public class DatasetResourceTest {
   private DatasetRegistrationService datasetRegistrationService;
 
   @Mock
-  private ElasticSearchService elasticService;
+  private ElasticSearchService elasticSearchService;
 
   @Mock
   private UserService userService;
@@ -116,7 +115,7 @@ public class DatasetResourceTest {
 
   private void initResource() {
     resource = new DatasetResource(datasetService, userService, darService,
-        datasetRegistrationService, elasticService);
+        datasetRegistrationService, elasticSearchService);
   }
 
   private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
@@ -707,14 +706,12 @@ public class DatasetResourceTest {
   @Test
   public void testIndexAllDatasets() throws IOException {
     List<Dataset> datasets = List.of(new Dataset());
-    DatasetTerm datasetTerm = new DatasetTerm();
     org.elasticsearch.client.Response elasticResponse = mock(
         org.elasticsearch.client.Response.class);
     BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
     when(datasetService.findAllDatasets()).thenReturn(datasets);
-    when(elasticService.toDatasetTerm(any())).thenReturn(datasetTerm);
-    when(elasticService.indexDatasets(any())).thenReturn(elasticResponse);
+    when(elasticSearchService.indexDatasets(datasets)).thenReturn(elasticResponse);
     when(elasticResponse.getStatusLine()).thenReturn(status);
     when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
 
@@ -726,14 +723,12 @@ public class DatasetResourceTest {
   @Test
   public void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
-    DatasetTerm datasetTerm = new DatasetTerm();
     org.elasticsearch.client.Response elasticResponse = mock(
         org.elasticsearch.client.Response.class);
     BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticService.toDatasetTerm(dataset)).thenReturn(datasetTerm);
-    when(elasticService.indexDatasets(any())).thenReturn(elasticResponse);
+    when(elasticSearchService.indexDataset(dataset)).thenReturn(elasticResponse);
     when(elasticResponse.getStatusLine()).thenReturn(status);
     when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
 
