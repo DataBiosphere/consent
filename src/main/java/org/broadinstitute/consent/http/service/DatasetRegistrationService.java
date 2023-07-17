@@ -86,21 +86,11 @@ public class DatasetRegistrationService implements ConsentLogger {
       User user,
       Map<String, FormDataBodyPart> files)
       throws Exception {
-
-    /*
-     * 1. Update study info √
-     * 2. Update existing dataset info √
-     * 3. Add new datasets √
-     * 4. Delete??? missing datasets ... not doing
-     * 5. Return updated study. √
-     */
-
-    List<StudyProperty> studyProps = convertRegistrationToStudyProperties(registration);
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
     List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
     List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
     List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
-    // Populate dataset updates and inserts:
+    // Dataset updates and inserts:
     IntStream.range(0, registration.getConsentGroups().size())
         .forEach(idx -> {
           ConsentGroup cg = registration.getConsentGroups().get(idx);
@@ -141,6 +131,7 @@ public class DatasetRegistrationService implements ConsentLogger {
           }
         });
 
+    List<StudyProperty> studyProps = convertRegistrationToStudyProperties(registration);
     DatasetServiceDAO.StudyUpdate studyUpdate = new StudyUpdate(
         registration.getStudyName(),
         studyId,
