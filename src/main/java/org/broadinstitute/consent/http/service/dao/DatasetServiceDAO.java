@@ -15,7 +15,6 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
-import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -271,7 +270,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       }
     });
 
-    // TODO: Validate/fix this for insert/update/delete
     executeInsertFiles(
         handle,
         update.files,

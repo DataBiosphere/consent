@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
-import jakarta.validation.constraints.AssertTrue;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,7 +16,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -450,7 +448,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateStudyDetails() throws Exception {
-    Study study = createStudy();
+    Study study = createStudy(null);
 
     String newStudyName = "New Study Name";
     String newStudyDescription = "New Study Description";
@@ -477,7 +475,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateStudyWithPropUpdates() throws Exception {
-    Study study = createStudy();
+    Study study = createStudy(null);
     List<StudyProperty> props = List.copyOf(study.getProperties());
 
     StudyProperty newProp = new StudyProperty();
@@ -517,11 +515,9 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
   @Test
   public void testUpdateStudyWithDatasetUpdates() throws Exception {
-    Study study = createStudy();
+    Study study = createStudy(null);
     Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).get(0);
 
-
-    // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
     StudyUpdate studyUpdate = new StudyUpdate(
         study.getName(),
         study.getStudyId(),
@@ -564,13 +560,66 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newInsertName)));
   }
 
+  @Test
+  public void testUpdateStudyWithFileUpdates() throws Exception {
+    FileStorageObject fso1 = new FileStorageObject();
+    fso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    fso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject fso2 = new FileStorageObject();
+    fso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    fso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+    Study study = createStudy(List.of(fso1, fso2));
+
+    FileStorageObject updatedFso1 = new FileStorageObject();
+    updatedFso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    updatedFso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    updatedFso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    updatedFso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject updatedFso2 = new FileStorageObject();
+    updatedFso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    updatedFso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    updatedFso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    updatedFso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of(updatedFso1, updatedFso2)
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    assertNotNull(updatedStudy.getAlternativeDataSharingPlan());
+    assertEquals(updatedFso1.getFileName(), updatedStudy.getAlternativeDataSharingPlan().getFileName());
+    assertTrue(updatedStudy.getDatasetIds().stream().findFirst().isPresent());
+    Dataset dataset = datasetDAO.findDatasetById(updatedStudy.getDatasetIds().stream().findFirst().get());
+    assertNotNull(dataset.getNihInstitutionalCertificationFile());
+    assertEquals(updatedFso2.getFileName(), dataset.getNihInstitutionalCertificationFile().getFileName());
+  }
+
 
   /**
    * Helper method to create a study with two props and one dataset
+   * @param fso Optional FSO to use as part of the study insert
    * @return Study
    * @throws Exception The exception
    */
-  private Study createStudy() throws Exception {
+  private Study createStudy(List<FileStorageObject> fso) throws Exception {
     Dac dac = createDac();
     User user = createUser();
 
@@ -592,7 +641,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         true,
         user.getUserId(),
         List.of(prop1, prop2),
-        List.of());
+        Objects.isNull(fso) ? List.of() : fso);
 
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
         RandomStringUtils.randomAlphabetic(20),
