@@ -71,7 +71,6 @@ public class DatasetResource extends Resource {
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
-  private final DataAccessRequestService darService;
   private final ElasticSearchService elasticSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
@@ -94,11 +93,10 @@ public class DatasetResource extends Resource {
 
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
-      DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
+      DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
-    this.darService = darService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
@@ -727,21 +725,21 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
-  @PermitAll
-  @Path("/{datasetId}/approved/users")
-  public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser,
-      @PathParam("datasetId") Integer datasetId) {
-    try {
-      String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
-      return Response.ok(content)
-          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
-          .build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
+//  @GET
+//  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+//  @PermitAll
+//  @Path("/{datasetId}/approved/users")
+//  public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser,
+//      @PathParam("datasetId") Integer datasetId) {
+//    try {
+//      String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
+//      return Response.ok(content)
+//          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
+//          .build();
+//    } catch (Exception e) {
+//      return createExceptionResponse(e);
+//    }
+//  }
 
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {

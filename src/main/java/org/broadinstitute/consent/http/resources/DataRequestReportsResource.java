@@ -23,21 +23,6 @@ public class DataRequestReportsResource extends Resource {
   @GET
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @PermitAll
-  @Path("/approved")
-  public Response downloadApprovedDARs() {
-    try {
-      return Response.ok(darService.createApprovedDARDocument())
-          .header(HttpHeaders.CONTENT_DISPOSITION,
-              "attachment; filename=" + "ApprovedDataAccessRequests.tsv")
-          .build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
-  @PermitAll
   @Path("/reviewed")
   public Response downloadReviewedDARs() {
     try {

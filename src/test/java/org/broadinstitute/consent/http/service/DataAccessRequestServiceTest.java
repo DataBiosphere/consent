@@ -1,10 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -18,7 +16,6 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
@@ -39,16 +36,13 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -257,37 +251,6 @@ public class DataAccessRequestServiceTest {
   }
 
   @Test
-  public void testCreateApprovedDARDocument() {
-    Election election = generateElection(1);
-    when(electionDAO.findDataAccessClosedElectionsByFinalResult(any()))
-        .thenReturn(Collections.singletonList(election));
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    DarCollection collection = new DarCollection();
-    Map<String, DataAccessRequest> dars = new HashMap<>();
-    dars.put(election.getReferenceId(), dar);
-    collection.setDars(dars);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
-    when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
-        .thenReturn("CONS-1");
-
-    Consent consent = new Consent();
-    consent.setConsentId("CONS-1");
-    when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
-    when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
-    initService();
-    try {
-      File file = service.createApprovedDARDocument();
-      assertNotNull(file);
-    } catch (IOException ioe) {
-      assert false;
-    }
-  }
-
-  @Test
   public void testCreateReviewedDARDocument() {
     Election election = generateElection(1);
     election.setFinalVote(true);
@@ -318,74 +281,6 @@ public class DataAccessRequestServiceTest {
 
       assertNotNull(file);
     } catch (Exception e) {
-      assert false;
-    }
-  }
-
-  @Test
-  public void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    User user = new User();
-    user.setUserId(1);
-    user.setDisplayName("displayName");
-    user.setInstitutionId(1);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
-    when(dataAccessRequestDAO.findAllDataAccessRequests())
-        .thenReturn(Collections.singletonList(dar));
-    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
-        .thenReturn(dar);
-    when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
-        .thenReturn(new DarCollection());
-    when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
-        .thenReturn(new Date());
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-
-    initService();
-
-    try {
-      String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
-      System.out.println(approvedUsers);
-      assertNotNull(approvedUsers);
-      assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
-    } catch (Exception ioe) {
-      assert false;
-    }
-  }
-
-  @Test
-  public void testCreateDatasetApprovedUsersContentAsPrivilegedUser() {
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    User user = new User();
-    UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(userRole);
-    user.setUserId(1);
-    user.setDisplayName("displayName");
-    user.setInstitutionId(1);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
-    when(dataAccessRequestDAO.findAllDataAccessRequests())
-        .thenReturn(Collections.singletonList(dar));
-    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
-        .thenReturn(dar);
-    when(darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId()))
-        .thenReturn(new DarCollection());
-    when(electionDAO.findApprovalAccessElectionDate(dar.getReferenceId()))
-        .thenReturn(new Date());
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-
-    initService();
-
-    try {
-      String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
-      System.out.println(approvedUsers);
-      assertNotNull(approvedUsers);
-      assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
-    } catch (Exception ioe) {
       assert false;
     }
   }
