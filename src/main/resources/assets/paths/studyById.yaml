@@ -23,8 +23,8 @@ get:
     500:
       description: Server error
 put:
-  summary: Update Study by Id
-  description: Updates Study and Properties of the Study specified by Id.
+  summary: Update Dataset Registration By Study Id
+  description: Updates Dataset Registration specified by Study Id.
   tags:
     - Dataset
     - Study
@@ -37,10 +37,10 @@ put:
         type: integer
   requestBody:
     description: |
-      Dataset registration schema instance and optional file for
-      an alternative data sharing plan. The registration schema is 
-      always required. If a file is also provided, then alternative 
-      data sharing information is required in the registration schema.
+      Dataset registration schema instance and optional files for an alternative data sharing plan 
+      and institutional certification files. The registration schema is always required. If a file 
+      is also provided, then alternative data sharing information is required in the registration 
+      schema.
     content:
       multipart/form-data:
         schema:
@@ -60,7 +60,7 @@ put:
               format: binary
   responses:
     200:
-      description: The Study with properties
+      description: The Updated Study with properties
       content:
         application/json:
           schema:
