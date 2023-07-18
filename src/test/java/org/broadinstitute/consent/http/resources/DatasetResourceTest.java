@@ -39,6 +39,7 @@ import org.apache.http.HttpVersion;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.broadinstitute.consent.http.authentication.GenericUser;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -56,6 +57,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -69,6 +71,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class DatasetResourceTest {
+
+  @Mock
+  private DataAccessRequestService darService;
 
   @Mock
   private DatasetService datasetService;
@@ -101,13 +106,15 @@ public class DatasetResourceTest {
 
   private DatasetResource resource;
 
+  private StudyDAO studyDAO;
+
   @BeforeEach
   public void setUp() {
     openMocks(this);
   }
 
   private void initResource() {
-    resource = new DatasetResource(datasetService, userService,
+    resource = new DatasetResource(datasetService, userService, darService,
         datasetRegistrationService, elasticSearchService);
   }
 
@@ -960,6 +967,23 @@ public class DatasetResourceTest {
     initResource();
     Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+  }
+
+  @Test
+  public void testDownloadDatasetApprovedUsersSuccess() {
+    List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
+    initResource();
+    Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
+    assertEquals(200, response.getStatus());
+    assertEquals(header, response.getHeaders().get("Content-Disposition"));
+  }
+
+  @Test
+  public void testDownloadDatasetApprovedUsersError() {
+    doThrow(new RuntimeException()).when(darService).getDatasetApprovedUsersContent(any(), any());
+    initResource();
+    Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
+    assertEquals(500, response.getStatus());
   }
 
   @Test

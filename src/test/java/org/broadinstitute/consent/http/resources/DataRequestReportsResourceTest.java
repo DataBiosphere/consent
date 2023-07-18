@@ -24,7 +24,20 @@ public class DataRequestReportsResourceTest {
   }
 
   @Test
-  public void testDownloadReviewedDARsSuccess() {
+  public void testDownloadApprovedDARsSuccess() throws Exception {
+    Response response = resource.downloadApprovedDARs();
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testDownloadApprovedDARsError() throws Exception {
+    doThrow(new RuntimeException()).when(darService).createApprovedDARDocument();
+    Response response = resource.downloadApprovedDARs();
+    assertEquals(500, response.getStatus());
+  }
+
+  @Test
+  public void testDownloadReviewedDARsSuccess() throws Exception {
     Response response = resource.downloadReviewedDARs();
     assertEquals(200, response.getStatus());
   }
