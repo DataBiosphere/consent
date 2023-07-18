@@ -602,7 +602,6 @@ public class VoteDAOTest extends DAOTestHelper {
         "dulName",
         new Date(),
         new Date(),
-        "Everything",
         "Group");
     return consentDAO.findConsentById(consentId);
   }
