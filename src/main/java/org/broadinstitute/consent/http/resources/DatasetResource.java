@@ -31,6 +31,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +51,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -218,7 +220,7 @@ public class DatasetResource extends Resource {
       @PathParam("studyId") Integer studyId,
       @FormDataParam("dataset") String json) {
     try {
-      datasetRegistrationService.findStudyById(studyId);
+      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
       Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
       if (!errors.isEmpty()) {
         throw new BadRequestException(
@@ -232,6 +234,19 @@ public class DatasetResource extends Resource {
 
       // key: field name (not file name), value: file body part
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+
+      // Validate that we're not trying to delete any datasets in the registration payload.
+      // The list of non-null dataset ids in the consent groups MUST be the same as the list of
+      // existing dataset ids.
+      HashSet<Integer> existingDatasetIds = new HashSet<>(existingStudy.getDatasetIds());
+      HashSet<Integer> consentGroupDatasetIds = new HashSet<>(registration.getConsentGroups()
+          .stream()
+          .map(ConsentGroup::getDatasetId)
+          .filter(Objects::nonNull)
+          .toList());
+      if (!consentGroupDatasetIds.containsAll(existingDatasetIds)) {
+        throw new BadRequestException("Invalid Consent Groups");
+      }
 
       // Update study from registration
       Study updatedStudy = datasetRegistrationService.updateDatasetsFromRegistration(
