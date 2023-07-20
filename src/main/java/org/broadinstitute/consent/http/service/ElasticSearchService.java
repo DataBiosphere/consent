@@ -66,6 +66,13 @@ public class ElasticSearchService implements ConsentLogger {
     return esClient.performRequest(bulkRequest);
   }
 
+  public Response deleteIndex(Integer datasetId) throws IOException {
+    Request deleteRequest = new Request(
+        HttpMethod.DELETE,
+        "/" + esConfig.getDatasetIndexName() + "/_doc/" + datasetId);
+    return esClient.performRequest(deleteRequest);
+  }
+
   public StudyTerm toStudyTerm(Study study) {
     if (Objects.isNull(study)) {
       return null;
