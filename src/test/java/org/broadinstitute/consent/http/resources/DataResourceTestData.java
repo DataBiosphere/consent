@@ -68,4 +68,29 @@ public class DataResourceTestData {
         ]
       }
       """;
+
+  public static final String registrationWithExistingCG = """
+      {
+        "studyType": "Observational",
+        "studyDescription": "description",
+        "dataTypes": ["types"],
+        "phenotypeIndication": "",
+        "species": "species",
+        "piName": "PI Name",
+        "consentGroups": [
+          {
+            "datasetId": 1,
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence"
+            }],
+            "numberOfParticipants": 2,
+            "consentGroupName": "name 1",
+            "dataAccessCommitteeId": 1,
+            "url": "https://asdf.com"
+          }
+        ]
+      }
+      """;
+
 }

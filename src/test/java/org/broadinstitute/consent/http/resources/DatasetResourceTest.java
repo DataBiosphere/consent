@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -1330,10 +1331,19 @@ public class DatasetResourceTest {
     DataResourceTestData.registrationWithMalformedJson,
     DataResourceTestData.registrationWithStudyName,
     DataResourceTestData.registrationWithDataSubmitterUserId,
-    DataResourceTestData.registrationWithExistingCGDataUse
+    DataResourceTestData.registrationWithExistingCGDataUse,
+    DataResourceTestData.registrationWithExistingCG
   })
   public void testUpdateStudyByRegistrationInvalid(String input) {
     Study study = createMockStudy();
+    // for DataResourceTestData.registrationWithExistingCG, manipulate the dataset ids to simulate
+    // a dataset deletion
+    if (input.equals(DataResourceTestData.registrationWithExistingCG)) {
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+      List<Integer> datasetIds = schemaV1.getConsentGroups().stream().map(ConsentGroup::getDatasetId).toList();
+      study.setDatasetIds(Set.of(datasetIds.get(0) + 1));
+    }
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
     initResource();

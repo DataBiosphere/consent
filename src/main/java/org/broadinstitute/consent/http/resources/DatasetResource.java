@@ -245,7 +245,7 @@ public class DatasetResource extends Resource {
               Objects.nonNull(cg.getOpenAccess()) ||
                   Objects.nonNull(cg.getGeneralResearchUse()) ||
                   Objects.nonNull(cg.getHmb()) ||
-                  Objects.nonNull(cg.getDiseaseSpecificUse()) ||
+                  (Objects.nonNull(cg.getDiseaseSpecificUse()) && cg.getDiseaseSpecificUse().size() > 0) ||
                   Objects.nonNull(cg.getPoa()) ||
                   Objects.nonNull(cg.getOtherPrimary()) ||
                   Objects.nonNull(cg.getNmds()) ||
@@ -273,7 +273,7 @@ public class DatasetResource extends Resource {
           .filter(Objects::nonNull)
           .toList());
       if (!consentGroupDatasetIds.containsAll(existingDatasetIds)) {
-        throw new BadRequestException("Invalid Consent Groups");
+        throw new BadRequestException("Invalid removal of Consent Groups");
       }
 
       // Update study from registration
