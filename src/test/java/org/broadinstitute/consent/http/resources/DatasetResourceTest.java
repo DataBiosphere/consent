@@ -31,8 +31,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpVersion;
@@ -1328,11 +1330,11 @@ public class DatasetResourceTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
-    DataResourceTestData.registrationWithMalformedJson,
-    DataResourceTestData.registrationWithStudyName,
-    DataResourceTestData.registrationWithDataSubmitterUserId,
-    DataResourceTestData.registrationWithExistingCGDataUse,
-    DataResourceTestData.registrationWithExistingCG
+      DataResourceTestData.registrationWithMalformedJson,
+      DataResourceTestData.registrationWithStudyName,
+      DataResourceTestData.registrationWithDataSubmitterUserId,
+      DataResourceTestData.registrationWithExistingCGDataUse,
+      DataResourceTestData.registrationWithExistingCG
   })
   public void testUpdateStudyByRegistrationInvalid(String input) {
     Study study = createMockStudy();
@@ -1340,8 +1342,10 @@ public class DatasetResourceTest {
     // a dataset deletion
     if (input.equals(DataResourceTestData.registrationWithExistingCG)) {
       Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
-      List<Integer> datasetIds = schemaV1.getConsentGroups().stream().map(ConsentGroup::getDatasetId).toList();
+      DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input,
+          DatasetRegistrationSchemaV1.class);
+      List<Integer> datasetIds = schemaV1.getConsentGroups().stream()
+          .map(ConsentGroup::getDatasetId).toList();
       study.setDatasetIds(Set.of(datasetIds.get(0) + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -1350,6 +1354,27 @@ public class DatasetResourceTest {
 
     Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateStudyByRegistration() {
+    String input = DataResourceTestData.validRegistration;
+    Study study = createMockStudy();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+    Set<Integer> datasetIds = schemaV1
+        .getConsentGroups()
+        .stream()
+        .map(ConsentGroup::getDatasetId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    study.setDatasetIds(datasetIds);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
+    initResource();
+
+    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   /**

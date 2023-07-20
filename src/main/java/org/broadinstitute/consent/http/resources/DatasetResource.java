@@ -283,8 +283,7 @@ public class DatasetResource extends Resource {
           registration,
           user,
           files);
-      URI uri = UriBuilder.fromPath("/api/dataset/study/" + studyId).build();
-      return Response.created(uri).entity(updatedStudy).build();
+      return Response.ok(updatedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
