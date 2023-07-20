@@ -73,14 +73,14 @@ public class DatasetRegistrationService implements ConsentLogger {
 
   /**
    * This method takes an instance of a dataset registration schema and updates the study and
-   * datasets from it.
+   * associated datasets from it.
    *
    * @param registration The DatasetRegistrationSchemaV1.yaml
    * @param user         The User updating the study
    * @param files        Map of files, where the key is the name of the field
    * @return The updated Study
    */
-  public Study updateDatasetsFromRegistration(
+  public Study updateStudyFromRegistration(
       Integer studyId,
       DatasetRegistrationSchemaV1 registration,
       User user,

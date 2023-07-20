@@ -68,6 +68,8 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 
 public class DatasetResourceTest {
@@ -1323,6 +1325,23 @@ public class DatasetResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {
+    DataResourceTestData.registrationWithMalformedJson,
+    DataResourceTestData.registrationWithStudyName,
+    DataResourceTestData.registrationWithDataSubmitterUserId,
+    DataResourceTestData.registrationWithExistingCGDataUse
+  })
+  public void testUpdateStudyByRegistrationInvalid(String input) {
+    Study study = createMockStudy();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
+    initResource();
+
+    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
    *
@@ -1448,6 +1467,7 @@ public class DatasetResourceTest {
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
     study.setCreateUserId(9);
     study.setPublicVisibility(true);
+    study.setDatasetIds(Set.of(dataset.getDataSetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
