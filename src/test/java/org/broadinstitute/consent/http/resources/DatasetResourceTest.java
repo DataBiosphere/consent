@@ -35,9 +35,12 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -787,14 +790,22 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetIndex() {
+  public void testSearchDatasetIndex() throws IOException {
+    String query = "{ \"dataUse\": [\"HMB\"] }";
+
+    org.elasticsearch.client.Response elasticResponse = mock(
+        org.elasticsearch.client.Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+    HttpEntity entity = new NStringEntity(query, ContentType.APPLICATION_JSON);
+
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
+    when(elasticSearchService.searchDatasets(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(entity);
 
     initResource();
-
-    String query = "{ \"dataUse\": [\"HMB\"] }";
     Response response = resource.searchDatasetIndex(authUser, query);
 
     assertEquals(200, response.getStatus());
