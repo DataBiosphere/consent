@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -669,11 +670,14 @@ public class DatasetResource extends Resource {
   @Path("/search/index")
   @Consumes("application/json")
   @Produces("application/json")
+  @PermitAll
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       var response = elasticSearchService.searchDatasets(query);
-      return Response.status(response.getStatusLine().getStatusCode()).entity(response.getEntity())
+      String entityContent = new String(response.getEntity().getContent().readAllBytes(),
+          StandardCharsets.UTF_8);
+      return Response.status(response.getStatusLine().getStatusCode()).entity(entityContent)
           .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
