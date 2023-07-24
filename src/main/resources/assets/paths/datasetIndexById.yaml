@@ -14,3 +14,19 @@ post:
   responses:
     200:
       description: The dataset has been indexed
+delete:
+  summary: Delete dataset index by id
+  description: Delete a specific dataset index in the system
+  parameters:
+    - name: datasetId
+      in: path
+      description: id of the dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Admin
+    - Dataset
+  responses:
+    200:
+      description: The dataset index has been deleted

@@ -636,6 +636,19 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @DELETE
+  @Path("/index/{datasetId}")
+  @RolesAllowed(ADMIN)
+  public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
+    try {
+      var response = elasticSearchService.deleteIndex(datasetId);
+      var status = response.getStatusLine().getStatusCode();
+      return Response.status(status).entity(response.getEntity()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
   @Path("/search")
   @Produces("application/json")

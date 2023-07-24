@@ -738,6 +738,21 @@ public class DatasetResourceTest {
   }
 
   @Test
+  public void testIndexDelete() throws IOException {
+    org.elasticsearch.client.Response elasticResponse = mock(
+        org.elasticsearch.client.Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+
+    when(elasticSearchService.deleteIndex(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+
+    initResource();
+    Response response = resource.deleteDatasetIndex(0);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
   public void testSearchDatasetsOpenAccessFalse() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
