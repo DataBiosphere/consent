@@ -181,6 +181,15 @@ public class UseRestrictionConverter {
           dataUse.setHmbResearch(true);
         }
       }
+
+      // Other Conditions
+      if (Objects.nonNull(dar.getData().getOther())) {
+        dataUse.setOtherRestrictions(dar.getData().getOther());
+      }
+      if (Objects.nonNull(dar.getData().getOtherText())) {
+        dataUse.setOther(dar.getData().getOtherText());
+      }
+
     }
     return dataUse;
   }
