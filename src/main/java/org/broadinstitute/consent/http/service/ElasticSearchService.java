@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -22,7 +23,6 @@ import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
@@ -49,6 +49,17 @@ public class ElasticSearchService implements ConsentLogger {
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
+  private Response performRequest(Request request) throws IOException {
+    var response = esClient.performRequest(request);
+    var status = response.getStatusLine().getStatusCode();
+    if (status != 200) {
+      throw new IOException("Invalid Elasticsearch query");
+    }
+    var body = new String(response.getEntity().getContent().readAllBytes(),
+        StandardCharsets.UTF_8);
+    return Response.status(status).entity(body).build();
+  }
+
   public Response indexDatasetTerms(List<DatasetTerm> datasets) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
@@ -65,14 +76,14 @@ public class ElasticSearchService implements ConsentLogger {
         String.join("", bulkApiCall) + "\n",
         ContentType.DEFAULT_BINARY));
 
-    return esClient.performRequest(bulkRequest);
+    return performRequest(bulkRequest);
   }
 
   public Response deleteIndex(Integer datasetId) throws IOException {
     Request deleteRequest = new Request(
         HttpMethod.DELETE,
         "/" + esConfig.getDatasetIndexName() + "/_doc/" + datasetId);
-    return esClient.performRequest(deleteRequest);
+    return performRequest(deleteRequest);
   }
 
   public boolean validateQuery(String query) throws IOException {
@@ -80,15 +91,10 @@ public class ElasticSearchService implements ConsentLogger {
         HttpMethod.GET,
         "/" + esConfig.getDatasetIndexName() + "/_validate/query");
     validateRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
-    Response validateResponse = esClient.performRequest(validateRequest);
+    Response response = performRequest(validateRequest);
 
-    if (validateResponse.getStatusLine().getStatusCode() != 200) {
-      throw new IOException("Invalid Elasticsearch query");
-    }
-
-    String entityContent = new String(validateResponse.getEntity().getContent().readAllBytes(),
-        StandardCharsets.UTF_8);
-    var json = GsonUtil.getInstance().fromJson(entityContent, Map.class);
+    var entity = response.getEntity().toString();
+    var json = GsonUtil.getInstance().fromJson(entity, Map.class);
 
     return (boolean) json.get("valid");
   }
@@ -103,7 +109,7 @@ public class ElasticSearchService implements ConsentLogger {
         "/" + esConfig.getDatasetIndexName() + "/_search");
     searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
 
-    return esClient.performRequest(searchRequest);
+    return performRequest(searchRequest);
   }
 
   public StudyTerm toStudyTerm(Study study) {

@@ -28,7 +28,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -614,9 +613,7 @@ public class DatasetResource extends Resource {
   public Response indexDatasets() {
     try {
       var datasets = datasetService.findAllDatasets();
-      var response = elasticSearchService.indexDatasets(datasets);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDatasets(datasets);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -628,9 +625,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
-      var response = elasticSearchService.indexDataset(dataset);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDataset(dataset);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -641,9 +636,7 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
     try {
-      var response = elasticSearchService.deleteIndex(datasetId);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.deleteIndex(datasetId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -674,11 +667,7 @@ public class DatasetResource extends Resource {
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      var response = elasticSearchService.searchDatasets(query);
-      String entityContent = new String(response.getEntity().getContent().readAllBytes(),
-          StandardCharsets.UTF_8);
-      return Response.status(response.getStatusLine().getStatusCode()).entity(entityContent)
-          .build();
+      return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

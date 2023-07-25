@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,6 +68,17 @@ public class ElasticSearchServiceTest {
         esConfig,
         dataAccessRequestDAO,
         ontologyService);
+  }
+
+  private void mockElasticSearchResponse(int statusCode, String body) throws IOException {
+    Response response = mock(Response.class);
+    String reasonPhrase = fromStatusCode(statusCode).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase);
+    HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
+
+    when(esClient.performRequest(any())).thenReturn(response);
+    when(response.getStatusLine()).thenReturn(status);
+    when(response.getEntity()).thenReturn(entity);
   }
 
   @Test
@@ -193,6 +205,7 @@ public class ElasticSearchServiceTest {
     String datasetIndexName = RandomStringUtils.randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
+    mockElasticSearchResponse(200, "");
 
     initService();
     service.indexDatasetTerms(List.of(term1, term2));
@@ -217,31 +230,19 @@ public class ElasticSearchServiceTest {
   public void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    Response elasticResponse = mock(Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-    HttpEntity entity = new NStringEntity("{\"valid\":true}", ContentType.APPLICATION_JSON);
-
-    when(esClient.performRequest(any())).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(entity);
+    mockElasticSearchResponse(200, "{\"valid\":true}");
 
     initService();
-    Response response = service.searchDatasets(query);
+    var response = service.searchDatasets(query);
 
-    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals(200, response.getStatus());
   }
 
   @Test
   public void testValidateQuery() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    Response elasticResponse = mock(Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-    HttpEntity entity = new NStringEntity("{\"valid\":true}", ContentType.APPLICATION_JSON);
-
-    when(esClient.performRequest(any())).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(entity);
+    mockElasticSearchResponse(200, "{\"valid\":true}");
 
     initService();
     assertTrue(service.validateQuery(query));
@@ -251,11 +252,7 @@ public class ElasticSearchServiceTest {
   public void testValidateQueryEmpty() throws IOException {
     String query = "{}";
 
-    Response elasticResponse = mock(Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 400, "Bad Request");
-
-    when(esClient.performRequest(any())).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
+    mockElasticSearchResponse(400, "Bad Request");
 
     initService();
     assertThrows(IOException.class, () -> service.validateQuery(query));
@@ -265,13 +262,7 @@ public class ElasticSearchServiceTest {
   public void testValidateQueryInvalid() throws IOException {
     String query = "{ \"bad\": [\"and\", \"invalid\"] }";
 
-    Response elasticResponse = mock(Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-    HttpEntity entity = new NStringEntity("{\"valid\":false}", ContentType.APPLICATION_JSON);
-
-    when(esClient.performRequest(any())).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(entity);
+    mockElasticSearchResponse(200, "{\"valid\":false}");
 
     initService();
     assertFalse(service.validateQuery(query));
