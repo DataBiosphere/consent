@@ -49,6 +49,10 @@ public class ElasticSearchService implements ConsentLogger {
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
+  private static final String deleteQuery = """
+      { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+      """;
+
   private Response performRequest(Request request) throws IOException {
     var response = esClient.performRequest(request);
     var status = response.getStatusLine().getStatusCode();
@@ -81,8 +85,11 @@ public class ElasticSearchService implements ConsentLogger {
 
   public Response deleteIndex(Integer datasetId) throws IOException {
     Request deleteRequest = new Request(
-        HttpMethod.DELETE,
-        "/" + esConfig.getDatasetIndexName() + "/_doc/" + datasetId);
+        HttpMethod.POST,
+        "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
+    deleteRequest.setEntity(new NStringEntity(
+        deleteQuery.formatted(datasetId),
+        ContentType.APPLICATION_JSON));
     return performRequest(deleteRequest);
   }
 
