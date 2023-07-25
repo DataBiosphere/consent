@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -372,6 +373,39 @@ public class UseRestrictionConverterTest implements WithMockServer {
     dar.getData().setOtherText("other");
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNotNull(dataUse.getOther());
+  }
+
+  @Test
+  public void testParseDataUseControl() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setControls(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getControls());
+    assertEquals("Yes", dataUse.getControlSetOption());
+  }
+
+  @Test
+  public void testParseDataUsePopulation() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPopulation(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPopulationStructure());
+    assertTrue(dataUse.getPopulation());
+  }
+
+  @Test
+  public void testParseDataUseNotHealth() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setNotHealth(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getNotHealth());
+    assertTrue(dataUse.getNonBiomedical());
   }
 
   private DataAccessRequest createDataAccessRequest() {
