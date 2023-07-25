@@ -1,0 +1,33 @@
+type: object
+properties:
+  datasetId:
+    type: integer
+    description: The unique identifier for a dataset
+  datasetIdentifier:
+    type: string
+    description: The public DUOS identifier for a dataset
+  dataUse:
+    type: object
+    description: The data use associated with the dataset
+    properties:
+      primary:
+        type: array
+        description: The primary data uses associated with the dataset
+        items:
+          $ref: '../schemas/DataUse.yaml'
+      secondary:
+        type: array
+        description: The secondary data uses associated with the dataset
+        items:
+          $ref: '../schemas/DataUse.yaml'
+  dacId:
+    type: integer
+    description: The unique identifier for a DAC
+  approvedUserIds:
+    type: array
+    description: The list of users who have been approved to access the dataset
+    items:
+      type: integer
+  study:
+    type: object
+    description: The study associated with the dataset

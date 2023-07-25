@@ -1,6 +1,6 @@
 post:
-  summary: Search Datasets
-  description: Returns all datasets matching a search query.
+  summary: Search the dataset index
+  description: Returns all results matching a search query.
   requestBody:
     description: Search query
     required: true
@@ -12,10 +12,21 @@ post:
     - Dataset
   responses:
     200:
-      description: A list of Datasets
+      description: A list of results matching the search query
       content:
         application/json:
           schema:
             type: array
             items:
-              type: object
+              $ref: '../schemas/DatasetSearch.yaml'
+          examples:
+            example1:
+              summary: Example search request 1
+              value:
+                query:
+                  bool:
+                    must:
+                      - match:
+                          _type: dataset
+                      - match:
+                          _id: 1403
