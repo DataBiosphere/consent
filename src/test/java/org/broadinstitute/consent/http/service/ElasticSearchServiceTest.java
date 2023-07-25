@@ -230,11 +230,17 @@ public class ElasticSearchServiceTest {
   public void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    /*
+     * FIXME: this approach is kind of hacky, we stick both the validation response and the search
+     *  response in the same body, and then rely on Gson to parse these into separate objects.
+     *  Ideally each request and response should be mocked separately, but this would involve many
+     *  more classes and methods. Alternately, it is possible to just mock the Gson parsing, but
+     *  this seems to affect the results of the other tests.
+     */
+    mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
 
     initService();
     var response = service.searchDatasets(query);
-
     assertEquals(200, response.getStatus());
   }
 
