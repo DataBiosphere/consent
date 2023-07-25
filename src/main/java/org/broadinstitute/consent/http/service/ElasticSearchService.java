@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -116,7 +117,13 @@ public class ElasticSearchService implements ConsentLogger {
         "/" + esConfig.getDatasetIndexName() + "/_search");
     searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
 
-    return performRequest(searchRequest);
+    Response response = performRequest(searchRequest);
+
+    var entity = response.getEntity().toString();
+    var json = GsonUtil.getInstance().fromJson(entity, ElasticSearchHits.class);
+    var hits = json.getHits();
+
+    return Response.ok().entity(hits).build();
   }
 
   public StudyTerm toStudyTerm(Study study) {
