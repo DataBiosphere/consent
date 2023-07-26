@@ -35,9 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.http.HttpVersion;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicStatusLine;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -706,14 +703,10 @@ public class DatasetResourceTest {
   @Test
   public void testIndexAllDatasets() throws IOException {
     List<Dataset> datasets = List.of(new Dataset());
-    org.elasticsearch.client.Response elasticResponse = mock(
-        org.elasticsearch.client.Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
+    Response mockResponse = Response.ok().entity(datasets).build();
     when(datasetService.findAllDatasets()).thenReturn(datasets);
-    when(elasticSearchService.indexDatasets(datasets)).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+    when(elasticSearchService.indexDatasets(datasets)).thenReturn(mockResponse);
 
     initResource();
     Response response = resource.indexDatasets();
@@ -723,14 +716,10 @@ public class DatasetResourceTest {
   @Test
   public void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
-    org.elasticsearch.client.Response elasticResponse = mock(
-        org.elasticsearch.client.Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
+    Response mockResponse = Response.ok().entity(dataset).build();
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticSearchService.indexDataset(dataset)).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+    when(elasticSearchService.indexDataset(dataset)).thenReturn(mockResponse);
 
     initResource();
     Response response = resource.indexDataset(1);
@@ -739,13 +728,8 @@ public class DatasetResourceTest {
 
   @Test
   public void testIndexDelete() throws IOException {
-    org.elasticsearch.client.Response elasticResponse = mock(
-        org.elasticsearch.client.Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-
-    when(elasticSearchService.deleteIndex(any())).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+    Response mockResponse = Response.status(200).entity("deleted").build();
+    when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
 
     initResource();
     Response response = resource.deleteDatasetIndex(0);
@@ -787,14 +771,16 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetIndex() {
+  public void testSearchDatasetIndex() throws IOException {
+    String query = "{ \"dataUse\": [\"HMB\"] }";
+
+    Response mockResponse = Response.ok().entity(query).build();
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
+    when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     initResource();
-
-    String query = "{ \"dataUse\": [\"HMB\"] }";
     Response response = resource.searchDatasetIndex(authUser, query);
 
     assertEquals(200, response.getStatus());

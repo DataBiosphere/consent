@@ -44,7 +44,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
@@ -614,9 +613,7 @@ public class DatasetResource extends Resource {
   public Response indexDatasets() {
     try {
       var datasets = datasetService.findAllDatasets();
-      var response = elasticSearchService.indexDatasets(datasets);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDatasets(datasets);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -628,9 +625,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
-      var response = elasticSearchService.indexDataset(dataset);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDataset(dataset);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -641,9 +636,7 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
     try {
-      var response = elasticSearchService.deleteIndex(datasetId);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.deleteIndex(datasetId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -670,18 +663,11 @@ public class DatasetResource extends Resource {
   @Path("/search/index")
   @Consumes("application/json")
   @Produces("application/json")
+  @PermitAll
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<DatasetSearchTerm> datasetSearchTerms = new ArrayList<>();
-      /* return up to 8 semi-random but consistent number of results for a specific query */
-      var numResults = query.hashCode() & 0x7L;
-      for (int i = 0; i < numResults; i++) {
-        DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
-        datasetSearchTerm.setDatasetId(i);
-        datasetSearchTerms.add(datasetSearchTerm);
-      }
-      return Response.ok().entity(unmarshal(datasetSearchTerms)).build();
+      return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
