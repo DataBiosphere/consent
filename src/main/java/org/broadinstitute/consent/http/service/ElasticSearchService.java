@@ -2,9 +2,11 @@ package org.broadinstitute.consent.http.service;
 
 import jakarta.ws.rs.HttpMethod;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.http.entity.ContentType;
@@ -71,6 +73,37 @@ public class ElasticSearchService implements ConsentLogger {
         HttpMethod.DELETE,
         "/" + esConfig.getDatasetIndexName() + "/_doc/" + datasetId);
     return esClient.performRequest(deleteRequest);
+  }
+
+  public boolean validateQuery(String query) throws IOException {
+    Request validateRequest = new Request(
+        HttpMethod.GET,
+        "/" + esConfig.getDatasetIndexName() + "/_validate/query");
+    validateRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    Response validateResponse = esClient.performRequest(validateRequest);
+
+    if (validateResponse.getStatusLine().getStatusCode() != 200) {
+      throw new IOException("Invalid Elasticsearch query");
+    }
+
+    String entityContent = new String(validateResponse.getEntity().getContent().readAllBytes(),
+        StandardCharsets.UTF_8);
+    var json = GsonUtil.getInstance().fromJson(entityContent, Map.class);
+
+    return (boolean) json.get("valid");
+  }
+
+  public Response searchDatasets(String query) throws IOException {
+    if (!validateQuery(query)) {
+      throw new IOException("Invalid Elasticsearch query");
+    }
+
+    Request searchRequest = new Request(
+        HttpMethod.GET,
+        "/" + esConfig.getDatasetIndexName() + "/_search");
+    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+
+    return esClient.performRequest(searchRequest);
   }
 
   public StudyTerm toStudyTerm(Study study) {

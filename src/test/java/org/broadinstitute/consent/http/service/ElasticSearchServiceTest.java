@@ -1,7 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -11,6 +15,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpVersion;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -23,6 +32,7 @@ import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -203,4 +213,67 @@ public class ElasticSearchServiceTest {
             StandardCharsets.UTF_8));
   }
 
+  @Test
+  public void testSearchDatasets() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    Response elasticResponse = mock(Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+    HttpEntity entity = new NStringEntity("{\"valid\":true}", ContentType.APPLICATION_JSON);
+
+    when(esClient.performRequest(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(entity);
+
+    initService();
+    Response response = service.searchDatasets(query);
+
+    assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testValidateQuery() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    Response elasticResponse = mock(Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+    HttpEntity entity = new NStringEntity("{\"valid\":true}", ContentType.APPLICATION_JSON);
+
+    when(esClient.performRequest(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(entity);
+
+    initService();
+    assertTrue(service.validateQuery(query));
+  }
+
+  @Test
+  public void testValidateQueryEmpty() throws IOException {
+    String query = "{}";
+
+    Response elasticResponse = mock(Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 400, "Bad Request");
+
+    when(esClient.performRequest(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+
+    initService();
+    assertThrows(IOException.class, () -> service.validateQuery(query));
+  }
+
+  @Test
+  public void testValidateQueryInvalid() throws IOException {
+    String query = "{ \"bad\": [\"and\", \"invalid\"] }";
+
+    Response elasticResponse = mock(Response.class);
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+    HttpEntity entity = new NStringEntity("{\"valid\":false}", ContentType.APPLICATION_JSON);
+
+    when(esClient.performRequest(any())).thenReturn(elasticResponse);
+    when(elasticResponse.getStatusLine()).thenReturn(status);
+    when(elasticResponse.getEntity()).thenReturn(entity);
+
+    initService();
+    assertFalse(service.validateQuery(query));
+  }
 }
