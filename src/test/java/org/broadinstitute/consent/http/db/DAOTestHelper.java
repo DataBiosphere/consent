@@ -154,7 +154,7 @@ public class DAOTestHelper {
     testingDAO.deleteAllApprovalTimes();
     testingDAO.deleteAllVotes();
     testingDAO.deleteAllConsentAudits();
-    testingDAO.deleteAllMatchEntityFailureReasons();
+    testingDAO.deleteAllMatchEntityRationales();
     testingDAO.deleteAllMatchEntities();
     testingDAO.deleteAllConsentAssociations();
     testingDAO.deleteAllConsents();

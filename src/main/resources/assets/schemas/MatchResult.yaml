@@ -25,3 +25,8 @@ properties:
   algorithmVersion:
     type: string
     description: The version of the algorithm used to generate the match.
+  rationales:
+    type: array
+    items:
+      type: string
+      description: Rationales for match results

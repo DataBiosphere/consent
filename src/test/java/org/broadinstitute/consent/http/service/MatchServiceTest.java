@@ -89,7 +89,7 @@ public class MatchServiceTest {
   @Test
   public void testInsertMatches() {
     when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-    doNothing().when(matchDAO).insertFailureReason(any(), any());
+    doNothing().when(matchDAO).insertRationale(any(), any());
     initService();
 
     service.insertMatches(List.of(new Match()));
@@ -326,7 +326,7 @@ public class MatchServiceTest {
     initService();
 
     service.removeMatchesForPurpose("DAR-2");
-    verify(matchDAO, atLeastOnce()).deleteFailureReasonsByPurposeIds(anyList());
+    verify(matchDAO, atLeastOnce()).deleteRationalesByPurposeIds(anyList());
     verify(matchDAO, atLeastOnce()).deleteMatchesByPurposeId(any());
   }
 
@@ -336,7 +336,7 @@ public class MatchServiceTest {
     initService();
 
     service.removeMatchesForConsent(m.getConsent());
-    verify(matchDAO, atLeastOnce()).deleteFailureReasonsByConsentIds(anyList());
+    verify(matchDAO, atLeastOnce()).deleteRationalesByConsentIds(anyList());
     verify(matchDAO, atLeastOnce()).deleteMatchesByConsentId(any());
   }
 

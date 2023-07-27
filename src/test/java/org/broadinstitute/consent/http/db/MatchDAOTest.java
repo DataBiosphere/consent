@@ -196,8 +196,8 @@ public class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
         match.getConsent(),
         match.getPurpose(),
@@ -206,11 +206,11 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getCreateDate(),
         match.getAlgorithmVersion(),
         match.getAbstain());
-    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
+    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
-    assertEquals(match.getFailureReasons().size(),
-        foundMatch.getFailureReasons().size());
+    assertEquals(match.getRationales().size(),
+        foundMatch.getRationales().size());
   }
 
   @Test
@@ -218,8 +218,8 @@ public class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
         match.getConsent(),
         match.getPurpose(),
@@ -228,11 +228,11 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getCreateDate(),
         match.getAlgorithmVersion(),
         match.getAbstain());
-    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
-    matchDAO.deleteFailureReasonsByConsentIds(List.of(match.getConsent()));
+    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
+    matchDAO.deleteRationalesByConsentIds(List.of(match.getConsent()));
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
-    assertEquals(0, foundMatch.getFailureReasons().size());
+    assertEquals(0, foundMatch.getRationales().size());
   }
 
   @Test
@@ -240,8 +240,8 @@ public class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
-    match.addFailureReason(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
         match.getConsent(),
         match.getPurpose(),
@@ -250,11 +250,11 @@ public class MatchDAOTest extends DAOTestHelper {
         match.getCreateDate(),
         match.getAlgorithmVersion(),
         match.getAbstain());
-    match.getFailureReasons().forEach(f -> matchDAO.insertFailureReason(matchId, f));
-    matchDAO.deleteFailureReasonsByPurposeIds(List.of(match.getPurpose()));
+    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
+    matchDAO.deleteRationalesByPurposeIds(List.of(match.getPurpose()));
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
-    assertEquals(0, foundMatch.getFailureReasons().size());
+    assertEquals(0, foundMatch.getRationales().size());
   }
 
   private Match createMatch() {
