@@ -88,12 +88,12 @@ public class MatchServiceTest {
 
   @Test
   public void testInsertMatches() {
-    when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any())).thenReturn(1);
+    when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
     doNothing().when(matchDAO).insertFailureReason(any(), any());
     initService();
 
     service.insertMatches(List.of(new Match()));
-    verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any());
+    verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test

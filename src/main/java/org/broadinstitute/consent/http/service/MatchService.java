@@ -65,7 +65,8 @@ public class MatchService implements ConsentLogger {
           m.getMatch(),
           m.getFailed(),
           new Date(),
-          m.getAlgorithmVersion()
+          m.getAlgorithmVersion(),
+          m.getAbstain()
       );
       if (!m.getFailureReasons().isEmpty()) {
         m.getFailureReasons().forEach(f -> {

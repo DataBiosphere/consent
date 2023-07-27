@@ -7,10 +7,8 @@ import org.broadinstitute.consent.http.db.mapper.MatchReducer;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -70,31 +68,20 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       " WHERE m.purpose IN (<purposeId>) ")
   List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
-  @SqlUpdate(
-      " INSERT INTO match_entity " +
-          " (consent, purpose, matchentity, failed, createdate, algorithm_version) VALUES " +
-          " (:consentId, :purposeId, :match, :failed, :createDate, 'v1')")
-  @GetGeneratedKeys
-  Integer insertMatch(@Bind("consentId") String consentId,
-      @Bind("purposeId") String purposeId,
-      @Bind("match") Boolean match,
-      @Bind("failed") Boolean failed,
-      @Bind("createDate") Date date);
-
-  @SqlUpdate(
-      " INSERT INTO match_entity " +
-          " (consent, purpose, matchentity, failed, createdate, algorithm_version) VALUES " +
-          " (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion)")
+  @SqlUpdate("""
+        INSERT INTO match_entity
+          (consent, purpose, matchentity, failed, createdate, algorithm_version, abstain)
+        VALUES
+          (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
+      """)
   @GetGeneratedKeys
   Integer insertMatch(@Bind("consentId") String consentId,
       @Bind("purposeId") String purposeId,
       @Bind("match") Boolean match,
       @Bind("failed") Boolean failed,
       @Bind("createDate") Date date,
-      @Bind("algorithmVersion") String algorithmVersion);
-
-  @SqlBatch("INSERT INTO match_entity (consent, purpose, matchentity, failed, createdate, algorithm_version) VALUES (:consent, :purpose, :match, :failed, :createDate, :algorithmVersion)")
-  void insertAll(@BindBean List<Match> matches);
+      @Bind("algorithmVersion") String algorithmVersion,
+      @Bind("abstain") Boolean abstain);
 
   @SqlUpdate("INSERT INTO match_failure_reason (match_entity_id, failure_reason) VALUES (:matchId, :reason) ")
   void insertFailureReason(@Bind("matchId") Integer matchId, @Bind("reason") String reason);
