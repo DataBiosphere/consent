@@ -18,32 +18,40 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface MatchDAO extends Transactional<MatchDAO> {
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("SELECT m.*, r.* " +
-      " FROM match_entity m " +
-      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
-      " WHERE m.consent = :consentId ")
+  @SqlQuery("""
+      SELECT m.*, r.*
+        FROM match_entity m
+        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+        WHERE m.consent = :consentId
+      """)
   List<Match> findMatchesByConsentId(@Bind("consentId") String consentId);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("SELECT m.*, r.* " +
-      " FROM match_entity m " +
-      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
-      " WHERE m.purpose = :purposeId ")
+  @SqlQuery("""
+      SELECT m.*, r.*
+        FROM match_entity m
+        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+        WHERE m.purpose = :purposeId
+      """)
   List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("SELECT m.*, r.* " +
-      " FROM match_entity m " +
-      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
-      " WHERE m.purpose = :purposeId AND m.consent = :consentId ")
+  @SqlQuery("""
+      SELECT m.*, r.*
+        FROM match_entity m
+        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+        WHERE m.purpose = :purposeId AND m.consent = :consentId
+      """)
   Match findMatchByPurposeIdAndConsentId(@Bind("purposeId") String purposeId,
       @Bind("consentId") String consentId);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("SELECT m.*, r.* " +
-      " FROM match_entity m " +
-      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
-      " WHERE m.matchid = :id ")
+  @SqlQuery("""
+      SELECT m.*, r.*
+        FROM match_entity m
+        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+        WHERE m.matchid = :id
+      """)
   Match findMatchById(@Bind("id") Integer id);
 
   @UseRowReducer(MatchReducer.class)
@@ -62,10 +70,12 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       @BindList("purposeIds") List<String> purposeIds);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("SELECT m.*, r.* " +
-      " FROM match_entity m " +
-      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
-      " WHERE m.purpose IN (<purposeId>) ")
+  @SqlQuery("""
+      SELECT m.*, r.*
+            FROM match_entity m
+            LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+            WHERE m.purpose IN (<purposeId>)
+      """)
   List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
   @SqlUpdate("""
