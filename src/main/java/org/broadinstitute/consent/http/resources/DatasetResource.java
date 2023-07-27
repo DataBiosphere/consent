@@ -241,23 +241,7 @@ public class DatasetResource extends Resource {
       List<ConsentGroup> invalidConsentGroups = registration.getConsentGroups()
           .stream()
           .filter(cg -> Objects.nonNull(cg.getDatasetId()))
-          .filter(cg ->
-              Objects.nonNull(cg.getOpenAccess()) ||
-                  Objects.nonNull(cg.getGeneralResearchUse()) ||
-                  Objects.nonNull(cg.getHmb()) ||
-                  (Objects.nonNull(cg.getDiseaseSpecificUse()) && cg.getDiseaseSpecificUse().size() > 0) ||
-                  Objects.nonNull(cg.getPoa()) ||
-                  Objects.nonNull(cg.getOtherPrimary()) ||
-                  Objects.nonNull(cg.getNmds()) ||
-                  Objects.nonNull(cg.getGso()) ||
-                  Objects.nonNull(cg.getPub()) ||
-                  Objects.nonNull(cg.getCol()) ||
-                  Objects.nonNull(cg.getIrb()) ||
-                  Objects.nonNull(cg.getGs()) ||
-                  Objects.nonNull(cg.getMor()) ||
-                  Objects.nonNull(cg.getMorDate()) ||
-                  Objects.nonNull(cg.getNpu()) ||
-                  Objects.nonNull(cg.getOtherSecondary()))
+          .filter(ConsentGroup::isInvalidForUpdate)
           .toList();
       if (!invalidConsentGroups.isEmpty()) {
         throw new BadRequestException("Invalid Data Use changes to existing Consent Groups");
