@@ -31,6 +31,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +50,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -58,6 +60,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -197,6 +200,73 @@ public class DatasetResource extends Resource {
 
       URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
       return Response.created(uri).entity(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/study/{studyId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  /*
+   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * With that object, we can fully update the study/datasets from the provided values.
+   */
+  public Response updateStudyByRegistration(
+      @Auth AuthUser authUser,
+      FormDataMultiPart multipart,
+      @PathParam("studyId") Integer studyId,
+      @FormDataParam("dataset") String json) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+
+      // Manually validate the schema from an editing context. Validation with the schema tools
+      // enforces it in a creation context but doesn't work for editing purposes.
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetRegistrationSchemaV1 registration = gson.fromJson(json, DatasetRegistrationSchemaV1.class);
+
+      // Not modifiable: Study Name, Data Submitter Name/Email, Primary Data Use,
+      // Secondary Data Use
+      if (Objects.nonNull(registration.getStudyName()) && !registration.getStudyName().equals(existingStudy.getName())) {
+        throw new BadRequestException("Invalid change to Study Name");
+      }
+      if (Objects.nonNull(registration.getDataSubmitterUserId()) &&!registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
+        throw new BadRequestException("Invalid change to Data Submitter");
+      }
+      // Data use changes are not allowed for existing datasets
+      List<ConsentGroup> invalidConsentGroups = registration.getConsentGroups()
+          .stream()
+          .filter(cg -> Objects.nonNull(cg.getDatasetId()))
+          .filter(ConsentGroup::isInvalidForUpdate)
+          .toList();
+      if (!invalidConsentGroups.isEmpty()) {
+        throw new BadRequestException("Invalid Data Use changes to existing Consent Groups");
+      }
+
+      // Validate that we're not trying to delete any datasets in the registration payload.
+      // The list of non-null dataset ids in the consent groups MUST be the same as the list of
+      // existing dataset ids.
+      HashSet<Integer> existingDatasetIds = new HashSet<>(existingStudy.getDatasetIds());
+      HashSet<Integer> consentGroupDatasetIds = new HashSet<>(registration.getConsentGroups()
+          .stream()
+          .map(ConsentGroup::getDatasetId)
+          .filter(Objects::nonNull)
+          .toList());
+      if (!consentGroupDatasetIds.containsAll(existingDatasetIds)) {
+        throw new BadRequestException("Invalid removal of Consent Groups");
+      }
+
+      // Update study from registration
+      Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+      Study updatedStudy = datasetRegistrationService.updateStudyFromRegistration(
+          studyId,
+          registration,
+          user,
+          files);
+      return Response.ok(updatedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

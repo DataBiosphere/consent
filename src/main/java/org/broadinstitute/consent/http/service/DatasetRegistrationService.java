@@ -14,9 +14,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -24,6 +26,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
@@ -31,6 +34,8 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
@@ -38,24 +43,109 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
  * Specialized service class which specifically handles the process of registering a new dataset
  * into the system, i.e. creates new datasets.
  */
-public class DatasetRegistrationService {
+public class DatasetRegistrationService implements ConsentLogger {
 
   private final DatasetDAO datasetDAO;
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
   private final ElasticSearchService elasticSearchService;
+  private final StudyDAO studyDAO;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
       DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
-      ElasticSearchService elasticSearchService) {
+      ElasticSearchService elasticSearchService, StudyDAO studyDAO) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
+    this.studyDAO = studyDAO;
   }
 
+  public Study findStudyById(Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    if (Objects.isNull(study)) {
+      throw new NotFoundException("Study with ID " + studyId + " is not found");
+    }
+    return study;
+  }
+
+  /**
+   * This method takes an instance of a dataset registration schema and updates the study and
+   * associated datasets from it.
+   *
+   * @param registration The DatasetRegistrationSchemaV1.yaml
+   * @param user         The User updating the study
+   * @param files        Map of files, where the key is the name of the field
+   * @return The updated Study
+   */
+  public Study updateStudyFromRegistration(
+      Integer studyId,
+      DatasetRegistrationSchemaV1 registration,
+      User user,
+      Map<String, FormDataBodyPart> files)
+      throws Exception {
+    Map<String, BlobId> uploadedFileCache = new HashMap<>();
+    List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
+    List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
+    List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+    // Dataset updates and inserts:
+    IntStream.range(0, registration.getConsentGroups().size())
+        .forEach(idx -> {
+          ConsentGroup cg = registration.getConsentGroups().get(idx);
+          if (Objects.nonNull(cg.getDatasetId())) {
+            Dataset existingDataset = datasetDAO.findDatasetById(cg.getDatasetId());
+            try {
+              DatasetUpdate datasetUpdate = new DatasetUpdate(
+                  cg.getConsentGroupName(),
+                  existingDataset.getNeedsApproval(),
+                  existingDataset.getActive(),
+                  existingDataset.getDacId(),
+                  convertConsentGroupToDatasetProperties(cg)
+              );
+              DatasetServiceDAO.DatasetUpdate update = createDatasetUpdate(
+                  cg.getDatasetId(),
+                  user,
+                  datasetUpdate,
+                  files,
+                  uploadedFileCache
+              );
+              datasetUpdates.add(update);
+            } catch (Exception e) {
+              logException(e);
+            }
+          } else {
+            try {
+              DatasetServiceDAO.DatasetInsert insert = createDatasetInsert(
+                  registration,
+                  user,
+                  files,
+                  uploadedFileCache,
+                  idx
+              );
+              datasetInserts.add(insert);
+            } catch (Exception e) {
+              logException(e);
+            }
+          }
+        });
+
+    List<StudyProperty> studyProps = convertRegistrationToStudyProperties(registration);
+    DatasetServiceDAO.StudyUpdate studyUpdate = new StudyUpdate(
+        registration.getStudyName(),
+        studyId,
+        registration.getStudyDescription(),
+        registration.getDataTypes(),
+        registration.getPiName(),
+        registration.getPublicVisibility(),
+        user.getUserId(),
+        studyProps,
+        uploadFiles
+    );
+
+    return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+  }
 
   /**
    * This method takes an instance of a dataset registration schema and creates datasets from it.

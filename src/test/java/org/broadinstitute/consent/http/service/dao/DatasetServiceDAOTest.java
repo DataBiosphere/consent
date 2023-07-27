@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
+import com.google.gson.Gson;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +29,10 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +42,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   public void setUp() {
-    serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO);
+    serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO, studyDAO);
   }
 
   @Test
@@ -439,6 +444,217 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
     assertEquals(newName, updatedDataset.getDatasetName());
+  }
+
+  @Test
+  public void testUpdateStudyDetails() throws Exception {
+    Study study = createStudy(null);
+
+    String newStudyName = "New Study Name";
+    String newStudyDescription = "New Study Description";
+    String newPIName = "New PI Name";
+    List<String> newDataTypes = List.of("DT 1", "DT 2", "DT 3");
+    StudyUpdate studyUpdate = new StudyUpdate(
+        newStudyName,
+        study.getStudyId(),
+        newStudyDescription,
+        newDataTypes,
+        newPIName,
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    assertEquals(newStudyName, updatedStudy.getName());
+    assertEquals(newStudyDescription, updatedStudy.getDescription());
+    assertEquals(newPIName, updatedStudy.getPiName());
+    assertEquals(newDataTypes, updatedStudy.getDataTypes());
+  }
+
+  @Test
+  public void testUpdateStudyWithPropUpdates() throws Exception {
+    Study study = createStudy(null);
+    List<StudyProperty> props = List.copyOf(study.getProperties());
+
+    StudyProperty newProp = new StudyProperty();
+    newProp.setKey(RandomStringUtils.randomAlphabetic(10));
+    newProp.setType(PropertyType.String);
+    newProp.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    String newPropValue = "New Study Prop Value";
+    StudyProperty prop1 = props.get(0);
+    StudyProperty prop2 = props.get(1);
+    prop1.setValue(newPropValue);
+
+    // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.of(newProp, prop1),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    // Updated prop
+    Optional<StudyProperty> updatedProp1 = updatedStudy.getProperties().stream().filter(p -> p.getStudyPropertyId().equals(prop1.getStudyPropertyId())).findFirst();
+    assertTrue(updatedProp1.isPresent());
+    assertEquals(newPropValue, updatedProp1.get().getValue());
+    // Added prop
+    Optional<StudyProperty> addedNewProp = updatedStudy.getProperties().stream().filter(p -> newProp.getValue().equals(p.getValue())).findFirst();
+    assertTrue(addedNewProp.isPresent());
+    // Deleted Prop
+    assertFalse(updatedStudy.getProperties().contains(prop2));
+  }
+
+  @Test
+  public void testUpdateStudyWithDatasetUpdates() throws Exception {
+    Study study = createStudy(null);
+    Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).get(0);
+
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of()
+    );
+
+    String newDatasetName = "New Dataset Name";
+    DatasetUpdate datasetUpdate = new DatasetUpdate(
+        dataset.getDataSetId(),
+        newDatasetName,
+        study.getCreateUserId(),
+        true,
+        !dataset.getActive(),
+        dataset.getDacId(),
+        List.copyOf(dataset.getProperties()),
+        List.of()
+    );
+
+    String newInsertName = "New Dataset Insert Name";
+    DatasetInsert datasetInsert = new DatasetInsert(
+        newInsertName,
+        dataset.getDacId(),
+        new DataUseBuilder().setGeneralUse(true).build(),
+        study.getCreateUserId(),
+        List.of(),
+        List.of()
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of(datasetInsert));
+    List<Dataset> updatedDatasets = datasetDAO.findDatasetsByIdList(new ArrayList<>(updatedStudy.getDatasetIds()));
+    assertTrue(updatedDatasets.contains(dataset));
+    assertEquals(updatedStudy.getDatasetIds().size(), updatedDatasets.size());
+    assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newDatasetName)));
+    assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newInsertName)));
+  }
+
+  @Test
+  public void testUpdateStudyWithFileUpdates() throws Exception {
+    FileStorageObject fso1 = new FileStorageObject();
+    fso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    fso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject fso2 = new FileStorageObject();
+    fso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    fso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+    Study study = createStudy(List.of(fso1, fso2));
+
+    FileStorageObject updatedFso1 = new FileStorageObject();
+    updatedFso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    updatedFso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    updatedFso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    updatedFso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject updatedFso2 = new FileStorageObject();
+    updatedFso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    updatedFso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    updatedFso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    updatedFso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    StudyUpdate studyUpdate = new StudyUpdate(
+        study.getName(),
+        study.getStudyId(),
+        study.getDescription(),
+        study.getDataTypes(),
+        study.getPiName(),
+        !study.getPublicVisibility(),
+        study.getCreateUserId(),
+        List.copyOf(study.getProperties()),
+        List.of(updatedFso1, updatedFso2)
+    );
+
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    assertNotNull(updatedStudy.getAlternativeDataSharingPlan());
+    assertEquals(updatedFso1.getFileName(), updatedStudy.getAlternativeDataSharingPlan().getFileName());
+    assertTrue(updatedStudy.getDatasetIds().stream().findFirst().isPresent());
+    Dataset dataset = datasetDAO.findDatasetById(updatedStudy.getDatasetIds().stream().findFirst().get());
+    assertNotNull(dataset.getNihInstitutionalCertificationFile());
+    assertEquals(updatedFso2.getFileName(), dataset.getNihInstitutionalCertificationFile().getFileName());
+  }
+
+
+  /**
+   * Helper method to create a study with two props and one dataset
+   * @param fso Optional FSO to use as part of the study insert
+   * @return Study
+   * @throws Exception The exception
+   */
+  private Study createStudy(List<FileStorageObject> fso) throws Exception {
+    Dac dac = createDac();
+    User user = createUser();
+
+    StudyProperty prop1 = new StudyProperty();
+    prop1.setKey(RandomStringUtils.randomAlphabetic(10));
+    prop1.setType(PropertyType.String);
+    prop1.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    StudyProperty prop2 = new StudyProperty();
+    prop2.setKey(RandomStringUtils.randomAlphabetic(10));
+    prop2.setType(PropertyType.String);
+    prop2.setValue(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        List.of(RandomStringUtils.randomAlphabetic(10)),
+        RandomStringUtils.randomAlphabetic(10),
+        true,
+        user.getUserId(),
+        List.of(prop1, prop2),
+        Objects.isNull(fso) ? List.of() : fso);
+
+    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
+        RandomStringUtils.randomAlphabetic(20),
+        dac.getDacId(),
+        new DataUseBuilder().setGeneralUse(true).build(),
+        user.getUserId(),
+        List.of(),
+        List.of());
+
+    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
+        List.of(datasetInsert));
+    List<Dataset> createdDatasets = datasetDAO.findDatasetsByIdList(createdIds);
+    return createdDatasets.get(0).getStudy();
   }
 
   private Dataset createDataset() {
