@@ -10,13 +10,13 @@ public class DataUseResponseMatchingObject {
 
   public DataUseRequestMatchingObject matchPair;
 
-  public List<String> failureReasons;
+  public List<String> rationale;
 
   public DataUseResponseMatchingObject(DataUseMatchResultType result,
-      DataUseRequestMatchingObject matchPair, List<String> failureReasons) {
+      DataUseRequestMatchingObject matchPair, List<String> rationale) {
     this.result = result;
     this.matchPair = matchPair;
-    this.failureReasons = failureReasons;
+    this.rationale = rationale;
   }
 
   public DataUseMatchResultType getResult() {
@@ -39,11 +39,11 @@ public class DataUseResponseMatchingObject {
     this.matchPair = matchPair;
   }
 
-  public List<String> getFailureReasons() {
-    return failureReasons;
+  public List<String> getRationale() {
+    return rationale;
   }
 
-  public void setFailureReasons(List<String> failureReasons) {
-    this.failureReasons = failureReasons;
+  public void setRationale(List<String> rationale) {
+    this.rationale = rationale;
   }
 }

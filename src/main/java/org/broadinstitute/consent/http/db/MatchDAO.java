@@ -20,21 +20,21 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("SELECT m.*, r.* " +
       " FROM match_entity m " +
-      " LEFT JOIN match_failure_reason r on r.match_entity_id = m.matchid " +
+      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
       " WHERE m.consent = :consentId ")
   List<Match> findMatchesByConsentId(@Bind("consentId") String consentId);
 
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("SELECT m.*, r.* " +
       " FROM match_entity m " +
-      " LEFT JOIN match_failure_reason r on r.match_entity_id = m.matchid " +
+      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
       " WHERE m.purpose = :purposeId ")
   List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("SELECT m.*, r.* " +
       " FROM match_entity m " +
-      " LEFT JOIN match_failure_reason r on r.match_entity_id = m.matchid " +
+      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
       " WHERE m.purpose = :purposeId AND m.consent = :consentId ")
   Match findMatchByPurposeIdAndConsentId(@Bind("purposeId") String purposeId,
       @Bind("consentId") String consentId);
@@ -42,14 +42,14 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("SELECT m.*, r.* " +
       " FROM match_entity m " +
-      " LEFT JOIN match_failure_reason r on r.match_entity_id = m.matchid " +
+      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
       " WHERE m.matchid = :id ")
   Match findMatchById(@Bind("id") Integer id);
 
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       " SELECT match_entity.*, r.* FROM match_entity " +
-          " LEFT JOIN match_failure_reason r on r.match_entity_id = match_entity.matchid " +
+          " LEFT JOIN match_rationale r on r.match_entity_id = match_entity.matchid " +
           " INNER JOIN (" +
           "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest "
           +
@@ -64,7 +64,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("SELECT m.*, r.* " +
       " FROM match_entity m " +
-      " LEFT JOIN match_failure_reason r on r.match_entity_id = m.matchid " +
+      " LEFT JOIN match_rationale r on r.match_entity_id = m.matchid " +
       " WHERE m.purpose IN (<purposeId>) ")
   List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
 
@@ -83,8 +83,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       @Bind("algorithmVersion") String algorithmVersion,
       @Bind("abstain") Boolean abstain);
 
-  @SqlUpdate("INSERT INTO match_failure_reason (match_entity_id, failure_reason) VALUES (:matchId, :reason) ")
-  void insertFailureReason(@Bind("matchId") Integer matchId, @Bind("reason") String reason);
+  @SqlUpdate("INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")
+  void insertRationale(@Bind("matchId") Integer matchId, @Bind("rationale") String rationale);
 
   @SqlUpdate("DELETE FROM match_entity WHERE consent = :consentId")
   void deleteMatchesByConsentId(@Bind("consentId") String consentId);
@@ -95,11 +95,11 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
   void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
 
-  @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE consent IN (<consentIds>)) ")
-  void deleteFailureReasonsByConsentIds(@BindList("consentIds") List<String> consentIds);
+  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE consent IN (<consentIds>)) ")
+  void deleteRationalesByConsentIds(@BindList("consentIds") List<String> consentIds);
 
-  @SqlUpdate("DELETE FROM match_failure_reason WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
-  void deleteFailureReasonsByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
+  void deleteRationalesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
 
   @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
   Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
