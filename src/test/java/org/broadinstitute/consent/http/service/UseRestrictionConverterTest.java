@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,11 +10,16 @@ import static org.mockserver.model.HttpResponse.response;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
+import java.util.List;
+import java.util.UUID;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -232,6 +238,183 @@ public class UseRestrictionConverterTest implements WithMockServer {
     assertTrue(dataUse.getControlSetOption().equalsIgnoreCase("Yes"));
     assertTrue(dataUse.getPopulationOriginsAncestry());
     assertTrue(dataUse.getHmbResearch());
+  }
+
+  @Test
+  public void testParseDataUsePurposeEmpty() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNull(dataUse.getGeneralUse());
+    assertNull(dataUse.getMethodsResearch());
+    assertNull(dataUse.getControlSetOption());
+    assertNull(dataUse.getDiseaseRestrictions());
+    assertNull(dataUse.getCommercialUse());
+    assertNull(dataUse.getGender());
+    assertNull(dataUse.getPediatric());
+    assertNull(dataUse.getPopulationOriginsAncestry());
+    assertNull(dataUse.getHmbResearch());
+    assertNull(dataUse.getOther());
+    assertNull(dataUse.getOtherRestrictions());
+    assertNull(dataUse.getSecondaryOther());
+  }
+
+  @Test
+  public void testParseDataUsePurposeMethods() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setMethods(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getMethodsResearch());
+  }
+
+  @Test
+  public void testParseDataUsePurposePopulation() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPopulation(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPopulationStructure());
+  }
+
+  @Test
+  public void testParseDataUsePurposeControls() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setControls(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNotNull(dataUse.getControlSetOption());
+  }
+
+  @Test
+  public void testParseDataUsePurposeDisease() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    OntologyEntry entry = new OntologyEntry();
+    entry.setId("id");
+    entry.setDefinition("description");
+    entry.setLabel("label");
+    dar.getData().setOntologies(List.of(entry));
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNotNull(dataUse.getDiseaseRestrictions());
+  }
+
+  @Test
+  public void testParseDataUsePurposeCommercial() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setForProfit(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getCommercialUse());
+  }
+
+  @Test
+  public void testParseDataUsePurposeGender() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setOneGender(true);
+    dar.getData().setGender("F");
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNotNull(dataUse.getGender());
+  }
+
+  @Test
+  public void testParseDataUsePurposePediatric() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPediatric(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPediatric());
+  }
+
+  @Test
+  public void testParseDataUsePurposePOA() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPoa(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPopulationOriginsAncestry());
+  }
+
+  @Test
+  public void testParseDataUsePurposeHMB() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setHmb(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getHmbResearch());
+  }
+
+  @Test
+  public void testParseDataUsePurposeOther1() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setOther(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getOtherRestrictions());
+  }
+
+  @Test
+  public void testParseDataUsePurposeOther2() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setOtherText("other");
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNotNull(dataUse.getOther());
+  }
+
+  @Test
+  public void testParseDataUseControl() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setControls(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getControls());
+    assertEquals("Yes", dataUse.getControlSetOption());
+  }
+
+  @Test
+  public void testParseDataUsePopulation() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPopulation(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPopulationStructure());
+    assertTrue(dataUse.getPopulation());
+  }
+
+  @Test
+  public void testParseDataUseNotHealth() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setNotHealth(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getNotHealth());
+    assertTrue(dataUse.getNonBiomedical());
+  }
+
+  private DataAccessRequest createDataAccessRequest() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setReferenceId(dar.getReferenceId());
+    dar.setData(data);
+    return dar;
   }
 
 }

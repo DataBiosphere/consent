@@ -27,8 +27,10 @@ public class DataUse {
   private Boolean methodsResearch;
   private String aggregateResearch;
   private String controlSetOption;
+  private boolean controls;
   private String gender;
   private Boolean pediatric;
+  private boolean population;
   private List<String> populationRestrictions;
   private Boolean otherRestrictions;
   private String dateRestriction;
@@ -48,6 +50,7 @@ public class DataUse {
   private Boolean stigmatizeDiseases;
   private Boolean vulnerablePopulations;
   private Boolean psychologicalTraits;
+  private Boolean notHealth;
   private Boolean nonBiomedical;
   private Boolean manualReview;
   private Boolean geneticStudiesOnly;
@@ -361,6 +364,30 @@ public class DataUse {
     this.publicationMoratorium = publicationMoratorium;
   }
 
+  public boolean getControls() {
+    return controls;
+  }
+
+  public void setControls(boolean controls) {
+    this.controls = controls;
+  }
+
+  public boolean getPopulation() {
+    return population;
+  }
+
+  public void setPopulation(boolean population) {
+    this.population = population;
+  }
+
+  public Boolean getNotHealth() {
+    return notHealth;
+  }
+
+  public void setNotHealth(Boolean notHealth) {
+    this.notHealth = notHealth;
+  }
+
   @Override
   public String toString() {
     return new GsonBuilder().create().toJson(this);
@@ -427,7 +454,10 @@ public class DataUse {
         && Objects.equal(getGenomicResults(), dataUse.getGenomicResults())
         && Objects.equal(getGenomicSummaryResults(), dataUse.getGenomicSummaryResults())
         && Objects.equal(getCollaborationInvestigators(), dataUse.getCollaborationInvestigators())
-        && Objects.equal(getPublicationMoratorium(), dataUse.getPublicationMoratorium());
+        && Objects.equal(getPublicationMoratorium(), dataUse.getPublicationMoratorium())
+        && Objects.equal(getControls(), dataUse.getControls())
+        && Objects.equal(getPopulation(), dataUse.getPopulation())
+        && Objects.equal(getNotHealth(), dataUse.getNotHealth());
   }
 
   @Override
@@ -446,6 +476,6 @@ public class DataUse {
         getManualReview(),
         getGeneticStudiesOnly(), getPublicationResults(), getGenomicResults(),
         getGenomicSummaryResults(), getCollaborationInvestigators(),
-        getPublicationMoratorium());
+        getPublicationMoratorium(), getControls(), getPopulation(), getNotHealth());
   }
 }
