@@ -17,6 +17,7 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration.Dynamic;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -26,11 +27,14 @@ import java.util.Objects;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.Scope;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.ui.LoggerUIService;
+import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
 import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
@@ -293,6 +297,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
   private void initializeLiquibase(ConsentConfiguration config)
       throws LiquibaseException, SQLException {
+    // Disable Liquibase's System.out logging.
+    // See https://github.com/liquibase/liquibase/issues/2396 for more info
+    try {
+      Field field = Scope.getCurrentScope().getClass().getDeclaredField("values");
+      field.setAccessible(true);
+      SmartMap values = ((SmartMap) field.get(Scope.getCurrentScope()));
+      values.set("ui", new LoggerUIService());
+    } catch (IllegalAccessException | NoSuchFieldException ignored) {
+    }
     Connection connection = DriverManager.getConnection(
         config.getDataSourceFactory().getUrl(),
         config.getDataSourceFactory().getUser(),
