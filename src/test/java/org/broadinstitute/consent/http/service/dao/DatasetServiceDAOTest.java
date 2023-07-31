@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.Gson;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,7 +31,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -87,15 +85,12 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(insert.name(), created.getName());
     assertEquals(insert.dacId(), created.getDacId());
 
-    assertEquals(3, created.getProperties().size());
+    assertEquals(2, created.getProperties().size());
 
     DatasetProperty createdProp1 = created.getProperties().stream()
         .filter((p) -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst().get();
     DatasetProperty createdProp2 = created.getProperties().stream()
         .filter((p) -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst().get();
-    DatasetProperty datasetNameProp = created.getProperties().stream()
-        .filter((p) -> p.getPropertyName().equals("Dataset Name")).findFirst().get();
-    assertNotNull(datasetNameProp);
 
     assertEquals(created.getDataSetId(), createdProp1.getDataSetId());
     assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
@@ -157,7 +152,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(insert1.name(), dataset1.getName());
     assertEquals(insert1.dacId(), dataset1.getDacId());
     assertEquals(true, dataset1.getDataUse().getGeneralUse());
-    assertEquals(1, dataset1.getProperties().size()); // dataset name property auto created
+    assertNull(dataset1.getProperties());
     assertNull(dataset1.getNihInstitutionalCertificationFile());
 
     Optional<Dataset> ds2Optional = datasets.stream()
@@ -168,7 +163,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(insert2.name(), dataset2.getName());
     assertEquals(insert2.dacId(), dataset2.getDacId());
     assertEquals(true, dataset2.getDataUse().getIllegalBehavior());
-    assertEquals(2, dataset2.getProperties().size());
+    assertEquals(1, dataset2.getProperties().size());
     assertNull(dataset2.getNihInstitutionalCertificationFile());
   }
 
@@ -643,12 +638,20 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
         List.of(prop1, prop2),
         Objects.isNull(fso) ? List.of() : fso);
 
+    DatasetProperty datasetProperty = new DatasetProperty();
+    datasetProperty.setSchemaProperty(RandomStringUtils.randomAlphabetic(10));
+    datasetProperty.setPropertyName(RandomStringUtils.randomAlphabetic(10));
+    datasetProperty.setPropertyType(PropertyType.Number);
+    datasetProperty.setPropertyKey(1);
+    datasetProperty.setPropertyValue(new Random().nextInt());
+    datasetProperty.setCreateDate(new Date());
+
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
         RandomStringUtils.randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
-        List.of(),
+        List.of(datasetProperty),
         List.of());
 
     List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
