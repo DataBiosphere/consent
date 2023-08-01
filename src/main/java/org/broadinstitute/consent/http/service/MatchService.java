@@ -65,11 +65,12 @@ public class MatchService implements ConsentLogger {
           m.getMatch(),
           m.getFailed(),
           new Date(),
-          m.getAlgorithmVersion()
+          m.getAlgorithmVersion(),
+          m.getAbstain()
       );
-      if (!m.getFailureReasons().isEmpty()) {
-        m.getFailureReasons().forEach(f -> {
-          matchDAO.insertFailureReason(id, f);
+      if (!m.getRationales().isEmpty()) {
+        m.getRationales().forEach(f -> {
+          matchDAO.insertRationale(id, f);
         });
       }
     });
@@ -109,12 +110,12 @@ public class MatchService implements ConsentLogger {
   }
 
   public void removeMatchesForPurpose(String purposeId) {
-    matchDAO.deleteFailureReasonsByPurposeIds(List.of(purposeId));
+    matchDAO.deleteRationalesByPurposeIds(List.of(purposeId));
     matchDAO.deleteMatchesByPurposeId(purposeId);
   }
 
   public void removeMatchesForConsent(String consentId) {
-    matchDAO.deleteFailureReasonsByConsentIds(List.of(consentId));
+    matchDAO.deleteRationalesByConsentIds(List.of(consentId));
     matchDAO.deleteMatchesByConsentId(consentId);
   }
 
@@ -177,7 +178,7 @@ public class MatchService implements ConsentLogger {
       DataUseResponseMatchingObject entity = new Gson().fromJson(stringEntity,
           DataUseResponseMatchingObject.class);
       match = matchSuccess(datasetId, darReferenceId, entity.getResult(),
-          entity.getFailureReasons());
+          entity.getRationale());
     } else {
       match = matchFailure(datasetId, darReferenceId, List.of());
     }

@@ -126,4 +126,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2023-06-08-add-translated-data-use.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-07-27-match-rationale.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
