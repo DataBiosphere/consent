@@ -1124,6 +1124,8 @@ paths:
     $ref: './paths/getDatasetsFromUserDacs.yaml'
   /api/user/me/dac/datasets/v2:
     $ref: './paths/getDatasetsFromUserDacsV2.yaml'
+  /api/user/me/researcher/datasets:
+    $ref: './paths/getApprovedDatasets.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
   /api/user/institution/unassigned:
