@@ -15,7 +15,7 @@ get:
           examples:
             example:
               summary: Example output
-              application/json:
+              value:
               [
                 {
                   "darId": "sample1",

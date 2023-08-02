@@ -13,6 +13,6 @@ properties:
   dacName:
     type: string
     description: The dac name
-  approvalDtae:
+  approvalDate:
     type: string
     description: the approval date
