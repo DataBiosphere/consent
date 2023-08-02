@@ -255,6 +255,16 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
+  public void testValidateQueryWithFromAndSize() throws IOException {
+    String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    mockElasticSearchResponse(200, "{\"valid\":true}");
+
+    initService();
+    assertTrue(service.validateQuery(query));
+  }
+
+  @Test
   public void testValidateQueryEmpty() throws IOException {
     String query = "{}";
 
