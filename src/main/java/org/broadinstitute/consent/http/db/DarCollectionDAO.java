@@ -300,6 +300,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
             + "AND dar.draft = false"
             + "AND final_access_vote.last_vote = TRUE"
             + "AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
-    DarCollection getAllApprovedDatasets(@Bind("userId") Integer userId);
+    DarCollection getAllApprovedDatasets(Integer userId);
 
 }

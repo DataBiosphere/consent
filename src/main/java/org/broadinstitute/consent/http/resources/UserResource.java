@@ -526,4 +526,19 @@ public class UserResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/me/researcher/datasets")
+  @PermitAll
+  public Response getApprovedDatasets(@Auth AuthUser authUser) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset dataset = datasetService.getAllApprovedDatasets(user.getUserId());
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+
 }
