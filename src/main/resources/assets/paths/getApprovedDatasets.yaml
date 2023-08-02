@@ -9,9 +9,32 @@ get:
       content:
         application/json:
           schema:
-            type: object
+            type: array
             items:
-              $ref: '../schemas/Dataset.yaml'
+              $ref: '../schemas/ApprovedDataset.yaml'
+          examples:
+            example:
+              summary: Example output
+              application/json:
+              [
+                {
+                  "darId": "sample1",
+                  "datasetId": 1,
+                  "datasetName": "sample1",
+                  "dacName": "sample1",
+                  "approvalDate": "sample1"
+
+                },
+                {
+                  "darId": "sample2",
+                  "datasetId": 2,
+                  "datasetName": "sample2",
+                  "dacName": "sample2",
+                  "approvalDate": "sample2"
+
+                },
+              ]
+                
     404:
       description: User not found or no datasets found for user
     500:
