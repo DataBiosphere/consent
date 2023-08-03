@@ -95,10 +95,15 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public boolean validateQuery(String query) throws IOException {
+    // Remove `size` and `from` parameters from query, otherwise validation will fail
+    var modifiedQuery = query
+        .replaceAll("\"size\": ?\\d+,?", "")
+        .replaceAll("\"from\": ?\\d+,?", "");
+
     Request validateRequest = new Request(
         HttpMethod.GET,
         "/" + esConfig.getDatasetIndexName() + "/_validate/query");
-    validateRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    validateRequest.setEntity(new NStringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
     Response response = performRequest(validateRequest);
 
     var entity = response.getEntity().toString();
