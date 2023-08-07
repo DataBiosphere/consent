@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -254,52 +256,5 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
      */
     @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
     void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
-
-    // @RegisterBeanMapper(value = User.class, prefix = "u")
-    // @RegisterBeanMapper(value = Institution.class, prefix = "i")
-    // @RegisterBeanMapper(value = DarCollection.class)
-    // @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-    // @RegisterBeanMapper(value = Election.class, prefix = "e")
-    // @RegisterBeanMapper(value = Vote.class, prefix = "v")
-    // @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-    // @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-    @UseRowReducer(DarCollectionReducer.class) 
-    @SqlQuery("SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, vote_view.update_date"
-            + "FROM data_access_request dar"
-            + "INNER JOIN dar_collection c on dar.collection_id = c.collection_id"
-            + "INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id"
-            + "INNER JOIN dataset d on d.dataset_id = dd.dataset_id"
-            + "LEFT JOIN dac dac on dac.dac_id = d.dac_id"
-            + "INNER JOIN ("
-            + "SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)"
-            + "OVER("
-            + "PARTITION BY e.reference_id"
-            + "ORDER BY v.createdate"
-            + "RANGE BETWEEN"
-            + "UNBOUNDED PRECEDING AND"
-            + "UNBOUNDED FOLLOWING"
-            + ") last_vote"
-            + "FROM election e"
-            + "INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL"
-            + "INNER JOIN data_access_request dar on dar.reference_id = e.reference_id AND dar.user_id = :userId"
-            + "INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id"
-            + "INNER JOIN dataset d on d.dataset_id = dd.dataset_id"
-            + "WHERE e.dataset_id = d.dataset_id"
-            + "AND LOWER(e.election_type) = 'dataaccess'"
-            + "AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id"
-            + "INNER JOIN election e ON e.dataset_id = d.dataset_id AND e.reference_id = dar.reference_id AND LOWER(e.election_type) = 'dataaccess'"
-            + "INNER JOIN vote v ON v.electionid = e.election_id"
-            + "INNER JOIN "
-            + "(SELECT voteid, MAX(updatedate) update_date"
-            + "FROM vote"
-            + "WHERE type = 'FINAL'"
-            + " --	 AND updatedate IS NOT NULL"
-            + "AND vote = true"
-            + "GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid"
-            + "WHERE dar.user_id = 3351"
-            + "AND dar.draft = false"
-            + "AND final_access_vote.last_vote = TRUE"
-            + "AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
-    DarCollection getAllApprovedDatasets(Integer userId);
 
 }

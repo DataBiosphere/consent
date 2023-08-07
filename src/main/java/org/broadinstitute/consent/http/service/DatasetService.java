@@ -598,4 +598,15 @@ public class DatasetService {
     }
 
   }
+
+  public List<Dataset> getApprovedDatasets(Integer userId) {
+    try {
+      List<Dataset> approvedDatasets = datasetDAO.getApprovedDatasets(userId);
+      return approvedDatasets;
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+      throw e;
+    }
+  }
+
 }
