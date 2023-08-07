@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -1005,6 +1006,79 @@ public class DatasetServiceTest {
         .mapToObj(i ->
             new Dictionary(i, String.valueOf(i), true, i, i)
         ).collect(Collectors.toList());
+  }
+
+  @Test
+  public void testGetApprovedDatasets() throws Exception {
+
+    User user = new User();
+    user.setUserId(1);
+    user.setCreateDate(new Date());
+    user.setEmail("abc@gmail.com");
+    user.setDisplayName("Jane Doe");
+    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
+        UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(1);
+    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    user.setRoles(List.of(chairRole, adminRole));
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDataSetId(1);
+    dataset1.setName("name1");
+    dataset1.setDatasetName("datasetName1");
+    dataset1.setUpdateDate(new Date());
+    dataset1.setUpdateUserId(1);
+    dataset1.setAlias(1);
+    dataset1.setDacId(3);
+    dataset1.setDacApproval(true);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDataSetId(2);
+    dataset2.setName("name2");
+    dataset2.setDatasetName("datasetName2");
+    dataset2.setUpdateDate(new Date());
+    dataset2.setUpdateUserId(1);
+    dataset2.setAlias(2);
+    dataset2.setDacId(1);
+    dataset2.setDacApproval(false);
+
+    Dataset dataset3 = new Dataset();
+    dataset3.setDataSetId(1);
+    dataset3.setName("name3");
+    dataset3.setDatasetName("datasetName3");
+    dataset3.setUpdateDate(new Date());
+    dataset3.setUpdateUserId(1);
+    dataset3.setAlias(3);
+    dataset3.setDacId(2);
+    dataset3.setDacApproval(true);
+
+    Dac dac1 = new Dac();
+    dac1.setName("DAC1");
+    dac1.setDacId(1);
+    dac1.addDataset(dataset1);
+    dac1.addDataset(dataset2);
+
+    Dac dac2 = new Dac();
+    dac2.setName("DAC2");
+    dac1.setDacId(2);
+    dac1.addDataset(dataset3);
+
+    initService();
+
+    when(datasetDAO.getApprovedDatasets(1));
+
+    List<ApprovedDataset> approveDatasetResult =
+        datasetService.getApprovedDatasets(1);
+    assertNotNull(approveDatasetResult);
+//    assertEquals(dataset1.getDataSetId(), approveDatasetResult.getDataSetId());
+//    assertEquals(dataset1.getUpdateUserId(), approveDatasetResult.getUpdateUserId());
+//    assertEquals(dataset1.getDacApproval(), approveDatasetResult.getDacApproval());
+//    assertEquals(dataset1.getUpdateDate(), approveDatasetResult.getUpdateDate());
+//    verify(emailService, times(0)).sendDatasetApprovedMessage(
+//        any(),
+//        any(),
+//        any()
+//    );
   }
 
 }

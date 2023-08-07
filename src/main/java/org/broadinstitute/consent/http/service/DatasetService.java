@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -599,9 +600,9 @@ public class DatasetService {
 
   }
 
-  public List<Dataset> getApprovedDatasets(Integer userId) {
+  public List<ApprovedDataset> getApprovedDatasets(Integer userId) {
     try {
-      List<Dataset> approvedDatasets = datasetDAO.getApprovedDatasets(userId);
+      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(userId);
       return approvedDatasets;
     } catch (Exception e) {
       logger.error(e.getMessage());
