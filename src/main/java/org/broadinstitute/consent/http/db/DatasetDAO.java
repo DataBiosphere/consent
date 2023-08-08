@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
@@ -871,6 +872,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate("DELETE FROM consent_associations WHERE dataset_id = :datasetId")
   void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
+  @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery("""
   SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, vote_view.update_date
   FROM data_access_request dar

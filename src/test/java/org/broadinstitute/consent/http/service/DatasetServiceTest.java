@@ -46,6 +46,8 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -1063,10 +1065,14 @@ public class DatasetServiceTest {
     dac1.setDacId(2);
     dac1.addDataset(dataset3);
 
+    DataAccessRequest dar1 = new DataAccessRequest();
+    dar1.setDatasetIds(List.of(1, 2, 3));
+    dar1.setUserId(1);
+    dar1.setId(1);
+
     initService();
 
     when(datasetDAO.getApprovedDatasets(1));
-
     List<ApprovedDataset> approveDatasetResult =
         datasetService.getApprovedDatasets(1);
     assertNotNull(approveDatasetResult);

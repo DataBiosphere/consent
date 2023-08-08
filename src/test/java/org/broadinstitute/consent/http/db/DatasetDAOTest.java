@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
@@ -20,9 +21,13 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -34,9 +39,12 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -1127,6 +1135,42 @@ public class DatasetDAOTest extends DAOTestHelper {
         ds.getStudy().getDatasetIds().contains(otherDsOnStudy.getDataSetId()));
   }
 
+  @Test
+  public void testGetApprovedDatasets() throws Exception {
+
+    User user = createUser();
+
+    Dataset dataset1 = createDataset(true);
+    Dataset dataset2 = createDataset(false);
+    Dataset dataset3 = createDataset(true);
+
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+
+    Dac dac1 = insertDac();
+    datasetDAO.updateDataset(dataset1.getDataSetId(), dataset1.getDatasetName(), timestamp,
+        user.getUserId(), false, dac1.getDacId());
+    datasetDAO.updateDataset(dataset2.getDataSetId(), dataset2.getDatasetName(), timestamp,
+        user.getUserId(), false, dac1.getDacId());
+
+    Dac dac2 = insertDac();
+    datasetDAO.updateDataset(dataset3.getDataSetId(), dataset3.getDatasetName(), timestamp,
+        user.getUserId(), false, dac2.getDacId());
+
+    DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
+    DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset2, dataset3));
+
+    String firstKey1 = dar1.getDars().keySet().stream().findFirst().get();
+    String firstKey2 = dar2.getDars().keySet().stream().findFirst().get();
+
+    Election election1 = createDataAccessElectionWithVotes(firstKey1, dataset1.getDataSetId(), user.getUserId(), true);
+    Election election2 = createDataAccessElectionWithVotes(firstKey2, dataset2.getDataSetId(), user.getUserId(), true);
+    Election election3 = createDataAccessElectionWithVotes(firstKey2, dataset3.getDataSetId(), user.getUserId(), false);
+
+    List<ApprovedDataset> approveDatasetResult =
+        datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approveDatasetResult);
+  }
+
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
       List<Dataset> datasets) {
     String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
@@ -1345,5 +1389,34 @@ public class DatasetDAOTest extends DAOTestHelper {
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
+
+
+  private Dataset createDataset(boolean dacApproval) {
+    User user = createUser();
+    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    Timestamp now = new Timestamp(new Date().getTime());
+    Instant instant = Instant.now();
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+        dataUse.toString(), null);
+    datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private Election createDataAccessElectionWithVotes(String referenceId, Integer datasetId, Integer userId, boolean approval) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        datasetId
+    );
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    voteDAO.updateVote(approval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+    return electionDAO.findElectionById(electionId);
+  }
+
 
 }
