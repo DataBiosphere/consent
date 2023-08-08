@@ -905,7 +905,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   WHERE type = 'FINAL'
   AND vote = true
   GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid
-  WHERE dar.user_id = 3351
+  D
   AND dar.draft = false
   AND final_access_vote.last_vote = TRUE
   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
