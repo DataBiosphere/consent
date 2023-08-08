@@ -257,3 +257,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
 
 }
+
+
+
+
+
