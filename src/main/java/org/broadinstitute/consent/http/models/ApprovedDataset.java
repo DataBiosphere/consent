@@ -1,21 +1,24 @@
 package org.broadinstitute.consent.http.models;
 
+import java.util.Date;
+
 public class ApprovedDataset {
 
   private int alias;
   private String darCode;
   private String datasetName;
   private String dacName;
-  private String approvalDate;
+  private Date approvalDate;
   private String datasetIdentifier;
 
   public ApprovedDataset(int alias, String darId, String datasetName, String dacName,
-      String approvalDate) {
+      Date approvalDate) {
     this.alias = alias;
     this.darCode = darId;
     this.datasetName = datasetName;
     this.dacName = dacName;
     this.approvalDate = approvalDate;
+    this.datasetIdentifier = Dataset.parseAliasToIdentifier(alias);
   }
 
   public int getAlias() {
@@ -50,11 +53,11 @@ public class ApprovedDataset {
     this.dacName = dacName;
   }
 
-  public String getApprovalDate() {
+  public Date getApprovalDate() {
     return approvalDate;
   }
 
-  public void setApprovalDate(String approvalDate) {
+  public void setApprovalDate(Date approvalDate) {
     this.approvalDate = approvalDate;
   }
 
