@@ -443,20 +443,6 @@ public class DatasetResource extends Resource {
   }
 
   @GET
-  @Deprecated // Use /v2/{datasetId}
-  @Path("/{datasetId}")
-  @Produces("application/json")
-  @PermitAll
-  public Response describeDataSet(@PathParam("datasetId") Integer datasetId) {
-    try {
-      DatasetDTO datasetDTO = datasetService.getDatasetDTO(datasetId);
-      return Response.ok(datasetDTO, MediaType.APPLICATION_JSON).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
   @Path("/v2/{datasetId}")
   @Produces("application/json")
   @PermitAll
