@@ -1138,6 +1138,7 @@ public class DatasetDAOTest extends DAOTestHelper {
   @Test
   public void testGetApprovedDatasets() throws Exception {
 
+    // user with approved and unapproved datasets
     User user = createUser();
 
     Dataset dataset1 = createDataset(false);
@@ -1201,6 +1202,44 @@ public class DatasetDAOTest extends DAOTestHelper {
     // election needs to be closed automatically when the final vote is cast: election status = true
     // dacApproval should automatically change when the final election vote is true
     // is it good practice to leave it to the user?
+
+  }
+
+  @Test
+  public void testGetApprovedDatasetsWhenNone() throws Exception {
+
+    // user with unapproved datasets but no approved datasets
+    User user = createUser();
+
+    Dataset dataset1 = createDataset(false);
+    Dataset dataset2 = createDataset(true);
+
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+
+    Dac dac1 = insertDac();
+    datasetDAO.updateDataset(dataset1.getDataSetId(), dataset1.getDatasetName(), timestamp,
+        user.getUserId(), false, dac1.getDacId());
+    datasetDAO.updateDataset(dataset2.getDataSetId(), dataset2.getDatasetName(), timestamp,
+        user.getUserId(), false, dac1.getDacId());
+
+    DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1, dataset2));
+
+    String firstKey1 = dar1.getDars().keySet().stream().findFirst().get();
+
+    createDataAccessElectionWithVotes(firstKey1, dataset1.getDataSetId(), user.getUserId(), false);
+    createDataAccessElectionWithVotes(firstKey1, dataset2.getDataSetId(), user.getUserId(), false);
+
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertTrue(approvedDatasets.size() == 0);
+  }
+
+  @Test
+  public void testGetApprovedDatasetsWhenEmpty() throws Exception {
+
+    // user with no datasets
+    User user = createUser();
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertTrue(approvedDatasets.size() == 0);
 
   }
 
