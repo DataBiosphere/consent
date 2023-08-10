@@ -548,6 +548,23 @@ paths:
               schema:
                 type: string
                 format: binary
+  /api/dataset:
+    get:
+      summary: Get Datasets
+      description: Returns Dataset list filtered by authenticated user.
+      deprecated: true
+      tags:
+        - Dataset
+      responses:
+        200:
+          description: A list of Datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas/Dataset.yaml'
+
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
