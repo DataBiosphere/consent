@@ -136,7 +136,6 @@ public class DataResourceTestData {
             }],
             "hmb": true,
             "numberOfParticipants": 2,
-            "consentGroupName": "name 1",
             "dataAccessCommitteeId": 1,
             "dataLocation": "location",
             "url": "https://asdf.com"
@@ -148,7 +147,6 @@ public class DataResourceTestData {
               "functionalEquivalence": "equivalence"
             }],
             "numberOfParticipants": 2,
-            "consentGroupName": "name 1",
             "dataAccessCommitteeId": 1,
             "dataLocation": "location",
             "url": "https://asdf.com"
