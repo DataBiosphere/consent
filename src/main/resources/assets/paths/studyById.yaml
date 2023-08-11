@@ -41,6 +41,16 @@ put:
       and institutional certification files. The registration schema is always required. If a file 
       is also provided, then alternative data sharing information is required in the registration 
       schema.
+      
+      The following fields are not modifiable:
+      * Study Name
+      * Data Submitter Name/Email
+      * Primary Data Use
+      * Secondary Data Use
+      * Consent Group Name
+      
+      Additionally, existing Consent Groups cannot be removed from the study, but new ones can be
+      added.
     content:
       multipart/form-data:
         schema:

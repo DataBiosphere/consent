@@ -236,7 +236,7 @@ public class DatasetResource extends Resource {
       if (Objects.nonNull(registration.getDataSubmitterUserId()) &&!registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
         throw new BadRequestException("Invalid change to Data Submitter");
       }
-      // Data use changes are not allowed for existing datasets
+      // Data use and name changes are not allowed for existing datasets
       List<ConsentGroup> invalidConsentGroups = registration.getConsentGroups()
           .stream()
           .filter(cg -> Objects.nonNull(cg.getDatasetId()))

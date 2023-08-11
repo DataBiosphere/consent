@@ -766,6 +766,7 @@ public class ConsentGroup {
 
   public boolean isInvalidForUpdate() {
     return Objects.nonNull(this.openAccess) ||
+        Objects.nonNull(this.consentGroupName) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
