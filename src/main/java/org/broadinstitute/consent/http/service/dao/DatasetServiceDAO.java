@@ -151,7 +151,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     }
 
     // insert properties
-    executeSynchronizeDatasetProperties(handle, datasetId, properties);
+    executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
 
     // files
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
@@ -207,7 +207,8 @@ public class DatasetServiceDAO implements ConsentLogger {
                 datasetUpdate.active,
                 datasetUpdate.dacId,
                 datasetUpdate.props,
-                studyUpdate.files);
+                studyUpdate.files,
+                false);
           }
           for (DatasetServiceDAO.DatasetInsert insert : datasetInserts) {
             executeInsertDatasetWithFiles(
@@ -261,14 +262,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         );
       }
     });
-    // Handle property deletes
-    List<String> modifiedPropertyKeys = update.props.stream().map(StudyProperty::getKey).distinct()
-        .toList();
-    existingStudyProperties.forEach(ep -> {
-      if (!modifiedPropertyKeys.contains(ep.getKey())) {
-        studyDAO.deleteStudyPropertyById(ep.getStudyPropertyId());
-      }
-    });
 
     executeInsertFiles(
         handle,
@@ -310,7 +303,8 @@ public class DatasetServiceDAO implements ConsentLogger {
               updates.active(),
               updates.dacId(),
               updates.props(),
-              updates.files());
+              updates.files(),
+              true);
 
           handle.commit();
         }
@@ -325,7 +319,8 @@ public class DatasetServiceDAO implements ConsentLogger {
       Boolean active,
       Integer dacId,
       List<DatasetProperty> properties,
-      List<FileStorageObject> uploadedFiles) {
+      List<FileStorageObject> uploadedFiles,
+      Boolean executeDeletes) {
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
@@ -338,7 +333,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     );
 
     // insert properties
-    executeSynchronizeDatasetProperties(handle, datasetId, properties);
+    executeSynchronizeDatasetProperties(handle, datasetId, properties, executeDeletes);
 
     // files
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
@@ -346,7 +341,7 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   // Helper methods to generate Dictionary inserts
   private void executeSynchronizeDatasetProperties(Handle handle, Integer datasetId,
-      List<DatasetProperty> properties) {
+      List<DatasetProperty> properties, boolean executeDeletes) {
     List<Update> updates = new ArrayList<>(generateDictionaryInserts(handle, properties));
     // We need to know existing properties for all property operations
     Set<DatasetProperty> existingProps = datasetDAO.findDatasetPropertiesByDatasetId(datasetId);
@@ -359,7 +354,10 @@ public class DatasetServiceDAO implements ConsentLogger {
     updates.addAll(generatePropertyUpdates(handle, datasetId, properties, existingProps));
 
     // 4. Generate deletes for outdated dataset properties
-    updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
+    if (executeDeletes) {
+      updates.addAll(generatePropertyDeletes(handle, properties, existingProps));
+    }
+
     updates.forEach(Update::execute);
   }
 
