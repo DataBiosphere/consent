@@ -787,7 +787,7 @@ public class ConsentGroup {
     return Objects.nonNull(this.openAccess) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
-        (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
+        (Objects.nonNull(this.diseaseSpecificUse) && !this.diseaseSpecificUse.isEmpty()) ||
         Objects.nonNull(this.poa) ||
         Objects.nonNull(this.otherPrimary);
   }
