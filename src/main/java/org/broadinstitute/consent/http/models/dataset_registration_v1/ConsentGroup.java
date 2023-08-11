@@ -766,7 +766,6 @@ public class ConsentGroup {
 
   public boolean isInvalidForUpdate() {
     return Objects.nonNull(this.openAccess) ||
-        Objects.nonNull(this.consentGroupName) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
@@ -782,6 +781,15 @@ public class ConsentGroup {
         Objects.nonNull(this.morDate) ||
         Objects.nonNull(this.npu) ||
         Objects.nonNull(this.otherSecondary);
+  }
+
+  public boolean hasPrimaryDataUse() {
+    return Objects.nonNull(this.openAccess) ||
+        Objects.nonNull(this.generalResearchUse) ||
+        Objects.nonNull(this.hmb) ||
+        (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
+        Objects.nonNull(this.poa) ||
+        Objects.nonNull(this.otherPrimary);
   }
 
 }

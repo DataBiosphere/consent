@@ -135,9 +135,10 @@ public class DataResourceTestData {
               "functionalEquivalence": "equivalence"
             }],
             "hmb": true,
+            "consentGroupName": "Name",
             "numberOfParticipants": 2,
             "dataAccessCommitteeId": 1,
-            "dataLocation": "location",
+            "dataLocation": "AnVIL Workspace",
             "url": "https://asdf.com"
           },
           {
@@ -148,7 +149,7 @@ public class DataResourceTestData {
             }],
             "numberOfParticipants": 2,
             "dataAccessCommitteeId": 1,
-            "dataLocation": "location",
+            "dataLocation": "AnVIL Workspace",
             "url": "https://asdf.com"
           }
         ]
