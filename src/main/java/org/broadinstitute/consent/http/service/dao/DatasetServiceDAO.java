@@ -320,7 +320,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       Integer dacId,
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
-      Boolean executeDeletes) {
+      boolean executeDeletes) {
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
