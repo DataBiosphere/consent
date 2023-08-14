@@ -904,4 +904,20 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
+  //  @SqlQuery("""
+//        SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, vote_view.update_date
+//        FROM data_access_request dar
+//        INNER JOIN dar_collection c on dar.collection_id = c.collection_id
+//        INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+//        INNER JOIN dataset d on d.dataset_id = dd.dataset_id
+//        INNER JOIN dac dac on dac.dac_id = d.dac_id
+//        INNER JOIN election e on dar.reference_id = e.reference_id AND e.dataset_id = d.dataset_id
+//        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+//        INNER JOIN (
+//          SELECT voteid, MAX(updatedate) update_date
+//          FROM vote
+//          GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid
+//        WHERE d.dac_approval = TRUE AND dar.user_id = :userId
+//      """)
+
 }

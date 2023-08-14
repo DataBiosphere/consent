@@ -11,7 +11,7 @@ public class ApprovedDatasetReducer
   @Override
   public void accumulate(Map<String, ApprovedDataset> map, RowView rowView) {
     ApprovedDataset f = rowView.getRow(ApprovedDataset.class);
-    String darDatasetApproval = f.getDarCode() + f.getAlias();
+    String darDatasetApproval = f.getDarCode() + "-" + f.getAlias();
     map.put(darDatasetApproval, f);
   }
 }

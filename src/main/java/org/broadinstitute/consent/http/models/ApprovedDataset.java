@@ -68,4 +68,14 @@ public class ApprovedDataset {
   public void setDatasetIdentifier(String datasetIdentifier) {
     this.datasetIdentifier = datasetIdentifier;
   }
+
+  public Boolean isApprovedDatasetEqual(ApprovedDataset that) {
+    return this.getAlias() == that.getAlias()
+        && this.getDatasetName().equals(that.getDatasetName())
+        && this.getDatasetIdentifier().equals(that.getDatasetIdentifier())
+        && this.getDarCode().equals(that.getDarCode())
+        && this.getDacName().equals(that.getDacName())
+        && (this.getApprovalDate().compareTo(that.getApprovalDate()) == 0);
+  }
+
 }

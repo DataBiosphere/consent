@@ -14,7 +14,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -1138,7 +1140,7 @@ public class DatasetDAOTest extends DAOTestHelper {
   @Test
   public void testGetApprovedDatasets() throws Exception {
 
-    // user with approved and unapproved datasets
+    // user with a mix of approved and unapproved datasets
     User user = createUser();
 
     Dataset dataset1 = createDataset(false);
@@ -1163,52 +1165,47 @@ public class DatasetDAOTest extends DAOTestHelper {
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
     DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset2, dataset3));
     DarCollection dar3 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset4));
+    List<DarCollection> allDarCollections = List.of(dar1, dar2, dar3);
 
-    String firstKey1 = dar1.getDars().keySet().stream().findFirst().get();
-    String firstKey2 = dar2.getDars().keySet().stream().findFirst().get();
-    String firstKey3 = dar3.getDars().keySet().stream().findFirst().get();
+    Map<Integer, Boolean> expectedFinalVotesForDatasets = Map.of(dataset1.getDataSetId(), false, dataset2.getDataSetId(), false, dataset3.getDataSetId(), true, dataset4.getDataSetId(), true);
 
-    createDataAccessElectionWithVotes(firstKey1, dataset1.getDataSetId(), user.getUserId(), false);
-    createDataAccessElectionWithVotes(firstKey2, dataset2.getDataSetId(), user.getUserId(), false);
-    Election election3 = createDataAccessElectionWithVotes(firstKey2, dataset3.getDataSetId(), user.getUserId(), true);
-    Election election4 = createDataAccessElectionWithVotes(firstKey3, dataset4.getDataSetId(), user.getUserId(), true);
+    Map<Integer, Election> elections = new HashMap<>();
+
+    for (DarCollection dar : allDarCollections) {
+      for (Map.Entry<String, DataAccessRequest> e : dar.getDars().entrySet()) {
+        for (Integer id : e.getValue().getDatasetIds()) {
+          elections.put(id, createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(), expectedFinalVotesForDatasets.get(id)));
+        }
+      }
+    }
 
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertNotNull(approvedDatasets);
 
     // checks that all datasets in the result are approved
     approvedDatasets.forEach(approvedDataset -> {
-      assertTrue(datasetDAO.findDatasetById(Integer.parseInt(approvedDataset.getDatasetIdentifier())).getDacApproval());
+      assertTrue(datasetDAO.findDatasetById(approvedDataset.getAlias()).getDacApproval());
     });
 
-    ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(), dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), election3.getFinalVoteDate());
-    ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(), dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(), election4.getFinalVoteDate());
-    List<ApprovedDataset> expected = List.of(expectedApprovedDataset1, expectedApprovedDataset2);
+    ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(), dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), elections.get(dataset3.getDataSetId()).getLastUpdate());
+    ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(), dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(), elections.get(dataset4.getDataSetId()).getLastUpdate());
+    Map<Integer, ApprovedDataset> expectedDatasets = Map.of(dataset3.getAlias(), expectedApprovedDataset1, dataset4.getAlias(), expectedApprovedDataset2);
 
     // checks that the expected result list size and contents match the observed result
-    assertEquals(approvedDatasets.size(), expected.size());
+    assertEquals(expectedDatasets.size(), approvedDatasets.size());
     IntStream.range(0, approvedDatasets.size()).forEach(index -> {
       ApprovedDataset dataset = approvedDatasets.get(index);
-      ApprovedDataset expectedDataset = expected.get(index);
-      assertTrue(isApprovedDatasetEqual(dataset, expectedDataset));
+      ApprovedDataset expectedDataset = expectedDatasets.get(dataset.getAlias());
+      assertTrue(dataset.isApprovedDatasetEqual(expectedDataset));
     });
 
-
-    // reducer works properly
-    // mapper works properly
-    // check that the expected is equal to the actual
-    // check that all datasets in result are approved
-
-    // election needs to be closed automatically when the final vote is cast: election status = true
-    // dacApproval should automatically change when the final election vote is true
-    // is it good practice to leave it to the user?
 
   }
 
   @Test
   public void testGetApprovedDatasetsWhenNone() throws Exception {
 
-    // user with unapproved datasets but no approved datasets
+    // user with only unapproved datasets
     User user = createUser();
 
     Dataset dataset1 = createDataset(false);
@@ -1224,10 +1221,11 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1, dataset2));
 
-    String firstKey1 = dar1.getDars().keySet().stream().findFirst().get();
-
-    createDataAccessElectionWithVotes(firstKey1, dataset1.getDataSetId(), user.getUserId(), false);
-    createDataAccessElectionWithVotes(firstKey1, dataset2.getDataSetId(), user.getUserId(), false);
+    for (Map.Entry<String, DataAccessRequest> e : dar1.getDars().entrySet()) {
+      for (Integer id : e.getValue().getDatasetIds()) {
+        createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(), false);
+      }
+    }
 
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertTrue(approvedDatasets.size() == 0);
@@ -1241,15 +1239,6 @@ public class DatasetDAOTest extends DAOTestHelper {
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertTrue(approvedDatasets.size() == 0);
 
-  }
-
-  private Boolean isApprovedDatasetEqual(ApprovedDataset a, ApprovedDataset b) {
-    return a.getAlias() == b.getAlias()
-        && a.getDatasetName().equals(b.getDatasetName())
-        && a.getDatasetIdentifier() == b.getDatasetIdentifier()
-        && a.getDarCode().equals(b.getDarCode())
-        && a.getDacName().equals(b.getDacName())
-        && (a.getApprovalDate().compareTo(b.getApprovalDate()) == 0);
   }
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
@@ -1486,7 +1475,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(id);
   }
 
-  private Election createDataAccessElectionWithVotes(String referenceId, Integer datasetId, Integer userId, boolean approval) {
+  private Election createDataAccessElectionWithVotes(String referenceId, Integer datasetId, Integer userId, boolean finalVoteApproval) {
     Integer electionId = electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
@@ -1495,11 +1484,9 @@ public class DatasetDAOTest extends DAOTestHelper {
         datasetId
     );
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
-    voteDAO.updateVote(approval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+    voteDAO.updateVote(finalVoteApproval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
     electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue(), new Date());
-    if (approval) {
-      datasetDAO.findDatasetById(datasetId).setDacApproval(true);
-    }
+    datasetDAO.updateDatasetApproval(finalVoteApproval, Instant.now(), userId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
