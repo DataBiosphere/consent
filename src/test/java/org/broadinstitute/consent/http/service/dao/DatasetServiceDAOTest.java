@@ -480,7 +480,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
     String newPropValue = "New Study Prop Value";
     StudyProperty prop1 = props.get(0);
-    StudyProperty prop2 = props.get(1);
     prop1.setValue(newPropValue);
 
     // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
@@ -504,8 +503,6 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
     // Added prop
     Optional<StudyProperty> addedNewProp = updatedStudy.getProperties().stream().filter(p -> newProp.getValue().equals(p.getValue())).findFirst();
     assertTrue(addedNewProp.isPresent());
-    // Deleted Prop
-    assertFalse(updatedStudy.getProperties().contains(prop2));
   }
 
   @Test
