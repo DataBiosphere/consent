@@ -423,23 +423,6 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDescribeDataSetSuccess() {
-    DatasetDTO testDTO = createMockDatasetDTO();
-    when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);
-    initResource();
-    Response response = resource.describeDataSet(1);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void testDescribeDataSetError() {
-    doThrow(new RuntimeException()).when(datasetService).getDatasetDTO(any());
-    initResource();
-    Response response = resource.describeDataSet(1);
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
   public void testGetDataSetSample() {
     List<String> header = List.of("attachment; filename=DataSetSample.tsv");
     initResource();
