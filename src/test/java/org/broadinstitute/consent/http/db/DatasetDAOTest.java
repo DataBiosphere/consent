@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -1184,7 +1182,7 @@ public class DatasetDAOTest extends DAOTestHelper {
 
     // checks that all datasets in the result are approved
     approvedDatasets.forEach(approvedDataset -> {
-      assertTrue(datasetDAO.findDatasetById(approvedDataset.getAlias()).getDacApproval());
+      assertTrue(datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval());
     });
 
     ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(), dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), elections.get(dataset3.getDataSetId()).getLastUpdate());

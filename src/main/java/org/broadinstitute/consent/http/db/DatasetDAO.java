@@ -872,52 +872,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         INNER JOIN dar_collection c on dar.collection_id = c.collection_id
         INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
         INNER JOIN dataset d on d.dataset_id = dd.dataset_id
-        LEFT JOIN dac dac on dac.dac_id = d.dac_id
-        INNER JOIN (
-          SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
-          OVER (
-            PARTITION BY e.reference_id
-            ORDER BY v.createdate
-            RANGE BETWEEN
-            UNBOUNDED PRECEDING AND
-            UNBOUNDED FOLLOWING
-          ) last_vote
-          FROM election e
-          INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
-          INNER JOIN data_access_request dar on dar.reference_id = e.reference_id AND dar.user_id = :userId
-          INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-          INNER JOIN dataset d on d.dataset_id = dd.dataset_id
-          WHERE e.dataset_id = d.dataset_id
-          AND LOWER(e.election_type) = 'dataaccess'
-          AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
-        INNER JOIN election e ON e.dataset_id = d.dataset_id AND e.reference_id = dar.reference_id AND LOWER(e.election_type) = 'dataaccess'
-        INNER JOIN vote v ON v.electionid = e.election_id
+        INNER JOIN dac dac on dac.dac_id = d.dac_id
+        INNER JOIN election e on dar.reference_id = e.reference_id AND e.dataset_id = d.dataset_id
+        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
         INNER JOIN (
           SELECT voteid, MAX(updatedate) update_date
           FROM vote
-          WHERE type = 'FINAL'
-          AND vote = true
           GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid
-        AND dar.draft = false
-        AND final_access_vote.last_vote = TRUE
-        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-      """)
+        WHERE d.dac_approval = TRUE AND dar.user_id = :userId
+  """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
-
-  //  @SqlQuery("""
-//        SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, vote_view.update_date
-//        FROM data_access_request dar
-//        INNER JOIN dar_collection c on dar.collection_id = c.collection_id
-//        INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-//        INNER JOIN dataset d on d.dataset_id = dd.dataset_id
-//        INNER JOIN dac dac on dac.dac_id = d.dac_id
-//        INNER JOIN election e on dar.reference_id = e.reference_id AND e.dataset_id = d.dataset_id
-//        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
-//        INNER JOIN (
-//          SELECT voteid, MAX(updatedate) update_date
-//          FROM vote
-//          GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid
-//        WHERE d.dac_approval = TRUE AND dar.user_id = :userId
-//      """)
 
 }
