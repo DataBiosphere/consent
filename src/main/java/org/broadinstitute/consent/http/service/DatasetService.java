@@ -600,9 +600,9 @@ public class DatasetService {
 
   }
 
-  public List<ApprovedDataset> getApprovedDatasets(Integer userId) {
+  public List<ApprovedDataset> getApprovedDatasets(User user) {
     try {
-      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(userId);
+      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
       return approvedDatasets;
     } catch (Exception e) {
       logger.error(e.getMessage());

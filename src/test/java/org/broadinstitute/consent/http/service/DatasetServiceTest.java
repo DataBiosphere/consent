@@ -20,6 +20,8 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -941,6 +943,19 @@ public class DatasetServiceTest {
 
   }
 
+  @Test
+  public void testGetApprovedDatasets() {
+    User user = new User(1, "test@domain.com", "Test User", new Date(),
+        List.of(
+            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
+        new Date());
+    when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
+    initService();
+    assertTrue(datasetService.getApprovedDatasets(user).size() == 1);
+    assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+  }
+
   /* Helper functions */
 
   private List<Dataset> getDatasets() {
@@ -1008,11 +1023,6 @@ public class DatasetServiceTest {
         .mapToObj(i ->
             new Dictionary(i, String.valueOf(i), true, i, i)
         ).collect(Collectors.toList());
-  }
-
-  @Test
-  public void testGetApprovedDatasets() throws Exception {
-
   }
 
 }

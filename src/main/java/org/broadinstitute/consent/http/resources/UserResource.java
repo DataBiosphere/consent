@@ -535,7 +535,7 @@ public class UserResource extends Resource {
   public Response getApprovedDatasets(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user.getUserId());
+      List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
       return Response.ok().entity(approvedDatasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
