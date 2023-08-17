@@ -165,9 +165,8 @@ public class ElasticSearchServiceTest {
     assertEquals(phenotypeProperty.getValue(), term.getStudy().getPhenotype());
     assertEquals(speciesProperty.getValue(), term.getStudy().getSpecies());
     assertEquals(study.getPiName(), term.getStudy().getPiName());
-    assertEquals(
-        study.getCreateUserId(),
-        term.getStudy().getDataSubmitterId());
+    assertEquals(study.getCreateUserId(), term.getStudy().getDataSubmitterId());
+    assertEquals(study.getCreateUserEmail(), term.getStudy().getDataSubmitterEmail());
     assertEquals(dataCustodianEmailProperty.getValue().toString(),
         GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class));
 
