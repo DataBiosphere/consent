@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
@@ -14,10 +15,12 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
@@ -31,17 +34,19 @@ public class ElasticSearchService implements ConsentLogger {
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DataAccessRequestDAO dataAccessRequestDAO;
-
+  private final UserDAO userDAO;
   private final OntologyService ontologyService;
 
   public ElasticSearchService(
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
       DataAccessRequestDAO dataAccessRequestDAO,
+      UserDAO userDao,
       OntologyService ontologyService) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
+    this.userDAO = userDao;
     this.ontologyService = ontologyService;
   }
 
@@ -160,11 +165,24 @@ public class ElasticSearchService implements ConsentLogger {
     findStudyProperty(
         study.getProperties(), "dataCustodianEmail"
     ).ifPresent(
-        prop -> term.setDataCustodian(prop.getValue().toString())
+        prop -> {
+          JsonArray jsonArray = (JsonArray) prop.getValue();
+          List<String> dataCustodianEmail = new ArrayList<>();
+          jsonArray.forEach((email) -> dataCustodianEmail.add(email.getAsString()));
+          term.setDataCustodianEmail(dataCustodianEmail);
+        }
     );
 
     if (Objects.nonNull(study.getCreateUserId())) {
       term.setDataSubmitterId(study.getCreateUserId());
+      User user = userDAO.findUserById(study.getCreateUserId());
+      if (Objects.nonNull(user)) {
+        study.setCreateUserEmail(user.getEmail());
+      }
+    }
+
+    if (Objects.nonNull(study.getCreateUserEmail())) {
+      term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
     return term;

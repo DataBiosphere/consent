@@ -11,8 +11,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.google.gson.JsonArray;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -23,6 +25,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -32,6 +35,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -57,6 +61,9 @@ public class ElasticSearchServiceTest {
   @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
 
+  @Mock
+  private UserDAO userDao;
+
   @BeforeEach
   public void setUp() {
     openMocks(this);
@@ -67,6 +74,7 @@ public class ElasticSearchServiceTest {
         esClient,
         esConfig,
         dataAccessRequestDAO,
+        userDao,
         ontologyService);
   }
 
@@ -97,6 +105,7 @@ public class ElasticSearchServiceTest {
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
     study.setCreateUserId(9);
+    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
 
     StudyProperty phenotypeProperty = new StudyProperty();
@@ -112,7 +121,9 @@ public class ElasticSearchServiceTest {
     StudyProperty dataCustodianEmailProperty = new StudyProperty();
     dataCustodianEmailProperty.setKey("dataCustodianEmail");
     dataCustodianEmailProperty.setType(PropertyType.String);
-    dataCustodianEmailProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    var email = new JsonArray();
+    email.add(RandomStringUtils.randomAlphabetic(10));
+    dataCustodianEmailProperty.setValue(email);
 
     study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
 
@@ -157,7 +168,8 @@ public class ElasticSearchServiceTest {
     assertEquals(
         study.getCreateUserId(),
         term.getStudy().getDataSubmitterId());
-    assertEquals(dataCustodianEmailProperty.getValue(), term.getStudy().getDataCustodian());
+    assertEquals(dataCustodianEmailProperty.getValue().toString(),
+        GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class));
 
     assertEquals(dataUseSummary, term.getDataUse());
 

@@ -10,8 +10,9 @@ public class StudyTerm {
   private String phenotype;
   private String species;
   private String piName;
+  private String dataSubmitterEmail;
   private Integer dataSubmitterId;
-  private String dataCustodian;
+  private List<String> dataCustodianEmail;
   private Boolean publicVisibility;
   private List<String> dataTypes;
 
@@ -64,6 +65,14 @@ public class StudyTerm {
     this.piName = piName;
   }
 
+  public String getDataSubmitterEmail() {
+    return dataSubmitterEmail;
+  }
+
+  public void setDataSubmitterEmail(String dataSubmitterEmail) {
+    this.dataSubmitterEmail = dataSubmitterEmail;
+  }
+
   public Integer getDataSubmitterId() {
     return dataSubmitterId;
   }
@@ -73,12 +82,12 @@ public class StudyTerm {
     this.dataSubmitterId = dataSubmitterId;
   }
 
-  public String getDataCustodian() {
-    return dataCustodian;
+  public List<String> getDataCustodianEmail() {
+    return dataCustodianEmail;
   }
 
-  public void setDataCustodian(String dataCustodian) {
-    this.dataCustodian = dataCustodian;
+  public void setDataCustodianEmail(List<String> dataCustodianEmail) {
+    this.dataCustodianEmail = dataCustodianEmail;
   }
 
   public Boolean getPublicVisibility() {
