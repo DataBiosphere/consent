@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetMapper;
+import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
@@ -12,6 +14,7 @@ import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
+import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -860,4 +863,24 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   @SqlUpdate("DELETE FROM consent_associations WHERE dataset_id = :datasetId")
   void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
+
+  @RegisterRowMapper(ApprovedDatasetMapper.class)
+  @UseRowReducer(ApprovedDatasetReducer.class)
+  @SqlQuery("""
+        SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, vote_view.update_date
+        FROM data_access_request dar
+        INNER JOIN dar_collection c on dar.collection_id = c.collection_id
+        INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+        INNER JOIN dataset d on d.dataset_id = dd.dataset_id
+        INNER JOIN dac dac on dac.dac_id = d.dac_id
+        INNER JOIN election e on dar.reference_id = e.reference_id AND e.dataset_id = d.dataset_id
+        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        INNER JOIN (
+          SELECT voteid, MAX(updatedate) update_date
+          FROM vote
+          GROUP BY voteid) vote_view ON v.voteid = vote_view.voteid
+        WHERE d.dac_approval = TRUE AND dar.user_id = :userId
+  """)
+  List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
+
 }

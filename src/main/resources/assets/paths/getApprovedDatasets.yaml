@@ -1,0 +1,18 @@
+get:
+  summary: Get all approved datasets from currently authenticated user
+  description: Get all approved datasets from currently authenticated user
+  tags:
+    - User
+  responses:
+    200:
+      description: Set of approved datasets that belong to the authenticated user
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/ApprovedDataset.yaml'
+    404:
+      description: User not found or no datasets found for user
+    500:
+      description: Server error
