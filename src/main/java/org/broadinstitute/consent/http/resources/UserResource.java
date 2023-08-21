@@ -38,6 +38,7 @@ import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
+import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
@@ -526,4 +527,20 @@ public class UserResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/me/researcher/datasets")
+  @PermitAll
+  public Response getApprovedDatasets(@Auth AuthUser authUser) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
+      return Response.ok().entity(approvedDatasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+
 }

@@ -1,18 +1,31 @@
 package org.broadinstitute.consent.http.service;
 
+import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.google.gson.JsonArray;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpVersion;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -22,7 +35,9 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +61,9 @@ public class ElasticSearchServiceTest {
   @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
 
+  @Mock
+  private UserDAO userDao;
+
   @BeforeEach
   public void setUp() {
     openMocks(this);
@@ -56,7 +74,19 @@ public class ElasticSearchServiceTest {
         esClient,
         esConfig,
         dataAccessRequestDAO,
+        userDao,
         ontologyService);
+  }
+
+  private void mockElasticSearchResponse(int statusCode, String body) throws IOException {
+    Response response = mock(Response.class);
+    String reasonPhrase = fromStatusCode(statusCode).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase);
+    HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
+
+    when(esClient.performRequest(any())).thenReturn(response);
+    when(response.getStatusLine()).thenReturn(status);
+    when(response.getEntity()).thenReturn(entity);
   }
 
   @Test
@@ -75,6 +105,7 @@ public class ElasticSearchServiceTest {
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
     study.setCreateUserId(9);
+    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
 
     StudyProperty phenotypeProperty = new StudyProperty();
@@ -90,7 +121,9 @@ public class ElasticSearchServiceTest {
     StudyProperty dataCustodianEmailProperty = new StudyProperty();
     dataCustodianEmailProperty.setKey("dataCustodianEmail");
     dataCustodianEmailProperty.setType(PropertyType.String);
-    dataCustodianEmailProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    var email = new JsonArray();
+    email.add(RandomStringUtils.randomAlphabetic(10));
+    dataCustodianEmailProperty.setValue(email);
 
     study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
 
@@ -132,10 +165,10 @@ public class ElasticSearchServiceTest {
     assertEquals(phenotypeProperty.getValue(), term.getStudy().getPhenotype());
     assertEquals(speciesProperty.getValue(), term.getStudy().getSpecies());
     assertEquals(study.getPiName(), term.getStudy().getPiName());
-    assertEquals(
-        study.getCreateUserId(),
-        term.getStudy().getDataSubmitterId());
-    assertEquals(dataCustodianEmailProperty.getValue(), term.getStudy().getDataCustodian());
+    assertEquals(study.getCreateUserId(), term.getStudy().getDataSubmitterId());
+    assertEquals(study.getCreateUserEmail(), term.getStudy().getDataSubmitterEmail());
+    assertEquals(dataCustodianEmailProperty.getValue().toString(),
+        GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class));
 
     assertEquals(dataUseSummary, term.getDataUse());
 
@@ -183,6 +216,7 @@ public class ElasticSearchServiceTest {
     String datasetIndexName = RandomStringUtils.randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
+    mockElasticSearchResponse(200, "");
 
     initService();
     service.indexDatasetTerms(List.of(term1, term2));
@@ -203,4 +237,61 @@ public class ElasticSearchServiceTest {
             StandardCharsets.UTF_8));
   }
 
+  @Test
+  public void testSearchDatasets() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    /*
+     * FIXME: this approach is kind of hacky, we stick both the validation response and the search
+     *  response in the same body, and then rely on Gson to parse these into separate objects.
+     *  Ideally each request and response should be mocked separately, but this would involve many
+     *  more classes and methods. Alternately, it is possible to just mock the Gson parsing, but
+     *  this seems to affect the results of the other tests.
+     */
+    mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
+
+    initService();
+    var response = service.searchDatasets(query);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testValidateQuery() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    mockElasticSearchResponse(200, "{\"valid\":true}");
+
+    initService();
+    assertTrue(service.validateQuery(query));
+  }
+
+  @Test
+  public void testValidateQueryWithFromAndSize() throws IOException {
+    String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+
+    mockElasticSearchResponse(200, "{\"valid\":true}");
+
+    initService();
+    assertTrue(service.validateQuery(query));
+  }
+
+  @Test
+  public void testValidateQueryEmpty() throws IOException {
+    String query = "{}";
+
+    mockElasticSearchResponse(400, "Bad Request");
+
+    initService();
+    assertThrows(IOException.class, () -> service.validateQuery(query));
+  }
+
+  @Test
+  public void testValidateQueryInvalid() throws IOException {
+    String query = "{ \"bad\": [\"and\", \"invalid\"] }";
+
+    mockElasticSearchResponse(200, "{\"valid\":false}");
+
+    initService();
+    assertFalse(service.validateQuery(query));
+  }
 }

@@ -1,0 +1,18 @@
+type: object
+properties:
+  darId:
+    type: string
+    description: The id of the DAR this dataset belongs to, if defined.
+  datasetId:
+    type: integer
+    format: int32
+    description: The dataset id, integer format
+  datasetName:
+    type: string
+    description: The dataset name
+  dacName:
+    type: string
+    description: The dac name
+  approvalDate:
+    type: string
+    description: the approval date

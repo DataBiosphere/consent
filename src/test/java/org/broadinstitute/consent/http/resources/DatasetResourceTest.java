@@ -31,13 +31,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.http.HttpVersion;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicStatusLine;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -54,6 +53,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -68,6 +68,8 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 
 public class DatasetResourceTest {
@@ -421,23 +423,6 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDescribeDataSetSuccess() {
-    DatasetDTO testDTO = createMockDatasetDTO();
-    when(datasetService.getDatasetDTO(any())).thenReturn(testDTO);
-    initResource();
-    Response response = resource.describeDataSet(1);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void testDescribeDataSetError() {
-    doThrow(new RuntimeException()).when(datasetService).getDatasetDTO(any());
-    initResource();
-    Response response = resource.describeDataSet(1);
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
   public void testGetDataSetSample() {
     List<String> header = List.of("attachment; filename=DataSetSample.tsv");
     initResource();
@@ -706,14 +691,10 @@ public class DatasetResourceTest {
   @Test
   public void testIndexAllDatasets() throws IOException {
     List<Dataset> datasets = List.of(new Dataset());
-    org.elasticsearch.client.Response elasticResponse = mock(
-        org.elasticsearch.client.Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
+    Response mockResponse = Response.ok().entity(datasets).build();
     when(datasetService.findAllDatasets()).thenReturn(datasets);
-    when(elasticSearchService.indexDatasets(datasets)).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+    when(elasticSearchService.indexDatasets(datasets)).thenReturn(mockResponse);
 
     initResource();
     Response response = resource.indexDatasets();
@@ -723,17 +704,23 @@ public class DatasetResourceTest {
   @Test
   public void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
-    org.elasticsearch.client.Response elasticResponse = mock(
-        org.elasticsearch.client.Response.class);
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
 
+    Response mockResponse = Response.ok().entity(dataset).build();
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticSearchService.indexDataset(dataset)).thenReturn(elasticResponse);
-    when(elasticResponse.getStatusLine()).thenReturn(status);
-    when(elasticResponse.getEntity()).thenReturn(new StringEntity("test"));
+    when(elasticSearchService.indexDataset(dataset)).thenReturn(mockResponse);
 
     initResource();
     Response response = resource.indexDataset(1);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  public void testIndexDelete() throws IOException {
+    Response mockResponse = Response.status(200).entity("deleted").build();
+    when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
+
+    initResource();
+    Response response = resource.deleteDatasetIndex(0);
     assertEquals(200, response.getStatus());
   }
 
@@ -772,14 +759,16 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetIndex() {
+  public void testSearchDatasetIndex() throws IOException {
+    String query = "{ \"dataUse\": [\"HMB\"] }";
+
+    Response mockResponse = Response.ok().entity(query).build();
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
+    when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     initResource();
-
-    String query = "{ \"dataUse\": [\"HMB\"] }";
     Response response = resource.searchDatasetIndex(authUser, query);
 
     assertEquals(200, response.getStatus());
@@ -1323,6 +1312,55 @@ public class DatasetResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {
+      DataResourceTestData.registrationWithMalformedJson,
+      DataResourceTestData.registrationWithStudyName,
+      DataResourceTestData.registrationWithDataSubmitterUserId,
+      DataResourceTestData.registrationWithExistingCGDataUse,
+      DataResourceTestData.registrationWithExistingCG
+  })
+  public void testUpdateStudyByRegistrationInvalid(String input) {
+    Study study = createMockStudy();
+    // for DataResourceTestData.registrationWithExistingCG, manipulate the dataset ids to simulate
+    // a dataset deletion
+    if (input.equals(DataResourceTestData.registrationWithExistingCG)) {
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input,
+          DatasetRegistrationSchemaV1.class);
+      List<Integer> datasetIds = schemaV1.getConsentGroups().stream()
+          .map(ConsentGroup::getDatasetId).toList();
+      study.setDatasetIds(Set.of(datasetIds.get(0) + 1));
+    }
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
+    initResource();
+
+    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  public void testUpdateStudyByRegistration() {
+    String input = DataResourceTestData.validRegistration;
+    Study study = createMockStudy();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+    Set<Integer> datasetIds = schemaV1
+        .getConsentGroups()
+        .stream()
+        .map(ConsentGroup::getDatasetId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    study.setDatasetIds(datasetIds);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
+    initResource();
+
+    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
   /**
    * Helper method to create a minimally valid instance of a dataset registration schema
    *
@@ -1446,7 +1484,9 @@ public class DatasetResourceTest {
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
     study.setCreateUserId(9);
+    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
+    study.setDatasetIds(Set.of(dataset.getDataSetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");

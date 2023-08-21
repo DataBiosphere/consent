@@ -44,13 +44,13 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetSearchTerm;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -59,6 +59,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -198,6 +199,47 @@ public class DatasetResource extends Resource {
 
       URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
       return Response.created(uri).entity(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/study/{studyId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  /*
+   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * With that object, we can fully update the study/datasets from the provided values.
+   */
+  public Response updateStudyByRegistration(
+      @Auth AuthUser authUser,
+      FormDataMultiPart multipart,
+      @PathParam("studyId") Integer studyId,
+      @FormDataParam("dataset") String json) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+
+      // Manually validate the schema from an editing context. Validation with the schema tools
+      // enforces it in a creation context but doesn't work for editing purposes.
+      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator();
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetRegistrationSchemaV1 registration = gson.fromJson(json, DatasetRegistrationSchemaV1.class);
+
+      if (updateValidator.validate(existingStudy, registration)) {
+        // Update study from registration
+        Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+        Study updatedStudy = datasetRegistrationService.updateStudyFromRegistration(
+            studyId,
+            registration,
+            user,
+            files);
+        return Response.ok(updatedStudy).build();
+      } else {
+        return Response.status(Status.BAD_REQUEST).build();
+      }
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -368,20 +410,6 @@ public class DatasetResource extends Resource {
         default -> datasetService.findPublicDatasets();
       };
       return Response.ok(datasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Deprecated // Use /v2/{datasetId}
-  @Path("/{datasetId}")
-  @Produces("application/json")
-  @PermitAll
-  public Response describeDataSet(@PathParam("datasetId") Integer datasetId) {
-    try {
-      DatasetDTO datasetDTO = datasetService.getDatasetDTO(datasetId);
-      return Response.ok(datasetDTO, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -614,9 +642,7 @@ public class DatasetResource extends Resource {
   public Response indexDatasets() {
     try {
       var datasets = datasetService.findAllDatasets();
-      var response = elasticSearchService.indexDatasets(datasets);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDatasets(datasets);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -628,9 +654,18 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
     try {
       var dataset = datasetService.findDatasetById(datasetId);
-      var response = elasticSearchService.indexDataset(dataset);
-      var status = response.getStatusLine().getStatusCode();
-      return Response.status(status).entity(response.getEntity()).build();
+      return elasticSearchService.indexDataset(dataset);
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("/index/{datasetId}")
+  @RolesAllowed(ADMIN)
+  public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
+    try {
+      return elasticSearchService.deleteIndex(datasetId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -657,18 +692,11 @@ public class DatasetResource extends Resource {
   @Path("/search/index")
   @Consumes("application/json")
   @Produces("application/json")
+  @PermitAll
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<DatasetSearchTerm> datasetSearchTerms = new ArrayList<>();
-      /* return up to 8 semi-random but consistent number of results for a specific query */
-      var numResults = query.hashCode() & 0x7L;
-      for (int i = 0; i < numResults; i++) {
-        DatasetSearchTerm datasetSearchTerm = new Gson().fromJson(query, DatasetSearchTerm.class);
-        datasetSearchTerm.setDatasetId(i);
-        datasetSearchTerms.add(datasetSearchTerm);
-      }
-      return Response.ok().entity(unmarshal(datasetSearchTerms)).build();
+      return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

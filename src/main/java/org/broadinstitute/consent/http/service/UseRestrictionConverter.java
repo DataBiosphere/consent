@@ -125,13 +125,15 @@ public class UseRestrictionConverter {
       //    Research related entries
       //
       if (Objects.nonNull(dar.getData().getMethods())) {
-        dataUse.setMethodsResearch(true);
+        dataUse.setMethodsResearch(dar.getData().getMethods());
       }
       if (Objects.nonNull(dar.getData().getPopulation())) {
-        dataUse.setPopulationStructure(true);
+        dataUse.setPopulationStructure(dar.getData().getPopulation());
+        dataUse.setPopulation(dar.getData().getPopulation());
       }
       if (Objects.nonNull(dar.getData().getControls())) {
         dataUse.setControlSetOption("Yes");
+        dataUse.setControls(dar.getData().getControls());
       }
 
       //
@@ -181,6 +183,20 @@ public class UseRestrictionConverter {
           dataUse.setHmbResearch(true);
         }
       }
+
+      // Other Conditions
+      if (Objects.nonNull(dar.getData().getOther())) {
+        dataUse.setOtherRestrictions(dar.getData().getOther());
+      }
+      if (Objects.nonNull(dar.getData().getOtherText())) {
+        dataUse.setOther(dar.getData().getOtherText());
+      }
+
+      if (Objects.nonNull(dar.getData().getNotHealth())) {
+        dataUse.setNotHealth(dar.getData().getNotHealth());
+        dataUse.setNonBiomedical(dar.getData().getNotHealth());
+      }
+
     }
     return dataUse;
   }

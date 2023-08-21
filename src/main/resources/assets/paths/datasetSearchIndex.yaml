@@ -1,6 +1,6 @@
 post:
-  summary: Search Datasets
-  description: Returns all datasets matching a search query.
+  summary: Search the dataset index
+  description: Returns all results matching a search query.
   requestBody:
     description: Search query
     required: true
@@ -8,14 +8,76 @@ post:
       application/json:
         schema:
           type: object
+        examples:
+          example1:
+            summary: Search request 1
+            value:
+              query:
+                bool:
+                  must:
+                    - match:
+                        _type: dataset
+                    - match:
+                        _id: 1440
+          example2:
+            summary: Search request 2
+            value:
+              from: 0
+              size: 10000
+              query:
+                bool:
+                  must:
+                    - match:
+                        _type: dataset
+                    - exists:
+                        field: study
   tags:
     - Dataset
   responses:
     200:
-      description: A list of Datasets
+      description: A list of results matching the search query
       content:
         application/json:
           schema:
             type: array
             items:
-              type: object
+              $ref: '../schemas/DatasetSearch.yaml'
+          examples:
+            example1:
+              summary: Search response 1
+              value:
+                - datasetId: 1440
+                  datasetIdentifier: DUOS-000636
+                  participantCount: 45
+                  dataUse:
+                    primary:
+                      - code: NPOA
+                        description: Future use for population origins or ancestry research is prohibited.
+                    secondary:
+                      - code: NCU
+                        description: Commercial use is not prohibited.
+                      - code: NMDS
+                        description: Data use for methods development research irrespective of the specified data use limitations is not prohibited.
+                      - code: NCTRL
+                        description: Restrictions for use as a control set for diseases other than those defined were not specified.
+                      - code: IRB
+                        description: Local ethics committee approval is required.
+                  dataLocation: Not Determined
+                  dacId: 3
+                  openAccess: false
+                  approvedUserIds:
+                    - 1
+                    - 2
+                    - 3
+                  study:
+                    description: Test study details
+                    studyName: Test Dataset
+                    studyId: 22
+                    phenotype: cancer
+                    species: human
+                    piName: FB
+                    dataSubmitterId: 5101
+                    dataCustodian:
+                    publicVisibility: true
+                    dataTypes:
+                      - genome

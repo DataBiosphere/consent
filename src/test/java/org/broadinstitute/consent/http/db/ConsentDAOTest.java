@@ -118,12 +118,14 @@ public class ConsentDAOTest extends DAOTestHelper {
   @Test
   public void testUpdateConsentSortDate() {
     Consent consent = createConsent();
+    Timestamp originalSortDate = consent.getSortDate();
     final Calendar cal = Calendar.getInstance();
     cal.add(Calendar.DATE, -1);
     Date yesterday = cal.getTime();
     consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday);
     Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-    assertTrue(foundConsent.getSortDate().before(consent.getSortDate()));
+    Timestamp newSortDate = foundConsent.getSortDate();
+    assertTrue(newSortDate.before(originalSortDate));
   }
 
   @Test

@@ -13,15 +13,15 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.23.0</liquibase.version>
+    <liquibase.version>4.23.1</liquibase.version>
     <dropwizard.version>4.0.0</dropwizard.version>
-    <pact.version>4.6.1</pact.version>
+    <pact.version>4.6.2</pact.version>
     <postgres.version>42.6.0</postgres.version>
     <surefire.version>3.1.2</surefire.version>
-    <swagger.ui.version>5.1.0</swagger.ui.version>
+    <swagger.ui.version>5.3.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.9.3</junit.version>
+    <junit.version>5.10.0</junit.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -114,7 +114,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>8.3.1</version>
+        <version>8.4.0</version>
         <executions>
           <execution>
             <goals>
@@ -188,7 +188,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
         <executions>
           <execution>
             <id>buildClassesOutput</id>
@@ -334,7 +334,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.39.1</version>
+        <version>3.41.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -387,14 +387,12 @@
       <artifactId>jdbi3-guava</artifactId>
     </dependency>
 
-    <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.5</version>
+      <version>2.15.2</version>
     </dependency>
 
-    <!-- Addressing OWASP warning: https://nvd.nist.gov/vuln/detail/CVE-2020-25649 -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
@@ -441,7 +439,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.25.0</version>
+      <version>6.28.0</version>
     </dependency>
 
     <dependency>
@@ -563,6 +561,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>5.4.0</version>
@@ -597,7 +602,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>32.1.1-jre</version>
+      <version>32.1.2-jre</version>
     </dependency>
 
     <dependency>
@@ -639,7 +644,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.23.0</version>
+      <version>2.26.1</version>
     </dependency>
 
     <dependency>
@@ -676,7 +681,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.8.2</version>
+      <version>8.9.1</version>
     </dependency>
 
     <dependency>

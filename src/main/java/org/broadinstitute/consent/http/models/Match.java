@@ -29,7 +29,7 @@ public class Match {
 
   private String algorithmVersion;
 
-  private List<String> failureReasons;
+  private List<String> rationales;
 
   public Match(Integer id, String consent, String purpose, Boolean match, Boolean abstain,
       Boolean failed, Date createDate, String algorithmVersion) {
@@ -44,7 +44,7 @@ public class Match {
   }
 
   public Match(String consentId, String purposeId, boolean match, boolean abstain, boolean failed,
-      MatchAlgorithm algorithm, List<String> failureReasons) {
+      MatchAlgorithm algorithm, List<String> rationales) {
     this.setConsent(consentId);
     this.setPurpose(purposeId);
     this.setMatch(match);
@@ -52,7 +52,7 @@ public class Match {
     this.setFailed(failed);
     this.setCreateDate(new Date());
     this.setAlgorithmVersion(algorithm.getVersion());
-    this.setFailureReasons(failureReasons);
+    this.setRationales(rationales);
   }
 
   public Match() {
@@ -122,34 +122,34 @@ public class Match {
     this.algorithmVersion = algorithmVersion;
   }
 
-  public List<String> getFailureReasons() {
-    if (Objects.isNull(this.failureReasons)) {
+  public List<String> getRationales() {
+    if (Objects.isNull(this.rationales)) {
       return List.of();
     }
-    return failureReasons;
+    return rationales;
   }
 
-  public void setFailureReasons(List<String> failureReasons) {
-    this.failureReasons = failureReasons;
+  public void setRationales(List<String> rationales) {
+    this.rationales = rationales;
   }
 
-  public void addFailureReason(String reason) {
-    if (Objects.isNull(this.failureReasons)) {
-      this.failureReasons = new ArrayList<>();
+  public void addRationale(String reason) {
+    if (Objects.isNull(this.rationales)) {
+      this.rationales = new ArrayList<>();
     }
-    if (!this.failureReasons.contains(reason) && !reason.isBlank()) {
-      this.failureReasons.add(reason);
+    if (!this.rationales.contains(reason) && !reason.isBlank()) {
+      this.rationales.add(reason);
     }
   }
 
   public static Match matchFailure(String consentId, String purposeId,
-      List<String> failureReasons) {
-    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V3, failureReasons);
+      List<String> rationales) {
+    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V3, rationales);
   }
 
   public static Match matchSuccess(String consentId, String purposeId, DataUseMatchResultType match,
-      List<String> failureReasons) {
+      List<String> rationales) {
     return new Match(consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V3,
-        failureReasons);
+        rationales);
   }
 }

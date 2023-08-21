@@ -22,3 +22,62 @@ get:
       description: Not Found
     500:
       description: Server error
+put:
+  summary: Update Dataset Registration By Study Id
+  description: Updates Dataset Registration specified by Study Id.
+  tags:
+    - Dataset
+    - Study
+  parameters:
+    - name: studyId
+      in: path
+      description: ID of the Study
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    description: |
+      Dataset registration schema instance and optional files for an alternative data sharing plan 
+      and institutional certification files. The registration schema is always required. If a file 
+      is also provided, then alternative data sharing information is required in the registration 
+      schema.
+      
+      The following fields are not modifiable:
+      * Study Name
+      * Data Submitter Name/Email
+      * Primary Data Use
+      * Secondary Data Use
+      * Consent Group Name
+      
+      Additionally, existing Consent Groups cannot be removed from the study, but new ones can be
+      added.
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            dataset:
+              description: Required dataset registration json schema instance
+              type: object
+              $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
+            alternativeDataSharingPlan:
+              description: Optional alternative data sharing plan
+              type: string
+              format: binary
+            consentGroups[0].nihInstitutionalCertificationFile:
+              description: Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
+              type: string
+              format: binary
+  responses:
+    200:
+      description: The Updated Study with properties
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Study.yaml'
+    400:
+      description: Bad Request when schema is invalid or the required consent groups are not provided.
+    404:
+      description: Not Found
+    500:
+      description: Server error
