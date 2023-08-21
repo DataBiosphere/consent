@@ -192,6 +192,23 @@ public class UserService {
     public void setEmail(String email) {
       this.email = email;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SimplifiedUser that = (SimplifiedUser) o;
+      return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(userId);
+    }
   }
 
   public User createUser(User user) {
