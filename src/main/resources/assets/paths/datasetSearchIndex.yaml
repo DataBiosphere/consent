@@ -19,6 +19,18 @@ post:
                         _type: dataset
                     - match:
                         _id: 1440
+          example2:
+            summary: Search request 2
+            value:
+              from: 0
+              size: 10000,
+              query:
+                bool:
+                  must:
+                    - match:
+                        _type: dataset
+                    - exists:
+                        field: study
   tags:
     - Dataset
   responses:

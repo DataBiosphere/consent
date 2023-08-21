@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import static com.fasterxml.jackson.databind.ser.std.NumberSerializers.addAll;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +20,7 @@ public class Study {
   private Set<StudyProperty> properties;
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
+  private String createUserEmail;
   private Integer createUserId;
   private Date updateDate;
   private Integer updateUserId;
@@ -132,6 +130,14 @@ public class Study {
     this.createDate = createDate;
   }
 
+  public String getCreateUserEmail() {
+    return createUserEmail;
+  }
+
+  public void setCreateUserEmail(String createUserEmail) {
+    this.createUserEmail = createUserEmail;
+  }
+
   public Integer getCreateUserId() {
     return createUserId;
   }
@@ -163,5 +169,4 @@ public class Study {
   public void setUuid(UUID uuid) {
     this.uuid = uuid;
   }
-
 }

@@ -1485,6 +1485,7 @@ public class DatasetResourceTest {
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
     study.setCreateUserId(9);
+    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
     study.setDatasetIds(Set.of(dataset.getDataSetId()));
 
