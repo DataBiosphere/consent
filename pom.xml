@@ -22,6 +22,7 @@
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.0</junit.version>
+    <io.grpc.version>1.57.2</io.grpc.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -645,6 +646,100 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
       <version>2.26.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!--  The following io.grpc libraries are transient dependencies of
+          com.google.cloud:google-cloud-storage and are directly pulled in to address an OWASP
+          finding for CVE-2023-33953: https://nvd.nist.gov/vuln/detail/CVE-2023-33953
+    -->
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-alts</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-auth</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-context</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-grpclb</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-googleapis</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-netty-shaded</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf-lite</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-rls</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-services</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-xds</artifactId>
+      <version>${io.grpc.version}</version>
     </dependency>
 
     <dependency>
