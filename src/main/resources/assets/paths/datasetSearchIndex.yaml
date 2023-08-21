@@ -23,7 +23,7 @@ post:
             summary: Search request 2
             value:
               from: 0
-              size: 10000,
+              size: 10000
               query:
                 bool:
                   must:
