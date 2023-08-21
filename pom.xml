@@ -530,6 +530,13 @@
       <groupId>au.com.dius.pact</groupId>
       <artifactId>consumer</artifactId>
       <version>${pact.version}</version>
+      <!-- See comments re: CVE-2023-33953 for google-cloud-storage -->
+      <exclusions>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>test</scope>
     </dependency>
 
@@ -668,6 +675,13 @@
     <!--  Addresses OWASP CVE-2023-33953 -->
     <dependency>
       <groupId>io.grpc</groupId>
+      <artifactId>grpc-api</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
       <artifactId>grpc-auth</artifactId>
       <version>${io.grpc.version}</version>
     </dependency>
@@ -676,6 +690,13 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-context</artifactId>
+      <version>${io.grpc.version}</version>
+    </dependency>
+
+    <!--  Addresses OWASP CVE-2023-33953 -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-core</artifactId>
       <version>${io.grpc.version}</version>
     </dependency>
 
