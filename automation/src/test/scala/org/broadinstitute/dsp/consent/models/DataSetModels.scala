@@ -17,7 +17,6 @@ object DataSetModels {
         active: Boolean,
         needsApproval: Boolean,
         isAssociatedToDataOwners: Option[Boolean],
-        //updateAssociationToDataOwnerAllowed: Option[Boolean],
         alias: String,
         objectId: Option[String],
         createDate: Option[Long],
