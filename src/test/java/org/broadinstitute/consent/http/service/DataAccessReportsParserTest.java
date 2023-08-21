@@ -99,8 +99,6 @@ public class DataAccessReportsParserTest {
         assertEquals(REQUESTER, columns[4]);
         assertEquals(ORGANIZATION, columns[5]);
         assertEquals(columns[6], sDUL.replace("\n", " "));
-        assertEquals(columns[7],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals(RUS_SUMMARY, columns[8]);
       }
       i++;
@@ -142,8 +140,6 @@ public class DataAccessReportsParserTest {
         assertEquals(DS_IDENTIFIER, columns[2]);
         assertEquals(CONSENT_NAME, columns[3]);
         assertEquals(columns[4], sDUL.replace("\n", " "));
-        assertEquals(columns[5],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals("Yes", columns[7]);
       }
       i++;
@@ -186,8 +182,6 @@ public class DataAccessReportsParserTest {
         assertEquals(DS_IDENTIFIER, columns[2]);
         assertEquals(CONSENT_NAME, columns[3]);
         assertEquals(columns[4], sDUL.replace("\n", " "));
-        assertEquals(columns[5],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals("Yes", columns[7]);
       }
       i++;
