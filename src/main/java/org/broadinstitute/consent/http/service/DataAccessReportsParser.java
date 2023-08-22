@@ -150,7 +150,6 @@ public class DataAccessReportsParser implements ConsentLogger {
         datasetIdentifiers.add(dataset.getDatasetIdentifier());
         datasetNames.add(dataset.getName());
       }
-      // TODO: See if we can get sDUL from the dataset instead
       String sDUL =
           StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n",
               " ") : "";

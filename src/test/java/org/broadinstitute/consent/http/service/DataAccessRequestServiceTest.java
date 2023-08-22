@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -304,10 +305,17 @@ public class DataAccessRequestServiceTest {
     Map<String, DataAccessRequest> dars = new HashMap<>();
     dars.put(election.getReferenceId(), dar);
     collection.setDars(dars);
+    Dataset d = new Dataset();
+    d.setDataSetId(1);
+    d.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dar.setDatasetIds(List.of(1));
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
+    when(dataSetDAO.findDatasetById(any())).thenReturn(d);
+    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
     when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
         .thenReturn("CONS-1");
+    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn("Use is limited to research");
 
     Consent consent = new Consent();
     consent.setConsentId("CONS-1");

@@ -11,10 +11,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -334,6 +337,9 @@ public class DataAccessRequestService implements ConsentLogger {
     FileWriter darWriter = new FileWriter(file);
     dataAccessReportsParser.setApprovedDARHeader(darWriter);
     if (CollectionUtils.isNotEmpty(elections)) {
+      // There are cases of duplicate elections for a DAR/Dataset.
+      // Cache processed entities, so we don't print duplicates to the output file.
+      Set<Pair<String, String>> darDatasetCache = new HashSet<>();
       for (Election election : elections) {
         try {
           DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
@@ -343,22 +349,26 @@ public class DataAccessRequestService implements ConsentLogger {
           Dataset dataset = Objects.nonNull(election.getDataSetId()) ? datasetDAO.findDatasetById(
               election.getDataSetId()) : null;
           if (Objects.nonNull(collection) && Objects.nonNull(user) && Objects.nonNull(dataset)) {
-            String consentId = datasetDAO.getAssociatedConsentIdByDatasetId(dataset.getDataSetId());
-            Consent consent =
-                Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
-            String consentName = Objects.nonNull(consent) ? consent.getName() : "";
-            String profileName = user.getDisplayName();
-            if (Objects.isNull(user.getInstitutionId())) {
-              logWarn(
-                  "No institution found for creator (user: %s, %d) of this Data Access Request (DAR: %s)".formatted(
-                      user.getDisplayName(), user.getUserId(), dataAccessRequest.getReferenceId()));
+            Pair<String, String> cacheEntry = Pair.of(collection.getDarCode(), dataset.getDatasetIdentifier());
+            if (!darDatasetCache.contains(cacheEntry)) {
+              darDatasetCache.add(cacheEntry);
+              String consentId = datasetDAO.getAssociatedConsentIdByDatasetId(dataset.getDataSetId());
+              Consent consent =
+                  Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
+              String consentName = Objects.nonNull(consent) ? consent.getName() : "";
+              String profileName = user.getDisplayName();
+              if (Objects.isNull(user.getInstitutionId())) {
+                logWarn(
+                    "No institution found for creator (user: %s, %d) of this Data Access Request (DAR: %s)".formatted(
+                        user.getDisplayName(), user.getUserId(), dataAccessRequest.getReferenceId()));
+              }
+              String institution = Objects.isNull(user.getInstitutionId()) ? ""
+                  : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+              String translatedDatasetDataUse = dataset.getTranslatedDataUse();
+              dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
+                  collection.getDarCode(), profileName, institution, consentName,
+                  translatedDatasetDataUse);
             }
-            String institution = Objects.isNull(user.getInstitutionId()) ? ""
-                : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
-            String translatedDatasetDataUse = dataset.getTranslatedDataUse();
-            dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
-                collection.getDarCode(), profileName, institution, consentName,
-                translatedDatasetDataUse);
           }
         } catch (Exception e) {
           logWarn("Exception generating Approved DAR Document: %s".formatted(e.getMessage()));
@@ -381,6 +391,7 @@ public class DataAccessRequestService implements ConsentLogger {
     dataAccessReportsParser.setReviewedDARHeader(darWriter);
     if (CollectionUtils.isNotEmpty(elections)) {
       for (Election election : elections) {
+        Dataset dataset = datasetDAO.findDatasetById(election.getDataSetId());
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
             election.getReferenceId());
         DataAccessRequest dar = findByReferenceId(election.getReferenceId());
@@ -394,10 +405,10 @@ public class DataAccessRequestService implements ConsentLogger {
               Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
           if (Objects.nonNull(consent)) {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), consent.getName(), "");
+                collection.getDarCode(), consent.getName(), dataset.getTranslatedDataUse());
           } else {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), "", "");
+                collection.getDarCode(), "", dataset.getTranslatedDataUse());
           }
         }
       }
