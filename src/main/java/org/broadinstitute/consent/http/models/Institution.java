@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -137,7 +138,9 @@ public class Institution {
     if (Objects.isNull(signingOfficials)) {
       this.setSigningOfficials(new ArrayList<>());
     }
-    signingOfficials.add(so);
+    if (!new HashSet<>(signingOfficials).contains(so)) {
+      signingOfficials.add(so);
+    }
   }
 
   public Integer getId() {
