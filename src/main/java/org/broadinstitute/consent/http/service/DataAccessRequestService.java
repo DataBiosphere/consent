@@ -65,7 +65,8 @@ public class DataAccessRequestService {
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+        UseRestrictionConverter useRestrictionConverter) {
     this.consentDAO = container.getConsentDAO();
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
@@ -77,7 +78,7 @@ public class DataAccessRequestService {
     this.voteDAO = container.getVoteDAO();
     this.institutionDAO = container.getInstitutionDAO();
     this.dacService = dacService;
-    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO);
+    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
   }
 
@@ -356,10 +357,7 @@ public class DataAccessRequestService {
                 Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
             String profileName = user.getDisplayName();
             if (Objects.isNull(user.getInstitutionId())) {
-              logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", "
-                  + user.getUserId() + ") "
-                  + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId()
-                  + ")");
+              logger.warn("No institution found for creator (user: %s, %d) of this Data Access Request (DAR: %s)".formatted(user.getDisplayName(), user.getUserId(), dataAccessRequest.getReferenceId()));
             }
             String institution = Objects.isNull(user.getInstitutionId()) ? ""
                 : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();

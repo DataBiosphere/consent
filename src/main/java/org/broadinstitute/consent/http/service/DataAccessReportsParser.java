@@ -10,9 +10,11 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -21,13 +23,15 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 public class DataAccessReportsParser implements ConsentLogger {
 
   private final DatasetDAO datasetDAO;
+  private final UseRestrictionConverter useRestrictionConverter;
 
   private static final String DEFAULT_SEPARATOR = "\t";
 
   private static final String END_OF_LINE = System.lineSeparator();
 
-  public DataAccessReportsParser(DatasetDAO datasetDAO) {
+  public DataAccessReportsParser(DatasetDAO datasetDAO, UseRestrictionConverter useRestrictionConverter) {
     this.datasetDAO = datasetDAO;
+    this.useRestrictionConverter = useRestrictionConverter;
   }
 
   public void setApprovedDARHeader(FileWriter darWriter) throws IOException {
@@ -146,11 +150,13 @@ public class DataAccessReportsParser implements ConsentLogger {
         datasetIdentifiers.add(dataset.getDatasetIdentifier());
         datasetNames.add(dataset.getName());
       }
+      // TODO: See if we can get sDUL from the dataset instead
       String sDUL =
           StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n",
               " ") : "";
-      // TODO: See if we can get this from the dataset instead
-      String translatedRestriction = "";
+      DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
+      String sDAR = useRestrictionConverter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
+      String formattedSDAR = sDAR.replace("\n", " ");
       darWriter.write(
           darCode + DEFAULT_SEPARATOR +
               StringUtils.join(datasetNames, ",") + DEFAULT_SEPARATOR +
@@ -158,7 +164,7 @@ public class DataAccessReportsParser implements ConsentLogger {
               consentName + DEFAULT_SEPARATOR +
               customContent1 +
               sDUL + DEFAULT_SEPARATOR +
-              translatedRestriction + DEFAULT_SEPARATOR +
+              formattedSDAR + DEFAULT_SEPARATOR +
               customContent2 + END_OF_LINE);
 
     }
