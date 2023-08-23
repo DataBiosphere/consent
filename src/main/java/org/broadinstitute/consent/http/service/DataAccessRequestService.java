@@ -382,6 +382,9 @@ public class DataAccessRequestService implements ConsentLogger {
     if (CollectionUtils.isNotEmpty(elections)) {
       for (Election election : elections) {
         Dataset dataset = datasetDAO.findDatasetById(election.getDataSetId());
+        String translatedDataUse =
+            (Objects.nonNull(dataset) && Objects.nonNull(dataset.getTranslatedDataUse()))
+                ? dataset.getTranslatedDataUse() : "";
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
             election.getReferenceId());
         DataAccessRequest dar = findByReferenceId(election.getReferenceId());
@@ -395,10 +398,10 @@ public class DataAccessRequestService implements ConsentLogger {
               Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
           if (Objects.nonNull(consent)) {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), consent.getName(), dataset.getTranslatedDataUse());
+                collection.getDarCode(), consent.getName(), translatedDataUse);
           } else {
             dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), "", dataset.getTranslatedDataUse());
+                collection.getDarCode(), "", translatedDataUse);
           }
         }
       }
