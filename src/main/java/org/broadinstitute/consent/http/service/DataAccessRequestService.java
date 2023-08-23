@@ -396,13 +396,11 @@ public class DataAccessRequestService implements ConsentLogger {
                   : null;
           Consent consent =
               Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
-          if (Objects.nonNull(consent)) {
-            dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), consent.getName(), translatedDataUse);
-          } else {
-            dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), "", translatedDataUse);
-          }
+          String consentName =
+              (Objects.nonNull(consent) && Objects.nonNull(consent.getName())) ? consent.getName()
+                  : "";
+          dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
+              collection.getDarCode(), consentName, translatedDataUse);
         }
       }
     }
