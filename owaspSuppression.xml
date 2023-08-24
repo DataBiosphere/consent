@@ -46,4 +46,14 @@
     </packageUrl>
     <cve>CVE-2023-35116</cve>
   </suppress>
+
+  <!-- Primary dependency that does not have an upgrade -->
+  <suppress>
+    <notes><![CDATA[
+   file name: postgresql-42.6.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.postgresql/postgresql@.*$</packageUrl>
+    <cpe>cpe:/a:postgresql:postgresql_jdbc_driver</cpe>
+  </suppress>
+
 </suppressions>
