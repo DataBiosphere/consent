@@ -73,7 +73,7 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexDatasetTerms(List<DatasetTerm> datasets) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
-    datasets.forEach((dsTerm) -> {
+    datasets.forEach(dsTerm -> {
       bulkApiCall.add(bulkHeader.formatted(dsTerm.getDatasetId()));
       bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
     });
@@ -84,7 +84,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     bulkRequest.setEntity(new NStringEntity(
         String.join("", bulkApiCall) + "\n",
-        ContentType.DEFAULT_BINARY));
+        ContentType.APPLICATION_JSON));
 
     return performRequest(bulkRequest);
   }
@@ -168,7 +168,7 @@ public class ElasticSearchService implements ConsentLogger {
         prop -> {
           JsonArray jsonArray = (JsonArray) prop.getValue();
           List<String> dataCustodianEmail = new ArrayList<>();
-          jsonArray.forEach((email) -> dataCustodianEmail.add(email.getAsString()));
+          jsonArray.forEach(email -> dataCustodianEmail.add(email.getAsString()));
           term.setDataCustodianEmail(dataCustodianEmail);
         }
     );
@@ -257,8 +257,8 @@ public class ElasticSearchService implements ConsentLogger {
     return
         props
             .stream()
-            .filter((p) -> Objects.nonNull(p.getSchemaProperty()))
-            .filter((p) -> p.getSchemaProperty().equals(schemaProp))
+            .filter(p -> Objects.nonNull(p.getSchemaProperty()))
+            .filter(p -> p.getSchemaProperty().equals(schemaProp))
             .findFirst();
   }
 
@@ -270,7 +270,7 @@ public class ElasticSearchService implements ConsentLogger {
     return
         props
             .stream()
-            .filter((p) -> p.getKey().equals(key))
+            .filter(p -> p.getKey().equals(key))
             .findFirst();
   }
 
