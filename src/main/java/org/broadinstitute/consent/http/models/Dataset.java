@@ -99,8 +99,6 @@ public class Dataset {
 
   private String consentId;
 
-  private String translatedUseRestriction;
-
   private Boolean deletable;
 
   private FileStorageObject nihInstitutionalCertificationFile;
@@ -335,14 +333,6 @@ public class Dataset {
 
   public void setConsentId(String consentId) {
     this.consentId = consentId;
-  }
-
-  public String getTranslatedUseRestriction() {
-    return translatedUseRestriction;
-  }
-
-  public void setTranslatedUseRestriction(String translatedUseRestriction) {
-    this.translatedUseRestriction = translatedUseRestriction;
   }
 
   public String getTranslatedDataUse() {

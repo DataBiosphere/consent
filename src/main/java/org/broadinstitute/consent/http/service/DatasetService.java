@@ -172,12 +172,10 @@ public class DatasetService {
        * data user letter
        * data user letter name
        */
-      String translatedUseRestriction = converter.translateDataUse(dataset.getDataUse(),
-          DataUseTranslationType.DATASET);
       consentDAO.useTransaction(h -> {
         try {
           h.insertConsent(consentId, manualReview, dataset.getDataUse().toString(), null, name,
-              null, createDate, createDate, translatedUseRestriction, groupName);
+              null, createDate, createDate, groupName);
           String associationType = AssociationType.SAMPLE_SET.getValue();
           h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -24,10 +25,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class DataAccessReportsParserTest {
+class DataAccessReportsParserTest {
 
   @Mock
   private DatasetDAO datasetDAO;
+  @Mock
+  private UseRestrictionConverter useRestrictionConverter;
   private DataAccessReportsParser parser;
   private final String CONSENT_NAME = "ORSP-1903";
   private final String NAME = "Test";
@@ -42,7 +45,6 @@ public class DataAccessReportsParserTest {
       Future use as a control set for diseases other than those specified is not prohibited
       """;
   private final String DAR_CODE = "DAR_3";
-  private final String TRANSLATED_USE_RESTRICTION = "Samples will be used under the following conditions:<br>Data will be used for health/medical/biomedical research <br>Data will be used to study:  kidney-cancer [DOID_263(CC)], kidney-failure [DOID_1074(CC)]<br>Data will be used for commercial purpose [NPU] <br>";
 
   @BeforeEach
   public void setUp() {
@@ -53,11 +55,16 @@ public class DataAccessReportsParserTest {
     d.setName(NAME);
     List<Dataset> datasets = List.of(d);
     when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(datasets);
-    this.parser = new DataAccessReportsParser(datasetDAO);
+    String translation = """
+        Research is limited to samples restricted for use under the following conditions:
+        Data is limited for health/medical/biomedical research. [HMB]
+    """;
+    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn(translation);
+    this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
   }
 
   @Test
-  public void testDataAccessApprovedReport() throws IOException {
+  void testDataAccessApprovedReport() throws IOException {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
@@ -99,8 +106,6 @@ public class DataAccessReportsParserTest {
         assertEquals(REQUESTER, columns[4]);
         assertEquals(ORGANIZATION, columns[5]);
         assertEquals(columns[6], sDUL.replace("\n", " "));
-        assertEquals(columns[7],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals(RUS_SUMMARY, columns[8]);
       }
       i++;
@@ -109,7 +114,7 @@ public class DataAccessReportsParserTest {
   }
 
   @Test
-  public void testDataAccessReviewedReport() throws IOException {
+  void testDataAccessReviewedReport() throws IOException {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
@@ -142,8 +147,6 @@ public class DataAccessReportsParserTest {
         assertEquals(DS_IDENTIFIER, columns[2]);
         assertEquals(CONSENT_NAME, columns[3]);
         assertEquals(columns[4], sDUL.replace("\n", " "));
-        assertEquals(columns[5],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals("Yes", columns[7]);
       }
       i++;
@@ -152,7 +155,7 @@ public class DataAccessReportsParserTest {
   }
 
   @Test
-  public void testDataAccessReviewedReportNullElectionDate() throws IOException {
+  void testDataAccessReviewedReportNullElectionDate() throws IOException {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = new Election();
@@ -186,8 +189,6 @@ public class DataAccessReportsParserTest {
         assertEquals(DS_IDENTIFIER, columns[2]);
         assertEquals(CONSENT_NAME, columns[3]);
         assertEquals(columns[4], sDUL.replace("\n", " "));
-        assertEquals(columns[5],
-            TRANSLATED_USE_RESTRICTION.replace("<br>", " "));
         assertEquals("Yes", columns[7]);
       }
       i++;
@@ -206,7 +207,6 @@ public class DataAccessReportsParserTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setDatasetIds(List.of(1));
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setTranslatedUseRestriction(TRANSLATED_USE_RESTRICTION);
     data.setNonTechRus(RUS_SUMMARY);
     dar.setData(data);
     dar.setSortDate(new Timestamp(currentDate.getTime()));

@@ -87,6 +87,8 @@ public class DataAccessRequestServiceTest {
   private MatchDAO matchDAO;
   @Mock
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  @Mock
+  private UseRestrictionConverter useRestrictionConverter;
 
   private DataAccessRequestService service;
 
@@ -113,7 +115,7 @@ public class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO);
+        dataAccessRequestServiceDAO, useRestrictionConverter);
   }
 
   @Test
@@ -303,16 +305,21 @@ public class DataAccessRequestServiceTest {
     Map<String, DataAccessRequest> dars = new HashMap<>();
     dars.put(election.getReferenceId(), dar);
     collection.setDars(dars);
+    Dataset d = new Dataset();
+    d.setDataSetId(1);
+    d.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dar.setDatasetIds(List.of(1));
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
+    when(dataSetDAO.findDatasetById(any())).thenReturn(d);
+    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
     when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
         .thenReturn("CONS-1");
+    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn("Use is limited to research");
 
     Consent consent = new Consent();
     consent.setConsentId("CONS-1");
     consent.setName("Consent 1");
-    consent.setTranslatedUseRestriction(
-        new DataUseBuilder().setGeneralUse(true).build().toString());
     when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
     initService();
 

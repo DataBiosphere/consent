@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotAcceptableException;
@@ -16,7 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -40,13 +37,10 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class DataAccessRequestService {
-
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+public class DataAccessRequestService implements ConsentLogger {
 
   private final ConsentDAO consentDAO;
   private final CounterService counterService;
@@ -65,7 +59,8 @@ public class DataAccessRequestService {
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+      UseRestrictionConverter useRestrictionConverter) {
     this.consentDAO = container.getConsentDAO();
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
@@ -77,7 +72,7 @@ public class DataAccessRequestService {
     this.voteDAO = container.getVoteDAO();
     this.institutionDAO = container.getInstitutionDAO();
     this.dacService = dacService;
-    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO);
+    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
   }
 
@@ -99,15 +94,14 @@ public class DataAccessRequestService {
       // If the user is an admin, delete all votes and elections
       if (user.hasUserRole(UserRoles.ADMIN)) {
         voteDAO.deleteVotesByReferenceId(referenceId);
-        List<Integer> electionIds = elections.stream().map(Election::getElectionId)
-            .collect(toList());
+        List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
         electionDAO.deleteElectionsFromAccessRPs(electionIds);
         electionDAO.deleteElectionsByIds(electionIds);
       } else {
         String message = String.format(
             "Unable to delete DAR: '%s', there are existing elections that reference it.",
             referenceId);
-        logger.warn(message);
+        logWarn(message);
         throw new NotAcceptableException(message);
       }
     }
@@ -157,7 +151,7 @@ public class DataAccessRequestService {
   private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
     List<DarDataset> darDatasets = datasetIds.stream()
         .map(datasetId -> new DarDataset(referenceId, datasetId))
-        .collect(Collectors.toList());
+        .toList();
     dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
 
     if (!darDatasets.isEmpty()) {
@@ -190,7 +184,7 @@ public class DataAccessRequestService {
         .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
         .map(DataAccessRequest::getDatasetIds)
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .toList();
     if (datasetIds.isEmpty()) {
       throw new IllegalArgumentException(
           "Source Collection must contain references to at least a single canceled DAR's dataset");
@@ -200,19 +194,19 @@ public class DataAccessRequestService {
         .getDars().values().stream()
         .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
     if (!electionIds.isEmpty()) {
       String errorMessage = "Found 'Open' elections for canceled DARs in collection id: "
           + sourceCollection.getDarCollectionId();
-      logger.warn(errorMessage);
+      logWarn(errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
 
     List<String> sourceReferenceIds = sourceCollection
         .getDars().values().stream()
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     dataAccessRequestDAO.archiveByReferenceIds(sourceReferenceIds);
 
     String referenceId = UUID.randomUUID().toString();
@@ -346,29 +340,28 @@ public class DataAccessRequestService {
               election.getReferenceId());
           DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
           User user = userDAO.findUserById(dataAccessRequest.getUserId());
-          if (Objects.nonNull(collection) && Objects.nonNull(user)) {
-            Integer datasetId = !CollectionUtils.isEmpty(dataAccessRequest.getDatasetIds())
-                ? dataAccessRequest.getDatasetIds().get(0) : null;
-            String consentId =
-                Objects.nonNull(datasetId) ? datasetDAO.getAssociatedConsentIdByDatasetId(datasetId)
-                    : null;
+          Dataset dataset = Objects.nonNull(election.getDataSetId()) ? datasetDAO.findDatasetById(
+              election.getDataSetId()) : null;
+          if (Objects.nonNull(collection) && Objects.nonNull(user) && Objects.nonNull(dataset)) {
+            String consentId = datasetDAO.getAssociatedConsentIdByDatasetId(dataset.getDataSetId());
             Consent consent =
                 Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
+            String consentName = Objects.nonNull(consent) ? consent.getName() : "";
             String profileName = user.getDisplayName();
             if (Objects.isNull(user.getInstitutionId())) {
-              logger.warn("No institution found for creator (user: " + user.getDisplayName() + ", "
-                  + user.getUserId() + ") "
-                  + "of this Data Access Request (DAR: " + dataAccessRequest.getReferenceId()
-                  + ")");
+              logWarn(
+                  "No institution found for creator (user: %s, %d) of this Data Access Request (DAR: %s)".formatted(
+                      user.getDisplayName(), user.getUserId(), dataAccessRequest.getReferenceId()));
             }
             String institution = Objects.isNull(user.getInstitutionId()) ? ""
                 : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+            String translatedDatasetDataUse = dataset.getTranslatedDataUse();
             dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
-                collection.getDarCode(), profileName, institution, consent.getName(),
-                consent.getTranslatedUseRestriction());
+                collection.getDarCode(), profileName, institution, consentName,
+                translatedDatasetDataUse);
           }
         } catch (Exception e) {
-          logger.error("Exception generating Approved DAR Document", e);
+          logWarn("Exception generating Approved DAR Document: %s".formatted(e.getMessage()));
         }
       }
     }
@@ -388,6 +381,10 @@ public class DataAccessRequestService {
     dataAccessReportsParser.setReviewedDARHeader(darWriter);
     if (CollectionUtils.isNotEmpty(elections)) {
       for (Election election : elections) {
+        Dataset dataset = datasetDAO.findDatasetById(election.getDataSetId());
+        String translatedDataUse =
+            (Objects.nonNull(dataset) && Objects.nonNull(dataset.getTranslatedDataUse()))
+                ? dataset.getTranslatedDataUse() : "";
         DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
             election.getReferenceId());
         DataAccessRequest dar = findByReferenceId(election.getReferenceId());
@@ -399,13 +396,11 @@ public class DataAccessRequestService {
                   : null;
           Consent consent =
               Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
-          if (Objects.nonNull(consent)) {
-            dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), consent.getName(), consent.getTranslatedUseRestriction());
-          } else {
-            dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-                collection.getDarCode(), "", "");
-          }
+          String consentName =
+              (Objects.nonNull(consent) && Objects.nonNull(consent.getName())) ? consent.getName()
+                  : "";
+          dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
+              collection.getDarCode(), consentName, translatedDataUse);
         }
       }
     }

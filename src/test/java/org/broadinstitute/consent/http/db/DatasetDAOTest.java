@@ -64,8 +64,6 @@ public class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(foundDataset);
     assertEquals(dac.getDacId(), foundDataset.getDacId());
     assertEquals(consent.getConsentId(), foundDataset.getConsentId());
-    assertEquals(consent.getTranslatedUseRestriction(),
-        foundDataset.getTranslatedUseRestriction());
     assertFalse(foundDataset.getProperties().isEmpty());
     assertTrue(foundDataset.getDeletable());
     assertNotNull(foundDataset.getCreateUser());
@@ -625,8 +623,6 @@ public class DatasetDAOTest extends DAOTestHelper {
     assertEquals(1, datasets.size());
     assertEquals(dac.getDacId(), datasets.get(0).getDacId());
     assertEquals(consent.getConsentId(), datasets.get(0).getConsentId());
-    assertEquals(consent.getTranslatedUseRestriction(),
-        datasets.get(0).getTranslatedUseRestriction());
     assertFalse(datasets.get(0).getProperties().isEmpty());
     assertNotNull(datasets.get(0).getCreateUser());
   }
@@ -1057,8 +1053,7 @@ public class DatasetDAOTest extends DAOTestHelper {
     String consentId = RandomStringUtils.randomAlphabetic(10);
     consentDAO.insertConsent(consentId, false, "", null,
         RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(),
-        new Date(),
-        null, RandomStringUtils.randomAlphabetic(10));
+        new Date(), RandomStringUtils.randomAlphabetic(10));
     consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10),
         datasetId);
 
@@ -1330,7 +1325,6 @@ public class DatasetDAOTest extends DAOTestHelper {
         "dulName",
         new Date(),
         new Date(),
-        "Everything",
         "Group");
     return consentDAO.findConsentById(consentId);
   }

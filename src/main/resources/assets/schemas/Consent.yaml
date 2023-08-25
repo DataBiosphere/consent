@@ -34,9 +34,6 @@ properties:
       DEPRECATED: Use updateDate
       The lastest modification date. This has historically been used to
       determine sort order in addition to update date.
-  translatedUseRestriction:
-    type: string
-    description: The translated use restriction of the consent.
   lastElectionStatus:
     type: string
     description: Displays the associated election if this exists, else is null.

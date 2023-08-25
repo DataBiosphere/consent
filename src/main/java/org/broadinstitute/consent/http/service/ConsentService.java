@@ -23,14 +23,11 @@ public class ConsentService {
   private final Logger logger;
   private final ConsentDAO consentDAO;
   private final ElectionDAO electionDAO;
-  private final UseRestrictionConverter useRestrictionConverter;
 
   @Inject
-  public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+  public ConsentService(ConsentDAO consentDAO, ElectionDAO electionDAO) {
     this.consentDAO = consentDAO;
     this.electionDAO = electionDAO;
-    this.useRestrictionConverter = useRestrictionConverter;
     this.logger = LoggerFactory.getLogger(this.getClass());
   }
 
@@ -49,15 +46,10 @@ public class ConsentService {
       throw new IllegalArgumentException("Consent for the specified id already exist");
     }
     Date createDate = new Date();
-    if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-      String translatedUseRestriction = useRestrictionConverter.translateDataUse(rec.getDataUse(),
-          DataUseTranslationType.DATASET);
-      rec.setTranslatedUseRestriction(translatedUseRestriction);
-    }
     consentDAO.insertConsent(id, rec.getRequiresManualReview(),
         rec.getDataUse().toString(),
         rec.getDataUseLetter(), rec.getName(), rec.getDulName(), createDate, createDate,
-        rec.getTranslatedUseRestriction(), rec.getGroupName());
+        rec.getGroupName());
     return consentDAO.findConsentById(id);
   }
 
@@ -66,14 +58,10 @@ public class ConsentService {
     if (StringUtils.isEmpty(consentDAO.checkConsentById(id))) {
       throw new NotFoundException();
     }
-    if (Objects.isNull(rec.getTranslatedUseRestriction()) && Objects.nonNull(rec.getDataUse())) {
-      rec.setTranslatedUseRestriction(useRestrictionConverter.translateDataUse(rec.getDataUse(),
-          DataUseTranslationType.DATASET));
-    }
     consentDAO.updateConsent(id, rec.getRequiresManualReview(),
         rec.getDataUse().toString(),
         rec.getDataUseLetter(), rec.getName(), rec.getDulName(), rec.getLastUpdate(),
-        rec.getSortDate(), rec.getTranslatedUseRestriction(), rec.getGroupName(), true);
+        rec.getSortDate(), rec.getGroupName(), true);
     return consentDAO.findConsentById(id);
   }
 

@@ -72,7 +72,6 @@ public class DataAccessRequestData {
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  private String translatedUseRestriction;
   @Deprecated
   private Long createDate;
   @Deprecated
@@ -374,14 +373,6 @@ public class DataAccessRequestData {
 
   public void setValidRestriction(Boolean validRestriction) {
     this.validRestriction = validRestriction;
-  }
-
-  public String getTranslatedUseRestriction() {
-    return translatedUseRestriction;
-  }
-
-  public void setTranslatedUseRestriction(String translatedUseRestriction) {
-    this.translatedUseRestriction = translatedUseRestriction;
   }
 
   public Long getCreateDate() {

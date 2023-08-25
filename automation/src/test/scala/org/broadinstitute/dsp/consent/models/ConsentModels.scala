@@ -14,7 +14,6 @@ object ConsentModels {
         createDate: Option[Long] = None,
         lastUpdate: Option[Long] = None,
         sortDate: Option[Long] = None,
-        translatedUseRestriction: Option[String] = None,
         dataUse: Option[DataUse] = None,
         groupName: Option[String] = None,
         updateStatus: Option[Boolean] = None,

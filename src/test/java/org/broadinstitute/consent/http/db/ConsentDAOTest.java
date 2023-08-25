@@ -106,7 +106,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consent.getDulName(),
         new Date(),
         new Date(),
-        consent.getTranslatedUseRestriction(),
         consent.getGroupName(),
         consent.getUpdated()
     );
@@ -196,7 +195,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consent2.getDulName(),
         new Date(),
         consent2.getSortDate(),
-        consent2.getTranslatedUseRestriction(),
         consent2.getGroupName(),
         consent2.getUpdated());
 
@@ -222,7 +220,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consent1.getDulName(),
         new Date(),
         consent1.getSortDate(),
-        consent1.getTranslatedUseRestriction(),
         consent1.getGroupName(),
         true);
     Consent consent2 = createConsent();
@@ -235,7 +232,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         consent2.getDulName(),
         new Date(),
         consent2.getSortDate(),
-        consent2.getTranslatedUseRestriction(),
         consent2.getGroupName(),
         false);
 
@@ -278,7 +274,6 @@ public class ConsentDAOTest extends DAOTestHelper {
         "dulName",
         new Date(),
         new Date(),
-        "Everything",
         "Group");
     return consentDAO.findConsentById(consentId);
   }

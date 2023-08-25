@@ -29,7 +29,6 @@ public class ConsentMapper implements RowMapper<Consent> {
     consent.setCreateDate(r.getTimestamp("create_date"));
     consent.setSortDate(r.getTimestamp("sort_date"));
     consent.setLastUpdate(r.getTimestamp("last_update"));
-    consent.setTranslatedUseRestriction(r.getString("translated_use_restriction"));
     consent.setGroupName(r.getString("group_name"));
     consent.setUpdated(r.getBoolean("updated"));
     consentMap.put(consent.getConsentId(), consent);

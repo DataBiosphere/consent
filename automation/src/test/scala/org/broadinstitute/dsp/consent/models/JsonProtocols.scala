@@ -27,7 +27,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val dataSetDetailFormat: JsonFormat[DataSetDetailEntry] = jsonFormat3(DataSetDetailEntry)
     implicit val ontologyEntryFormat: JsonFormat[OntologyEntry] = jsonFormat4(OntologyEntry)
     implicit val userFormat: JsonFormat[User] = jsonFormat10(User)
-    implicit val dataSetFormat: JsonFormat[DataSet] = jsonFormat16(DataSet)
+    implicit val dataSetFormat: JsonFormat[DataSet] = jsonFormat15(DataSet)
     implicit val dataAccessRequestDraftFormat: JsonFormat[DataAccessRequestDraft] = jsonFormat3(DataAccessRequestDraft)
     implicit val fireCloudProfileFormat: JsonFormat[FireCloudProfile] = jsonFormat11(FireCloudProfile)
     implicit val nihUserFormat: JsonFormat[NihUserAccount] = jsonFormat4(NihUserAccount)
@@ -35,7 +35,7 @@ object JsonProtocols extends DefaultJsonProtocol {
     implicit val dacFormat: JsonFormat[Dac] = jsonFormat8(Dac)
     implicit val electionStatusFormat: JsonFormat[ElectionStatus] = jsonFormat2(ElectionStatus)
     implicit val pendingCaseFormat: JsonFormat[PendingCase] = jsonFormat18(PendingCase)
-    implicit val consentFormat: JsonFormat[Consent] = jsonFormat15(Consent)
+    implicit val consentFormat: JsonFormat[Consent] = jsonFormat14(Consent)
     implicit val voteFormat: JsonFormat[Vote] = jsonFormat10(Vote)
     implicit val votePostFormat: JsonFormat[VotePostObject] = jsonFormat4(VotePostObject)
     implicit val electionFormat: JsonFormat[Election] = jsonFormat18(Election)
@@ -208,7 +208,6 @@ object JsonProtocols extends DefaultJsonProtocol {
                 partialDarCode = optionalEntryReader("partialDarCode", fields, _.convertTo[Option[String]], None),
                 restriction = optionalEntryReader("restriction", fields, _ => None, None),
                 validRestriction = optionalEntryReader("validRestriction", fields, _.convertTo[Option[Boolean]], None),
-                translatedUseRestriction = optionalEntryReader("translatedUseRestriction", fields, _.convertTo[Option[String]], None),
                 createDate = optionalEntryReader("createDate", fields, _.convertTo[Option[Long]], None),
                 sortDate = optionalEntryReader("sortDate", fields, _.convertTo[Option[Long]], None),
                 datasetIds = optionalEntryReader("datasetIds", fields, _.convertTo[Option[Seq[Int]]], None),
