@@ -55,10 +55,11 @@ class DataAccessReportsParserTest {
     d.setName(NAME);
     List<Dataset> datasets = List.of(d);
     when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(datasets);
-    when(useRestrictionConverter
-        .translateDataUse(any(), any()))
-        .thenReturn(
-            "Research is limited to samples restricted for use under the following conditions:\nData is limited for health/medical/biomedical research. [HMB]\n");
+    String translation = """
+        Research is limited to samples restricted for use under the following conditions:
+        Data is limited for health/medical/biomedical research. [HMB]
+    """;
+    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn(translation);
     this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
   }
 
