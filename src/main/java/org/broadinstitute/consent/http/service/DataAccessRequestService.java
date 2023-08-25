@@ -59,7 +59,8 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+      UseRestrictionConverter useRestrictionConverter) {
     this.consentDAO = container.getConsentDAO();
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
