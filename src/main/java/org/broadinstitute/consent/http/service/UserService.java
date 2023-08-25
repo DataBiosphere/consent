@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
@@ -191,6 +191,23 @@ public class UserService {
 
     public void setEmail(String email) {
       this.email = email;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SimplifiedUser that = (SimplifiedUser) o;
+      return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(userId);
     }
   }
 

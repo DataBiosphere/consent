@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -59,8 +59,7 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
     this.consentDAO = container.getConsentDAO();
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
