@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -140,16 +139,20 @@ class DatasetResourceTest {
     return mockDTO;
   }
 
+  private Dataset createMockDataset() {
+    Dataset mockDataset = new Dataset();
+    mockDataset.setDataSetId(RandomUtils.nextInt(100, 1000));
+    mockDataset.setDatasetName("test");
+    return mockDataset;
+  }
+
   @Test
   void testCreateDatasetSuccess() throws Exception {
-    DatasetDTO result = createMockDatasetDTO();
-    Consent consent = new Consent();
+    Dataset result = createMockDataset();
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
-    when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
-    when(datasetService.createConsentForDataset(any())).thenReturn(consent);
-    when(datasetService.getDatasetDTO(any())).thenReturn(result);
+    when(datasetService.createDataset(any(), any(), anyInt())).thenReturn(result);
     when(authUser.getGenericUser()).thenReturn(genericUser);
     when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -256,14 +259,12 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testCreateDatasetError() throws Exception {
-    Consent consent = new Consent();
+  void testCreateDatasetError() {
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
     doThrow(new RuntimeException()).when(datasetService)
-        .createDatasetWithConsent(any(), any(), anyInt());
-    when(datasetService.createConsentForDataset(any())).thenReturn(consent);
+        .createDataset(any(), any(), anyInt());
     when(authUser.getGenericUser()).thenReturn(genericUser);
     when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
