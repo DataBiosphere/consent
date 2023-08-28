@@ -100,13 +100,13 @@ object Requests {
         .headers(TestConfig.jsonHeader)
         .headers(additionalHeaders)
         .resources(
-          DataSet.byUserId(expectedStatus, userId, additionalHeaders),
           Dac.list(expectedStatus, additionalHeaders)
         )
     }
   }
 
   object DataSet {
+    val dataSetResponse: String = "DATASET_RESPONSE"
     val dataSetsByDataSetId: String = "DATASET_BYDSID_"
 
     def getDataSetsByDataSetId(expectedStatus: Int, dataSetId: String, additionalHeaders: Map[String, String], index: Int = 0): HttpRequestBuilder = {
