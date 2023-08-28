@@ -82,6 +82,11 @@ public class Dataset {
 
   private Integer updateUserId;
 
+  /**
+   * Active is a deprecated property. The visibility of a dataset is
+   * calculated from DAC approval and the public visibility dataset property
+   */
+  @Deprecated(forRemoval = true)
   private Boolean active;
 
   private String consentName;

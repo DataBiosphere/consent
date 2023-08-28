@@ -546,7 +546,7 @@ public class DatasetService {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return datasetDAO.findAllDatasets();
     } else {
-      List<Dataset> datasets = datasetDAO.getActiveDatasets();
+      List<Dataset> datasets = datasetDAO.getDatasets();
       if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
         List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         return Stream

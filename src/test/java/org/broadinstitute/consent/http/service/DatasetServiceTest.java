@@ -20,8 +20,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,8 +46,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -735,7 +731,7 @@ public class DatasetServiceTest {
     assertEquals(1, datasets.size());
     assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
     verify(datasetDAO, times(1)).findAllDatasets();
-    verify(datasetDAO, times(0)).getActiveDatasets();
+    verify(datasetDAO, times(0)).getDatasets();
     verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
   }
 
@@ -751,7 +747,7 @@ public class DatasetServiceTest {
     d2.setDataSetId(2);
     Dataset d3 = new Dataset();
     d2.setDataSetId(3);
-    when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+    when(datasetDAO.getDatasets()).thenReturn(List.of(d1, d2));
     when(datasetDAO.findDatasetsByAuthUserEmail(any())).thenReturn(List.of(d2, d3));
     initService();
 
@@ -763,7 +759,7 @@ public class DatasetServiceTest {
     assertTrue(datasets.contains(d2));
     assertTrue(datasets.contains(d3));
     verify(datasetDAO, times(0)).findAllDatasets();
-    verify(datasetDAO, times(1)).getActiveDatasets();
+    verify(datasetDAO, times(1)).getDatasets();
     verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(any());
   }
 
@@ -777,7 +773,7 @@ public class DatasetServiceTest {
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
     d2.setDataSetId(2);
-    when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+    when(datasetDAO.getDatasets()).thenReturn(List.of(d1, d2));
     initService();
 
     List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
@@ -786,7 +782,7 @@ public class DatasetServiceTest {
     assertTrue(datasets.contains(d1));
     assertTrue(datasets.contains(d2));
     verify(datasetDAO, times(0)).findAllDatasets();
-    verify(datasetDAO, times(1)).getActiveDatasets();
+    verify(datasetDAO, times(1)).getDatasets();
     verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
   }
 
