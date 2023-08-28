@@ -365,19 +365,6 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
-  public Response describeDataSets(@Auth AuthUser authUser) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getUserId());
-      return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @PermitAll
   @Path("/v2")
   public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
     try {
@@ -614,23 +601,6 @@ public class DatasetResource extends Resource {
     try {
       Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
       return Response.ok(dictionaries).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/autocomplete/{partial}")
-  @Produces("application/json")
-  @PermitAll
-  @Deprecated
-  public Response datasetAutocomplete(@Auth AuthUser authUser,
-      @PathParam("partial") String partial) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Integer userId = user.getUserId();
-      List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, userId);
-      return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
