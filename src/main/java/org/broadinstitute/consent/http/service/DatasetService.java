@@ -9,10 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +19,6 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -43,7 +39,6 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,29 +49,20 @@ public class DatasetService {
   public static final String DATASET_NAME_KEY = "Dataset Name";
   public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
   private final ConsentDAO consentDAO;
-  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final DatasetServiceDAO datasetServiceDAO;
   private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
-  private final UseRestrictionConverter converter;
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO dataSetDAO,
-      DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      UseRestrictionConverter converter,
-      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
+  public DatasetService(ConsentDAO consentDAO, DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO,
+    DacDAO dacDAO, EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
     this.consentDAO = consentDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
-    this.datasetServiceDAO = datasetServiceDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
-    this.converter = converter;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
@@ -431,55 +417,9 @@ public class DatasetService {
     }
   }
 
-  @Deprecated
-  public Set<DatasetDTO> describeDatasets(Integer userId) {
-    List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelationDatasetIds();
-    HashSet<DatasetDTO> datasets = new HashSet<>();
-    if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
-      datasets.addAll(datasetDAO.findAllDatasetDTOs());
-    } else {
-      datasets.addAll(datasetDAO.findActiveDatasetDTOs());
-      if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
-        Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
-        datasets.addAll(chairSpecificDatasets);
-      }
-    }
-    datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
-    return datasets;
-  }
-
-
   public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
     return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
-  }
-
-  @Deprecated
-  public List<Map<String, String>> autoCompleteDatasets(String partial, Integer userId) {
-    Set<DatasetDTO> datasets = describeDatasets(userId);
-    String lowercasePartial = partial.toLowerCase();
-    Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
-        .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
-        .collect(Collectors.toSet());
-    return filteredDatasetsContainingPartial.stream().map(ds ->
-        {
-          HashMap<String, String> map = new HashMap<>();
-          List<DatasetPropertyDTO> properties = ds.getProperties();
-          Optional<DatasetPropertyDTO> datasetName = properties.stream()
-              .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
-          Optional<DatasetPropertyDTO> pi = properties.stream()
-              .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
-              .findFirst();
-          String datasetNameString =
-              datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
-          String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
-          map.put("id", ds.getDataSetId().toString());
-          map.put("objectId", ds.getObjectId());
-          map.put("concatenation",
-              datasetNameString + " | " + piString + " | " + ds.getConsentId());
-          return map;
-        }
-    ).collect(Collectors.toList());
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
