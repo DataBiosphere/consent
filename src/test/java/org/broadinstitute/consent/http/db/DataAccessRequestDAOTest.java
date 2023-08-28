@@ -32,10 +32,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 
-public class DataAccessRequestDAOTest extends DAOTestHelper {
+class DataAccessRequestDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindAll() {
+  void testFindAll() {
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
     assertTrue(dars.isEmpty());
 
@@ -49,7 +49,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllDrafts() {
+  void testFindAllDrafts() {
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertTrue(dars.isEmpty());
 
@@ -66,7 +66,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllDraftsByUserId() {
+  void testFindAllDraftsByUserId() {
     DataAccessRequest dar = createDraftDataAccessRequest();
     Dataset d1 = createDARDAOTestDataset();
     Dataset d2 = createDARDAOTestDataset();
@@ -82,7 +82,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllDarsByUserId() {
+  void testFindAllDarsByUserId() {
     DataAccessRequest dar = createDataAccessRequestV3();
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(
         dar.getCollectionId());
@@ -97,7 +97,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void updateDraftToNonDraft() {
+  void updateDraftToNonDraft() {
     DataAccessRequest dar = createDraftDataAccessRequest();
 
     List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
@@ -110,7 +110,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void updateNonDraftToDraft() {
+  void updateNonDraftToDraft() {
     DataAccessRequest dar = createDataAccessRequestV3();
 
     List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
@@ -124,7 +124,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
 
   @Test
-  public void updateDraftToNonDraftByCollectionId() {
+  void updateDraftToNonDraftByCollectionId() {
     DarCollection darColl = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
 
@@ -137,7 +137,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void updateNonDraftToDraftByCollectionId() {
+  void updateNonDraftToDraftByCollectionId() {
     DarCollection darColl = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
 
@@ -149,7 +149,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCreate() {
+  void testCreate() {
     User user = createUserWithInstitution();
     String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
@@ -167,7 +167,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindByReferenceIds() {
+  void testFindByReferenceIds() {
     DataAccessRequest dar1 = createDataAccessRequestV3();
     DataAccessRequest dar2 = createDataAccessRequestV3();
     DataAccessRequest dar3 = createDataAccessRequestV3();
@@ -181,7 +181,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateByReferenceId() {
+  void testUpdateByReferenceId() {
     DataAccessRequest dar = createDataAccessRequestV3();
     Date now = new Date();
     User user = createUser();
@@ -196,19 +196,19 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertDraftDataAccessRequest() {
+  void testInsertDraftDataAccessRequest() {
     DataAccessRequest dar = createDraftDataAccessRequest();
     assertNotNull(dar);
   }
 
   @Test
-  public void testInsertVersion3() {
+  void testInsertVersion3() {
     DataAccessRequest dar = createDataAccessRequestV3();
     assertNotNull(dar);
   }
 
   @Test
-  public void testDeleteByCollectionId() {
+  void testDeleteByCollectionId() {
     //creates a dar with a collection ID (also creates a DarCollection)
     DataAccessRequest dar = createDataAccessRequestV3();
     DataAccessRequest returned = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
@@ -221,7 +221,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCancelDeleteByCollectionIds() {
+  void testCancelDeleteByCollectionIds() {
     DataAccessRequest dar1 = createDataAccessRequestV3();
     DataAccessRequest dar2 = createDataAccessRequestV3();
 
@@ -252,7 +252,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDraftForCollection() {
+  void testUpdateDraftForCollection() {
     DarCollection collection = createDarCollection();
     DataAccessRequest draft = createDraftDataAccessRequest();
     String referenceId = draft.getReferenceId();
@@ -264,7 +264,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testArchiveByReferenceIdsStatusChange() {
+  void testArchiveByReferenceIdsStatusChange() {
     DataAccessRequest dar = createDataAccessRequestV3();
     List<String> referenceIds = List.of(dar.getReferenceId());
     dataAccessRequestDAO.cancelByReferenceIds(referenceIds);
@@ -326,7 +326,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDataAccessRequests should exclude archived DARs
   @Test
-  public void testFindAllArchived() {
+  void testFindAllArchived() {
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDataAccessRequests();
     assertTrue(dars.isEmpty());
 
@@ -343,7 +343,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   // findAllDataAccessRequests should exclude archived DARs
   // test case with two DARs
   @Test
-  public void testFindAllFilterArchived() {
+  void testFindAllFilterArchived() {
     User user = createUserWithInstitution();
 
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
@@ -361,7 +361,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDataAccessRequestsByDatasetId should exclude archived DARs
   @Test
-  public void testFindAllByDatasetIdArchived() {
+  void testFindAllByDatasetIdArchived() {
     String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
     Dataset dataset = createDARDAOTestDataset();
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
@@ -378,7 +378,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
   @Test
-  public void testEnsureOnlyDataAccessRequestsByDatasetIdReturnsJustForSpecificDatasetId() {
+  void testEnsureOnlyDataAccessRequestsByDatasetIdReturnsJustForSpecificDatasetId() {
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000);
     String darCode2 = "DAR-" + RandomUtils.nextInt(100, 1000);
     Dataset dataset1 = createDARDAOTestDataset();
@@ -419,7 +419,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllApprovedDataAccessRequestsByDatasetId() {
+  void testFindAllApprovedDataAccessRequestsByDatasetId() {
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
     String darCode2 = "DAR-" + RandomUtils.nextInt(100, 1000000);
     String darCode3 = "DAR-" + RandomUtils.nextInt(100, 1000000);
@@ -518,7 +518,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
    * does not show up as an approved user for the dataset.
    */
   @Test
-  public void testFindAllApprovedDataAccessRequestsByDatasetId_ApprovedThenDeniedCase() {
+  void testFindAllApprovedDataAccessRequestsByDatasetId_ApprovedThenDeniedCase() {
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
     User user1 = createUserWithInstitution();
@@ -559,7 +559,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDraftDataAccessRequests should exclude archived DARs
   @Test
-  public void testFindAllDraftsArchived() {
+  void testFindAllDraftsArchived() {
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertTrue(dars.isEmpty());
 
@@ -572,7 +572,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDraftsByUserId should exclude archived DARs
   @Test
-  public void testFindAllDraftsByUserIdArchived() {
+  void testFindAllDraftsByUserIdArchived() {
     User user = createUserWithInstitution();
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDraftsByUserId(user.getUserId());
@@ -588,7 +588,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDarsByUserId should exclude archived DARs
   @Test
-  public void testFindAllDarsByUserIdArchived() {
+  void testFindAllDarsByUserIdArchived() {
     User user = createUserWithInstitution();
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
     assertTrue(dars.isEmpty());
@@ -606,7 +606,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findByReferenceId should exclude archived DARs
   @Test
-  public void testFindByReferenceIdArchived() {
+  void testFindByReferenceIdArchived() {
     String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
     Dataset dataset = createDARDAOTestDataset();
     User user = createUserWithInstitution();
@@ -619,7 +619,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findByReferenceIds should exclude archived DARs
   @Test
-  public void testFindByReferenceIdsArchived() {
+  void testFindByReferenceIdsArchived() {
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 200);
     String darCode2 = "DAR-" + RandomUtils.nextInt(201, 300);
     Dataset dataset1 = createDARDAOTestDataset();
@@ -637,7 +637,7 @@ public class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // findAllDataAccessRequestDatas should exclude archived DARs
   @Test
-  public void testFindAllDataAccessRequestDatasArchived() {
+  void testFindAllDataAccessRequestDatasArchived() {
     User user = createUserWithInstitution();
     List<DataAccessRequestData> dars = dataAccessRequestDAO.findAllDataAccessRequestDatas();
     assertTrue(dars.isEmpty());
