@@ -712,7 +712,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id "
           + " WHERE d.name IS NOT NULL "
           + " ORDER BY d.dataset_id ")
-  Set<DatasetDTO> findActiveDatasetDTOs();
+  Set<DatasetDTO> getDatasetDTOs();
 
   @Deprecated
   @UseRowMapper(DatasetDTOWithPropertiesMapper.class)

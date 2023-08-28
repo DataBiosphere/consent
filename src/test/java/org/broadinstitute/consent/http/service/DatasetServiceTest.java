@@ -701,7 +701,7 @@ public class DatasetServiceTest {
         null);
     when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 2)).thenReturn(2);
     when(datasetDAO.findAllDatasetDTOs()).thenReturn(setOfDtos);
-    when(datasetDAO.findActiveDatasetDTOs()).thenReturn(emptyActiveDtoSet);
+    when(datasetDAO.getDatasetDTOs()).thenReturn(emptyActiveDtoSet);
     when(datasetDAO.findDatasetDTOsByUserId(2)).thenReturn(singleDtoSet);
     initService();
 

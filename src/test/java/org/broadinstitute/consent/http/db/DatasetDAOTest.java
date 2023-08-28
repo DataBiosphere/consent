@@ -883,7 +883,7 @@ class DatasetDAOTest extends DAOTestHelper {
     consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
         dataset.getDataSetId());
 
-    Set<DatasetDTO> datasets = datasetDAO.findActiveDatasetDTOs();
+    Set<DatasetDTO> datasets = datasetDAO.getDatasetDTOs();
     assertFalse(datasets.isEmpty());
     List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).toList();
     assertTrue(datasetIds.contains(dataset.getDataSetId()));

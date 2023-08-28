@@ -438,7 +438,7 @@ public class DatasetService {
     if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
       datasets.addAll(datasetDAO.findAllDatasetDTOs());
     } else {
-      datasets.addAll(datasetDAO.findActiveDatasetDTOs());
+      datasets.addAll(datasetDAO.getDatasetDTOs());
       if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
         Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
         datasets.addAll(chairSpecificDatasets);
