@@ -703,15 +703,16 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   @Deprecated
   @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-  @SqlQuery(
-      "SELECT d.*, k.key, dp.property_value, ca.consent_id, d.dac_id, c.translated_use_restriction "
-          + " FROM dataset d "
-          + " LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id "
-          + " LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key "
-          + " LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id "
-          + " LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id "
-          + " WHERE d.name IS NOT NULL "
-          + " ORDER BY d.dataset_id ")
+  @SqlQuery("""
+      SELECT d.*, k.key, dp.property_value, ca.consent_id, d.dac_id, c.translated_use_restriction
+      FROM dataset d
+      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
+      LEFT OUTER JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
+      LEFT OUTER JOIN consents c ON c.consent_id = ca.consent_id
+      WHERE d.name IS NOT NULL
+      ORDER BY d.dataset_id
+      """)
   Set<DatasetDTO> getDatasetDTOs();
 
   @Deprecated
