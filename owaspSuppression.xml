@@ -10,24 +10,6 @@
     <cpe>cpe:/a:apache:httpclient</cpe>
   </suppress>
 
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: grpc-core-1.53.0.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/io\.grpc/grpc\-core@.*$</packageUrl>
-    <cpe>cpe:/a:grpc:grpc</cpe>
-  </suppress>
-
-  <!-- Test Library -->
-  <suppress>
-    <notes><![CDATA[
-   file name: grpc-api-1.53.0.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/io\.grpc/grpc\-api@.*$</packageUrl>
-    <cpe>cpe:/a:grpc:grpc</cpe>
-  </suppress>
-
   <!-- Sendgrid dependency that does not have an upgrade -->
   <suppress>
     <notes><![CDATA[
