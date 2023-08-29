@@ -15,13 +15,10 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.FilterRegistration.Dynamic;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import liquibase.Contexts;
@@ -96,7 +93,6 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
@@ -106,7 +102,6 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,10 +194,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatasetRegistrationService.class).get();
     final ElasticSearchService elasticSearchService = injector.getProvider(
         ElasticSearchService.class).get();
-    final OntologyService ontologyService = injector.getProvider(OntologyService.class).get();
 
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    configureCors(env);
 
     env.jersey().register(JerseyGsonProvider.class);
 
@@ -282,17 +275,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     bootstrap.addBundle(new AssetsBundle("/assets/", "/api-docs", "index.html"));
     bootstrap.addBundle(new MultiPartBundle());
     bootstrap.addBundle(new JdbiExceptionsBundle());
-  }
-
-  private void configureCors(Environment environment) {
-    Dynamic filter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-    filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-    filter.setInitParameter("allowedOrigins", "*");
-    filter.setInitParameter("allowedMethods", "OPTIONS,GET,PUT,POST,DELETE,HEAD,PATCH");
-    filter.setInitParameter("allowedHeaders",
-        "X-Requested-With,Content-Type,Accept,Origin,Authorization,Content-Disposition,Access-Control-Expose-Headers,Pragma,Cache-Control,Expires,X-App-ID");
-    filter.setInitParameter("exposeHeaders", "Content-Type,Pragma,Cache-Control,Expires");
-    filter.setInitParameter("allowCredentials", "true");
   }
 
   private void initializeLiquibase(ConsentConfiguration config)
