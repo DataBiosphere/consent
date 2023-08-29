@@ -20,9 +20,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,10 +43,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -117,7 +111,7 @@ public class DatasetServiceTest {
         Collections.singleton(test));
     initService();
 
-    DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1",
+    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(), "Test Dataset 1",
         1);
 
     assertNotNull(result);
@@ -541,35 +535,6 @@ public class DatasetServiceTest {
     assertNotNull(updated);
     assertTrue(updated.isPresent());
     verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any(), any());
-  }
-
-  @Test
-  public void testCreateConsentForDataset() throws IOException {
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    DataUse dataUse = new DataUseBuilder().build();
-    dataSetDTO.setDataUse(dataUse);
-    Consent consent = new Consent();
-    when(consentDAO.findConsentById(anyString())).thenReturn(consent);
-    doNothing().when(consentDAO)
-        .insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any());
-    doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
-    initService();
-
-    Consent result = datasetService.createConsentForDataset(dataSetDTO);
-    assertNotNull(result);
-  }
-
-  @Test
-  public void testCreateConsentForDatasetNullDataUse() {
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    dataSetDTO.setDataUse(null);
-    Consent consent = new Consent();
-    when(consentDAO.findConsentById(anyString())).thenReturn(consent);
-    initService();
-
-    assertThrows(IllegalArgumentException.class, () -> {
-      datasetService.createConsentForDataset(dataSetDTO);
-    });
   }
 
   @Test
