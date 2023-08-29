@@ -392,6 +392,20 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
+  @Path("/custodian")
+  public Response findDatasetsByCustodian(@Auth AuthUser authUser) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      List<Dataset> datasets = datasetService.findDatasetsByCustodian(user);
+      return Response.ok(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
   @Path("/role/{roleName}")
   public Response findDatasetsAccordingToRole(
       @Auth AuthUser authUser,

@@ -883,4 +883,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery(
+      Dataset.BASE_QUERY + """
+      WHERE d.create_user_id = :userId
+      OR (dp.schema_property = 'dataCustodianEmail' AND LOWER(dp.property_value) = LOWER(:email))
+      """)
+  List<Dataset> findDatasetsByCustodian(@Bind("userId") Integer userId, @Bind("email") String email);
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -43,8 +44,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -1232,6 +1231,21 @@ public class DatasetDAOTest extends DAOTestHelper {
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertTrue(approvedDatasets.size() == 0);
 
+  }
+
+  @Test
+  void testFindDatasetsByCustodian() {
+    Dataset dataset = createDataset();
+    User user = dataset.getCreateUser();
+    createDatasetProperty(dataset.getDataSetId(), "studyName", "Study Name", PropertyType.String);
+    createDatasetProperty(dataset.getDataSetId(), "dataCustodianEmail", user.getEmail(), PropertyType.String);
+    Dataset dataset2 = createDataset();
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
+    assertNotNull(datasets);
+    assertFalse(datasets.isEmpty());
+    assertEquals(dataset.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
+    assertNotEquals(dataset2.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
   }
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
