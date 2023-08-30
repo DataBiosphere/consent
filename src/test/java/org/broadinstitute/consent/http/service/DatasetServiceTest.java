@@ -111,7 +111,7 @@ public class DatasetServiceTest {
         Collections.singleton(test));
     initService();
 
-    DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1",
+    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(), "Test Dataset 1",
         1);
 
     assertNotNull(result);
