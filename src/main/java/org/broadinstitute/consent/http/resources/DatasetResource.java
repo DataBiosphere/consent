@@ -379,24 +379,12 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
+  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser, @QueryParam("asCustodian") Boolean asCustodian) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
-      return Response.ok(datasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @PermitAll
-  @Path("/custodian")
-  public Response findDatasetsByCustodian(@Auth AuthUser authUser) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.findDatasetsByCustodian(user);
+      List<Dataset> datasets = (Objects.nonNull(asCustodian) && asCustodian) ?
+        datasetService.findDatasetsByCustodian(user) :
+        datasetService.findAllDatasetsByUser(user);
       return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
