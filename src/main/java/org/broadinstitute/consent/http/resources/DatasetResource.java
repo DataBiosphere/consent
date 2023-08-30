@@ -153,7 +153,7 @@ public class DatasetResource extends Resource {
     User dacUser = userService.findUserByEmail(authUser.getGenericUser().getEmail());
     Integer userId = dacUser.getUserId();
     try {
-      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset,
+      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(inputDataset,
           name, userId);
       URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
           .build(createdDatasetWithConsent.getDataSetId());
