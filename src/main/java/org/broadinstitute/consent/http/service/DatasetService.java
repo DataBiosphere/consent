@@ -362,7 +362,7 @@ public class DatasetService {
     if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
       datasets.addAll(datasetDAO.findAllDatasetDTOs());
     } else {
-      datasets.addAll(datasetDAO.findActiveDatasetDTOs());
+      datasets.addAll(datasetDAO.getDatasetDTOs());
       if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
         Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
         datasets.addAll(chairSpecificDatasets);
@@ -470,7 +470,7 @@ public class DatasetService {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return datasetDAO.findAllDatasets();
     } else {
-      List<Dataset> datasets = datasetDAO.getActiveDatasets();
+      List<Dataset> datasets = datasetDAO.getDatasets();
       if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
         List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         return Stream
