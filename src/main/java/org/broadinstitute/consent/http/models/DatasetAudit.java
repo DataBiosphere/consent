@@ -20,6 +20,7 @@ public class DatasetAudit {
   @JsonProperty
   private Date date;
 
+  @Deprecated(forRemoval = true)
   @JsonProperty
   private Boolean active;
 
@@ -37,14 +38,12 @@ public class DatasetAudit {
       String objectId,
       String name,
       Date date,
-      Boolean active,
       Integer user,
       String action) {
     this.dataSetId = dataSetId;
     this.objectId = objectId;
     this.name = name;
     this.date = date;
-    this.active = active;
     this.user = user;
     this.action = action;
   }

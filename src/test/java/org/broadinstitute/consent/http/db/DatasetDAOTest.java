@@ -876,7 +876,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindActiveDatasets() {
+  void testFindDatasetDTOs() {
     Dataset dataset = insertDataset();
     Consent consent = insertConsent();
 
@@ -1041,7 +1041,7 @@ class DatasetDAOTest extends DAOTestHelper {
         "objectid",
         "name",
         new Date(),
-        false, d.getCreateUserId(),
+        d.getCreateUserId(),
         "action");
     datasetDAO.insertDatasetAudit(audit);
   }

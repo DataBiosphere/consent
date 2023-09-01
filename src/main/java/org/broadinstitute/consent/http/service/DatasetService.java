@@ -304,7 +304,7 @@ public class DatasetService {
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
       DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-          new Date(), dataset.getActive(), userId, AuditActions.DELETE.getValue().toUpperCase());
+        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.useTransaction(h -> {
           try {
