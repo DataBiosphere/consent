@@ -705,8 +705,6 @@ paths:
                   type: string
         500:
           description: Server error.
-  /api/dataset/disable/{id}/{active}:
-    $ref: './paths/datasetDisableById.yaml'
   /api/datasetAssociation/{datasetId}:
     get:
       summary: Get Dataset Associations
@@ -1670,10 +1668,6 @@ components:
         isCanceled:
           type: boolean
           description: The DAR is canceled
-          deprecated: true
-        needsApproval:
-          type: boolean
-          description: The DAR requires Data Owners approval
           deprecated: true
         dataSetElectionResult:
           type: string

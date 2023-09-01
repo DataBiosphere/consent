@@ -92,7 +92,7 @@ public class Dataset {
   private String consentName;
 
   /**
-   * Active is a deprecated property. The visibility of a dataset is
+   * Needs Approval is a deprecated property. The visibility of a dataset is
    * calculated from DAC approval and the public visibility dataset property
    */
   @Deprecated(forRemoval = true)
