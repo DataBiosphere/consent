@@ -590,24 +590,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @DELETE
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/disable/{datasetId}/{active}")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response disableDataSet(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId,
-      @PathParam("active") Boolean active, @Context UriInfo info) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset dataset = datasetService.findDatasetById(datasetId);
-      // Validate that the admin/chairperson has edit access to this dataset
-      validateDatasetDacAccess(user, dataset);
-      datasetService.disableDataset(datasetId, active);
-      return Response.ok().build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @GET
   @Path("/dictionary")
   @Produces("application/json")

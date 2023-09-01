@@ -109,7 +109,7 @@ public class DatasetAssociationServiceTest {
   DatasetAssociation dsAssociation1 = new DatasetAssociation(1, 3);
   DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
 
-  Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date(), true);
+  Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date());
   User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(),
       chairpersonList());
   User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(),

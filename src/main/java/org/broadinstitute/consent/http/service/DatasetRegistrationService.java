@@ -99,8 +99,6 @@ public class DatasetRegistrationService implements ConsentLogger {
             try {
               DatasetUpdate datasetUpdate = new DatasetUpdate(
                   cg.getConsentGroupName(),
-                  existingDataset.getNeedsApproval(),
-                  existingDataset.getActive(),
                   existingDataset.getDacId(),
                   convertConsentGroupToDatasetProperties(cg)
               );
@@ -312,8 +310,6 @@ public class DatasetRegistrationService implements ConsentLogger {
         datasetId,
         datasetUpdate.getName(),
         user.getUserId(),
-        datasetUpdate.getNeedsApproval(),
-        datasetUpdate.getActive(),
         datasetUpdate.getDacId(),
         props,
         fileStorageObjects

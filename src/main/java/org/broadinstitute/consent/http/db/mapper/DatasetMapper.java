@@ -49,7 +49,6 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "translated_data_use")) {
       dataset.setTranslatedDataUse(r.getString("translated_data_use"));
     }
-    dataset.setActive(r.getBoolean("active"));
     dataset.setAlias(r.getInt("alias"));
 
     return dataset;

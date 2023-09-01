@@ -89,8 +89,6 @@ public class ElectionServiceTest {
     sampleDataset1 = new Dataset();
     sampleDataset1.setDataSetId(1);
     sampleDataset1.setObjectId("ObjectID 1");
-    sampleDataset1.setActive(true);
-    sampleDataset1.setNeedsApproval(false);
     sampleDataset1.setConsentName(referenceId);
     sampleDataset1.setName("Dataset 1");
     sampleDataset1.setAlias(1);
