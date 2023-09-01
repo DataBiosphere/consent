@@ -91,6 +91,11 @@ public class Dataset {
 
   private String consentName;
 
+  /**
+   * Active is a deprecated property. The visibility of a dataset is
+   * calculated from DAC approval and the public visibility dataset property
+   */
+  @Deprecated(forRemoval = true)
   private Boolean needsApproval;
 
   private Integer alias;
@@ -122,7 +127,7 @@ public class Dataset {
   }
 
   public Dataset(Integer dataSetId, String objectId, String name, Date createDate,
-      Integer createUserId, Date updateDate, Integer updateUserId, Boolean active, Integer alias) {
+      Integer createUserId, Date updateDate, Integer updateUserId, Integer alias) {
     this.dataSetId = dataSetId;
     this.objectId = objectId;
     this.name = name;
@@ -131,28 +136,24 @@ public class Dataset {
     this.createUserId = createUserId;
     this.updateDate = updateDate;
     this.updateUserId = updateUserId;
-    this.active = active;
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active,
-      Integer alias) {
+  public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Integer alias) {
     this.dataSetId = dataSetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
     this.createDate = createDate;
-    this.active = active;
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Boolean active) {
+  public Dataset(Integer dataSetId, String objectId, String name, Date createDate) {
     this.dataSetId = dataSetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
     this.createDate = createDate;
-    this.active = active;
   }
 
   private static final String PREFIX = "DUOS-";

@@ -707,19 +707,6 @@ public class DatasetResource extends Resource {
   @PUT
   @Produces("application/json")
   @RolesAllowed(ADMIN)
-  public Response updateNeedsReviewDataSets(@QueryParam("dataSetId") Integer dataSetId,
-      @QueryParam("needsApproval") Boolean needsApproval) {
-    try {
-      Dataset dataset = datasetService.updateNeedsReviewDatasets(dataSetId, needsApproval);
-      return Response.ok().entity(unmarshal(dataset)).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @PUT
-  @Produces("application/json")
-  @RolesAllowed(ADMIN)
   @Path("/{id}/datause")
   public Response updateDatasetDataUse(@Auth AuthUser authUser, @PathParam("id") Integer id,
       String dataUseJson) {

@@ -217,18 +217,6 @@ public class DatasetServiceTest {
   }
 
   @Test
-  public void testUpdateNeedsReviewDataSets() {
-    Integer dataSetId = 1;
-    when(datasetDAO.findDatasetById(dataSetId))
-        .thenReturn(getDatasets().get(0));
-    doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
-    initService();
-
-    Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
-    assertNotNull(dataSet);
-  }
-
-  @Test
   public void testDeleteDataset() throws Exception {
     Integer dataSetId = 1;
     when(datasetDAO.findDatasetById(any()))
@@ -534,7 +522,7 @@ public class DatasetServiceTest {
     Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
     assertNotNull(updated);
     assertTrue(updated.isPresent());
-    verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any(), any());
+    verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any());
   }
 
   @Test
@@ -931,7 +919,6 @@ public class DatasetServiceTest {
           dataset.setName("Test Dataset " + i);
           dataset.setConsentName("Test Consent " + i);
           dataset.setActive(true);
-          dataset.setNeedsApproval(false);
           dataset.setProperties(Collections.emptySet());
           return dataset;
         }).collect(Collectors.toList());
@@ -945,7 +932,6 @@ public class DatasetServiceTest {
           DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name",
               "Test Dataset " + i);
           dataset.setActive(true);
-          dataset.setNeedsApproval(false);
           dataset.setProperties(Collections.singletonList(nameProperty));
           return dataset;
         }).collect(Collectors.toList());
@@ -975,7 +961,6 @@ public class DatasetServiceTest {
     datasetDTO.setDataSetId(1);
     datasetDTO.setObjectId("Test ObjectId");
     datasetDTO.setActive(true);
-    datasetDTO.setNeedsApproval(false);
     datasetDTO.setProperties(getDatasetPropertiesDTO());
     DataUse dataUse = new DataUse();
     dataUse.setGeneralUse(true);

@@ -64,7 +64,6 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       if (property.getPropertyName() != null) {
         datasetDTO.addProperty(property);
       }
-      datasetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
       datasetDTO.setObjectId(r.getString("object_id"));
       datasetDTOs.put(dataSetId, datasetDTO);
     } else {

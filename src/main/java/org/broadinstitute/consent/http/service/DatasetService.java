@@ -100,14 +100,6 @@ public class DatasetService {
     }
   }
 
-  public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
-    if (datasetDAO.findDatasetById(datasetId) == null) {
-      throw new NotFoundException("DataSet doesn't exist");
-    }
-    datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
-    return datasetDAO.findDatasetById(datasetId);
-  }
-
   public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
     if (CollectionUtils.isEmpty(dacIds)) {
       throw new BadRequestException("No dataset IDs provided");
@@ -155,7 +147,6 @@ public class DatasetService {
             dataset.getDataUse().toString(), dataset.getDacId());
         List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         h.insertDatasetProperties(propertyList);
-        h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
         return id;
       } catch (Exception e) {
         if (Objects.nonNull(h)) {
@@ -191,9 +182,6 @@ public class DatasetService {
     if (Objects.isNull(dataset.getDatasetName())) {
       throw new IllegalArgumentException("Dataset 'Name' cannot be null");
     }
-    if (Objects.isNull(dataset.getNeedsApproval())) {
-      throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-    }
 
     Dataset old = findDatasetById(datasetId);
     Set<DatasetProperty> oldProperties = old.getProperties();
@@ -224,7 +212,7 @@ public class DatasetService {
 
     updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
     datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
-        dataset.getNeedsApproval(), dataset.getDacId());
+        dataset.getDacId());
     Dataset updatedDataset = findDatasetById(datasetId);
     return Optional.of(updatedDataset);
   }
