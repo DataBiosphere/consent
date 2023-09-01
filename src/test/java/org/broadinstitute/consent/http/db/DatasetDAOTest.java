@@ -1201,6 +1201,21 @@ class DatasetDAOTest extends DAOTestHelper {
 
   }
 
+  @Test
+  void testFindDatasetsByCustodian() {
+    Dataset dataset = createDataset();
+    User user = dataset.getCreateUser();
+    createDatasetProperty(dataset.getDataSetId(), "studyName", "Study Name", PropertyType.String);
+    createDatasetProperty(dataset.getDataSetId(), "dataCustodianEmail", user.getEmail(), PropertyType.String);
+    Dataset dataset2 = createDataset();
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
+    assertNotNull(datasets);
+    assertFalse(datasets.isEmpty());
+    assertEquals(dataset.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
+    assertNotEquals(dataset2.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
+  }
+
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
       List<Dataset> datasets) {
     String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);

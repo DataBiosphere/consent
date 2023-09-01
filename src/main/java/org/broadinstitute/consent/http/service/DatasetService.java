@@ -496,6 +496,10 @@ public class DatasetService {
     return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
   }
 
+  public List<Dataset> findDatasetsByCustodian(User user) {
+    return datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
+  }
+
   public List<Dataset> findDatasetsForDataSubmitter(User user) {
     return datasetDAO.findDatasetsForDataSubmitter(user.getUserId(), user.getEmail());
   }
