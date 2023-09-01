@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -99,7 +98,7 @@ class DatasetServiceTest {
         Collections.singleton(test));
     initService();
 
-    DatasetDTO result = datasetService.createDatasetWithConsent(getDatasetDTO(), "Test Dataset 1",
+    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(), "Test Dataset 1",
         1);
 
     assertNotNull(result);
@@ -526,35 +525,6 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testCreateConsentForDataset() throws IOException {
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    DataUse dataUse = new DataUseBuilder().build();
-    dataSetDTO.setDataUse(dataUse);
-    Consent consent = new Consent();
-    when(consentDAO.findConsentById(anyString())).thenReturn(consent);
-    doNothing().when(consentDAO)
-        .insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any());
-    doNothing().when(consentDAO).insertConsentAssociation(any(), any(), any());
-    initService();
-
-    Consent result = datasetService.createConsentForDataset(dataSetDTO);
-    assertNotNull(result);
-  }
-
-  @Test
-  void testCreateConsentForDatasetNullDataUse() {
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    dataSetDTO.setDataUse(null);
-    Consent consent = new Consent();
-    when(consentDAO.findConsentById(anyString())).thenReturn(consent);
-    initService();
-
-    assertThrows(IllegalArgumentException.class, () -> {
-      datasetService.createConsentForDataset(dataSetDTO);
-    });
-  }
-
-  @Test
   void testSearchDatasetsOpenAccessFalse() {
     Dataset ds1 = new Dataset();
     ds1.setName("asdf1234");
@@ -676,7 +646,7 @@ class DatasetServiceTest {
     assertEquals(1, datasets.size());
     assertEquals(dataset.getDataSetId(), datasets.get(0).getDataSetId());
     verify(datasetDAO, times(1)).findAllDatasets();
-    verify(datasetDAO, times(0)).getActiveDatasets();
+    verify(datasetDAO, times(0)).getDatasets();
     verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
   }
 
@@ -692,7 +662,7 @@ class DatasetServiceTest {
     d2.setDataSetId(2);
     Dataset d3 = new Dataset();
     d2.setDataSetId(3);
-    when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+    when(datasetDAO.getDatasets()).thenReturn(List.of(d1, d2));
     when(datasetDAO.findDatasetsByAuthUserEmail(any())).thenReturn(List.of(d2, d3));
     initService();
 
@@ -704,7 +674,7 @@ class DatasetServiceTest {
     assertTrue(datasets.contains(d2));
     assertTrue(datasets.contains(d3));
     verify(datasetDAO, times(0)).findAllDatasets();
-    verify(datasetDAO, times(1)).getActiveDatasets();
+    verify(datasetDAO, times(1)).getDatasets();
     verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(any());
   }
 
@@ -718,7 +688,7 @@ class DatasetServiceTest {
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
     d2.setDataSetId(2);
-    when(datasetDAO.getActiveDatasets()).thenReturn(List.of(d1, d2));
+    when(datasetDAO.getDatasets()).thenReturn(List.of(d1, d2));
     initService();
 
     List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
@@ -727,7 +697,7 @@ class DatasetServiceTest {
     assertTrue(datasets.contains(d1));
     assertTrue(datasets.contains(d2));
     verify(datasetDAO, times(0)).findAllDatasets();
-    verify(datasetDAO, times(1)).getActiveDatasets();
+    verify(datasetDAO, times(1)).getDatasets();
     verify(datasetDAO, times(0)).findDatasetsByAuthUserEmail(any());
   }
 

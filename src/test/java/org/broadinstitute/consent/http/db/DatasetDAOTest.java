@@ -69,38 +69,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetActiveDatasets_positive_case() {
-    // This inserts a dataset with the active property set to true
-    Dataset ds = insertDataset();
-    Dac dac = insertDac();
-    Consent consent = insertConsent();
-    datasetDAO.updateDatasetDacId(ds.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        ds.getDataSetId());
-
-    List<Dataset> activeDatasets = datasetDAO.getActiveDatasets();
-    assertFalse(activeDatasets.isEmpty());
-    assertEquals(1, activeDatasets.size());
-    assertTrue(activeDatasets.get(0).getActive());
-  }
-
-  @Test
-  void testGetActiveDatasets_negative_case() {
-    // This inserts a dataset with the active property set to true
-    Dataset ds = insertDataset();
-    // Update so it is inactive
-    datasetDAO.updateDatasetActive(ds.getDataSetId(), false);
-    Dac dac = insertDac();
-    Consent consent = insertConsent();
-    datasetDAO.updateDatasetDacId(ds.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        ds.getDataSetId());
-
-    List<Dataset> activeDatasets = datasetDAO.getActiveDatasets();
-    assertTrue(activeDatasets.isEmpty());
-  }
-
-  @Test
   void testFindPublicDatasets_positive() {
     User user = createUser();
 
@@ -1197,6 +1165,21 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
+  }
+
+  @Test
+  void testFindDatasetsByCustodian() {
+    Dataset dataset = createDataset();
+    User user = dataset.getCreateUser();
+    createDatasetProperty(dataset.getDataSetId(), "studyName", "Study Name", PropertyType.String);
+    createDatasetProperty(dataset.getDataSetId(), "dataCustodianEmail", user.getEmail(), PropertyType.String);
+    Dataset dataset2 = createDataset();
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
+    assertNotNull(datasets);
+    assertFalse(datasets.isEmpty());
+    assertEquals(dataset.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
+    assertNotEquals(dataset2.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
   }
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,

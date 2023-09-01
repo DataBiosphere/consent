@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
@@ -22,13 +21,11 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.AssociationType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -133,73 +130,7 @@ public class DatasetService {
     return d;
   }
 
-  /**
-   * Create a minimal consent from the data provided in a Dataset.
-   *
-   * @param dataset The DataSetDTO
-   * @return The created Consent
-   */
-  public Consent createConsentForDataset(DatasetDTO dataset) {
-    String consentId = UUID.randomUUID().toString();
-    Optional<DatasetPropertyDTO> nameProp = dataset.getProperties()
-        .stream()
-        .filter(p -> p.getPropertyName().equalsIgnoreCase(DATASET_NAME_KEY))
-        .findFirst();
-    // Typically, this is a construct from ORSP consisting of dataset name and some form of investigator code.
-    // In our world, we'll use that dataset name if provided, or the alias.
-    String groupName =
-        nameProp.isPresent() ? nameProp.get().getPropertyValue() : dataset.getAlias();
-    String name = CONSENT_NAME_PREFIX + dataset.getDataSetId();
-    Date createDate = new Date();
-    if (Objects.nonNull(dataset.getDataUse())) {
-      boolean manualReview = isConsentDataUseManualReview(dataset.getDataUse());
-      /*
-       * Consents created for a dataset do not need the following properties:
-       * data user letter
-       * data user letter name
-       */
-      consentDAO.useTransaction(h -> {
-        try {
-          h.insertConsent(consentId, manualReview, dataset.getDataUse().toString(), null, name,
-              null, createDate, createDate, groupName);
-          String associationType = AssociationType.SAMPLE_SET.getValue();
-          h.insertConsentAssociation(consentId, associationType, dataset.getDataSetId());
-        } catch (Exception e) {
-          h.rollback();
-          logger.error("Exception creating consent: " + e.getMessage());
-          throw e;
-        }
-      });
-      return consentDAO.findConsentById(consentId);
-    } else {
-      throw new IllegalArgumentException(
-          "Dataset is missing Data Use information. Consent could not be created.");
-    }
-  }
-
-  private boolean isConsentDataUseManualReview(DataUse dataUse) {
-    return Objects.nonNull(dataUse.getOther()) ||
-        (Objects.nonNull(dataUse.getPopulationRestrictions()) && !dataUse
-            .getPopulationRestrictions().isEmpty()) ||
-        (Objects.nonNull(dataUse.getAddiction()) && dataUse.getAddiction()) ||
-        (Objects.nonNull(dataUse.getEthicsApprovalRequired()) && dataUse
-            .getEthicsApprovalRequired()) ||
-        (Objects.nonNull(dataUse.getIllegalBehavior()) && dataUse.getIllegalBehavior()) ||
-        (Objects.nonNull(dataUse.getManualReview()) && dataUse.getManualReview()) ||
-        (Objects.nonNull(dataUse.getOtherRestrictions()) && dataUse.getOtherRestrictions()) ||
-        (Objects.nonNull(dataUse.getPopulationOriginsAncestry()) && dataUse
-            .getPopulationOriginsAncestry()) ||
-        (Objects.nonNull(dataUse.getPsychologicalTraits()) && dataUse
-            .getPsychologicalTraits()) ||
-        (Objects.nonNull(dataUse.getSexualDiseases()) && dataUse.getSexualDiseases()) ||
-        (Objects.nonNull(dataUse.getStigmatizeDiseases()) && dataUse.getStigmatizeDiseases())
-        ||
-        (Objects.nonNull(dataUse.getVulnerablePopulations()) && dataUse
-            .getVulnerablePopulations());
-  }
-
-  public DatasetDTO createDatasetWithConsent(DatasetDTO dataset, String name, Integer userId)
-      throws Exception {
+  public DatasetDTO createDatasetFromDatasetDTO(DatasetDTO dataset, String name, Integer userId) {
     if (Objects.nonNull(getDatasetByName(name))) {
       throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
     }
@@ -221,13 +152,6 @@ public class DatasetService {
       }
     });
     dataset.setDataSetId(createdDatasetId);
-    try {
-      createConsentForDataset(dataset);
-    } catch (Exception e) {
-      logger.error("Exception creating consent for dataset: " + e.getMessage());
-      deleteDataset(createdDatasetId, userId);
-      throw e;
-    }
     return getDatasetDTO(createdDatasetId);
   }
 
@@ -486,7 +410,7 @@ public class DatasetService {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return datasetDAO.findAllDatasets();
     } else {
-      List<Dataset> datasets = datasetDAO.getActiveDatasets();
+      List<Dataset> datasets = datasetDAO.getDatasets();
       if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
         List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
         return Stream
@@ -510,6 +434,10 @@ public class DatasetService {
     List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
 
     return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
+  }
+
+  public List<Dataset> findDatasetsByCustodian(User user) {
+    return datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
   }
 
   public List<Dataset> findDatasetsForDataSubmitter(User user) {

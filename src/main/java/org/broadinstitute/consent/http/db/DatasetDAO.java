@@ -246,7 +246,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery(
       Dataset.BASE_QUERY + """
               WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                AND d.active = TRUE
                 AND d.dac_approval = TRUE
           """)
   List<Dataset> findPublicDatasets();
@@ -257,7 +256,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               WHERE
                 (
                   (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.active = TRUE
                   AND d.dac_approval = TRUE
                 )
                 OR d.dac_id IN (<dacIds>)
@@ -270,7 +268,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               WHERE
                 (
                   (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.active = TRUE
                   AND d.dac_approval = TRUE
                 )
                 OR
@@ -454,9 +451,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
           LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
           LEFT JOIN consents c ON c.consent_id = ca.consent_id
-          WHERE d.name IS NOT NULL AND d.active = true
+          WHERE d.name IS NOT NULL
       """)
-  List<Dataset> getActiveDatasets();
+  List<Dataset> getDatasets();
 
   @SqlQuery("""
           SELECT DISTINCT dp.property_value
@@ -843,4 +840,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery(
+      Dataset.BASE_QUERY + """
+      WHERE d.create_user_id = :userId
+      OR (dp.schema_property = 'dataCustodianEmail' AND LOWER(dp.property_value) = LOWER(:email))
+      """)
+  List<Dataset> findDatasetsByCustodian(@Bind("userId") Integer userId, @Bind("email") String email);
 }

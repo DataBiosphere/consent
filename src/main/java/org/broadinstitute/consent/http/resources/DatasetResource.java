@@ -153,7 +153,7 @@ public class DatasetResource extends Resource {
     User dacUser = userService.findUserByEmail(authUser.getGenericUser().getEmail());
     Integer userId = dacUser.getUserId();
     try {
-      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetWithConsent(inputDataset,
+      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(inputDataset,
           name, userId);
       URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
           .build(createdDatasetWithConsent.getDataSetId());
@@ -366,10 +366,12 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser) {
+  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser, @QueryParam("asCustodian") Boolean asCustodian) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.findAllDatasetsByUser(user);
+      List<Dataset> datasets = (Objects.nonNull(asCustodian) && asCustodian) ?
+        datasetService.findDatasetsByCustodian(user) :
+        datasetService.findAllDatasetsByUser(user);
       return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

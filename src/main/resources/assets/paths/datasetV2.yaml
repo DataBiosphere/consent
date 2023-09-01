@@ -6,8 +6,17 @@ get:
     Chairpersons can see all active datasets and inactive ones 
     associated to any of their Data Access Committees. 
     All other users can see active datasets.
+    If the optional `asCustodian` parameter is provided, all datasets that the user has created
+    or is specified as a custodian for will be returned.
   tags:
     - Dataset
+  parameters:
+    - name: asCustodian
+      in: query
+      description: Query for datasets as a Data Custodian
+      required: false
+      schema:
+        type: boolean
   responses:
     200:
       description: A list of Datasets

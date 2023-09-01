@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -143,12 +142,10 @@ class DatasetResourceTest {
   @Test
   void testCreateDatasetSuccess() throws Exception {
     DatasetDTO result = createMockDatasetDTO();
-    Consent consent = new Consent();
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
-    when(datasetService.createDatasetWithConsent(any(), any(), anyInt())).thenReturn(result);
-    when(datasetService.createConsentForDataset(any())).thenReturn(consent);
+    when(datasetService.createDatasetFromDatasetDTO(any(), any(), anyInt())).thenReturn(result);
     when(datasetService.getDatasetDTO(any())).thenReturn(result);
     when(authUser.getGenericUser()).thenReturn(genericUser);
     when(genericUser.getEmail()).thenReturn("email@email.com");
@@ -257,13 +254,11 @@ class DatasetResourceTest {
 
   @Test
   void testCreateDatasetError() throws Exception {
-    Consent consent = new Consent();
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
     doThrow(new RuntimeException()).when(datasetService)
-        .createDatasetWithConsent(any(), any(), anyInt());
-    when(datasetService.createConsentForDataset(any())).thenReturn(consent);
+        .createDatasetFromDatasetDTO(any(), any(), anyInt());
     when(authUser.getGenericUser()).thenReturn(genericUser);
     when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -932,7 +927,16 @@ class DatasetResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
     initResource();
-    Response response = resource.findAllDatasetsAvailableToUser(authUser);
+    Response response = resource.findAllDatasetsAvailableToUser(authUser, null);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testFindAllDatasetsAvailableToUserAsCustodian() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetService.findDatasetsByCustodian(any())).thenReturn(List.of(new Dataset()));
+    initResource();
+    Response response = resource.findAllDatasetsAvailableToUser(authUser, true);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
