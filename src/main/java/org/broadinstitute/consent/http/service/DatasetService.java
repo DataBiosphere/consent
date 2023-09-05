@@ -174,25 +174,20 @@ public class DatasetService {
 
     List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
-            .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
-        .collect(Collectors.toList());
+            .noneMatch(op -> op.getPropertyName().equals(p.getPropertyName())))
+        .toList();
 
     List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
             .noneMatch(p::equals))
-        .collect(Collectors.toList());
+        .toList();
 
-    List<DatasetProperty> propertiesToDelete = oldProperties.stream()
-        .filter(op -> updateDatasetProperties.stream()
-            .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
-        ).collect(Collectors.toList());
-
-    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-        .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
+    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() &&
+      dataset.getDatasetName().equals(old.getName())) {
       return Optional.empty();
     }
 
-    updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
+    updateDatasetProperties(propertiesToUpdate, List.of(), propertiesToAdd);
     datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
         dataset.getDacId());
     Dataset updatedDataset = findDatasetById(datasetId);
