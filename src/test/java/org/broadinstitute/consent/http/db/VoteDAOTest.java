@@ -37,19 +37,6 @@ import org.junit.jupiter.api.Test;
 
 public class VoteDAOTest extends DAOTestHelper {
 
-//  @Test
-//  public void testFindVotesByReferenceId() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Consent consent = createConsent();
-//    Dataset dataset = createDataset();
-//    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-//    Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-//
-//    List<Vote> votes = voteDAO.findVotesByReferenceId(election.getReferenceId());
-//    assertFalse(votes.isEmpty());
-//    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
-//  }
-
   @Test
   public void testFindVoteById() {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
@@ -132,21 +119,6 @@ public class VoteDAOTest extends DAOTestHelper {
     assertEquals(1, foundVotes3.size());
   }
 
-//  @Test
-//  public void testFindPendingVotesByElectionId() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Consent consent = createConsent();
-//    Dataset dataset = createDataset();
-//    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-//    Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-//
-//    List<Vote> foundVotes = voteDAO.findPendingVotesByElectionId(election.getElectionId());
-//    assertNotNull(foundVotes);
-//    assertFalse(foundVotes.isEmpty());
-//    assertEquals(1, foundVotes.size());
-//    assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
-//  }
-
   @Test
   public void testFindVoteByElectionIdAndDACUserId() {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
@@ -160,21 +132,6 @@ public class VoteDAOTest extends DAOTestHelper {
     assertNotNull(foundVote);
     assertEquals(vote.getVoteId(), foundVote.getVoteId());
   }
-
-//  @Test
-//  public void testFindVotesByElectionIdAndDACUserIds() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Consent consent = createConsent();
-//    Dataset dataset = createDataset();
-//    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-//    Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-//
-//    List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndUserIds(election.getElectionId(),
-//        Collections.singletonList(user.getUserId()));
-//    assertNotNull(foundVotes);
-//    assertFalse(foundVotes.isEmpty());
-//    assertEquals(vote.getVoteId(), foundVotes.get(0).getVoteId());
-//  }
 
   @Test
   public void testCheckVoteById() {
@@ -193,61 +150,6 @@ public class VoteDAOTest extends DAOTestHelper {
   public void testInsertVote() {
     // no-op ... tested by `createDacVote` and `createFinalVote`
   }
-
-//  @Test
-//  public void testDeleteVoteByReferenceId() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Dataset dataset = createDataset();
-//    DataAccessRequest dar = createDataAccessRequestV3();
-//    String referenceId = dar.getReferenceId();
-//    Integer datasetId = dataset.getDataSetId();
-//    Election election = createDataAccessElection(referenceId, datasetId);
-//    Vote vote1 = createDacVote(user.getUserId(), election.getElectionId());
-//    Vote vote2 = createDacVote(user.getUserId(), election.getElectionId());
-//    Vote vote3 = createDacVote(user.getUserId(), election.getElectionId());
-//
-//    List<Vote> foundVotes = voteDAO.findVotesByReferenceId(referenceId);
-//    assertEquals(3, foundVotes.size());
-//    voteDAO.deleteVotesByReferenceId(referenceId);
-//    foundVotes = voteDAO.findVotesByReferenceId(referenceId);
-//    assertEquals(0, foundVotes.size());
-//  }
-
-//  @Test
-//  public void testDeleteVoteByReferenceIds() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Dataset dataset = createDataset();
-//    Integer datasetId = dataset.getDataSetId();
-//    DataAccessRequest dar1 = createDataAccessRequestV3();
-//    DataAccessRequest dar2 = createDataAccessRequestV3();
-//
-//    String referenceId1 = dar1.getReferenceId();
-//    Election election1 = createDataAccessElection(referenceId1, datasetId);
-//    Vote vote1 = createDacVote(user.getUserId(), election1.getElectionId());
-//    Vote vote2 = createDacVote(user.getUserId(), election1.getElectionId());
-//    Vote vote3 = createDacVote(user.getUserId(), election1.getElectionId());
-//
-//    String referenceId2 = dar2.getReferenceId();
-//    Election election2 = createDataAccessElection(referenceId2, datasetId);
-//    Vote vote4 = createDacVote(user.getUserId(), election2.getElectionId());
-//    Vote vote5 = createDacVote(user.getUserId(), election2.getElectionId());
-//    Vote vote6 = createDacVote(user.getUserId(), election2.getElectionId());
-//
-//    List<Vote> foundVotes = voteDAO.findVotesByReferenceId(referenceId1);
-//    assertEquals(3, foundVotes.size());
-//
-//    foundVotes = voteDAO.findVotesByReferenceId(referenceId2);
-//    assertEquals(3, foundVotes.size());
-//
-//    voteDAO.deleteVotesByReferenceIds(List.of(referenceId1, referenceId2));
-//
-//    foundVotes = voteDAO.findVotesByReferenceId(referenceId1);
-//    assertEquals(0, foundVotes.size());
-//
-//    foundVotes = voteDAO.findVotesByReferenceId(referenceId2);
-//    assertEquals(0, foundVotes.size());
-//
-//  }
 
   @Test
   public void testCreateVote() {
@@ -398,39 +300,6 @@ public class VoteDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     assertEquals(3, votes.size());
   }
-
-//  @Test
-//  public void testFindDataOwnerPendingVotesByElectionId() {
-//    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-//    Dataset dataset = createDataset();
-//    Dac dac = createDac();
-//    Consent consent = createConsent();
-//    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-//    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-//    Vote vote = createDacVote(user.getUserId(), election.getElectionId());
-//
-//    List<Vote> votes = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(),
-//        vote.getType());
-//    assertNotNull(votes);
-//    assertFalse(votes.isEmpty());
-//    assertEquals(1, votes.size());
-//    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
-//
-//    List<Vote> votes2 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(),
-//        vote.getType().toLowerCase());
-//    assertNotNull(votes2);
-//    assertFalse(votes2.isEmpty());
-//    assertEquals(1, votes2.size());
-//    assertEquals(vote.getVoteId(), votes2.get(0).getVoteId());
-//
-//    List<Vote> votes3 = voteDAO.findDataOwnerPendingVotesByElectionId(election.getElectionId(),
-//        vote.getType().toUpperCase());
-//    assertNotNull(votes3);
-//    assertFalse(votes3.isEmpty());
-//    assertEquals(1, votes3.size());
-//    assertEquals(vote.getVoteId(), votes3.get(0).getVoteId());
-//
-//  }
 
   @Test
   public void testRemoveVotesByIds() {
