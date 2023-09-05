@@ -96,27 +96,6 @@ public class VoteServiceTest {
         useRestrictionConverter, voteDAO, voteServiceDAO);
   }
 
-//  @Test
-//  public void testFindVotesByReferenceId() {
-//    when(voteDAO.findVotesByReferenceId(any())).thenReturn(Collections.emptyList());
-//    initService();
-//
-//    Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
-//    assertTrue(votes.isEmpty());
-//  }
-
-//  @Test
-//  public void testAdvanceVotes() {
-//    Vote v = setUpTestVote(false, false);
-//    initService();
-//
-//    try {
-//      service.advanceVotes(Collections.singletonList(v), true, "New Rationale");
-//    } catch (Exception e) {
-//      fail("Should not error: " + e.getMessage());
-//    }
-//  }
-
   @Test
   public void testUpdateVote() {
     Vote v = setUpTestVote(false, false);

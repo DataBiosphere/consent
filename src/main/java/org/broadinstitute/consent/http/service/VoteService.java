@@ -73,50 +73,6 @@ public class VoteService implements ConsentLogger {
     this.voteServiceDAO = voteServiceDAO;
   }
 
-//  /**
-//   * Find all votes for a reference id. This can find votes for multiple elections as there are
-//   * usually multiple forms of election per thing being voted upon.
-//   *
-//   * @param referenceId The reference id for the election.
-//   * @return Collection of votes for the given reference id
-//   */
-//  public Collection<Vote> findVotesByReferenceId(String referenceId) {
-//    return voteDAO.findVotesByReferenceId(referenceId);
-//  }
-
-//  /**
-//   * Find all votes for an election id.
-//   *
-//   * @param electionId The election id for the election.
-//   * @return Collection of votes on the election specified by the election id
-//   */
-//  public List<Vote> findVotesByElectionId(Integer electionId) {
-//    Election election = electionDAO.findElectionById(electionId);
-//    if (election == null) {
-//      throw new NotFoundException();
-//    }
-//    return voteDAO.findVotesByElectionId(electionId);
-//  }
-
-
-//  /**
-//   * s Update votes such that they have the provided value and rationale.
-//   *
-//   * @param voteList  Collection of votes to advance
-//   * @param voteValue The new vote value
-//   * @param rationale The new rationale
-//   */
-//  public void advanceVotes(Collection<Vote> voteList, boolean voteValue, String rationale) {
-//    Date now = new Date();
-//    voteList.forEach(v -> {
-//      v.setUpdateDate(now);
-//      v.setCreateDate(now);
-//      v.setVote(voteValue);
-//      v.setRationale(rationale);
-//      updateVote(v);
-//    });
-//  }
-
   /**
    * @param vote Vote to update
    * @return The updated Vote
