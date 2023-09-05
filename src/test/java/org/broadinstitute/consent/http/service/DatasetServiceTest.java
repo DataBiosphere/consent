@@ -341,7 +341,7 @@ public class DatasetServiceTest {
     dataSetDTO.setDatasetName(dataset.getName());
     Set<DatasetProperty> datasetProps = getDatasetProperties();
     List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-        new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
+        new DatasetPropertyDTO(p.getPropertyName(), p.getPropertyValue().toString())
     ).collect(Collectors.toList());
     dataSetDTO.setProperties(dtoProps);
     dataset.setProperties(datasetProps);
@@ -911,12 +911,16 @@ public class DatasetServiceTest {
 
   private Set<DatasetProperty> getDatasetProperties() {
     return IntStream.range(1, 11)
-        .mapToObj(i ->
-            new DatasetProperty(1,
+        .mapToObj(i -> {
+            DatasetProperty prop = new DatasetProperty(1,
                 i,
                 "Test Value" + RandomStringUtils.randomAlphanumeric(25),
                 PropertyType.String,
-                new Date())
+                new Date());
+            prop.setPropertyName(RandomStringUtils.randomAlphanumeric(15));
+            prop.setPropertyId(i);
+            return prop;
+          }
         ).collect(Collectors.toSet());
   }
 
