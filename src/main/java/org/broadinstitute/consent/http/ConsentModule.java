@@ -313,13 +313,8 @@ public class ConsentModule extends AbstractModule {
   @Provides
   ElectionService providesElectionService() {
     return new ElectionService(
-        providesConsentDAO(),
-        providesElectionDAO(),
-        providesVoteDAO(),
-        providesUserDAO(),
-        providesMailMessageDAO(),
-        providesEmailService(),
-        providesDataAccessRequestService());
+      providesElectionDAO()
+    );
   }
 
   @Provides

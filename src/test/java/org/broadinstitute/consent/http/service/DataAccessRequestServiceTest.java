@@ -95,11 +95,6 @@ public class DataAccessRequestServiceTest {
   @BeforeEach
   public void setUp() {
     openMocks(this);
-    doNothings();
-  }
-
-  private void doNothings() {
-    doNothing().when(electionDAO).updateElectionStatus(any(), any());
   }
 
   private void initService() {

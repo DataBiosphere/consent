@@ -172,12 +172,12 @@ public class SendGridAPI {
     return sendMessage(message);
   }
 
-  public Optional<Response> sendClosedDatasetElectionsMessage(String toAddress,
-      String dataAccessRequestId, String type, Writer template) {
-    Mail message = closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount,
-        template, dataAccessRequestId, type);
-    return sendMessage(message);
-  }
+//  public Optional<Response> sendClosedDatasetElectionsMessage(String toAddress,
+//      String dataAccessRequestId, String type, Writer template) {
+//    Mail message = closedDatasetElections.closedDatasetElectionMessage(toAddress, fromAccount,
+//        template, dataAccessRequestId, type);
+//    return sendMessage(message);
+//  }
 
   public Optional<Response> sendNewResearcherApprovedMessage(String toAddress, Writer template,
       String darCode) {

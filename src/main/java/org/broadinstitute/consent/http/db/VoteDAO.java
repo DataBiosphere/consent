@@ -18,8 +18,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(VoteMapper.class)
 public interface VoteDAO extends Transactional<VoteDAO> {
 
-  @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.election_id = v.electionid WHERE election.reference_id = :referenceId")
-  List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
+//  @SqlQuery("SELECT v.* FROM vote v INNER JOIN election ON election.election_id = v.electionid WHERE election.reference_id = :referenceId")
+//  List<Vote> findVotesByReferenceId(@Bind("referenceId") String referenceId);
 
   @SqlQuery("select * from vote v where v.voteId = :voteId")
   Vote findVoteById(@Bind("voteId") Integer voteId);
@@ -30,23 +30,23 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   @SqlQuery("select * from vote v where v.electionId IN (<electionIds>)")
   List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
 
-  @SqlQuery("SELECT * FROM vote v WHERE v.electionid = :electionId")
-  List<Vote> findVotesByElectionId(@Bind("electionId") Integer electionId);
+//  @SqlQuery("SELECT * FROM vote v WHERE v.electionid = :electionId")
+//  List<Vote> findVotesByElectionId(@Bind("electionId") Integer electionId);
 
   @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
   List<Vote> findVotesByElectionIdAndType(@Bind("electionId") Integer electionId,
       @Bind("type") String type);
 
-  @SqlQuery("select * from vote v where v.electionId = :electionId and v.vote is null and lower(v.type) = 'dac'")
-  List<Vote> findPendingVotesByElectionId(@Bind("electionId") Integer electionId);
+//  @SqlQuery("select * from vote v where v.electionId = :electionId and v.vote is null and lower(v.type) = 'dac'")
+//  List<Vote> findPendingVotesByElectionId(@Bind("electionId") Integer electionId);
 
   @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id = :userId and lower(v.type) = 'dac'")
   Vote findVoteByElectionIdAndUserId(@Bind("electionId") Integer electionId,
       @Bind("userId") Integer userId);
 
-  @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id in (<userIds>) and lower(v.type) = 'dac'")
-  List<Vote> findVotesByElectionIdAndUserIds(@Bind("electionId") Integer electionId,
-      @BindList("userIds") List<Integer> userIds);
+//  @SqlQuery("select * from vote v where v.electionId = :electionId and v.user_id in (<userIds>) and lower(v.type) = 'dac'")
+//  List<Vote> findVotesByElectionIdAndUserIds(@Bind("electionId") Integer electionId,
+//      @BindList("userIds") List<Integer> userIds);
 
   @SqlQuery("""
       SELECT vote.voteId FROM vote
@@ -103,9 +103,9 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   void insertVotes(@Bind("userId") List<Integer> userIds, @Bind("electionId") Integer electionId,
       @Bind("type") String type);
 
-  @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and lower(v.type) = lower(:type)")
-  List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId,
-      @Bind("type") String type);
+//  @SqlQuery("select * from vote v where v.electionId = :electionId and (v.vote is null and (v.has_concerns = false OR v.has_concerns is null)) and lower(v.type) = lower(:type)")
+//  List<Vote> findDataOwnerPendingVotesByElectionId(@Bind("electionId") Integer electionId,
+//      @Bind("type") String type);
 
   @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
   void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);

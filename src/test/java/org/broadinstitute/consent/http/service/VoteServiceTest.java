@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.NotFoundException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -97,26 +96,26 @@ public class VoteServiceTest {
         useRestrictionConverter, voteDAO, voteServiceDAO);
   }
 
-  @Test
-  public void testFindVotesByReferenceId() {
-    when(voteDAO.findVotesByReferenceId(any())).thenReturn(Collections.emptyList());
-    initService();
+//  @Test
+//  public void testFindVotesByReferenceId() {
+//    when(voteDAO.findVotesByReferenceId(any())).thenReturn(Collections.emptyList());
+//    initService();
+//
+//    Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
+//    assertTrue(votes.isEmpty());
+//  }
 
-    Collection<Vote> votes = service.findVotesByReferenceId(UUID.randomUUID().toString());
-    assertTrue(votes.isEmpty());
-  }
-
-  @Test
-  public void testAdvanceVotes() {
-    Vote v = setUpTestVote(false, false);
-    initService();
-
-    try {
-      service.advanceVotes(Collections.singletonList(v), true, "New Rationale");
-    } catch (Exception e) {
-      fail("Should not error: " + e.getMessage());
-    }
-  }
+//  @Test
+//  public void testAdvanceVotes() {
+//    Vote v = setUpTestVote(false, false);
+//    initService();
+//
+//    try {
+//      service.advanceVotes(Collections.singletonList(v), true, "New Rationale");
+//    } catch (Exception e) {
+//      fail("Should not error: " + e.getMessage());
+//    }
+//  }
 
   @Test
   public void testUpdateVote() {

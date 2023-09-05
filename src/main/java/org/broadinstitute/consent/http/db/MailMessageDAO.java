@@ -16,11 +16,11 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
-  @SqlQuery("SELECT email_entity_id FROM email_entity e " +
-      "WHERE (e.entity_reference_id = :darReferenceId OR e.entity_reference_id = :rpReferenceId) " +
-      "AND e.email_type = 1 LIMIT 1")
-  Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId,
-      @Bind("rpReferenceId") String rpReferenceId);
+//  @SqlQuery("SELECT email_entity_id FROM email_entity e " +
+//      "WHERE (e.entity_reference_id = :darReferenceId OR e.entity_reference_id = :rpReferenceId) " +
+//      "AND e.email_type = 1 LIMIT 1")
+//  Integer existsCollectDAREmail(@Bind("darReferenceId") String darReferenceId,
+//      @Bind("rpReferenceId") String rpReferenceId);
 
   @SqlUpdate("INSERT INTO email_entity " +
       "(entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date) VALUES "

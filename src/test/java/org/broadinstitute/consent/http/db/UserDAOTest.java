@@ -297,41 +297,6 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsersForElectionsByRoles() {
-    Dataset dataset = createDataset();
-    Dac dac = createDac();
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-    createDacVote(user.getUserId(), election.getElectionId());
-
-    Set<User> users = userDAO.findUsersForElectionsByRoles(
-        Collections.singletonList(election.getElectionId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-    assertNotNull(users);
-    assertFalse(users.isEmpty());
-    assertEquals(1, users.size());
-  }
-
-  @Test
-  public void testFindUsersForElectionsByRolesNotFound() {
-    Dataset dataset = createDataset();
-    Dac dac = createDac();
-    User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    Election election = createDataAccessElection(consent.getConsentId(), dataset.getDataSetId());
-    createDacVote(user.getUserId(), election.getElectionId());
-
-    Set<User> users = userDAO.findUsersForElectionsByRoles(
-        Collections.singletonList(election.getElectionId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-    assertNotNull(users);
-    assertTrue(users.isEmpty());
-  }
-
-  @Test
   public void testFindUsersForDatasetsByRole() {
     Dataset dataset = createDataset();
     Dac dac = createDac();

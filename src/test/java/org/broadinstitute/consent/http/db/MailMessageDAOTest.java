@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
@@ -21,14 +20,14 @@ import org.junit.jupiter.api.Test;
 
 public class MailMessageDAOTest extends DAOTestHelper {
 
-  @Test
-  public void testExistsCollectDAREmailNegative() {
-    Integer exists = mailMessageDAO.existsCollectDAREmail(
-        RandomStringUtils.random(10, true, false),
-        RandomStringUtils.random(10, true, false)
-    );
-    assertNull(exists);
-  }
+//  @Test
+//  public void testExistsCollectDAREmailNegative() {
+//    Integer exists = mailMessageDAO.existsCollectDAREmail(
+//        RandomStringUtils.random(10, true, false),
+//        RandomStringUtils.random(10, true, false)
+//    );
+//    assertNull(exists);
+//  }
 
   @Test
   public void testInsert_AllFields() {

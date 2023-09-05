@@ -18,8 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.mail.MessagingException;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -218,42 +216,6 @@ public class EmailService {
         EmailType.DISABLED_DATASET,
         template
     );
-  }
-
-  public void sendClosedDataSetElectionsMessage(List<Election> elections)
-      throws MessagingException, IOException, TemplateException {
-    Map<String, List<Election>> reviewedDatasets = new HashMap<>();
-    List<String> referenceIds = elections.stream().map(Election::getReferenceId)
-        .collect(Collectors.toList());
-    List<DarCollection> darCollections = referenceIds.isEmpty() ? List.of() :
-        collectionDAO.findDARCollectionsByReferenceIds(referenceIds);
-    for (Election election : elections) {
-      List<Election> dsElections = electionDAO.findLastElectionsByReferenceIdAndType(
-          election.getReferenceId(), ElectionType.DATA_SET.getValue());
-      Optional<DarCollection> collection = darCollections.stream()
-          .filter(c -> c.getDars().containsKey(election.getReferenceId()))
-          .findFirst();
-      String darCode = collection.map(DarCollection::getDarCode).orElse("");
-      reviewedDatasets.put(darCode, dsElections);
-    }
-    List<User> users = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
-        true);
-    if (CollectionUtils.isNotEmpty(users)) {
-      Writer template = templateHelper.getClosedDatasetElectionsTemplate(reviewedDatasets, "", "",
-          SERVER_URL);
-      users.forEach(u -> {
-        Optional<Response> response = sendGridAPI.sendClosedDatasetElectionsMessage(u.getEmail(),
-            "", "", template);
-        saveEmailAndResponse(
-            response.orElse(null),
-            null,
-            null,
-            u.getUserId(),
-            EmailType.CLOSED_DATASET_ELECTION,
-            template
-        );
-      });
-    }
   }
 
   public void sendResearcherDarApproved(String darCode, Integer researcherId,
