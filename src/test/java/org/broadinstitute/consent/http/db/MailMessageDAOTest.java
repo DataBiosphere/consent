@@ -20,15 +20,6 @@ import org.junit.jupiter.api.Test;
 
 public class MailMessageDAOTest extends DAOTestHelper {
 
-//  @Test
-//  public void testExistsCollectDAREmailNegative() {
-//    Integer exists = mailMessageDAO.existsCollectDAREmail(
-//        RandomStringUtils.random(10, true, false),
-//        RandomStringUtils.random(10, true, false)
-//    );
-//    assertNull(exists);
-//  }
-
   @Test
   public void testInsert_AllFields() {
     Instant now = Instant.now();
