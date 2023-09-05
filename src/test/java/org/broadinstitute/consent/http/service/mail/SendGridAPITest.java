@@ -83,15 +83,6 @@ public class SendGridAPITest {
     }
   }
 
-//  @Test
-//  public void testClosedDatasetElectionsMessage() {
-//    try {
-//      sendGridAPI.sendClosedDatasetElectionsMessage(TO, ID, TYPE, template);
-//    } catch (Exception e) {
-//      fail("Should not throw exception");
-//    }
-//  }
-
   @Test
   public void testNewResearcherApprovedMessage() {
     try {
