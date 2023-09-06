@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Connects to the consent database in an environment. You MUST have jq installed
 # to be able to use this script.
@@ -16,17 +16,12 @@ check_color_support() {
     if [ "$NCOLORS" -ge 8 ]; then
         BLD="$(tput bold)"
         RED="$(tput setaf 1)"
-        GRN="$(tput setaf 2)"
-        YLW="$(tput setaf 3)"
         RST="$(tput sgr0)"
     else
         BLD=""
         RED=""
-        GRN=""
-        YLW=""
         RST=""
     fi
-    INFO="${BLD}+${RST}"
 }
 
 # print out usage to stdout
