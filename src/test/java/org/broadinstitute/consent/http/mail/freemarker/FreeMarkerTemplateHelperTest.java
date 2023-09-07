@@ -92,17 +92,6 @@ class FreeMarkerTemplateHelperTest {
   }
 
   @Test
-  void testGetClosedDatasetElectionsTemplate() throws Exception {
-    Writer template = helper.getClosedDatasetElectionsTemplate(getClosedDsElections(), "DarCode",
-        "SomeType", "localhost:1234");
-    String templateString = template.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Closed Dataset Elections",
-        parsedTemplate.title());
-    assertEquals("Hello Admin,", parsedTemplate.getElementById("userName").text());
-  }
-
-  @Test
   void testGetNewResearcherLibraryRequestTemplate() throws Exception {
     Writer template = helper.getNewResearcherLibraryRequestTemplate("John Doe",
         "http://localhost:8000/#/");

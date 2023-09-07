@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -26,13 +25,7 @@ import org.junit.jupiter.api.Test;
 public class ConsentDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindConsentById() {
-    // no-op ... tested in `createConsent()`
-  }
-
-  @Test
-
-  public void testFindConsentsFromConsentsIDs() {
+  void testFindConsentsFromConsentsIDs() {
     Consent consent1 = createConsent();
     Consent consent2 = createConsent();
 
@@ -48,7 +41,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCheckConsentById_case1() {
+  void testCheckConsentById_case1() {
     Consent consent = createConsent();
 
     String consentId = consentDAO.checkConsentById(consent.getConsentId());
@@ -56,7 +49,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetIdByName() {
+  void testGetIdByName() {
     Consent consent = createConsent();
 
     String consentId = consentDAO.getIdByName(consent.getName());
@@ -64,7 +57,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindConsentByName() {
+  void testFindConsentByName() {
     Consent consent = createConsent();
 
     Consent foundConsent = consentDAO.findConsentByName(consent.getName());
@@ -73,12 +66,7 @@ public class ConsentDAOTest extends DAOTestHelper {
 
 
   @Test
-  public void testInsertConsent() {
-    // no-op ... tested in `createConsent()`
-  }
-
-  @Test
-  public void testDeleteConsent() {
+  void testDeleteConsent() {
     Consent consent = createConsent();
     String consentId = consent.getConsentId();
     Consent foundConsent = consentDAO.findConsentById(consentId);
@@ -89,12 +77,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testLogicalDeleteConsent() {
-    // no-op ... tested in `testCheckConsentById_case2()`
-  }
-
-  @Test
-  public void testUpdateConsent() {
+  void testUpdateConsent() {
     Consent consent = createConsent();
 
     consentDAO.updateConsent(
@@ -116,35 +99,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateConsentSortDate() {
-    Consent consent = createConsent();
-    Timestamp originalSortDate = consent.getSortDate();
-    final Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DATE, -1);
-    Date yesterday = cal.getTime();
-    consentDAO.updateConsentSortDate(consent.getConsentId(), yesterday);
-    Consent foundConsent = consentDAO.findConsentById(consent.getConsentId());
-    Timestamp newSortDate = foundConsent.getSortDate();
-    assertTrue(newSortDate.before(originalSortDate));
-  }
-
-  @Test
-  public void testInsertConsentAssociation() {
-    // no-op ... tested in `createAssociation()`
-  }
-
-  @Test
-  public void testFindAssociationsByType() {
-    // no-op ... tested in `testFindAssociationByTypeAndId()`
-  }
-
-  @Test
-  public void testFindAssociationsByDataSetId() {
-    // no-op ... tested in `testDeleteOneAssociation()`
-  }
-
-  @Test
-  public void testDeleteAllAssociationsForConsent() {
+  void testDeleteAllAssociationsForConsent() {
     Dataset dataset = createDataset();
     Dataset dataset2 = createDataset();
     Consent consent = createConsent();
@@ -160,7 +115,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteAssociationsByDataSetId() {
+  void testDeleteAssociationsByDataSetId() {
     Dataset dataset = createDataset();
     Dataset dataset2 = createDataset();
     Consent consent = createConsent();
@@ -178,12 +133,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAssociationTypesForConsent() {
-    // no-op ... tested in `testDeleteAllAssociationsForType()`
-  }
-
-  @Test
-  public void testCheckManualReview() {
+  void testCheckManualReview() {
     Consent consent = createConsent();
     Consent consent2 = createConsent();
     consentDAO.updateConsent(
@@ -203,13 +153,7 @@ public class ConsentDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInvalidRestrictions() {
-    // no-op ... tested in `testUpdateConsentValidUseRestriction()`
-  }
-
-  @Test
-
-  public void testConsentUpdateStatus() {
+  void testConsentUpdateStatus() {
     Consent consent1 = createConsent();
     consentDAO.updateConsent(
         consent1.getConsentId(),

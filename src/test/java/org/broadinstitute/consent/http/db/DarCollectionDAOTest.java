@@ -121,22 +121,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionsByReferenceIds() {
-    DataAccessRequest dar1 = createDataAccessRequestV3();
-    DataAccessRequest dar2 = createDataAccessRequestV3();
-    DataAccessRequest dar3 = createDataAccessRequestV3();
-    List<DarCollection> darCollections = darCollectionDAO.findDARCollectionsByReferenceIds(
-        List.of(dar1.getReferenceId(), dar2.getReferenceId()));
-    assertNotNull(darCollections);
-    assertEquals(2, darCollections.size());
-    List<Integer> darCollectionIds = darCollections.stream().map(DarCollection::getDarCollectionId)
-        .collect(Collectors.toList());
-    assertTrue(darCollectionIds.contains(dar1.collectionId));
-    assertTrue(darCollectionIds.contains(dar2.collectionId));
-    assertFalse(darCollectionIds.contains(dar3.collectionId));
-  }
-
-  @Test
   public void testFindDARCollectionByCollectionId() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(

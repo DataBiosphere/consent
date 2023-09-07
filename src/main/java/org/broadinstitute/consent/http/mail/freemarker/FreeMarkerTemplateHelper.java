@@ -7,11 +7,8 @@ import freemarker.template.TemplateExceptionHandler;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
@@ -48,12 +45,6 @@ public class FreeMarkerTemplateHelper {
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-request.html");
     return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
-  }
-
-  public Writer getClosedDatasetElectionsTemplate(Map<String, List<Election>> elections,
-      String darCode, String type, String serverUrl) throws IOException, TemplateException {
-    Template temp = freeMarkerConfig.getTemplate("closed-dataset-elections.html");
-    return generateClosedDatasetElectionsTemplate(elections, darCode, serverUrl, temp);
   }
 
   public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName,
@@ -137,30 +128,6 @@ public class FreeMarkerTemplateHelper {
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
-  }
-
-  private Writer generateClosedDatasetElectionsTemplate(Map<String, List<Election>> elections,
-      String darCode, String serverUrl, Template temp) throws IOException, TemplateException {
-    List<ClosedDatasetElectionModel> closedElections = new ArrayList<>();
-    List<String> dars = new ArrayList<>(elections.keySet());
-    for (String key : dars) {
-      String numberOfDatasets = String.valueOf((elections.get(key)).size());
-      closedElections.add(new ClosedDatasetElectionModel(key, numberOfDatasets,
-          consolidateDatasetElectionResult(elections.get(key))));
-    }
-    ClosedDatasetElectionsModel model = new ClosedDatasetElectionsModel(serverUrl, closedElections);
-    Writer out = new StringWriter();
-    temp.process(model, out);
-    return out;
-  }
-
-  private String consolidateDatasetElectionResult(List<Election> elections) {
-    for (Election e : elections) {
-      if (!e.getFinalAccessVote()) {
-        return "Denied";
-      }
-    }
-    return "Approved";
   }
 
   private Writer generateTemplate(String user, String election, String entityId, Template temp,
