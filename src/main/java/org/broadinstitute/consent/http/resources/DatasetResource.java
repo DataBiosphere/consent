@@ -25,8 +25,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,22 +75,6 @@ public class DatasetResource extends Resource {
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
-  private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
-  private final String defaultDataSetSampleContent =
-      "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
-          + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
-
-  private String dataSetSampleFileName;
-  private String dataSetSampleContent;
-
-  void resetDataSetSampleFileName() {
-    dataSetSampleFileName = defaultDataSetSampleFileName;
-  }
-
-  void resetDataSetSampleContent() {
-    dataSetSampleContent = defaultDataSetSampleContent;
-  }
-
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
       DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
@@ -103,8 +85,6 @@ public class DatasetResource extends Resource {
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
-    resetDataSetSampleFileName();
-    resetDataSetSampleContent();
   }
 
   @Deprecated
@@ -485,23 +465,6 @@ public class DatasetResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-  }
-
-  @GET
-  @Path("/sample")
-  @PermitAll
-  public Response getDataSetSample() {
-    String msg = "GETting Data Set Sample";
-    logDebug(msg);
-    InputStream inputStream = null;
-    try {
-      inputStream = new ByteArrayInputStream(dataSetSampleContent.getBytes());
-    } catch (Exception e) {
-      logException("Error when GETting dataset sample.", e);
-      return createExceptionResponse(e);
-    }
-    return Response.ok(inputStream)
-        .header("Content-Disposition", "attachment; filename=" + dataSetSampleFileName).build();
   }
 
   @POST

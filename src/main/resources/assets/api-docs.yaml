@@ -582,30 +582,6 @@ paths:
     $ref: './paths/findAllStudyNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
-  /api/dataset/sample:
-    get:
-      summary: getDataSetSample
-      description: Returns a Dataset sample .tsv file.
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: .tsv sample
-          content:
-            text/plain:
-              schema:
-                type: string
-          headers:
-            Content-type:
-              schema:
-                type: string
-              description: text/plain
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename=DataSetSample.tsv
-        500:
-          description: Server error.
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:

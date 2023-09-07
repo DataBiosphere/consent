@@ -394,15 +394,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testGetDataSetSample() {
-    List<String> header = List.of("attachment; filename=DataSetSample.tsv");
-    initResource();
-    Response response = resource.getDataSetSample();
-    assertEquals(200, response.getStatus());
-    assertEquals(header, response.getHeaders().get("Content-Disposition"));
-  }
-
-  @Test
   void testDownloadDatasetsSuccess() {
     List<DatasetDTO> dtoList = new ArrayList<>();
     DatasetDTO testDTO = createMockDatasetDTO();
