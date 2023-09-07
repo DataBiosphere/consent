@@ -415,8 +415,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         dataset.getDataSetId(),
         newName,
         dataset.getCreateUserId(),
-        true,
-        true,
         dataset.getDacId(),
         List.of(updateProp1, updateProp2, prop4),
         List.of()
@@ -527,8 +525,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         dataset.getDataSetId(),
         newDatasetName,
         study.getCreateUserId(),
-        true,
-        !dataset.getActive(),
         dataset.getDacId(),
         List.copyOf(dataset.getProperties()),
         List.of()
@@ -663,7 +659,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }

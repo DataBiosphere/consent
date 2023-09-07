@@ -548,6 +548,23 @@ paths:
               schema:
                 type: string
                 format: binary
+  /api/dataset:
+    get:
+      summary: Get Datasets
+      description: Returns Dataset list filtered by authenticated user.
+      deprecated: true
+      tags:
+        - Dataset
+      responses:
+        200:
+          description: A list of Datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas/Dataset.yaml'
+
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
@@ -663,8 +680,31 @@ paths:
     $ref: './paths/datasetSearch.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
-  /api/dataset/disable/{id}/{active}:
-    $ref: './paths/datasetDisableById.yaml'
+  /api/dataset/autocomplete/{partial}:
+    get:
+      deprecated: true
+      summary: datasetAutocomplete
+      description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
+      parameters:
+        - name: partial
+          in: path
+          description: the value to autocomplete.
+          required: true
+          schema:
+            type: string
+      tags:
+        - Dataset
+      responses:
+        200:
+          description: An array of Dataset objectIds
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  type: string
+        500:
+          description: Server error.
   /api/datasetAssociation/{datasetId}:
     get:
       summary: Get Dataset Associations
@@ -749,107 +789,6 @@ paths:
     $ref: './paths/tdrDataset.yaml'
   /api/tdr/dar/draft:
     $ref: './paths/tdrDraftDAR.yaml'
-  /api/election/{id}:
-    get:
-      summary: describeElectionById
-      description: Returns the Election identified by Id.
-      parameters:
-        - name: id
-          in: path
-          description: Election Id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Election
-      responses:
-        200:
-          description: Election
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Election'
-        400:
-          description: Could not find Election with the specified Id
-  /api/election/{electionId}/votes:
-    get:
-      summary: get the votes on the election specified by the electionId
-      description: Returns the list of votes associated with the election identified by Id
-      parameters:
-        - name: electionId
-          in: path
-          description: Election Id
-          required: true
-          schema:
-            type: integer
-      tags:
-        - Election
-      responses:
-        200:
-          description: List of votes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Election'
-        404:
-          description: Could not find Election with the specified Id
-        500:
-          description: Internal Server Error
-    put:
-      summary: updateElection
-      description: "Updates the election specified by Id."
-      parameters:
-        - name: id
-          in: path
-          description: Id of the Election to Update
-          required: true
-          schema:
-            type: integer
-        - name: rec
-          in: body
-          description: Updated Election.
-          required: true
-          schema:
-            $ref: '#/components/schemas/Election'
-      tags:
-        - Election
-      responses:
-        200:
-          description: updated Election
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Election'
-        400:
-          description: Illegal Argument Exception
-  /api/election/{referenceId}/advance/{vote}:
-    post:
-      summary: Advance Elections
-      description: Advance all incomplete votes in any elections on the reference.
-      operationId: advanceElections
-      parameters:
-        - name: referenceId
-          in: path
-          description: referenceId for the Elections
-          required: true
-          schema:
-            type: string
-        - name: vote
-          in: path
-          description: Vote value for all votes in the Elections
-          required: true
-          schema:
-            type: string
-            enum:
-              - Yes
-              - No
-      tags:
-        - Election
-      responses:
-        200:
-          description: All incomplete votes for the elections have been advanced.
-        500:
-          description: Server error.
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
@@ -1519,146 +1458,6 @@ components:
           type: integer
           format: int32
           description: Describes the number of cases that are opened and have to be reviewed.
-    DataAccessRequestManage:
-      type: object
-      properties:
-        dar:
-          type: object
-          description: The Data Access Request
-        election:
-          type: object
-          description: The Election
-        votes:
-          type: array
-          description: The Votes for the Election
-        dac:
-          type: object
-          description: The DAC for the Election
-        researcher:
-          type: object
-          description: The Researcher for the Data Access Request
-        referenceId:
-          type: string
-          description: The reference ID that identifies the case
-          deprecated: true
-        logged:
-          type: string
-          description: Describes the logged votes vs. total votes required.
-          deprecated: true
-        alreadyVoted:
-          type: boolean
-          description: Describes if the user already voted on this case
-          deprecated: true
-        isReminderSent:
-          type: boolean
-          description: Describes if the user recieved a reminder by the chairperson to log the vote on the case.
-          deprecated: true
-        isFinalVote:
-          type: boolean
-          description: If the user is chairperson, this will be false if the final vote is not logged yet, true otherwise.
-          deprecated: true
-        status:
-          type: string
-          description: Status of the vote. Pending or editable.
-          deprecated: true
-        voteId:
-          type: integer
-          format: int32
-          description: Describes the id of the users vote, related to this particular pending case.
-          deprecated: true
-        totalVotes:
-          type: integer
-          format: int32
-          description: Describes the total votes(users) required to vote for this election.
-          deprecated: true
-        votesLogged:
-          type: integer
-          format: int32
-          description: Votes already logged in this pending case. Equal to the total of users that voted minus the ones that didnt.
-          deprecated: true
-        rpElectionId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose election related to this pending case, if it exists
-          deprecated: true
-        rpVoteId:
-          type: integer
-          format: int32
-          description: Describes the id of the research purpose vote, related to this particular pending case, if it exists
-          deprecated: true
-        electionStatus:
-          type: string
-          description: The status of the election.
-          deprecated: true
-        rus:
-          type: string
-          description: The rus of the Data Access Request.
-          deprecated: true
-        dataRequestId:
-          type: string
-          description: The ID of the Data Access Request.
-          deprecated: true
-        projectTitle:
-          type: string
-          description: The title of the project, in the Data Access Request
-          deprecated: true
-        frontEndId:
-          type: string
-          description: The front end ID for the case
-          deprecated: true
-        electionId:
-          type: integer
-          format: int32
-          description: The ID of the election related to the DAR.
-          deprecated: true
-        createDate:
-          type: string
-          format: date-time
-          description: The Date the election was created.
-          deprecated: true
-        sortDate:
-          type: string
-          format: date
-          description: The datetime the election was created/updated (the last one).
-          deprecated: true
-        electionVote:
-          type: boolean
-          description: Result of the election
-          deprecated: true
-        isCanceled:
-          type: boolean
-          description: The DAR is canceled
-          deprecated: true
-        needsApproval:
-          type: boolean
-          description: The DAR requires Data Owners approval
-          deprecated: true
-        dataSetElectionResult:
-          type: string
-          description: Result of the Data Owners elections.
-          deprecated: true
-        datasetId:
-          type: integer
-          format: int32
-          description: The ID of the dataset for this DAR.
-          deprecated: true
-        dacId:
-          type: integer
-          format: int32
-          description: The ID of the DAC for this DAR's dataset.
-          deprecated: true
-        errors:
-          type: array
-          items:
-            type: string
-          description: List of any structural errors with this DAR
-          deprecated: true
-        ownerUser:
-          description: The owner of the DAR
-          deprecated: true
-          type: object
-          items:
-            $ref: '#/components/schemas/User'
     DatasetAssociation:
       type: object
       properties:

@@ -179,17 +179,6 @@ public interface UserDAO extends Transactional<UserDAO> {
   User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("""
-      SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
-      FROM users du
-      INNER JOIN user_role ur ON ur.user_id = du.user_id
-      INNER JOIN roles r ON r.roleId = ur.role_id AND r.name in (<roleNames>)
-      INNER JOIN vote v ON v.user_id = du.user_id AND v.electionId in (<electionIds>)
-      """)
-  Set<User> findUsersForElectionsByRoles(@BindList("electionIds") List<Integer> electionIds,
-      @BindList("roleNames") List<String> roleNames);
-
-  @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery("select du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
       " from users du " +
       " inner join user_role ur on ur.user_id = du.user_id " +

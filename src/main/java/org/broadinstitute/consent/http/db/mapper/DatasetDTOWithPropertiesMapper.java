@@ -21,7 +21,6 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
 
     DatasetDTO datasetDTO;
     Integer dataSetId = r.getInt("dataset_id");
-    String consentId = r.getString("consent_id");
     Integer alias = r.getInt("alias");
     if (!datasetDTOs.containsKey(dataSetId)) {
       datasetDTO = new DatasetDTO(new ArrayList<>());
@@ -31,10 +30,8 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
           datasetDTO.setDacId(dacId);
         }
       }
-      datasetDTO.setConsentId(consentId);
       datasetDTO.setAlias(alias);
       datasetDTO.setDataSetId(dataSetId);
-      datasetDTO.setActive(r.getBoolean("active"));
       // Both Consents and Datasets store DataUse in `data_use`.
       if (hasColumn(r, "data_use")) {
         datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
@@ -64,7 +61,6 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       if (property.getPropertyName() != null) {
         datasetDTO.addProperty(property);
       }
-      datasetDTO.setNeedsApproval(r.getBoolean("needs_approval"));
       datasetDTO.setObjectId(r.getString("object_id"));
       datasetDTOs.put(dataSetId, datasetDTO);
     } else {

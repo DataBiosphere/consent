@@ -9,15 +9,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -44,8 +47,7 @@ public class DatasetService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
-  public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
-  private final ConsentDAO consentDAO;
+  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
@@ -54,9 +56,10 @@ public class DatasetService {
   private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetService(ConsentDAO consentDAO, DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO,
-    DacDAO dacDAO, EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
-    this.consentDAO = consentDAO;
+  public DatasetService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
+      UserRoleDAO userRoleDAO, DacDAO dacDAO, EmailService emailService,
+      OntologyService ontologyService, StudyDAO studyDAO) {
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
@@ -77,21 +80,6 @@ public class DatasetService {
   @Deprecated
   public Collection<Dictionary> describeDictionaryByReceiveOrder() {
     return datasetDAO.getMappedFieldsOrderByReceiveOrder();
-  }
-
-  public void disableDataset(Integer datasetId, Boolean active) {
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (dataset != null) {
-      datasetDAO.updateDatasetActive(dataset.getDataSetId(), active);
-    }
-  }
-
-  public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
-    if (datasetDAO.findDatasetById(datasetId) == null) {
-      throw new NotFoundException("DataSet doesn't exist");
-    }
-    datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
-    return datasetDAO.findDatasetById(datasetId);
   }
 
   public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -137,11 +125,10 @@ public class DatasetService {
     Timestamp now = new Timestamp(new Date().getTime());
     Integer createdDatasetId = datasetDAO.inTransaction(h -> {
       try {
-        Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), false,
+        Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(),
             dataset.getDataUse().toString(), dataset.getDacId());
         List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         h.insertDatasetProperties(propertyList);
-        h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
         return id;
       } catch (Exception e) {
         if (Objects.nonNull(h)) {
@@ -177,9 +164,6 @@ public class DatasetService {
     if (Objects.isNull(dataset.getDatasetName())) {
       throw new IllegalArgumentException("Dataset 'Name' cannot be null");
     }
-    if (Objects.isNull(dataset.getNeedsApproval())) {
-      throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-    }
 
     Dataset old = findDatasetById(datasetId);
     Set<DatasetProperty> oldProperties = old.getProperties();
@@ -190,27 +174,22 @@ public class DatasetService {
 
     List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
-            .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
-        .collect(Collectors.toList());
+            .noneMatch(op -> op.getPropertyName().equals(p.getPropertyName())))
+        .toList();
 
     List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
             .noneMatch(p::equals))
-        .collect(Collectors.toList());
+        .toList();
 
-    List<DatasetProperty> propertiesToDelete = oldProperties.stream()
-        .filter(op -> updateDatasetProperties.stream()
-            .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
-        ).collect(Collectors.toList());
-
-    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-        .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
+    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() &&
+      dataset.getDatasetName().equals(old.getName())) {
       return Optional.empty();
     }
 
-    updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
+    updateDatasetProperties(propertiesToUpdate, List.of(), propertiesToAdd);
     datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
-        dataset.getNeedsApproval(), dataset.getDacId());
+        dataset.getDacId());
     Dataset updatedDataset = findDatasetById(datasetId);
     return Optional.of(updatedDataset);
   }
@@ -320,7 +299,7 @@ public class DatasetService {
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
       DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-          new Date(), dataset.getActive(), userId, AuditActions.DELETE.getValue().toUpperCase());
+        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.useTransaction(h -> {
           try {
@@ -341,9 +320,55 @@ public class DatasetService {
     }
   }
 
+  @Deprecated
+  public Set<DatasetDTO> describeDatasets(Integer userId) {
+    List<Integer> datasetIdsInUse = dataAccessRequestDAO.findAllDARDatasetRelationDatasetIds();
+    HashSet<DatasetDTO> datasets = new HashSet<>();
+    if (userHasRole(UserRoles.ADMIN.getRoleName(), userId)) {
+      datasets.addAll(datasetDAO.findAllDatasetDTOs());
+    } else {
+      datasets.addAll(datasetDAO.getDatasetDTOs());
+      if (userHasRole(UserRoles.CHAIRPERSON.getRoleName(), userId)) {
+        Collection<DatasetDTO> chairSpecificDatasets = datasetDAO.findDatasetDTOsByUserId(userId);
+        datasets.addAll(chairSpecificDatasets);
+      }
+    }
+    datasets.forEach(d -> d.setDeletable(!datasetIdsInUse.contains(d.getDataSetId())));
+    return datasets;
+  }
+
+
   public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
     return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
+  }
+
+  @Deprecated
+  public List<Map<String, String>> autoCompleteDatasets(String partial, Integer userId) {
+    Set<DatasetDTO> datasets = describeDatasets(userId);
+    String lowercasePartial = partial.toLowerCase();
+    Set<DatasetDTO> filteredDatasetsContainingPartial = datasets.stream()
+        .filter(ds -> filterDatasetOnProperties(ds, lowercasePartial))
+        .collect(Collectors.toSet());
+    return filteredDatasetsContainingPartial.stream().map(ds ->
+        {
+          HashMap<String, String> map = new HashMap<>();
+          List<DatasetPropertyDTO> properties = ds.getProperties();
+          Optional<DatasetPropertyDTO> datasetName = properties.stream()
+              .filter(p -> p.getPropertyName().equalsIgnoreCase("Dataset Name")).findFirst();
+          Optional<DatasetPropertyDTO> pi = properties.stream()
+              .filter(p -> p.getPropertyName().equalsIgnoreCase("Principal Investigator(PI)"))
+              .findFirst();
+          String datasetNameString =
+              datasetName.isPresent() ? datasetName.get().getPropertyValue() : "";
+          String piString = pi.isPresent() ? pi.get().getPropertyValue() : "";
+          map.put("id", ds.getDataSetId().toString());
+          map.put("objectId", ds.getObjectId());
+          map.put("concatenation",
+              datasetNameString + " | " + piString + " | " + ds.getConsentId());
+          return map;
+        }
+    ).collect(Collectors.toList());
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

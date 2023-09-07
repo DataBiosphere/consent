@@ -64,23 +64,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("status") String status,
       @Bind("lastUpdate") Date lastUpdate);
 
-  @SqlUpdate("UPDATE election SET status = :status WHERE election_id IN (<electionIds>) ")
-  void updateElectionStatus(@BindList("electionIds") List<Integer> electionIds,
-      @Bind("status") String status);
-
-  @SqlQuery(
-      "SELECT e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, "
-          +
-          "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version "
-          +
-          "FROM election e " +
-          "INNER JOIN vote v ON v.electionId = e.election_id AND LOWER(v.type) = 'final' " +
-          "WHERE e.reference_id = :referenceId " +
-          "AND LOWER(e.election_type) = LOWER(:type) " +
-          "ORDER BY create_date DESC LIMIT 1")
-  Election getElectionWithFinalVoteByReferenceIdAndType(@Bind("referenceId") String referenceId,
-      @Bind("type") String type);
-
   @SqlQuery("SELECT DISTINCT "
       + "    e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, "
       + "    e.reference_id, v.rationale final_rationale, v.createdate final_vote_date, "
@@ -95,10 +78,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       + "    END = LOWER(v.type)"
       + "WHERE e.election_id = :electionId LIMIT 1 ")
   Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
-
-  @SqlQuery("SELECT e.* FROM election e INNER JOIN vote v ON v.electionId = e.election_id WHERE v.voteId = :voteId")
-  @UseRowMapper(SimpleElectionMapper.class)
-  Election findElectionByVoteId(@Bind("voteId") Integer voteId);
 
   // TODO: This can return multiple rows per election id, e.g. ID 578 on staging.
   // The root of the duplicate rows is in the vote inner join. When there are multiple chairperson
@@ -239,21 +218,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   @UseRowMapper(ElectionMapper.class)
   List<Election> findOpenElectionsByReferenceIds(
       @BindList("referenceIds") List<String> referenceIds);
-
-  @SqlQuery(
-      "SELECT DISTINCT e.* " +
-          "FROM election e " +
-          "INNER JOIN " +
-          "(SELECT reference_id, MAX(create_date) max_date " +
-          "FROM election e " +
-          "WHERE e.election_type = :type " +
-          "GROUP BY reference_id) election_view " +
-          "ON election_view.max_date = e.create_date " +
-          "AND election_view.reference_id = e.reference_id " +
-          "AND e.reference_id = :referenceId ")
-  @UseRowMapper(SimpleElectionMapper.class)
-  List<Election> findLastElectionsByReferenceIdAndType(@Bind("referenceId") String referenceId,
-      @Bind("type") String type);
 
   // TODO: Update for datasetid distinction. Method can return a list, so refactor usages.
   @SqlQuery(
@@ -400,10 +364,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("status") String status,
       @Bind("lastUpdate") Date lastUpdate,
       @Bind("finalAccessVote") Boolean finalAccessVote);
-
-  @SqlUpdate("UPDATE election SET archived = true, last_update = :lastUpdate WHERE election_id = :electionId ")
-  void archiveElectionById(@Bind("electionId") Integer electionId,
-      @Bind("lastUpdate") Date lastUpdate);
 
   @SqlUpdate("""
       UPDATE election
