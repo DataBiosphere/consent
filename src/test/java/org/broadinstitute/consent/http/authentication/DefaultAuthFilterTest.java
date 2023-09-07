@@ -11,7 +11,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -35,10 +34,6 @@ class DefaultAuthFilterTest {
       .setRealm(" ")
       .setUnauthorizedHandler(unauthorizedHandler)
       .buildAuthFilter();
-
-  @BeforeEach
-  public void setUp() {
-  }
 
   @Test
   void testUnauthorizedUrl() {
