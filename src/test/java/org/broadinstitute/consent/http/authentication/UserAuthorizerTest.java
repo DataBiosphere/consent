@@ -2,57 +2,49 @@ package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
-import java.util.Collections;
+import java.util.List;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class UserAuthorizerTest {
+@ExtendWith(MockitoExtension.class)
+class UserAuthorizerTest {
 
   private UserAuthorizer authorizer;
   @Mock
-  UserRoleDAO userRoleDAO;
+  private UserRoleDAO userRoleDAO;
   @Mock
-  AuthUser authorizedUser;
+  private AuthUser authorizedUser;
   @Mock
-  AuthUser unauthorizedUser;
+  private AuthUser unauthorizedUser;
   @Mock
-  ContainerRequestContext context;
+  private ContainerRequestContext context;
 
   @BeforeEach
-  public void setUp() {
-    openMocks(this);
-    when(authorizedUser.getEmail()).thenReturn("Authorized User");
-    when(unauthorizedUser.getEmail()).thenReturn("Unauthorized User");
-    when(userRoleDAO.findRoleNamesByUserEmail("Authorized User")).thenReturn(
-        Collections.singletonList(getChairpersonRole().getName()));
-    when(userRoleDAO.findRoleNamesByUserEmail("Unauthorized User")).thenReturn(
-        Collections.singletonList(getChairpersonRole().getName()));
+  void setUp() {
     authorizer = new UserAuthorizer(userRoleDAO);
   }
 
   @Test
-  public void testAuthorizeNotAuthorized() {
+  void testAuthorizeNotAuthorized() {
     assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER, context));
   }
 
   @Test
-  public void testAuthorizeAuthorized() {
+  void testAuthorizeAuthorized() {
+    when(userRoleDAO.findRoleNamesByUserEmail(any()))
+      .thenReturn(List.of(UserRoles.CHAIRPERSON.getRoleName()));
     assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
-  }
-
-  /* Helper Methods */
-
-  private UserRole getChairpersonRole() {
-    return new UserRole(1, "CHAIRPERSON");
   }
 
 }
