@@ -651,43 +651,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       FROM dataset d
       LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
       LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
-      INNER JOIN user_role ur ON ur.dac_id = d.dac_id
-      WHERE ur.user_id = :userId
-      AND d.name IS NOT NULL
-      ORDER BY d.dataset_id
-      """)
-  Set<DatasetDTO> findDatasetDTOsByUserId(@Bind("userId") Integer userId);
-
-  @Deprecated
-  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-  @SqlQuery("""
-      SELECT d.*, k.key, dp.property_value, d.dac_id
-      FROM dataset d
-      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
-      WHERE d.name IS NOT NULL
-      ORDER BY d.dataset_id
-      """)
-  Set<DatasetDTO> getDatasetDTOs();
-
-  @Deprecated
-  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-  @SqlQuery("""
-      SELECT d.*, k.key, dp.property_value, d.dac_id
-      FROM dataset d
-      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
-      ORDER BY d.dataset_id
-      """)
-  Set<DatasetDTO> findAllDatasetDTOs();
-
-  @Deprecated
-  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-  @SqlQuery("""
-      SELECT d.*, k.key, dp.property_value, d.dac_id
-      FROM dataset d
-      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
       WHERE d.dataset_id = :datasetId ORDER BY d.dataset_id, k.display_order
       """)
   Set<DatasetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);

@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,7 +80,7 @@ public class DatasetServiceTest {
   }
 
   private void initService() {
-    datasetService = new DatasetService(dataAccessRequestDAO, datasetDAO,
+    datasetService = new DatasetService(datasetDAO,
         userRoleDAO, dacDAO, emailService, ontologyService, studyDAO);
   }
 
@@ -500,19 +499,6 @@ public class DatasetServiceTest {
   }
 
   @Test
-  public void testAutoCompleteDatasets() {
-    List<DatasetDTO> dtos = getDatasetDTOs();
-    Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
-    when(datasetDAO.findAllDatasetDTOs()).thenReturn(setOfDtos);
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(
-        UserRoles.ADMIN.getRoleId());
-    initService();
-    List<Map<String, String>> result = datasetService.autoCompleteDatasets("a", 0);
-    assertNotNull(result);
-    assertEquals(result.size(), dtos.size());
-  }
-
-  @Test
   public void testSearchDatasetsOpenAccessFalse() {
     Dataset ds1 = new Dataset();
     ds1.setName("asdf1234");
@@ -617,34 +603,6 @@ public class DatasetServiceTest {
     // query nonexistent phrase
     results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", true, u);
     assertEquals(0, results.size());
-  }
-
-  @Test
-  public void testDescribeDatasets() {
-    List<DatasetDTO> dtos = getDatasetDTOs();
-    Set<DatasetDTO> setOfDtos = new HashSet<>(dtos);
-    Set<DatasetDTO> singleDtoSet = Collections.singleton(dtos.get(0));
-    Set<DatasetDTO> emptyActiveDtoSet = Collections.emptySet();
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 0)).thenReturn(null);
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 1)).thenReturn(1);
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.ADMIN.getRoleName(), 2)).thenReturn(null);
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 0)).thenReturn(
-        null);
-    when(userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(), 2)).thenReturn(2);
-    when(datasetDAO.findAllDatasetDTOs()).thenReturn(setOfDtos);
-    when(datasetDAO.getDatasetDTOs()).thenReturn(emptyActiveDtoSet);
-    when(datasetDAO.findDatasetDTOsByUserId(2)).thenReturn(singleDtoSet);
-    initService();
-
-    Set<DatasetDTO> memberResult = datasetService.describeDatasets(0);
-    assertNotNull(memberResult);
-    assertEquals(memberResult.size(), 0);
-    Set<DatasetDTO> adminResult = datasetService.describeDatasets(1);
-    assertNotNull(adminResult);
-    assertEquals(adminResult.size(), dtos.size());
-    Set<DatasetDTO> chairResult = datasetService.describeDatasets(2);
-    assertNotNull(chairResult);
-    assertEquals(chairResult.size(), singleDtoSet.size());
   }
 
   @Test

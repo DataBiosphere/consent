@@ -548,23 +548,6 @@ paths:
               schema:
                 type: string
                 format: binary
-  /api/dataset:
-    get:
-      summary: Get Datasets
-      description: Returns Dataset list filtered by authenticated user.
-      deprecated: true
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: A list of Datasets
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/Dataset.yaml'
-
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
@@ -680,31 +663,6 @@ paths:
     $ref: './paths/datasetSearch.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
-  /api/dataset/autocomplete/{partial}:
-    get:
-      deprecated: true
-      summary: datasetAutocomplete
-      description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
-      parameters:
-        - name: partial
-          in: path
-          description: the value to autocomplete.
-          required: true
-          schema:
-            type: string
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: An array of Dataset objectIds
-          content:
-            text/plain:
-              schema:
-                type: array
-                items:
-                  type: string
-        500:
-          description: Server error.
   /api/datasetAssociation/{datasetId}:
     get:
       summary: Get Dataset Associations
