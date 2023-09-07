@@ -115,18 +115,6 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testDescribeDictionaryByDisplayOrder() {
-    when(datasetDAO.getMappedFieldsOrderByDisplayOrder())
-        .thenReturn(new ArrayList<>(getDictionaries()));
-    initService();
-
-    Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
-    assertNotNull(dictionaries);
-    assertEquals(dictionaries.stream().findFirst().orElseThrow().getDisplayOrder(),
-        getDictionaries().stream().findFirst().orElseThrow().getDisplayOrder());
-  }
-
-  @Test
   void testDescribeDictionaryByReceiveOrder() {
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder())
         .thenReturn(new ArrayList<>(getDictionaries()));

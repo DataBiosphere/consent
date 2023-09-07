@@ -683,11 +683,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
   List<Dictionary> getDictionaryTerms();
 
-  @Deprecated // Use getDictionaryTerms()
-  @RegisterRowMapper(DictionaryMapper.class)
-  @SqlQuery("SELECT * FROM dictionary d WHERE d.display_order IS NOT NULL ORDER BY display_order")
-  List<Dictionary> getMappedFieldsOrderByDisplayOrder();
-
   @SqlQuery(
       "SELECT ds.* FROM consent_associations ca "
           + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "

@@ -528,22 +528,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testDescribeDictionarySuccess() {
-    when(datasetService.describeDictionaryByDisplayOrder()).thenReturn(dictionaries);
-    initResource();
-    Response response = resource.describeDictionary();
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  void testDescribeDictionaryError() {
-    doThrow(new RuntimeException()).when(datasetService).describeDictionaryByDisplayOrder();
-    initResource();
-    Response response = resource.describeDictionary();
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
   void testIndexAllDatasets() throws IOException {
     List<Dataset> datasets = List.of(new Dataset());
 

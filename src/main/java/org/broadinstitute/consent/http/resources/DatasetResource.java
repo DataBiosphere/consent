@@ -577,19 +577,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @GET
-  @Path("/dictionary")
-  @Produces("application/json")
-  @PermitAll
-  public Response describeDictionary() {
-    try {
-      Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
-      return Response.ok(dictionaries).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @POST
   @Path("/index")
   @RolesAllowed(ADMIN)

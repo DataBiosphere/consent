@@ -606,23 +606,6 @@ paths:
               description: attachment; filename=DataSetSample.tsv
         500:
           description: Server error.
-  /api/dataset/dictionary:
-    get:
-      summary: describeDictionary
-      description: Return all the values that compound the dictionary , this values are the attributes of a Dataset.
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: An array of the existent dictionaries
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Dictionary'
-        500:
-          description: Server error.
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
@@ -1441,31 +1424,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    Dictionary:
-      type: object
-      properties:
-        keyId:
-          type: integer
-          format: int32
-          description: Id of the key.
-        key:
-          type: integer
-          format: int32
-          description: Value of the key.
-        required:
-          deprecated: true
-          type: boolean
-          description: Defines if this attribute is required to create a Dataset
-        displayOrder:
-          deprecated: true
-          type: integer
-          format: int32
-          description: Defines the position of the attribute in the .tsv file
-        receiveOrder:
-          deprecated: true
-          type: integer
-          format: int32
-          description: The display order of the properties.
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:
