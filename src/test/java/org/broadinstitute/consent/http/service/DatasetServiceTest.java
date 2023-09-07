@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -53,7 +51,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -64,28 +61,17 @@ public class DatasetServiceTest {
   private DatasetService datasetService;
 
   @Mock
-  private ConsentDAO consentDAO;
-
-  @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
-
   @Mock
   private DatasetDAO datasetDAO;
-
-  @Mock
-  private DatasetServiceDAO datasetServiceDAO;
-
   @Mock
   private UserRoleDAO userRoleDAO;
   @Mock
   private DacDAO dacDAO;
   @Mock
-  private UseRestrictionConverter useRestrictionConverter;
-  @Mock
   private EmailService emailService;
   @Mock
   private OntologyService ontologyService;
-
   @Mock
   private StudyDAO studyDAO;
 
@@ -95,15 +81,15 @@ public class DatasetServiceTest {
   }
 
   private void initService() {
-    datasetService = new DatasetService(consentDAO, dataAccessRequestDAO, datasetDAO,
-        datasetServiceDAO, userRoleDAO, dacDAO, useRestrictionConverter, emailService, ontologyService, studyDAO);
+    datasetService = new DatasetService(dataAccessRequestDAO, datasetDAO,
+        userRoleDAO, dacDAO, emailService, ontologyService, studyDAO);
   }
 
   @Test
   public void testCreateDataset() throws Exception {
     DatasetDTO test = getDatasetDTO();
     Dataset mockDataset = getDatasets().get(0);
-    when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), anyBoolean(), any(),
+    when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), any(),
         any())).thenReturn(mockDataset.getDataSetId());
     when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
     when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
@@ -157,18 +143,6 @@ public class DatasetServiceTest {
   }
 
   @Test
-  public void testDisableDataset() {
-    Integer dataSetId = 1;
-    when(datasetDAO.findDatasetById(dataSetId))
-        .thenReturn(getDatasets().get(0));
-    doNothing().when(datasetDAO).updateDatasetActive(any(), any());
-
-    initService();
-
-    datasetService.disableDataset(dataSetId, false);
-  }
-
-  @Test
   public void testFindDatasetsByDacIds() {
     when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
     initService();
@@ -214,18 +188,6 @@ public class DatasetServiceTest {
     assertThrows(BadRequestException.class, () -> {
       datasetService.findDatasetListByDacIds(null);
     });
-  }
-
-  @Test
-  public void testUpdateNeedsReviewDataSets() {
-    Integer dataSetId = 1;
-    when(datasetDAO.findDatasetById(dataSetId))
-        .thenReturn(getDatasets().get(0));
-    doNothing().when(datasetDAO).updateDatasetNeedsApproval(any(), any());
-    initService();
-
-    Dataset dataSet = datasetService.updateNeedsReviewDatasets(dataSetId, true);
-    assertNotNull(dataSet);
   }
 
   @Test
@@ -379,7 +341,7 @@ public class DatasetServiceTest {
     dataSetDTO.setDatasetName(dataset.getName());
     Set<DatasetProperty> datasetProps = getDatasetProperties();
     List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-        new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
+        new DatasetPropertyDTO(p.getPropertyName(), p.getPropertyValue().toString())
     ).collect(Collectors.toList());
     dataSetDTO.setProperties(dtoProps);
     dataset.setProperties(datasetProps);
@@ -534,7 +496,7 @@ public class DatasetServiceTest {
     Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
     assertNotNull(updated);
     assertTrue(updated.isPresent());
-    verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any(), any());
+    verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any());
   }
 
   @Test
@@ -930,8 +892,6 @@ public class DatasetServiceTest {
           dataset.setDataSetId(i);
           dataset.setName("Test Dataset " + i);
           dataset.setConsentName("Test Consent " + i);
-          dataset.setActive(true);
-          dataset.setNeedsApproval(false);
           dataset.setProperties(Collections.emptySet());
           return dataset;
         }).collect(Collectors.toList());
@@ -944,8 +904,6 @@ public class DatasetServiceTest {
           dataset.setDataSetId(i);
           DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name",
               "Test Dataset " + i);
-          dataset.setActive(true);
-          dataset.setNeedsApproval(false);
           dataset.setProperties(Collections.singletonList(nameProperty));
           return dataset;
         }).collect(Collectors.toList());
@@ -953,12 +911,16 @@ public class DatasetServiceTest {
 
   private Set<DatasetProperty> getDatasetProperties() {
     return IntStream.range(1, 11)
-        .mapToObj(i ->
-            new DatasetProperty(1,
+        .mapToObj(i -> {
+            DatasetProperty prop = new DatasetProperty(1,
                 i,
                 "Test Value" + RandomStringUtils.randomAlphanumeric(25),
                 PropertyType.String,
-                new Date())
+                new Date());
+            prop.setPropertyName(RandomStringUtils.randomAlphanumeric(15));
+            prop.setPropertyId(i);
+            return prop;
+          }
         ).collect(Collectors.toSet());
   }
 
@@ -974,8 +936,6 @@ public class DatasetServiceTest {
     DatasetDTO datasetDTO = new DatasetDTO();
     datasetDTO.setDataSetId(1);
     datasetDTO.setObjectId("Test ObjectId");
-    datasetDTO.setActive(true);
-    datasetDTO.setNeedsApproval(false);
     datasetDTO.setProperties(getDatasetPropertiesDTO());
     DataUse dataUse = new DataUse();
     dataUse.setGeneralUse(true);

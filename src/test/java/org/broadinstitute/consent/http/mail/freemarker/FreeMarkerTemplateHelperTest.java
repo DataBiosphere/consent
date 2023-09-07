@@ -27,7 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class FreeMarkerTemplateHelperTest {
+class FreeMarkerTemplateHelperTest {
 
   private FreeMarkerTemplateHelper helper;
 
@@ -44,48 +44,42 @@ public class FreeMarkerTemplateHelperTest {
   }
 
   @Test
-  public void testGetDisabledDatasetsTemplate() throws Exception {
+  void testGetDisabledDatasetsTemplate() throws Exception {
     Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User",
-        sampleDatasets().stream().map(ds -> ds.getObjectId()).collect(Collectors.toList()),
+        sampleDatasets().stream().map(Dataset::getObjectId).collect(Collectors.toList()),
         "entityId", "serverUrl");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertTrue(
-        parsedTemplate.title()
-            .equals("Broad Data Use Oversight System - Disabled Datasets Notification"));
-    assertTrue(
-        parsedTemplate.getElementById("userName").text().equals("Hello DatasetTemp User,"));
+    assertEquals("Broad Data Use Oversight System - Disabled Datasets Notification",
+        parsedTemplate.title());
+    assertEquals("Hello DatasetTemp User,", parsedTemplate.getElementById("userName").text());
     assertTrue(templateString.contains("DS-101"));
     assertTrue(templateString.contains("DS-102"));
     assertTrue(templateString.contains("DS-103"));
   }
 
   @Test
-  public void testGetNewCaseTemplate() throws Exception {
+  void testGetNewCaseTemplate() throws Exception {
     Writer template = helper.getNewCaseTemplate("NewCase User", "DARELECTION-1", "DAR-1",
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertTrue(
-        parsedTemplate.title().equals("Broad Data Use Oversight System - New Case Notification"));
-    assertTrue(
-        parsedTemplate.getElementById("userName").text().equals("Hello NewCase User,"));
+    assertEquals("Broad Data Use Oversight System - New Case Notification", parsedTemplate.title());
+    assertEquals("Hello NewCase User,", parsedTemplate.getElementById("userName").text());
   }
 
   @Test
-  public void testGetReminderTemplate() throws Exception {
+  void testGetReminderTemplate() throws Exception {
     Writer template = helper.getReminderTemplate("Reminder User", "DARELECTION-1", "DAR-1",
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertTrue(
-        parsedTemplate.title().equals("Broad Data Use Oversight System - Vote Reminder"));
-    assertTrue(
-        parsedTemplate.getElementById("userName").text().equals("Hello Reminder User,"));
+    assertEquals("Broad Data Use Oversight System - Vote Reminder", parsedTemplate.title());
+    assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
   @Test
-  public void testGetNewDARRequestTemplate() throws Exception {
+  void testGetNewDARRequestTemplate() throws Exception {
     Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
@@ -98,32 +92,30 @@ public class FreeMarkerTemplateHelperTest {
   }
 
   @Test
-  public void testGetNewResearcherLibraryRequestTemplate() throws Exception {
+  void testGetNewResearcherLibraryRequestTemplate() throws Exception {
     Writer template = helper.getNewResearcherLibraryRequestTemplate("John Doe",
         "http://localhost:8000/#/");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
 
-    assertTrue(
-        parsedTemplate.title()
-            .equals("Broad Data Use Oversight System - New Researcher Library Request"));
+    assertEquals("Broad Data Use Oversight System - New Researcher Library Request",
+        parsedTemplate.title());
 
     assertTrue(parsedTemplate
         .getElementById("content")
         .text()
         .contains("A researcher from your institution, John Doe, has registered in DUOS"));
 
-    assertTrue(parsedTemplate
+    assertEquals("http://localhost:8000/#/", parsedTemplate
         .getElementById("serverUrl")
-        .attr("href")
-        .equals("http://localhost:8000/#/"));
+        .attr("href"));
 
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }
 
   @Test
-  public void testGetDataCustodianApprovalTemplate() throws Exception {
+  void testGetDataCustodianApprovalTemplate() throws Exception {
     List<DatasetMailDTO> datasetMailDTOs = List.of();
     Writer template = helper.getDataCustodianApprovalTemplate(datasetMailDTOs, "Depositor",
         "Dar Code", "researcher@email.com");
@@ -146,9 +138,9 @@ public class FreeMarkerTemplateHelperTest {
     return Jsoup.parse(parsedHtml);
   }
 
-  private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date(), true);
-  private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date(), true);
-  private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date(), true);
+  private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date());
+  private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date());
+  private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date());
   private User testUser = new User(1, "testuser@email.com", "Test User", new Date(), null);
   private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null, true, 1);
   private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null, false, 2);
@@ -166,8 +158,8 @@ public class FreeMarkerTemplateHelperTest {
 
   private Map<String, List<Election>> getClosedDsElections() {
     Map<String, List<Election>> closedDatasetElections = new HashMap<>();
-    closedDatasetElections.put("DAR-1", Arrays.asList(e1, e2));
-    closedDatasetElections.put("DAR-2", Arrays.asList(e3));
+    closedDatasetElections.put("DAR-1", List.of(e1, e2));
+    closedDatasetElections.put("DAR-2", List.of(e3));
     return closedDatasetElections;
   }
 }

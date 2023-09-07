@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -40,7 +39,6 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,31 +47,22 @@ public class DatasetService {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
-  public static final String CONSENT_NAME_PREFIX = "DUOS-DS-CG-";
-  private final ConsentDAO consentDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final DatasetServiceDAO datasetServiceDAO;
   private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
-  private final UseRestrictionConverter converter;
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetService(ConsentDAO consentDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO dataSetDAO,
-      DatasetServiceDAO datasetServiceDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      UseRestrictionConverter converter,
-      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
-    this.consentDAO = consentDAO;
+  public DatasetService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO dataSetDAO,
+      UserRoleDAO userRoleDAO, DacDAO dacDAO, EmailService emailService,
+      OntologyService ontologyService, StudyDAO studyDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = dataSetDAO;
-    this.datasetServiceDAO = datasetServiceDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
-    this.converter = converter;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
@@ -91,21 +80,6 @@ public class DatasetService {
   @Deprecated
   public Collection<Dictionary> describeDictionaryByReceiveOrder() {
     return datasetDAO.getMappedFieldsOrderByReceiveOrder();
-  }
-
-  public void disableDataset(Integer datasetId, Boolean active) {
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (dataset != null) {
-      datasetDAO.updateDatasetActive(dataset.getDataSetId(), active);
-    }
-  }
-
-  public Dataset updateNeedsReviewDatasets(Integer datasetId, Boolean needsApproval) {
-    if (datasetDAO.findDatasetById(datasetId) == null) {
-      throw new NotFoundException("DataSet doesn't exist");
-    }
-    datasetDAO.updateDatasetNeedsApproval(datasetId, needsApproval);
-    return datasetDAO.findDatasetById(datasetId);
   }
 
   public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
@@ -151,11 +125,10 @@ public class DatasetService {
     Timestamp now = new Timestamp(new Date().getTime());
     Integer createdDatasetId = datasetDAO.inTransaction(h -> {
       try {
-        Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(), false,
+        Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(),
             dataset.getDataUse().toString(), dataset.getDacId());
         List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
         h.insertDatasetProperties(propertyList);
-        h.updateDatasetNeedsApproval(id, dataset.getNeedsApproval());
         return id;
       } catch (Exception e) {
         if (Objects.nonNull(h)) {
@@ -191,9 +164,6 @@ public class DatasetService {
     if (Objects.isNull(dataset.getDatasetName())) {
       throw new IllegalArgumentException("Dataset 'Name' cannot be null");
     }
-    if (Objects.isNull(dataset.getNeedsApproval())) {
-      throw new IllegalArgumentException("Dataset 'Needs Approval' field cannot be null");
-    }
 
     Dataset old = findDatasetById(datasetId);
     Set<DatasetProperty> oldProperties = old.getProperties();
@@ -204,27 +174,22 @@ public class DatasetService {
 
     List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
-            .noneMatch(op -> op.getPropertyKey().equals(p.getPropertyKey())))
-        .collect(Collectors.toList());
+            .noneMatch(op -> op.getPropertyName().equals(p.getPropertyName())))
+        .toList();
 
     List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
         .filter(p -> oldProperties.stream()
             .noneMatch(p::equals))
-        .collect(Collectors.toList());
+        .toList();
 
-    List<DatasetProperty> propertiesToDelete = oldProperties.stream()
-        .filter(op -> updateDatasetProperties.stream()
-            .noneMatch(p -> p.getPropertyKey().equals(op.getPropertyKey()))
-        ).collect(Collectors.toList());
-
-    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() && propertiesToDelete
-        .isEmpty() && dataset.getDatasetName().equals(old.getName())) {
+    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() &&
+      dataset.getDatasetName().equals(old.getName())) {
       return Optional.empty();
     }
 
-    updateDatasetProperties(propertiesToUpdate, propertiesToDelete, propertiesToAdd);
+    updateDatasetProperties(propertiesToUpdate, List.of(), propertiesToAdd);
     datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
-        dataset.getNeedsApproval(), dataset.getDacId());
+        dataset.getDacId());
     Dataset updatedDataset = findDatasetById(datasetId);
     return Optional.of(updatedDataset);
   }
@@ -334,7 +299,7 @@ public class DatasetService {
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
       DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-          new Date(), dataset.getActive(), userId, AuditActions.DELETE.getValue().toUpperCase());
+        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.useTransaction(h -> {
           try {

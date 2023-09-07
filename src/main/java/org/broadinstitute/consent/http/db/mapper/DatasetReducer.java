@@ -33,10 +33,6 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
-    if (hasColumn(rowView, "needs_approval", Boolean.class)) {
-      Boolean needsApproval = rowView.getColumn("needs_approval", Boolean.class);
-      dataset.setNeedsApproval(needsApproval);
-    }
     if (hasColumn(rowView, "dac_approval", Boolean.class)) {
       dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
     }

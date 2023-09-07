@@ -74,8 +74,6 @@ public class DatasetServiceDAO implements ConsentLogger {
   public record DatasetUpdate(Integer datasetId,
                               String name,
                               Integer userId,
-                              Boolean needsApproval,
-                              Boolean active,
                               Integer dacId,
                               List<DatasetProperty> props,
                               List<FileStorageObject> files) {
@@ -141,7 +139,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         new Timestamp(new Date().getTime()),
         userId,
         null,
-        false,
         dataUse.toString(),
         dacId
     );
@@ -203,8 +200,6 @@ public class DatasetServiceDAO implements ConsentLogger {
                 datasetUpdate.datasetId,
                 datasetUpdate.name,
                 studyUpdate.userId,
-                datasetUpdate.needsApproval,
-                datasetUpdate.active,
                 datasetUpdate.dacId,
                 datasetUpdate.props,
                 studyUpdate.files,
@@ -299,8 +294,6 @@ public class DatasetServiceDAO implements ConsentLogger {
               updates.datasetId(),
               updates.name(),
               updates.userId(),
-              updates.needsApproval(),
-              updates.active(),
               updates.dacId(),
               updates.props(),
               updates.files(),
@@ -315,8 +308,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       Integer datasetId,
       String datasetName,
       Integer userId,
-      Boolean needsApproval,
-      Boolean active,
       Integer dacId,
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
@@ -327,8 +318,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         datasetName,
         new Timestamp(new Date().getTime()),
         userId,
-        needsApproval,
-        active,
         dacId
     );
 

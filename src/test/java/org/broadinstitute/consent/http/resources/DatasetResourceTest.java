@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.authentication.GenericUser;
-import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -71,7 +70,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 
-public class DatasetResourceTest {
+class DatasetResourceTest {
 
   @Mock
   private DataAccessRequestService darService;
@@ -107,8 +106,6 @@ public class DatasetResourceTest {
 
   private DatasetResource resource;
 
-  private StudyDAO studyDAO;
-
   @BeforeEach
   public void setUp() {
     openMocks(this);
@@ -141,7 +138,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetSuccess() throws Exception {
+  void testCreateDatasetSuccess() throws Exception {
     DatasetDTO result = createMockDatasetDTO();
     String json = createPropertiesJson("Dataset Name", "test");
 
@@ -163,7 +160,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetNoJson() {
+  void testCreateDatasetNoJson() {
     initResource();
     assertThrows(BadRequestException.class, () -> {
       resource.createDataset(authUser, uriInfo, "");
@@ -171,7 +168,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetNoProperties() {
+  void testCreateDatasetNoProperties() {
     initResource();
     assertThrows(BadRequestException.class, () -> {
       resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
@@ -179,7 +176,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetNullName() {
+  void testCreateDatasetNullName() {
     String json = createPropertiesJson("Dataset Name", null);
 
     initResource();
@@ -189,7 +186,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetEmptyName() {
+  void testCreateDatasetEmptyName() {
     String json = createPropertiesJson("Dataset Name", "");
 
     initResource();
@@ -200,7 +197,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetMissingName() {
+  void testCreateDatasetMissingName() {
     String json = createPropertiesJson("Property", "test");
 
     initResource();
@@ -210,7 +207,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetInvalidProperty() {
+  void testCreateDatasetInvalidProperty() {
     List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
     invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
     when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
@@ -225,7 +222,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetDuplicateProperties() {
+  void testCreateDatasetDuplicateProperties() {
     List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
     duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
     duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
@@ -240,7 +237,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetNameInUse() {
+  void testCreateDatasetNameInUse() {
     Dataset inUse = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(inUse);
 
@@ -254,7 +251,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetError() throws Exception {
+  void testCreateDatasetError() throws Exception {
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
@@ -271,7 +268,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetSuccess() {
+  void testUpdateDatasetSuccess() {
     Dataset preexistingDataset = new Dataset();
     String json = createPropertiesJson("Dataset Name", "test");
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
@@ -291,21 +288,21 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetNoJson() {
+  void testUpdateDatasetNoJson() {
     initResource();
     Response response = resource.updateDataset(authUser, uriInfo, 1, "");
     assertEquals(400, response.getStatus());
   }
 
   @Test
-  public void testUpdateDatasetNoProperties() {
+  void testUpdateDatasetNoProperties() {
     initResource();
     Response response = resource.updateDataset(authUser, uriInfo, 1, "{\"properties\":[]}");
     assertEquals(400, response.getStatus());
   }
 
   @Test
-  public void testUpdateDatasetIdNotFound() {
+  void testUpdateDatasetIdNotFound() {
     String json = createPropertiesJson("Dataset Name", "test");
     when(datasetService.findDatasetById(anyInt())).thenReturn(null);
 
@@ -315,7 +312,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetInvalidProperty() {
+  void testUpdateDatasetInvalidProperty() {
     List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
     invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
     when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
@@ -330,7 +327,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetDuplicateProperties() {
+  void testUpdateDatasetDuplicateProperties() {
     List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
     duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
     duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
@@ -346,7 +343,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetNoContent() {
+  void testUpdateDatasetNoContent() {
     Dataset preexistingDataset = new Dataset();
     String json = createPropertiesJson("Dataset Name", "test");
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
@@ -364,7 +361,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDescribeDatasetsSuccess() {
+  void testDescribeDatasetsSuccess() {
     when(authUser.getEmail()).thenReturn("authUserEmail");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
@@ -374,7 +371,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDescribeDatasetsError() {
+  void testDescribeDatasetsError() {
     when(authUser.getEmail()).thenReturn("authUserEmail");
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(datasetService).describeDatasets(anyInt());
@@ -384,7 +381,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testValidateDatasetNameSuccess() {
+  void testValidateDatasetNameSuccess() {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
     initResource();
@@ -393,7 +390,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testValidateDatasetNameNotFound() {
+  void testValidateDatasetNameNotFound() {
     initResource();
 
     assertThrows(NotFoundException.class, () -> {
@@ -402,7 +399,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testFindAllStudyNamesSuccess() {
+  void testFindAllStudyNamesSuccess() {
     when(datasetService.findAllStudyNames()).thenReturn(Set.of("Hi", "Hello"));
     initResource();
     Response response = resource.findAllStudyNames();
@@ -410,7 +407,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testFindAllStudyNamesFail() {
+  void testFindAllStudyNamesFail() {
     when(datasetService.findAllStudyNames()).thenThrow();
     initResource();
     Response response = resource.findAllStudyNames();
@@ -418,7 +415,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDataSetSample() {
+  void testGetDataSetSample() {
     List<String> header = List.of("attachment; filename=DataSetSample.tsv");
     initResource();
     Response response = resource.getDataSetSample();
@@ -427,7 +424,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDownloadDatasetsSuccess() {
+  void testDownloadDatasetsSuccess() {
     List<DatasetDTO> dtoList = new ArrayList<>();
     DatasetDTO testDTO = createMockDatasetDTO();
     dtoList.add(testDTO);
@@ -440,7 +437,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDownloadDatasetsHeaderError() {
+  void testDownloadDatasetsHeaderError() {
     doThrow(new RuntimeException()).when(datasetService).describeDictionaryByReceiveOrder();
     initResource();
     Response response = resource.downloadDataSets(List.of(1));
@@ -448,14 +445,14 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDownloadDatasetsEmptyList() {
+  void testDownloadDatasetsEmptyList() {
     initResource();
     Response response = resource.downloadDataSets(List.of());
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void testDownloadDatasetsServiceError() {
+  void testDownloadDatasetsServiceError() {
     doThrow(new RuntimeException()).when(datasetService).describeDataSetsByReceiveOrder(any());
     initResource();
     Response response = resource.downloadDataSets(List.of(1));
@@ -463,7 +460,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDeleteSuccessAdmin() {
+  void testDeleteSuccessAdmin() {
     Dataset dataSet = new Dataset();
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
@@ -476,7 +473,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDeleteSuccessChairperson() {
+  void testDeleteSuccessChairperson() {
     Dataset dataSet = new Dataset();
     dataSet.setDataSetId(1);
     dataSet.setDacId(1);
@@ -496,7 +493,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDeleteErrorNoDacIds() {
+  void testDeleteErrorNoDacIds() {
     Dataset dataSet = new Dataset();
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -513,7 +510,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDeleteErrorNullConsent() {
+  void testDeleteErrorNullConsent() {
     Dataset dataSet = new Dataset();
     dataSet.setDataSetId(1);
 
@@ -532,7 +529,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDeleteErrorMismatch() {
+  void testDeleteErrorMismatch() {
     Dataset dataSet = new Dataset();
     dataSet.setDataSetId(1);
     dataSet.setDacId(2);
@@ -552,96 +549,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDisableDataSetSuccessAdmin() {
-    Dataset dataSet = new Dataset();
-
-    when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.disableDataSet(authUser, 1, true, null);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void testDisableDataSetSuccessChairperson() {
-    Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
-    dataSet.setDacId(1);
-
-    when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    role.setDacId(1);
-    when(user.getRoles()).thenReturn(List.of(role));
-
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.disableDataSet(authUser, 1, true, null);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void testDisableDataSetErrorNoDacIds() {
-    Dataset dataSet = new Dataset();
-
-    when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    when(user.getRoles()).thenReturn(List.of(role));
-
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.disableDataSet(authUser, 1, true, null);
-    assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  public void testDisableDataSetErrorNullConsent() {
-    Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
-
-    when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    role.setDacId(1);
-    when(user.getRoles()).thenReturn(List.of(role));
-
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.disableDataSet(authUser, 1, true, null);
-    assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  public void testDisableDataSetErrorMismatch() {
-    Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
-    dataSet.setDacId(2);
-
-    when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    role.setDacId(1);
-    when(user.getRoles()).thenReturn(List.of(role));
-
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.disableDataSet(authUser, 1, true, null);
-    assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  public void testDescribeDictionarySuccess() {
+  void testDescribeDictionarySuccess() {
     when(datasetService.describeDictionaryByDisplayOrder()).thenReturn(dictionaries);
     initResource();
     Response response = resource.describeDictionary();
@@ -649,7 +557,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDescribeDictionaryError() {
+  void testDescribeDictionaryError() {
     doThrow(new RuntimeException()).when(datasetService).describeDictionaryByDisplayOrder();
     initResource();
     Response response = resource.describeDictionary();
@@ -657,7 +565,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDatasetAutocompleteSuccess() {
+  void testDatasetAutocompleteSuccess() {
     List<Map<String, String>> autocompleteMap = List.of(Collections.EMPTY_MAP);
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -671,7 +579,7 @@ public class DatasetResourceTest {
 
 
   @Test
-  public void testDatasetAutocompleteError() {
+  void testDatasetAutocompleteError() {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
@@ -684,7 +592,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testIndexAllDatasets() throws IOException {
+  void testIndexAllDatasets() throws IOException {
     List<Dataset> datasets = List.of(new Dataset());
 
     Response mockResponse = Response.ok().entity(datasets).build();
@@ -697,7 +605,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testIndexDataset() throws IOException {
+  void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
 
     Response mockResponse = Response.ok().entity(dataset).build();
@@ -710,7 +618,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testIndexDelete() throws IOException {
+  void testIndexDelete() throws IOException {
     Response mockResponse = Response.status(200).entity("deleted").build();
     when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
 
@@ -720,7 +628,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetsOpenAccessFalse() {
+  void testSearchDatasetsOpenAccessFalse() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
     Boolean openAccess = false;
@@ -737,7 +645,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetsOpenAccessTrue() {
+  void testSearchDatasetsOpenAccessTrue() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
     Boolean openAccess = true;
@@ -754,7 +662,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSearchDatasetIndex() throws IOException {
+  void testSearchDatasetIndex() throws IOException {
     String query = "{ \"dataUse\": [\"HMB\"] }";
 
     Response mockResponse = Response.ok().entity(query).build();
@@ -771,17 +679,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateNeedsReviewDataSetsSuccess() {
-    Dataset dataSet = new Dataset();
-    when(datasetService.updateNeedsReviewDatasets(any(), any())).thenReturn(dataSet);
-
-    initResource();
-    Response response = resource.updateNeedsReviewDataSets(1, true);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void testGetDataset() {
+  void testGetDataset() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
     ds.setName("asdfasdfasdfasdfasdfasdf");
@@ -793,7 +691,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDatasetNotFound() {
+  void testGetDatasetNotFound() {
     when(datasetService.findDatasetById(1)).thenReturn(null);
 
     initResource();
@@ -802,7 +700,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDatasets() {
+  void testGetDatasets() {
     Dataset ds1 = new Dataset();
     ds1.setDataSetId(1);
     Dataset ds2 = new Dataset();
@@ -820,7 +718,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDatasetsDuplicates() {
+  void testGetDatasetsDuplicates() {
     Dataset ds1 = new Dataset();
     ds1.setDataSetId(1);
     Dataset ds2 = new Dataset();
@@ -838,7 +736,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDatasetsDuplicatesNotFound() {
+  void testGetDatasetsDuplicatesNotFound() {
     Dataset ds1 = new Dataset();
     ds1.setDataSetId(1);
     Dataset ds2 = new Dataset();
@@ -859,7 +757,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetDatasetsNotFound() {
+  void testGetDatasetsNotFound() {
     Dataset ds1 = new Dataset();
     ds1.setDataSetId(1);
     Dataset ds3 = new Dataset();
@@ -881,16 +779,7 @@ public class DatasetResourceTest {
 
 
   @Test
-  public void testUpdateNeedsReviewDataSetsError() {
-    doThrow(new RuntimeException()).when(datasetService).updateNeedsReviewDatasets(any(), any());
-
-    initResource();
-    Response response = resource.updateNeedsReviewDataSets(1, true);
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
-  public void testUpdateDatasetDataUse_OK() {
+  void testUpdateDatasetDataUse_OK() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     Dataset d = new Dataset();
     when(datasetService.findDatasetById(any())).thenReturn(d);
@@ -903,7 +792,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetDataUse_BadRequestJson() {
+  void testUpdateDatasetDataUse_BadRequestJson() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
 
@@ -913,7 +802,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetDataUse_BadRequestService() {
+  void testUpdateDatasetDataUse_BadRequestService() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     Dataset d = new Dataset();
     when(datasetService.findDatasetById(any())).thenReturn(d);
@@ -927,7 +816,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetDataUse_NotFound() {
+  void testUpdateDatasetDataUse_NotFound() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     when(datasetService.findDatasetById(any())).thenThrow(new NotFoundException());
     when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(
@@ -940,7 +829,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetDataUse_NotModified() {
+  void testUpdateDatasetDataUse_NotModified() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     Dataset d = new Dataset();
     DataUse du = new DataUseBuilder().setGeneralUse(true).build();
@@ -954,7 +843,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDownloadDatasetApprovedUsersSuccess() {
+  void testDownloadDatasetApprovedUsersSuccess() {
     List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
     initResource();
     Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
@@ -963,7 +852,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testDownloadDatasetApprovedUsersError() {
+  void testDownloadDatasetApprovedUsersError() {
     doThrow(new RuntimeException()).when(darService).getDatasetApprovedUsersContent(any(), any());
     initResource();
     Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
@@ -971,7 +860,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testFindAllDatasetsAvailableToUser() {
+  void testFindAllDatasetsAvailableToUser() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
     initResource();
@@ -989,21 +878,21 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetRegistration_invalidSchema_case1() {
+  void testCreateDatasetRegistration_invalidSchema_case1() {
     initResource();
     Response response = resource.createDatasetRegistration(authUser, null, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testCreateDatasetRegistration_invalidSchema_case2() {
+  void testCreateDatasetRegistration_invalidSchema_case2() {
     initResource();
     Response response = resource.createDatasetRegistration(authUser, null, "{}");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testCreateDatasetRegistration_invalidSchema_case3() {
+  void testCreateDatasetRegistration_invalidSchema_case3() {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
     String schemaString = new Gson().toJson(schemaV1);
     initResource();
@@ -1012,7 +901,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
+  void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
         List.of());
@@ -1025,7 +914,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetRegistration_withFile() throws SQLException, IOException {
+  void testCreateDatasetRegistration_withFile() throws SQLException, IOException {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("sharing_plan.txt")
@@ -1047,7 +936,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetRegistration_multipleFiles() throws SQLException, IOException {
+  void testCreateDatasetRegistration_multipleFiles() throws SQLException, IOException {
     FormDataContentDisposition contentFile = FormDataContentDisposition
         .name("file")
         .fileName("sharing_plan.txt")
@@ -1095,7 +984,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testCreateDatasetRegistration_invalidFileName() {
+  void testCreateDatasetRegistration_invalidFileName() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("file/with&$invalid*^chars\\.txt")
@@ -1115,7 +1004,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetStudyByIdNoDatasets() {
+  void testGetStudyByIdNoDatasets() {
     Study study = new Study();
     study.setStudyId(1);
     study.setName("asdfasdfasdfasdfasdfasdf");
@@ -1126,7 +1015,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetStudyByIdWithDatasets() {
+  void testGetStudyByIdWithDatasets() {
     Dataset ds1 = new Dataset();
     ds1.setDataSetId(1);
     Dataset ds2 = new Dataset();
@@ -1152,7 +1041,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testGetStudyByIdNotFound() {
+  void testGetStudyByIdNotFound() {
     when(datasetService.getStudyWithDatasetsById(1)).thenThrow(new NotFoundException());
 
     initResource();
@@ -1161,7 +1050,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testupdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
+  void testupdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
@@ -1191,7 +1080,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetWithNoJson() {
+  void testUpdateDatasetWithNoJson() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1208,7 +1097,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetWithInvalidJson() {
+  void testUpdateDatasetWithInvalidJson() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1230,7 +1119,7 @@ public class DatasetResourceTest {
    * tests the case that there are no updates to the dataset properties, should result in success
    */
   @Test
-  public void testUpdateDatasetWithNoProperties() {
+  void testUpdateDatasetWithNoProperties() {
     Dataset dataset = new Dataset();
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
@@ -1250,7 +1139,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetWIthDatasetIdNotFound() {
+  void testUpdateDatasetWIthDatasetIdNotFound() {
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
         .fileName("validFile.txt")
@@ -1270,7 +1159,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateDatasetInvalidFileName() throws SQLException, IOException {
+  void testUpdateDatasetInvalidFileName() throws SQLException, IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
@@ -1299,7 +1188,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSyncDataUseTranslation() {
+  void testSyncDataUseTranslation() {
     when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
     initResource();
 
@@ -1308,7 +1197,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testSyncDataUseTranslationNotFound() {
+  void testSyncDataUseTranslationNotFound() {
     when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
     initResource();
 
@@ -1324,7 +1213,7 @@ public class DatasetResourceTest {
       DataResourceTestData.registrationWithExistingCGDataUse,
       DataResourceTestData.registrationWithExistingCG
   })
-  public void testUpdateStudyByRegistrationInvalid(String input) {
+  void testUpdateStudyByRegistrationInvalid(String input) {
     Study study = createMockStudy();
     // for DataResourceTestData.registrationWithExistingCG, manipulate the dataset ids to simulate
     // a dataset deletion
@@ -1345,7 +1234,7 @@ public class DatasetResourceTest {
   }
 
   @Test
-  public void testUpdateStudyByRegistration() {
+  void testUpdateStudyByRegistration() {
     String input = DataResourceTestData.validRegistration;
     Study study = createMockStudy();
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();

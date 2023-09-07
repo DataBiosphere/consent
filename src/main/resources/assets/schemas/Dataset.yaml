@@ -61,9 +61,11 @@ properties:
   active:
     type: boolean
     description: The Dataset is active
+    deprecated: true
   needsApproval:
     type: boolean
     description: The Dataset need Data Owners approval
+    deprecated: true
   alias:
     type: string
     description: The dataset id, short format

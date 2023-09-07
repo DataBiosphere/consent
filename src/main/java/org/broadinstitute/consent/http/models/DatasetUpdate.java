@@ -4,21 +4,12 @@ import java.util.List;
 
 public record DatasetUpdate (
     String name,
-    Boolean needsApproval,
-    Boolean active,
     Integer dacId,
     List<DatasetProperty> properties
 ){
 
   public String getName() {
     return this.name;
-  }
-
-  public Boolean getNeedsApproval() {
-    return this.needsApproval;
-  }
-  public Boolean getActive() {
-    return this.active;
   }
 
   public Integer getDacId() {
