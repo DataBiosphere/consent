@@ -1,52 +1,57 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
-import io.dropwizard.auth.AuthFilter;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
+import java.security.Principal;
 import java.util.Optional;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class OAuthCustomAuthFilterTest {
+@ExtendWith(MockitoExtension.class)
+class OAuthCustomAuthFilterTest {
 
   @Mock
-  ContainerRequestContext requestContext;
+  private ContainerRequestContext requestContext;
   @Mock
-  MultivaluedMap<String, String> headers;
+  private MultivaluedMap<String, String> headers;
   @Mock
-  UriInfo uriInfo;
+  private UriInfo uriInfo;
   @Mock
-  OAuthAuthenticator authenticator;
+  private OAuthAuthenticator authenticator;
   @Mock
-  UserRoleDAO userRoleDAO;
+  private UserRoleDAO userRoleDAO;
 
-  Optional principal;
+  @Mock
+  private OAuthCustomAuthFilter<Principal> filter;
 
-  AuthFilter filter;
+  @Mock
+  private AuthUser user;
 
-  AuthUser user;
+  @Mock
+  private GenericUser genericUser;
 
-  GenericUser genericUser;
+  private final String token = "0cx2G9gKm4XZdK8BFxoWy7AE025tvq";
 
   @BeforeEach
-  public void setUp() {
-    openMocks(this);
+  void setUp() {
     when(requestContext.getHeaders()).thenReturn(headers);
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
-    when(headers.getFirst("Authorization")).thenReturn("Bearer 0cx2G9gKm4XZdK8BFxoWy7AE025tvq");
-    when(authenticator.authenticate(notNull())).thenReturn(principal);
-    filter = Mockito.spy(new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    when(headers.getFirst("Authorization")).thenReturn("Bearer %s".formatted(token));
+    when(authenticator.authenticate(notNull())).thenReturn(Optional.of(user));
+    filter = Mockito.spy(new OAuthCustomAuthFilter<>(authenticator, userRoleDAO));
     genericUser = new GenericUser();
     genericUser.setName("Test User");
     genericUser.setEmail("test@gmail.com");
@@ -54,19 +59,19 @@ public class OAuthCustomAuthFilterTest {
   }
 
   @Test
-  public void testFilterSuccessful() throws Exception {
-    principal = Optional.of(user);
+  void testFilterSuccessful() {
     when(uriInfo.getPath()).thenReturn("api/something");
-    when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
-    filter.filter(requestContext);
+    when(authenticator.authenticate(token)).thenReturn(Optional.of(user));
+    assertDoesNotThrow(() -> {
+      filter.filter(requestContext);
+    });
   }
 
 
   @Test
-  public void testFilterExceptionBadCredentials() {
-    principal = Optional.empty();
+  void testFilterExceptionBadCredentials() {
     when(uriInfo.getPath()).thenReturn("api/something");
-    when(authenticator.authenticate("0cx2G9gKm4XZdK8BFxoWy7AE025tvq")).thenReturn(principal);
+    when(authenticator.authenticate(token)).thenReturn(Optional.empty());
     assertThrows(WebApplicationException.class, () -> {
       filter.filter(requestContext);
     });
