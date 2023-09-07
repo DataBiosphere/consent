@@ -300,7 +300,7 @@ public class DarCollectionService {
             .map(UserRole::getDacId)
             .filter(Objects::nonNull)
             .toList();
-        datasetIds = datasetDAO.findDatasetListByDacIds(chairDacIds).stream()
+        datasetIds = chairDacIds.isEmpty() ? List.of() : datasetDAO.findDatasetListByDacIds(chairDacIds).stream()
             .map(Dataset::getDataSetId)
             .toList();
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
@@ -312,7 +312,7 @@ public class DarCollectionService {
             .map(UserRole::getDacId)
             .filter(Objects::nonNull)
             .toList();
-        datasetIds = datasetDAO.findDatasetListByDacIds(memberDacIds).stream()
+        datasetIds = memberDacIds.isEmpty() ? List.of() : datasetDAO.findDatasetListByDacIds(memberDacIds).stream()
             .map(Dataset::getDataSetId)
             .toList();
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
@@ -365,7 +365,7 @@ public class DarCollectionService {
               .map(UserRole::getDacId)
               .filter(Objects::nonNull)
               .toList();
-          datasetIds = datasetDAO.findDatasetListByDacIds(chairDacIds).stream()
+          datasetIds = chairDacIds.isEmpty() ? List.of() : datasetDAO.findDatasetListByDacIds(chairDacIds).stream()
               .map(Dataset::getDataSetId)
               .toList();
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
@@ -378,7 +378,7 @@ public class DarCollectionService {
               .map(UserRole::getDacId)
               .filter(Objects::nonNull)
               .toList();
-          datasetIds = datasetDAO.findDatasetListByDacIds(memberDacIds).stream()
+          datasetIds = memberDacIds.isEmpty() ? List.of() : datasetDAO.findDatasetListByDacIds(memberDacIds).stream()
               .map(Dataset::getDataSetId)
               .toList();
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
