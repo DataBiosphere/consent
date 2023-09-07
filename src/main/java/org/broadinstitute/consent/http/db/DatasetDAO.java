@@ -51,9 +51,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """
           INSERT INTO dataset
               (name, create_date, create_user_id, update_date,
-              update_user_id, object_id, active, dac_id, alias, data_use)
+              update_user_id, object_id, dac_id, alias, data_use)
           (SELECT :name, :createDate, :createUserId, :createDate,
-              :createUserId, :objectId, :active, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)
+              :createUserId, :objectId, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)
           """)
   @GetGeneratedKeys
   Integer insertDataset(
@@ -61,7 +61,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("createDate") Timestamp createDate,
       @Bind("createUserId") Integer createUserId,
       @Bind("objectId") String objectId,
-      @Bind("active") Boolean active,
       @Bind("dataUse") String dataUse,
       @Bind("dacId") Integer dacId);
 
@@ -70,8 +69,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
             SET name = :datasetName,
                 update_date = :updateDate,
                 update_user_id = :updateUserId,
-                needs_approval = :needsApproval,
-                active = :active,
                 dac_id = :dacId
             WHERE dataset_id = :datasetId
       """)
@@ -80,14 +77,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("datasetName") String datasetName,
       @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId,
-      @Bind("needsApproval") Boolean needsApproval,
-      @Bind("active") Boolean active,
       @Bind("dacId") Integer updatedDacId);
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -140,7 +135,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -193,7 +188,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -291,7 +286,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -351,7 +346,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -405,7 +400,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -466,7 +461,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.active, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
@@ -554,7 +549,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
 
   @Deprecated
-  @SqlBatch("INSERT INTO dataset (name, create_date, object_id, active, alias, data_use) VALUES (:name, :createDate, :objectId, :active, :alias, :dataUse)")
+  @SqlBatch("INSERT INTO dataset (name, create_date, object_id, alias, data_use) VALUES (:name, :createDate, :objectId, :alias, :dataUse)")
   void insertAll(@BindBean Collection<Dataset> datasets);
 
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
@@ -577,10 +572,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
   void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate(
-      "INSERT INTO dataset_audit "
-          + "(dataset_id, change_action, modified_by_user, modification_date, object_id, name, active) "
-          + "VALUES (:dataSetId, :action, :user, :date, :objectId, :name, :active )")
+  @SqlUpdate("""
+      INSERT INTO dataset_audit
+        (dataset_id, change_action, modified_by_user, modification_date, object_id, name)
+      VALUES
+        (:dataSetId, :action, :user, :date, :objectId, :name)
+      """)
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
 
@@ -614,32 +611,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate("DELETE FROM dataset WHERE dataset_id = :datasetId")
   void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate(
-      "UPDATE dataset "
-          + "SET active = :active "
-          + "WHERE dataset_id = :datasetId")
-  void updateDatasetActive(@Bind("datasetId") Integer datasetId, @Bind("active") Boolean active);
-
-  @SqlUpdate(
-      "UPDATE dataset "
-          + "SET needs_approval = :needsApproval "
-          + "WHERE dataset_id = :datasetId")
-  void updateDatasetNeedsApproval(@Bind("datasetId") Integer datasetId,
-      @Bind("needsApproval") Boolean needsApproval);
-
   @SqlUpdate("""
       UPDATE dataset
       SET name = :datasetName,
           update_date = :updateDate,
           update_user_id = :updateUserId,
-          needs_approval = :needsApproval,
           dac_id = :dacId
       WHERE dataset_id = :datasetId
       """)
   void updateDataset(@Bind("datasetId") Integer datasetId,
       @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId,
-      @Bind("needsApproval") Boolean needsApproval, @Bind("dacId") Integer updatedDacId);
+      @Bind("dacId") Integer updatedDacId);
 
   @SqlUpdate("""
       UPDATE dataset

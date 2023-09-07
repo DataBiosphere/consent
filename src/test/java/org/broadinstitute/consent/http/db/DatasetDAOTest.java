@@ -627,7 +627,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     Integer userId = RandomUtils.nextInt(1, 1000);
 
-    datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, true, dac.getDacId());
+    datasetDAO.updateDataset(d.getDataSetId(), name, now, userId, dac.getDacId());
     Dataset updated = datasetDAO.findDatasetById(d.getDataSetId());
 
     assertEquals(name, updated.getName());
@@ -876,7 +876,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindActiveDatasets() {
+  void testFindDatasetDTOs() {
     Dataset dataset = insertDataset();
     Consent consent = insertConsent();
 
@@ -907,23 +907,6 @@ class DatasetDAOTest extends DAOTestHelper {
 
     assertEquals(3, returned.size());
     assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
-  }
-
-  @Test
-  void testFindAllStudyNamesWithInactiveDataset() {
-    Dataset ds1 = insertDataset();
-    String ds1Name = RandomStringUtils.randomAlphabetic(20);
-    createDatasetProperty(ds1.getDataSetId(), "studyName", ds1Name, PropertyType.String);
-
-    Dataset ds2 = insertDataset();
-    String ds2Name = RandomStringUtils.randomAlphabetic(20);
-    createDatasetProperty(ds2.getDataSetId(), "studyName", ds2Name, PropertyType.String);
-
-    datasetDAO.updateDatasetActive(ds1.getDataSetId(), false);
-
-    Set<String> returned = datasetDAO.findAllStudyNames();
-    assertEquals(2, returned.size());
-    assertTrue(returned.contains(ds2Name));
   }
 
   @Test
@@ -1013,10 +996,10 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testGetDatasetsForConsent() {
     Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
-        null, RandomStringUtils.randomAlphabetic(10), true, null, null);
+        null, RandomStringUtils.randomAlphabetic(10), null, null);
     //negative record, make sure this isn't pulled in
     datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
-        RandomStringUtils.randomAlphabetic(10), true, null, null);
+        RandomStringUtils.randomAlphabetic(10), null, null);
     String consentId = RandomStringUtils.randomAlphabetic(10);
     consentDAO.insertConsent(consentId, false, "", null,
         RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(),
@@ -1058,7 +1041,7 @@ class DatasetDAOTest extends DAOTestHelper {
         "objectid",
         "name",
         new Date(),
-        false, d.getCreateUserId(),
+        d.getCreateUserId(),
         "action");
     datasetDAO.insertDatasetAudit(audit);
   }
@@ -1112,15 +1095,15 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Dac dac1 = insertDac();
     datasetDAO.updateDataset(dataset1.getDataSetId(), dataset1.getDatasetName(), timestamp,
-        user.getUserId(), false, dac1.getDacId());
+        user.getUserId(), dac1.getDacId());
     datasetDAO.updateDataset(dataset2.getDataSetId(), dataset2.getDatasetName(), timestamp,
-        user.getUserId(), false, dac1.getDacId());
+        user.getUserId(), dac1.getDacId());
 
     Dac dac2 = insertDac();
     datasetDAO.updateDataset(dataset3.getDataSetId(), dataset3.getDatasetName(), timestamp,
-        user.getUserId(), false, dac2.getDacId());
+        user.getUserId(), dac2.getDacId());
     datasetDAO.updateDataset(dataset4.getDataSetId(), dataset4.getDatasetName(), timestamp,
-        user.getUserId(), false, dac2.getDacId());
+        user.getUserId(), dac2.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
     DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset2, dataset3));
@@ -1175,9 +1158,9 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Dac dac1 = insertDac();
     datasetDAO.updateDataset(dataset1.getDataSetId(), dataset1.getDatasetName(), timestamp,
-        user.getUserId(), false, dac1.getDacId());
+        user.getUserId(), dac1.getDacId());
     datasetDAO.updateDataset(dataset2.getDataSetId(), dataset2.getDatasetName(), timestamp,
-        user.getUserId(), false, dac1.getDacId());
+        user.getUserId(), dac1.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1, dataset2));
 
@@ -1267,7 +1250,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, true,
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
@@ -1428,7 +1411,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
@@ -1442,7 +1425,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Instant instant = Instant.now();
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, false,
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
     createDatasetProperties(id);
