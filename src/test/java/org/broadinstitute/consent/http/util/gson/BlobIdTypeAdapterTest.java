@@ -8,10 +8,10 @@ import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
-public class BlobIdTypeAdapterTest {
+class BlobIdTypeAdapterTest {
 
   @Test
-  public void testBlobIdTypeAdapter() {
+  void testBlobIdTypeAdapter() {
     BlobId randomId = BlobId.of(
         RandomStringUtils.randomAlphabetic(10),
         RandomStringUtils.randomAlphabetic(10));

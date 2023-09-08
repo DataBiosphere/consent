@@ -7,12 +7,10 @@ import java.util.Date;
  * This object is set up to allow us to have test coverage to ensure that our Gson configuration is
  * set up properly.
  */
-public class GsonTestObject {
+class GsonTestObject {
 
-  public GsonTestObject() {
+  GsonTestObject() {
   }
-
-  ;
 
   private transient String transientField;
 
@@ -20,27 +18,27 @@ public class GsonTestObject {
   private Instant instant;
 
 
-  public String getTransientField() {
+  String getTransientField() {
     return transientField;
   }
 
-  public void setTransientField(String transientField) {
-    this.transientField = transientField;
+  void setTransientField() {
+    this.transientField = "should never serialize";
   }
 
-  public Date getDate() {
+  Date getDate() {
     return date;
   }
 
-  public void setDate(Date date) {
+  void setDate(Date date) {
     this.date = date;
   }
 
-  public Instant getInstant() {
+  Instant getInstant() {
     return instant;
   }
 
-  public void setInstant(Instant instant) {
+  void setInstant(Instant instant) {
     this.instant = instant;
   }
 }

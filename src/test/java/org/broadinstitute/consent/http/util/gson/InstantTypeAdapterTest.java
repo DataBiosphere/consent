@@ -7,10 +7,10 @@ import java.time.Instant;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
-public class InstantTypeAdapterTest {
+class InstantTypeAdapterTest {
 
   @Test
-  public void testInstantTypeAdapter() {
+  void testInstantTypeAdapter() {
     Instant randomTime = Instant.ofEpochMilli(new Random().nextLong());
     long randomTimeMilli = randomTime.toEpochMilli();
 
