@@ -7,10 +7,10 @@ import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.jupiter.api.Test;
 
-public class UserCheckRoleInDacTest {
+class UserCheckRoleInDacTest {
 
   @Test
-  public void testCheckIfUserHasRole_RoleNotFound() {
+  void testCheckIfUserHasRole_RoleNotFound() {
     User user = new User();
     UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     user.setRoles(List.of(adminRole));
@@ -19,7 +19,7 @@ public class UserCheckRoleInDacTest {
   }
 
   @Test
-  public void testCheckIfUserHasRole_RoleTypeFoundDifferentDacId() {
+  void testCheckIfUserHasRole_RoleTypeFoundDifferentDacId() {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -30,7 +30,7 @@ public class UserCheckRoleInDacTest {
   }
 
   @Test
-  public void testCheckIfUserHasRole() {
+  void testCheckIfUserHasRole() {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -42,6 +42,5 @@ public class UserCheckRoleInDacTest {
     assertTrue(isUserChair);
     assertTrue(isUserAdmin);
   }
-
 
 }

@@ -6,18 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DarManualReviewTest {
+class DarManualReviewTest {
 
   private DataAccessRequest dar;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
   }
 
   @Test
-  public void testManualReviewFalse() {
+  void testManualReviewFalse() {
     assertFalse(dar.requiresManualReview());
     // There are many fields we could check, but this one is enough to prove our logic.
     dar.addDatasetId(1);
@@ -25,79 +25,79 @@ public class DarManualReviewTest {
   }
 
   @Test
-  public void testManualReviewPoa() {
+  void testManualReviewPoa() {
     dar.getData().setPoa(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewPopulation() {
+  void testManualReviewPopulation() {
     dar.getData().setPopulation(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewOther() {
+  void testManualReviewOther() {
     dar.getData().setOther(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewOtherTextTrue() {
+  void testManualReviewOtherTextTrue() {
     dar.getData().setOtherText("true");
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewOtherTextFalse() {
+  void testManualReviewOtherTextFalse() {
     dar.getData().setOtherText("");
     assertFalse(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewIllegalBehavior() {
+  void testManualReviewIllegalBehavior() {
     dar.getData().setIllegalBehavior(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewIllegalAddiction() {
+  void testManualReviewIllegalAddiction() {
     dar.getData().setAddiction(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewSexualDiseases() {
+  void testManualReviewSexualDiseases() {
     dar.getData().setSexualDiseases(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewStigmatizedDiseases() {
+  void testManualReviewStigmatizedDiseases() {
     dar.getData().setStigmatizedDiseases(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewVulnerablePopulation() {
+  void testManualReviewVulnerablePopulation() {
     dar.getData().setVulnerablePopulation(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewPopulationMigration() {
+  void testManualReviewPopulationMigration() {
     dar.getData().setPopulationMigration(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewPsychiatricTraits() {
+  void testManualReviewPsychiatricTraits() {
     dar.getData().setPsychiatricTraits(true);
     assertTrue(dar.requiresManualReview());
   }
 
   @Test
-  public void testManualReviewNotHealth() {
+  void testManualReviewNotHealth() {
     dar.getData().setNotHealth(true);
     assertTrue(dar.requiresManualReview());
   }
