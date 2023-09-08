@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -296,12 +297,12 @@ public class DarCollectionService {
         processDarCollectionSummariesForSO(summaries);
         break;
       case CHAIRPERSON:
-        datasetIds = getDatasetIdsForUserAndRole(user, UserRoles.CHAIRPERSON);
+        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForChair(summaries);
         break;
       case MEMBER:
-        datasetIds = getDatasetIdsForUserAndRole(user, UserRoles.MEMBER);
+        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForMember(summaries, userId);
         break;
@@ -322,14 +323,15 @@ public class DarCollectionService {
     return summaries;
   }
 
-  private List<Integer> getDatasetIdsForUserAndRole(User user, UserRoles role) {
+  private List<Integer> getDatasetIdsForUserAndRoleId(User user, Integer roleId) {
     List<Integer> roleDacIds = user.getRoles().stream()
-        .filter(ur -> ur.getRoleId().equals(role.getRoleId()))
+        .filter(ur -> Objects.nonNull(ur.getRoleId()))
+        .filter(ur -> ur.getRoleId().equals(roleId))
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)
         .toList();
     return Stream.of(roleDacIds)
-        .filter(arr -> !arr.isEmpty())
+        .filter(Predicate.not(List::isEmpty))
         .map(datasetDAO::findDatasetListByDacIds)
         .flatMap(List::stream)
         .map(Dataset::getDataSetId)
@@ -361,13 +363,13 @@ public class DarCollectionService {
           processDarCollectionSummariesForSO(List.of(summary));
           break;
         case CHAIRPERSON:
-          datasetIds = getDatasetIdsForUserAndRole(user, UserRoles.CHAIRPERSON);
+          datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
               datasetIds, collectionId);
           processDarCollectionSummariesForChair(List.of(summary));
           break;
         case MEMBER:
-          datasetIds = getDatasetIdsForUserAndRole(user, UserRoles.MEMBER);
+          datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
               datasetIds, collectionId);
           processDarCollectionSummariesForMember(List.of(summary), userId);
