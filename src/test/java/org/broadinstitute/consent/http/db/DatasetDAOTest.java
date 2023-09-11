@@ -849,26 +849,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllDatasetDTOs() {
-    Dataset dataset = insertDataset();
-
-    Set<DatasetDTO> datasets = datasetDAO.findAllDatasetDTOs();
-    assertFalse(datasets.isEmpty());
-    List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).toList();
-    assertTrue(datasetIds.contains(dataset.getDataSetId()));
-  }
-
-  @Test
-  void testFindDatasetDTOs() {
-    Dataset dataset = insertDataset();
-
-    Set<DatasetDTO> datasets = datasetDAO.getDatasetDTOs();
-    assertFalse(datasets.isEmpty());
-    List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).toList();
-    assertTrue(datasetIds.contains(dataset.getDataSetId()));
-  }
-
-  @Test
   void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
     String ds1Name = RandomStringUtils.randomAlphabetic(20);
@@ -886,20 +866,6 @@ class DatasetDAOTest extends DAOTestHelper {
 
     assertEquals(3, returned.size());
     assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
-  }
-
-  @Test
-  void testFindDatasetsByUser() {
-    Dataset dataset = insertDataset();
-    Dac dac = insertDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    User user = createUser();
-    createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
-
-    Set<DatasetDTO> datasets = datasetDAO.findDatasetDTOsByUserId(user.getUserId());
-    assertFalse(datasets.isEmpty());
-    List<Integer> datasetIds = datasets.stream().map(DatasetDTO::getDataSetId).toList();
-    assertTrue(datasetIds.contains(dataset.getDataSetId()));
   }
 
   @Test
