@@ -15,7 +15,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
@@ -36,7 +35,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -45,12 +43,13 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DacServiceTest {
+@ExtendWith(MockitoExtension.class)
+class DacServiceTest {
 
   private DacService service;
 
@@ -67,15 +66,10 @@ public class DacServiceTest {
   private ElectionDAO electionDAO;
 
   @Mock
-  DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
 
   @Mock
   private VoteService voteService;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
@@ -83,7 +77,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindAll() {
+  void testFindAll() {
     when(dacDAO.findAll()).thenReturn(Collections.emptyList());
     initService();
 
@@ -91,7 +85,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindAllDACUsersBySearchString_case1() {
+  void testFindAllDACUsersBySearchString_case1() {
     when(dacDAO.findAll()).thenReturn(Collections.emptyList());
     when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
     initService();
@@ -100,7 +94,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindAllDACUsersBySearchString_case2() {
+  void testFindAllDACUsersBySearchString_case2() {
     when(dacDAO.findAll()).thenReturn(getDacs());
     when(dacDAO.findAllDACUserMemberships()).thenReturn(getDacUsers());
     initService();
@@ -118,7 +112,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindById() {
+  void testFindById() {
     int dacId = 1;
     when(dacDAO.findById(dacId)).thenReturn(getDacs().get(0));
     when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId())).thenReturn(
@@ -134,7 +128,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testCreateDac() {
+  void testCreateDac() {
     when(dacDAO.createDac(anyString(), anyString(), any())).thenReturn(getDacs().get(0).getDacId());
     initService();
 
@@ -143,7 +137,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testCreateDacWithEmail() {
+  void testCreateDacWithEmail() {
     when(dacDAO.createDac(anyString(), anyString(), anyString(), any())).thenReturn(
         getDacs().get(0).getDacId());
     initService();
@@ -153,7 +147,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testUpdateDac() {
+  void testUpdateDac() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), any(), any());
     initService();
 
@@ -165,7 +159,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testUpdateDacWithEmail() {
+  void testUpdateDacWithEmail() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), anyString(), any(), any());
     initService();
 
@@ -177,7 +171,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testDeleteDac() {
+  void testDeleteDac() {
     doNothing().when(dacDAO).deleteDacMembers(anyInt());
     doNothing().when(dacDAO).deleteDac(anyInt());
     initService();
@@ -190,7 +184,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindDatasetsByDacId() {
+  void testFindDatasetsByDacId() {
 
     List<Dataset> datasets = getDatasets();
     when(dataSetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasets);
@@ -202,7 +196,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindMembersByDacId() {
+  void testFindMembersByDacId() {
     when(dacDAO.findMembersByDacId(anyInt())).thenReturn(
         Collections.singletonList(getDacUsers().get(0)));
     when(dacDAO.findUserRolesForUsers(any())).thenReturn(getDacUsers().get(0).getRoles());
@@ -214,13 +208,12 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testAddDacMember() {
+  void testAddDacMember() {
     Gson gson = new Gson();
     User user = getDacUsers().get(0);
     Dac dac = getDacs().get(0);
     when(userDAO.findUserById(any())).thenReturn(user);
     when(userDAO.findUserById(any())).thenReturn(user);
-    when(dacDAO.findUserRolesForUser(any())).thenReturn(getDacUsers().get(0).getRoles());
     List<Election> elections = getElections().stream().
         map(e -> {
           Election newE = gson.fromJson(gson.toJson(e), Election.class);
@@ -245,7 +238,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testRemoveDacMember() {
+  void testRemoveDacMember() {
     Role role = new Role(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
     Dac dac = getDacs().get(0);
     User member = getDacUsers().get(1);
@@ -265,7 +258,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testRemoveDacChair() {
+  void testRemoveDacChair() {
     Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     Dac dac = getDacs().get(0);
     User chair1 = getDacUsers().get(0);
@@ -286,25 +279,21 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testRemoveDacChairFailure() {
+  void testRemoveDacChairFailure() {
     Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     Dac dac = getDacs().get(0);
     User chair = getDacUsers().get(0);
     dac.setChairpersons(Collections.singletonList(chair));
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
-    doNothing().when(dacDAO).removeDacMember(anyInt());
-    doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
     initService();
 
     assertThrows(BadRequestException.class, () -> {
       service.removeDacMember(role, chair, dac);
-      verify(dacDAO, times(0)).removeDacMember(anyInt());
-      verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
     });
   }
 
   @Test
-  public void testIsAuthUserAdmin_case1() {
+  void testIsAuthUserAdmin_case1() {
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
     initService();
 
@@ -312,7 +301,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testIsAuthUserAdmin_case2() {
+  void testIsAuthUserAdmin_case2() {
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
     initService();
 
@@ -320,7 +309,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testIsAuthUserChair_case1() {
+  void testIsAuthUserChair_case1() {
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
     initService();
 
@@ -328,7 +317,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testIsAuthUserChair_case2() {
+  void testIsAuthUserChair_case2() {
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
     initService();
 
@@ -336,7 +325,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterDataAccessRequestsByDAC_adminCase() {
+  void testFilterDataAccessRequestsByDAC_adminCase() {
     User user = new User();
     user.setRoles(new ArrayList<>());
     user.getRoles().add(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
@@ -352,7 +341,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterDataAccessRequestsByDAC_memberCase_1() {
+  void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
     when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -368,7 +357,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterDataAccessRequestsByDAC_memberCase_2() {
+  void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
     when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -384,7 +373,7 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterDataAccessRequestsByDAC_memberCase_3() {
+  void testFilterDataAccessRequestsByDAC_memberCase_3() {
     // Member no direct access to datasets
     List<Dataset> memberDataSets = Collections.emptyList();
     when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
@@ -396,11 +385,11 @@ public class DacServiceTest {
     List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
 
     // Filtered documents should contain the ones the user has direct access to
-    assertEquals(memberDataSets.size(), filtered.size());
+    assertEquals(0, filtered.size());
   }
 
   @Test
-  public void testFilterElectionsByDAC_adminCase() {
+  void testFilterElectionsByDAC_adminCase() {
     // User is an admin user
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
     initService();
@@ -413,14 +402,12 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterElectionsByDAC_memberCase1() {
+  void testFilterElectionsByDAC_memberCase1() {
     // User is not an admin user
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
     // Member is a member of one DAC that has a single consented dataset
-    List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
     List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
     initService();
 
@@ -432,21 +419,19 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterElectionsByDAC_memberCase2() {
+  void testFilterElectionsByDAC_memberCase2() {
     // User is not an admin user
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
     // Member is a member of one DAC that has a single consented dataset
-    List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
     List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
     initService();
 
     // There are unassociated elections:
     List<Election> unassociatedElections = getElections().stream().
         peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
+        toList();
 
     List<Election> elections = getElections();
 
@@ -461,19 +446,18 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFilterElectionsByDAC_memberCase3() {
+  void testFilterElectionsByDAC_memberCase3() {
     // User is not an admin user
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
     // Member has no direct access to elections via DAC or DataSet
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
     initService();
 
     // There are unassociated elections:
     List<Election> unassociatedElections = getElections().stream().
         peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
+        toList();
 
     List<Election> elections = getElections();
 
@@ -487,12 +471,9 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindDacsByUserAdminCase() {
+  void testFindDacsByUserAdminCase() {
     List<Dac> dacs = getDacs();
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
     when(dacDAO.findAll()).thenReturn(dacs);
-    // User is an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
     initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
@@ -500,12 +481,9 @@ public class DacServiceTest {
   }
 
   @Test
-  public void testFindDacsByUserChairCase() {
+  void testFindDacsByUserChairCase() {
     List<Dac> dacs = getDacs();
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
     when(dacDAO.findAll()).thenReturn(dacs);
-    // User is a chairperson user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getChair());
     initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
@@ -533,14 +511,6 @@ public class DacServiceTest {
   }
 
   /**
-   * @return A list of 5 consents
-   */
-  private List<Consent> getConsents() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> new Consent()).collect(Collectors.toList());
-  }
-
-  /**
    * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
    */
   private List<DataAccessRequest> getDataAccessRequests() {
@@ -565,18 +535,6 @@ public class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dataset dataSet = new Dataset();
-          dataSet.setDataSetId(i);
-          return dataSet;
-        }).collect(Collectors.toList());
-  }
-
-  /**
-   * @return A list of 5 datasets with ids
-   */
-  private List<DatasetDTO> getDatasetDTOs() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          DatasetDTO dataSet = new DatasetDTO();
           dataSet.setDataSetId(i);
           return dataSet;
         }).collect(Collectors.toList());

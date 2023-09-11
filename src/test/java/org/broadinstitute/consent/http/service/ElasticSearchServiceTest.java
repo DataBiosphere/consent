@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.JsonArray;
 import java.io.IOException;
@@ -39,13 +38,15 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ElasticSearchServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ElasticSearchServiceTest {
 
   private ElasticSearchService service;
 
@@ -64,11 +65,6 @@ public class ElasticSearchServiceTest {
   @Mock
   private UserDAO userDao;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initService() {
     service = new ElasticSearchService(
         esClient,
@@ -78,10 +74,10 @@ public class ElasticSearchServiceTest {
         ontologyService);
   }
 
-  private void mockElasticSearchResponse(int statusCode, String body) throws IOException {
+  private void mockElasticSearchResponse(String body) throws IOException {
     Response response = mock(Response.class);
-    String reasonPhrase = fromStatusCode(statusCode).getReasonPhrase();
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase);
+    String reasonPhrase = fromStatusCode(200).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, reasonPhrase);
     HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
 
     when(esClient.performRequest(any())).thenReturn(response);
@@ -89,8 +85,17 @@ public class ElasticSearchServiceTest {
     when(response.getEntity()).thenReturn(entity);
   }
 
+  private void mockElasticSearchBadRequest() throws IOException {
+    Response response = mock(Response.class);
+    String reasonPhrase = fromStatusCode(400).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 400, reasonPhrase);
+
+    when(esClient.performRequest(any())).thenReturn(response);
+    when(response.getStatusLine()).thenReturn(status);
+  }
+
   @Test
-  public void testToDatasetTermComplete() {
+  void testToDatasetTermComplete() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
     dataset.setAlias(10);
@@ -186,7 +191,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testToDatasetTermIncomplete() {
+  void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
     dataset.setAlias(10);
@@ -207,7 +212,7 @@ public class ElasticSearchServiceTest {
   ArgumentCaptor<Request> request;
 
   @Test
-  public void testIndexDatasets() throws IOException {
+  void testIndexDatasets() throws IOException {
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
@@ -216,7 +221,7 @@ public class ElasticSearchServiceTest {
     String datasetIndexName = RandomStringUtils.randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
-    mockElasticSearchResponse(200, "");
+    mockElasticSearchResponse("");
 
     initService();
     service.indexDatasetTerms(List.of(term1, term2));
@@ -238,7 +243,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testSearchDatasets() throws IOException {
+  void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
     /*
@@ -248,7 +253,7 @@ public class ElasticSearchServiceTest {
      *  more classes and methods. Alternately, it is possible to just mock the Gson parsing, but
      *  this seems to affect the results of the other tests.
      */
-    mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
+    mockElasticSearchResponse("{\"valid\":true,\"hits\":{\"hits\":[]}}");
 
     initService();
     var response = service.searchDatasets(query);
@@ -256,40 +261,40 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testValidateQuery() throws IOException {
+  void testValidateQuery() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
     initService();
     assertTrue(service.validateQuery(query));
   }
 
   @Test
-  public void testValidateQueryWithFromAndSize() throws IOException {
+  void testValidateQueryWithFromAndSize() throws IOException {
     String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
     initService();
     assertTrue(service.validateQuery(query));
   }
 
   @Test
-  public void testValidateQueryEmpty() throws IOException {
+  void testValidateQueryEmpty() throws IOException {
     String query = "{}";
 
-    mockElasticSearchResponse(400, "Bad Request");
+    mockElasticSearchBadRequest();
 
     initService();
     assertThrows(IOException.class, () -> service.validateQuery(query));
   }
 
   @Test
-  public void testValidateQueryInvalid() throws IOException {
+  void testValidateQueryInvalid() throws IOException {
     String query = "{ \"bad\": [\"and\", \"invalid\"] }";
 
-    mockElasticSearchResponse(200, "{\"valid\":false}");
+    mockElasticSearchResponse("{\"valid\":false}");
 
     initService();
     assertFalse(service.validateQuery(query));

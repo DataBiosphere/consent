@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -25,9 +25,12 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DatasetAssociationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class DatasetAssociationServiceTest {
 
   @Mock
   private DatasetAssociationDAO dsAssociationDAO;
@@ -42,50 +45,55 @@ public class DatasetAssociationServiceTest {
 
   @BeforeEach
   public void setUp() {
-    openMocks(this);
     service = new DatasetAssociationService(dsAssociationDAO, userDAO, dsDAO, userRoleDAO);
   }
 
   @Test
-  public void testGetAndVerifyUsersUserNotDataOwner() {
+  void testGetAndVerifyUsersUserNotDataOwner() {
     when(dsDAO.findDatasetById(any())).thenReturn(ds1);
     when(userDAO.findUsersWithRoles(notNull())).thenReturn(
         new HashSet<>(Arrays.asList(member, chairperson)));
     doNothing().when(userRoleDAO).insertSingleUserRole(any(), any());
-    service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
-  }
-
-  @Test
-  public void testGetAndVerifyUsersInvalidUsersList() {
-    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
-        new HashSet<>(Arrays.asList(member, chairperson)));
-    assertThrows(BadRequestException.class, () -> {
-      service.createDatasetUsersAssociation(1, Arrays.asList(1, 2, 3, 4));
-    });
-  }
-
-  @Test
-  public void testCreateDatasetUsersAssociation() {
-    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
-        new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-    when(dsDAO.findDatasetById(1)).thenReturn(ds1);
-    when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(
-        Arrays.asList(dsAssociation1, dsAssociation2));
-    service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
-  }
-
-  @Test
-  public void testCreateDatasetUsersAssociationNotFoundException() {
-    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
-        new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
-    when(dsDAO.findDatasetById(1)).thenReturn(null);
-    assertThrows(NotFoundException.class, () -> {
+    assertDoesNotThrow(() -> {
       service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
     });
   }
 
   @Test
-  public void testCreateDatasetUsersAssociationBadRequestException() {
+  void testGetAndVerifyUsersInvalidUsersList() {
+    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
+        new HashSet<>(Arrays.asList(member, chairperson)));
+    List<Integer> userIds = Arrays.asList(1, 2, 3, 4);
+    assertThrows(BadRequestException.class, () -> {
+      service.createDatasetUsersAssociation(1, userIds);
+    });
+  }
+
+  @Test
+  void testCreateDatasetUsersAssociation() {
+    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
+        new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
+    when(dsDAO.findDatasetById(1)).thenReturn(ds1);
+    when(dsAssociationDAO.getDatasetAssociation(1)).thenReturn(
+        Arrays.asList(dsAssociation1, dsAssociation2));
+    assertDoesNotThrow(() -> {
+      service.createDatasetUsersAssociation(1, Arrays.asList(1, 2));
+    });
+  }
+
+  @Test
+  void testCreateDatasetUsersAssociationNotFoundException() {
+    when(userDAO.findUsersWithRoles(notNull())).thenReturn(
+        new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
+    when(dsDAO.findDatasetById(1)).thenReturn(null);
+    List<Integer> userIds = Arrays.asList(1, 2);
+    assertThrows(NotFoundException.class, () -> {
+      service.createDatasetUsersAssociation(1, userIds);
+    });
+  }
+
+  @Test
+  void testCreateDatasetUsersAssociationBadRequestException() {
     when(userDAO.findUsersWithRoles(notNull())).thenReturn(
         new HashSet<>(Arrays.asList(dataOwner1, dataOwner2)));
     when(dsDAO.findDatasetById(1)).thenReturn(ds1);
@@ -106,17 +114,17 @@ public class DatasetAssociationServiceTest {
   private static final String DACMEMBER = "Member";
   private static final String DATAOWNER = "DataOwner";
 
-  DatasetAssociation dsAssociation1 = new DatasetAssociation(1, 3);
-  DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
+  private final DatasetAssociation dsAssociation1 = new DatasetAssociation(1, 3);
+  private final DatasetAssociation dsAssociation2 = new DatasetAssociation(1, 4);
 
-  Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date());
-  User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(),
+  private final Dataset ds1 = new Dataset(1, "DS-001", "DS-001", new Date());
+  private final User chairperson = new User(1, "originalchair@broad.com", "Original Chairperson", new Date(),
       chairpersonList());
-  User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(),
+  private final User member = new User(2, "originalchair@broad.com", "Original Chairperson", new Date(),
       memberList());
-  User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(),
+  private final User dataOwner1 = new User(3, "originalchair@broad.com", "Original Chairperson", new Date(),
       dataownerList());
-  User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(),
+  private final User dataOwner2 = new User(4, "originalchair@broad.com", "Original Chairperson", new Date(),
       dataownerList());
 
   private List<UserRole> chairpersonList() {

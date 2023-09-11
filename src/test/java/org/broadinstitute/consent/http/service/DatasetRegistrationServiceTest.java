@@ -46,14 +46,15 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DatasetRegistrationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class DatasetRegistrationServiceTest {
 
   private DatasetRegistrationService datasetRegistrationService;
 
@@ -75,11 +76,6 @@ public class DatasetRegistrationServiceTest {
   @Mock
   private ElasticSearchService elasticSearchService;
 
-  @BeforeEach
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
         datasetServiceDAO, gcsService, elasticSearchService, studyDAO);
@@ -94,15 +90,15 @@ public class DatasetRegistrationServiceTest {
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
-  public void testInsertCompleteDatasetRegistration() throws Exception {
+  void testInsertCompleteDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
-
+    FormDataBodyPart bodyPart = createFormDataBodyPart();
     initService();
 
     Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile",
-        createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
+        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
+        bodyPart, "otherUnused", bodyPart);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
         BlobId.of("qwer", "tyuio"));
     when(dacDAO.findById(any())).thenReturn(new Dac());
@@ -225,7 +221,7 @@ public class DatasetRegistrationServiceTest {
 
   // inserts only required fields to ensure that null fields are ok
   @Test
-  public void testInsertMinimumDatasetRegistration() throws Exception {
+  void testInsertMinimumDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
@@ -276,7 +272,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testInsertOpenAccess() throws Exception {
+  void testInsertOpenAccess() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createOpenAccessRegistrationNoDacId(user);
 
@@ -298,16 +294,17 @@ public class DatasetRegistrationServiceTest {
 
   // test inset multiple consent groups
   @Test
-  public void testInsertMultipleDatasetRegistration() throws Exception {
+  void testInsertMultipleDatasetRegistration() throws Exception {
     User user = mock();
+    FormDataBodyPart bodyPart = createFormDataBodyPart();
     DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
 
     initService();
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile",
-        createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
+        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
+        bodyPart, "otherUnused", bodyPart);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
         BlobId.of("qwer", "tyuio"));
 
@@ -388,7 +385,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testRegistrationErrorsOnInvalidDacId() throws Exception {
+  void testRegistrationErrorsOnInvalidDacId() throws Exception {
 
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
@@ -396,13 +393,14 @@ public class DatasetRegistrationServiceTest {
     when(dacDAO.findById(any())).thenReturn(null);
 
     initService();
+    Map<String, FormDataBodyPart> files = Map.of();
     assertThrows(NotFoundException.class, () -> {
-      datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+      datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
     });
   }
 
   @Test
-  public void testExtractStudyProperty() {
+  void testExtractStudyProperty() {
     DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         PropertyType.String,
@@ -427,7 +425,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testExtractDatasetProperty() {
+  void testExtractDatasetProperty() {
     DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         RandomStringUtils.randomAlphabetic(10),
@@ -455,7 +453,7 @@ public class DatasetRegistrationServiceTest {
 
 
   @Test
-  public void testExtractStudyPropertyTyped() {
+  void testExtractStudyPropertyTyped() {
     DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         PropertyType.Json,
@@ -477,7 +475,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testExtractDatasetPropertyTyped() {
+  void testExtractDatasetPropertyTyped() {
     DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         RandomStringUtils.randomAlphabetic(10),
