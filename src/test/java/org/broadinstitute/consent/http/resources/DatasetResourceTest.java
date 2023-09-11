@@ -28,7 +28,6 @@ import java.net.URI;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -361,26 +360,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testDescribeDatasetsSuccess() {
-    when(authUser.getEmail()).thenReturn("authUserEmail");
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetService.describeDatasets(anyInt())).thenReturn(Collections.emptySet());
-    initResource();
-    Response response = resource.describeDataSets(authUser);
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  void testDescribeDatasetsError() {
-    when(authUser.getEmail()).thenReturn("authUserEmail");
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    doThrow(new RuntimeException()).when(datasetService).describeDatasets(anyInt());
-    initResource();
-    Response response = resource.describeDataSets(authUser);
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
   void testValidateDatasetNameSuccess() {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
@@ -412,15 +391,6 @@ class DatasetResourceTest {
     initResource();
     Response response = resource.findAllStudyNames();
     assertEquals(500, response.getStatus());
-  }
-
-  @Test
-  void testGetDataSetSample() {
-    List<String> header = List.of("attachment; filename=DataSetSample.tsv");
-    initResource();
-    Response response = resource.getDataSetSample();
-    assertEquals(200, response.getStatus());
-    assertEquals(header, response.getHeaders().get("Content-Disposition"));
   }
 
   @Test
@@ -546,49 +516,6 @@ class DatasetResourceTest {
     initResource();
     Response response = resource.delete(authUser, 1, null);
     assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  void testDescribeDictionarySuccess() {
-    when(datasetService.describeDictionaryByDisplayOrder()).thenReturn(dictionaries);
-    initResource();
-    Response response = resource.describeDictionary();
-    assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  void testDescribeDictionaryError() {
-    doThrow(new RuntimeException()).when(datasetService).describeDictionaryByDisplayOrder();
-    initResource();
-    Response response = resource.describeDictionary();
-    assertEquals(500, response.getStatus());
-  }
-
-  @Test
-  void testDatasetAutocompleteSuccess() {
-    List<Map<String, String>> autocompleteMap = List.of(Collections.EMPTY_MAP);
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(user.getUserId()).thenReturn(0);
-    when(datasetService.autoCompleteDatasets(anyString(), anyInt())).thenReturn(autocompleteMap);
-
-    initResource();
-    Response response = resource.datasetAutocomplete(authUser, "test");
-    assertEquals(200, response.getStatus());
-  }
-
-
-  @Test
-  void testDatasetAutocompleteError() {
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(user.getUserId()).thenReturn(0);
-    doThrow(new RuntimeException()).when(datasetService)
-        .autoCompleteDatasets(anyString(), anyInt());
-
-    initResource();
-    Response response = resource.datasetAutocomplete(authUser, "test");
-    assertEquals(500, response.getStatus());
   }
 
   @Test

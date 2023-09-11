@@ -19,7 +19,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -40,6 +42,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.slf4j.Logger;
@@ -294,16 +297,12 @@ public class DarCollectionService {
         processDarCollectionSummariesForSO(summaries);
         break;
       case CHAIRPERSON:
-        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-            .map(d -> d.getDataSetId())
-            .collect(Collectors.toList());
+        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForChair(summaries);
         break;
       case MEMBER:
-        datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-            .map(d -> d.getDataSetId())
-            .collect(Collectors.toList());
+        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForMember(summaries, userId);
         break;
@@ -324,6 +323,21 @@ public class DarCollectionService {
     return summaries;
   }
 
+  private List<Integer> getDatasetIdsForUserAndRoleId(User user, Integer roleId) {
+    List<Integer> roleDacIds = user.getRoles().stream()
+        .filter(ur -> Objects.nonNull(ur.getRoleId()))
+        .filter(ur -> ur.getRoleId().equals(roleId))
+        .map(UserRole::getDacId)
+        .filter(Objects::nonNull)
+        .toList();
+    return Stream.of(roleDacIds)
+        .filter(Predicate.not(List::isEmpty))
+        .map(datasetDAO::findDatasetListByDacIds)
+        .flatMap(List::stream)
+        .map(Dataset::getDataSetId)
+        .toList();
+  }
+
   /**
    * Finds the DarCollectionSummary for a given darCollectionId, processed by the given role name.
    *
@@ -337,7 +351,6 @@ public class DarCollectionService {
     DarCollectionSummary summary = null;
     UserRoles role = UserRoles.getUserRoleFromName(userRole);
     Integer userId = user.getUserId();
-    ;
     List<Integer> datasetIds;
     try {
       switch (role) {
@@ -350,17 +363,13 @@ public class DarCollectionService {
           processDarCollectionSummariesForSO(List.of(summary));
           break;
         case CHAIRPERSON:
-          datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-              .map(d -> d.getDataSetId())
-              .collect(Collectors.toList());
+          datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
               datasetIds, collectionId);
           processDarCollectionSummariesForChair(List.of(summary));
           break;
         case MEMBER:
-          datasetIds = datasetDAO.findDatasetDTOsByUserId(userId).stream()
-              .map(d -> d.getDataSetId())
-              .collect(Collectors.toList());
+          datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
           summary = darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId,
               datasetIds, collectionId);
           processDarCollectionSummariesForMember(List.of(summary), userId);

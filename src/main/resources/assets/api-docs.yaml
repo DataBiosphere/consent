@@ -548,23 +548,6 @@ paths:
               schema:
                 type: string
                 format: binary
-  /api/dataset:
-    get:
-      summary: Get Datasets
-      description: Returns Dataset list filtered by authenticated user.
-      deprecated: true
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: A list of Datasets
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/Dataset.yaml'
-
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
@@ -599,47 +582,6 @@ paths:
     $ref: './paths/findAllStudyNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
-  /api/dataset/sample:
-    get:
-      summary: getDataSetSample
-      description: Returns a Dataset sample .tsv file.
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: .tsv sample
-          content:
-            text/plain:
-              schema:
-                type: string
-          headers:
-            Content-type:
-              schema:
-                type: string
-              description: text/plain
-            Content-Disposition:
-              schema:
-                type: string
-              description: attachment; filename=DataSetSample.tsv
-        500:
-          description: Server error.
-  /api/dataset/dictionary:
-    get:
-      summary: describeDictionary
-      description: Return all the values that compound the dictionary , this values are the attributes of a Dataset.
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: An array of the existent dictionaries
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Dictionary'
-        500:
-          description: Server error.
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
@@ -680,31 +622,6 @@ paths:
     $ref: './paths/datasetSearch.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
-  /api/dataset/autocomplete/{partial}:
-    get:
-      deprecated: true
-      summary: datasetAutocomplete
-      description: Returns Dataset list with the Datasets whose objectsIds matches with the partial string.
-      parameters:
-        - name: partial
-          in: path
-          description: the value to autocomplete.
-          required: true
-          schema:
-            type: string
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: An array of Dataset objectIds
-          content:
-            text/plain:
-              schema:
-                type: array
-                items:
-                  type: string
-        500:
-          description: Server error.
   /api/datasetAssociation/{datasetId}:
     get:
       summary: Get Dataset Associations
@@ -1483,31 +1400,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    Dictionary:
-      type: object
-      properties:
-        keyId:
-          type: integer
-          format: int32
-          description: Id of the key.
-        key:
-          type: integer
-          format: int32
-          description: Value of the key.
-        required:
-          deprecated: true
-          type: boolean
-          description: Defines if this attribute is required to create a Dataset
-        displayOrder:
-          deprecated: true
-          type: integer
-          format: int32
-          description: Defines the position of the attribute in the .tsv file
-        receiveOrder:
-          deprecated: true
-          type: integer
-          format: int32
-          description: The display order of the properties.
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:

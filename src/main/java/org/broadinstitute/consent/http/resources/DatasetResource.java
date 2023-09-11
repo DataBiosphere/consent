@@ -25,8 +25,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,22 +75,6 @@ public class DatasetResource extends Resource {
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
-  private final String defaultDataSetSampleFileName = "DataSetSample.tsv";
-  private final String defaultDataSetSampleContent =
-      "Dataset Name\tData Type\tSpecies\tPhenotype/Indication\t# of participants\tDescription\tdbGAP\tData Depositor\tPrincipal Investigator(PI)\tSample Collection ID\tConsent ID"
-          + "\n(Bucienne Monco) - Muc-1 Kidney Disease\tDNA, whole genome\thuman\tmuc-1, kidney disease\t31\tmuc-1 patients that developed cancer , 5 weeks after treatment\thttp://....\tJohn Doe\tMark Smith\tSC-20658\t1";
-
-  private String dataSetSampleFileName;
-  private String dataSetSampleContent;
-
-  void resetDataSetSampleFileName() {
-    dataSetSampleFileName = defaultDataSetSampleFileName;
-  }
-
-  void resetDataSetSampleContent() {
-    dataSetSampleContent = defaultDataSetSampleContent;
-  }
-
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
       DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
@@ -103,8 +85,6 @@ public class DatasetResource extends Resource {
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
-    resetDataSetSampleFileName();
-    resetDataSetSampleContent();
   }
 
   @Deprecated
@@ -365,19 +345,6 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
-  public Response describeDataSets(@Auth AuthUser authUser) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Collection<DatasetDTO> dataSetList = datasetService.describeDatasets(user.getUserId());
-      return Response.ok(dataSetList, MediaType.APPLICATION_JSON).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @PermitAll
   @Path("/v2")
   public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser, @QueryParam("asCustodian") Boolean asCustodian) {
     try {
@@ -500,23 +467,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @GET
-  @Path("/sample")
-  @PermitAll
-  public Response getDataSetSample() {
-    String msg = "GETting Data Set Sample";
-    logDebug(msg);
-    InputStream inputStream = null;
-    try {
-      inputStream = new ByteArrayInputStream(dataSetSampleContent.getBytes());
-    } catch (Exception e) {
-      logException("Error when GETting dataset sample.", e);
-      return createExceptionResponse(e);
-    }
-    return Response.ok(inputStream)
-        .header("Content-Disposition", "attachment; filename=" + dataSetSampleFileName).build();
-  }
-
   @POST
   @Path("/download")
   @Consumes(MediaType.APPLICATION_JSON)
@@ -585,36 +535,6 @@ public class DatasetResource extends Resource {
       validateDatasetDacAccess(user, dataset);
       datasetService.deleteDataset(datasetId, user.getUserId());
       return Response.ok().build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/dictionary")
-  @Produces("application/json")
-  @PermitAll
-  public Response describeDictionary() {
-    try {
-      Collection<Dictionary> dictionaries = datasetService.describeDictionaryByDisplayOrder();
-      return Response.ok(dictionaries).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/autocomplete/{partial}")
-  @Produces("application/json")
-  @PermitAll
-  @Deprecated
-  public Response datasetAutocomplete(@Auth AuthUser authUser,
-      @PathParam("partial") String partial) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Integer userId = user.getUserId();
-      List<Map<String, String>> datasets = datasetService.autoCompleteDatasets(partial, userId);
-      return Response.ok(datasets, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

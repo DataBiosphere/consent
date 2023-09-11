@@ -34,7 +34,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DatasetServiceDAOTest extends DAOTestHelper {
+class DatasetServiceDAOTest extends DAOTestHelper {
 
   private DatasetServiceDAO serviceDAO;
 
@@ -44,7 +44,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertDatasets() throws Exception {
+  void testInsertDatasets() throws Exception {
 
     Dac dac = createDac();
     User user = createUser();
@@ -110,7 +110,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
 
 
   @Test
-  public void testInsertMultipleDatasets() throws Exception {
+  void testInsertMultipleDatasets() throws Exception {
 
     Dac dac = createDac();
     User user = createUser();
@@ -168,7 +168,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertStudyWithDatasets() throws Exception {
+  void testInsertStudyWithDatasets() throws Exception {
     Dac dac = createDac();
     User user = createUser();
 
@@ -214,7 +214,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertStudyWithProps() throws Exception {
+  void testInsertStudyWithProps() throws Exception {
     Dac dac = createDac();
     User user = createUser();
 
@@ -279,7 +279,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertStudyWithAlternativeDataSharingFile() throws Exception {
+  void testInsertStudyWithAlternativeDataSharingFile() throws Exception {
     Dac dac = createDac();
     User user = createUser();
 
@@ -357,7 +357,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDatasetWithProps() throws Exception {
+  void testUpdateDatasetWithProps() throws Exception {
     Dataset dataset = createDataset();
 
     // Set up two existing props for updating
@@ -440,7 +440,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudyDetails() throws Exception {
+  void testUpdateStudyDetails() throws Exception {
     Study study = createStudy(null);
 
     String newStudyName = "New Study Name";
@@ -467,7 +467,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudyWithPropUpdates() throws Exception {
+  void testUpdateStudyWithPropUpdates() throws Exception {
     Study study = createStudy(null);
     List<StudyProperty> props = List.copyOf(study.getProperties());
 
@@ -504,7 +504,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudyWithDatasetUpdates() throws Exception {
+  void testUpdateStudyWithDatasetUpdates() throws Exception {
     Study study = createStudy(null);
     Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).get(0);
 
@@ -549,7 +549,7 @@ public class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudyWithFileUpdates() throws Exception {
+  void testUpdateStudyWithFileUpdates() throws Exception {
     FileStorageObject fso1 = new FileStorageObject();
     fso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
     fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
