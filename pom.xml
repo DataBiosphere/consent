@@ -13,16 +13,16 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.23.1</liquibase.version>
+    <liquibase.version>4.23.2</liquibase.version>
     <dropwizard.version>4.0.0</dropwizard.version>
     <pact.version>4.6.2</pact.version>
     <postgres.version>42.6.0</postgres.version>
     <surefire.version>3.1.2</surefire.version>
-    <swagger.ui.version>5.4.2</swagger.ui.version>
+    <swagger.ui.version>5.6.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.0</junit.version>
-    <io.grpc.version>1.57.2</io.grpc.version>
+    <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.5.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -129,7 +129,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -139,7 +139,7 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>3.4.0</version>
+                  <version>3.4.1</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
                   <version>{java.version}</version>
@@ -336,7 +336,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.41.0</version>
+        <version>3.41.1</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -441,7 +441,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.28.0</version>
+      <version>6.29.0</version>
     </dependency>
 
     <dependency>
@@ -804,7 +804,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.9.1</version>
+      <version>8.10.0</version>
     </dependency>
 
     <dependency>
