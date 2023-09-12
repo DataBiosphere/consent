@@ -25,7 +25,7 @@ import org.mockserver.model.Delay;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
-public class HttpClientUtilTest implements WithMockServer {
+class HttpClientUtilTest implements WithMockServer {
 
   private HttpClientUtil clientUtil;
 
@@ -37,17 +37,17 @@ public class HttpClientUtilTest implements WithMockServer {
       container.getServerPort());
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     container.start();
   }
 
   @AfterAll
-  public static void tearDown() {
+  static void tearDown() {
     container.stop();
   }
 
   @BeforeEach
-  public void init() {
+  void init() {
     openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
@@ -60,7 +60,7 @@ public class HttpClientUtilTest implements WithMockServer {
    * Test that the cache works normally
    */
   @Test
-  public void testGetCachedResponse_case1() {
+  void testGetCachedResponse_case1() {
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(200));
@@ -78,7 +78,7 @@ public class HttpClientUtilTest implements WithMockServer {
    * Test that when the cache is expired, all calls are made to external servers
    */
   @Test
-  public void testGetCachedResponse_case2() {
+  void testGetCachedResponse_case2() {
     ServicesConfiguration configuration = new ServicesConfiguration();
     configuration.setTimeoutSeconds(1);
     // Setting the cache to 0 effectively means no caching
@@ -100,7 +100,7 @@ public class HttpClientUtilTest implements WithMockServer {
   }
 
   @Test
-  public void testGetHttpResponseUnderTimeout() throws Exception {
+  void testGetHttpResponseUnderTimeout() throws Exception {
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(200));
@@ -109,7 +109,7 @@ public class HttpClientUtilTest implements WithMockServer {
   }
 
   @Test
-  public void testGetHttpResponseOverTimeout() {
+  void testGetHttpResponseOverTimeout() {
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(200)

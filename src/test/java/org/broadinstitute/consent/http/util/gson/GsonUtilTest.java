@@ -15,10 +15,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 
-public class GsonUtilTest {
+class GsonUtilTest {
 
   @Test
-  public void testBuildJson() {
+  void testBuildJson() {
     Gson gson = GsonUtil.buildGson();
 
     Vote ds = new Vote();
@@ -30,7 +30,7 @@ public class GsonUtilTest {
   }
 
   @Test
-  public void testInstantJson() {
+  void testInstantJson() {
     Gson gson = GsonUtil.buildGson();
 
     Instant instant = Instant.now();
@@ -45,7 +45,7 @@ public class GsonUtilTest {
   }
 
   @Test
-  public void testBlobIdJson() {
+  void testBlobIdJson() {
     Gson gson = GsonUtil.buildGson();
     boolean serializationFailed = false;
     boolean deserializationFailed = false;
@@ -68,7 +68,7 @@ public class GsonUtilTest {
   }
 
   @Test
-  public void testBuildJsonWithCustomObjects_Serialization() {
+  void testBuildJsonWithCustomObjects_Serialization() {
     Gson gson = GsonUtil.buildGson();
 
     GsonTestObject obj = new GsonTestObject();
@@ -78,7 +78,7 @@ public class GsonUtilTest {
     obj.setDate(new Date(now.toEpochMilli()));
     obj.setInstant(now);
 
-    obj.setTransientField("should never serialize");
+    obj.setTransientField();
 
     String objAsJsonString = gson.toJson(obj);
 
@@ -94,7 +94,7 @@ public class GsonUtilTest {
   }
 
   @Test
-  public void testBuildJsonWithCustomObjects_Deserialization() {
+  void testBuildJsonWithCustomObjects_Deserialization() {
     Gson gson = GsonUtil.buildGson();
 
     String json = """

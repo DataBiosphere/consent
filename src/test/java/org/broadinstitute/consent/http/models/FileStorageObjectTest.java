@@ -15,10 +15,10 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
-public class FileStorageObjectTest {
+class FileStorageObjectTest {
 
   @Test
-  public void testFileStorageObjectGsonSerialization() {
+  void testFileStorageObjectGsonSerialization() {
     FileStorageObject fso = new FileStorageObject();
 
     fso.setFileName("asdf");
@@ -47,7 +47,7 @@ public class FileStorageObjectTest {
   }
 
   @Test
-  public void testFileStorageObjectGsonDeserialization_no_BlobId() {
+  void testFileStorageObjectGsonDeserialization_no_BlobId() {
 
     JsonObject jsonObject = new JsonObject();
 
@@ -63,7 +63,7 @@ public class FileStorageObjectTest {
   }
 
   @Test
-  public void testFileStorageObjectDeserializationFromString_no_BlobId() {
+  void testFileStorageObjectDeserializationFromString_no_BlobId() {
     String json = "{\"fileName\":\"asdf\", \"invalidField\":\"bot\", \"blobId\":\"test\"}";
 
     FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);

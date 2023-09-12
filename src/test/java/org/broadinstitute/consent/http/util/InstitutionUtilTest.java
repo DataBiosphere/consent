@@ -15,7 +15,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class InstitutionUtilTest {
+class InstitutionUtilTest {
 
   private final List<UserRole> adminRoles = Collections.singletonList(
       new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
@@ -39,12 +39,12 @@ public class InstitutionUtilTest {
   }
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     util = new InstitutionUtil();
   }
 
   @Test
-  public void testCheckIfAdmin() {
+  void testCheckIfAdmin() {
     Boolean adminResult = util.checkIfAdmin(adminUser);
     Boolean researcherResult = util.checkIfAdmin(researcherUser);
     assertTrue(adminResult);
@@ -52,7 +52,7 @@ public class InstitutionUtilTest {
   }
 
   @Test
-  public void testGsonBuilderAdmin() {
+  void testGsonBuilderAdmin() {
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
@@ -68,7 +68,7 @@ public class InstitutionUtilTest {
   }
 
   @Test
-  public void testGsonBuilderNonAdmin() {
+  void testGsonBuilderNonAdmin() {
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);

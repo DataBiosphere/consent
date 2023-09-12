@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.jupiter.api.Test;
 
-public class UserUpdateFieldsTest {
+class UserUpdateFieldsTest {
 
   private static final List<Integer> ALL_ROLE_IDS = Stream.of(UserRoles.values())
       .map(UserRoles::getRoleId).collect(Collectors.toList());
@@ -18,7 +18,7 @@ public class UserUpdateFieldsTest {
       .filter(id -> !UserUpdateFields.IGNORE_ROLE_IDS.contains(id)).collect(Collectors.toList());
 
   @Test
-  public void testGetRoleIdsToAdd_Case_1() {
+  void testGetRoleIdsToAdd_Case_1() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(ALL_ROLE_IDS);
     // If the user has all role ids, and we're updating the user to have all roles,
@@ -28,7 +28,7 @@ public class UserUpdateFieldsTest {
   }
 
   @Test
-  public void testGetRoleIdsToAdd_Case_2() {
+  void testGetRoleIdsToAdd_Case_2() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(ALL_ROLE_IDS);
     // If the user has no role ids, then roles to add = all non-ignorable roles
@@ -37,7 +37,7 @@ public class UserUpdateFieldsTest {
   }
 
   @Test
-  public void testGetRoleIdsToAdd_Case_3() {
+  void testGetRoleIdsToAdd_Case_3() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(List.of(100, 200, 300, 400));
     // Role ids outside the range of existing roles should not be added
@@ -46,7 +46,7 @@ public class UserUpdateFieldsTest {
   }
 
   @Test
-  public void testGetRoleIdsToRemove_Case_1() {
+  void testGetRoleIdsToRemove_Case_1() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(ALL_ROLE_IDS);
     // If the user has all role ids, and we're updating the user to have all roles,
@@ -56,7 +56,7 @@ public class UserUpdateFieldsTest {
   }
 
   @Test
-  public void testGetRoleIdsToRemove_Case_2() {
+  void testGetRoleIdsToRemove_Case_2() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(List.of());
     // If the user has all role ids, and we're updating the user to have NO roles,
@@ -72,7 +72,7 @@ public class UserUpdateFieldsTest {
   }
 
   @Test
-  public void testGetRoleIdsToRemove_Case_3() {
+  void testGetRoleIdsToRemove_Case_3() {
     UserUpdateFields fields = new UserUpdateFields();
     fields.setUserRoleIds(ALL_ROLE_IDS);
     List<Integer> invalidRoleIds = List.of(100, 200, 300, 400);

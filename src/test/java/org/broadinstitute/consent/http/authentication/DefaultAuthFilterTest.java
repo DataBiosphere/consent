@@ -1,30 +1,27 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.DefaultUnauthorizedHandler;
 import io.dropwizard.auth.UnauthorizedHandler;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
-import java.util.Optional;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DefaultAuthFilterTest {
+@ExtendWith(MockitoExtension.class)
+class DefaultAuthFilterTest {
 
   @Mock
   private ContainerRequestContext requestContext;
-  @Mock
-  private MultivaluedMap<String, String> headers;
   @Mock
   private UriInfo uriInfo;
   @Spy
@@ -38,28 +35,22 @@ public class DefaultAuthFilterTest {
       .setUnauthorizedHandler(unauthorizedHandler)
       .buildAuthFilter();
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-    when(requestContext.getHeaders()).thenReturn(headers);
-    when(requestContext.getUriInfo()).thenReturn(uriInfo);
-  }
-
   @Test
-  public void testUnauthorizedUrl() {
+  void testUnauthorizedUrl() {
+    when(requestContext.getUriInfo()).thenReturn(uriInfo);
     when(uriInfo.getPath()).thenReturn("/something");
-    when(headers.getFirst("Authorization")).thenReturn(null);
     assertThrows(WebApplicationException.class, () -> {
       filter.filter(requestContext);
     });
   }
 
   @Test
-  public void testApiUrl() throws Exception {
-    Optional<AuthUser> principal = Optional.of(new AuthUser("test@email.com"));
-    when(authenticator.authenticate(notNull())).thenReturn(principal);
+  void testApiUrl() {
+    when(requestContext.getUriInfo()).thenReturn(uriInfo);
     when(uriInfo.getPath()).thenReturn("api/something");
-    filter.filter(requestContext);
+    assertDoesNotThrow(() -> {
+      filter.filter(requestContext);
+    });
   }
 }
 

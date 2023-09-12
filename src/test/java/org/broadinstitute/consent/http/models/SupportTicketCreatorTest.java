@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -17,9 +16,12 @@ import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SupportTicketCreatorTest {
+@ExtendWith(MockitoExtension.class)
+class SupportTicketCreatorTest {
 
   private SupportTicketCreator supportTicketCreator;
 
@@ -33,15 +35,14 @@ public class SupportTicketCreatorTest {
   private ServicesConfiguration configuration;
 
   @BeforeEach
-  public void setUp() {
-    openMocks(this);
+  void setUp() {
     this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
     String supportRequestUrl = RandomStringUtils.randomAlphabetic(10);
     when(configuration.postSupportRequestUrl()).thenReturn(supportRequestUrl);
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SuggestedInstitution() {
+  void testCreateInstitutionSOSupportTicket_SuggestedInstitution() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -84,7 +85,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SuggestedSigningOfficial() {
+  void testCreateInstitutionSOSupportTicket_SuggestedSigningOfficial() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -112,7 +113,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
+  void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -145,7 +146,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
+  void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -176,7 +177,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficial() {
+  void testCreateInstitutionSOSupportTicket_SelectedSigningOfficial() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -213,7 +214,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_SelectedSigningOfficialNotFound() {
+  void testCreateInstitutionSOSupportTicket_SelectedSigningOfficialNotFound() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -244,7 +245,7 @@ public class SupportTicketCreatorTest {
   }
 
   @Test
-  public void testCreateInstitutionSOSupportTicket_MultipleFields() {
+  void testCreateInstitutionSOSupportTicket_MultipleFields() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();

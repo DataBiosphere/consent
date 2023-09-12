@@ -12,10 +12,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.junit.jupiter.api.Test;
 
-public class DatasetTests {
+class DatasetTests {
 
   @Test
-  public void testParseIdentifierToAlias() {
+  void testParseIdentifierToAlias() {
     assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-3"));
     assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-000003"));
     assertEquals(123456, (int) Dataset.parseIdentifierToAlias("DUOS-123456"));
@@ -29,7 +29,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchName() {
+  void testIsDatasetMatchName() {
     String name = RandomStringUtils.randomAlphanumeric(20);
 
     Dataset ds = new Dataset();
@@ -43,7 +43,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchNameCaseIndependent() {
+  void testIsDatasetMatchNameCaseIndependent() {
     String name = RandomStringUtils.randomAlphabetic(20);
 
     Dataset ds = new Dataset();
@@ -54,7 +54,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchDatasetProperty() {
+  void testIsDatasetMatchDatasetProperty() {
     Dataset ds = new Dataset();
 
     String value = RandomStringUtils.randomAlphanumeric(20);
@@ -69,7 +69,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchIdentifier() {
+  void testIsDatasetMatchIdentifier() {
     Dataset ds = new Dataset();
     ds.setAlias(1235);
 
@@ -81,7 +81,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchDataUseCommercial() {
+  void testIsDatasetMatchDataUseCommercial() {
     Dataset ds = new Dataset();
 
     assertFalse(ds.isDatasetMatch("collaborator", false));
@@ -95,7 +95,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchDataUseIrb() {
+  void testIsDatasetMatchDataUseIrb() {
     Dataset ds = new Dataset();
 
     assertFalse(ds.isDatasetMatch("irb", false));
@@ -110,7 +110,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchDataUseDiseases() {
+  void testIsDatasetMatchDataUseDiseases() {
     Dataset ds = new Dataset();
 
     assertFalse(ds.isDatasetMatch("cancer", false));
@@ -126,7 +126,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchMultipleTerms() {
+  void testIsDatasetMatchMultipleTerms() {
     Dataset ds = new Dataset();
 
     ds.setName("asdf");
@@ -141,7 +141,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchOpenAccessTrue() {
+  void testIsDatasetMatchOpenAccessTrue() {
     Dataset ds = new Dataset();
 
     String value = "true";
@@ -158,7 +158,7 @@ public class DatasetTests {
   }
 
   @Test
-  public void testIsDatasetMatchOpenAccessFalse() {
+  void testIsDatasetMatchOpenAccessFalse() {
     Dataset ds = new Dataset();
 
     String value = "false";

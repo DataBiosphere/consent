@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class JsonSchemaUtilTest {
+class JsonSchemaUtilTest {
 
   private static JsonSchemaUtil schemaUtil;
 
@@ -43,25 +43,25 @@ public class JsonSchemaUtilTest {
 
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     schemaUtil = new JsonSchemaUtil();
   }
 
   @Test
-  public void testIsValidDatasetRegistrationObject_v1_case0() {
+  void testIsValidDatasetRegistrationObject_v1_case0() {
     String instance = "{}";
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
     assertFalse(errors.isEmpty());
   }
 
   @Test
-  public void testIsValidDatasetRegistrationObject_v1_case1() {
+  void testIsValidDatasetRegistrationObject_v1_case1() {
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertTrue(errors.isEmpty());
   }
 
   @Test
-  public void testParseDatasetRegistrationObject_v1() {
+  void testParseDatasetRegistrationObject_v1() {
     DatasetRegistrationSchemaV1 instance = schemaUtil.deserializeDatasetRegistration(
         datasetRegistrationInstance);
     assertNotNull(instance);
@@ -81,7 +81,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_valid_date() {
+  void testValidateDatasetRegistrationObject_v1_valid_date() {
     String instance = """
         {
           "studyType": "Observational",
@@ -119,7 +119,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_invalid_dates() {
+  void testValidateDatasetRegistrationObject_v1_invalid_dates() {
     String instance = """
         {
           "studyType": "Observational",
@@ -159,7 +159,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_gsr_explanation_conditionally_required() {
+  void testValidateDatasetRegistrationObject_v1_gsr_explanation_conditionally_required() {
     String noGsrSelected = """
         {
           "studyType": "Observational",
@@ -255,8 +255,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_dbgap_info_conditionally_required() {
-    String anvilUseNoWorks = datasetRegistrationInstance;
+  void testValidateDatasetRegistrationObject_v1_dbgap_info_conditionally_required() {
 
     String anvilUseYesRequiresDbGapFields = """
         {
@@ -285,7 +284,7 @@ public class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(anvilUseNoWorks);
+    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(anvilUseYesRequiresDbGapFields);
@@ -293,8 +292,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testParseValidateRegistrationObject_v1_nih_admin_info_conditionally_required() {
-    String anvilUseNoWorks = datasetRegistrationInstance;
+  void testParseValidateRegistrationObject_v1_nih_admin_info_conditionally_required() {
 
     String anvilUseFundedHaveId = """
         {
@@ -377,7 +375,7 @@ public class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(anvilUseNoWorks);
+    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertNoErrors(errors);
 
     Set<ValidationMessage> fundedHaveIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedHaveId);
@@ -396,7 +394,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testParseValidateRegistrationObject_v1_dac_id_conditionally_required() {
+  void testParseValidateRegistrationObject_v1_dac_id_conditionally_required() {
     String openAccessNoDacId = """
         {
           "studyType": "Observational",
@@ -476,8 +474,6 @@ public class JsonSchemaUtilTest {
         }
         """;
 
-    String notOpenAccessWithDacId = datasetRegistrationInstance;
-
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(openAccessNoDacId);
     assertNoErrors(errors);
 
@@ -487,12 +483,12 @@ public class JsonSchemaUtilTest {
     errors = schemaUtil.validateSchema_v1(noOpenAccessNoDacId);
     assertFieldHasError(errors, "dataAccessCommitteeId");
 
-    errors = schemaUtil.validateSchema_v1(notOpenAccessWithDacId);
+    errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertNoErrors(errors);
   }
 
   @Test
-  public void testParseValidateRegistrationObject_v1_consent_group_required() {
+  void testParseValidateRegistrationObject_v1_consent_group_required() {
     String noConsentGroup = """
         {
           "studyType": "Observational",
@@ -534,7 +530,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_file_types_required() {
+  void testValidateDatasetRegistrationObject_v1_file_types_required() {
     String noFileTypes = """
         {
           "studyType": "Observational",
@@ -589,7 +585,7 @@ public class JsonSchemaUtilTest {
 
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_needs_at_least_one_disease() {
+  void testValidateDatasetRegistrationObject_v1_needs_at_least_one_disease() {
     String emptyDiseaseSpecificUse = """
         {
           "studyType": "Observational",
@@ -652,7 +648,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_only_one_primary_consent() {
+  void testValidateDatasetRegistrationObject_v1_only_one_primary_consent() {
     String hmbAndGru = """
         {
           "studyType": "Observational",
@@ -717,7 +713,7 @@ public class JsonSchemaUtilTest {
   }
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_url_not_required_if_data_loc_not_determined() {
+  void testValidateDatasetRegistrationObject_v1_url_not_required_if_data_loc_not_determined() {
     String notDeterminedNoURL = """
         {
           "studyType": "Observational",
@@ -782,7 +778,7 @@ public class JsonSchemaUtilTest {
 
 
   @Test
-  public void testValidateDatasetRegistrationObject_v1_empty_string_is_invalid_if_required() {
+  void testValidateDatasetRegistrationObject_v1_empty_string_is_invalid_if_required() {
     String instance = """
          {
            "studyType": "Observational",
