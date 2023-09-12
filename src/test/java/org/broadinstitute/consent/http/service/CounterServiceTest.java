@@ -5,30 +5,26 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.broadinstitute.consent.http.db.CounterDAO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 
-public class CounterServiceTest {
+@ExtendWith(MockitoExtension.class)
+class CounterServiceTest {
 
   @Mock
   private CounterDAO counterDAO;
 
   private CounterService service;
 
-  @BeforeEach
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   private void initService() {
     service = new CounterService(counterDAO);
   }
 
   @Test
-  public void testGetNextDarSequence() {
+  void testGetNextDarSequence() {
     int count = 10;
     when(counterDAO.incrementCountByName(any())).thenReturn(count);
     initService();

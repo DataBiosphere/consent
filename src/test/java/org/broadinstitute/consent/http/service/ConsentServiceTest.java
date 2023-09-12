@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -22,38 +21,31 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Election;
 import org.joda.time.DateTimeField;
 import org.joda.time.Instant;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ConsentServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ConsentServiceTest {
 
   private ConsentService service;
 
   @Mock
-  ConsentDAO consentDAO;
+  private ConsentDAO consentDAO;
 
   @Mock
-  ElectionDAO electionDAO;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
+  private ElectionDAO electionDAO;
 
   private void initService() {
     service = new ConsentService(consentDAO, electionDAO);
   }
 
   @Test
-  public void testCreate() {
+  void testCreate() {
     Consent testConsent = this.getTestConsent();
-    when(consentDAO.checkConsentById(any()))
-        .thenReturn(null);
     when(consentDAO.getIdByName(any()))
         .thenReturn(null);
-    when(consentDAO.checkConsentById("test consent"))
-        .thenReturn("test consent");
     doNothing().when(consentDAO)
         .insertConsent(any(), any(), any(), any(), any(), any(), any(), any(), any());
     when(consentDAO.findConsentById(any()))
@@ -66,7 +58,7 @@ public class ConsentServiceTest {
   }
 
   @Test
-  public void testUpdate() {
+  void testUpdate() {
     Timestamp updateDate = new Timestamp(new Date().getTime());
     LocalDate localDate = LocalDate.now();
     ZoneId defaultZoneId = ZoneId.systemDefault();
@@ -76,13 +68,8 @@ public class ConsentServiceTest {
     testConsent.setLastUpdate(prevTimestamp);
     testConsent.setSortDate(prevTimestamp);
 
-    doNothing().when(consentDAO)
-        .updateConsent("test consent", testConsent.getRequiresManualReview(),
-            testConsent.getDataUse().toString(),
-            testConsent.getDataUseLetter(), testConsent.getName(), testConsent.getDulName(),
-            testConsent.getLastUpdate(),
-            testConsent.getSortDate(),
-            testConsent.getGroupName(), true);
+    doNothing().when(consentDAO).updateConsent(any(), any(), any(), any(), any(), any(), any(),
+      any(), any(), any());
     when(consentDAO.checkConsentById("test consent"))
         .thenReturn("test consent");
     when(consentDAO.findConsentById("test consent"))
@@ -101,7 +88,7 @@ public class ConsentServiceTest {
   }
 
   @Test
-  public void testRetrieve() {
+  void testRetrieve() {
     when(consentDAO.findConsentById("test consent"))
         .thenReturn(this.getTestConsent());
     Election mockElection = this.getTestElection();
@@ -122,7 +109,7 @@ public class ConsentServiceTest {
   }
 
   @Test
-  public void testGetByName() {
+  void testGetByName() {
     when(consentDAO.findConsentByName("test consent"))
         .thenReturn(this.getTestConsent());
     initService();
