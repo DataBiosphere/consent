@@ -221,6 +221,9 @@ public class ElasticSearchService implements ConsentLogger {
       Dac dac = dacDAO.findById(dataset.getDacId());
       term.setDacId(dataset.getDacId());
       term.setDacName(dac.getName());
+      if (Objects.nonNull(dataset.getDacApproval())) {
+        term.setDacApproval(dataset.getDacApproval());
+      }
     }
 
     List<Integer> approvedUserIds =

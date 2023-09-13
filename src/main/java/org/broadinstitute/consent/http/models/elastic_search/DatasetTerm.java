@@ -14,6 +14,7 @@ public class DatasetTerm {
   private String url;
   private Integer dacId;
   private String dacName;
+  private Boolean dacApproval;
   private Boolean openAccess;
   private List<Integer> approvedUserIds;
   private StudyTerm study;
@@ -90,6 +91,14 @@ public class DatasetTerm {
 
   public void setDacName(String dacName) {
     this.dacName = dacName;
+  }
+
+  public Boolean getDacApproval() {
+    return dacApproval;
+  }
+
+  public void setDacApproval(Boolean dacApproval) {
+    this.dacApproval = dacApproval;
   }
 
   public Boolean getOpenAccess() {
