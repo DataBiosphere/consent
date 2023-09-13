@@ -212,6 +212,7 @@ public class ElasticSearchService implements ConsentLogger {
     term.setDatasetId(dataset.getDataSetId());
     term.setCreateUserId(dataset.getCreateUserId());
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
+    term.setDatasetName(dataset.getName());
 
     if (Objects.nonNull(dataset.getStudy())) {
       term.setStudy(toStudyTerm(dataset.getStudy()));

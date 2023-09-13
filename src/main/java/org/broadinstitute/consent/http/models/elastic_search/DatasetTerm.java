@@ -8,6 +8,7 @@ public class DatasetTerm {
   private Integer datasetId;
   private Integer createUserId;
   private String datasetIdentifier;
+  private String datasetName;
   private Integer participantCount;
   private DataUseSummary dataUse;
   private String dataLocation;
@@ -43,6 +44,13 @@ public class DatasetTerm {
     this.datasetIdentifier = datasetIdentifier;
   }
 
+  public String getDatasetName() {
+    return datasetName;
+  }
+
+  public void setDatasetName(String datasetName) {
+    this.datasetName = datasetName;
+  }
 
   public Integer getParticipantCount() {
     return participantCount;

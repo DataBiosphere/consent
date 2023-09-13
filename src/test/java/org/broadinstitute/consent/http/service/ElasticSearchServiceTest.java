@@ -101,6 +101,7 @@ public class ElasticSearchServiceTest {
     dataset.setDataSetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
     dataset.setDacId(1);
     dataset.setDataUse(new DataUse());
 
