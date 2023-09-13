@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -155,6 +156,11 @@ public class ElasticSearchServiceTest {
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
 
+    Dac dac = new Dac();
+    dac.setDacId(dataset.getDacId());
+    dac.setName("Dac Name");
+
+    when(dacDAO.findById(any())).thenReturn(dac);
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
         List.of(10, 11));
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
