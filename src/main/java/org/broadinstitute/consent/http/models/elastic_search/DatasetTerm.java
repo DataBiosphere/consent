@@ -6,12 +6,14 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 public class DatasetTerm {
 
   private Integer datasetId;
+  private Integer createUserId;
   private String datasetIdentifier;
   private Integer participantCount;
   private DataUseSummary dataUse;
   private String dataLocation;
   private String url;
   private Integer dacId;
+  private String dacName;
   private Boolean openAccess;
   private List<Integer> approvedUserIds;
   private StudyTerm study;
@@ -22,6 +24,14 @@ public class DatasetTerm {
 
   public void setDatasetId(Integer datasetId) {
     this.datasetId = datasetId;
+  }
+
+  public Integer getCreateUserId() {
+    return createUserId;
+  }
+
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
   }
 
   public String getDatasetIdentifier() {
@@ -72,6 +82,14 @@ public class DatasetTerm {
 
   public void setDacId(Integer dacId) {
     this.dacId = dacId;
+  }
+
+  public String getDacName() {
+    return dacName;
+  }
+
+  public void setDacName(String dacName) {
+    this.dacName = dacName;
   }
 
   public Boolean getOpenAccess() {

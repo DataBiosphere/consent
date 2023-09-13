@@ -442,6 +442,7 @@ public class ConsentModule extends AbstractModule {
     return new ElasticSearchService(
         ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
         config.getElasticSearchConfiguration(),
+        providesDacDAO(),
         providesDataAccessRequestDAO(),
         providesUserDAO(),
         providesOntologyService()

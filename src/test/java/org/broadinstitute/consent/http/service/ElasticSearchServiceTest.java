@@ -24,6 +24,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -59,6 +60,9 @@ public class ElasticSearchServiceTest {
   private ElasticSearchConfiguration esConfig;
 
   @Mock
+  private DacDAO dacDAO;
+
+  @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
 
   @Mock
@@ -73,6 +77,7 @@ public class ElasticSearchServiceTest {
     service = new ElasticSearchService(
         esClient,
         esConfig,
+        dacDAO,
         dataAccessRequestDAO,
         userDao,
         ontologyService);
