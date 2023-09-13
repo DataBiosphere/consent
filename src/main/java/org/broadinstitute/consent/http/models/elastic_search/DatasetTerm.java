@@ -7,6 +7,7 @@ public class DatasetTerm {
 
   private Integer datasetId;
   private Integer createUserId;
+  private String createUserDisplayName;
   private String datasetIdentifier;
   private String datasetName;
   private Integer participantCount;
@@ -34,6 +35,14 @@ public class DatasetTerm {
 
   public void setCreateUserId(Integer createUserId) {
     this.createUserId = createUserId;
+  }
+
+  public String getCreateUserDisplayName() {
+    return createUserDisplayName;
+  }
+
+  public void setCreateUserDisplayName(String createUserDisplayName) {
+    this.createUserDisplayName = createUserDisplayName;
   }
 
   public String getDatasetIdentifier() {
