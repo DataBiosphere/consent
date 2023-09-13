@@ -186,6 +186,7 @@ public class ElasticSearchServiceTest {
     assertEquals(study.getDataTypes(), term.getStudy().getDataTypes());
     assertEquals(dataLocationProp.getPropertyValue(), term.getDataLocation());
     assertEquals(dataset.getDacId(), term.getDacId());
+    assertEquals(dac.getName(), term.getDacName());
     assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
     assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
 
