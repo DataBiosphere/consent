@@ -210,11 +210,11 @@ public class ElasticSearchService implements ConsentLogger {
     DatasetTerm term = new DatasetTerm();
 
     term.setDatasetId(dataset.getDataSetId());
-    if (Objects.nonNull(dataset.getCreateUserId())) {
+    Optional.ofNullable(dataset.getCreateUserId()).ifPresent(userId -> {
       User user = userDAO.findUserById(dataset.getCreateUserId());
       term.setCreateUserId(dataset.getCreateUserId());
       term.setCreateUserDisplayName(user.getDisplayName());
-    }
+    });
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
     term.setDatasetName(dataset.getName());
 
@@ -222,14 +222,14 @@ public class ElasticSearchService implements ConsentLogger {
       term.setStudy(toStudyTerm(dataset.getStudy()));
     }
 
-    if (Objects.nonNull(dataset.getDacId())) {
+    Optional.ofNullable(dataset.getDacId()).ifPresent(dacId -> {
       Dac dac = dacDAO.findById(dataset.getDacId());
       term.setDacId(dataset.getDacId());
       term.setDacName(dac.getName());
       if (Objects.nonNull(dataset.getDacApproval())) {
         term.setDacApproval(dataset.getDacApproval());
       }
-    }
+    });
 
     List<Integer> approvedUserIds =
         dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
