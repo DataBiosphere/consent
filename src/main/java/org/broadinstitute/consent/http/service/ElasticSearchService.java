@@ -14,8 +14,10 @@ import java.util.Optional;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
@@ -33,6 +35,7 @@ public class ElasticSearchService implements ConsentLogger {
 
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
+  private final DacDAO dacDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
@@ -40,11 +43,13 @@ public class ElasticSearchService implements ConsentLogger {
   public ElasticSearchService(
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
+      DacDAO dacDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
       OntologyService ontologyService) {
     this.esClient = esClient;
     this.esConfig = esConfig;
+    this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
@@ -205,13 +210,26 @@ public class ElasticSearchService implements ConsentLogger {
     DatasetTerm term = new DatasetTerm();
 
     term.setDatasetId(dataset.getDataSetId());
+    Optional.ofNullable(dataset.getCreateUserId()).ifPresent(userId -> {
+      User user = userDAO.findUserById(dataset.getCreateUserId());
+      term.setCreateUserId(dataset.getCreateUserId());
+      term.setCreateUserDisplayName(user.getDisplayName());
+    });
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
+    term.setDatasetName(dataset.getName());
 
     if (Objects.nonNull(dataset.getStudy())) {
       term.setStudy(toStudyTerm(dataset.getStudy()));
     }
 
-    term.setDacId(dataset.getDacId());
+    Optional.ofNullable(dataset.getDacId()).ifPresent(dacId -> {
+      Dac dac = dacDAO.findById(dataset.getDacId());
+      term.setDacId(dataset.getDacId());
+      term.setDacName(dac.getName());
+      if (Objects.nonNull(dataset.getDacApproval())) {
+        term.setDacApproval(dataset.getDacApproval());
+      }
+    });
 
     List<Integer> approvedUserIds =
         dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(

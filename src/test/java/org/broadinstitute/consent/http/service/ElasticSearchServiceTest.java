@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.JsonArray;
 import java.io.IOException;
@@ -24,14 +23,17 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
@@ -39,13 +41,15 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ElasticSearchServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ElasticSearchServiceTest {
 
   private ElasticSearchService service;
 
@@ -59,20 +63,19 @@ public class ElasticSearchServiceTest {
   private ElasticSearchConfiguration esConfig;
 
   @Mock
+  private DacDAO dacDAO;
+
+  @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
 
   @Mock
   private UserDAO userDao;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initService() {
     service = new ElasticSearchService(
         esClient,
         esConfig,
+        dacDAO,
         dataAccessRequestDAO,
         userDao,
         ontologyService);
@@ -90,13 +93,22 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testToDatasetTermComplete() {
+  void testToDatasetTermComplete() {
+    User user = new User();
+    user.setUserId(1);
+    user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
+    user.setEmail(RandomStringUtils.randomAlphabetic(10));
+
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
     dataset.setDacId(1);
+    dataset.setDacApproval(true);
     dataset.setDataUse(new DataUse());
+    dataset.setCreateUser(user);
+    dataset.setCreateUserId(user.getUserId());
 
     Study study = new Study();
     study.setName(RandomStringUtils.randomAlphabetic(10));
@@ -107,6 +119,8 @@ public class ElasticSearchServiceTest {
     study.setCreateUserId(9);
     study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
+    study.setCreateUserId(user.getUserId());
+    study.setCreateUserEmail(user.getEmail());
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
@@ -150,6 +164,12 @@ public class ElasticSearchServiceTest {
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
 
+    Dac dac = new Dac();
+    dac.setDacId(dataset.getDacId());
+    dac.setName("Dac Name");
+
+    when(userDao.findUserById(any())).thenReturn(user);
+    when(dacDAO.findById(any())).thenReturn(dac);
     when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
         List.of(10, 11));
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
@@ -159,6 +179,8 @@ public class ElasticSearchServiceTest {
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+    assertEquals(user.getUserId(), term.getCreateUserId());
+    assertEquals(user.getDisplayName(), term.getCreateUserDisplayName());
     assertEquals(study.getDescription(), term.getStudy().getDescription());
     assertEquals(study.getName(), term.getStudy().getStudyName());
     assertEquals(study.getStudyId(), term.getStudy().getStudyId());
@@ -175,6 +197,8 @@ public class ElasticSearchServiceTest {
     assertEquals(study.getDataTypes(), term.getStudy().getDataTypes());
     assertEquals(dataLocationProp.getPropertyValue(), term.getDataLocation());
     assertEquals(dataset.getDacId(), term.getDacId());
+    assertEquals(dac.getName(), term.getDacName());
+    assertEquals(dataset.getDacApproval(), term.getDacApproval());
     assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
     assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
 
@@ -186,7 +210,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testToDatasetTermIncomplete() {
+  void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
     dataset.setAlias(10);
@@ -207,7 +231,7 @@ public class ElasticSearchServiceTest {
   ArgumentCaptor<Request> request;
 
   @Test
-  public void testIndexDatasets() throws IOException {
+  void testIndexDatasets() throws IOException {
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
@@ -238,7 +262,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testSearchDatasets() throws IOException {
+  void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
     /*
@@ -256,7 +280,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testValidateQuery() throws IOException {
+  void testValidateQuery() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
     mockElasticSearchResponse(200, "{\"valid\":true}");
@@ -266,7 +290,7 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testValidateQueryWithFromAndSize() throws IOException {
+  void testValidateQueryWithFromAndSize() throws IOException {
     String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
     mockElasticSearchResponse(200, "{\"valid\":true}");
@@ -276,17 +300,21 @@ public class ElasticSearchServiceTest {
   }
 
   @Test
-  public void testValidateQueryEmpty() throws IOException {
+  void testValidateQueryEmpty() throws IOException {
     String query = "{}";
 
-    mockElasticSearchResponse(400, "Bad Request");
+    Response response = mock(Response.class);
+    String reasonPhrase = fromStatusCode(400).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 400, reasonPhrase);
+    when(esClient.performRequest(any())).thenReturn(response);
+    when(response.getStatusLine()).thenReturn(status);
 
     initService();
     assertThrows(IOException.class, () -> service.validateQuery(query));
   }
 
   @Test
-  public void testValidateQueryInvalid() throws IOException {
+  void testValidateQueryInvalid() throws IOException {
     String query = "{ \"bad\": [\"and\", \"invalid\"] }";
 
     mockElasticSearchResponse(200, "{\"valid\":false}");
