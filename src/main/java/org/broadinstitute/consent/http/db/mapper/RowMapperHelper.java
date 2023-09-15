@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.commons.text.StringEscapeUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.core.result.RowView;
@@ -31,6 +32,23 @@ public interface RowMapperHelper {
     } catch (Exception e) {
       log.debug("RowView does not contain column " + columnName);
       return false;
+    }
+  }
+
+  /*
+   * Utility method to check if a column exists in the row view or not.
+   *
+   * @param rowView The RowView
+   * @param columnName The column name
+   * @param clazz The class that corresponds to the column
+   * @return Optional of requested class if the column is in the results, empty otherwise
+   */
+  default <T> Optional<T> hasOptionalColumn(RowView rowView, String columnName, Class<T> clazz) {
+    try {
+      return Optional.of(rowView.getColumn(columnName, clazz));
+    } catch (Exception e) {
+      log.debug(String.format("RowView does not contain column %s", columnName));
+      return Optional.empty();
     }
   }
 
