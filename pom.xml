@@ -467,7 +467,18 @@
           <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-http</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+
+    <!-- OWASP Vulnerability (jetty-http-11.0.14.jar): 09/18/2023 -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-http</artifactId>
+      <version>12.0.1</version>
     </dependency>
 
     <dependency>
@@ -482,6 +493,19 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-auth</artifactId>
       <version>${dropwizard.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-servlets</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- OWASP Vulnerability (jetty-servlets-11.0.14.jar): 09/18/2023 -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlets</artifactId>
+      <version>11.0.16</version>
     </dependency>
 
     <dependency>
