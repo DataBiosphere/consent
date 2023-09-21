@@ -190,7 +190,7 @@ public interface DacDAO extends Transactional<DacDAO> {
   void removeDacMember(@Bind("userRoleId") Integer userRoleId);
 
   @UseRowMapper(RoleMapper.class)
-  @SqlQuery("SELECT * FROM roles WHERE roleId = :roleId")
+  @SqlQuery("SELECT * FROM roles WHERE role_id = :roleId")
   Role getRoleById(@Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserRoleMapper.class)

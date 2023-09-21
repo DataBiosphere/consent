@@ -22,9 +22,9 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     SELECT * 
     FROM roles r
     INNER JOIN user_role ur ON ur.role_id = r.role_id 
-    WHERE ur.user_id = :user_id
+    WHERE ur.user_id = :userId
     """)
-  List<UserRole> findRolesByUserId(@Bind("user_id") Integer userId); // r.roleId => role_id
+  List<UserRole> findRolesByUserId(@Bind("userId") Integer userId); // r.roleId => role_id
 
   @SqlQuery("""
     SELECT DISTINCT name
@@ -45,54 +45,54 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
   @SqlQuery("""
     SELECT role_id
     FROM roles
-    WHERE name = :role_name
+    WHERE name = :roleName
     """)
-  Integer findRoleIdByName(@Bind("role_name") String roleName); // roleId in roles
+  Integer findRoleIdByName(@Bind("roleName") String roleName); // roleId in roles
 
   @SqlBatch("""
-    INSERT INTO user_role (role_id, user_id) VALUES (:role_id, :user_id)
+    INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
     """)
-  void insertUserRoles(@BindBean List<UserRole> roles, @Bind("user_id") Integer userId);
+  void insertUserRoles(@BindBean List<UserRole> roles, @Bind("userId") Integer userId);
 
   @SqlUpdate("""
-    UPDATE user_role SET role_id = :new_role_id
-    WHERE user_id = :user_id AND role_id = :existent_role_id
+    UPDATE user_role SET role_id = :newRoleId
+    WHERE user_id = :userId AND role_id = :existentRoleId
     """)
-  void updateUserRoles(@Bind("new_role_id") Integer newRoleId,
-      @Bind("user_id") Integer userId,
-      @Bind("existent_role_id") Integer existentRoleId);
+  void updateUserRoles(@Bind("newRoleId") Integer newRoleId,
+      @Bind("userId") Integer userId,
+      @Bind("existentRoleId") Integer existentRoleId);
 
   @SqlUpdate("""
-    DELETE FROM user_role WHERE user_id = :user_id AND role_id IN (<existent_roles>)
+    DELETE FROM user_role WHERE user_id = :userId AND role_id IN (<existentRoles>)
     """)
-  void removeUserRoles(@Bind("user_id") Integer userId,
-      @BindList("existent_roles") List<Integer> existentRoles); // what is existent_roles?
+  void removeUserRoles(@Bind("userId") Integer userId,
+      @BindList("existentRoles") List<Integer> existentRoles); // what is existent_roles?
 
   @SqlUpdate("""
-    INSERT INTO user_role (role_id, user_id) VALUES (:role_id, :user_id)
+    INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
     """)
-  void insertSingleUserRole(@Bind("role_id") Integer roleId, @Bind("user_id") Integer userId);
+  void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId);
 
   @SqlUpdate("""
-    DELETE FROM user_role WHERE user_id = :user_id AND role_id = :role_id
+    DELETE FROM user_role WHERE user_id = :userId AND role_id = :roleId
     """)
-  void removeSingleUserRole(@Bind("user_id") Integer userId, @Bind("role_id") Integer roleId);
+  void removeSingleUserRole(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId);
 
   @SqlQuery("""
     SELECT r.role_id 
     FROM roles r 
     INNER JOIN user_role ur on ur.role_id = r.role_id  
-    WHERE ur.user_id = :user_id AND r.name = :name
+    WHERE ur.user_id = :userId AND r.name = :name
     """)
-  Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("user_id") Integer id); // change r.roleId
+  Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id); // change r.roleId
 
   @SqlQuery("""
     SELECT *
     FROM user_role ur 
     INNER JOIN roles r ON r.role_id = ur.role_id
-    WHERE ur.user_id = :user_id AND ur.role_id = :role_id
+    WHERE ur.user_id = :userId AND ur.role_id = :roleId
     """)
-  UserRole findRoleByUserIdAndRoleId(@Bind("user_id") Integer userId,
-      @Bind("role_id") Integer roleId); // change r.roleId
+  UserRole findRoleByUserIdAndRoleId(@Bind("userId") Integer userId,
+      @Bind("roleId") Integer roleId); // change r.roleId
 
 }
