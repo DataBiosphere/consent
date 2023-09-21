@@ -205,30 +205,24 @@ public class ElasticSearchService implements ConsentLogger {
     if (Objects.isNull(user)) {
       return null;
     }
-    UserTerm term = new UserTerm();
-    term.setUserId(user.getUserId());
-    term.setDisplayName(user.getDisplayName());
-    return term;
+    InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
+      toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
+      null;
+    return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
   }
 
   public DacTerm toDacTerm(Dac dac) {
     if (Objects.isNull(dac)) {
       return null;
     }
-    DacTerm term = new DacTerm();
-    term.setDacId(dac.getDacId());
-    term.setDacName(dac.getName());
-    return term;
+    return new DacTerm(dac.getDacId(), dac.getName());
   }
 
   public InstitutionTerm toInstitutionTerm(Institution institution) {
     if (Objects.isNull(institution)) {
       return null;
     }
-    InstitutionTerm term = new InstitutionTerm();
-    term.setId(institution.getId());
-    term.setName(institution.getName());
-    return term;
+    return new InstitutionTerm(institution.getId(), institution.getName());
   }
 
   public Response indexDataset(Dataset dataset) throws IOException {
@@ -253,10 +247,10 @@ public class ElasticSearchService implements ConsentLogger {
       term.setCreateUserId(dataset.getCreateUserId());
       term.setCreateUserDisplayName(user.getDisplayName());
       term.setSubmitter(toUserTerm(user));
-      if (Objects.nonNull(user.getInstitutionId())) {
-        Institution institution = institutionDAO.findInstitutionById(user.getInstitutionId());
-        term.getSubmitter().setInstitution(toInstitutionTerm(institution));
-      }
+    });
+    Optional.ofNullable(dataset.getUpdateUserId()).ifPresent(userId -> {
+      User user = userDAO.findUserById(dataset.getUpdateUserId());
+      term.setUpdateUser(toUserTerm(user));
     });
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
     term.setDatasetName(dataset.getName());
