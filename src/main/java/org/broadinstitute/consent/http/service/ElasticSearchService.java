@@ -16,16 +16,21 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.elastic_search.DacTerm;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
+import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
+import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -39,6 +44,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
+  private final InstitutionDAO institutionDAO;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -46,13 +52,15 @@ public class ElasticSearchService implements ConsentLogger {
       DacDAO dacDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
-      OntologyService ontologyService) {
+      OntologyService ontologyService,
+      InstitutionDAO institutionDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
+    this.institutionDAO = institutionDAO;
   }
 
 
@@ -193,6 +201,36 @@ public class ElasticSearchService implements ConsentLogger {
     return term;
   }
 
+  public UserTerm toUserTerm(User user) {
+    if (Objects.isNull(user)) {
+      return null;
+    }
+    UserTerm term = new UserTerm();
+    term.setUserId(user.getUserId());
+    term.setDisplayName(user.getDisplayName());
+    return term;
+  }
+
+  public DacTerm toDacTerm(Dac dac) {
+    if (Objects.isNull(dac)) {
+      return null;
+    }
+    DacTerm term = new DacTerm();
+    term.setDacId(dac.getDacId());
+    term.setDacName(dac.getName());
+    return term;
+  }
+
+  public InstitutionTerm toInstitutionTerm(Institution institution) {
+    if (Objects.isNull(institution)) {
+      return null;
+    }
+    InstitutionTerm term = new InstitutionTerm();
+    term.setId(institution.getId());
+    term.setName(institution.getName());
+    return term;
+  }
+
   public Response indexDataset(Dataset dataset) throws IOException {
     return indexDatasetTerms(List.of(toDatasetTerm(dataset)));
   }
@@ -214,6 +252,11 @@ public class ElasticSearchService implements ConsentLogger {
       User user = userDAO.findUserById(dataset.getCreateUserId());
       term.setCreateUserId(dataset.getCreateUserId());
       term.setCreateUserDisplayName(user.getDisplayName());
+      term.setSubmitter(toUserTerm(user));
+      if (Objects.nonNull(user.getInstitutionId())) {
+        Institution institution = institutionDAO.findInstitutionById(user.getInstitutionId());
+        term.getSubmitter().setInstitution(toInstitutionTerm(institution));
+      }
     });
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
     term.setDatasetName(dataset.getName());
@@ -229,6 +272,7 @@ public class ElasticSearchService implements ConsentLogger {
       if (Objects.nonNull(dataset.getDacApproval())) {
         term.setDacApproval(dataset.getDacApproval());
       }
+      term.setDac(toDacTerm(dac));
     });
 
     List<Integer> approvedUserIds =
