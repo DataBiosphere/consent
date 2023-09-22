@@ -248,10 +248,10 @@ public class ElasticSearchService implements ConsentLogger {
       term.setCreateUserDisplayName(user.getDisplayName());
       term.setSubmitter(toUserTerm(user));
     });
-    Optional.ofNullable(dataset.getUpdateUserId()).ifPresent(userId -> {
-      User user = userDAO.findUserById(dataset.getUpdateUserId());
-      term.setUpdateUser(toUserTerm(user));
-    });
+    Optional.ofNullable(dataset.getUpdateUserId())
+        .map(userDAO::findUserById)
+        .map(this::toUserTerm)
+        .ifPresent(term::setUpdateUser);
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
     term.setDatasetName(dataset.getName());
 
