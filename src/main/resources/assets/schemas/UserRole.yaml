@@ -1,6 +1,6 @@
 type: object
 properties:
-  roleId:
+  role_id:
     type: integer
     format: int32
     description: ID of the role
