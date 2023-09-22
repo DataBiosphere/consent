@@ -7,7 +7,7 @@ object UserModels {
     case class UserRole(
         userRoleId: Int,
         userId: Int,
-        roleId: Int,
+        role_id: Int,
         name: String,
         dacId: Option[Int]
     )
