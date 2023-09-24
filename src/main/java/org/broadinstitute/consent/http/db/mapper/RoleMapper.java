@@ -10,6 +10,6 @@ public class RoleMapper implements RowMapper<Role> {
 
   @Override
   public Role map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
-    return new Role(resultSet.getInt("roleId"), resultSet.getString("name"));
+    return new Role(resultSet.getInt("role_id"), resultSet.getString("name"));
   }
 }
