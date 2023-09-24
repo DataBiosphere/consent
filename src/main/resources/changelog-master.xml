@@ -128,6 +128,4 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2023-07-27-match-rationale.xml"
     relativeToChangelogFile="true"/>
-  <include file="changesets/changelog-consent-2023-09-20-capitalize-datasets-used-in-user-role-dao.xml"
-    relativeToChangelogFile="true"/>
 </databaseChangeLog>
