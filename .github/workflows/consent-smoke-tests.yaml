@@ -1,6 +1,8 @@
 name: consent-smoke-tests
 
-on: [ pull_request ]
+on:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   create-bee-workflow:
@@ -14,26 +16,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Get Short Sha
-        id: short-sha
-        run: echo "sha=$(git rev-parse --short=12 HEAD)" >> $GITHUB_OUTPUT
-      - name: Await the completion of Tag/Build/Push
-        uses: codex-/await-local-workflow-run@v1
-        with:
-          token: ${{ github.token }}
-          workflow: build.yaml
-          timeout_mins: 5
-          poll_interval_ms: 10000
-      - name: Echo Consent version
-        run: |
-          echo ${{ steps.short-sha.outputs.sha }}
       - name: Bee Create
         uses: broadinstitute/workflow-dispatch@v3
         with:
           workflow: bee-create
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/main
-          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
+          token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-${{ matrix.terra-env }}", "bee-template-name": "duos", "version-template": "${{ matrix.terra-env }}" }'
       - name: run smoke tests
         run: |
