@@ -9,6 +9,7 @@ statistics over time.
 1. Update configuration (`/src/test/resources/performance.conf`) to point to your preferred environment. For localhost, it would be `https://local.broadinstitute.org:28443` 
 2. Spin up a local instance in a terminal window using a proper docker compose file
 3. Run gatling tests against that environment: `mvn gatling:test`
+   1. You can also run the above command with any custom destination: `mvn gatling:test -Dconsent.baseUrl=https://consent.dsde-staging.broadinstitute.org/` 
 
 ## TODO
 1. We need to run these tests against an on-demand (BEE) environment.
