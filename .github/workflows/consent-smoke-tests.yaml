@@ -33,14 +33,17 @@ jobs:
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev", "bee-template-name": "duos", "version-template": "dev" }'
-      - name: run smoke tests
+      - name: Run Smoke Tests
         run: |
           mvn clean gatling:test -Dconsent.baseUrl=https://consent.${{ github.event.repository.name }}-${{ github.run_id }}-dev.bee.envs-terra.bio/
-#      - name: Bee Destroy
-#        uses: broadinstitute/workflow-dispatch@v3
-#        with:
-#          workflow: bee-destroy
-#          repo: broadinstitute/terra-github-workflows
-#          ref: refs/heads/main
-#          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
-#          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
+      - name: Upload Test Results
+        run: |
+          echo "TODO: Parse and upload test results to QA BQ"
+      - name: Bee Destroy
+        uses: broadinstitute/workflow-dispatch@v3
+        with:
+          workflow: bee-destroy
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN}}
+          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
