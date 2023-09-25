@@ -12,10 +12,10 @@ public class TestConfig {
   }
 
   public String getBaseUrl() {
-    return config.getString("ontology.baseUrl");
+    return config.getString("consent.baseUrl");
   }
 
   public int getPause() {
-    return config.getInt("ontology.pause");
+    return config.getInt("consent.pause");
   }
 }
