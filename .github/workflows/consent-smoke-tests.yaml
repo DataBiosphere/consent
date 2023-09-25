@@ -1,15 +1,16 @@
 name: consent-smoke-tests
 
 on:
+  pull_request:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
   create-bee-workflow:
-    strategy:
-      matrix:
-        terra-env: [ dev ] # what versions of apps do we use to emulate types of environments
+#    strategy:
+#      matrix:
+#        terra-env: [ dev ] # what versions of apps do we use to emulate types of environments
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -24,15 +25,15 @@ jobs:
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
-          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-${{ matrix.terra-env }}", "bee-template-name": "duos", "version-template": "${{ matrix.terra-env }}" }'
+          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev", "bee-template-name": "duos", "version-template": "dev" }'
       - name: run smoke tests
         run: |
           mvn clean gatling:test -Dconsent.baseUrl=https://consent.consent-${{ github.run_id }}-dev.bee.envs-terra.bio/
-      - name: Bee Destroy
-        uses: broadinstitute/workflow-dispatch@v3
-        with:
-          workflow: bee-destroy
-          repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
-          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
-          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-${{ matrix.terra-env }}" }'
+#      - name: Bee Destroy
+#        uses: broadinstitute/workflow-dispatch@v3
+#        with:
+#          workflow: bee-destroy
+#          repo: broadinstitute/terra-github-workflows
+#          ref: refs/heads/main
+#          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
+#          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
