@@ -20,7 +20,6 @@ jobs:
           check_name: deploy # Optional
           timeout_mins: 5 # Default: 15
           poll_interval_ms: 10000 # Default: 15000
-            - name: Wait for Workflow Action
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
