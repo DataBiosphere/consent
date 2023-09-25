@@ -15,8 +15,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.entity.ContentType;
@@ -32,6 +34,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -97,121 +100,219 @@ class ElasticSearchServiceTest {
     when(response.getEntity()).thenReturn(entity);
   }
 
-  @Test
-  void testToDatasetTermComplete() {
+  private Institution createInstitution() {
+    Institution institution = new Institution();
+    institution.setId(RandomUtils.nextInt(1, 1000));
+    return institution;
+  }
+  private User createUser(int start, int max) {
     User user = new User();
-    user.setUserId(1);
+    user.setUserId(RandomUtils.nextInt(start, max));
     user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
     user.setEmail(RandomStringUtils.randomAlphabetic(10));
+    Institution i = createInstitution();
+    user.setInstitution(i);
+    user.setInstitutionId(i.getId());
+    return user;
+  }
 
+  private Dataset createDataset(User user, User updateUser, DataUse dataUse, Dac dac) {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(100);
-    dataset.setAlias(10);
+    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setAlias(dataset.getDataSetId());
     dataset.setDatasetIdentifier();
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
-    dataset.setDacId(1);
+    dataset.setDatasetName(dataset.getName());
+    dataset.setDacId(dac.getDacId());
     dataset.setDacApproval(true);
-    dataset.setDataUse(new DataUse());
+    dataset.setDataUse(dataUse);
     dataset.setCreateUser(user);
+    dataset.setUpdateUserId(updateUser.getUserId());
     dataset.setCreateUserId(user.getUserId());
+    return dataset;
+  }
 
+  private Dac createDac() {
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(1, 100));
+    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    return dac;
+  }
+
+  private Study createStudy(User user) {
     Study study = new Study();
     study.setName(RandomStringUtils.randomAlphabetic(10));
     study.setDescription(RandomStringUtils.randomAlphabetic(20));
-    study.setStudyId(12345);
+    study.setStudyId(RandomUtils.nextInt(1, 100));
     study.setPiName(RandomStringUtils.randomAlphabetic(10));
     study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
-    study.setCreateUserId(9);
-    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
+    study.setCreateUserEmail(user.getEmail());
     study.setCreateUserId(user.getUserId());
     study.setCreateUserEmail(user.getEmail());
+    return study;
+  }
 
-    StudyProperty phenotypeProperty = new StudyProperty();
-    phenotypeProperty.setKey("phenotypeIndication");
-    phenotypeProperty.setType(PropertyType.String);
-    phenotypeProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+  private StudyProperty createStudyProperty(String key, PropertyType type) {
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(key);
+    prop.setType(type);
+    switch (type) {
+      case Boolean -> prop.setValue(true);
+      case Json -> {
+        var val = new JsonArray();
+        val.add(RandomStringUtils.randomAlphabetic(10));
+        prop.setValue(val);
+      }
+      case Number -> prop.setValue(RandomUtils.nextInt(1, 100));
+      default -> prop.setValue(RandomStringUtils.randomAlphabetic(10));
+    }
+    return prop;
+  }
 
-    StudyProperty speciesProperty = new StudyProperty();
-    speciesProperty.setKey("species");
-    speciesProperty.setType(PropertyType.String);
-    speciesProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type) {
+    DatasetProperty prop = new DatasetProperty();
+    prop.setSchemaProperty(schemaProp);
+    prop.setPropertyType(type);
+    switch (type) {
+      case Boolean -> prop.setPropertyValue(true);
+      case Number -> prop.setPropertyValue(RandomUtils.nextInt(1, 100));
+      default -> prop.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    }
+    return prop;
+  }
 
-    StudyProperty dataCustodianEmailProperty = new StudyProperty();
-    dataCustodianEmailProperty.setKey("dataCustodianEmail");
-    dataCustodianEmailProperty.setType(PropertyType.String);
-    var email = new JsonArray();
-    email.add(RandomStringUtils.randomAlphabetic(10));
-    dataCustodianEmailProperty.setValue(email);
-
-    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
-
-    dataset.setStudy(study);
-
-    DatasetProperty openAccessProp = new DatasetProperty();
-    openAccessProp.setSchemaProperty("openAccess");
-    openAccessProp.setPropertyType(PropertyType.Boolean);
-    openAccessProp.setPropertyValue(true);
-
-    DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setSchemaProperty("dataLocation");
-    dataLocationProp.setPropertyType(PropertyType.String);
-    dataLocationProp.setPropertyValue("some location");
-
-    DatasetProperty numParticipantsProp = new DatasetProperty();
-    numParticipantsProp.setSchemaProperty("numberOfParticipants");
-    numParticipantsProp.setPropertyType(PropertyType.Number);
-    numParticipantsProp.setPropertyValue(20);
-
-    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
-
+  private DataUseSummary createDataUseSummary() {
     DataUseSummary dataUseSummary = new DataUseSummary();
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
+    return dataUseSummary;
+  }
 
-    Dac dac = new Dac();
-    dac.setDacId(dataset.getDacId());
-    dac.setName("Dac Name");
+  /**
+   * Private container record to consolidate dataset and associated object creation
+   */
+  private record DatasetRecord(User createUser, User updateUser, Dac dac, Dataset dataset, Study study) {}
+  private DatasetRecord createDatasetRecord() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Study study = createStudy(user);
+    study.setProperties(Set.of(
+        createStudyProperty("phenotypeIndication", PropertyType.String),
+        createStudyProperty("species", PropertyType.String),
+        createStudyProperty("dataCustodianEmail", PropertyType.Json)
+    ));
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    dataset.setProperties(Set.of(
+        createDatasetProperty("openAccess", PropertyType.Boolean),
+        createDatasetProperty("numberOfParticipants", PropertyType.Number),
+        createDatasetProperty("url", PropertyType.String),
+        createDatasetProperty("dataLocation", PropertyType.String)
+    ));
+    dataset.setStudy(study);
+    return new DatasetRecord(user, updateUser, dac, dataset, study);
+  }
 
-    when(userDao.findUserById(any())).thenReturn(user);
-    when(dacDAO.findById(any())).thenReturn(dac);
-    when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
-        List.of(10, 11));
-    when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
+  @Test
+  void testToDatasetTerm_UserInfo() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(datasetRecord.updateUser);
+    when(institutionDAO.findInstitutionById(datasetRecord.createUser.getInstitutionId())).thenReturn(datasetRecord.createUser.getInstitution());
+    when(institutionDAO.findInstitutionById(datasetRecord.updateUser.getInstitutionId())).thenReturn(datasetRecord.updateUser.getInstitution());
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
     initService();
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    assertEquals(datasetRecord.createUser.getUserId(), term.getCreateUserId());
+    assertEquals(datasetRecord.createUser.getDisplayName(), term.getCreateUserDisplayName());
+    assertEquals(datasetRecord.createUser.getUserId(), term.getSubmitter().userId());
+    assertEquals(datasetRecord.createUser.getDisplayName(), term.getSubmitter().displayName());
+    assertEquals(datasetRecord.createUser.getInstitutionId(), term.getSubmitter().institution().id());
+    assertEquals(datasetRecord.createUser.getInstitution().getName(), term.getSubmitter().institution().name());
+    assertEquals(datasetRecord.updateUser.getUserId(), term.getUpdateUser().userId());
+    assertEquals(datasetRecord.updateUser.getDisplayName(), term.getUpdateUser().displayName());
+    assertEquals(datasetRecord.updateUser.getInstitutionId(), term.getUpdateUser().institution().id());
+    assertEquals(datasetRecord.updateUser.getInstitution().getName(), term.getUpdateUser().institution().name());
+  }
 
-    assertEquals(dataset.getDataSetId(), term.getDatasetId());
-    assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
-    assertEquals(user.getUserId(), term.getCreateUserId());
-    assertEquals(user.getDisplayName(), term.getCreateUserDisplayName());
-    assertEquals(study.getDescription(), term.getStudy().getDescription());
-    assertEquals(study.getName(), term.getStudy().getStudyName());
-    assertEquals(study.getStudyId(), term.getStudy().getStudyId());
-    assertEquals(phenotypeProperty.getValue(), term.getStudy().getPhenotype());
-    assertEquals(speciesProperty.getValue(), term.getStudy().getSpecies());
-    assertEquals(study.getPiName(), term.getStudy().getPiName());
-    assertEquals(study.getCreateUserId(), term.getStudy().getDataSubmitterId());
-    assertEquals(study.getCreateUserEmail(), term.getStudy().getDataSubmitterEmail());
-    assertEquals(dataCustodianEmailProperty.getValue().toString(),
-        GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class));
+  @Test
+  void testToDatasetTerm_StudyInfo() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(datasetRecord.updateUser);
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
+    initService();
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
+    assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
+    assertEquals(datasetRecord.study.getStudyId(), term.getStudy().getStudyId());
+    Optional<StudyProperty> phenoProp = datasetRecord.study.getProperties().stream().filter(p -> p.getKey().equals("phenotypeIndication")).findFirst();
+    assertTrue(phenoProp.isPresent());
+    assertEquals(phenoProp.get().getValue().toString(), term.getStudy().getPhenotype());
+    Optional<StudyProperty> speciesProp = datasetRecord.study.getProperties().stream().filter(p -> p.getKey().equals("species")).findFirst();
+    assertTrue(speciesProp.isPresent());
+    assertEquals(speciesProp.get().getValue().toString(), term.getStudy().getSpecies());
+    assertEquals(datasetRecord.study.getPiName(), term.getStudy().getPiName());
+    assertEquals(datasetRecord.study.getCreateUserEmail(), term.getStudy().getDataSubmitterEmail());
+    assertEquals(datasetRecord.study.getCreateUserId(), term.getStudy().getDataSubmitterId());
+    Optional<StudyProperty> custodianProp = datasetRecord.study.getProperties().stream().filter(p -> p.getKey().equals("dataCustodianEmail")).findFirst();
+    assertTrue(custodianProp.isPresent());
+    String termCustodians = GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class);
+    assertEquals(custodianProp.get().getValue().toString(), termCustodians);
+    assertEquals(datasetRecord.study.getPublicVisibility(), term.getStudy().getPublicVisibility());
+    assertEquals(datasetRecord.study.getDataTypes(), term.getStudy().getDataTypes());
+  }
+
+  @Test
+  void testToDatasetTerm_DatasetInfo() {
+    List<Integer> approvedUserIds = List.of(1, 2);
+    DataUseSummary dataUseSummary = createDataUseSummary();
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(datasetRecord.updateUser);
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
+    when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(approvedUserIds);
+    initService();
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+
+    assertEquals(datasetRecord.dataset.getDataSetId(), term.getDatasetId());
+    assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+    assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
+    assertEquals(datasetRecord.dataset.getDatasetName(), term.getDatasetName());
+
+    Optional<DatasetProperty> countProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("numberOfParticipants")).findFirst();
+    assertTrue(countProp.isPresent());
+    assertEquals(Integer.valueOf(countProp.get().getPropertyValue().toString()), term.getParticipantCount());
     assertEquals(dataUseSummary, term.getDataUse());
+    Optional<DatasetProperty> locationProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("dataLocation")).findFirst();
+    assertTrue(locationProp.isPresent());
+    assertEquals(locationProp.get().getPropertyValue().toString(), term.getDataLocation());
+    Optional<DatasetProperty> urlProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("url")).findFirst();
+    assertTrue(urlProp.isPresent());
+    assertEquals(urlProp.get().getPropertyValue().toString(), term.getUrl());
+    assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
+    Optional<DatasetProperty> openAccessProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("openAccess")).findFirst();
+    assertTrue(openAccessProp.isPresent());
+    assertEquals(Boolean.valueOf(openAccessProp.get().getPropertyValue().toString()), term.getOpenAccess());
+    assertEquals(approvedUserIds, term.getApprovedUserIds());
+  }
 
-    assertEquals(study.getDataTypes(), term.getStudy().getDataTypes());
-    assertEquals(dataLocationProp.getPropertyValue(), term.getDataLocation());
-    assertEquals(dataset.getDacId(), term.getDacId());
-    assertEquals(dac.getName(), term.getDacName());
-    assertEquals(dataset.getDacApproval(), term.getDacApproval());
-    assertEquals(openAccessProp.getPropertyValue(), term.getOpenAccess());
-    assertEquals(study.getPublicVisibility(), term.getStudy().getPublicVisibility());
+  @Test
+  void testToDatasetTerm_DacInfo() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
+    initService();
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
-    assertEquals(numParticipantsProp.getPropertyValue(), term.getParticipantCount());
-
-    assertEquals(List.of(10, 11),
-        term.getApprovedUserIds());
-
+    assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
+    assertEquals(datasetRecord.dac.getDacId(), term.getDacId());
+    assertEquals(datasetRecord.dac.getDacId(), term.getDac().dacId());
+    assertEquals(datasetRecord.dac.getName(), term.getDac().dacName());
   }
 
   @Test
