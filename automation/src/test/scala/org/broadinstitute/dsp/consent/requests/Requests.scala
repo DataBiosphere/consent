@@ -136,7 +136,6 @@ object Requests {
     val darPartialJson: String = "darPartialJson"
     val darReferenceId: String = "darReferenceId"
     val darId: String = "darId"
-    val manageDarResponse: String = "manageDarResponse"
     val darConsentResponse: String = "darConsentResponse"
     val translateResponse: String = "translateResponse"
 
