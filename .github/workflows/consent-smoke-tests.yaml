@@ -6,7 +6,7 @@ jobs:
   build:
     uses: ./.github/workflows/build.yaml
   create-bee-workflow:
-    needs: [tag-build-push, report-to-sherlock]
+    needs: [build]
     strategy:
       matrix:
         terra-env: [ dev ] # what versions of apps do we use to emulate types of environments
