@@ -9,7 +9,7 @@ import org.broadinstitute.dsp.consent.scenarios.GroupedScenarios._
 class UserScenarios extends Simulation with TestRunner {
     runScenarios(
         List(
-            GroupedScenario("User Login") { exec(Requests.User.me(OK.code, TestConfig.researcherHeader)) }
+            GroupedScenario("User Login") { exec(Requests.User.me(OK.code, TestConfig.adminHeader)) }
         )
     )
 }
