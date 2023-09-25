@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
     - develop
-  workflow_call:
 env:
   REGISTRY_HOST: gcr.io
   GOOGLE_PROJECT: broad-dsp-gcr-public

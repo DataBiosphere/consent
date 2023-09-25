@@ -3,10 +3,7 @@ name: consent-smoke-tests
 on: [ pull_request ]
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yaml
   create-bee-workflow:
-    needs: [build]
     strategy:
       matrix:
         terra-env: [ dev ] # what versions of apps do we use to emulate types of environments
@@ -15,6 +12,13 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
+      - name: Wait for build to succeed
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Tag, Build and Push Image'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
