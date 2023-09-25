@@ -12,17 +12,15 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-      - name: Wait for Workflow Action
-        uses: kamilchodola/wait-for-workflow-action@1.1.0
+      - name: Await the completion of FancyDispatch
+        uses: codex-/await-local-workflow-run@v1
         with:
-          GITHUB_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_TOKEN }}
-          workflow_id: 'build.yml'
-          max_wait_minutes: '3'
-          interval: '5'
-          timeout: '60'
-          org_name: 'DataBiosphere'
-          repo_name: 'consent'
-          ref: '${{ github.ref }}'
+          token: ${{ github.token }} # The standard action GitHub token should be enough to poll the local workflows.
+          workflow: build.yml # filename of the workflow you wish to await
+          check_name: deploy # Optional
+          timeout_mins: 5 # Default: 15
+          poll_interval_ms: 10000 # Default: 15000
+            - name: Wait for Workflow Action
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
