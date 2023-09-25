@@ -12,13 +12,17 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-      - name: Wait for build to succeed
-        uses: lewagon/wait-on-check-action@v1.3.1
+      - name: Wait for Workflow Action
+        uses: kamilchodola/wait-for-workflow-action@1.1.0
         with:
-          ref: ${{ github.ref }}
-          check-name: 'report-to-sherlock'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 180
+          GITHUB_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_TOKEN }}
+          workflow_id: 'build.yml'
+          max_wait_minutes: '3'
+          interval: '5'
+          timeout: '60'
+          org_name: 'DataBiosphere'
+          repo_name: 'consent'
+          ref: '${{ github.ref }}'
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
