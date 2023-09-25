@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.ref }}
           check-name: 'Tag, Build and Push Image'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+          wait-interval: 180
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
