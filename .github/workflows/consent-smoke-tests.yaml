@@ -15,11 +15,10 @@ jobs:
       - name: Await the completion of FancyDispatch
         uses: codex-/await-local-workflow-run@v1
         with:
-          token: ${{ github.token }} # The standard action GitHub token should be enough to poll the local workflows.
-          workflow: build.yml # filename of the workflow you wish to await
-          check_name: deploy # Optional
-          timeout_mins: 5 # Default: 15
-          poll_interval_ms: 10000 # Default: 15000
+          token: ${{ github.token }}
+          workflow: build.yaml
+          timeout_mins: 5
+          poll_interval_ms: 10000
       - name: Echo Consent version
         run: |
           echo '${{ needs.tag-build-push.outputs.sha-tag }}'
