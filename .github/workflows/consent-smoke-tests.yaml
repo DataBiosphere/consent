@@ -12,7 +12,12 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps:
-      - name: Await the completion of FancyDispatch
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Get Short Sha
+        id: short-sha
+        run: echo "sha=$(git rev-parse --short=12 HEAD)" >> $GITHUB_OUTPUT
+      - name: Await the completion of Tag/Build/Push
         uses: codex-/await-local-workflow-run@v1
         with:
           token: ${{ github.token }}
@@ -21,14 +26,13 @@ jobs:
           poll_interval_ms: 10000
       - name: Echo Consent version
         run: |
-          echo '${{ needs.tag-build-push.outputs.sha-tag }}'
-
-#      - name: dispatch to terra-github-workflows
-#        uses: broadinstitute/workflow-dispatch@v3
-#        with:
-#          workflow: bee-create
-#          repo: broadinstitute/terra-github-workflows
-#          ref: refs/heads/main
-#          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
-#          # manually recalculate b/c env context is broken https://github.com/actions/runner/issues/480
-#          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-${{ matrix.terra-env }}", "version-template": "${{ matrix.terra-env }}", "custom-version-json": "${{ needs.tag-build-push.outputs.sha-tag }}" }'
+          echo ${{ steps.short-sha.outputs.sha }}
+      - name: dispatch to terra-github-workflows
+        uses: broadinstitute/workflow-dispatch@v3
+        with:
+          workflow: bee-create
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN}} # github token for access to kick off a job in the private repo
+          # manually recalculate b/c env context is broken https://github.com/actions/runner/issues/480
+          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-${{ matrix.terra-env }}", "version-template": "${{ matrix.terra-env }}", "custom-version-json": "${{ steps.short-sha.outputs.sha }}" }'
