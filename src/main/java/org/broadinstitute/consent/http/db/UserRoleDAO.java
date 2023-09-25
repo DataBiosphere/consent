@@ -24,7 +24,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     INNER JOIN user_role ur ON ur.role_id = r.role_id 
     WHERE ur.user_id = :userId
     """)
-  List<UserRole> findRolesByUserId(@Bind("userId") Integer userId); // r.roleId => role_id
+  List<UserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
   @SqlQuery("""
     SELECT DISTINCT name
@@ -33,7 +33,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     INNER JOIN users u ON u.user_id = ur.user_id
     WHERE LOWER(u.email) = LOWER(:email)
     """)
-  List<String> findRoleNamesByUserEmail(@Bind("email") String email); // r.role_id
+  List<String> findRoleNamesByUserEmail(@Bind("email") String email);
 
   @UseRowMapper(DatabaseRoleMapper.class)
   @SqlQuery("""
@@ -47,7 +47,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     FROM roles
     WHERE name = :roleName
     """)
-  Integer findRoleIdByName(@Bind("roleName") String roleName); // roleId in roles
+  Integer findRoleIdByName(@Bind("roleName") String roleName);
 
   @SqlBatch("""
     INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
@@ -66,7 +66,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     DELETE FROM user_role WHERE user_id = :userId AND role_id IN (<existentRoles>)
     """)
   void removeUserRoles(@Bind("userId") Integer userId,
-      @BindList("existentRoles") List<Integer> existentRoles); // what is existent_roles?
+      @BindList("existentRoles") List<Integer> existentRoles);
 
   @SqlUpdate("""
     INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
@@ -84,7 +84,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     INNER JOIN user_role ur on ur.role_id = r.role_id  
     WHERE ur.user_id = :userId AND r.name = :name
     """)
-  Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id); // change r.roleId
+  Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
 
   @SqlQuery("""
     SELECT *
@@ -93,6 +93,6 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     WHERE ur.user_id = :userId AND ur.role_id = :roleId
     """)
   UserRole findRoleByUserIdAndRoleId(@Bind("userId") Integer userId,
-      @Bind("roleId") Integer roleId); // change r.roleId
+      @Bind("roleId") Integer roleId);
 
 }
