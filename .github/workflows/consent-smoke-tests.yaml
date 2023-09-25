@@ -4,7 +4,7 @@ on: [ pull_request ]
 
 jobs:
   build:
-    uses: ./.github/build.yaml
+    uses: ./.github/workflows/build.yaml
   create-bee-workflow:
     needs: [tag-build-push, report-to-sherlock]
     strategy:
