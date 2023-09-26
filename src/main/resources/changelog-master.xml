@@ -128,4 +128,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2023-07-27-match-rationale.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-09-20-rename-role-id-column-in-roles.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
