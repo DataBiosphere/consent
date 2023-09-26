@@ -7,6 +7,7 @@ public class DatasetTerm {
 
   private Integer datasetId;
   private Integer createUserId;
+  @Deprecated // Use submitter.displayName instead
   private String createUserDisplayName;
   private String datasetIdentifier;
   private String datasetName;
@@ -15,11 +16,15 @@ public class DatasetTerm {
   private String dataLocation;
   private String url;
   private Integer dacId;
+  @Deprecated // Use dac.name instead
   private String dacName;
   private Boolean dacApproval;
   private Boolean openAccess;
   private List<Integer> approvedUserIds;
   private StudyTerm study;
+  private UserTerm submitter;
+  private UserTerm updateUser;
+  private DacTerm dac;
 
   public Integer getDatasetId() {
     return datasetId;
@@ -68,7 +73,6 @@ public class DatasetTerm {
   public void setParticipantCount(Integer participantCount) {
     this.participantCount = participantCount;
   }
-
 
   public DataUseSummary getDataUse() {
     return dataUse;
@@ -140,5 +144,29 @@ public class DatasetTerm {
 
   public void setStudy(StudyTerm study) {
     this.study = study;
+  }
+
+  public UserTerm getSubmitter() {
+    return submitter;
+  }
+
+  public void setSubmitter(UserTerm submitter) {
+    this.submitter = submitter;
+  }
+
+  public UserTerm getUpdateUser() {
+    return updateUser;
+  }
+
+  public void setUpdateUser(UserTerm updateUser) {
+    this.updateUser = updateUser;
+  }
+
+  public DacTerm getDac() {
+    return dac;
+  }
+
+  public void setDac(DacTerm dac) {
+    this.dac = dac;
   }
 }
