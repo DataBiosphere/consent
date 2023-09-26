@@ -10,12 +10,16 @@ import org.broadinstitute.consent.performance.Endpoints;
 
 public class Status implements Endpoints {
 
-  public List<ScenarioBuilder> tests = List.of(
-      scenario("Liveness").exec(liveness().check(status().is(HttpStatusCodes.STATUS_CODE_OK)))
-          .pause(1, 5),
-      scenario("Status").exec(systemStatus().check(status().is(HttpStatusCodes.STATUS_CODE_OK)))
-          .pause(1, 5),
-      scenario("Version").exec(systemVersion().check(status().is(HttpStatusCodes.STATUS_CODE_OK)))
-          .pause(1, 5)
+  public record ScenarioTest(String name, ScenarioBuilder scenarioBuilder) {}
+
+  public List<ScenarioTest> scenarioTests = List.of(
+      new ScenarioTest("Liveness",
+          scenario("Liveness").exec(liveness().check(status().is(HttpStatusCodes.STATUS_CODE_OK)))
+              .pause(1, 5)),
+      new ScenarioTest("Status",
+          scenario("Status").exec(systemStatus().check(status().is(HttpStatusCodes.STATUS_CODE_OK)))
+              .pause(1, 5)),
+      new ScenarioTest("Version", scenario("Version").exec(
+          systemVersion().check(status().is(HttpStatusCodes.STATUS_CODE_OK))).pause(1, 5))
   );
 }
