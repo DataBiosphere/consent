@@ -9,6 +9,6 @@ import org.jdbi.v3.core.statement.StatementContext;
 public class DatabaseRoleMapper implements RowMapper<Role> {
 
   public Role map(ResultSet r, StatementContext ctx) throws SQLException {
-    return new Role(r.getInt("roleId"), r.getString("name"));
+    return new Role(r.getInt("role_id"), r.getString("name"));
   }
 }

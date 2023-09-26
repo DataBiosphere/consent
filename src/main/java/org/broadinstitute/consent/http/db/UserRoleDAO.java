@@ -18,45 +18,80 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(UserRoleMapper.class)
 public interface UserRoleDAO extends Transactional<UserRoleDAO> {
 
-  @SqlQuery("select * from roles r inner join user_role ur on ur.role_id = r.roleId where ur.user_id = :userId")
+  @SqlQuery("""
+    SELECT * 
+    FROM roles r
+    INNER JOIN user_role ur ON ur.role_id = r.role_id 
+    WHERE ur.user_id = :userId
+    """)
   List<UserRole> findRolesByUserId(@Bind("userId") Integer userId);
 
-  @SqlQuery("SELECT DISTINCT name " +
-      "  FROM roles r " +
-      "  INNER JOIN user_role ur ON ur.role_id = r.roleid " +
-      "  INNER JOIN users u ON u.user_id = ur.user_id " +
-      "  WHERE LOWER(u.email) = LOWER(:email)")
+  @SqlQuery("""
+    SELECT DISTINCT name
+    FROM roles r
+    INNER JOIN user_role ur ON ur.role_id = r.role_id
+    INNER JOIN users u ON u.user_id = ur.user_id
+    WHERE LOWER(u.email) = LOWER(:email)
+    """)
   List<String> findRoleNamesByUserEmail(@Bind("email") String email);
 
   @UseRowMapper(DatabaseRoleMapper.class)
-  @SqlQuery("select * from roles")
+  @SqlQuery("""
+    SELECT * 
+    FROM roles
+    """)
   List<Role> findRoles();
 
-  @SqlQuery("select roleId from roles where name = :roleName")
+  @SqlQuery("""
+    SELECT role_id
+    FROM roles
+    WHERE name = :roleName
+    """)
   Integer findRoleIdByName(@Bind("roleName") String roleName);
 
-  @SqlBatch("insert into user_role (role_id, user_id) values (:roleId, :userId)")
+  @SqlBatch("""
+    INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
+    """)
   void insertUserRoles(@BindBean List<UserRole> roles, @Bind("userId") Integer userId);
 
-  @SqlUpdate("update user_role set role_id = :newRoleId where user_id = :userId and role_id = :existentRoleId")
+  @SqlUpdate("""
+    UPDATE user_role SET role_id = :newRoleId
+    WHERE user_id = :userId AND role_id = :existentRoleId
+    """)
   void updateUserRoles(@Bind("newRoleId") Integer newRoleId,
       @Bind("userId") Integer userId,
       @Bind("existentRoleId") Integer existentRoleId);
 
-  @SqlUpdate("delete from user_role where user_id = :userId and role_id IN (<existentRoles>)")
+  @SqlUpdate("""
+    DELETE FROM user_role WHERE user_id = :userId AND role_id IN (<existentRoles>)
+    """)
   void removeUserRoles(@Bind("userId") Integer userId,
       @BindList("existentRoles") List<Integer> existentRoles);
 
-  @SqlUpdate("insert into user_role (role_id, user_id) values (:roleId, :userId)")
+  @SqlUpdate("""
+    INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)
+    """)
   void insertSingleUserRole(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId);
 
-  @SqlUpdate("delete from user_role where user_id = :userId and role_id = :roleId")
+  @SqlUpdate("""
+    DELETE FROM user_role WHERE user_id = :userId AND role_id = :roleId
+    """)
   void removeSingleUserRole(@Bind("userId") Integer userId, @Bind("roleId") Integer roleId);
 
-  @SqlQuery("select r.roleId from roles r inner join user_role ur on ur.role_id = r.roleId  where ur.user_id = :userId and r.name = :name")
+  @SqlQuery("""
+    SELECT r.role_id 
+    FROM roles r 
+    INNER JOIN user_role ur on ur.role_id = r.role_id  
+    WHERE ur.user_id = :userId AND r.name = :name
+    """)
   Integer findRoleByNameAndUser(@Bind("name") String name, @Bind("userId") Integer id);
 
-  @SqlQuery("select * from user_role ur inner join roles r on r.roleId = ur.role_id where ur.user_id = :userId and ur.role_id = :roleId")
+  @SqlQuery("""
+    SELECT *
+    FROM user_role ur 
+    INNER JOIN roles r ON r.role_id = ur.role_id
+    WHERE ur.user_id = :userId AND ur.role_id = :roleId
+    """)
   UserRole findRoleByUserIdAndRoleId(@Bind("userId") Integer userId,
       @Bind("roleId") Integer roleId);
 
