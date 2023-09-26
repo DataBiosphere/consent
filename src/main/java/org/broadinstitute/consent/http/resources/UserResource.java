@@ -452,6 +452,24 @@ public class UserResource extends Resource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @Path("/signing-officials/{userId}")
+  @RolesAllowed(RESEARCHER)
+  public Response getSOsByUserId(@PathParam("userId") Integer userId) {
+    try {
+      User user = userService.findUserById(userId);
+      if (Objects.nonNull(user.getInstitutionId())) {
+        List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(
+            user.getInstitutionId());
+        return Response.ok().entity(signingOfficials).build();
+      }
+      return Response.ok().entity(Collections.emptyList()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
   public Response getUserAcknowledgements(@Auth AuthUser authUser) {
