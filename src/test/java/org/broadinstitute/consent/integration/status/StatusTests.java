@@ -19,25 +19,26 @@ import org.junit.jupiter.api.Test;
  *     <testcase name="testStatus" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.184"/>
  *     <testcase name="testLiveness" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.144"/>
  */
+@DisplayName("Status Related Tests")
 class StatusTests implements IntegrationTestHelper {
 
   @DisplayName("Status: Status test")
   @Test
-  void testStatus() throws Exception {
+  void status_page_OK() throws Exception {
     SimpleResponse response = fetchGetResponse("status");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
   @DisplayName("Status: Liveness test")
   @Test
-  void testLiveness() throws Exception {
+  void liveness_page_OK() throws Exception {
     SimpleResponse response = fetchGetResponse("liveness");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
   @DisplayName("Status: Version test")
   @Test
-  void testVersion() throws Exception {
+  void version_page_OK() throws Exception {
     SimpleResponse response = fetchGetResponse("version");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }

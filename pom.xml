@@ -70,8 +70,6 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${surefire.version}</version>
             <configuration>
-              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
               <systemPropertyVariables>
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
@@ -97,8 +95,6 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${surefire.version}</version>
             <configuration>
-              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
               <includes>**/integration/**/*.java</includes>
             </configuration>
             <dependencies>
