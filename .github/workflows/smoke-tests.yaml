@@ -41,7 +41,7 @@ jobs:
         if: always()
         with:
           name: test-reports
-          path: '/target/surefire-reports/'
+          path: 'target/surefire-reports'
       - name: Bee Destroy
         uses: broadinstitute/workflow-dispatch@v3
         with:
@@ -51,7 +51,7 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
 
-  upload-test-results:
+  upload-test-reports:
     needs: [smoke-tests]
     if: always()
     permissions:
@@ -65,4 +65,3 @@ jobs:
       artifact: 'test-reports'
       big-query-table: 'broad-dsde-qa.automated_testing.test_results'
       subuuid: ${{ github.run_id }}
-

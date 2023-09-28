@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.broadinstitute.consent.integration.IntegrationTestHelper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,18 +21,21 @@ import org.junit.jupiter.api.Test;
  */
 class StatusTests implements IntegrationTestHelper {
 
+  @DisplayName("Status: Status test")
   @Test
   void testStatus() throws Exception {
     SimpleResponse response = fetchGetResponse("status");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
+  @DisplayName("Status: Liveness test")
   @Test
   void testLiveness() throws Exception {
     SimpleResponse response = fetchGetResponse("liveness");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
+  @DisplayName("Status: Version test")
   @Test
   void testVersion() throws Exception {
     SimpleResponse response = fetchGetResponse("version");
