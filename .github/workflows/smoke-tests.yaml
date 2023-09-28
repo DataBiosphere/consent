@@ -36,9 +36,21 @@ jobs:
       - name: Run Smoke Tests
         run: |
           mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ github.event.repository.name }}-${{ github.run_id }}-dev.bee.envs-terra.bio/
+      - name: Store Test Result Artifact
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports
+          path: '/target/surefire-reports/'
       - name: Upload Test Results
-        run: |
-          echo "TODO: Parse and upload test results to QA BQ"
+        uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@main
+        with:
+          service-name: 'duos'
+          test-uuid:  ${{ github.run_id }}
+          environment: 'dev'
+          artifact: 'test-reports'
+          big-query-table: 'broad-dsde-qa.automated_testing.test_results'
+          subuuid: ${{ github.run_id }}
       - name: Bee Destroy
         uses: broadinstitute/workflow-dispatch@v3
         with:
