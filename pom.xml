@@ -24,8 +24,6 @@
     <junit.version>5.10.0</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.5.0</mockito.version>
-    <gatling.highcharts.version>3.9.5</gatling.highcharts.version>
-    <gatling.plugin.version>4.5.0</gatling.plugin.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -50,6 +48,7 @@
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
               <includes>**/*.java</includes>
+              <excludes>**/integration/**/*.java</excludes>
             </configuration>
             <dependencies>
               <dependency>
@@ -89,6 +88,30 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${surefire.version}</version>
+            <configuration>
+              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
+              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
+              <includes>**/integration/**/*.java</includes>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
@@ -108,12 +131,6 @@
     </testResources>
 
     <plugins>
-
-      <plugin>
-        <groupId>io.gatling</groupId>
-        <artifactId>gatling-maven-plugin</artifactId>
-        <version>${gatling.plugin.version}</version>
-      </plugin>
 
       <plugin>
         <groupId>org.owasp</groupId>
@@ -351,13 +368,6 @@
   </dependencyManagement>
 
   <dependencies>
-
-    <dependency>
-      <groupId>io.gatling.highcharts</groupId>
-      <artifactId>gatling-charts-highcharts</artifactId>
-      <version>${gatling.highcharts.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>com.networknt</groupId>

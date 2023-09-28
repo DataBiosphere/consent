@@ -35,7 +35,7 @@ jobs:
           inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev", "bee-template-name": "duos", "version-template": "dev" }'
       - name: Run Smoke Tests
         run: |
-          mvn clean gatling:test -Dconsent.baseUrl=https://consent.${{ github.event.repository.name }}-${{ github.run_id }}-dev.bee.envs-terra.bio/
+          mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ github.event.repository.name }}-${{ github.run_id }}-dev.bee.envs-terra.bio/
       - name: Upload Test Results
         run: |
           echo "TODO: Parse and upload test results to QA BQ"
