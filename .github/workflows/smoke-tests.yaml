@@ -57,7 +57,7 @@ jobs:
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
-          inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
+          inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}" }'
       - name: Notify Slack
         if: github.event_name == 'push'
         uses: broadinstitute/action-slack@v3.8.0
