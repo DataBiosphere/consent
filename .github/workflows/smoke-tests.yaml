@@ -1,12 +1,17 @@
 name: consent-smoke-tests
 
 on:
+  pull_request:
+    types:
+      - opened
+      - closed
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
   smoke-tests:
+#    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -53,6 +58,16 @@ jobs:
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ github.event.repository.name }}-${{ github.run_id }}-dev" }'
+      - name: Notify Slack
+        if: github.event_name == 'push'
+        uses: broadinstitute/action-slack@v3.8.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          status: ${{ job.status }}
+          channel: "#duos-notifications"
+          fields: repo,commit,author,action,eventName,ref,workflow,job,took
 
   upload-test-reports:
     needs: [smoke-tests]
