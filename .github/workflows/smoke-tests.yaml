@@ -5,9 +5,6 @@ on:
     types:
       - opened
       - closed
-  workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
   smoke-tests:
@@ -59,7 +56,6 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}" }'
       - name: Notify Slack
-        if: github.event_name == 'push'
         uses: broadinstitute/action-slack@v3.8.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
