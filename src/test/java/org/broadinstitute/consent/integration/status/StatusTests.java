@@ -11,13 +11,15 @@ import org.junit.jupiter.api.Test;
 /**
  * These tests are not parameterized because that displays poorly in the results xml, i.e. compare:
  *   Parameterized:
- *     <testcase name="testStatus(String 1)" classname="org.broadinstitute.consent.integration.status.StatusTests" time="1.004"/>
- *     <testcase name="testStatus(String 2)" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.184"/>
- *     <testcase name="testStatus(String 3)" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.144"/>
+ *     <testcase name="testPageOk(String 1)" ...
+ *     <testcase name="testPageOk(String 2)" ...
+ *     <testcase name="testPageOk(String 3)" ...
  *   Non-parameterized:
- *     <testcase name="testVersion" classname="org.broadinstitute.consent.integration.status.StatusTests" time="1.004"/>
- *     <testcase name="testStatus" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.184"/>
- *     <testcase name="testLiveness" classname="org.broadinstitute.consent.integration.status.StatusTests" time="0.144"/>
+ *     <testcase name="version_page_OK" ...
+ *     <testcase name="status_page_OK" ...
+ *     <testcase name="liveness_page_OK" ...
+ * It would be ideal if the provided display name was used in the xml, but that only appears in the
+ * IDE display.
  */
 @DisplayName("Status Related Tests")
 class StatusTests implements IntegrationTestHelper {
