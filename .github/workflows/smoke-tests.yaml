@@ -1,11 +1,9 @@
 name: consent-smoke-tests
 
-on:
-  pull_request:
-    types:
-      - opened
-      - closed
-      - edited
+on: [pull_request]
+#  pull_request:
+#    types:
+#      - closed
 
 jobs:
   smoke-tests:
