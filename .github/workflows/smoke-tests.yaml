@@ -1,13 +1,13 @@
 name: consent-smoke-tests
 
-on: [pull_request]
-#  pull_request:
-#    types:
-#      - closed
+on:
+  pull_request:
+    types:
+      - closed
 
 jobs:
   smoke-tests:
-#    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
