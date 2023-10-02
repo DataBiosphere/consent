@@ -196,6 +196,66 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUnsupportedUnicodeDarInsert() {
+    String unsupportedUnicode = "\u0000";
+    DarCollection collection = createDarCollection();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collection.getDarCollectionId(),
+        referenceId,
+        collection.getCreateUserId(),
+        now, now, now, now,
+        data);
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(dar);
+    assertFalse(dar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
+  void testUnsupportedUnicodeDarUpdate() {
+    String unsupportedUnicode = "\u0000";
+    DarCollection collection = createDarCollection();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
+    assertNotNull(dar);
+    Date now = new Date();
+
+    String rus = RandomStringUtils.random(10, true, false);
+    dar.getData().setRus(rus + String.format(" %s ", unsupportedUnicode));
+    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), collection.getCreateUserId(),
+        now, now,
+        now, dar.getData());
+
+    DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertNotNull(updatedDar);
+    assertFalse(updatedDar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
+  void testUnsupportedUnicodeDraftDar() {
+    String unsupportedUnicode = "\u0000";
+    User user = createUser();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId,
+        user.getUserId(),
+        now,
+        now,
+        now,
+        now,
+        data
+    );
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(dar);
+    assertFalse(dar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
   void testInsertDraftDataAccessRequest() {
     DataAccessRequest dar = createDraftDataAccessRequest();
     assertNotNull(dar);

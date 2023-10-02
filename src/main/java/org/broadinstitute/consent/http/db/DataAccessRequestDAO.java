@@ -193,7 +193,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       "UPDATE data_access_request "
-          + "SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, "
+          + "SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate, "
           + "submission_date = :submissionDate, update_date = :updateDate "
           + "WHERE reference_id = :referenceId")
   void updateDataByReferenceId(
@@ -218,7 +218,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   @SqlUpdate(
       "UPDATE data_access_request dar "
-          + "SET data=jsonb_set((dar.data #>> '{}')::jsonb, '{status}', '\"Canceled\"') "
+          + "SET data=jsonb_set((regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb, '{status}', '\"Canceled\"') "
           + "WHERE reference_id IN (<referenceIds>)")
   void cancelByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
