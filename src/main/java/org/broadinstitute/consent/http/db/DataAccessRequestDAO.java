@@ -36,7 +36,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.draft != true "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
@@ -52,7 +52,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       " SELECT distinct e.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, "
           + " dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + " (dar.data #>> '{}')::jsonb AS data "
+          + " (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data "
           + " FROM data_access_request dar "
           + " INNER JOIN election e "
           + " ON e.reference_id = dar.reference_id "
@@ -110,7 +110,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.draft = true "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
@@ -125,7 +125,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.draft = true "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL) "
@@ -142,7 +142,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.draft = false "
           + "  AND dar.user_id = :userId "
@@ -159,7 +159,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.reference_id = :referenceId "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
@@ -174,7 +174,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       "SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + "  (dar.data #>> '{}')::jsonb AS data FROM data_access_request dar"
+          + "  (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar"
           + "  LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
           + "  WHERE dar.reference_id IN (<referenceIds>) "
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
