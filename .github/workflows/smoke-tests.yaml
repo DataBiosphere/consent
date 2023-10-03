@@ -23,12 +23,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-      - uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          cache: 'maven'
       - name: Bee Create
         uses: broadinstitute/workflow-dispatch@v3
         with:
