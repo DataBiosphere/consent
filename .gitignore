@@ -146,12 +146,6 @@ hs_err_pid*
 /data/
 /es_temp/
 
-## Automation
-automation/src/test/resources/application.conf
-automation/src/test/resources/logback.xml
-automation/src/test/resources/accounts/*.json
-automation/.bsp/*
-
 ## APP
 
 /config/
