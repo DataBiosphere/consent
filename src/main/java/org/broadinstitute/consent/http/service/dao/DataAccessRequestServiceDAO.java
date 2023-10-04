@@ -36,7 +36,7 @@ public class DataAccessRequestServiceDAO {
       handle.useTransaction(h -> {
 
         final String updateDataByReferenceId = "UPDATE data_access_request "
-            + "SET data = to_jsonb(:data), user_id = :userId, sort_date = :sortDate, "
+            + "SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate, "
             + "submission_date = :submissionDate, update_date = :updateDate "
             + "WHERE reference_id = :referenceId";
         final String deleteDarDatasetRelationByReferenceId = "DELETE FROM dar_dataset WHERE reference_id = :referenceId";
