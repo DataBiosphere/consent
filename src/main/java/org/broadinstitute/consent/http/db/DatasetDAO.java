@@ -433,10 +433,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Dataset> getDatasets();
 
   @SqlQuery("""
-          SELECT DISTINCT dp.property_value
+          SELECT DISTINCT dp.property_value as name
           FROM dataset_property dp
           INNER JOIN dataset d ON dp.dataset_id = d.dataset_id
           WHERE (dp.schema_property = 'studyName')
+          UNION DISTINCT
+          SELECT DISTINCT s.name as name
+          FROM study s
       """)
   Set<String> findAllStudyNames();
 

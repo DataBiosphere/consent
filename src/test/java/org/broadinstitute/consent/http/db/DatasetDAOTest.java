@@ -862,10 +862,13 @@ class DatasetDAOTest extends DAOTestHelper {
     String ds3Name = RandomStringUtils.randomAlphabetic(15);
     createDatasetProperty(ds3.getDataSetId(), "studyName", ds3Name, PropertyType.String);
 
+    Study study = insertStudyWithProperties();
+
     Set<String> returned = datasetDAO.findAllStudyNames();
 
-    assertEquals(3, returned.size());
-    assertTrue(returned.containsAll(Set.of(ds1Name, ds2Name, ds3Name)));
+    Set<String> names = Set.of(ds1Name, ds2Name, ds3Name, study.getName());
+    assertEquals(names.size(), returned.size());
+    assertTrue(returned.containsAll(names));
   }
 
   @Test
