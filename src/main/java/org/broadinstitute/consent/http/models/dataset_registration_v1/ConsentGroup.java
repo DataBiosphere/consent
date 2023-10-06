@@ -35,6 +35,7 @@ import java.util.Objects;
     "dataAccessCommitteeId",
     "dataLocation",
     "url",
+    "numberOfParticipants",
     "fileTypes"
 })
 public class ConsentGroup {
