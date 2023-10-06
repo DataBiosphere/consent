@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -176,9 +177,12 @@ public class DatasetResource extends Resource {
           registration,
           user,
           files);
-
-      URI uri = UriBuilder.fromPath("/api/dataset/v2").build();
-      return Response.created(uri).entity(datasets).build();
+      Study study = datasets.get(0).getStudy();
+      DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
+      DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
+      registration.setStudyId(study.getStudyId());
+      URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId())).build();
+      return Response.created(uri).entity(createdRegistration).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
