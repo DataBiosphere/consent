@@ -830,8 +830,12 @@ class DatasetResourceTest {
   @Test
   void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
     when(userService.findUserByEmail(any())).thenReturn(user);
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setStudyId(1);
+    dataset.setStudy(study);
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
-        List.of());
+        List.of(dataset));
     String schemaV1 = createDatasetRegistrationMock(user);
     initResource();
 
@@ -853,8 +857,12 @@ class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
 
     when(userService.findUserByEmail(any())).thenReturn(user);
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setStudyId(1);
+    dataset.setStudy(study);
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
-        List.of());
+        List.of(dataset));
     String schemaV1 = createDatasetRegistrationMock(user);
     initResource();
 
@@ -895,8 +903,12 @@ class DatasetResourceTest {
             "notFile", List.of(formDataBodyPartNotFile)));
 
     when(userService.findUserByEmail(any())).thenReturn(user);
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setStudyId(1);
+    dataset.setStudy(study);
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
-        List.of());
+        List.of(dataset));
     String schemaV1 = createDatasetRegistrationMock(user);
     initResource();
 
