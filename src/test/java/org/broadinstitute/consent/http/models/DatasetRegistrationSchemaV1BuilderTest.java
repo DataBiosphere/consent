@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.gson.Gson;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted;
@@ -81,6 +83,25 @@ class DatasetRegistrationSchemaV1BuilderTest {
     System.out.println(gson.toJson(schemaV1));
   }
 
+  @Test
+  void testBuildSchemaWithDatasetProps() {
+    DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
+    Study study = createMockStudy();
+    Dataset dataset = createMockDataset();
+    addAllDatasetProperties(dataset);
+    DatasetRegistrationSchemaV1 schemaV1 = builder.build(study, List.of(dataset));
+    assertNotNull(schemaV1.getConsentGroups());
+    assertFalse(schemaV1.getConsentGroups().isEmpty());
+    ConsentGroup consentGroup = schemaV1.getConsentGroups().get(0);
+    assertNotNull(consentGroup);
+    assertNotNull(consentGroup.getDatasetId());
+    assertNotNull(consentGroup.getConsentGroupName());
+
+    // TODO: Test code ... remove when complete.
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    System.out.println(gson.toJson(consentGroup));
+  }
+
   private Study createMockStudy() {
     Date now = new Date();
     Study study = new Study();
@@ -147,4 +168,46 @@ class DatasetRegistrationSchemaV1BuilderTest {
     property.setType(type);
     return property;
   }
+
+  private Dataset createMockDataset() {
+    User user = new User();
+    user.setUserId(randomInt());
+    user.setDisplayName(randomString());
+    user.setEmail(randomString());
+    Date now = new Date();
+    Dataset dataset = new Dataset();
+    dataset.setName(randomString());
+    dataset.setDataSetId(randomInt());
+    dataset.setDatasetName(randomString());
+    dataset.setCreateUser(user);
+    dataset.setCreateUserId(user.getUserId());
+    dataset.setCreateDate(now);
+    dataset.setDacApproval(true);
+    dataset.setUpdateUserId(user.getUserId());
+    dataset.setUpdateDate(now);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    dataset.setTranslatedDataUse(randomString());
+    return dataset;
+  }
+
+  private void addAllDatasetProperties(Dataset dataset) {
+    dataset.addProperty(createDatasetProperty(dataset, DatasetRegistrationSchemaV1Builder.openAccess, PropertyType.Boolean));
+    dataset.addProperty(createDatasetProperty(dataset, DatasetRegistrationSchemaV1Builder.generalResearchUse, PropertyType.Boolean));
+    dataset.addProperty(createDatasetProperty(dataset, DatasetRegistrationSchemaV1Builder.hmb, PropertyType.Boolean));
+  }
+
+  private DatasetProperty createDatasetProperty(Dataset dataset, String schemaProp, PropertyType type) {
+    DatasetProperty prop = new DatasetProperty();
+    prop.setDataSetId(dataset.getDataSetId());
+    prop.setSchemaProperty(schemaProp);
+    prop.setPropertyName(schemaProp);
+    prop.setPropertyType(type);
+    switch (type) {
+      case Boolean -> prop.setPropertyValue(true);
+      case Number -> prop.setPropertyValue(randomInt());
+      default -> prop.setPropertyValue(randomString());
+    }
+    return prop;
+  }
+
 }

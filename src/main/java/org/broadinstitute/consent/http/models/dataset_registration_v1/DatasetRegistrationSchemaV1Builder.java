@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
@@ -206,8 +208,133 @@ public class DatasetRegistrationSchemaV1Builder {
     return null;
   }
 
+  public static final String openAccess = "openAccess";
+  public static final String generalResearchUse = "generalResearchUse";
+  public static final String hmb = "hmb";
+  public static final String diseaseSpecificUse = "diseaseSpecificUse";
+  public static final String poa = "poa";
+  public static final String otherPrimary = "otherPrimary";
+  public static final String nmds = "nmds";
+  public static final String gso = "gso";
+  public static final String pub = "pub";
+  public static final String col = "col";
+  public static final String irb = "irb";
+  public static final String gs = "gs";
+  public static final String mor = "mor";
+  public static final String morDate = "morDate";
+  public static final String npu = "npu";
+  public static final String otherSecondary = "otherSecondary";
+  public static final String dataAccessCommitteeId = "dataAccessCommitteeId";
+  public static final String dataLocation = "dataLocation";
+  public static final String url = "url";
+  public static final String numberOfParticipants = "numberOfParticipants";
+  public static final String fileTypes = "fileTypes";
+
   private ConsentGroup consentGroupFromDataset(Dataset dataset) {
-    return new ConsentGroup();
+    if (Objects.nonNull(dataset)) {
+      ConsentGroup consentGroup = new ConsentGroup();
+      consentGroup.setDatasetId(dataset.getDataSetId());
+      consentGroup.setConsentGroupName(dataset.getName());
+      consentGroup.setOpenAccess(findBooleanDSPropValue(dataset.getProperties(), openAccess));
+      consentGroup.setGeneralResearchUse(findBooleanDSPropValue(dataset.getProperties(), generalResearchUse));
+      consentGroup.setHmb(findBooleanDSPropValue(dataset.getProperties(), hmb));
+      consentGroup.setDiseaseSpecificUse(findListStringDSPropValue(dataset.getProperties(), diseaseSpecificUse));
+      consentGroup.setPoa(findBooleanDSPropValue(dataset.getProperties(), poa));
+      consentGroup.setOtherPrimary(findStringDSPropValue(dataset.getProperties(), otherPrimary));
+      consentGroup.setNmds(findBooleanDSPropValue(dataset.getProperties(), nmds));
+      consentGroup.setGso(findBooleanDSPropValue(dataset.getProperties(), gso));
+      consentGroup.setPub(findBooleanDSPropValue(dataset.getProperties(), pub));
+      consentGroup.setCol(findBooleanDSPropValue(dataset.getProperties(), col));
+      consentGroup.setIrb(findBooleanDSPropValue(dataset.getProperties(), irb));
+      consentGroup.setGs(findStringDSPropValue(dataset.getProperties(), gs));
+      consentGroup.setMor(findBooleanDSPropValue(dataset.getProperties(), mor));
+      consentGroup.setMorDate(findStringDSPropValue(dataset.getProperties(), morDate));
+      consentGroup.setNpu(findBooleanDSPropValue(dataset.getProperties(), npu));
+      consentGroup.setOtherSecondary(findStringDSPropValue(dataset.getProperties(), otherSecondary));
+      consentGroup.setDataAccessCommitteeId(findIntegerDSPropValue(dataset.getProperties(), dataAccessCommitteeId));
+      String dataLocationVal = findStringDSPropValue(dataset.getProperties(), dataLocation);
+      if (Objects.nonNull(dataLocationVal)) {
+        consentGroup.setDataLocation(DataLocation.fromValue(dataLocationVal));
+      }
+      consentGroup.setUrl(findStringDSPropValue(dataset.getProperties(), url));
+      consentGroup.setNumberOfParticipants(findIntegerDSPropValue(dataset.getProperties(), numberOfParticipants));
+      consentGroup.setFileTypes(findListFTSODSPropValue(dataset.getProperties()));
+      return consentGroup;
+    }
+    return null;
+  }
+
+  private String findStringDSPropValue(Set<DatasetProperty> props, String propName) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .map(DatasetProperty::getPropertyValueAsString)
+          .findFirst()
+          .orElse(null);
+    }
+    return null;
+  }
+
+  private Boolean findBooleanDSPropValue(Set<DatasetProperty> props, String propName) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .map(DatasetProperty::getPropertyValue)
+          .map(Object::toString)
+          .map(Boolean::valueOf)
+          .findFirst()
+          .orElse(null);
+    }
+    return null;
+  }
+
+  private List<String> findListStringDSPropValue(Set<DatasetProperty> props, String key) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(key))
+          .map(DatasetProperty::getPropertyValue)
+          .map(p -> GsonUtil.getInstance().fromJson(p.toString(), JsonElement.class))
+          .map(JsonElement::getAsJsonArray)
+          .map(JsonArray::asList)
+          .flatMap(List::stream)
+          .map(JsonElement::getAsString)
+          .toList();
+    }
+    return List.of();
+  }
+
+  private Integer findIntegerDSPropValue(Set<DatasetProperty> props, String propName) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .map(DatasetProperty::getPropertyValue)
+          .map(Object::toString)
+          .map(Integer::valueOf)
+          .findFirst()
+          .orElse(null);
+    }
+    return null;
+  }
+
+  private List<FileTypeObject> findListFTSODSPropValue(Set<DatasetProperty> props) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(fileTypes))
+          .map(DatasetProperty::getPropertyValueAsString)
+          .map(p -> GsonUtil.getInstance().fromJson(p, JsonElement.class))
+          .map(JsonElement::getAsJsonArray)
+          .map(JsonArray::asList)
+          .flatMap(List::stream)
+          .map(JsonElement::getAsString)
+          .map(p -> GsonUtil.getInstance().fromJson(p, FileTypeObject.class))
+          .toList();
+    }
+    return List.of();
   }
 
 }
