@@ -17,7 +17,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
@@ -214,7 +213,7 @@ public class DatasetRegistrationServiceTest {
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
     assertContainsDatasetProperty(datasetProps, "url",
-        schema.getConsentGroups().get(0).getUrl().toString());
+        schema.getConsentGroups().get(0).getUrl());
     assertContainsDatasetProperty(datasetProps, "dataAccessCommitteeId",
         schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(datasetProps, "openAccess",
@@ -704,7 +703,7 @@ public class DatasetRegistrationServiceTest {
     fileType2.setFileType(FileTypeObject.FileType.PHENOTYPE);
     fileType2.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
     consentGroup.setFileTypes(List.of(fileType1, fileType2));
-    consentGroup.setUrl(URI.create("https://asdf.gov"));
+    consentGroup.setUrl("https://asdf.gov");
     consentGroup.setMor(false);
     consentGroup.setNmds(false);
     consentGroup.setNpu(false);

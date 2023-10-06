@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -165,7 +164,7 @@ public class ConsentGroup {
    */
   @JsonProperty("url")
   @JsonPropertyDescription("Free text field for entering URL of data")
-  private URI url;
+  private String url;
   /**
    * # of Participants (Required)
    */
@@ -501,7 +500,7 @@ public class ConsentGroup {
    * Free text field for entering URL of data
    */
   @JsonProperty("url")
-  public URI getUrl() {
+  public String getUrl() {
     return url;
   }
 
@@ -509,7 +508,7 @@ public class ConsentGroup {
    * Free text field for entering URL of data
    */
   @JsonProperty("url")
-  public void setUrl(URI url) {
+  public void setUrl(String url) {
     this.url = url;
   }
 

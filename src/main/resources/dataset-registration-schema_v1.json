@@ -665,7 +665,6 @@
         },
         "url": {
           "type": "string",
-          "format": "uri",
           "label": "Free text field for entering URL of data",
           "description": "Free text field for entering URL of data",
           "minLength": 1
