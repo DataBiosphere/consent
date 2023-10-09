@@ -13,7 +13,7 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.23.2</liquibase.version>
+    <liquibase.version>4.24.0</liquibase.version>
     <dropwizard.version>4.0.2</dropwizard.version>
     <pact.version>4.6.3</pact.version>
     <postgres.version>42.6.0</postgres.version>
@@ -23,7 +23,7 @@
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.0</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.5.0</mockito.version>
+    <mockito.version>5.6.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -357,7 +357,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.41.2</version>
+        <version>3.41.3</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -608,7 +608,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.19.0</version>
+      <version>1.19.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -616,7 +616,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.19.0</version>
+      <version>1.19.1</version>
       <scope>test</scope>
     </dependency>
 
