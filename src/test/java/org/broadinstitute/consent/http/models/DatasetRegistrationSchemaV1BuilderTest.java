@@ -52,7 +52,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.google.gson.JsonArray;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -290,14 +290,15 @@ class DatasetRegistrationSchemaV1BuilderTest {
       case Boolean -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : true);
       case Number -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : randomInt());
       case Json -> {
-        JsonArray json = new JsonArray();
+        List<Object> list = new ArrayList<>();
         if (Objects.nonNull(propValue)) {
-          json.add(GsonUtil.getInstance().toJson(propValue));
+          list.add(GsonUtil.getInstance().toJson(propValue));
         } else {
-          json.add(randomString());
+          list.add(randomString());
         }
-        prop.setPropertyValue(json);
+        prop.setPropertyValue(list);
       }
+      // Default to string
       default -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : randomString());
     }
     return prop;
