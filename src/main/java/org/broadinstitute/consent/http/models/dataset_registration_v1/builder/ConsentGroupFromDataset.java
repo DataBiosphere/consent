@@ -148,11 +148,9 @@ public class ConsentGroupFromDataset {
           .stream()
           .filter(p -> p.getSchemaProperty().equalsIgnoreCase(fileTypes))
           .map(DatasetProperty::getPropertyValueAsString)
-          .map(p -> GsonUtil.getInstance().fromJson(p, JsonElement.class))
-          .map(JsonElement::getAsJsonArray)
+          .map(p -> GsonUtil.getInstance().fromJson(p, JsonArray.class))
           .map(JsonArray::asList)
           .flatMap(List::stream)
-          .map(JsonElement::getAsString)
           .map(p -> GsonUtil.getInstance().fromJson(p, FileTypeObject.class))
           .toList();
     }
