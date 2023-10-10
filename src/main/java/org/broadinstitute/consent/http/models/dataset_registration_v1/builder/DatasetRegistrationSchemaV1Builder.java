@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -61,20 +60,19 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String fileTypes = "fileTypes";
 
   public DatasetRegistrationSchemaV1 build(Study study, List<Dataset> datasets) {
-    SchemaFromStudy schemaFromStudy = new SchemaFromStudy();
-    ConsentGroupFromDataset consentGroupFromDataset = new ConsentGroupFromDataset();
-    DatasetRegistrationSchemaV1 schemaV1 = schemaFromStudy.build(study);
+    DatasetRegistrationSchemaV1 schema = new SchemaFromStudy().build(study);
     if (!datasets.isEmpty()) {
-      if (Objects.isNull(schemaV1.getConsentGroups())) {
-        schemaV1.setConsentGroups(new ArrayList<>());
-      }
-      List<ConsentGroup> consentGroups = datasets.stream().filter(Objects::nonNull).map(
-          consentGroupFromDataset::build).toList();
+      ConsentGroupFromDataset consentGroupFromDataset = new ConsentGroupFromDataset();
+      List<ConsentGroup> consentGroups = datasets
+        .stream()
+        .filter(Objects::nonNull)
+        .map(consentGroupFromDataset::build)
+        .toList();
       if (!consentGroups.isEmpty()) {
-        schemaV1.getConsentGroups().addAll(consentGroups);
+        schema.setConsentGroups(consentGroups);
       }
     }
-    return schemaV1;
+    return schema;
   }
 
 }
