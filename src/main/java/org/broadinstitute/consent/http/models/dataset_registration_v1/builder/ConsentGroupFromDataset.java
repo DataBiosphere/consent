@@ -24,6 +24,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -66,7 +67,11 @@ public class ConsentGroupFromDataset {
       if (Objects.nonNull(dataLocationVal)) {
         consentGroup.setDataLocation(DataLocation.fromValue(dataLocationVal));
       }
-      consentGroup.setUrl(findStringDSPropValue(dataset.getProperties(), url));
+      String urlVal = findStringDSPropValue(dataset.getProperties(), url);
+      if (Objects.nonNull(urlVal)) {
+        URI uri = URI.create(urlVal);
+        consentGroup.setUrl(uri);
+      }
       consentGroup.setNumberOfParticipants(
           findIntegerDSPropValue(dataset.getProperties(), numberOfParticipants));
       consentGroup.setFileTypes(findListFTSODSPropValue(dataset.getProperties()));

@@ -275,7 +275,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     dataset.addProperty(createDatasetProperty(dataset, otherSecondary, PropertyType.String, null));
     dataset.addProperty(createDatasetProperty(dataset, dataAccessCommitteeId, PropertyType.Number, null));
     dataset.addProperty(createDatasetProperty(dataset, dataLocation, PropertyType.String, DataLocation.NOT_DETERMINED.value()));
-    dataset.addProperty(createDatasetProperty(dataset, url, PropertyType.String, null));
+    dataset.addProperty(createDatasetProperty(dataset, url, PropertyType.String, "http://www.abc.com"));
     dataset.addProperty(createDatasetProperty(dataset, numberOfParticipants, PropertyType.Number, null));
     dataset.addProperty(createDatasetProperty(dataset, fileTypes, PropertyType.Json, new FileTypeObject()));
   }
