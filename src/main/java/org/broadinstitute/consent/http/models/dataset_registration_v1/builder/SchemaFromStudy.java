@@ -137,6 +137,7 @@ public class SchemaFromStudy {
   }
 
 
+  @Nullable
   private List<String> findListStringPropValue(Set<StudyProperty> props, String key) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -150,9 +151,10 @@ public class SchemaFromStudy {
           .map(JsonElement::getAsString)
           .toList();
     }
-    return List.of();
+    return null;
   }
 
+  @Nullable
   private List<AlternativeDataSharingPlanReason> findListADSPRPropValue(Set<StudyProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -167,9 +169,10 @@ public class SchemaFromStudy {
           .map(AlternativeDataSharingPlanReason::fromValue)
           .toList();
     }
-    return List.of();
+    return null;
   }
 
+  @Nullable
   private List<NihICsSupportingStudy> findListNICSSPropValue(Set<StudyProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -184,9 +187,10 @@ public class SchemaFromStudy {
           .map(NihICsSupportingStudy::fromValue)
           .toList();
     }
-    return List.of();
+    return null;
   }
 
+  @Nullable
   private String findStringPropValue(Set<StudyProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props

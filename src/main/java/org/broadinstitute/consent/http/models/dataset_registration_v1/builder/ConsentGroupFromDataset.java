@@ -80,6 +80,7 @@ public class ConsentGroupFromDataset {
     return null;
   }
 
+  @Nullable
   private String findStringDSPropValue(Set<DatasetProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -107,6 +108,7 @@ public class ConsentGroupFromDataset {
     return null;
   }
 
+  @Nullable
   private List<String> findListStringDSPropValue(Set<DatasetProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -121,9 +123,10 @@ public class ConsentGroupFromDataset {
           .map(JsonElement::getAsString)
           .toList();
     }
-    return List.of();
+    return null;
   }
 
+  @Nullable
   private Integer findIntegerDSPropValue(Set<DatasetProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -138,6 +141,7 @@ public class ConsentGroupFromDataset {
     return null;
   }
 
+  @Nullable
   private List<FileTypeObject> findListFTSODSPropValue(Set<DatasetProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
@@ -152,7 +156,7 @@ public class ConsentGroupFromDataset {
           .map(p -> GsonUtil.getInstance().fromJson(p, FileTypeObject.class))
           .toList();
     }
-    return List.of();
+    return null;
   }
 
 }
