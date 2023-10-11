@@ -1,0 +1,24 @@
+get:
+  summary: Get Study Registration by Dataset Identifier
+  description: Finds Study in Dataset Registration Format limited to the provided dataset identifier
+  parameters:
+    - name: datasetIdentifier
+      in: path
+      description: Identifier of the Dataset
+      required: true
+      schema:
+        type: string
+  tags:
+    - Dataset
+    - Study
+  responses:
+    200:
+      description: The Study Registration
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error

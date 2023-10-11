@@ -418,6 +418,46 @@ public class DatasetResource extends Resource {
   }
 
   @GET
+  @Path("/study/registration/{studyId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response getRegistrationFromStudy(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
+    try {
+      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      List<Dataset> datasets = Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
+      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, datasets);
+      registration.setStudyId(study.getStudyId());
+      return Response.ok().entity(registration).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/registration/{datasetIdentifier}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser, @PathParam("datasetIdentifier") String datasetIdentifier) {
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      if (Objects.isNull(dataset)) {
+        throw new NotFoundException("No dataset exists for dataset identifier: " + datasetIdentifier);
+      }
+      Study study;
+      if (Objects.nonNull(dataset.getStudy())) {
+        study = datasetService.findStudyById(dataset.getStudy().getStudyId());
+      } else {
+        throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
+      }
+      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, List.of(dataset));
+      registration.setStudyId(study.getStudyId());
+      return Response.ok().entity(registration).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
   @Path("/batch")
   @Produces("application/json")
   @PermitAll
