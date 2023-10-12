@@ -578,10 +578,14 @@ paths:
                 type: integer
         404:
           description: Dataset not found
+  /api/dataset/registration/{datasetIdentifier}:
+    $ref: './paths/datasetRegistrationByDatasetIdentifier.yaml'
   /api/dataset/studyNames:
     $ref: './paths/findAllStudyNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
+  /api/dataset/study/registration/{studyId}:
+    $ref: './paths/studyRegistrationByStudyId.yaml'
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
