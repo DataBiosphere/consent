@@ -13,8 +13,8 @@
     <java.version>17</java.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <liquibase.version>4.23.2</liquibase.version>
-    <dropwizard.version>4.0.0</dropwizard.version>
+    <liquibase.version>4.24.0</liquibase.version>
+    <dropwizard.version>4.0.2</dropwizard.version>
     <pact.version>4.6.3</pact.version>
     <postgres.version>42.6.0</postgres.version>
     <surefire.version>3.1.2</surefire.version>
@@ -23,7 +23,7 @@
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.0</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.5.0</mockito.version>
+    <mockito.version>5.6.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -48,6 +48,7 @@
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
               <includes>**/*.java</includes>
+              <excludes>**/integration/**/*.java</excludes>
             </configuration>
             <dependencies>
               <dependency>
@@ -69,12 +70,32 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${surefire.version}</version>
             <configuration>
-              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
               <systemPropertyVariables>
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
               <includes>**/pact/**/*.java</includes>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${surefire.version}</version>
+            <configuration>
+              <includes>**/integration/**/*.java</includes>
             </configuration>
             <dependencies>
               <dependency>
@@ -336,7 +357,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.41.2</version>
+        <version>3.41.3</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -348,12 +369,6 @@
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
       <version>1.0.79</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-lang3</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -391,12 +406,6 @@
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.15.2</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
       <version>2.15.2</version>
     </dependency>
@@ -412,12 +421,6 @@
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
       <version>4.9.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -430,12 +433,6 @@
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
       <version>4.5.1</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>org.apache.httpcomponents</artifactId>
-          <groupId>httpclient</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -452,22 +449,9 @@
 
     <!-- Support for JSON logging -->
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.4.7</version>
-    </dependency>
-
-    <!-- Support for JSON logging -->
-    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-json-logging</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -506,12 +490,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-core</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -630,7 +608,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.19.0</version>
+      <version>1.19.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -638,12 +616,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.19.0</version>
+      <version>1.19.1</version>
       <scope>test</scope>
     </dependency>
 
 
     <!-- Required for mocking client calls against ontology and elastic search -->
+    <!--suppress VulnerableLibrariesLocal -->
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-client-java</artifactId>
@@ -661,114 +640,6 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
       <version>2.27.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!--  The following io.grpc libraries are transient dependencies of
-          com.google.cloud:google-cloud-storage and are directly pulled in to address an OWASP
-          finding for CVE-2023-33953: https://nvd.nist.gov/vuln/detail/CVE-2023-33953
-    -->
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-alts</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-api</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-auth</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-context</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-core</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-grpclb</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-googleapis</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf-lite</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-rls</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-services</artifactId>
-      <version>${io.grpc.version}</version>
-    </dependency>
-
-    <!--  Addresses OWASP CVE-2023-33953 -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-xds</artifactId>
-      <version>${io.grpc.version}</version>
     </dependency>
 
     <dependency>
