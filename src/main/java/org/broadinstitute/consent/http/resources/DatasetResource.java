@@ -180,9 +180,9 @@ public class DatasetResource extends Resource {
       Study study = datasets.get(0).getStudy();
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
-      registration.setStudyId(study.getStudyId());
       URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId())).build();
-      return Response.created(uri).entity(createdRegistration).build();
+      String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
+      return Response.created(uri).entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -426,8 +426,8 @@ public class DatasetResource extends Resource {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
       List<Dataset> datasets = Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
       DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, datasets);
-      registration.setStudyId(study.getStudyId());
-      return Response.ok().entity(registration).build();
+      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
+      return Response.ok().entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -450,8 +450,8 @@ public class DatasetResource extends Resource {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
       }
       DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, List.of(dataset));
-      registration.setStudyId(study.getStudyId());
-      return Response.ok().entity(registration).build();
+      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
+      return Response.ok().entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
