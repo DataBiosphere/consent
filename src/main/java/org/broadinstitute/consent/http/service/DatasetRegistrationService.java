@@ -682,7 +682,7 @@ public class DatasetRegistrationService implements ConsentLogger {
           "URL", "url", PropertyType.String,
           (consentGroup) -> {
             if (Objects.nonNull(consentGroup.getUrl())) {
-              return consentGroup.getUrl().toString();
+              return consentGroup.getUrl();
             }
             return null;
           }),

@@ -99,6 +99,11 @@
     }
   ],
   "properties": {
+    "studyId": {
+      "type": "number",
+      "label": "Study Id",
+      "description": "The study id"
+    },
     "studyName": {
       "type": "string",
       "label": "Study Name",

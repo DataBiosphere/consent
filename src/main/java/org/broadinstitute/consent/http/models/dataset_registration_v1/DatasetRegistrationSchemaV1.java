@@ -25,6 +25,7 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+    "studyId",
     "studyName",
     "studyType",
     "studyDescription",
@@ -63,6 +64,13 @@ import java.util.Map;
     "consentGroups"
 })
 public class DatasetRegistrationSchemaV1 {
+
+  /**
+   * The study id
+   */
+  @JsonProperty("studyId")
+  @JsonPropertyDescription("The study id")
+  private Integer studyId;
 
   /**
    * The study name (Required)
@@ -283,6 +291,22 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("consentGroups")
   @JsonPropertyDescription("Consent Groups")
   private List<ConsentGroup> consentGroups = new ArrayList<ConsentGroup>();
+
+  /**
+   * The study id
+   */
+  @JsonProperty("studyId")
+  public Integer getStudyId() {
+    return studyId;
+  }
+
+  /**
+   * The study id
+   */
+  @JsonProperty("studyId")
+  public void setStudyId(Integer studyId) {
+    this.studyId = studyId;
+  }
 
   /**
    * The study name (Required)
@@ -881,6 +905,10 @@ public class DatasetRegistrationSchemaV1 {
     StringBuilder sb = new StringBuilder();
     sb.append(DatasetRegistrationSchemaV1.class.getName()).append('@')
         .append(Integer.toHexString(System.identityHashCode(this))).append('[');
+    sb.append("studyId");
+    sb.append('=');
+    sb.append(((this.studyId == null) ? "<null>" : this.studyId));
+    sb.append(',');
     sb.append("studyName");
     sb.append('=');
     sb.append(((this.studyName == null) ? "<null>" : this.studyName));
@@ -1054,6 +1082,7 @@ public class DatasetRegistrationSchemaV1 {
         : this.nihGenomicProgramAdministratorName.hashCode()));
     result = ((result * 31) + ((this.alternativeDataSharingPlanFileName == null) ? 0
         : this.alternativeDataSharingPlanFileName.hashCode()));
+    result = ((result * 31) + ((this.studyId == null) ? 0 : this.studyId.hashCode()));
     result = ((result * 31) + ((this.studyName == null) ? 0 : this.studyName.hashCode()));
     result = ((result * 31) + ((this.dataSubmitterUserId == null) ? 0
         : this.dataSubmitterUserId.hashCode()));
@@ -1135,8 +1164,11 @@ public class DatasetRegistrationSchemaV1 {
             (this.alternativeDataSharingPlanFileName == rhs.alternativeDataSharingPlanFileName) || (
                 (this.alternativeDataSharingPlanFileName != null)
                     && this.alternativeDataSharingPlanFileName.equals(
-                    rhs.alternativeDataSharingPlanFileName)))) && ((this.studyName == rhs.studyName)
-            || ((this.studyName != null) && this.studyName.equals(rhs.studyName)))) && (
+                    rhs.alternativeDataSharingPlanFileName)))) &&
+            ((this.studyName == rhs.studyName) || ((this.studyName != null)
+                && this.studyName.equals(rhs.studyName))) &&
+            ((this.studyId == rhs.studyId) || ((this.studyId != null) && this.studyId.equals(
+                rhs.studyId)))) && (
             (this.dataSubmitterUserId == rhs.dataSubmitterUserId) || (
                 (this.dataSubmitterUserId != null) && this.dataSubmitterUserId.equals(
                     rhs.dataSubmitterUserId)))) && ((this.publicVisibility == rhs.publicVisibility)
