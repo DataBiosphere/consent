@@ -42,6 +42,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(dataset)) {
       ConsentGroup consentGroup = new ConsentGroup();
       consentGroup.setDatasetId(dataset.getDataSetId());
+      consentGroup.setDatasetIdentifier(dataset.getDatasetIdentifier());
       consentGroup.setConsentGroupName(dataset.getName());
       consentGroup.setOpenAccess(findBooleanDSPropValue(dataset.getProperties(), openAccess));
       consentGroup.setGeneralResearchUse(
