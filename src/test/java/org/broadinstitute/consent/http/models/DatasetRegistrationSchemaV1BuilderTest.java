@@ -142,6 +142,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     ConsentGroup consentGroup = schemaV1.getConsentGroups().get(0);
     assertNotNull(consentGroup);
     assertNotNull(consentGroup.getDatasetId());
+    assertNotNull(consentGroup.getDatasetIdentifier());
     assertNotNull(consentGroup.getConsentGroupName());
     assertNotNull(consentGroup.getOpenAccess());
     assertNotNull(consentGroup.getGeneralResearchUse());
@@ -244,6 +245,9 @@ class DatasetRegistrationSchemaV1BuilderTest {
     Dataset dataset = new Dataset();
     dataset.setName(randomString());
     dataset.setDataSetId(randomInt());
+    dataset.setAlias(randomInt());
+    // datasetIdentifier is derived from `alias`
+    dataset.setDatasetIdentifier();
     dataset.setDatasetName(randomString());
     dataset.setCreateUser(user);
     dataset.setCreateUserId(user.getUserId());

@@ -16,6 +16,7 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "datasetId",
+    "datasetIdentifier",
     "consentGroupName",
     "openAccess",
     "generalResearchUse",
@@ -47,6 +48,12 @@ public class ConsentGroup {
   @JsonProperty("datasetId")
   @JsonPropertyDescription("Dataset Id")
   private Integer datasetId;
+  /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  @JsonPropertyDescription("Dataset Identifier")
+  private String datasetIdentifier;
   /**
    * Consent Group Name
    */
@@ -183,6 +190,7 @@ public class ConsentGroup {
   /**
    * Dataset Id
    */
+  @JsonProperty("datasetId")
   public Integer getDatasetId() {
     return datasetId;
   }
@@ -190,8 +198,25 @@ public class ConsentGroup {
   /**
    * Dataset Id
    */
+  @JsonProperty("datasetId")
   public void setDatasetId(Integer datasetId) {
     this.datasetId = datasetId;
+  }
+
+  /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  public String getDatasetIdentifier() {
+    return datasetIdentifier;
+  }
+
+  /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  public void setDatasetIdentifier(String datasetIdentifier) {
+    this.datasetIdentifier = datasetIdentifier;
   }
 
   /**
@@ -547,6 +572,10 @@ public class ConsentGroup {
     sb.append('=');
     sb.append(((this.datasetId == null) ? "<null>" : this.datasetId));
     sb.append(',');
+    sb.append("datasetIdentifier");
+    sb.append('=');
+    sb.append(((this.datasetIdentifier == null) ? "<null>" : this.datasetIdentifier));
+    sb.append(',');
     sb.append("consentGroupName");
     sb.append('=');
     sb.append(((this.consentGroupName == null) ? "<null>" : this.consentGroupName));
@@ -663,6 +692,8 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.diseaseSpecificUse == null) ? 0
         : this.diseaseSpecificUse.hashCode()));
     result = ((result * 31) + ((this.datasetId == null) ? 0 : this.datasetId.hashCode()));
+    result = ((result * 31) + ((this.datasetIdentifier == null) ? 0
+        : this.datasetIdentifier.hashCode()));
     result = ((result * 31) + ((this.consentGroupName == null) ? 0
         : this.consentGroupName.hashCode()));
     result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
@@ -705,6 +736,9 @@ public class ConsentGroup {
         (this.diseaseSpecificUse != null) && this.diseaseSpecificUse.equals(
             rhs.diseaseSpecificUse)))) && ((this.datasetId == rhs.datasetId) || (
         (this.datasetId != null) && this.datasetId.equals(rhs.datasetId))) && (
+        (this.datasetIdentifier == rhs.datasetIdentifier) || (
+            (this.datasetIdentifier != null) && this.datasetIdentifier.equals(
+                rhs.datasetIdentifier))) && (
         (this.consentGroupName == rhs.consentGroupName) || (
             (this.consentGroupName != null) && this.consentGroupName.equals(rhs.consentGroupName))))
         && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && (
