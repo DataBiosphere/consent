@@ -530,7 +530,7 @@ class JsonSchemaUtilTest {
   }
 
   @Test
-  void testValidateDatasetRegistrationObject_v1_file_types_required() {
+  void testValidateDatasetRegistrationObject_v1_file_types_not_required() {
     String noFileTypes = """
         {
           "studyType": "Observational",
@@ -545,6 +545,7 @@ class JsonSchemaUtilTest {
           "dataSubmitterUserId": 1,
           "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
           "consentGroups": [{
+            "numberOfParticipants": 1,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -568,6 +569,7 @@ class JsonSchemaUtilTest {
           "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
           "consentGroups": [{
             "fileTypes": [],
+            "numberOfParticipants": 1,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -577,10 +579,10 @@ class JsonSchemaUtilTest {
         """;
 
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(noFileTypes);
-    assertFieldHasError(errors, "fileTypes");
+    assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(emptyFileTypes);
-    assertFieldHasError(errors, "fileTypes");
+    assertNoErrors(errors);
   }
 
 
