@@ -511,6 +511,20 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @GET
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/datasetNames")
+  @PermitAll
+  public Response findAllDatasetNames() {
+    try {
+      List<String> datasetNames = datasetService.findAllDatasetNames();
+      return Response.ok(datasetNames).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @POST
   @Path("/download")
   @Consumes(MediaType.APPLICATION_JSON)

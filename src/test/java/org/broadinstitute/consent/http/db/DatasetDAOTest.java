@@ -872,6 +872,16 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllDatasetNames() {
+    Dataset ds1 = insertDataset();
+    Dataset ds2 = insertDataset();
+
+    List<String> dsNames = datasetDAO.findAllDatasetNames();
+    assertTrue(dsNames.contains(ds1.getDatasetName()));
+    assertTrue(dsNames.contains(ds2.getDatasetName()));
+  }
+
+  @Test
   void testFindDatasetsByDacIds() {
     Dataset dataset = insertDataset();
     Dac dac = insertDac();

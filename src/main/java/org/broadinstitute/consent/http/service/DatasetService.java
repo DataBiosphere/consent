@@ -139,6 +139,10 @@ public class DatasetService {
   public Set<String> findAllStudyNames() {
     return datasetDAO.findAllStudyNames();
   }
+  public List<String> findAllDatasetNames() {
+    return datasetDAO.findAllDatasetNames();
+  }
+
   public Study findStudyById(Integer id) {
     return studyDAO.findStudyById(id);
   }
