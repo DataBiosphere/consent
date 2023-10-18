@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
-import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/emailNotifier")
