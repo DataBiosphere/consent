@@ -1,12 +1,11 @@
 get:
-  summary: Find All Study Names
-  description: Returns a list of all the actively used dataset study names.
+  summary: Find All Dataset Names
+  description: Returns a list of all the actively used dataset names.
   tags:
     - Dataset
-    - Study
   responses:
     200:
-      description: All study names
+      description: All dataset names
       content:
         application/json:
           schema:

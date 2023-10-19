@@ -443,6 +443,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   Set<String> findAllStudyNames();
 
+  @SqlQuery("""
+          SELECT DISTINCT d.name
+          FROM dataset d
+          WHERE d.name IS NOT NULL
+      """)
+  List<String> findAllDatasetNames();
+
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,

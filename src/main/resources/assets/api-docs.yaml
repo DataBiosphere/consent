@@ -582,6 +582,8 @@ paths:
     $ref: './paths/datasetRegistrationByDatasetIdentifier.yaml'
   /api/dataset/studyNames:
     $ref: './paths/findAllStudyNames.yaml'
+  /api/dataset/datasetNames:
+    $ref: './paths/findAllDatasetNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
   /api/dataset/study/registration/{studyId}:
