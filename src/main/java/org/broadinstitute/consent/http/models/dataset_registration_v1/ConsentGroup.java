@@ -539,10 +539,18 @@ public class ConsentGroup {
     this.url = url;
   }
 
+  /**
+   * # of Participants (Required)
+   */
+  @JsonProperty("numberOfParticipants")
   public Integer getNumberOfParticipants() {
     return numberOfParticipants;
   }
 
+  /**
+   * # of Participants (Required)
+   */
+  @JsonProperty("numberOfParticipants")
   public void setNumberOfParticipants(Integer numberOfParticipants) {
     this.numberOfParticipants = numberOfParticipants;
   }

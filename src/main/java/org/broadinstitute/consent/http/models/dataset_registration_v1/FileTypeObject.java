@@ -12,8 +12,7 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "fileType",
-    "functionalEquivalence",
-    "numberOfParticipants"
+    "functionalEquivalence"
 })
 public class FileTypeObject {
 
