@@ -415,13 +415,13 @@ class JsonSchemaUtilTest {
             }],
             "numberOfParticipants": 2,
             "consentGroupName": "name",
-            "openAccess": true,
+            "accessManagement": "open",
             "url": "https://asdf.com"
           }]
         }
         """;
 
-    String openAccessFalseNoDacId = """
+    String controlledAccessNoDacId = """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -441,14 +441,14 @@ class JsonSchemaUtilTest {
             }],
             "numberOfParticipants": 2,
             "consentGroupName": "name",
-            "openAccess": false,
+            "accessManagement": "controlled",
             "poa": true,
             "url": "https://asdf.com"
           }]
         }
         """;
 
-    String noOpenAccessNoDacId = """
+    String noAccessManagementNoDacId = """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -478,9 +478,9 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
 
     // only errors if not open access & no dac id present
-    errors = schemaUtil.validateSchema_v1(openAccessFalseNoDacId);
+    errors = schemaUtil.validateSchema_v1(controlledAccessNoDacId);
     assertFieldHasError(errors, "dataAccessCommitteeId");
-    errors = schemaUtil.validateSchema_v1(noOpenAccessNoDacId);
+    errors = schemaUtil.validateSchema_v1(noAccessManagementNoDacId);
     assertFieldHasError(errors, "dataAccessCommitteeId");
 
     errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
@@ -700,7 +700,7 @@ class JsonSchemaUtilTest {
             "numberOfParticipants": 2,
             "consentGroupName": "name!",
             "diseaseSpecificUse": ["some disease"],
-            "openAccess": true,
+            "accessManagement": "open",
             "dataAccessCommitteeId": 1,
             "url": "https://asdf.com"
           }]

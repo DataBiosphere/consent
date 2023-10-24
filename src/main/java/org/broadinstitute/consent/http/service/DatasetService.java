@@ -313,9 +313,9 @@ public class DatasetService {
     }
   }
 
-  public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
+  public List<Dataset> searchDatasets(String query, boolean accessManagement, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
-    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
+    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, accessManagement)).toList();
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

@@ -18,7 +18,7 @@ import java.util.Objects;
     "datasetId",
     "datasetIdentifier",
     "consentGroupName",
-    "openAccess",
+    "accessManagement",
     "generalResearchUse",
     "hmb",
     "diseaseSpecificUse",
@@ -63,9 +63,9 @@ public class ConsentGroup {
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
+  @JsonProperty("accessManagement")
   @JsonPropertyDescription("No Restrictions")
-  private Boolean openAccess;
+  private Boolean accessManagement;
   /**
    * General Research Use
    */
@@ -238,17 +238,17 @@ public class ConsentGroup {
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
-  public Boolean getOpenAccess() {
-    return openAccess;
+  @JsonProperty("accessManagement")
+  public Boolean getAccessManagement() {
+    return accessManagement;
   }
 
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
-  public void setOpenAccess(Boolean openAccess) {
-    this.openAccess = openAccess;
+  @JsonProperty("accessManagement")
+  public void setAccessManagement(Boolean accessManagement) {
+    this.accessManagement = accessManagement;
   }
 
   /**
@@ -588,9 +588,9 @@ public class ConsentGroup {
     sb.append('=');
     sb.append(((this.consentGroupName == null) ? "<null>" : this.consentGroupName));
     sb.append(',');
-    sb.append("openAccess");
+    sb.append("accessManagement");
     sb.append('=');
-    sb.append(((this.openAccess == null) ? "<null>" : this.openAccess));
+    sb.append(((this.accessManagement == null) ? "<null>" : this.accessManagement));
     sb.append(',');
     sb.append("generalResearchUse");
     sb.append('=');
@@ -707,7 +707,7 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
     result = ((result * 31) + ((this.npu == null) ? 0 : this.npu.hashCode()));
     result = ((result * 31) + ((this.dataLocation == null) ? 0 : this.dataLocation.hashCode()));
-    result = ((result * 31) + ((this.openAccess == null) ? 0 : this.openAccess.hashCode()));
+    result = ((result * 31) + ((this.accessManagement == null) ? 0 : this.accessManagement.hashCode()));
     result = ((result * 31) + ((this.irb == null) ? 0 : this.irb.hashCode()));
     result = ((result * 31) + ((this.hmb == null) ? 0 : this.hmb.hashCode()));
     result = ((result * 31) + ((this.pub == null) ? 0 : this.pub.hashCode()));
@@ -752,8 +752,8 @@ public class ConsentGroup {
         && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && (
         (this.npu == rhs.npu) || ((this.npu != null) && this.npu.equals(rhs.npu)))) && (
         (this.dataLocation == rhs.dataLocation) || ((this.dataLocation != null)
-            && this.dataLocation.equals(rhs.dataLocation)))) && ((this.openAccess == rhs.openAccess)
-        || ((this.openAccess != null) && this.openAccess.equals(rhs.openAccess)))) && (
+            && this.dataLocation.equals(rhs.dataLocation)))) && ((this.accessManagement == rhs.accessManagement)
+        || ((this.accessManagement != null) && this.accessManagement.equals(rhs.accessManagement)))) && (
         (this.irb == rhs.irb) || ((this.irb != null) && this.irb.equals(rhs.irb)))) && (
         (this.hmb == rhs.hmb) || ((this.hmb != null) && this.hmb.equals(rhs.hmb)))) && (
         (this.pub == rhs.pub) || ((this.pub != null) && this.pub.equals(rhs.pub)))) && (
@@ -808,7 +808,7 @@ public class ConsentGroup {
   }
 
   public boolean isInvalidForUpdate() {
-    return Objects.nonNull(this.openAccess) ||
+    return Objects.nonNull(this.accessManagement) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
@@ -827,7 +827,7 @@ public class ConsentGroup {
   }
 
   public boolean hasPrimaryDataUse() {
-    return Objects.nonNull(this.openAccess) ||
+    return Objects.nonNull(this.accessManagement) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && !this.diseaseSpecificUse.isEmpty()) ||

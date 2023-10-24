@@ -141,7 +141,7 @@ class DatasetTests {
   }
 
   @Test
-  void testIsDatasetMatchOpenAccessTrue() {
+  void testIsDatasetMatchAccessManagementTrue() {
     Dataset ds = new Dataset();
 
     String value = "true";
@@ -150,7 +150,7 @@ class DatasetTests {
     dsp.setPropertyName("Open Access");
     dsp.setPropertyValue(value);
     dsp.setPropertyType(PropertyType.String);
-    dsp.setSchemaProperty("consentGroup.openAccess");
+    dsp.setSchemaProperty("consentGroup.accessManagement");
     ds.setProperties(Set.of(dsp));
 
     assertTrue(ds.isDatasetMatch(value, true));
@@ -158,7 +158,7 @@ class DatasetTests {
   }
 
   @Test
-  void testIsDatasetMatchOpenAccessFalse() {
+  void testIsDatasetMatchAccessManagementFalse() {
     Dataset ds = new Dataset();
 
     String value = "false";
@@ -167,7 +167,7 @@ class DatasetTests {
     dsp.setPropertyName("Open Access");
     dsp.setPropertyValue(value);
     dsp.setPropertyType(PropertyType.String);
-    dsp.setSchemaProperty("consentGroup.openAccess");
+    dsp.setSchemaProperty("consentGroup.accessManagement");
     ds.setProperties(Set.of(dsp));
 
     assertTrue(ds.isDatasetMatch(value, false));

@@ -20,7 +20,7 @@ public class DatasetSearchTerm {
   private List<String> dataTypes = List.of("");
   private String dataLocation = "";
   private String dacName = "";
-  private Boolean openAccess = false;
+  private Boolean accessManagement = false;
   private List<Integer> approvedUsers = List.of(0);
 
   public void setDatasetId(Integer datasetId) {

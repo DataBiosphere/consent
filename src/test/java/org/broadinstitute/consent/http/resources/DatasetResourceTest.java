@@ -557,34 +557,34 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testSearchDatasetsOpenAccessFalse() {
+  void testSearchDatasetsAccessManagementFalse() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean openAccess = false;
+    Boolean accessManagement = false;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", openAccess);
+    Response response = resource.searchDatasets(authUser, "search query", accessManagement);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
   }
 
   @Test
-  void testSearchDatasetsOpenAccessTrue() {
+  void testSearchDatasetsAccessManagementTrue() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean openAccess = true;
+    Boolean accessManagement = true;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", openAccess);
+    Response response = resource.searchDatasets(authUser, "search query", accessManagement);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
@@ -1410,10 +1410,10 @@ class DatasetResourceTest {
 
     dataset.setStudy(study);
 
-    DatasetProperty openAccessProp = new DatasetProperty();
-    openAccessProp.setSchemaProperty("openAccess");
-    openAccessProp.setPropertyType(PropertyType.Boolean);
-    openAccessProp.setPropertyValue(true);
+    DatasetProperty accessManagementProp = new DatasetProperty();
+    accessManagementProp.setSchemaProperty("accessManagement");
+    accessManagementProp.setPropertyType(PropertyType.Boolean);
+    accessManagementProp.setPropertyValue(true);
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setSchemaProperty("dataLocation");
@@ -1425,7 +1425,7 @@ class DatasetResourceTest {
     numParticipantsProp.setPropertyType(PropertyType.Number);
     numParticipantsProp.setPropertyValue(20);
 
-    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
+    dataset.setProperties(Set.of(accessManagementProp, dataLocationProp, numParticipantsProp));
     study.addDatasets(List.of(dataset));
 
     return study;

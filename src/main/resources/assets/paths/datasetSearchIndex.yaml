@@ -64,7 +64,7 @@ post:
                         description: Local ethics committee approval is required.
                   dataLocation: Not Determined
                   dacId: 3
-                  openAccess: false
+                  accessManagement: controlled
                   approvedUserIds:
                     - 1
                     - 2

@@ -640,10 +640,10 @@ public class DatasetResource extends Resource {
   public Response searchDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query,
-      @QueryParam("open") @DefaultValue("false") boolean openAccess) {
+      @QueryParam("open") @DefaultValue("false") boolean accessManagement) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, openAccess, user);
+      List<Dataset> datasets = datasetService.searchDatasets(query, accessManagement, user);
       return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

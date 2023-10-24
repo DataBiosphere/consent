@@ -648,10 +648,10 @@ public class DatasetRegistrationService implements ConsentLogger {
           "alternativeDataSharingPlanTargetPublicReleaseDate", PropertyType.Date,
           DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanTargetPublicReleaseDate),
       new StudyPropertyExtractor(
-          "alternativeDataSharingPlanControlledOpenAccess", PropertyType.String,
+          "alternativeDataSharingPlanAccessManagement", PropertyType.String,
           (registration) -> {
-            if (Objects.nonNull(registration.getAlternativeDataSharingPlanControlledOpenAccess())) {
-              return registration.getAlternativeDataSharingPlanControlledOpenAccess().value();
+            if (Objects.nonNull(registration.getAlternativeDataSharingPlanAccessManagement())) {
+              return registration.getAlternativeDataSharingPlanAccessManagement().value();
             }
             return null;
           })
@@ -687,8 +687,8 @@ public class DatasetRegistrationService implements ConsentLogger {
             return null;
           }),
       new DatasetPropertyExtractor(
-          "Open Access", "openAccess", PropertyType.Boolean,
-          ConsentGroup::getOpenAccess),
+          "Open Access", "accessManagement", PropertyType.Boolean,
+          ConsentGroup::getAccessManagement),
       new DatasetPropertyExtractor(
           "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
           ConsentGroup::getDataAccessCommitteeId)

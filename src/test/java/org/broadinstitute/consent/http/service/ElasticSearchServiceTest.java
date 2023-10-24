@@ -206,7 +206,7 @@ class ElasticSearchServiceTest {
     ));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
-        createDatasetProperty("openAccess", PropertyType.Boolean),
+        createDatasetProperty("accessManagement", PropertyType.Boolean),
         createDatasetProperty("numberOfParticipants", PropertyType.Number),
         createDatasetProperty("url", PropertyType.String),
         createDatasetProperty("dataLocation", PropertyType.String)
@@ -300,9 +300,9 @@ class ElasticSearchServiceTest {
     assertTrue(urlProp.isPresent());
     assertEquals(urlProp.get().getPropertyValue().toString(), term.getUrl());
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
-    Optional<DatasetProperty> openAccessProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("openAccess")).findFirst();
-    assertTrue(openAccessProp.isPresent());
-    assertEquals(Boolean.valueOf(openAccessProp.get().getPropertyValue().toString()), term.getOpenAccess());
+    Optional<DatasetProperty> accessManagementProp = datasetRecord.dataset.getProperties().stream().filter(p -> p.getSchemaProperty().equals("accessManagement")).findFirst();
+    assertTrue(accessManagementProp.isPresent());
+    assertEquals(Boolean.valueOf(accessManagementProp.get().getPropertyValue().toString()), term.getAccessManagement());
     assertEquals(approvedUserIds, term.getApprovedUserIds());
   }
 

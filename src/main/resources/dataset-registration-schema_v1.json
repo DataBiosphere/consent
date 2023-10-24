@@ -435,13 +435,14 @@
           "label" : "Target Delivery Date",
           "description" : "Target Delivery Date"
         },
-        "alternativeDataSharingPlanControlledOpenAccess" : {
+        "alternativeDataSharingPlanAccessManagement" : {
           "type" : "string",
-          "label" : "Does the data need to be managed under Controlled or Open Access?",
-          "description" : "Does the data need to be managed under Controlled or Open Access?",
+          "label" : "Does the data need to be managed under Controlled, Open, or External Access?",
+          "description" : "Does the data need to be managed under Controlled, Open, or External Access?",
           "enum" : [
             "Controlled Access",
-            "Open Access"
+            "Open Access",
+            "External Access"
           ]
         }
       }
@@ -469,11 +470,11 @@
           }
         },
         {
-          "$comment" : "if openAccess is false OR not present, then require dac id & add secondary consent fields",
+          "$comment" : "if accessManagement is controlled OR not present, then require dac id & add secondary consent fields",
           "if" : {
             "properties" : {
-              "openAccess" : {
-                "const" : false
+              "accessManagement" : {
+                "const" : "controlled"
               }
             }
           },
@@ -542,16 +543,16 @@
           }
         },
         {
-          "$comment" : "ensure one (and only one) primary consent is selected",
+          "$comment" : "ensure the dataset is open OR exactly one primary use is selected",
           "oneOf" : [
             {
               "properties" : {
-                "openAccess" : {
-                  "const" : true
+                "accessManagement" : {
+                  "const" : "open"
                 }
               },
               "required" : [
-                "openAccess"
+                "accessManagement"
               ]
             },
             {
@@ -623,10 +624,15 @@
           "description" : "Consent Group Name",
           "minLength" : 1
         },
-        "openAccess" : {
-          "type" : "boolean",
-          "label" : "No Restrictions",
-          "description" : "No Restrictions"
+        "accessManagement" : {
+          "type" : "string",
+          "enum" : [
+            "controlled",
+            "open",
+            "external"
+          ],
+          "label" : "One of Controlled, Open, or External Access",
+          "description" : "One of Controlled, Open, or External Access"
         },
         "generalResearchUse" : {
           "type" : "boolean",

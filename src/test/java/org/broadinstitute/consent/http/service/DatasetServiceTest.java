@@ -484,7 +484,7 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testSearchDatasetsOpenAccessFalse() {
+  void testSearchDatasetsAccessManagementFalse() {
     Dataset ds1 = new Dataset();
     ds1.setName("asdf1234");
     ds1.setAlias(3);
@@ -547,7 +547,7 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testSearchDatasetsOpenAccessTrue() {
+  void testSearchDatasetsAccessManagementTrue() {
     Dataset ds1 = new Dataset();
     ds1.setName("string");
     ds1.setAlias(622);

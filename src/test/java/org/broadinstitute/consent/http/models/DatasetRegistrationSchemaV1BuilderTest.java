@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanControlledOpenAccess;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanAccessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataReleased;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataSubmitted;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanExplanation;
@@ -37,7 +37,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nmds;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.npu;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.openAccess;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherPrimary;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherSecondary;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.phenotypeIndication;
@@ -64,7 +64,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.Alternativ
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission;
@@ -127,7 +127,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(schemaV1.getAlternativeDataSharingPlanDataReleased());
     assertNotNull(schemaV1.getAlternativeDataSharingPlanTargetDeliveryDate());
     assertNotNull(schemaV1.getAlternativeDataSharingPlanTargetPublicReleaseDate());
-    assertNotNull(schemaV1.getAlternativeDataSharingPlanControlledOpenAccess());
+    assertNotNull(schemaV1.getAlternativeDataSharingPlanAccessManagement());
   }
 
   @Test
@@ -144,7 +144,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(consentGroup.getDatasetId());
     assertNotNull(consentGroup.getDatasetIdentifier());
     assertNotNull(consentGroup.getConsentGroupName());
-    assertNotNull(consentGroup.getOpenAccess());
+    assertNotNull(consentGroup.getAccessManagement());
     assertNotNull(consentGroup.getGeneralResearchUse());
     assertNotNull(consentGroup.getHmb());
     assertNotNull(consentGroup.getDiseaseSpecificUse());
@@ -216,7 +216,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     study.addProperty(createStudyProperty(alternativeDataSharingPlanDataReleased, study.getStudyId(), Boolean.TRUE, PropertyType.Boolean));
     study.addProperty(createStudyProperty(alternativeDataSharingPlanTargetDeliveryDate, study.getStudyId(), randomString(), PropertyType.String));
     study.addProperty(createStudyProperty(alternativeDataSharingPlanTargetPublicReleaseDate, study.getStudyId(), randomString(), PropertyType.String));
-    study.addProperty(createStudyProperty(alternativeDataSharingPlanControlledOpenAccess, study.getStudyId(), AlternativeDataSharingPlanControlledOpenAccess.OPEN_ACCESS.value(), PropertyType.String));
+    study.addProperty(createStudyProperty(alternativeDataSharingPlanAccessManagement, study.getStudyId(), AlternativeDataSharingPlanAccessManagement.OPEN_ACCESS.value(), PropertyType.String));
   }
 
   private String randomString() {
@@ -261,7 +261,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
   }
 
   private void addAllDatasetProperties(Dataset dataset) {
-    dataset.addProperty(createDatasetProperty(dataset, openAccess, PropertyType.Boolean, null));
+    dataset.addProperty(createDatasetProperty(dataset, accessManagement, PropertyType.Boolean, null));
     dataset.addProperty(createDatasetProperty(dataset, generalResearchUse, PropertyType.Boolean, null));
     dataset.addProperty(createDatasetProperty(dataset, hmb, PropertyType.Boolean, null));
     dataset.addProperty(createDatasetProperty(dataset, diseaseSpecificUse, PropertyType.Json, null));

@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess.OPEN_ACCESS;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement.OPEN_ACCESS;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -363,12 +363,12 @@ public class Dataset {
    * the raw search query and open access.
    *
    * @param query      Raw string query
-   * @param openAccess Boolean for open access
+   * @param accessManagement Boolean for open access
    * @return if the Dataset matched query
    */
 
   // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of comparing strings
-  public boolean isDatasetMatch(@NonNull String query, boolean openAccess) {
+  public boolean isDatasetMatch(@NonNull String query, boolean accessManagement) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
 
@@ -377,18 +377,18 @@ public class Dataset {
     matchTerms.add(this.getDatasetIdentifier());
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
-      Optional<DatasetProperty> openAccessProp = getProperties()
+      Optional<DatasetProperty> accessManagementProp = getProperties()
           .stream()
           .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
           .filter((dp) -> Objects.equals(dp.getPropertyName(), OPEN_ACCESS.toString()))
           .findFirst();
 
-      if (openAccessProp.isEmpty()) {
-        if (openAccess) {
+      if (accessManagementProp.isEmpty()) {
+        if (accessManagement) {
           return false;
         }
-      } else if (!Objects.equals(openAccessProp.get().getPropertyValue().toString(),
-          Boolean.toString(openAccess))) {
+      } else if (!Objects.equals(accessManagementProp.get().getPropertyValue().toString(),
+          Boolean.toString(accessManagement))) {
         return false;
       }
 

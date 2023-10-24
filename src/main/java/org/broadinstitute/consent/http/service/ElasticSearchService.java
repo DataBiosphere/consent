@@ -285,9 +285,9 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     findDatasetProperty(
-        dataset.getProperties(), "openAccess"
+        dataset.getProperties(), "accessManagement"
     ).ifPresent(
-        datasetProperty -> term.setOpenAccess((Boolean) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setAccessManagement((Boolean) datasetProperty.getPropertyValue())
     );
 
     findDatasetProperty(
