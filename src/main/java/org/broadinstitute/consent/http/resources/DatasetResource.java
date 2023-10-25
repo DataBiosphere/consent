@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -134,7 +135,8 @@ public class DatasetResource extends Resource {
     User dacUser = userService.findUserByEmail(authUser.getGenericUser().getEmail());
     Integer userId = dacUser.getUserId();
     try {
-      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(inputDataset,
+      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(
+          inputDataset,
           name, userId);
       URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
           .build(createdDatasetWithConsent.getDataSetId());
@@ -180,7 +182,8 @@ public class DatasetResource extends Resource {
       Study study = datasets.get(0).getStudy();
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
-      URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId())).build();
+      URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
+          .build();
       String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
       return Response.created(uri).entity(entity).build();
     } catch (Exception e) {
@@ -210,7 +213,8 @@ public class DatasetResource extends Resource {
       // enforces it in a creation context but doesn't work for editing purposes.
       DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator();
       Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 registration = gson.fromJson(json, DatasetRegistrationSchemaV1.class);
+      DatasetRegistrationSchemaV1 registration = gson.fromJson(json,
+          DatasetRegistrationSchemaV1.class);
 
       if (updateValidator.validate(existingStudy, registration)) {
         // Update study from registration
@@ -350,12 +354,13 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser, @QueryParam("asCustodian") Boolean asCustodian) {
+  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser,
+      @QueryParam("asCustodian") Boolean asCustodian) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = (Objects.nonNull(asCustodian) && asCustodian) ?
-        datasetService.findDatasetsByCustodian(user) :
-        datasetService.findAllDatasetsByUser(user);
+          datasetService.findDatasetsByCustodian(user) :
+          datasetService.findAllDatasetsByUser(user);
       return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -421,11 +426,14 @@ public class DatasetResource extends Resource {
   @Path("/study/registration/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response getRegistrationFromStudy(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
+  public Response getRegistrationFromStudy(@Auth AuthUser authUser,
+      @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
-      List<Dataset> datasets = Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
-      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, datasets);
+      List<Dataset> datasets =
+          Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
+      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
+          study, datasets);
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
@@ -437,11 +445,13 @@ public class DatasetResource extends Resource {
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser, @PathParam("datasetIdentifier") String datasetIdentifier) {
+  public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
+      @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
       Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
       if (Objects.isNull(dataset)) {
-        throw new NotFoundException("No dataset exists for dataset identifier: " + datasetIdentifier);
+        throw new NotFoundException(
+            "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
       Study study;
       if (Objects.nonNull(dataset.getStudy())) {
@@ -449,7 +459,8 @@ public class DatasetResource extends Resource {
       } else {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
       }
-      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(study, List.of(dataset));
+      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
+          study, List.of(dataset));
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
@@ -583,15 +594,26 @@ public class DatasetResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{datasetId}")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId,
       @Context UriInfo info) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetById(datasetId);
-      // Validate that the admin/chairperson has edit/delete access to this dataset
+      // Validate that the admin/chairperson/data submitter has edit/delete access to this dataset
       validateDatasetDacAccess(user, dataset);
-      datasetService.deleteDataset(datasetId, user.getUserId());
+      try {
+        datasetService.deleteDataset(datasetId, user.getUserId());
+      } catch (Exception e) {
+        logException(e);
+        return createExceptionResponse(e);
+      }
+      try {
+        elasticSearchService.deleteIndex(datasetId);
+      } catch (IOException e) {
+        logException(e);
+        return createExceptionResponse(e);
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -723,6 +745,17 @@ public class DatasetResource extends Resource {
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return;
+    }
+    if (user.hasUserRole(UserRoles.DATASUBMITTER)) {
+      if (dataset.getCreateUserId().equals(user.getUserId())) {
+        return;
+      }
+      // If the user doesn't have any other appropriate role, we can return an error here,
+      // otherwise, continue checking if the user has chair permissions
+      if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
+        logWarn("User does not have permission to delete dataset: " + user.getEmail());
+        throw new NotFoundException();
+      }
     }
     List<Integer> dacIds = user.getRoles().stream()
         .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))

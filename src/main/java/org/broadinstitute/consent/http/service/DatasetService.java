@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -28,13 +27,13 @@ import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,16 +48,19 @@ public class DatasetService {
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
+  private final DatasetServiceDAO datasetServiceDAO;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
+      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO,
+      DatasetServiceDAO datasetServiceDAO) {
     this.datasetDAO = dataSetDAO;
     this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
+    this.datasetServiceDAO = datasetServiceDAO;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -288,28 +290,7 @@ public class DatasetService {
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (Objects.nonNull(dataset)) {
-      // Some legacy dataset names can be null
-      String dsAuditName =
-          Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
-      try {
-        datasetDAO.useTransaction(h -> {
-          try {
-            h.insertDatasetAudit(dsAudit);
-            h.deleteUserAssociationsByDatasetId(datasetId);
-            h.deleteDatasetPropertiesByDatasetId(datasetId);
-            h.deleteConsentAssociationsByDatasetId(datasetId);
-            h.deleteDatasetById(datasetId);
-          } catch (Exception e) {
-            h.rollback();
-            throw e;
-          }
-        });
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-        throw e;
-      }
+      datasetServiceDAO.deleteDataset(dataset, userId);
     }
   }
 

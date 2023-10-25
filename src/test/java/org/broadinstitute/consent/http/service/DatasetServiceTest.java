@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -70,6 +71,8 @@ class DatasetServiceTest {
   private OntologyService ontologyService;
   @Mock
   private StudyDAO studyDAO;
+  @Mock
+  private DatasetServiceDAO datasetServiceDAO;
 
   @BeforeEach
   public void setUp() {
@@ -77,8 +80,8 @@ class DatasetServiceTest {
   }
 
   private void initService() {
-    datasetService = new DatasetService(datasetDAO,
-        userRoleDAO, dacDAO, emailService, ontologyService, studyDAO);
+    datasetService = new DatasetService(datasetDAO, userRoleDAO, dacDAO, emailService,
+      ontologyService, studyDAO, datasetServiceDAO);
   }
 
   @Test
@@ -172,21 +175,6 @@ class DatasetServiceTest {
     assertThrows(BadRequestException.class, () -> {
       datasetService.findDatasetListByDacIds(null);
     });
-  }
-
-  @Test
-  void testDeleteDataset() throws Exception {
-    Integer dataSetId = 1;
-    when(datasetDAO.findDatasetById(any()))
-        .thenReturn(getDatasets().get(0));
-    when(datasetDAO.insertDatasetAudit(any()))
-        .thenReturn(1);
-    doNothing().when(datasetDAO).deleteUserAssociationsByDatasetId(any());
-    doNothing().when(datasetDAO).deleteDatasetsProperties(any());
-    doNothing().when(datasetDAO).deleteConsentAssociationsByDatasetId(any());
-
-    initService();
-    datasetService.deleteDataset(dataSetId, 1);
   }
 
   @Test
