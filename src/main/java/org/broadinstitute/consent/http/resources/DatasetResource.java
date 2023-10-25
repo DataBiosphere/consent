@@ -600,6 +600,9 @@ public class DatasetResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetById(datasetId);
+      if (Objects.nonNull(dataset.getDeletable()) && !dataset.getDeletable()) {
+        throw new BadRequestException("Dataset is in use and cannot be deleted.");
+      }
       // Validate that the admin/chairperson/data submitter has edit/delete access to this dataset
       validateDatasetDacAccess(user, dataset);
       try {
