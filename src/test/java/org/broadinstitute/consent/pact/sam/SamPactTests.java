@@ -213,7 +213,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getResourceTypes")
-  public void testGetResourceTypes(MockServer mockServer) throws Exception {
+  void testGetResourceTypes(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -225,7 +225,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getSelfInfo")
-  public void testGetSelfInfo(MockServer mockServer) throws Exception {
+  void testGetSelfInfo(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -236,7 +236,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getSelfDiagnostics")
-  public void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
+  void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -247,7 +247,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "postUserRegistration")
-  public void testPostUserRegistration(MockServer mockServer) throws Exception {
+  void testPostUserRegistration(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -258,7 +258,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getTermsOfService")
-  public void testGetTermsOfService(MockServer mockServer) throws Exception {
+  void testGetTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -269,7 +269,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "postTermsOfService")
-  public void testPostTermsOfService(MockServer mockServer) throws Exception {
+  void testPostTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -286,7 +286,7 @@ public class SamPactTests {
    */
   @Test
   @PactTestFor(pactMethod = "deleteTermsOfService")
-  public void testDeleteTermsOfService(MockServer mockServer) throws Exception {
+  void testDeleteTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
