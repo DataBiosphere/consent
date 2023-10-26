@@ -19,7 +19,7 @@ public class DatasetTerm {
   @Deprecated // Use dac.name instead
   private String dacName;
   private Boolean dacApproval;
-  private Boolean accessManagement;
+  private String accessManagement;
   private List<Integer> approvedUserIds;
   private StudyTerm study;
   private UserTerm submitter;
@@ -122,11 +122,11 @@ public class DatasetTerm {
     this.dacApproval = dacApproval;
   }
 
-  public Boolean getAccessManagement() {
+  public String getAccessManagement() {
     return accessManagement;
   }
 
-  public void setAccessManagement(Boolean accessManagement) {
+  public void setAccessManagement(String accessManagement) {
     this.accessManagement = accessManagement;
   }
 

@@ -207,8 +207,8 @@ public class ElasticSearchService implements ConsentLogger {
       return null;
     }
     InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
-      toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
-      null;
+        toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
+        null;
     return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
   }
 
@@ -287,7 +287,7 @@ public class ElasticSearchService implements ConsentLogger {
     findDatasetProperty(
         dataset.getProperties(), "accessManagement"
     ).ifPresent(
-        datasetProperty -> term.setAccessManagement((Boolean) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
     );
 
     findDatasetProperty(
