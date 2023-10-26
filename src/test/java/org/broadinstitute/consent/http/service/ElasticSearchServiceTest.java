@@ -280,7 +280,7 @@ class ElasticSearchServiceTest {
     when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
-    when(dataAccessRequestDAO.findAllApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
+    when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
     initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
@@ -328,7 +328,7 @@ class ElasticSearchServiceTest {
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
 
-    when(dataAccessRequestDAO.findAllApprovedDARsByDatasetId(any())).thenReturn(
+    when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
 
     initService();

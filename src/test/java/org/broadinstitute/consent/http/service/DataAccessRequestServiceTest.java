@@ -217,7 +217,7 @@ class DataAccessRequestServiceTest {
     dar2.setUserId(20);
 
     when(dataAccessRequestDAO
-        .findAllApprovedDARsByDatasetId(d.getDataSetId()))
+        .findApprovedDARsByDatasetId(d.getDataSetId()))
         .thenReturn(List.of(dar1, dar2));
 
     when(userDAO.findUsers(List.of(dar1.getUserId(), dar2.getUserId())))

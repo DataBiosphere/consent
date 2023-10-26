@@ -415,7 +415,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     StringBuilder builder = new StringBuilder();
     builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-    List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDARsByDatasetId(
+    List<DataAccessRequest> darList = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         datasetId);
     if (CollectionUtils.isNotEmpty(darList)) {
       for (DataAccessRequest dar : darList) {
@@ -440,7 +440,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
-    return dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset.getDataSetId());
+    return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDataSetId());
   }
 
 }

@@ -82,7 +82,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           AND final_access_vote.last_vote = TRUE
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  List<DataAccessRequest> findAllApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+  List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order

@@ -271,7 +271,7 @@ public class ElasticSearchService implements ConsentLogger {
     });
 
     List<Integer> approvedUserIds = dataAccessRequestDAO
-        .findAllApprovedDARsByDatasetId(dataset.getDataSetId())
+        .findApprovedDARsByDatasetId(dataset.getDataSetId())
         .stream()
         .map(DataAccessRequest::getUserId)
         .toList();

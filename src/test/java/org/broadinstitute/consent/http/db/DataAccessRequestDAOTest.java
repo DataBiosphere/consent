@@ -454,7 +454,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDARsByDatasetId(
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         dataset1.getDataSetId());
     assertEquals(1, dars.size());
     assertTrue(dars.get(0).getDatasetIds().contains(dataset1.getDataSetId()));
@@ -469,10 +469,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Dataset dataset2 = createDARDAOTestDataset();
 
     assertTrue(
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     User user1 = createUserWithInstitution();
@@ -482,14 +482,14 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest testDar2 = createDAR(user2, dataset2, darCode2);
     DataAccessRequest testDar3 = createDAR(user3, dataset2, darCode3);
     assertTrue(
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     assertEquals(0,
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
 
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -517,16 +517,16 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
     assertEquals(testDar1.getUserId(),
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .get(0).getUserId());
     assertEquals(1,
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
     assertEquals(testDar2.getUserId(),
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .get(0).getUserId());
 
     Election e3 = createDataAccessElection(testDar3.getReferenceId(), dataset2.getDataSetId());
@@ -541,7 +541,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    List<DataAccessRequest> approvedDars = dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId());
+    List<DataAccessRequest> approvedDars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId());
     List<Integer> approvedDarIds = approvedDars.stream().map(DataAccessRequest::getId).toList();
     assertEquals(2, approvedDarIds.size());
     assertTrue(approvedDarIds.contains(testDar3.getId()));
@@ -573,7 +573,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
 
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -589,7 +589,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(0,
-        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
   }
 
