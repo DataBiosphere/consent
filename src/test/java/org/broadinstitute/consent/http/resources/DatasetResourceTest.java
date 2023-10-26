@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -548,7 +549,8 @@ class DatasetResourceTest {
 
   @Test
   void testIndexDelete() throws IOException {
-    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted").build();
+    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
+        .build();
     when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
 
     initResource();
@@ -564,7 +566,8 @@ class DatasetResourceTest {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
+        List.of(ds));
 
     initResource();
     Response response = resource.searchDatasets(authUser, "search query", accessManagement);
@@ -581,7 +584,8 @@ class DatasetResourceTest {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
+        List.of(ds));
 
     initResource();
     Response response = resource.searchDatasets(authUser, "search query", accessManagement);
@@ -1030,7 +1034,8 @@ class DatasetResourceTest {
     when(datasetService.findStudyById(any())).thenReturn(study);
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -1043,7 +1048,8 @@ class DatasetResourceTest {
     when(datasetService.findStudyById(any())).thenThrow(new NotFoundException());
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -1055,7 +1061,8 @@ class DatasetResourceTest {
     when(datasetService.findDatasetByIdentifier(any())).thenReturn(null);
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -1412,8 +1419,8 @@ class DatasetResourceTest {
 
     DatasetProperty accessManagementProp = new DatasetProperty();
     accessManagementProp.setSchemaProperty("accessManagement");
-    accessManagementProp.setPropertyType(PropertyType.Boolean);
-    accessManagementProp.setPropertyValue(true);
+    accessManagementProp.setPropertyType(PropertyType.String);
+    accessManagementProp.setPropertyValue(AccessManagement.OPEN.value());
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setSchemaProperty("dataLocation");
