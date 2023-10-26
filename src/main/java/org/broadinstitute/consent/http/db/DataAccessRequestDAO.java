@@ -42,28 +42,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<DataAccessRequest> findAllDataAccessRequests();
 
-
-  /**
-   * Find all non-draft, approved DataAccessRequests for the given datasetId
-   *
-   * @return List<DataAccessRequest>
-   */
-  @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery(
-      " SELECT distinct e.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, "
-          + " dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + " (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data "
-          + " FROM data_access_request dar "
-          + " INNER JOIN election e "
-          + " ON e.reference_id = dar.reference_id "
-          + " INNER JOIN vote v "
-          + " ON e.election_id = v.electionid "
-          + " WHERE lower(v.type) = 'final' AND v.vote = true AND e.dataset_id = :datasetId "
-          + " AND e.archived IS NOT true AND lower(e.election_type) = 'dataaccess'"
-  )
-  List<DataAccessRequest> findAllApprovedDataAccessRequestsByDatasetId(
-      @Bind("datasetId") Integer datasetId);
-
   /**
    * This query finds unique DARs on dar-dataset combinations where the most recent vote is
    * true. The query accomplishes this by creating a view that is a grouping of election reference
@@ -80,7 +58,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery("""
-          SELECT dar
+          SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft,
+            dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+            dd.dataset_id
           FROM data_access_request dar
           INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
           INNER JOIN (

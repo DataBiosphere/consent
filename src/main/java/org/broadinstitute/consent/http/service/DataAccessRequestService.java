@@ -415,7 +415,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     StringBuilder builder = new StringBuilder();
     builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-    List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
+    List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDARsByDatasetId(
         datasetId);
     if (CollectionUtils.isNotEmpty(darList)) {
       for (DataAccessRequest dar : darList) {
