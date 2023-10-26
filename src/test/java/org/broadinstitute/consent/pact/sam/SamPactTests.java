@@ -46,8 +46,8 @@ import org.junit.jupiter.api.Test;
 @MockServerConfig(hostInterface = "localhost", port = "1234")
 public class SamPactTests {
 
-  protected static final String PROVIDER_NAME = "sam-provider";
-  protected static final String CONSUMER_NAME = "consent-consumer";
+  protected static final String PROVIDER_NAME = "sam";
+  protected static final String CONSUMER_NAME = "consent";
 
   private static final List<ResourceType> RESOURCE_TYPES = List.of(
       new ResourceType()
