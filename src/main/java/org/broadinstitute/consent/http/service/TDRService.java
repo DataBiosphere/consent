@@ -34,10 +34,10 @@ public class TDRService implements ConsentLogger {
   public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
     Collection<DataAccessRequest> dars = dataAccessRequestService.getApprovedDARsForDataset(
         dataset);
-    List<String> internalCollaborators = dars.stream()
+    List<String> labCollaborators = dars.stream()
         .map(DataAccessRequest::getData)
         .filter(Objects::nonNull)
-        .map(DataAccessRequestData::getInternalCollaborators)
+        .map(DataAccessRequestData::getLabCollaborators)
         .flatMap(List::stream)
         .filter(Objects::nonNull)
         .map(Collaborator::getEmail)
@@ -46,7 +46,7 @@ public class TDRService implements ConsentLogger {
     Collection<User> users = userDAO.findUsers(userIds);
     List<String> userEmails = users.stream().map(User::getEmail).toList();
 
-    List<ApprovedUser> approvedUsers = Stream.of(internalCollaborators, userEmails)
+    List<ApprovedUser> approvedUsers = Stream.of(labCollaborators, userEmails)
         .flatMap(List::stream)
         .distinct()
         .map(ApprovedUser::new)

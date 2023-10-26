@@ -53,9 +53,9 @@ class TDRServiceTest {
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setUserId(user1.getUserId());
     DataAccessRequestData data = new DataAccessRequestData();
-    Collaborator internal = new Collaborator();
-    internal.setEmail("internal@gmail.com");
-    data.setInternalCollaborators(List.of(internal));
+    Collaborator lab = new Collaborator();
+    lab.setEmail("lab@gmail.com");
+    data.setLabCollaborators(List.of(lab));
     dar1.setData(data);
     User user2 = new User();
     user2.setUserId(2);
@@ -73,7 +73,7 @@ class TDRServiceTest {
         .toList();
 
     assertTrue(
-        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail(), internal.getEmail())));
+        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail(), lab.getEmail())));
   }
 
   @Test
