@@ -270,7 +270,7 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDac(toDacTerm(dac));
     });
 
-    List<Integer> approvedUserIds = this.dataAccessRequestDAO
+    List<Integer> approvedUserIds = dataAccessRequestDAO
         .findAllApprovedDARsByDatasetId(dataset.getDataSetId())
         .stream()
         .map(DataAccessRequest::getUserId)
