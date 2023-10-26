@@ -64,8 +64,8 @@ public class ConsentGroup {
    * No Restrictions
    */
   @JsonProperty("accessManagement")
-  @JsonPropertyDescription("No Restrictions")
-  private Boolean accessManagement;
+  @JsonPropertyDescription("One of Controlled, Open, or External")
+  private AccessManagement accessManagement;
   /**
    * General Research Use
    */
@@ -239,7 +239,7 @@ public class ConsentGroup {
    * No Restrictions
    */
   @JsonProperty("accessManagement")
-  public Boolean getAccessManagement() {
+  public AccessManagement getAccessManagement() {
     return accessManagement;
   }
 
@@ -247,7 +247,7 @@ public class ConsentGroup {
    * No Restrictions
    */
   @JsonProperty("accessManagement")
-  public void setAccessManagement(Boolean accessManagement) {
+  public void setAccessManagement(AccessManagement accessManagement) {
     this.accessManagement = accessManagement;
   }
 
@@ -707,7 +707,8 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
     result = ((result * 31) + ((this.npu == null) ? 0 : this.npu.hashCode()));
     result = ((result * 31) + ((this.dataLocation == null) ? 0 : this.dataLocation.hashCode()));
-    result = ((result * 31) + ((this.accessManagement == null) ? 0 : this.accessManagement.hashCode()));
+    result = ((result * 31) + ((this.accessManagement == null) ? 0
+        : this.accessManagement.hashCode()));
     result = ((result * 31) + ((this.irb == null) ? 0 : this.irb.hashCode()));
     result = ((result * 31) + ((this.hmb == null) ? 0 : this.hmb.hashCode()));
     result = ((result * 31) + ((this.pub == null) ? 0 : this.pub.hashCode()));
@@ -752,8 +753,10 @@ public class ConsentGroup {
         && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && (
         (this.npu == rhs.npu) || ((this.npu != null) && this.npu.equals(rhs.npu)))) && (
         (this.dataLocation == rhs.dataLocation) || ((this.dataLocation != null)
-            && this.dataLocation.equals(rhs.dataLocation)))) && ((this.accessManagement == rhs.accessManagement)
-        || ((this.accessManagement != null) && this.accessManagement.equals(rhs.accessManagement)))) && (
+            && this.dataLocation.equals(rhs.dataLocation)))) && (
+        (this.accessManagement == rhs.accessManagement)
+            || ((this.accessManagement != null) && this.accessManagement.equals(
+            rhs.accessManagement)))) && (
         (this.irb == rhs.irb) || ((this.irb != null) && this.irb.equals(rhs.irb)))) && (
         (this.hmb == rhs.hmb) || ((this.hmb != null) && this.hmb.equals(rhs.hmb)))) && (
         (this.pub == rhs.pub) || ((this.pub != null) && this.pub.equals(rhs.pub)))) && (
@@ -805,6 +808,47 @@ public class ConsentGroup {
       }
     }
 
+  }
+
+  /*
+   * Access Management
+   */
+  public enum AccessManagement {
+    OPEN("open"),
+    CONTROLLED("controlled"),
+    EXTERNAL("external");
+    private final String value;
+    private final static Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
+
+    static {
+      for (ConsentGroup.AccessManagement c : values()) {
+        CONSTANTS.put(c.value, c);
+      }
+    }
+
+    AccessManagement(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+      return this.value;
+    }
+
+    @JsonCreator
+    public static ConsentGroup.AccessManagement fromValue(String value) {
+      ConsentGroup.AccessManagement constant = CONSTANTS.get(value);
+      if (constant == null) {
+        throw new IllegalArgumentException(value);
+      } else {
+        return constant;
+      }
+    }
   }
 
   public boolean isInvalidForUpdate() {

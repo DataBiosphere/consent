@@ -687,8 +687,13 @@ public class DatasetRegistrationService implements ConsentLogger {
             return null;
           }),
       new DatasetPropertyExtractor(
-          "Open Access", "accessManagement", PropertyType.Boolean,
-          ConsentGroup::getAccessManagement),
+          "Access Management", "accessManagement", PropertyType.String,
+          (consentGroup) -> {
+            if (Objects.nonNull(consentGroup.getAccessManagement())) {
+              return consentGroup.getAccessManagement().value();
+            }
+            return null;
+          }),
       new DatasetPropertyExtractor(
           "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
           ConsentGroup::getDataAccessCommitteeId)
