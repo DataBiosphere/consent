@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -268,14 +269,18 @@ class ElasticSearchServiceTest {
 
   @Test
   void testToDatasetTerm_DatasetInfo() {
-    List<Integer> approvedUserIds = List.of(1, 2);
+    DataAccessRequest dar1 = new DataAccessRequest();
+    dar1.setUserId(1);
+    DataAccessRequest dar2 = new DataAccessRequest();
+    dar2.setUserId(2);
+    List<Integer> approvedUserIds = List.of(dar1.getUserId(), dar2.getUserId());
     DataUseSummary dataUseSummary = createDataUseSummary();
     DatasetRecord datasetRecord = createDatasetRecord();
     when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
     when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
-    when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(approvedUserIds);
+    when(dataAccessRequestDAO.findAllApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
     initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
@@ -323,7 +328,7 @@ class ElasticSearchServiceTest {
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
 
-    when(dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(any())).thenReturn(
+    when(dataAccessRequestDAO.findAllApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
 
     initService();

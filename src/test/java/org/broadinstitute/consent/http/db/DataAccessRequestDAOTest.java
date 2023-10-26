@@ -487,10 +487,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Dataset dataset2 = createDARDAOTestDataset();
 
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     User user1 = createUserWithInstitution();
@@ -500,10 +500,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest testDar2 = createDAR(user2, dataset2, darCode2);
     DataAccessRequest testDar3 = createDAR(user3, dataset2, darCode3);
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     assertEquals(0,
@@ -535,16 +535,16 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
     assertEquals(testDar1.getUserId(),
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .get(0));
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
     assertEquals(testDar2.getUserId(),
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .get(0));
 
     Election e3 = createDataAccessElection(testDar3.getReferenceId(), dataset2.getDataSetId());
@@ -560,16 +560,16 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(2,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .contains(testDar3.getUserId()));
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .contains(testDar2.getUserId()));
     assertFalse(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset2.getDataSetId())
             .contains(testDar1.getUserId()));
   }
 
@@ -597,7 +597,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
 
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -613,7 +613,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(0,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
   }
 

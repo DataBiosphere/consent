@@ -217,15 +217,15 @@ public class DataAccessRequestServiceTest {
     dar2.setUserId(20);
 
     when(this.dataAccessRequestDAO
-        .findAllUserIdsWithApprovedDARsByDatasetId(d.getDataSetId()))
-        .thenReturn(List.of(dar1.getUserId(), dar2.getUserId()));
+        .findAllApprovedDARsByDatasetId(d.getDataSetId()))
+        .thenReturn(List.of(dar1, dar2));
 
     when(this.userDAO.findUsers(List.of(dar1.getUserId(), dar2.getUserId())))
         .thenReturn(List.of(user1, user2));
 
     initService();
 
-    assertEquals(List.of(user1, user2), service.getUsersApprovedForDataset(d));
+    assertEquals(List.of(dar1, dar2), service.getApprovedDARsForDataset(d));
   }
 
   @Test

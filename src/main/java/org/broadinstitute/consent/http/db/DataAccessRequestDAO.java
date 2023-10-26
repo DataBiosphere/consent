@@ -65,7 +65,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("datasetId") Integer datasetId);
 
   /**
-   * This query finds unique user ids on dar-dataset combinations where the most recent vote is
+   * This query finds unique DARs on dar-dataset combinations where the most recent vote is
    * true. The query accomplishes this by creating a view that is a grouping of election reference
    * ids and LAST vote in the group of final votes for all data access elections. We need to group
    * them due to the case of multiple elections on a dar-dataset request. Election 1 may have been
@@ -76,10 +76,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * example would be filtered out.
    *
    * @param datasetId The dataset id
-   * @return List of approved user ids for the dataset
+   * @return List of approved DARs for the dataset
    */
+  @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery("""
-          SELECT DISTINCT dar.user_id
+          SELECT dar
           FROM data_access_request dar
           INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
           INNER JOIN (
@@ -100,7 +101,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           AND final_access_vote.last_vote = TRUE
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+  List<DataAccessRequest> findAllApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order

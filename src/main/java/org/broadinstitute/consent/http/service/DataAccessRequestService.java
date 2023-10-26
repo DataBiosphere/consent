@@ -439,13 +439,8 @@ public class DataAccessRequestService implements ConsentLogger {
     return builder.toString();
   }
 
-  public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
-    List<Integer> userIds = this.dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
-        dataset.getDataSetId());
-    if (userIds.isEmpty()) {
-      return List.of();
-    }
-    return this.userDAO.findUsers(userIds);
+  public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
+    return dataAccessRequestDAO.findAllApprovedDARsByDatasetId(dataset.getDataSetId());
   }
 
 }

@@ -4,35 +4,48 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class TDRService {
+public class TDRService implements ConsentLogger {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final DatasetDAO datasetDAO;
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final UserDAO userDAO;
 
   @Inject
-  public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO) {
+  public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO,
+      UserDAO userDAO) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.datasetDAO = datasetDAO;
+    this.userDAO = userDAO;
   }
 
   public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
-    Collection<User> users = dataAccessRequestService.getUsersApprovedForDataset(dataset);
+    Collection<DataAccessRequest> dars = dataAccessRequestService.getApprovedDARsForDataset(
+        dataset);
+    List<String> internalCollaborators = dars.stream()
+        .map(DataAccessRequest::getData)
+        .map(DataAccessRequestData::getInternalCollaborators)
+        .flatMap(List::stream).map(Collaborator::getEmail).toList();
+    List<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).toList();
+    Collection<User> users = userDAO.findUsers(userIds);
+    List<String> userEmails = users.stream().map(User::getEmail).toList();
 
-    List<ApprovedUser> approvedUsers = users
-        .stream()
-        .map((u) -> new ApprovedUser(u.getEmail()))
+    List<ApprovedUser> approvedUsers = Stream.of(internalCollaborators, userEmails)
+        .flatMap(List::stream)
+        .map(ApprovedUser::new)
         .sorted(Comparator.comparing(ApprovedUser::getEmail))
-        .collect(Collectors.toList());
+        .toList();
 
     return new ApprovedUsers(approvedUsers);
   }
