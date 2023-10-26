@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -35,8 +36,12 @@ public class TDRService implements ConsentLogger {
         dataset);
     List<String> internalCollaborators = dars.stream()
         .map(DataAccessRequest::getData)
+        .filter(Objects::nonNull)
         .map(DataAccessRequestData::getInternalCollaborators)
-        .flatMap(List::stream).map(Collaborator::getEmail).toList();
+        .flatMap(List::stream)
+        .filter(Objects::nonNull)
+        .map(Collaborator::getEmail)
+        .toList();
     List<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).toList();
     Collection<User> users = userDAO.findUsers(userIds);
     List<String> userEmails = users.stream().map(User::getEmail).toList();

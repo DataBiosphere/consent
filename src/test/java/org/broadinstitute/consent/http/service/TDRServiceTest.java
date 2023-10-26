@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -9,7 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
@@ -49,6 +52,11 @@ class TDRServiceTest {
     user1.setEmail("asdf1@gmail.com");
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setUserId(user1.getUserId());
+    DataAccessRequestData data = new DataAccessRequestData();
+    Collaborator internal = new Collaborator();
+    internal.setEmail("internal@gmail.com");
+    data.setInternalCollaborators(List.of(internal));
+    dar1.setData(data);
     User user2 = new User();
     user2.setUserId(2);
     user2.setEmail("asdf2@gmail.com");
@@ -56,6 +64,7 @@ class TDRServiceTest {
     dar2.setUserId(user2.getUserId());
 
     when(darService.getApprovedDARsForDataset(dataset)).thenReturn(List.of(dar1, dar2));
+    when(userDAO.findUsers(any())).thenReturn(List.of(user1, user2));
     initService();
 
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(dataset);
@@ -64,7 +73,7 @@ class TDRServiceTest {
         .toList();
 
     assertTrue(
-        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail())));
+        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail(), internal.getEmail())));
   }
 
   @Test
