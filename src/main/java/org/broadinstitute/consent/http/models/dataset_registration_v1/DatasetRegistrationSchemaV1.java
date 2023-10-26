@@ -1270,7 +1270,8 @@ public class DatasetRegistrationSchemaV1 {
   public enum AlternativeDataSharingPlanAccessManagement {
 
     CONTROLLED_ACCESS("Controlled Access"),
-    OPEN_ACCESS("Open Access");
+    OPEN_ACCESS("Open Access"),
+    EXTERNAL_ACCESS("External Access");
     private final String value;
     private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement>();
 
