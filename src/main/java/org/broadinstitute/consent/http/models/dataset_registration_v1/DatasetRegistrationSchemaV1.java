@@ -280,10 +280,10 @@ public class DatasetRegistrationSchemaV1 {
   @JsonPropertyDescription("Target Public Release Date")
   private String alternativeDataSharingPlanTargetPublicReleaseDate;
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
   @JsonProperty("alternativeDataSharingPlanAccessManagement")
-  @JsonPropertyDescription("Does the data need to be managed under Controlled or Open Access?")
+  @JsonPropertyDescription("Does the data need to be managed under Controlled, Open, or External Access?")
   private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement alternativeDataSharingPlanAccessManagement;
   /**
    * Consent Groups (Required)
@@ -868,7 +868,7 @@ public class DatasetRegistrationSchemaV1 {
   }
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
   @JsonProperty("alternativeDataSharingPlanAccessManagement")
   public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement getAlternativeDataSharingPlanAccessManagement() {
@@ -876,7 +876,7 @@ public class DatasetRegistrationSchemaV1 {
   }
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
   @JsonProperty("alternativeDataSharingPlanAccessManagement")
   public void setAlternativeDataSharingPlanAccessManagement(
@@ -1265,7 +1265,7 @@ public class DatasetRegistrationSchemaV1 {
 
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
   public enum AlternativeDataSharingPlanAccessManagement {
 

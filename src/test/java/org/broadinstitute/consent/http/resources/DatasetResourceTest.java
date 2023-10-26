@@ -559,10 +559,10 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testSearchDatasetsAccessManagementFalse() {
+  void testSearchDatasetsControlledAccess() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean accessManagement = false;
+    AccessManagement accessManagement = AccessManagement.CONTROLLED;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
@@ -570,17 +570,18 @@ class DatasetResourceTest {
         List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", accessManagement);
+    Response response = resource.searchDatasets(authUser, "search query",
+        accessManagement.toString());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
   }
 
   @Test
-  void testSearchDatasetsAccessManagementTrue() {
+  void testSearchDatasetsOpenAccess() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean accessManagement = true;
+    AccessManagement accessManagement = AccessManagement.OPEN;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
@@ -588,7 +589,8 @@ class DatasetResourceTest {
         List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", accessManagement);
+    Response response = resource.searchDatasets(authUser, "search query",
+        accessManagement.toString());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
