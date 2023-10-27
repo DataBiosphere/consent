@@ -46,11 +46,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDataset() throws Exception {
     Dataset dataset = createDataset();
-//    when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
-//    when(datasetDAO.insertDatasetAudit(any())).thenReturn(dataset.getDataSetId());
-//    doNothing().when(datasetDAO).deleteUserAssociationsByDatasetId(any());
-//    doNothing().when(datasetDAO).deleteDatasetsProperties(any());
-//    doNothing().when(datasetDAO).deleteConsentAssociationsByDatasetId(any());
 
     serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
     // Assert that the dataset is deleted:
