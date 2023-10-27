@@ -57,7 +57,6 @@ public class TDRService implements ConsentLogger {
   }
 
   public List<Dataset> getDatasetsByIdentifier(List<Integer> aliases) {
-    // reduce DB calls with new method that takes an ArrayList of identifiers as a parameter to perform a bulk fetch
     return datasetDAO.findDatasetsByAlias(aliases)
         .stream()
         // technically, it is possible to have two dataset identifiers which
