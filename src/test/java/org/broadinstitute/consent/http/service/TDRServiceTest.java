@@ -9,7 +9,9 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import java.util.Arrays;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -32,6 +34,9 @@ class TDRServiceTest {
   @Mock
   private UserDAO userDAO;
 
+  @Mock SamDAO samDAO;
+
+  @Mock AuthUser authUser;
   private TDRService service;
 
   @BeforeEach
@@ -40,7 +45,7 @@ class TDRServiceTest {
   }
 
   private void initService() {
-    service = new TDRService(darService, datasetDAO, userDAO);
+    service = new TDRService(darService, datasetDAO, samDAO, userDAO);
   }
 
   @Test
@@ -67,7 +72,7 @@ class TDRServiceTest {
     when(userDAO.findUsers(any())).thenReturn(List.of(user1, user2));
     initService();
 
-    ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(dataset);
+    ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(authUser, dataset);
     List<String> approvedUsersEmails = approvedUsers.approvedUsers().stream()
         .map(ApprovedUser::email)
         .toList();

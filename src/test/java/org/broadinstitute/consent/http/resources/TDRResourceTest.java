@@ -70,7 +70,7 @@ class TDRResourceTest {
 
     Dataset d = new Dataset();
 
-    when(tdrService.getApprovedUsersForDataset(d)).thenReturn(approvedUsers);
+    when(tdrService.getApprovedUsersForDataset(authUser, d)).thenReturn(approvedUsers);
     when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
 
     initResource();

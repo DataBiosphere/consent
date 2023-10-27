@@ -1,13 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotAuthorizedException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -21,17 +24,19 @@ public class TDRService implements ConsentLogger {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final DatasetDAO datasetDAO;
+  private final SamDAO samDAO;
   private final UserDAO userDAO;
 
   @Inject
   public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO,
-      UserDAO userDAO) {
+      SamDAO samDAO, UserDAO userDAO) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.datasetDAO = datasetDAO;
+    this.samDAO = samDAO;
     this.userDAO = userDAO;
   }
 
-  public ApprovedUsers getApprovedUsersForDataset(Dataset dataset) {
+  public ApprovedUsers getApprovedUsersForDataset(AuthUser authUser, Dataset dataset) {
     Collection<DataAccessRequest> dars = dataAccessRequestService.getApprovedDARsForDataset(
         dataset);
     List<String> labCollaborators = dars.stream()
@@ -41,6 +46,20 @@ public class TDRService implements ConsentLogger {
         .flatMap(List::stream)
         .filter(Objects::nonNull)
         .map(Collaborator::getEmail)
+        // Sam has an endpoint for validating a single email at a time
+        .map(email -> {
+          try {
+            samDAO.getV1UserByEmail(authUser, email);
+            return email;
+          } catch (NotAuthorizedException e) {
+            logWarn("User " + authUser.getEmail() + " is not authorized to look for users in Sam");
+            return null;
+          } catch (Exception e) {
+            logWarn("Lab Collaborator: " + email + " does not exist in Sam");
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
         .toList();
     List<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).toList();
     Collection<User> users = userDAO.findUsers(userIds);
