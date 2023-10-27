@@ -68,8 +68,8 @@ class TDRServiceTest {
     initService();
 
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(dataset);
-    List<String> approvedUsersEmails = approvedUsers.getApprovedUsers().stream()
-        .map(ApprovedUser::getEmail)
+    List<String> approvedUsersEmails = approvedUsers.approvedUsers().stream()
+        .map(ApprovedUser::email)
         .toList();
 
     assertTrue(

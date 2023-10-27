@@ -50,7 +50,7 @@ public class TDRService implements ConsentLogger {
         .flatMap(List::stream)
         .distinct()
         .map(ApprovedUser::new)
-        .sorted(Comparator.comparing(ApprovedUser::getEmail))
+        .sorted(Comparator.comparing(ApprovedUser::email))
         .toList();
 
     return new ApprovedUsers(approvedUsers);
