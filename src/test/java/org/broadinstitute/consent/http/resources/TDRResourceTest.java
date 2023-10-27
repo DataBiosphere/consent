@@ -63,6 +63,7 @@ class TDRResourceTest {
 
   @Test
   void testGetApprovedUsersForDataset() {
+    String ds = "DUOS-00003";
     List<ApprovedUser> users = List.of(
         new ApprovedUser("asdf1@gmail.com"),
         new ApprovedUser("asdf2@gmail.com"));
@@ -70,13 +71,12 @@ class TDRResourceTest {
 
     Dataset d = new Dataset();
 
-    when(tdrService.getApprovedUsersForDataset(authUser, d)).thenReturn(approvedUsers);
-    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
+    when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(approvedUsers);
+    when(datasetService.findDatasetByIdentifier(ds)).thenReturn(d);
 
     initResource();
 
-    Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
-
+    Response r = resource.getApprovedUsers(new AuthUser(), ds);
     assertEquals(200, r.getStatus());
     assertEquals(approvedUsers, r.getEntity());
   }
