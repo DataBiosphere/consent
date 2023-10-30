@@ -63,7 +63,7 @@ public class TDRResource extends Resource {
         throw new NotFoundException("Could not find dataset " + identifier);
       }
 
-      ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(dataset);
+      ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(authUser, dataset);
       return Response.ok(approvedUsers).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

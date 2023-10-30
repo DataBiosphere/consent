@@ -42,44 +42,26 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           + "  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)")
   List<DataAccessRequest> findAllDataAccessRequests();
 
-
   /**
-   * Find all non-draft, approved DataAccessRequests for the given datasetId
-   *
-   * @return List<DataAccessRequest>
-   */
-  @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery(
-      " SELECT distinct e.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft, "
-          + " dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, "
-          + " (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data "
-          + " FROM data_access_request dar "
-          + " INNER JOIN election e "
-          + " ON e.reference_id = dar.reference_id "
-          + " INNER JOIN vote v "
-          + " ON e.election_id = v.electionid "
-          + " WHERE lower(v.type) = 'final' AND v.vote = true AND e.dataset_id = :datasetId "
-          + " AND e.archived IS NOT true AND lower(e.election_type) = 'dataaccess'"
-  )
-  List<DataAccessRequest> findAllApprovedDataAccessRequestsByDatasetId(
-      @Bind("datasetId") Integer datasetId);
-
-  /**
-   * This query finds unique user ids on dar-dataset combinations where the most recent vote is
-   * true. The query accomplishes this by creating a view that is a grouping of election reference
+   * This query finds DARs on dar-dataset combinations where the most recent vote is true.
+   * The query accomplishes this by creating a view that is a grouping of election reference
    * ids and LAST vote in the group of final votes for all data access elections. We need to group
    * them due to the case of multiple elections on a dar-dataset request. Election 1 may have been
    * denied. Election 2 may have been approved. Election 3 may have been denied again. When we
    * partition over the election reference id, we'll get all final votes. The `LAST_VALUE` function
-   * selects the last result in the partition, which would be `FALSE` in the example. Outside the
-   * JOIN, we filter on groupings where the final vote value is `TRUE` so the election in the
-   * example would be filtered out.
+   * selects the last result in the partition, which would be `FALSE` in the example above. Outside
+   * the JOIN, we filter on groupings where the final vote value is `TRUE` so the denied election in
+   * the example would be filtered out.
    *
    * @param datasetId The dataset id
-   * @return List of approved user ids for the dataset
+   * @return List of approved DARs for the dataset
    */
+  @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery("""
-          SELECT DISTINCT dar.user_id
+          SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.draft,
+            dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+            dd.dataset_id
           FROM data_access_request dar
           INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
           INNER JOIN (
@@ -100,7 +82,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           AND final_access_vote.last_vote = TRUE
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  List<Integer> findAllUserIdsWithApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+  List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order
