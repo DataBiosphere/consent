@@ -34,7 +34,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -50,6 +49,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -62,8 +62,6 @@ class DatasetServiceTest {
   @Mock
   private DatasetDAO datasetDAO;
   @Mock
-  private UserRoleDAO userRoleDAO;
-  @Mock
   private DacDAO dacDAO;
   @Mock
   private EmailService emailService;
@@ -71,6 +69,8 @@ class DatasetServiceTest {
   private OntologyService ontologyService;
   @Mock
   private StudyDAO studyDAO;
+  @Mock
+  private DatasetServiceDAO datasetServiceDAO;
 
   @BeforeEach
   public void setUp() {
@@ -78,8 +78,8 @@ class DatasetServiceTest {
   }
 
   private void initService() {
-    datasetService = new DatasetService(datasetDAO,
-        userRoleDAO, dacDAO, emailService, ontologyService, studyDAO);
+    datasetService = new DatasetService(datasetDAO, dacDAO, emailService,
+      ontologyService, studyDAO, datasetServiceDAO);
   }
 
   @Test
@@ -174,21 +174,6 @@ class DatasetServiceTest {
     assertThrows(BadRequestException.class, () -> {
       datasetService.findDatasetListByDacIds(null);
     });
-  }
-
-  @Test
-  void testDeleteDataset() throws Exception {
-    Integer dataSetId = 1;
-    when(datasetDAO.findDatasetById(any()))
-        .thenReturn(getDatasets().get(0));
-    when(datasetDAO.insertDatasetAudit(any()))
-        .thenReturn(1);
-    doNothing().when(datasetDAO).deleteUserAssociationsByDatasetId(any());
-    doNothing().when(datasetDAO).deleteDatasetsProperties(any());
-    doNothing().when(datasetDAO).deleteConsentAssociationsByDatasetId(any());
-
-    initService();
-    datasetService.deleteDataset(dataSetId, 1);
   }
 
   @Test

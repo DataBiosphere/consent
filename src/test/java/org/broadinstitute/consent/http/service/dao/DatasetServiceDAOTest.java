@@ -44,6 +44,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteDataset() throws Exception {
+    Dataset dataset = createDataset();
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+    // Assert that the dataset is deleted:
+    Dataset deleted = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertNull(deleted);
+
+  }
+
+  @Test
   void testInsertDatasets() throws Exception {
 
     Dac dac = createDac();

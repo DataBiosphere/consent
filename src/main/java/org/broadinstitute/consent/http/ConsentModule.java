@@ -289,11 +289,11 @@ public class ConsentModule extends AbstractModule {
   DatasetService providesDatasetService() {
     return new DatasetService(
         providesDatasetDAO(),
-        providesUserRoleDAO(),
         providesDacDAO(),
         providesEmailService(),
         providesOntologyService(),
-        providesStudyDAO());
+        providesStudyDAO(),
+        providesDatasetServiceDAO());
   }
 
   @Provides

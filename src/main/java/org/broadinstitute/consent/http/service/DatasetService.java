@@ -19,8 +19,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -28,7 +26,6 @@ import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
@@ -36,6 +33,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,21 +43,22 @@ public class DatasetService {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
   private final DatasetDAO datasetDAO;
-  private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
+  private final DatasetServiceDAO datasetServiceDAO;
 
   @Inject
-  public DatasetService(DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
-      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO) {
+  public DatasetService(DatasetDAO dataSetDAO, DacDAO dacDAO,
+      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO,
+      DatasetServiceDAO datasetServiceDAO) {
     this.datasetDAO = dataSetDAO;
-    this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
+    this.datasetServiceDAO = datasetServiceDAO;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -290,28 +289,7 @@ public class DatasetService {
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (Objects.nonNull(dataset)) {
-      // Some legacy dataset names can be null
-      String dsAuditName =
-          Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-          new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
-      try {
-        datasetDAO.useTransaction(h -> {
-          try {
-            h.insertDatasetAudit(dsAudit);
-            h.deleteUserAssociationsByDatasetId(datasetId);
-            h.deleteDatasetPropertiesByDatasetId(datasetId);
-            h.deleteConsentAssociationsByDatasetId(datasetId);
-            h.deleteDatasetById(datasetId);
-          } catch (Exception e) {
-            h.rollback();
-            throw e;
-          }
-        });
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-        throw e;
-      }
+      datasetServiceDAO.deleteDataset(dataset, userId);
     }
   }
 
@@ -362,22 +340,6 @@ public class DatasetService {
           dataset.getDatasetIdentifier());
     }
 
-  }
-
-  private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {
-    //datasets need to have consentId, null check to prevent NPE
-    String consentId = dataset.getConsentId();
-    Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
-    return consentIdMatch || dataset.getProperties()
-        .stream()
-        .filter(p -> Objects.nonNull(p.getPropertyValue()))
-        .anyMatch(p -> {
-          return p.getPropertyValue().toLowerCase().contains(term);
-        });
-  }
-
-  private boolean userHasRole(String roleName, Integer userId) {
-    return userRoleDAO.findRoleByNameAndUser(roleName, userId) != null;
   }
 
   public List<Dataset> findAllDatasetsByUser(User user) {

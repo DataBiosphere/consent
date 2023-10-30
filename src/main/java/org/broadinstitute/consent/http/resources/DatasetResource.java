@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -594,15 +595,29 @@ public class DatasetResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{datasetId}")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId,
       @Context UriInfo info) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetById(datasetId);
-      // Validate that the admin/chairperson has edit/delete access to this dataset
+      if (Objects.nonNull(dataset.getDeletable()) && !dataset.getDeletable()) {
+        throw new BadRequestException("Dataset is in use and cannot be deleted.");
+      }
+      // Validate that the admin/chairperson/data submitter has edit/delete access to this dataset
       validateDatasetDacAccess(user, dataset);
-      datasetService.deleteDataset(datasetId, user.getUserId());
+      try {
+        datasetService.deleteDataset(datasetId, user.getUserId());
+      } catch (Exception e) {
+        logException(e);
+        return createExceptionResponse(e);
+      }
+      try {
+        elasticSearchService.deleteIndex(datasetId);
+      } catch (IOException e) {
+        logException(e);
+        return createExceptionResponse(e);
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -735,6 +750,17 @@ public class DatasetResource extends Resource {
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return;
+    }
+    if (user.hasUserRole(UserRoles.DATASUBMITTER)) {
+      if (dataset.getCreateUserId().equals(user.getUserId())) {
+        return;
+      }
+      // If the user doesn't have any other appropriate role, we can return an error here,
+      // otherwise, continue checking if the user has chair permissions
+      if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
+        logWarn("User does not have permission to delete dataset: " + user.getEmail());
+        throw new NotFoundException();
+      }
     }
     List<Integer> dacIds = user.getRoles().stream()
         .filter(r -> r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()))
