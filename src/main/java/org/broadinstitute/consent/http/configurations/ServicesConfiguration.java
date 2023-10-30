@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotNull;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
@@ -12,6 +14,7 @@ public class ServicesConfiguration {
   public static final String REGISTER_SELF_PATH = "register/user/v2/self";
   public static final String TOS_TEXT_PATH = "tos/text";
   public static final String REGISTER_TOS_PATH = "register/user/v1/termsofservice";
+  public static final String SAM_V1_USER_EMAIL = "api/users/v1";
 
   @NotNull
   private String ontologyURL;
@@ -97,6 +100,11 @@ public class ServicesConfiguration {
 
   public String tosRegistrationUrl() {
     return getSamUrl() + REGISTER_TOS_PATH;
+  }
+
+  public String getV1UserUrl(String email) {
+    String encoded = URLEncoder.encode(email, Charset.defaultCharset());
+    return getSamUrl() + SAM_V1_USER_EMAIL + "/" + encoded;
   }
 
   public String postSupportRequestUrl() {

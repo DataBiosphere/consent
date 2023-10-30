@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -166,4 +167,18 @@ public class SamDAO implements ConsentLogger {
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
   }
+
+  public EmailResponse getV1UserByEmail(AuthUser authUser, String email) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.getV1UserUrl(email));
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (!response.isSuccessStatusCode()) {
+      logException(
+          "Error getting user by email from Sam: " + response.getStatusMessage(),
+          new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, EmailResponse.class);
+  }
+
 }

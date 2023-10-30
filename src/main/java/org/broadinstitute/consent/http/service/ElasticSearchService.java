@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
@@ -206,8 +207,8 @@ public class ElasticSearchService implements ConsentLogger {
       return null;
     }
     InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
-      toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
-      null;
+        toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
+        null;
     return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
   }
 
@@ -269,9 +270,11 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDac(toDacTerm(dac));
     });
 
-    List<Integer> approvedUserIds =
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
-            dataset.getDataSetId());
+    List<Integer> approvedUserIds = dataAccessRequestDAO
+        .findApprovedDARsByDatasetId(dataset.getDataSetId())
+        .stream()
+        .map(DataAccessRequest::getUserId)
+        .toList();
 
     if (!approvedUserIds.isEmpty()) {
       term.setApprovedUserIds(approvedUserIds);
@@ -282,9 +285,9 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     findDatasetProperty(
-        dataset.getProperties(), "openAccess"
+        dataset.getProperties(), "accessManagement"
     ).ifPresent(
-        datasetProperty -> term.setOpenAccess((Boolean) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
     );
 
     findDatasetProperty(

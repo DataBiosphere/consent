@@ -8,14 +8,17 @@ get:
       required: true
       schema:
         type: string
-    - name: open
+    - name: access
       in: query
-      description: Open Access
+      description: One of controlled, open, or external
       required: false
       schema:
-        type: boolean
-        required: false
-        default: false
+        type: string
+        enum:
+          - controlled
+          - open
+          - external
+        default: controlled
   tags:
     - Dataset
   responses:

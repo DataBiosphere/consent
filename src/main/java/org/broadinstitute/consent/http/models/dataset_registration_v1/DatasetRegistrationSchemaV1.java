@@ -60,7 +60,7 @@ import java.util.Map;
     "alternativeDataSharingPlanDataReleased",
     "alternativeDataSharingPlanTargetDeliveryDate",
     "alternativeDataSharingPlanTargetPublicReleaseDate",
-    "alternativeDataSharingPlanControlledOpenAccess",
+    "alternativeDataSharingPlanAccessManagement",
     "consentGroups"
 })
 public class DatasetRegistrationSchemaV1 {
@@ -280,11 +280,11 @@ public class DatasetRegistrationSchemaV1 {
   @JsonPropertyDescription("Target Public Release Date")
   private String alternativeDataSharingPlanTargetPublicReleaseDate;
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
-  @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
-  @JsonPropertyDescription("Does the data need to be managed under Controlled or Open Access?")
-  private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess;
+  @JsonProperty("alternativeDataSharingPlanAccessManagement")
+  @JsonPropertyDescription("Does the data need to be managed under Controlled, Open, or External Access?")
+  private DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement alternativeDataSharingPlanAccessManagement;
   /**
    * Consent Groups (Required)
    */
@@ -868,20 +868,20 @@ public class DatasetRegistrationSchemaV1 {
   }
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
-  @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
-  public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess getAlternativeDataSharingPlanControlledOpenAccess() {
-    return alternativeDataSharingPlanControlledOpenAccess;
+  @JsonProperty("alternativeDataSharingPlanAccessManagement")
+  public DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement getAlternativeDataSharingPlanAccessManagement() {
+    return alternativeDataSharingPlanAccessManagement;
   }
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
-  @JsonProperty("alternativeDataSharingPlanControlledOpenAccess")
-  public void setAlternativeDataSharingPlanControlledOpenAccess(
-      DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess alternativeDataSharingPlanControlledOpenAccess) {
-    this.alternativeDataSharingPlanControlledOpenAccess = alternativeDataSharingPlanControlledOpenAccess;
+  @JsonProperty("alternativeDataSharingPlanAccessManagement")
+  public void setAlternativeDataSharingPlanAccessManagement(
+      DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement alternativeDataSharingPlanAccessManagement) {
+    this.alternativeDataSharingPlanAccessManagement = alternativeDataSharingPlanAccessManagement;
   }
 
   /**
@@ -1058,10 +1058,10 @@ public class DatasetRegistrationSchemaV1 {
     sb.append(((this.alternativeDataSharingPlanTargetPublicReleaseDate == null) ? "<null>"
         : this.alternativeDataSharingPlanTargetPublicReleaseDate));
     sb.append(',');
-    sb.append("alternativeDataSharingPlanControlledOpenAccess");
+    sb.append("alternativeDataSharingPlanAccessManagement");
     sb.append('=');
-    sb.append(((this.alternativeDataSharingPlanControlledOpenAccess == null) ? "<null>"
-        : this.alternativeDataSharingPlanControlledOpenAccess));
+    sb.append(((this.alternativeDataSharingPlanAccessManagement == null) ? "<null>"
+        : this.alternativeDataSharingPlanAccessManagement));
     sb.append(',');
     sb.append("consentGroups");
     sb.append('=');
@@ -1113,8 +1113,8 @@ public class DatasetRegistrationSchemaV1 {
     result = ((result * 31) + (
         (this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation == null) ? 0
             : this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.hashCode()));
-    result = ((result * 31) + ((this.alternativeDataSharingPlanControlledOpenAccess == null) ? 0
-        : this.alternativeDataSharingPlanControlledOpenAccess.hashCode()));
+    result = ((result * 31) + ((this.alternativeDataSharingPlanAccessManagement == null) ? 0
+        : this.alternativeDataSharingPlanAccessManagement.hashCode()));
     result = ((result * 31) + ((this.sequencingCenter == null) ? 0
         : this.sequencingCenter.hashCode()));
     result = ((result * 31) + ((this.multiCenterStudy == null) ? 0
@@ -1212,11 +1212,11 @@ public class DatasetRegistrationSchemaV1 {
             (this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation != null)
                 && this.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation.equals(
                 rhs.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation)))) && (
-        (this.alternativeDataSharingPlanControlledOpenAccess
-            == rhs.alternativeDataSharingPlanControlledOpenAccess) || (
-            (this.alternativeDataSharingPlanControlledOpenAccess != null)
-                && this.alternativeDataSharingPlanControlledOpenAccess.equals(
-                rhs.alternativeDataSharingPlanControlledOpenAccess)))) && (
+        (this.alternativeDataSharingPlanAccessManagement
+            == rhs.alternativeDataSharingPlanAccessManagement) || (
+            (this.alternativeDataSharingPlanAccessManagement != null)
+                && this.alternativeDataSharingPlanAccessManagement.equals(
+                rhs.alternativeDataSharingPlanAccessManagement)))) && (
         (this.sequencingCenter == rhs.sequencingCenter) || ((this.sequencingCenter != null)
             && this.sequencingCenter.equals(rhs.sequencingCenter)))) && (
         (this.multiCenterStudy == rhs.multiCenterStudy) || ((this.multiCenterStudy != null)
@@ -1265,22 +1265,23 @@ public class DatasetRegistrationSchemaV1 {
 
 
   /**
-   * Does the data need to be managed under Controlled or Open Access?
+   * Does the data need to be managed under Controlled, Open, or External Access?
    */
-  public enum AlternativeDataSharingPlanControlledOpenAccess {
+  public enum AlternativeDataSharingPlanAccessManagement {
 
     CONTROLLED_ACCESS("Controlled Access"),
-    OPEN_ACCESS("Open Access");
+    OPEN_ACCESS("Open Access"),
+    EXTERNAL_ACCESS("External Access");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess>();
+    private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement>();
 
     static {
-      for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess c : values()) {
+      for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement c : values()) {
         CONSTANTS.put(c.value, c);
       }
     }
 
-    AlternativeDataSharingPlanControlledOpenAccess(String value) {
+    AlternativeDataSharingPlanAccessManagement(String value) {
       this.value = value;
     }
 
@@ -1295,9 +1296,9 @@ public class DatasetRegistrationSchemaV1 {
     }
 
     @JsonCreator
-    public static DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess fromValue(
+    public static DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement fromValue(
         String value) {
-      DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess constant = CONSTANTS.get(
+      DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement constant = CONSTANTS.get(
           value);
       if (constant == null) {
         throw new IllegalArgumentException(value);

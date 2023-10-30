@@ -16,6 +16,7 @@ import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -34,6 +36,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,8 +49,8 @@ import org.junit.jupiter.api.Test;
 @MockServerConfig(hostInterface = "localhost", port = "1234")
 public class SamPactTests {
 
-  protected static final String PROVIDER_NAME = "sam-provider";
-  protected static final String CONSUMER_NAME = "consent-consumer";
+  protected static final String PROVIDER_NAME = "sam";
+  protected static final String CONSUMER_NAME = "consent";
 
   private static final List<ResourceType> RESOURCE_TYPES = List.of(
       new ResourceType()
@@ -77,6 +80,9 @@ public class SamPactTests {
               .setAllUsersGroup(USER_STATUS_DIAGNOSTICS.getInAllUsersGroup())
               .setLdap(true)
               .setGoogle(USER_STATUS_DIAGNOSTICS.getInGoogleProxyGroup()));
+
+  private static final EmailResponse EMAIL_RESPONSE =
+      new EmailResponse("googleId", "email", "subjectId");
 
   private final Map<String, String> JSON_HEADERS = Map.of(
       HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON,
@@ -209,11 +215,26 @@ public class SamPactTests {
         .toPact();
   }
 
+  @Pact(consumer = CONSUMER_NAME)
+  public RequestResponsePact getV1UserByEmail(PactDslWithProvider builder) {
+    Gson gson = GsonUtil.buildGson();
+    return builder
+        .given(" GET Sam User By Email")
+        .uponReceiving(" GET Request: " + ServicesConfiguration.SAM_V1_USER_EMAIL)
+        .path("/" + ServicesConfiguration.SAM_V1_USER_EMAIL + "/test")
+        .method("GET")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .headers(JSON_HEADERS)
+        .body(gson.toJson(EMAIL_RESPONSE))
+        .toPact();
+  }
+
   //******* Tests *******//
 
   @Test
   @PactTestFor(pactMethod = "getResourceTypes")
-  public void testGetResourceTypes(MockServer mockServer) throws Exception {
+  void testGetResourceTypes(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -225,7 +246,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getSelfInfo")
-  public void testGetSelfInfo(MockServer mockServer) throws Exception {
+  void testGetSelfInfo(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -236,7 +257,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getSelfDiagnostics")
-  public void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
+  void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -247,7 +268,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "postUserRegistration")
-  public void testPostUserRegistration(MockServer mockServer) throws Exception {
+  void testPostUserRegistration(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -258,7 +279,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "getTermsOfService")
-  public void testGetTermsOfService(MockServer mockServer) throws Exception {
+  void testGetTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -269,7 +290,7 @@ public class SamPactTests {
 
   @Test
   @PactTestFor(pactMethod = "postTermsOfService")
-  public void testPostTermsOfService(MockServer mockServer) throws Exception {
+  void testPostTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -286,7 +307,7 @@ public class SamPactTests {
    */
   @Test
   @PactTestFor(pactMethod = "deleteTermsOfService")
-  public void testDeleteTermsOfService(MockServer mockServer) throws Exception {
+  void testDeleteTermsOfService(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
@@ -303,6 +324,17 @@ public class SamPactTests {
           .returnResponse();
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
     }
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "getV1UserByEmail")
+  void testGetV1UserByEmail(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    EmailResponse response = samDAO.getV1UserByEmail(authUser, "test");
+    assertNotNull(response);
   }
 
 }

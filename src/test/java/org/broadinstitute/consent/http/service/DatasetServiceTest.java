@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -96,7 +97,8 @@ class DatasetServiceTest {
         Collections.singleton(test));
     initService();
 
-    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(), "Test Dataset 1",
+    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(),
+        "Test Dataset 1",
         1);
 
     assertNotNull(result);
@@ -472,7 +474,7 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testSearchDatasetsOpenAccessFalse() {
+  void testSearchDatasetsControlledAccess() {
     Dataset ds1 = new Dataset();
     ds1.setName("asdf1234");
     ds1.setAlias(3);
@@ -499,49 +501,50 @@ class DatasetServiceTest {
     initService();
 
     // query dataset name
-    List<Dataset> results = datasetService.searchDatasets("asdf", false, u);
+    List<Dataset> results = datasetService.searchDatasets("asdf", AccessManagement.CONTROLLED, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query pi name
-    results = datasetService.searchDatasets("John", false, u);
+    results = datasetService.searchDatasets("John", AccessManagement.CONTROLLED, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query ds identifier
-    results = datasetService.searchDatasets("DUOS-000280", false, u);
+    results = datasetService.searchDatasets("DUOS-000280", AccessManagement.CONTROLLED, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds2));
 
     // query pi name for all of them
-    results = datasetService.searchDatasets("Doe", false, u);
+    results = datasetService.searchDatasets("Doe", AccessManagement.CONTROLLED, u);
 
     assertEquals(2, results.size());
     assertTrue(results.contains(ds2));
     assertTrue(results.contains(ds1));
 
     // search on two things at once
-    results = datasetService.searchDatasets("Doe asdf", false, u);
+    results = datasetService.searchDatasets("Doe asdf", AccessManagement.CONTROLLED, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query nonexistent phrase
-    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", false, u);
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf",
+        AccessManagement.CONTROLLED, u);
     assertEquals(0, results.size());
   }
 
   @Test
-  void testSearchDatasetsOpenAccessTrue() {
+  void testSearchDatasetsOpenAccess() {
     Dataset ds1 = new Dataset();
     ds1.setName("string");
     ds1.setAlias(622);
     DatasetProperty ds1PI = new DatasetProperty();
-    ds1PI.setPropertyName("Open Access");
-    ds1PI.setPropertyValue("true");
+    ds1PI.setPropertyName("Access Management");
+    ds1PI.setPropertyValue("open");
     ds1PI.setPropertyType(PropertyType.String);
     ds1.setProperties(Set.of(ds1PI));
 
@@ -549,8 +552,8 @@ class DatasetServiceTest {
     ds2.setName("TESTING NAME");
     ds2.setAlias(623);
     DatasetProperty ds2PI = new DatasetProperty();
-    ds2PI.setPropertyName("Open Access");
-    ds2PI.setPropertyValue("true");
+    ds2PI.setPropertyName("Access Management");
+    ds2PI.setPropertyValue("open");
     ds2PI.setPropertyType(PropertyType.String);
     ds2.setProperties(Set.of(ds2PI));
 
@@ -562,19 +565,19 @@ class DatasetServiceTest {
     initService();
 
     // query dataset name
-    List<Dataset> results = datasetService.searchDatasets("string", true, u);
+    List<Dataset> results = datasetService.searchDatasets("string", AccessManagement.OPEN, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
     // query ds identifier
-    results = datasetService.searchDatasets("DUOS-000623", true, u);
+    results = datasetService.searchDatasets("DUOS-000623", AccessManagement.OPEN, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds2));
 
     // query nonexistent phrase
-    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", true, u);
+    results = datasetService.searchDatasets("asdflasdfasdfasdfhalskdjf", AccessManagement.OPEN, u);
     assertEquals(0, results.size());
   }
 
@@ -843,15 +846,15 @@ class DatasetServiceTest {
   private Set<DatasetProperty> getDatasetProperties() {
     return IntStream.range(1, 11)
         .mapToObj(i -> {
-            DatasetProperty prop = new DatasetProperty(1,
-                i,
-                "Test Value" + RandomStringUtils.randomAlphanumeric(25),
-                PropertyType.String,
-                new Date());
-            prop.setPropertyName(RandomStringUtils.randomAlphanumeric(15));
-            prop.setPropertyId(i);
-            return prop;
-          }
+              DatasetProperty prop = new DatasetProperty(1,
+                  i,
+                  "Test Value" + RandomStringUtils.randomAlphanumeric(25),
+                  PropertyType.String,
+                  new Date());
+              prop.setPropertyName(RandomStringUtils.randomAlphanumeric(15));
+              prop.setPropertyId(i);
+              return prop;
+            }
         ).collect(Collectors.toSet());
   }
 

@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
@@ -665,10 +666,11 @@ public class DatasetResource extends Resource {
   public Response searchDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query,
-      @QueryParam("open") @DefaultValue("false") boolean openAccess) {
+      @QueryParam("access") @DefaultValue("controlled") String accessString) {
     try {
+      AccessManagement accessManagement = AccessManagement.fromValue(accessString.toLowerCase());
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, openAccess, user);
+      List<Dataset> datasets = datasetService.searchDatasets(query, accessManagement, user);
       return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
