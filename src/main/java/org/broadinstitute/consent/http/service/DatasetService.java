@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.slf4j.Logger;
@@ -139,6 +140,7 @@ public class DatasetService {
   public Set<String> findAllStudyNames() {
     return datasetDAO.findAllStudyNames();
   }
+
   public List<String> findAllDatasetNames() {
     return datasetDAO.findAllDatasetNames();
   }
@@ -176,7 +178,7 @@ public class DatasetService {
         .toList();
 
     if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() &&
-      dataset.getDatasetName().equals(old.getName())) {
+        dataset.getDatasetName().equals(old.getName())) {
       return Optional.empty();
     }
 
@@ -292,7 +294,7 @@ public class DatasetService {
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
       DatasetAudit dsAudit = new DatasetAudit(datasetId, dataset.getObjectId(), dsAuditName,
-        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
+          new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.useTransaction(h -> {
           try {
@@ -313,9 +315,9 @@ public class DatasetService {
     }
   }
 
-  public List<Dataset> searchDatasets(String query, boolean openAccess, User user) {
+  public List<Dataset> searchDatasets(String query, AccessManagement accessManagement, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
-    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, openAccess)).toList();
+    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, accessManagement)).toList();
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

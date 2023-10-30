@@ -36,8 +36,8 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String alternativeDataSharingPlanDataReleased = "alternativeDataSharingPlanDataReleased";
   public static final String alternativeDataSharingPlanTargetDeliveryDate = "alternativeDataSharingPlanTargetDeliveryDate";
   public static final String alternativeDataSharingPlanTargetPublicReleaseDate = "alternativeDataSharingPlanTargetPublicReleaseDate";
-  public static final String alternativeDataSharingPlanControlledOpenAccess = "alternativeDataSharingPlanControlledOpenAccess";
-  public static final String openAccess = "openAccess";
+  public static final String alternativeDataSharingPlanAccessManagement = "alternativeDataSharingPlanAccessManagement";
+  public static final String accessManagement = "accessManagement";
   public static final String generalResearchUse = "generalResearchUse";
   public static final String hmb = "hmb";
   public static final String diseaseSpecificUse = "diseaseSpecificUse";

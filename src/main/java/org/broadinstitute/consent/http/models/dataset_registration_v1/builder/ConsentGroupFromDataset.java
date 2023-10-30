@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.col;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataAccessCommitteeId;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
@@ -15,7 +16,6 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nmds;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.npu;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.openAccess;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherPrimary;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherSecondary;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.poa;
@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -44,7 +45,10 @@ public class ConsentGroupFromDataset {
       consentGroup.setDatasetId(dataset.getDataSetId());
       consentGroup.setDatasetIdentifier(dataset.getDatasetIdentifier());
       consentGroup.setConsentGroupName(dataset.getName());
-      consentGroup.setOpenAccess(findBooleanDSPropValue(dataset.getProperties(), openAccess));
+      String accessManagementVal = findStringDSPropValue(dataset.getProperties(), accessManagement);
+      if (Objects.nonNull(accessManagementVal)) {
+        consentGroup.setAccessManagement(AccessManagement.fromValue(accessManagementVal));
+      }
       consentGroup.setGeneralResearchUse(
           findBooleanDSPropValue(dataset.getProperties(), generalResearchUse));
       consentGroup.setHmb(findBooleanDSPropValue(dataset.getProperties(), hmb));

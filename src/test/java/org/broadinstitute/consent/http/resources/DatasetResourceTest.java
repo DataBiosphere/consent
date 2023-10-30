@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -548,7 +549,8 @@ class DatasetResourceTest {
 
   @Test
   void testIndexDelete() throws IOException {
-    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted").build();
+    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
+        .build();
     when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
 
     initResource();
@@ -557,34 +559,38 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testSearchDatasetsOpenAccessFalse() {
+  void testSearchDatasetsControlledAccess() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean openAccess = false;
+    AccessManagement accessManagement = AccessManagement.CONTROLLED;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
+        List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", openAccess);
+    Response response = resource.searchDatasets(authUser, "search query",
+        accessManagement.toString());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
   }
 
   @Test
-  void testSearchDatasetsOpenAccessTrue() {
+  void testSearchDatasetsOpenAccess() {
     Dataset ds = new Dataset();
     ds.setDataSetId(1);
-    Boolean openAccess = true;
+    AccessManagement accessManagement = AccessManagement.OPEN;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(0);
-    when(datasetService.searchDatasets("search query", openAccess, user)).thenReturn(List.of(ds));
+    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
+        List.of(ds));
 
     initResource();
-    Response response = resource.searchDatasets(authUser, "search query", openAccess);
+    Response response = resource.searchDatasets(authUser, "search query",
+        accessManagement.toString());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
@@ -1030,7 +1036,8 @@ class DatasetResourceTest {
     when(datasetService.findStudyById(any())).thenReturn(study);
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -1043,7 +1050,8 @@ class DatasetResourceTest {
     when(datasetService.findStudyById(any())).thenThrow(new NotFoundException());
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -1055,7 +1063,8 @@ class DatasetResourceTest {
     when(datasetService.findDatasetByIdentifier(any())).thenReturn(null);
 
     initResource();
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser, dataset.getDatasetIdentifier());
+    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+        dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -1410,10 +1419,10 @@ class DatasetResourceTest {
 
     dataset.setStudy(study);
 
-    DatasetProperty openAccessProp = new DatasetProperty();
-    openAccessProp.setSchemaProperty("openAccess");
-    openAccessProp.setPropertyType(PropertyType.Boolean);
-    openAccessProp.setPropertyValue(true);
+    DatasetProperty accessManagementProp = new DatasetProperty();
+    accessManagementProp.setSchemaProperty("accessManagement");
+    accessManagementProp.setPropertyType(PropertyType.String);
+    accessManagementProp.setPropertyValue(AccessManagement.OPEN.value());
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setSchemaProperty("dataLocation");
@@ -1425,7 +1434,7 @@ class DatasetResourceTest {
     numParticipantsProp.setPropertyType(PropertyType.Number);
     numParticipantsProp.setPropertyValue(20);
 
-    dataset.setProperties(Set.of(openAccessProp, dataLocationProp, numParticipantsProp));
+    dataset.setProperties(Set.of(accessManagementProp, dataLocationProp, numParticipantsProp));
     study.addDatasets(List.of(dataset));
 
     return study;

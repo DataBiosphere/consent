@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanControlledOpenAccess;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanAccessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataReleased;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataSubmitted;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanExplanation;
@@ -39,7 +39,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission;
@@ -124,12 +124,12 @@ public class SchemaFromStudy {
       schemaV1.setAlternativeDataSharingPlanTargetPublicReleaseDate(
           findStringPropValue(study.getProperties(),
               alternativeDataSharingPlanTargetPublicReleaseDate));
-      String alternativeDataSharingPlanControlledOpenAccessVal = findStringPropValue(
-          study.getProperties(), alternativeDataSharingPlanControlledOpenAccess);
-      if (Objects.nonNull(alternativeDataSharingPlanControlledOpenAccessVal)) {
-        schemaV1.setAlternativeDataSharingPlanControlledOpenAccess(
-            AlternativeDataSharingPlanControlledOpenAccess.fromValue(
-                alternativeDataSharingPlanControlledOpenAccessVal));
+      String alternativeDataSharingPlanAccessManagementVal = findStringPropValue(
+          study.getProperties(), alternativeDataSharingPlanAccessManagement);
+      if (Objects.nonNull(alternativeDataSharingPlanAccessManagementVal)) {
+        schemaV1.setAlternativeDataSharingPlanAccessManagement(
+            AlternativeDataSharingPlanAccessManagement.fromValue(
+                alternativeDataSharingPlanAccessManagementVal));
       }
     }
 

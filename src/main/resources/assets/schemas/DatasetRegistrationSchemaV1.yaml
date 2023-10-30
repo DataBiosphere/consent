@@ -207,12 +207,13 @@ properties:
     type: string
     format: date
     description: Target Public Release Date
-  alternativeDataSharingPlanControlledOpenAccess:
+  alternativeDataSharingPlanAccessManagement:
     type: string
-    description: Does the data need to be managed under Controlled or Open Access?
+    description: Does the data need to be managed under Controlled, Open, or External Access?
     enum:
       - Controlled Access
       - Open Access
+      - External Access
   consentGroups:
     type: array
     description: Consent Groups

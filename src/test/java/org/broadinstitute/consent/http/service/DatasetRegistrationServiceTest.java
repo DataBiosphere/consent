@@ -39,7 +39,9 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -203,8 +205,8 @@ public class DatasetRegistrationServiceTest {
         PropertyType.Date.coerce(schema.getAlternativeDataSharingPlanTargetDeliveryDate()));
     assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanTargetPublicReleaseDate",
         PropertyType.Date.coerce(schema.getAlternativeDataSharingPlanTargetPublicReleaseDate()));
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanControlledOpenAccess",
-        schema.getAlternativeDataSharingPlanControlledOpenAccess().value());
+    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanAccessManagement",
+        schema.getAlternativeDataSharingPlanAccessManagement().value());
 
     List<DatasetProperty> datasetProps = inserts.get(0).props();
     assertContainsDatasetProperty(datasetProps, "dataLocation",
@@ -217,8 +219,8 @@ public class DatasetRegistrationServiceTest {
         schema.getConsentGroups().get(0).getUrl().toString());
     assertContainsDatasetProperty(datasetProps, "dataAccessCommitteeId",
         schema.getConsentGroups().get(0).getDataAccessCommitteeId());
-    assertContainsDatasetProperty(datasetProps, "openAccess",
-        schema.getConsentGroups().get(0).getOpenAccess());
+    assertContainsDatasetProperty(datasetProps, "accessManagement",
+        schema.getConsentGroups().get(0).getAccessManagement().value());
 
   }
 
@@ -276,9 +278,9 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testInsertOpenAccess() throws Exception {
+  public void testInsertAccessManagement() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createOpenAccessRegistrationNoDacId(user);
+    DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
 
     initService();
 
@@ -357,8 +359,8 @@ public class DatasetRegistrationServiceTest {
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
     assertContainsDatasetProperty(props, "dataAccessCommitteeId",
         schema.getConsentGroups().get(0).getDataAccessCommitteeId());
-    assertContainsDatasetProperty(props, "openAccess",
-        schema.getConsentGroups().get(0).getOpenAccess());
+    assertContainsDatasetProperty(props, "accessManagement",
+        schema.getConsentGroups().get(0).getAccessManagement().value());
     assertContainsDatasetProperty(props, "numberOfParticipants",
         schema.getConsentGroups().get(0).getNumberOfParticipants());
 
@@ -379,8 +381,8 @@ public class DatasetRegistrationServiceTest {
     List<DatasetProperty> props2 = inserts.get(1).props();
     assertContainsDatasetProperty(props2, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
-    assertContainsDatasetProperty(props2, "openAccess",
-        schema.getConsentGroups().get(1).getOpenAccess());
+    assertContainsDatasetProperty(props2, "accessManagement",
+        schema.getConsentGroups().get(1).getAccessManagement().value());
     assertContainsDatasetProperty(props2, "numberOfParticipants",
         schema.getConsentGroups().get(1).getNumberOfParticipants());
 
@@ -579,7 +581,7 @@ public class DatasetRegistrationServiceTest {
     return schemaV1;
   }
 
-  private DatasetRegistrationSchemaV1 createOpenAccessRegistrationNoDacId(User user) {
+  private DatasetRegistrationSchemaV1 createAccessManagementRegistrationNoDacId(User user) {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
     schemaV1.setStudyName(RandomStringUtils.randomAlphabetic(10));
     schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
@@ -595,7 +597,7 @@ public class DatasetRegistrationServiceTest {
 
     ConsentGroup consentGroup = new ConsentGroup();
     consentGroup.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    consentGroup.setOpenAccess(true);
+    consentGroup.setAccessManagement(AccessManagement.OPEN);
     FileTypeObject fileType = new FileTypeObject();
     fileType.setFileType(FileTypeObject.FileType.ARRAYS);
     fileType.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
@@ -629,7 +631,7 @@ public class DatasetRegistrationServiceTest {
     consentGroup1.setNumberOfParticipants(new Random().nextInt());
     consentGroup1.setFileTypes(List.of(fileType1));
     consentGroup1.setDataAccessCommitteeId(new Random().nextInt());
-    consentGroup1.setOpenAccess(false);
+    consentGroup1.setAccessManagement(AccessManagement.CONTROLLED);
 
     ConsentGroup consentGroup2 = new ConsentGroup();
     consentGroup2.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
@@ -639,7 +641,7 @@ public class DatasetRegistrationServiceTest {
     fileType2.setFunctionalEquivalence(RandomStringUtils.randomAlphabetic(10));
     consentGroup2.setNumberOfParticipants(new Random().nextInt());
     consentGroup2.setFileTypes(List.of(fileType2));
-    consentGroup2.setOpenAccess(true);
+    consentGroup2.setAccessManagement(AccessManagement.OPEN);
 
     schemaV1.setConsentGroups(List.of(consentGroup1, consentGroup2));
     return schemaV1;
@@ -689,8 +691,8 @@ public class DatasetRegistrationServiceTest {
     schemaV1.setAlternativeDataSharingPlanDataReleased(true);
     schemaV1.setAlternativeDataSharingPlanTargetDeliveryDate("2011-11-11");
     schemaV1.setAlternativeDataSharingPlanTargetPublicReleaseDate("2012-10-08");
-    schemaV1.setAlternativeDataSharingPlanControlledOpenAccess(
-        DatasetRegistrationSchemaV1.AlternativeDataSharingPlanControlledOpenAccess.OPEN_ACCESS);
+    schemaV1.setAlternativeDataSharingPlanAccessManagement(
+        AlternativeDataSharingPlanAccessManagement.OPEN_ACCESS);
     schemaV1.setPiInstitution(10);
 
     ConsentGroup consentGroup = new ConsentGroup();
@@ -708,7 +710,7 @@ public class DatasetRegistrationServiceTest {
     consentGroup.setMor(false);
     consentGroup.setNmds(false);
     consentGroup.setNpu(false);
-    consentGroup.setOpenAccess(false);
+    consentGroup.setAccessManagement(AccessManagement.CONTROLLED);
     consentGroup.setDataLocation(ConsentGroup.DataLocation.TDR_LOCATION);
     consentGroup.setDataAccessCommitteeId(new Random().nextInt());
 
