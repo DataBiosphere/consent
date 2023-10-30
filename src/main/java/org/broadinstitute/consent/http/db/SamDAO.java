@@ -174,7 +174,7 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = clientUtil.handleHttpRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
-          "Error getting enabled statuses of user from Sam: " + response.getStatusMessage(),
+          "Error getting user by email from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
