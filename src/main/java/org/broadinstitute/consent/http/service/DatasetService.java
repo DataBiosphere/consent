@@ -19,7 +19,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -44,7 +43,6 @@ public class DatasetService {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
   private final DatasetDAO datasetDAO;
-  private final UserRoleDAO userRoleDAO;
   private final DacDAO dacDAO;
   private final EmailService emailService;
   private final OntologyService ontologyService;
@@ -52,11 +50,10 @@ public class DatasetService {
   private final DatasetServiceDAO datasetServiceDAO;
 
   @Inject
-  public DatasetService(DatasetDAO dataSetDAO, UserRoleDAO userRoleDAO, DacDAO dacDAO,
+  public DatasetService(DatasetDAO dataSetDAO, DacDAO dacDAO,
       EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO,
       DatasetServiceDAO datasetServiceDAO) {
     this.datasetDAO = dataSetDAO;
-    this.userRoleDAO = userRoleDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
@@ -343,22 +340,6 @@ public class DatasetService {
           dataset.getDatasetIdentifier());
     }
 
-  }
-
-  private boolean filterDatasetOnProperties(DatasetDTO dataset, String term) {
-    //datasets need to have consentId, null check to prevent NPE
-    String consentId = dataset.getConsentId();
-    Boolean consentIdMatch = Objects.nonNull(consentId) && consentId.toLowerCase().contains(term);
-    return consentIdMatch || dataset.getProperties()
-        .stream()
-        .filter(p -> Objects.nonNull(p.getPropertyValue()))
-        .anyMatch(p -> {
-          return p.getPropertyValue().toLowerCase().contains(term);
-        });
-  }
-
-  private boolean userHasRole(String roleName, Integer userId) {
-    return userRoleDAO.findRoleByNameAndUser(roleName, userId) != null;
   }
 
   public List<Dataset> findAllDatasetsByUser(User user) {
