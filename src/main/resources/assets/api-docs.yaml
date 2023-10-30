@@ -45,6 +45,7 @@ paths:
     $ref: './paths/mailByRange.yaml'
   /api/consent/cases/summary:
     get:
+      deprecated: true
       summary: Get Consent Summary Cases
       description: Returns number of denied, approved and pending cases.
       tags:
@@ -84,6 +85,7 @@ paths:
         404:
           description: The consent associated with the ID couldn't be found.
     put:
+      deprecated: true
       summary: Update Consent by ID
       description: Updates the consent identified by the ID.
       parameters:
@@ -119,6 +121,7 @@ paths:
           description: Internal server error
   /api/consent/{id}/matches:
     get:
+      deprecated: true
       summary: getMatches
       description: Returns the matches that are related to this consent.
       parameters:

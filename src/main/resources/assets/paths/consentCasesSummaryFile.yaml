@@ -1,4 +1,5 @@
 get:
+  deprecated: true
   summary: Get Data Access Request or Consent Election Summary Details
   description: | 
     Returns the details of the reviewed cases by type 
