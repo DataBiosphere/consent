@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -326,13 +325,13 @@ public class User {
     return this.getRoles()
         .stream()
         .map(UserRole::getRoleId)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Transient
   public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
     List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId)
-        .collect(Collectors.toList());
+        .toList();
     return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
   }
 
@@ -346,7 +345,7 @@ public class User {
               && r.getRoleId().equals(role.getRoleId())
               && Objects.equals(r.getDacId(), dacId);
         })
-        .collect(Collectors.toList());
+        .toList();
     return !targetRoles.isEmpty();
 
   }

@@ -5,7 +5,6 @@ import jakarta.ws.rs.NotFoundException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
@@ -80,7 +79,7 @@ public class InstitutionService {
 
     List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
         .map(SimplifiedUser::new)
-        .collect(Collectors.toList());
+        .toList();
     institution.setSigningOfficials(signingOfficials);
 
     return institution;

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
@@ -18,7 +17,7 @@ public class UserUpdateFields {
   protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(),
       UserRoles.MEMBER.getRoleId());
   private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
+      .map(UserRoles::getRoleId).toList();
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
@@ -153,7 +152,7 @@ public class UserUpdateFields {
                   !IGNORE_ROLE_IDS.contains(id) &&    // Never add ignorable roles
                   VALID_ROLE_IDS.contains(id);        // Only add roles we know about
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
@@ -177,6 +176,6 @@ public class UserUpdateFields {
                   VALID_ROLE_IDS.contains(
                       id);                            // Only remove roles we know about
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 }

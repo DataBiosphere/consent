@@ -199,7 +199,7 @@ public class DarCollectionService {
           List<Vote> votes = s.getVotes().stream()
               .filter(
                   v -> v.getUserId().equals(userId) && v.getType().equals(VoteType.DAC.getValue()))
-              .collect(Collectors.toList());
+              .toList();
           if (!votes.isEmpty()) {
             Boolean hasVoted = votes.stream().allMatch(v -> Objects.nonNull(v.getVote()));
             String targetActionString = hasVoted ? DarCollectionActions.UPDATE.getValue()
@@ -420,7 +420,7 @@ public class DarCollectionService {
     return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
         .stream()
         .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public void deleteByCollectionId(User user, Integer collectionId)
@@ -522,7 +522,7 @@ public class DarCollectionService {
         .map(DarCollection::getDars)
         .map(Map::keySet)
         .flatMap(Set::stream)
-        .collect(Collectors.toList());
+        .toList();
     List<Integer> datasetIds = referenceIds.isEmpty() ? List.of()
         : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if (!datasetIds.isEmpty()) {
@@ -544,7 +544,7 @@ public class DarCollectionService {
         DarCollection copy = c.deepCopy();
         copy.setDatasets(collectionDatasets);
         return copy;
-      }).collect(Collectors.toList());
+      }).toList();
     }
     // There were no datasets to add, so we return the original list
     return collections;
@@ -564,7 +564,7 @@ public class DarCollectionService {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream()
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
 
     if (referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
@@ -580,7 +580,7 @@ public class DarCollectionService {
     List<String> activeDarIds = dars.stream()
         .filter(d -> !DataAccessRequest.isCanceled(d))
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     if (!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
@@ -600,7 +600,7 @@ public class DarCollectionService {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream()
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
 
     if (referenceIds.isEmpty()) {
       logger.warn("DAR Collection does not have any associated DAR ids");
@@ -626,16 +626,16 @@ public class DarCollectionService {
     List<Integer> datasetIds = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
         .stream()
         .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+        .toList();
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()
         .filter(d -> datasetIds.containsAll(d.getDatasetIds()))
-        .collect(Collectors.toList());
+        .toList();
 
     List<String> referenceIds = dars.stream()
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
 
     if (referenceIds.isEmpty()) {
       logger.warn(

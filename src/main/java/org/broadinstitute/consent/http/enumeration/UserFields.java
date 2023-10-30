@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum UserFields {
@@ -28,7 +27,7 @@ public enum UserFields {
   }
 
   public static List<String> getValues() {
-    return Stream.of(UserFields.values()).map(UserFields::getValue).collect(Collectors.toList());
+    return Stream.of(UserFields.values()).map(UserFields::getValue).toList();
   }
 
   public Boolean getRequired() {

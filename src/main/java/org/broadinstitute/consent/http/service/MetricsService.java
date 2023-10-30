@@ -95,17 +95,17 @@ public class MetricsService {
   public List<? extends DecisionMetrics> generateDecisionMetrics(Type type) {
     List<DataAccessRequest> dars = darDAO.findAllDataAccessRequests();
     List<String> referenceIds =
-        dars.stream().map(DataAccessRequest::getReferenceId).collect(Collectors.toList());
+        dars.stream().map(DataAccessRequest::getReferenceId).toList();
     List<Integer> datasetIds =
         dars.stream()
             .map(DataAccessRequest::getDatasetIds)
             .flatMap(List::stream)
-            .collect(Collectors.toList());
+            .toList();
     List<Dataset> datasets = dataSetDAO.findDatasetsByIdList(datasetIds);
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     List<Match> matches = matchDAO.findMatchesForPurposeIds(referenceIds);
     List<Integer> electionIds =
-        elections.stream().map(Election::getElectionId).collect(Collectors.toList());
+        elections.stream().map(Election::getElectionId).toList();
     List<Dac> dacs = electionDAO.findAllDacsForElectionIds(electionIds);
     //this method generates a list of DarDecisionMetrics representing the given list of dars and including
     //information about each dar's datasets, elections, match, and dac
@@ -124,7 +124,7 @@ public class MetricsService {
   private List<DarDecisionMetrics> getDarMetrics(List<DataAccessRequest> dars,
       List<Dataset> datasets, List<Election> elections, List<Match> matches, List<Dac> dacs) {
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId)
-        .collect(Collectors.toList());
+        .toList();
     List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
         darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
     Map<Integer, DarCollection> collectionMap = darCollections.stream()
@@ -146,19 +146,19 @@ public class MetricsService {
                   .filter(e ->
                       e.getReferenceId()
                           .equalsIgnoreCase(dataAccessRequest.getReferenceId())
-                  ).collect(Collectors.toList());
+                  ).toList();
 
               List<Election> filteredAccessElections = associatedElections
                   .stream()
                   .filter(e -> e.getElectionType()
                       .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue())
-                  ).collect(Collectors.toList());
+                  ).toList();
 
               List<Election> filteredRpElections = associatedElections
                   .stream()
                   .filter(e -> e.getElectionType()
                       .equalsIgnoreCase(ElectionType.RP.getValue())
-                  ).collect(Collectors.toList());
+                  ).toList();
 
               Optional<Election> accessElection = searchFilteredElectionList(
                   filteredAccessElections);
@@ -192,7 +192,7 @@ public class MetricsService {
                   match.orElse(null),
                   darCode);
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<DacDecisionMetrics> getDacMetrics(List<Dac> allDacs, Set<DatasetDTO> datasetsDacs,
@@ -204,14 +204,14 @@ public class MetricsService {
                   darMetrics.stream()
                       .filter(m -> Objects.nonNull(m.getDacName()))
                       .filter(m -> m.getDacName().equalsIgnoreCase(dac.getName()))
-                      .collect(Collectors.toList());
+                      .toList();
               List<DatasetDTO> dacFilteredDatasets =
                   datasetsDacs.stream()
                       .filter(ds -> ds.getDacId().equals(dac.getDacId()))
-                      .collect(Collectors.toList());
+                      .toList();
               return new DacDecisionMetrics(dac, dacFilteredDatasets, dacFilteredMetrics);
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private static Optional<Election> searchFilteredElectionList(List<Election> electionList) {
@@ -246,7 +246,7 @@ public class MetricsService {
     //convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findAllApprovedDataAccessRequestsByDatasetId(datasetId);
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId)
-        .collect(Collectors.toList());
+        .toList();
     List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
         darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
     Map<Integer, DarCollection> collectionMap = darCollections.stream()
@@ -256,11 +256,11 @@ public class MetricsService {
       DarCollection collection = collectionMap.get(dar.getCollectionId());
       String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
       return new DarMetricsSummary(dar, darCode);
-    }).collect(Collectors.toList());
+    }).toList();
 
     //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
     List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId))
-        .collect(Collectors.toList());
+        .toList();
     if (!referenceIds.isEmpty()) {
       List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds,
           "DataAccess");

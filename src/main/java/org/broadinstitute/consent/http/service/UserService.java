@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -134,7 +133,7 @@ public class UserService {
       // Handle Roles
       if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
         List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream()
-            .map(UserRole::getRoleId).collect(Collectors.toList());
+            .map(UserRole::getRoleId).toList();
         List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
         List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
         // Add the new role ids to the user
@@ -142,7 +141,7 @@ public class UserService {
           List<UserRole> newRoles = roleIdsToAdd.stream()
               .map(id -> new UserRole(id,
                   Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
-              .collect(Collectors.toList());
+              .toList();
           userRoleDAO.insertUserRoles(newRoles, userId);
         }
         // Remove the old role ids from the user
@@ -290,13 +289,13 @@ public class UserService {
         findRolesByUserId(userId).
         stream().
         map(UserRole::getRoleId).
-        collect(Collectors.toList());
+        toList();
     if (!roleIds.isEmpty()) {
       userRoleDAO.removeUserRoles(userId, roleIds);
     }
     List<Vote> votes = voteDAO.findVotesByUserId(userId);
     if (!votes.isEmpty()) {
-      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
+      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).toList();
       voteDAO.removeVotesByIds(voteIds);
     }
     datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
@@ -323,7 +322,7 @@ public class UserService {
     }
 
     List<User> users = userDAO.getSOsByInstitution(institutionId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return users.stream().map(SimplifiedUser::new).toList();
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -384,9 +383,9 @@ public class UserService {
     }
     user.getRoles().forEach(role -> {
       List<UserRoles> validRoles = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER,
-          UserRoles.ALUMNI, UserRoles.ADMIN).collect(Collectors.toList());
+          UserRoles.ALUMNI, UserRoles.ADMIN).toList();
       List<String> validRoleNameList = validRoles.stream().map(UserRoles::getRoleName)
-          .collect(Collectors.toList());
+          .toList();
       if (!validRoleNameList.contains(role.getName())) {
         String validRoleNames = String.join(", ", validRoleNameList);
         throw new BadRequestException(

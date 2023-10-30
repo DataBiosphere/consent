@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.enumeration;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum FileCategory {
@@ -28,7 +27,7 @@ public enum FileCategory {
 
   public static List<String> getValues() {
     return Stream.of(FileCategory.values()).map(FileCategory::getValue)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public static Boolean containsValue(String value) {

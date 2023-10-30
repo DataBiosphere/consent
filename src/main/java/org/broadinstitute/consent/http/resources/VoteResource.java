@@ -13,7 +13,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -162,19 +161,19 @@ public class VoteResource extends Resource {
           return type.equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()) || type.equalsIgnoreCase(
               VoteType.FINAL.getValue());
         })
-        .collect(Collectors.toList());
+        .toList();
     //if the filtered list is populated, get the vote ids and get the full vote records for those that have type = 'DataAccess'
     if (!targetVotes.isEmpty()) {
       List<Integer> voteIds = targetVotes.stream()
           .map(Vote::getVoteId)
-          .collect(Collectors.toList());
+          .toList();
       List<Election> targetElections = electionService.findElectionsByVoteIdsAndType(voteIds,
           ElectionType.DATA_ACCESS.getValue());
       //If DataAccess votes are present, get elections from DARs created by users with LCs
       if (!targetElections.isEmpty()) {
         List<Integer> targetElectionIds = targetElections.stream()
             .map(Election::getElectionId)
-            .collect(Collectors.toList());
+            .toList();
         List<Election> electionsWithCardHoldingUsers = electionService.findElectionsWithCardHoldingUsersByElectionIds(
             targetElectionIds);
         //We want to make sure that each election is associated with a card holding user

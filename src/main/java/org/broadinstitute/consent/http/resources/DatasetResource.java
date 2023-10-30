@@ -107,7 +107,7 @@ public class DatasetResource extends Resource {
     if (invalidProperties.size() > 0) {
       List<String> invalidKeys = invalidProperties.stream()
           .map(DatasetPropertyDTO::getPropertyName)
-          .collect(Collectors.toList());
+          .toList();
       throw new BadRequestException(
           "Dataset contains invalid properties that could not be recognized or associated with a key: "
               + invalidKeys.toString());
@@ -318,7 +318,7 @@ public class DatasetResource extends Resource {
       if (invalidProperties.size() > 0) {
         List<String> invalidKeys = invalidProperties.stream()
             .map(DatasetPropertyDTO::getPropertyName)
-            .collect(Collectors.toList());
+            .toList();
         throw new BadRequestException(
             "Dataset contains invalid properties that could not be recognized or associated with a key: "
                 + invalidKeys.toString());

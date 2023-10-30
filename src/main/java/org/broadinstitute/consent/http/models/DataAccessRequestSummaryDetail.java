@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.HeaderSummary;
@@ -100,7 +99,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
     List<String> dataSetUUIds =
         getDar().getDatasetIds().stream()
             .map(Dataset::parseAliasToIdentifier)
-            .collect(Collectors.toList());
+            .toList();
     Optional<Vote> chairPersonRPVote =
         getRpVotes().stream()
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.CHAIRPERSON.getValue()))

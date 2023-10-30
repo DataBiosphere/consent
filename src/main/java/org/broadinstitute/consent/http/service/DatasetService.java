@@ -241,7 +241,7 @@ public class DatasetService {
     Date now = new Date();
     List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
     List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-        .collect(Collectors.toList());
+        .toList();
 
     return properties.stream()
         .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
@@ -253,17 +253,17 @@ public class DatasetService {
                 PropertyType.String,
                 now)
         )
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public List<DatasetPropertyDTO> findInvalidProperties(List<DatasetPropertyDTO> properties) {
     List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
     List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-        .collect(Collectors.toList());
+        .toList();
 
     return properties.stream()
         .filter(p -> !keys.contains(p.getPropertyName()))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public List<DatasetPropertyDTO> findDuplicateProperties(List<DatasetPropertyDTO> properties) {
@@ -275,7 +275,7 @@ public class DatasetService {
       uniqueKeys.forEach(key -> {
         List<DatasetPropertyDTO> propertiesPerKey = properties.stream()
             .filter(property -> property.getPropertyName().equals(key))
-            .collect(Collectors.toList());
+            .toList();
         if (propertiesPerKey.size() > 1) {
           allDuplicateProperties.addAll(propertiesPerKey);
         }
@@ -388,7 +388,7 @@ public class DatasetService {
         return Stream
             .concat(chairDatasets.stream(), datasets.stream())
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
       }
       return datasets;
     }

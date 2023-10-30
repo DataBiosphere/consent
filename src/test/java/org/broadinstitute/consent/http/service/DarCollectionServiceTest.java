@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -97,7 +96,7 @@ class DarCollectionServiceTest {
     List<Integer> datasetIds = datasets.stream()
         .map(Dataset::getDataSetId)
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
 
     when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
     when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
@@ -112,7 +111,7 @@ class DarCollectionServiceTest {
     List<Integer> collectionDatasetIds = datasetsFromCollection.stream()
         .map(Dataset::getDataSetId)
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
     assertEquals(datasetIds, collectionDatasetIds);
   }
 
@@ -125,7 +124,7 @@ class DarCollectionServiceTest {
     List<Integer> datasetIds = datasets.stream()
         .map(Dataset::getDataSetId)
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
 
     Dataset dataset = new Dataset();
     dataset.setDataSetId(datasetIds.get(0));
@@ -1224,7 +1223,7 @@ class DarCollectionServiceTest {
               collection.setCreateUserId(1);
               return collection;
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private Election createMockElection() {

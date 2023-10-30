@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.AuditTable;
 import org.broadinstitute.consent.http.models.Consent;
@@ -33,7 +32,7 @@ public class ConsentAuditDAOTest extends DAOTestHelper {
     List<ConsentAudit> audits =
         List.of(createConsentAudit(), createConsentAudit(), createConsentAudit());
     List<String> auditObjectIds =
-        audits.stream().map(ConsentAudit::getModifiedObjectId).collect(Collectors.toList());
+        audits.stream().map(ConsentAudit::getModifiedObjectId).toList();
 
     consentAuditDAO.batchInsertWorkspaceAudit(audits);
 

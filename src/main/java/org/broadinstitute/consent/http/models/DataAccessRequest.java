@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
@@ -212,7 +211,7 @@ public class DataAccessRequest {
       datasetIds = Stream.of(datasetIds, ids)
           .flatMap(List::stream)
           .distinct()
-          .collect(Collectors.toList());
+          .toList();
     }
   }
 

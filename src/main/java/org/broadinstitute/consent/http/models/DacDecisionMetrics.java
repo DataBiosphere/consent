@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 /**
@@ -73,7 +72,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     List<DarDecisionMetrics> completedDarMetrics =
         metrics.stream()
             .filter(m -> Objects.nonNull(m.getDacDecision()))
-            .collect(Collectors.toList());
+            .toList();
 
     if (!metrics.isEmpty()) {
       int percentReviewed = createPercentage(completedDarMetrics.size(), metrics.size());
@@ -83,7 +82,7 @@ public class DacDecisionMetrics implements DecisionMetrics {
     List<DarDecisionMetrics> approvedDarMetrics =
         completedDarMetrics.stream()
             .filter(m -> (m.getDacDecision()).equalsIgnoreCase("Yes"))
-            .collect(Collectors.toList());
+            .toList();
 
     this.setAverageCountUniqueUser(approvedDarMetrics);
 
@@ -222,12 +221,12 @@ public class DacDecisionMetrics implements DecisionMetrics {
       List<DarDecisionMetrics> agreementMetricsDenominator =
           completedDarMetrics.stream()
               .filter(m -> Objects.nonNull(m.getAlgorithmDecision()))
-              .collect(Collectors.toList());
+              .toList();
 
       List<DarDecisionMetrics> agreementMetricsNumerator =
           agreementMetricsDenominator.stream()
               .filter(m -> m.getAlgorithmDecision().equalsIgnoreCase(m.getDacDecision()))
-              .collect(Collectors.toList());
+              .toList();
 
       int percentAgreement = createPercentage(agreementMetricsNumerator.size(),
           agreementMetricsDenominator.size());
@@ -243,12 +242,12 @@ public class DacDecisionMetrics implements DecisionMetrics {
     List<DarDecisionMetrics> srpMetricsDenominator =
         completedDarMetrics.stream()
             .filter(m -> Objects.nonNull(m.getSrpDecision()))
-            .collect(Collectors.toList());
+            .toList();
 
     List<DarDecisionMetrics> srpMetricsNumerator =
         srpMetricsDenominator.stream()
             .filter(m -> m.getSrpDecision().equalsIgnoreCase("yes"))
-            .collect(Collectors.toList());
+            .toList();
     int percentSrp = createPercentage(srpMetricsNumerator.size(), srpMetricsDenominator.size());
     this.percentSRPAccurate = percentSrp;
   }

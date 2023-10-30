@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -75,6 +74,6 @@ public class VoteServiceDAO {
                 h.commit();
               });
         });
-    return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).collect(Collectors.toList()));
+    return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).toList());
   }
 }

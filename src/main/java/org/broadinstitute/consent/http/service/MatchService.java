@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -188,7 +187,7 @@ public class MatchService implements ConsentLogger {
   private List<DataAccessRequest> findRelatedDars(List<Integer> dataSetIds) {
     return dataAccessRequestDAO.findAllDataAccessRequests().stream()
         .filter(d -> !Collections.disjoint(dataSetIds, d.getDatasetIds()))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private DataUseRequestMatchingObject createRequestObject(Dataset dataset, DataAccessRequest dar) {

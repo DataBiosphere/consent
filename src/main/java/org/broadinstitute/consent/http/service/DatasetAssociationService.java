@@ -76,7 +76,7 @@ public class DatasetAssociationService {
     Collection<User> unAssociatedUsers = dataOwnersList
         .stream()
         .filter(dataOwner -> !finalAssociatedUsers.contains(dataOwner))
-        .collect(Collectors.toList());
+        .toList();
     usersMap.put("not_associated_users", unAssociatedUsers);
     return usersMap;
   }

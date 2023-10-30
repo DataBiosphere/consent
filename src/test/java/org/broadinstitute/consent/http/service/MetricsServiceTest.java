@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -180,7 +179,7 @@ public class MetricsServiceTest {
               dto.setProperties(Arrays.asList(name, consent));
               return dto;
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<DataAccessRequest> generateDars(int count) {
@@ -199,7 +198,7 @@ public class MetricsServiceTest {
               dar.setData(data);
               return dar;
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<Dataset> generateDatasets(int count) {
@@ -212,7 +211,7 @@ public class MetricsServiceTest {
               d.setName(UUID.randomUUID().toString());
               return d;
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<Election> generateElection(String ref) {

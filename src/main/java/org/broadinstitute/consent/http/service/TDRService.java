@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -32,7 +31,7 @@ public class TDRService {
         .stream()
         .map((u) -> new ApprovedUser(u.getEmail()))
         .sorted(Comparator.comparing(ApprovedUser::getEmail))
-        .collect(Collectors.toList());
+        .toList();
 
     return new ApprovedUsers(approvedUsers);
   }

@@ -11,7 +11,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -110,7 +109,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
         .map(Vote::getVoteId)
-        .collect(Collectors.toList());
+        .toList();
     votes.forEach(v -> {
       assertTrue(v.getVote());
       assertEquals(rationale, v.getRationale());
@@ -145,7 +144,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
     assertFalse(votes.isEmpty());
     List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
         .map(Vote::getVoteId)
-        .collect(Collectors.toList());
+        .toList();
     votes.forEach(v -> {
       assertTrue(v.getVote());
       assertEquals(rationale, v.getRationale());

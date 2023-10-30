@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -58,13 +57,13 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         .map(DataAccessRequest::getElections)
         .map(electionMap -> electionMap.values())
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<Election> getDatasetElectionsFromElection(List<Election> elections) {
     return elections.stream()
         .filter(e -> e.getElectionType().equalsIgnoreCase("dataset"))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Test
@@ -107,7 +106,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
     assertNotNull(collection);
     assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
     List<String> ids = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     assertTrue(ids.contains(dar.getReferenceId()));
   }
 

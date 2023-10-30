@@ -58,7 +58,7 @@ public class DacService {
 
   public List<User> findAllDACUsersBySearchString(String term) {
     return dacDAO.findAllDACUsersBySearchString(term).stream().distinct()
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
@@ -74,7 +74,7 @@ public class DacService {
 
   private List<Dac> addMemberInfoToDacs(List<Dac> dacs) {
     List<User> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct()
-        .collect(Collectors.toList());
+        .toList();
     Map<Dac, List<User>> dacToUserMap = groupUsersByDacs(dacs, allDacMembers);
     return dacs.stream().peek(d -> {
       List<User> chairs = dacToUserMap.get(d).stream().
@@ -82,15 +82,15 @@ public class DacService {
               anyMatch(
                   ur -> ur.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()) && ur.getDacId()
                       .equals(d.getDacId()))).
-          collect(Collectors.toList());
+          toList();
       List<User> members = dacToUserMap.get(d).stream().
           filter(u -> u.getRoles().stream().
               anyMatch(ur -> ur.getRoleId().equals(UserRoles.MEMBER.getRoleId()) && ur.getDacId()
                   .equals(d.getDacId()))).
-          collect(Collectors.toList());
+          toList();
       d.setChairpersons(chairs);
       d.setMembers(members);
-    }).collect(Collectors.toList());
+    }).toList();
   }
 
   /**
@@ -181,7 +181,7 @@ public class DacService {
         stream().
         map(User::getUserId).
         distinct().
-        collect(Collectors.toList());
+        toList();
     Map<Integer, List<UserRole>> userRoleMap = new HashMap<>();
     if (!allUserIds.isEmpty()) {
       userRoleMap.putAll(dacDAO.findUserRolesForUsers(allUserIds).
@@ -230,7 +230,7 @@ public class DacService {
         filter(r -> Objects.nonNull(r.getDacId())).
         filter(r -> r.getDacId().equals(dac.getDacId())).
         filter(r -> r.getRoleId().equals(role.getRoleId())).
-        collect(Collectors.toList());
+        toList();
     dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
@@ -267,7 +267,7 @@ public class DacService {
         .filter(Objects::nonNull)
         .map(Dac::getDacId)
         .distinct()
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
@@ -285,7 +285,7 @@ public class DacService {
                 user.getEmail()).
             stream().
             map(Dataset::getDataSetId).
-            collect(Collectors.toList());
+            toList();
 
         return documents.
             stream().
@@ -293,7 +293,7 @@ public class DacService {
               List<Integer> datasetIds = d.getDatasetIds();
               return accessibleDatasetIds.stream().anyMatch(datasetIds::contains);
             }).
-            collect(Collectors.toList());
+            toList();
       }
     }
     return Collections.emptyList();
@@ -310,10 +310,10 @@ public class DacService {
     List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
         stream().
         map(Dataset::getDataSetId).
-        collect(Collectors.toList());
+        toList();
     return elections.stream().
         filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
-        collect(Collectors.toList());
+        toList();
   }
 
 }

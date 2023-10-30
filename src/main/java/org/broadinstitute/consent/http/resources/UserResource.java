@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
@@ -132,7 +131,7 @@ public class UserResource extends Resource {
       List<Integer> dacIds = user.getRoles().stream()
           .filter(r -> Objects.nonNull(r.getDacId()))
           .map(UserRole::getDacId)
-          .collect(Collectors.toList());
+          .toList();
       datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
       return Response.ok().entity(datasets).build();
     } catch (Exception e) {
@@ -150,7 +149,7 @@ public class UserResource extends Resource {
       List<Integer> dacIds = user.getRoles().stream()
           .map(UserRole::getDacId)
           .filter(Objects::nonNull)
-          .collect(Collectors.toList());
+          .toList();
       List<Dataset> datasets =
           dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
       if (datasets.isEmpty()) {

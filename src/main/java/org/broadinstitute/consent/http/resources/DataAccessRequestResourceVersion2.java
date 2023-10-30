@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
@@ -126,7 +125,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(
         Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-            .collect(Collectors.toList()),
+            .toList(),
         authUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
@@ -255,7 +254,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
           Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-              .collect(Collectors.toList()),
+              .toList(),
           authUser, referenceId);
       if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
           Objects.nonNull(dar.getData().getIrbDocumentName())) {
@@ -366,7 +365,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
           Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-              .collect(Collectors.toList()),
+              .toList(),
           authUser, referenceId);
       if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
           Objects.nonNull(dar.getData().getCollaborationLetterName())) {

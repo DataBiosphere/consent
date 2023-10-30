@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -228,7 +227,7 @@ public class DacServiceTest {
           newE.setReferenceId(UUID.randomUUID().toString());
           return newE;
         }).
-        collect(Collectors.toList());
+        toList();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
@@ -446,13 +445,13 @@ public class DacServiceTest {
     // There are unassociated elections:
     List<Election> unassociatedElections = getElections().stream().
         peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
+        toList();
 
     List<Election> elections = getElections();
 
     List<Election> allElections = Stream.
         concat(unassociatedElections.stream(), elections.stream()).
-        collect(Collectors.toList());
+        toList();
 
     Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
     // As a member, both direct-associated and unassociated elections should be returned.
@@ -473,13 +472,13 @@ public class DacServiceTest {
     // There are unassociated elections:
     List<Election> unassociatedElections = getElections().stream().
         peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
+        toList();
 
     List<Election> elections = getElections();
 
     List<Election> allElections = Stream.
         concat(unassociatedElections.stream(), elections.stream()).
-        collect(Collectors.toList());
+        toList();
 
     Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
     // As a member, both direct-associated and unassociated elections should be returned.
@@ -529,7 +528,7 @@ public class DacServiceTest {
           Election election = new Election();
           election.setDataSetId(i);
           return election;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   /**
@@ -537,7 +536,7 @@ public class DacServiceTest {
    */
   private List<Consent> getConsents() {
     return IntStream.range(1, 5).
-        mapToObj(i -> new Consent()).collect(Collectors.toList());
+        mapToObj(i -> new Consent()).toList();
   }
 
   /**
@@ -555,7 +554,7 @@ public class DacServiceTest {
           data.setReferenceId(referenceId);
           dar.setData(data);
           return dar;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   /**
@@ -567,7 +566,7 @@ public class DacServiceTest {
           Dataset dataSet = new Dataset();
           dataSet.setDataSetId(i);
           return dataSet;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   /**
@@ -579,7 +578,7 @@ public class DacServiceTest {
           DatasetDTO dataSet = new DatasetDTO();
           dataSet.setDataSetId(i);
           return dataSet;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   /**
@@ -593,7 +592,7 @@ public class DacServiceTest {
           dac.setDescription("Dac " + i);
           dac.setName("Dac " + i);
           return dac;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   /**

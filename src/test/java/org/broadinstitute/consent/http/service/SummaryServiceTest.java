@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.ConsentDAO;
@@ -102,11 +101,11 @@ public class SummaryServiceTest {
     List<Election> consentElections = List.of(
         createElection(ElectionType.TRANSLATE_DUL.getValue()));
     List<Integer> accessElectionIds = accessElections.stream().map(Election::getElectionId)
-        .collect(Collectors.toList());
+        .toList();
     List<Integer> rpElectionIds = rpElections.stream().map(Election::getElectionId)
-        .collect(Collectors.toList());
+        .toList();
     List<Integer> consentElectionIds = consentElections.stream().map(Election::getElectionId)
-        .collect(Collectors.toList());
+        .toList();
     List<DataAccessRequest> dars = List.of(
         createDAR(accessElections.get(0).getReferenceId(), darUser.getUserId()));
     List<Association> associations = List.of(createAssociation(dars.get(0).getDatasetIds().get(0),

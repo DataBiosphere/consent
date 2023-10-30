@@ -13,7 +13,6 @@ import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -203,6 +202,6 @@ public class InstitutionServiceTest {
           Institution institute = new Institution();
           institute.setId(i);
           return institute;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 }

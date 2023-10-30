@@ -200,12 +200,12 @@ public class VoteService implements ConsentLogger {
   public void deleteOpenDacVotesForUser(Dac dac, User user) {
     List<Integer> openElectionIds = electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream().
         map(Election::getElectionId).
-        collect(Collectors.toList());
+        toList();
     if (!openElectionIds.isEmpty()) {
       List<Integer> openUserVoteIds = voteDAO.findVotesByElectionIds(openElectionIds).stream().
           filter(v -> v.getUserId().equals(user.getUserId())).
           map(Vote::getVoteId).
-          collect(Collectors.toList());
+          toList();
       if (!openUserVoteIds.isEmpty()) {
         voteDAO.removeVotesByIds(openUserVoteIds);
       }
@@ -263,7 +263,7 @@ public class VoteService implements ConsentLogger {
         .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
         .map(Vote::getElectionId)
         .distinct()
-        .collect(Collectors.toList());
+        .toList();
 
     List<Election> finalElections =
         finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
@@ -271,20 +271,20 @@ public class VoteService implements ConsentLogger {
     List<String> finalElectionReferenceIds = finalElections.stream()
         .map(Election::getReferenceId)
         .distinct()
-        .collect(Collectors.toList());
+        .toList();
 
     List<Integer> collectionIds =
         finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
             .findByReferenceIds(finalElectionReferenceIds).stream()
             .map(DataAccessRequest::getCollectionId)
-            .collect(Collectors.toList());
+            .toList();
 
     List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
         darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
     List<Integer> datasetIds = finalElections.stream()
         .map(Election::getDataSetId)
-        .collect(Collectors.toList());
+        .toList();
     List<Dataset> datasets =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
@@ -323,7 +323,7 @@ public class VoteService implements ConsentLogger {
         List<String> dataUseTranslations = dataUses.stream()
             .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
         String translation = String.join(";", dataUseTranslations);
 
         try {
@@ -437,7 +437,7 @@ public class VoteService implements ConsentLogger {
   private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
     List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
         .map(Vote::getElectionId)
-        .collect(Collectors.toList()));
+        .toList());
 
     // If there are any DataAccess elections in a non-open state, throw an error
     List<Election> nonOpenAccessElections = elections.stream()

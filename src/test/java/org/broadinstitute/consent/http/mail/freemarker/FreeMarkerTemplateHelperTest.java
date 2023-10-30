@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -46,7 +45,7 @@ class FreeMarkerTemplateHelperTest {
   @Test
   void testGetDisabledDatasetsTemplate() throws Exception {
     Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User",
-        sampleDatasets().stream().map(Dataset::getObjectId).collect(Collectors.toList()),
+        sampleDatasets().stream().map(Dataset::getObjectId).toList(),
         "entityId", "serverUrl");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);

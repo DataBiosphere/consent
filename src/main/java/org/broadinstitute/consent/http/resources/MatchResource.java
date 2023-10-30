@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.service.MatchService;
@@ -42,7 +41,7 @@ public class MatchResource extends Resource {
             .stream()
             .filter(id -> !id.isBlank())
             .map(id -> id.strip())
-            .collect(Collectors.toList());
+            .toList();
 
         if (purposeIdsList.isEmpty()) {
           throw new BadRequestException("Invalid query params provided");

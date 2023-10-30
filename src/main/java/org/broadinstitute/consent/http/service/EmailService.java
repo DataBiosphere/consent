@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -137,7 +136,7 @@ public class EmailService {
     List<Integer> datasetIds = collection.getDars().values().stream()
         .map(DataAccessRequest::getDatasetIds)
         .flatMap(List::stream)
-        .collect(Collectors.toList());
+        .toList();
     Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     // Ensure that admins/chairs are not double emailed

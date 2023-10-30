@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -649,7 +648,7 @@ public class DataAccessRequestData {
               .filter(Objects::nonNull)
               .filter(e -> Objects.nonNull(e.getId()))
               .filter(e -> Objects.nonNull(e.getLabel()))
-              .collect(Collectors.toList());
+              .toList();
       if (filteredEntries.isEmpty()) {
         data.setOntologies(Collections.emptyList());
       } else {

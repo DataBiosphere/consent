@@ -101,7 +101,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
     List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
     assertFalse(currentRoles.isEmpty());
     List<Integer> roleIds = userRoleDAO.findRoles().stream().map(Role::getRoleId)
-        .collect(Collectors.toList());
+        .toList();
     userRoleDAO.removeUserRoles(user.getUserId(), roleIds);
     List<UserRole> newRoles = userRoleDAO.findRolesByUserId(user.getUserId());
     assertTrue(newRoles.isEmpty());

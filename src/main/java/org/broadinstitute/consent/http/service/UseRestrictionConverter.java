@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -72,7 +71,7 @@ public class UseRestrictionConverter {
           .filter(Objects::nonNull)
           .filter(hashMap -> hashMap.containsKey("id"))
           .map(hashMap -> hashMap.get("id"))
-          .collect(Collectors.toList());
+          .toList();
       if (!restrictions.isEmpty()) {
         dataUse.setDiseaseRestrictions(restrictions);
       }
@@ -141,7 +140,7 @@ public class UseRestrictionConverter {
       //
 
       List<String> ontologies = dar.getData().getOntologies()
-          .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+          .stream().map(OntologyEntry::getId).toList();
       if (CollectionUtils.isNotEmpty(ontologies)) {
         dataUse.setDiseaseRestrictions(ontologies);
       }

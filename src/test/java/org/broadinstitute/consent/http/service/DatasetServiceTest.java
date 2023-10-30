@@ -243,7 +243,7 @@ class DatasetServiceTest {
 
     List<DatasetPropertyDTO> input = getDatasetPropertiesDTO().stream()
         .peek(p -> p.setPropertyKey("Invalid Key"))
-        .collect(Collectors.toList());
+        .toList();
 
     List<DatasetPropertyDTO> properties = datasetService.findInvalidProperties(input);
 
@@ -326,7 +326,7 @@ class DatasetServiceTest {
     Set<DatasetProperty> datasetProps = getDatasetProperties();
     List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
         new DatasetPropertyDTO(p.getPropertyName(), p.getPropertyValue().toString())
-    ).collect(Collectors.toList());
+    ).toList();
     dataSetDTO.setProperties(dtoProps);
     dataset.setProperties(datasetProps);
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
@@ -464,7 +464,7 @@ class DatasetServiceTest {
     Set<DatasetProperty> datasetProps = getDatasetProperties();
     List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
         new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
-    ).collect(Collectors.toList());
+    ).toList();
     datasetDTO.setProperties(dtoProps);
     dataset.setProperties(datasetProps);
 
@@ -837,7 +837,7 @@ class DatasetServiceTest {
           dataset.setConsentName("Test Consent " + i);
           dataset.setProperties(Collections.emptySet());
           return dataset;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   private List<DatasetDTO> getDatasetDTOs() {
@@ -849,7 +849,7 @@ class DatasetServiceTest {
               "Test Dataset " + i);
           dataset.setProperties(Collections.singletonList(nameProperty));
           return dataset;
-        }).collect(Collectors.toList());
+        }).toList();
   }
 
   private Set<DatasetProperty> getDatasetProperties() {
@@ -872,7 +872,7 @@ class DatasetServiceTest {
     return dictionaries.stream()
         .map(d ->
             new DatasetPropertyDTO(d.getKey(), "Test Value")
-        ).collect(Collectors.toList());
+        ).toList();
   }
 
   private DatasetDTO getDatasetDTO() {
@@ -890,7 +890,7 @@ class DatasetServiceTest {
     return IntStream.range(1, 11)
         .mapToObj(i ->
             new Dictionary(i, String.valueOf(i), true, i, i)
-        ).collect(Collectors.toList());
+        ).toList();
   }
 
 }

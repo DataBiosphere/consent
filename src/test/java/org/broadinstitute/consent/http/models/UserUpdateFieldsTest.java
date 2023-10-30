@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.jupiter.api.Test;
@@ -13,9 +12,9 @@ import org.junit.jupiter.api.Test;
 class UserUpdateFieldsTest {
 
   private static final List<Integer> ALL_ROLE_IDS = Stream.of(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
+      .map(UserRoles::getRoleId).toList();
   private static final List<Integer> NON_IGNORABLE_ROLES = ALL_ROLE_IDS.stream()
-      .filter(id -> !UserUpdateFields.IGNORE_ROLE_IDS.contains(id)).collect(Collectors.toList());
+      .filter(id -> !UserUpdateFields.IGNORE_ROLE_IDS.contains(id)).toList();
 
   @Test
   void testGetRoleIdsToAdd_Case_1() {
@@ -74,9 +73,8 @@ class UserUpdateFieldsTest {
   @Test
   void testGetRoleIdsToRemove_Case_3() {
     UserUpdateFields fields = new UserUpdateFields();
-    fields.setUserRoleIds(ALL_ROLE_IDS);
     List<Integer> invalidRoleIds = List.of(100, 200, 300, 400);
-    fields.getUserRoleIds().addAll(invalidRoleIds);
+    fields.setUserRoleIds(Stream.of(ALL_ROLE_IDS, invalidRoleIds).flatMap(List::stream).toList());
     // Role ids outside the range of existing roles should not be removed
     List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
     assertTrue(roleIdsToRemove.isEmpty());
