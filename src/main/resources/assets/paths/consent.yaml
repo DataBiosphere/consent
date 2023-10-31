@@ -1,4 +1,5 @@
 get:
+  deprecated: true
   summary: Find Consent by name
   description: Returns the Consent identified by the name.
   parameters:
@@ -22,6 +23,7 @@ get:
     404:
       description: The consent associated with the provided name could not be found.
 post:
+  deprecated: true
   summary: Create new Consent
   description: Creates the consent sent with the request.
   requestBody:
