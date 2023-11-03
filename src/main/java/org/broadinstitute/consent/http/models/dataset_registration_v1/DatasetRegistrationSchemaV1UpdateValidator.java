@@ -38,6 +38,19 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
       throw new BadRequestException("Invalid Data Use changes to existing Consent Groups");
     }
 
+    // Ensure that all consent group changes are for datasets in the current study
+    List<ConsentGroup> nonStudyConsentGroups = registration.getConsentGroups()
+        .stream()
+        .filter(cg -> Objects.nonNull(cg.getDatasetId()))
+        .filter(cg -> existingStudy
+              .getDatasetIds()
+              .stream()
+              .noneMatch(id -> id.equals(cg.getDatasetId())))
+        .toList();
+    if (!nonStudyConsentGroups.isEmpty()) {
+      throw new BadRequestException("Invalid Consent Group changes to study");
+    }
+
     // Consent Name changes are not allowed for existing datasets unless it is empty
     List<ConsentGroup> invalidConsentGroupNameChanges = registration.getConsentGroups()
         .stream()
@@ -50,10 +63,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
               .stream()
               .filter(d -> d.getDataSetId().equals(cg.getDatasetId()))
               .findFirst();
-          // Should not hit this case, but if we did, the edited consent group is for a dataset not in this study
-          return dataset.map(
-              value -> Objects.nonNull(value.getName()) || !value.getName().isBlank()).orElse(true);
-          // If the dataset name is populated, then we cannot update it
+          return dataset.isPresent() && !dataset.get().getName().isBlank();
         })
         .toList();
     if (!invalidConsentGroupNameChanges.isEmpty()) {
