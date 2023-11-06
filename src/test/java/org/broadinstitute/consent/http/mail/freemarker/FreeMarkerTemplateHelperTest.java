@@ -64,7 +64,7 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New Case Notification", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - New DAR ready for your vote", parsedTemplate.title());
     assertEquals("Hello NewCase User,", parsedTemplate.getElementById("userName").text());
   }
 
@@ -74,7 +74,7 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Vote Reminder", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR", parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
@@ -83,7 +83,7 @@ class FreeMarkerTemplateHelperTest {
     Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New Data Access Request",
+    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
         parsedTemplate.title());
     Element userNameElement = parsedTemplate.getElementById("userName");
     assertNotNull(userNameElement);
@@ -98,7 +98,7 @@ class FreeMarkerTemplateHelperTest {
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
 
-    assertEquals("Broad Data Use Oversight System - New Researcher Library Request",
+    assertEquals("Broad Data Use Oversight System - Request from your researcher for Library Card permissions",
         parsedTemplate.title());
 
     assertTrue(parsedTemplate
@@ -122,7 +122,7 @@ class FreeMarkerTemplateHelperTest {
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
     assertEquals(
-        "Broad Data Use Oversight System - Researcher - DAR Approved Notification",
+        "Broad Data Use Oversight System - Researcher - A researcher was approved for your dataset",
         parsedTemplate.title());
     assertTrue(parsedTemplate
         .getElementById("content")
