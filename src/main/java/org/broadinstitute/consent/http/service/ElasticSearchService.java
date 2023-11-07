@@ -216,7 +216,7 @@ public class ElasticSearchService implements ConsentLogger {
     if (Objects.isNull(dac)) {
       return null;
     }
-    return new DacTerm(dac.getDacId(), dac.getName());
+    return new DacTerm(dac.getDacId(), dac.getName(), dac.getEmail());
   }
 
   public InstitutionTerm toInstitutionTerm(Institution institution) {
@@ -263,7 +263,6 @@ public class ElasticSearchService implements ConsentLogger {
     Optional.ofNullable(dataset.getDacId()).ifPresent(dacId -> {
       Dac dac = dacDAO.findById(dataset.getDacId());
       term.setDacId(dataset.getDacId());
-      term.setDacName(dac.getName());
       if (Objects.nonNull(dataset.getDacApproval())) {
         term.setDacApproval(dataset.getDacApproval());
       }
