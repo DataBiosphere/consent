@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 
 public class DatasetRegistrationSchemaV1UpdateValidator {
@@ -26,6 +25,11 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     if (Objects.nonNull(registration.getDataSubmitterUserId())
         && !registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
       throw new BadRequestException("Invalid change to Data Submitter");
+    }
+
+    // Minimum number of consent groups is 1
+    if (registration.getConsentGroups().isEmpty()) {
+      throw new BadRequestException("Invalid number of Consent Groups");
     }
 
     // Data use changes are not allowed for existing datasets
@@ -67,48 +71,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         })
         .toList();
     if (!invalidConsentGroupNameChanges.isEmpty()) {
-      throw new BadRequestException("Invalid Data Use Name changes to existing Consent Groups");
-    }
-
-    // Controlled Access Studies require DAC IDs
-    List<ConsentGroup> controlledAccessMissingDacs = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> AccessManagement.CONTROLLED.equals(cg.getAccessManagement()))
-        .filter(cg -> Objects.isNull(cg.getDataAccessCommitteeId()))
-        .toList();
-    if (!controlledAccessMissingDacs.isEmpty()) {
-      throw new BadRequestException("Missing DAC Selection for Controlled Access Consent Groups");
-    }
-
-    // Controlled Access Studies require Data Use
-    List<ConsentGroup> controlledAccessMissingDataUse = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> AccessManagement.CONTROLLED.equals(cg.getAccessManagement()))
-        .filter(cg -> Objects.isNull(cg.getDatasetId()))
-        .filter(cg -> !cg.hasPrimaryDataUse())
-        .toList();
-    if (!controlledAccessMissingDataUse.isEmpty()) {
-      throw new BadRequestException("Missing Data Use Selection for Controlled Access Consent Groups");
-    }
-
-    // External Management studies require there be NO Dac ID
-    List<ConsentGroup> invalidExternalConsentGroup = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> AccessManagement.EXTERNAL.equals(cg.getAccessManagement()))
-        .filter(cg -> Objects.nonNull(cg.getDataAccessCommitteeId()))
-        .toList();
-    if (!invalidExternalConsentGroup.isEmpty()) {
-      throw new BadRequestException("Invalid DAC Selection for Externally Managed Study");
-    }
-
-    // Open Access studies require NO Data Use
-    List<ConsentGroup> missingDataUseConsentGroups = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> AccessManagement.OPEN.equals(cg.getAccessManagement()))
-        .filter(ConsentGroup::hasPrimaryDataUse)
-        .toList();
-    if (!missingDataUseConsentGroups.isEmpty()) {
-      throw new BadRequestException("Invalid Data Use Selection for Open Access Study");
+      throw new BadRequestException("Invalid Name changes to existing Consent Groups");
     }
 
     // Data Location required for all consent groups
