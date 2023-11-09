@@ -83,7 +83,10 @@ put:
       description: Server error
 delete:
   summary: Delete Study
-  description: Deletes Study, Datasets, and all properties of the Study specified by id.
+  description: |
+    Deletes Study, Datasets, and all properties of the Study specified by id.
+    * Admins can delete any study
+    * Chairpersons and Data Submitters can delete studies they created
   parameters:
     - name: studyId
       in: path
