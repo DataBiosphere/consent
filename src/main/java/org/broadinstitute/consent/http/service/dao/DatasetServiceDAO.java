@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -56,6 +57,30 @@ public class DatasetServiceDAO implements ConsentLogger {
         datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDataSetId());
         datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDataSetId());
         datasetDAO.deleteDatasetById(dataset.getDataSetId());
+      } catch (Exception e) {
+        handle.rollback();
+        logException(e);
+        throw e;
+      }
+      handle.commit();
+    });
+  }
+
+  public void deleteStudy(Study study, User user) throws Exception {
+    jdbi.useHandle(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      study.getDatasets().forEach(d -> {
+        try {
+          deleteDataset(d, user.getUserId());
+        } catch (Exception e) {
+          handle.rollback();
+          logException(e);
+          throw new DatasetDeletionException(e);
+        }
+      });
+      try {
+        studyDAO.deleteStudyPropertiesByStudyId(study.getStudyId());
+        studyDAO.deleteStudyByStudyId(study.getStudyId());
       } catch (Exception e) {
         handle.rollback();
         logException(e);
@@ -217,9 +242,9 @@ public class DatasetServiceDAO implements ConsentLogger {
   public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates,
       List<DatasetServiceDAO.DatasetInsert> datasetInserts) throws SQLException {
     jdbi.useHandle(
-    handle -> {
-      handle.getConnection().setAutoCommit(false);
-      executeUpdateStudy(handle, studyUpdate);
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          executeUpdateStudy(handle, studyUpdate);
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
                 handle,

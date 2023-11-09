@@ -26,10 +26,10 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
-public class StudyDAOTest extends DAOTestHelper {
+class StudyDAOTest extends DAOTestHelper {
 
   @Test
-  public void testCreateAndFindStudy() {
+  void testCreateAndFindStudy() {
     User u = createUser();
 
     String name = RandomStringUtils.randomAlphabetic(20);
@@ -79,7 +79,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testStudyProps() {
+  void testStudyProps() {
     User u = createUser();
 
     String name = RandomStringUtils.randomAlphabetic(20);
@@ -157,7 +157,7 @@ public class StudyDAOTest extends DAOTestHelper {
 
 
   @Test
-  public void testAlternativeDataSharingPlan() {
+  void testAlternativeDataSharingPlan() {
     User u = createUser();
 
     UUID uuid = UUID.randomUUID();
@@ -184,7 +184,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetAlternativeDataSharingFile() {
+  void testGetAlternativeDataSharingFile() {
     Study study = insertStudyWithProperties();
 
     // create unrelated file with the same id as dataset id but different category, timestamp before
@@ -214,7 +214,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated() {
+  void testGetAlternativeDataSharingPlanFile_AlwaysLatestCreated() {
     Study study = insertStudyWithProperties();
 
     String fileName = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
@@ -259,7 +259,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetAlternativeDataSharingPlanFile_NotDeleted() {
+  void testGetAlternativeDataSharingPlanFile_NotDeleted() {
     Study study = insertStudyWithProperties();
 
     FileStorageObject altFile = createFileStorageObject(
@@ -281,7 +281,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testIncludesDatasetIds() {
+  void testIncludesDatasetIds() {
     Study s = insertStudyWithProperties();
 
     insertDataset();
@@ -298,7 +298,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudy() {
+  void testUpdateStudy() {
     User user = createUser();
     Study study = insertStudyWithProperties();
     String newName = "New Name";
@@ -326,7 +326,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateStudyProperty() {
+  void testUpdateStudyProperty() {
     Study study = insertStudyWithProperties();
     String newPropStringVal = RandomStringUtils.randomAlphabetic(15);
     Integer newPropNumberVal = RandomUtils.nextInt(100, 1000);
@@ -355,7 +355,7 @@ public class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteStudyProperty() {
+  void testDeleteStudyProperty() {
     Study study = insertStudyWithProperties();
     assertNotNull(study.getProperties());
     assertFalse(study.getProperties().isEmpty());
@@ -365,6 +365,35 @@ public class StudyDAOTest extends DAOTestHelper {
     });
     Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNull(updatedStudy.getProperties());
+  }
+
+  @Test
+  void testDeleteStudyPropertiesByStudyId() {
+    Study study = insertStudyWithProperties();
+
+    studyDAO.deleteStudyPropertiesByStudyId(study.getStudyId());
+    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(updatedStudy.getProperties());
+  }
+
+  @Test
+  void testDeleteStudyById() {
+    User u = createUser();
+    UUID uuid = UUID.randomUUID();
+    Integer id = studyDAO.insertStudy(
+        "name",
+        "description",
+        "asdf",
+        List.of(),
+        true,
+        u.getUserId(),
+        Instant.now(),
+        uuid
+    );
+
+    studyDAO.deleteStudyByStudyId(id);
+    Study deletedStudy = studyDAO.findStudyById(id);
+    assertNull(deletedStudy);
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

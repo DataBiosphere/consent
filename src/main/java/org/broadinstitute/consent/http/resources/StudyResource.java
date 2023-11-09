@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -15,10 +16,13 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
@@ -28,6 +32,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -40,12 +45,17 @@ public class StudyResource extends Resource {
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
+  private final ElasticSearchService elasticSearchService;
+
 
   @Inject
-  public StudyResource(DatasetService datasetService, UserService userService, DatasetRegistrationService datasetRegistrationService) {
+  public StudyResource(DatasetService datasetService, UserService userService,
+      DatasetRegistrationService datasetRegistrationService,
+      ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
+    this.elasticSearchService = elasticSearchService;
   }
 
   @GET
@@ -65,12 +75,37 @@ public class StudyResource extends Resource {
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response deleteStudyById(@PathParam("studyId") Integer studyId) {
+  public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.findStudyById(studyId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Study study = datasetService.getStudyWithDatasetsById(studyId);
+
       if (Objects.isNull(study)) {
-        throw new NotFoundException();
+        throw new NotFoundException("Study not found");
       }
+
+      // If the user is not an admin, ensure that they are the study/dataset creator
+      if (!user.hasUserRole(UserRoles.ADMIN) && (!Objects.equals(study.getCreateUserId(),
+          user.getUserId()))) {
+        throw new NotFoundException("Study not found");
+      }
+
+      boolean deletable = study.getDatasets()
+          .stream()
+          .allMatch(Dataset::getDeletable);
+      if (!deletable) {
+        throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
+      }
+      Set<Integer> studyDatasetIds = study.getDatasetIds();
+      datasetService.deleteStudy(study, user);
+      // Remove from ES index
+      studyDatasetIds.forEach(id -> {
+        try {
+          elasticSearchService.deleteIndex(id);
+        } catch (IOException e) {
+          logException(e);
+        }
+      });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

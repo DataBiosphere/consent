@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,9 @@ class StudyResourceTest {
   private UserService userService;
 
   @Mock
+  private ElasticSearchService elasticSearchService;
+
+  @Mock
   private AuthUser authUser;
 
   @Mock
@@ -62,7 +66,7 @@ class StudyResourceTest {
   }
 
   private void initResource() {
-    resource = new StudyResource(datasetService, userService, datasetRegistrationService);
+    resource = new StudyResource(datasetService, userService, datasetRegistrationService, elasticSearchService);
   }
 
   @Test

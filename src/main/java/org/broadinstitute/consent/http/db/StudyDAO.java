@@ -124,4 +124,14 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       """)
   void deleteStudyPropertyById(@Bind("studyPropertyId") Integer studyPropertyId);
 
+  @SqlUpdate("""
+          DELETE FROM study_property WHERE study_id = :studyId
+      """)
+  void deleteStudyPropertiesByStudyId(@Bind("studyId") Integer studyId);
+
+  @SqlUpdate("""
+          DELETE FROM study WHERE study_id = :studyId
+      """)
+  void deleteStudyByStudyId(@Bind("studyId") Integer studyId);
+
 }

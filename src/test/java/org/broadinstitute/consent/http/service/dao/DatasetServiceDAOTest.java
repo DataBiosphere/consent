@@ -612,6 +612,32 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
 
+  @Test
+  void testDeleteStudy() throws Exception {
+    FileStorageObject fso1 = new FileStorageObject();
+    fso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    fso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject fso2 = new FileStorageObject();
+    fso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    fso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+    Study study = createStudy(List.of(fso1, fso2));
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
+    study.addDatasets(datasets);
+
+    serviceDAO.deleteStudy(study, createUser());
+    Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(deletedStudy);
+  }
+
+
   /**
    * Helper method to create a study with two props and one dataset
    * @param fso Optional FSO to use as part of the study insert

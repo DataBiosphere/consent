@@ -34,11 +34,12 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class DatasetService {
+public class DatasetService implements ConsentLogger {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
@@ -291,6 +292,10 @@ public class DatasetService {
     if (Objects.nonNull(dataset)) {
       datasetServiceDAO.deleteDataset(dataset, userId);
     }
+  }
+
+  public void deleteStudy(Study study, User user) throws Exception {
+    datasetServiceDAO.deleteStudy(study, user);
   }
 
   public List<Dataset> searchDatasets(String query, AccessManagement accessManagement, User user) {
