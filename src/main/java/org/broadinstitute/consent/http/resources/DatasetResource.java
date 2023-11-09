@@ -50,7 +50,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -187,48 +186,6 @@ public class DatasetResource extends Resource {
           .build();
       String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
       return Response.created(uri).entity(entity).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @PUT
-  @Consumes({MediaType.MULTIPART_FORM_DATA})
-  @Produces({MediaType.APPLICATION_JSON})
-  @Path("/study/{studyId}")
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  /*
-   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
-   * With that object, we can fully update the study/datasets from the provided values.
-   */
-  public Response updateStudyByRegistration(
-      @Auth AuthUser authUser,
-      FormDataMultiPart multipart,
-      @PathParam("studyId") Integer studyId,
-      @FormDataParam("dataset") String json) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
-
-      // Manually validate the schema from an editing context. Validation with the schema tools
-      // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator();
-      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 registration = gson.fromJson(json,
-          DatasetRegistrationSchemaV1.class);
-
-      if (updateValidator.validate(existingStudy, registration)) {
-        // Update study from registration
-        Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-        Study updatedStudy = datasetRegistrationService.updateStudyFromRegistration(
-            studyId,
-            registration,
-            user,
-            files);
-        return Response.ok(updatedStudy).build();
-      } else {
-        return Response.status(Status.BAD_REQUEST).build();
-      }
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -405,38 +362,6 @@ public class DatasetResource extends Resource {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
       }
       return Response.ok(dataset).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/study/{studyId}")
-  @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response getStudyById(@PathParam("studyId") Integer studyId) {
-    try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
-      return Response.ok(study).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/study/registration/{studyId}")
-  @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response getRegistrationFromStudy(@Auth AuthUser authUser,
-      @PathParam("studyId") Integer studyId) {
-    try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
-      List<Dataset> datasets =
-          Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
-      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
-          study, datasets);
-      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
-      return Response.ok().entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

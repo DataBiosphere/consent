@@ -1,0 +1,166 @@
+package org.broadinstitute.consent.http.resources;
+
+import com.google.gson.Gson;
+import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.service.DatasetRegistrationService;
+import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+
+@Path("api/dataset/study")
+public class StudyResource extends Resource {
+
+  private final DatasetService datasetService;
+  private final DatasetRegistrationService datasetRegistrationService;
+  private final UserService userService;
+
+  @Inject
+  public StudyResource(DatasetService datasetService, UserService userService, DatasetRegistrationService datasetRegistrationService) {
+    this.datasetService = datasetService;
+    this.userService = userService;
+    this.datasetRegistrationService = datasetRegistrationService;
+  }
+
+  @GET
+  @Path("/{studyId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response getStudyById(@PathParam("studyId") Integer studyId) {
+    try {
+      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      return Response.ok(study).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("/{studyId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response deleteStudyById(@PathParam("studyId") Integer studyId) {
+    try {
+      Study study = datasetService.findStudyById(studyId);
+      if (Objects.isNull(study)) {
+        throw new NotFoundException();
+      }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/registration/{studyId}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response getRegistrationFromStudy(@Auth AuthUser authUser,
+      @PathParam("studyId") Integer studyId) {
+    try {
+      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      List<Dataset> datasets =
+          Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
+      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
+          study, datasets);
+      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
+      return Response.ok().entity(entity).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Consumes({MediaType.MULTIPART_FORM_DATA})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/{studyId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  /*
+   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * With that object, we can fully update the study/datasets from the provided values.
+   */
+  public Response updateStudyByRegistration(
+      @Auth AuthUser authUser,
+      FormDataMultiPart multipart,
+      @PathParam("studyId") Integer studyId,
+      @FormDataParam("dataset") String json) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+
+      // Manually validate the schema from an editing context. Validation with the schema tools
+      // enforces it in a creation context but doesn't work for editing purposes.
+      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator();
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetRegistrationSchemaV1 registration = gson.fromJson(json,
+          DatasetRegistrationSchemaV1.class);
+
+      if (updateValidator.validate(existingStudy, registration)) {
+        // Update study from registration
+        Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+        Study updatedStudy = datasetRegistrationService.updateStudyFromRegistration(
+            studyId,
+            registration,
+            user,
+            files);
+        return Response.ok(updatedStudy).build();
+      } else {
+        return Response.status(Status.BAD_REQUEST).build();
+      }
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Finds and validates all the files uploaded to the multipart.
+   *
+   * @param multipart Form data
+   * @return Map of file body parts, where the key is the name of the field and the value is the
+   * body part including the file(s).
+   */
+  private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
+    if (Objects.isNull(multipart)) {
+      return Map.of();
+    }
+
+    Map<String, FormDataBodyPart> files = new HashMap<>();
+    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
+      for (FormDataBodyPart part : parts) {
+        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+          validateFileDetails(part.getContentDisposition());
+          files.put(part.getName(), part);
+        }
+      }
+    }
+
+    return files;
+  }
+
+}
