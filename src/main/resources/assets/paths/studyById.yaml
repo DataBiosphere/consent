@@ -9,7 +9,6 @@ get:
       schema:
         type: integer
   tags:
-    - Dataset
     - Study
   responses:
     200:
@@ -26,7 +25,6 @@ put:
   summary: Update Dataset Registration By Study Id
   description: Updates Dataset Registration specified by Study Id.
   tags:
-    - Dataset
     - Study
   parameters:
     - name: studyId
@@ -98,10 +96,10 @@ delete:
     - Study
   responses:
     200:
-      description: The Study was deleted.
+      description: The Study was successfully deleted
     400:
       description: Study is in use and cannot be deleted
     404:
       description: Not Found
     500:
-      description: Server error.
+      description: Server error
