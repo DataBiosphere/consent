@@ -16,8 +16,6 @@ public class DatasetTerm {
   private String dataLocation;
   private String url;
   private Integer dacId;
-  @Deprecated // Use dac.name instead
-  private String dacName;
   private Boolean dacApproval;
   private String accessManagement;
   private List<Integer> approvedUserIds;
@@ -104,14 +102,6 @@ public class DatasetTerm {
 
   public void setDacId(Integer dacId) {
     this.dacId = dacId;
-  }
-
-  public String getDacName() {
-    return dacName;
-  }
-
-  public void setDacName(String dacName) {
-    this.dacName = dacName;
   }
 
   public Boolean getDacApproval() {
