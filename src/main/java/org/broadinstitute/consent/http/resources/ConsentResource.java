@@ -19,7 +19,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 
 @Path("api/consent")
 public class ConsentResource extends Resource {
@@ -41,7 +40,7 @@ public class ConsentResource extends Resource {
   @POST
   @Consumes("application/json")
   @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-  public Response createConsent(@Context UriInfo info, Consent rec, @Auth AuthUser user) {
+  public Response createConsent(@Context UriInfo info, String rec, @Auth AuthUser user) {
     return Response.status(HttpStatusCodes.STATUS_CODE_NOT_FOUND).build();
   }
 
@@ -51,7 +50,7 @@ public class ConsentResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER, DATAOWNER})
-  public Response update(@PathParam("id") String id, Consent updated, @Auth AuthUser user) {
+  public Response update(@PathParam("id") String id, String updated, @Auth AuthUser user) {
     return Response.status(HttpStatusCodes.STATUS_CODE_NOT_FOUND).build();
   }
 
