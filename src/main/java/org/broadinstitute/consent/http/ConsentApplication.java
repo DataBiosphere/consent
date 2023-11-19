@@ -76,8 +76,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -92,7 +90,6 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -160,7 +157,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
 
     // Services
-    final ConsentService consentService = injector.getProvider(ConsentService.class).get();
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
     final DacService dacService = injector.getProvider(DacService.class).get();
@@ -177,8 +173,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
     final UserService userService = injector.getProvider(UserService.class).get();
     final VoteService voteService = injector.getProvider(VoteService.class).get();
-    final AuditService auditService = injector.getProvider(AuditService.class).get();
-    final SummaryService summaryService = injector.getProvider(SummaryService.class).get();
     final MatchService matchService = injector.getProvider(MatchService.class).get();
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
     final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
@@ -224,14 +218,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService, elasticSearchService));
     env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
-    env.jersey()
-        .register(new ConsentResource(auditService, userService, consentService, matchService));
-    env.jersey().register(new ConsentCasesResource(summaryService));
+    env.jersey().register(injector.getInstance(ConsentResource.class));
+    env.jersey().register(injector.getInstance(ConsentCasesResource.class));
     env.jersey().register(new DacResource(dacService, userService, datasetService));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
         new DarCollectionResource(darCollectionService, userService));
-    env.jersey().register(new DataRequestCasesResource(summaryService));
+    env.jersey().register(injector.getInstance(DataRequestCasesResource.class));
     env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
     env.jersey().register(new EmailNotifierResource(emailService));
     env.jersey().register(new InstitutionResource(userService, institutionService));

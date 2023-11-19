@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -42,7 +41,6 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -61,8 +59,6 @@ import org.mockito.Mock;
 
 class DataAccessRequestServiceTest {
 
-  @Mock
-  private ConsentDAO consentDAO;
   @Mock
   private CounterService counterService;
   @Mock
@@ -99,7 +95,6 @@ class DataAccessRequestServiceTest {
 
   private void initService() {
     DAOContainer container = new DAOContainer();
-    container.setConsentDAO(consentDAO);
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
     container.setDarCollectionDAO(darCollectionDAO);
     container.setInstitutionDAO(institutionDAO);
@@ -272,9 +267,6 @@ class DataAccessRequestServiceTest {
     when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
         .thenReturn("CONS-1");
 
-    Consent consent = new Consent();
-    consent.setConsentId("CONS-1");
-    when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
     when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
     initService();
     try {
@@ -312,10 +304,6 @@ class DataAccessRequestServiceTest {
         .thenReturn("CONS-1");
     when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn("Use is limited to research");
 
-    Consent consent = new Consent();
-    consent.setConsentId("CONS-1");
-    consent.setName("Consent 1");
-    when(consentDAO.findConsentById("CONS-1")).thenReturn(consent);
     initService();
 
     try {

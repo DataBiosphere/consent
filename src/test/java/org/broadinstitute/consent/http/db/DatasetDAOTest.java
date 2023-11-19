@@ -29,7 +29,6 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -946,27 +945,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetDatasetsForConsent() {
-    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null,
-        null, RandomStringUtils.randomAlphabetic(10), null, null);
-    //negative record, make sure this isn't pulled in
-    datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(10), null, null,
-        RandomStringUtils.randomAlphabetic(10), null, null);
-    String consentId = RandomStringUtils.randomAlphabetic(10);
-    consentDAO.insertConsent(consentId, false, "", null,
-        RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date(),
-        new Date(), RandomStringUtils.randomAlphabetic(10));
-    consentDAO.insertConsentAssociation(consentId, RandomStringUtils.randomAlphabetic(10),
-        datasetId);
-
-    List<Dataset> datasets = datasetDAO.getDatasetsForConsent(consentId);
-    assertEquals(1, datasets.size());
-    Dataset targetDataset = datasets.get(0);
-    assertEquals(datasetId, targetDataset.getDataSetId());
-    assertNull(targetDataset.getDacApproval());
-  }
-
-  @Test
   void testUpdateDatasetApproval() {
     User updateUser = createUser();
     Dataset dataset = insertDataset();
@@ -1229,21 +1207,6 @@ class DatasetDAOTest extends DAOTestHelper {
         "Test_" + RandomStringUtils.random(20, true, true),
         new Date());
     return dacDAO.findById(id);
-  }
-
-  protected Consent insertConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        """
-            {"generalUse":true}""",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Group");
-    return consentDAO.findConsentById(consentId);
   }
 
   private Study insertStudyWithProperties() {

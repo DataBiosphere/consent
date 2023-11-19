@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -45,10 +44,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 @SuppressWarnings({"unchecked", "resource"})
-public class MatchServiceTest {
+class MatchServiceTest {
 
-  @Mock
-  ConsentDAO consentDAO;
   @Mock
   DatasetDAO datasetDAO;
   @Mock
@@ -72,7 +69,7 @@ public class MatchServiceTest {
   private UseRestrictionConverter useRestrictionConverter;
 
   private void initService() {
-    service = new MatchService(clientMock, config, consentDAO, matchDAO,
+    service = new MatchService(clientMock, config, matchDAO,
         dataAccessRequestDAO, datasetDAO,
         useRestrictionConverter);
   }
@@ -87,7 +84,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testInsertMatches() {
+  void testInsertMatches() {
     when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
     doNothing().when(matchDAO).insertRationale(any(), any());
     initService();
@@ -97,7 +94,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchById() {
+  void testFindMatchById() {
     Match m = createMatchObject();
     when(matchDAO.findMatchById(m.getId())).thenReturn(m);
     initService();
@@ -108,7 +105,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchByIdNotFound() {
+  void testFindMatchByIdNotFound() {
     Match m = createMatchObject();
     when(matchDAO.findMatchById(m.getId())).thenReturn(null);
     initService();
@@ -119,7 +116,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchByConsentId() {
+  void testFindMatchByConsentId() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
     initService();
@@ -131,7 +128,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchByConsentIdNotFound() {
+  void testFindMatchByConsentIdNotFound() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of());
     initService();
@@ -142,7 +139,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchForDataAccessRequest() {
+  void testFindMatchForDataAccessRequest() {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
     DataUseResponseMatchingObject responseObject = Mockito.mock(
@@ -159,23 +156,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testCreateMatchesForConsent() {
-    Match m = createMatchObject();
-    Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.addDatasetId(1);
-    when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
-    when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
-    initService();
-
-    service.createMatchesForConsent(m.getConsent());
-    verify(datasetDAO, atLeastOnce()).getDatasetsForConsent(any());
-    verify(dataAccessRequestDAO, atLeastOnce()).findAllDataAccessRequests();
-  }
-
-  @Test
-  public void testSingleEntitiesMatchV3EmptyDataset() {
+  void testSingleEntitiesMatchV3EmptyDataset() {
     DataAccessRequest dar = new DataAccessRequest();
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
@@ -184,7 +165,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testSingleEntitiesMatchV3EmptyDar() {
+  void testSingleEntitiesMatchV3EmptyDar() {
     Dataset dataset = new Dataset();
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
@@ -193,7 +174,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testSingleEntitiesMatchV3Failure() {
+  void testSingleEntitiesMatchV3Failure() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     dataset.setAlias(2);
@@ -217,7 +198,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testSingleEntitiesMatchV3Approve() {
+  void testSingleEntitiesMatchV3Approve() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
@@ -240,7 +221,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testSingleEntitiesMatchV3Deny() {
+  void testSingleEntitiesMatchV3Deny() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
@@ -263,7 +244,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testSingleEntitiesMatchV3Abstain() {
+  void testSingleEntitiesMatchV3Abstain() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
@@ -286,7 +267,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testFindMatchesByPurposeId() {
+  void testFindMatchesByPurposeId() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByPurposeId(any())).thenReturn(List.of(m));
     initService();
@@ -297,20 +278,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testReprocessMatchesForConsent() {
-    Match m = createMatchObject();
-    when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
-    initService();
-
-    try {
-      service.reprocessMatchesForConsent(m.getConsent());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
-  public void testReprocessMatchesForPurpose() {
+  void testReprocessMatchesForPurpose() {
     Match m = createMatchObject();
     initService();
 
@@ -322,7 +290,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testRemoveMatchesForPurpose() {
+  void testRemoveMatchesForPurpose() {
     initService();
 
     service.removeMatchesForPurpose("DAR-2");
@@ -331,17 +299,7 @@ public class MatchServiceTest {
   }
 
   @Test
-  public void testRemoveMatchesForConsent() {
-    Match m = createMatchObject();
-    initService();
-
-    service.removeMatchesForConsent(m.getConsent());
-    verify(matchDAO, atLeastOnce()).deleteRationalesByConsentIds(anyList());
-    verify(matchDAO, atLeastOnce()).deleteMatchesByConsentId(any());
-  }
-
-  @Test
-  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
+  void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
         List.of(m));
