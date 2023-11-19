@@ -45,7 +45,6 @@ public class DAOTestHelper {
 
   protected static Jdbi jdbi;
 
-  protected static ConsentDAO consentDAO;
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
   protected static UserDAO userDAO;
@@ -115,7 +114,6 @@ public class DAOTestHelper {
         GsonUtil.buildGson()
     );
 
-    consentDAO = jdbi.onDemand(ConsentDAO.class);
     counterDAO = jdbi.onDemand(CounterDAO.class);
     dacDAO = jdbi.onDemand(DacDAO.class);
     userDAO = jdbi.onDemand(UserDAO.class);
