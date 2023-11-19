@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -22,7 +21,6 @@ public class Dataset {
                 u.create_date AS u_create_date, u.email_preference AS u_email_preference,
                 u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
                 k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
-                ca.consent_id, c.translated_use_restriction,
                 s.study_id AS s_study_id,
                 s.name AS s_name,
                 s.description AS s_description,
@@ -56,12 +54,10 @@ public class Dataset {
             LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
             LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
             LEFT JOIN dictionary k ON k.key_id = dp.property_key
-            LEFT JOIN consent_associations ca ON ca.dataset_id = d.dataset_id
             LEFT JOIN study s ON s.study_id = d.study_id
             LEFT JOIN study_property sp ON sp.study_id = s.study_id
             LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
             LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
-            LEFT JOIN consents c ON c.consent_id = ca.consent_id
       """;
 
   private Integer dataSetId;
@@ -88,8 +84,6 @@ public class Dataset {
   @Deprecated(forRemoval = true)
   private Boolean active;
 
-  private String consentName;
-
   /**
    * Needs Approval is a deprecated property. The visibility of a dataset is calculated from DAC
    * approval and the public visibility dataset property
@@ -106,8 +100,6 @@ public class Dataset {
   private String translatedDataUse;
   private Integer dacId;
 
-  private String consentId;
-
   private Boolean deletable;
 
   private FileStorageObject nihInstitutionalCertificationFile;
@@ -119,8 +111,6 @@ public class Dataset {
 
   private User createUser;
   private Study study;
-
-  private ConsentGroup consentGroup;
 
   public Dataset() {
   }
@@ -269,14 +259,6 @@ public class Dataset {
     this.dacApproval = dacApproval;
   }
 
-  public String getConsentName() {
-    return consentName;
-  }
-
-  public void setConsentName(String consentName) {
-    this.consentName = consentName;
-  }
-
   public Integer getAlias() {
     return alias;
   }
@@ -330,14 +312,6 @@ public class Dataset {
 
   public void setDacId(Integer dacId) {
     this.dacId = dacId;
-  }
-
-  public String getConsentId() {
-    return consentId;
-  }
-
-  public void setConsentId(String consentId) {
-    this.consentId = consentId;
   }
 
   public String getTranslatedDataUse() {

@@ -407,7 +407,7 @@ class DacServiceTest {
     List<Election> elections = getElections();
 
     Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
-    // As an admin, all consents should be returned.
+    // As an admin, all elections should be returned.
     assertEquals(elections.size(), filtered.size());
   }
 
@@ -426,7 +426,7 @@ class DacServiceTest {
     List<Election> elections = getElections();
 
     Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
-    // As a member, only direct-associated consents should be returned.
+    // As a member, only direct-associated datasets should be returned.
     assertEquals(memberDatasets.size(), filtered.size());
   }
 

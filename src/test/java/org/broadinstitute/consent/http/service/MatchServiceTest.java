@@ -183,7 +183,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
 
     Response response = Mockito.mock(Response.class);
-    when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.getStatus()).thenReturn(500);
     when(builder.post(any())).thenReturn(response);
@@ -205,7 +204,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"APPROVE\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);
@@ -228,7 +226,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"DENY\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);
@@ -251,7 +248,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"ABSTAIN\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(datasetDAO.getDatasetsForConsent(any())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);

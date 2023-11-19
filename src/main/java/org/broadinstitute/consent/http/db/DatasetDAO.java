@@ -691,12 +691,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
   List<Dictionary> getDictionaryTerms();
 
-  @SqlQuery(
-      "SELECT ds.* FROM consent_associations ca "
-          + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
-          + "WHERE ca.consent_id = :consentId")
-  List<Dataset> getDatasetsForConsent(@Bind("consentId") String consentId);
-
   @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
   Dataset getDatasetByName(@Bind("name") String name);
 
