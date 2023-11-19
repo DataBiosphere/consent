@@ -82,7 +82,7 @@ class VoteDAOTest extends DAOTestHelper {
   void testFindVotesByElectionIds() {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dataset dataset = createDataset();
-    String darCode = "DAR-1234567890";
+    String darCode = "DAR-12345";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
@@ -91,7 +91,7 @@ class VoteDAOTest extends DAOTestHelper {
     createDacVote(user.getUserId(), election.getElectionId());
 
     Dataset dataset2 = createDataset();
-    String darCode2 = "DAR-1234567890";
+    String darCode2 = "DAR-67890";
     Integer collection_id2 = darCollectionDAO.insertDarCollection(darCode2, user.getUserId(),
         new Date());
     DataAccessRequest dar2 = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id2,
