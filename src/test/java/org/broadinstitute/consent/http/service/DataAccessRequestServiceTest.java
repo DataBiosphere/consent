@@ -264,9 +264,6 @@ class DataAccessRequestServiceTest {
     institution.setName("Institution");
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
-    when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
-        .thenReturn("CONS-1");
-
     when(institutionDAO.findInstitutionById(any())).thenReturn(institution);
     initService();
     try {
@@ -300,8 +297,6 @@ class DataAccessRequestServiceTest {
     when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
     when(dataSetDAO.findDatasetById(any())).thenReturn(d);
     when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
-    when(dataSetDAO.getAssociatedConsentIdByDatasetId(any()))
-        .thenReturn("CONS-1");
     when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn("Use is limited to research");
 
     initService();

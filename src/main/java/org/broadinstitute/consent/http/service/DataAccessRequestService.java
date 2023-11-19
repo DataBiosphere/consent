@@ -384,9 +384,6 @@ public class DataAccessRequestService implements ConsentLogger {
         if (Objects.nonNull(dar) && Objects.nonNull(collection)) {
           Integer datasetId =
               !CollectionUtils.isEmpty(dar.getDatasetIds()) ? dar.getDatasetIds().get(0) : null;
-          String consentId =
-              Objects.nonNull(datasetId) ? datasetDAO.getAssociatedConsentIdByDatasetId(datasetId)
-                  : null;
           String datasetName =
               (Objects.nonNull(dataset) && Objects.nonNull(dataset.getName())) ? dataset.getName()
                   : "";
