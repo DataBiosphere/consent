@@ -137,7 +137,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>8.4.2</version>
+        <version>8.4.3</version>
         <executions>
           <execution>
             <goals>
