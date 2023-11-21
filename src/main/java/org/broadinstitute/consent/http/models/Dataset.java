@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.gson.Gson;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -8,8 +10,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import com.google.gson.reflect.TypeToken;
+import org.bouncycastle.crypto.CryptoServicesRegistrar.Property;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Dataset {
@@ -470,5 +476,38 @@ public class Dataset {
 
   public void setCreateUser(User createUser) {
     this.createUser = createUser;
+  }
+
+  public List<String> getDataCustodianEmails() {
+    if (!(this.getProperties() == null)) {
+      Gson gson = GsonUtil.getInstance();
+      Type listOfStringsType = new TypeToken<List<String>>() {}.getType();
+      return this.getProperties()
+          .stream()
+          .filter(p -> (Objects.nonNull(p.getSchemaProperty()) &&
+              p.getSchemaProperty().equalsIgnoreCase("dataCustodianEmail")))
+          .filter(p -> p.getPropertyType().equals(PropertyType.Json))
+          .map(p -> {
+            List<String> stringList = gson.fromJson(p.getPropertyValueAsString(), listOfStringsType);
+            return stringList;
+          })
+          .flatMap(List::stream)
+          .distinct()
+          .toList();
+    }
+    return List.of();
+  }
+
+  public List<String> getDataDepositorEmails() {
+    if (!(this.getProperties() == null)) {
+      return this.getProperties()
+          .stream()
+          .filter(p -> Objects.nonNull(p.getSchemaProperty()) &&
+              p.getPropertyName().equalsIgnoreCase("Data Depositor"))
+          .map(p -> p.getPropertyValueAsString())
+          .distinct()
+          .toList();
+    }
+    return List.of();
   }
 }

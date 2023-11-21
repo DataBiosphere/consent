@@ -352,8 +352,10 @@ public class VoteService implements ConsentLogger {
   protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher,
       String darCode) throws IllegalArgumentException {
     Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
+
     // Find all the custodians, data owners, and data submitters to notify for each dataset
     datasets.forEach(d -> {
+
       // Data Submitter
       if (Objects.nonNull(d.getCreateUserId())) {
         User submitter = userDAO.findUserById(d.getCreateUserId());
@@ -362,22 +364,25 @@ public class VoteService implements ConsentLogger {
           custodianMap.get(submitter).add(d);
         }
       }
-      // Data Custodians and Data Depositor
-      List<String> custodianEmails = d.getProperties()
-          .stream()
-          .filter(p ->
-              (Objects.nonNull(p.getSchemaProperty()) && p.getSchemaProperty()
-                  .equalsIgnoreCase("dataCustodianEmail")) ||
-                  p.getPropertyName().equalsIgnoreCase("Data Depositor"))
-          .map(DatasetProperty::getPropertyValueAsString)
-          .distinct()
-          .toList();
+
+      // Data Custodians
+      List<String> custodianEmails = d.getDataCustodianEmails();
       if (!custodianEmails.isEmpty()) {
         userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
           custodianMap.putIfAbsent(u, new HashSet<>());
           custodianMap.get(u).add(d);
         });
       }
+
+      // Data Depositors
+      List<String> depositorEmails = d.getDataDepositorEmails();
+      if (!depositorEmails.isEmpty()) {
+        userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
+          custodianMap.putIfAbsent(u, new HashSet<>());
+          custodianMap.get(u).add(d);
+        });
+      }
+
       // Data Owners
       List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
       if (!ownerUserIds.isEmpty()) {
