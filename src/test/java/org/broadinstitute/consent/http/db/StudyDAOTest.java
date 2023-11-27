@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -355,41 +354,9 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteStudyProperty() {
-    Study study = insertStudyWithProperties();
-    assertNotNull(study.getProperties());
-    assertFalse(study.getProperties().isEmpty());
-
-    study.getProperties().forEach(p -> {
-      studyDAO.deleteStudyPropertyById(p.getStudyPropertyId());
-    });
-    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
-    assertNull(updatedStudy.getProperties());
-  }
-
-  @Test
-  void testDeleteStudyPropertiesByStudyId() {
-    Study study = insertStudyWithProperties();
-
-    studyDAO.deleteStudyPropertiesByStudyId(study.getStudyId());
-    Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
-    assertNull(updatedStudy.getProperties());
-  }
-
-  @Test
   void testDeleteStudyById() {
-    User u = createUser();
-    UUID uuid = UUID.randomUUID();
-    Integer id = studyDAO.insertStudy(
-        "name",
-        "description",
-        "asdf",
-        List.of(),
-        true,
-        u.getUserId(),
-        Instant.now(),
-        uuid
-    );
+    Study study = insertStudyWithProperties();
+    Integer id = study.getStudyId();
 
     studyDAO.deleteStudyByStudyId(id);
     Study deletedStudy = studyDAO.findStudyById(id);

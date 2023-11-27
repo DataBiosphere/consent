@@ -79,7 +79,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         }
       });
       try {
-        studyDAO.deleteStudyPropertiesByStudyId(study.getStudyId());
         studyDAO.deleteStudyByStudyId(study.getStudyId());
       } catch (Exception e) {
         handle.rollback();
