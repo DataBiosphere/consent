@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -416,4 +417,7 @@ public class DatasetService {
     }
   }
 
+  public Study convertDatasetToStudy(Dataset dataset, StudyConversion studyConversion) {
+    return null;
+  }
 }

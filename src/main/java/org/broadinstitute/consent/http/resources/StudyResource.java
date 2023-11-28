@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
@@ -57,6 +58,24 @@ public class StudyResource extends Resource {
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
   }
+
+  @PUT
+  @Path("/convert/{datasetIdentifier}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  public Response convertToStudy(@Auth AuthUser authUser, @PathParam("datasetIdentifier") String datasetIdentifier,
+      @FormDataParam("studyInfo") String json) {
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
+      Study study = datasetService.convertDatasetToStudy(dataset, studyConversion);
+      return Response.ok(study).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
 
   @GET
   @Path("/{studyId}")
