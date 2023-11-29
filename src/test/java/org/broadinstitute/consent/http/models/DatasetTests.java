@@ -180,10 +180,10 @@ class DatasetTests {
   }
 
   @Test
-  void testGetDataDepositorEmails() {
+  void testGetDataDepositors() {
     Dataset ds = new Dataset();
 
-    assertTrue(ds.getDataDepositorEmails().isEmpty());
+    assertTrue(ds.getDataDepositors().isEmpty());
 
     DatasetProperty depositorProp = new DatasetProperty();
     depositorProp.setPropertyName("Data Depositor");
@@ -192,8 +192,8 @@ class DatasetTests {
     depositorProp.setPropertyType(PropertyType.String);
     ds.setProperties(Set.of(depositorProp));
 
-    assertTrue(ds.getDataDepositorEmails().size() == 1);
-    assertEquals(ds.getDataDepositorEmails(), List.of("depositor@test.com"));
+    assertTrue(ds.getDataDepositors().size() == 1);
+    assertEquals(ds.getDataDepositors(), List.of("depositor@test.com"));
 
     Gson gson = GsonUtil.getInstance();
     DatasetProperty custodianProp = new DatasetProperty();
@@ -203,8 +203,8 @@ class DatasetTests {
     custodianProp.setPropertyValue(gson.toJson(List.of("custodian@test.com")));
     ds.setProperties(Set.of(depositorProp, custodianProp));
 
-    assertTrue(ds.getDataDepositorEmails().size() == 1);
-    assertEquals(ds.getDataDepositorEmails(), List.of("depositor@test.com"));
+    assertTrue(ds.getDataDepositors().size() == 1);
+    assertEquals(ds.getDataDepositors(), List.of("depositor@test.com"));
 
   }
 

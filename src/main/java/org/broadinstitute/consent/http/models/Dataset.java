@@ -498,7 +498,7 @@ public class Dataset {
     return List.of();
   }
 
-  public List<String> getDataDepositorEmails() {
+  public List<String> getDataDepositors() {
     if (!(this.getProperties() == null)) {
       return this.getProperties()
           .stream()

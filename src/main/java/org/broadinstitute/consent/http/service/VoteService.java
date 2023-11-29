@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -375,7 +376,18 @@ public class VoteService implements ConsentLogger {
       }
 
       // Data Depositors
-      List<String> depositorEmails = d.getDataDepositorEmails();
+      List<String> depositors = d.getDataDepositors();
+      List<String> depositorEmails = new ArrayList<>();
+      String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
+          "[a-zA-Z0-9_+&*-]+)*@" +
+          "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+          "A-Z]{2,7}$";
+      depositors.forEach(e -> {
+        Pattern pat = Pattern.compile(emailRegex);
+        if (pat.matcher(e).matches()) {
+          depositorEmails.add(e);
+        }
+      });
       if (!depositorEmails.isEmpty()) {
         userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
           custodianMap.putIfAbsent(u, new HashSet<>());
