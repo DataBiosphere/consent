@@ -618,6 +618,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   void updateDatasetDataUse(@Bind("datasetId") Integer datasetId, @Bind("dataUse") String dataUse);
 
+  @SqlUpdate("""
+      UPDATE dataset
+      SET create_user_id = :createUserId
+      WHERE dataset_id = :datasetId
+      """)
+  void updateDatasetCreateUserId(@Bind("datasetId") Integer datasetId, @Bind("createUserId") Integer createUserId);
+
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       """

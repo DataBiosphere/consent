@@ -67,9 +67,10 @@ public class StudyResource extends Resource {
   public Response convertToStudy(@Auth AuthUser authUser, @PathParam("datasetIdentifier") String datasetIdentifier,
       @FormDataParam("studyInfo") String json) {
     try {
+      User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
-      Study study = datasetService.convertDatasetToStudy(dataset, studyConversion);
+      Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
