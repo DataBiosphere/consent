@@ -474,9 +474,11 @@ public class DatasetService {
       newPropConversion(dictionaries, dataset, "Data Location", "dataLocation", PropertyType.String, studyConversion.getDataLocation());
     }
 
-    // Handle "URL"
     if (Objects.nonNull(studyConversion.getUrl())) {
+      // Handle "URL"
       newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String, studyConversion.getUrl());
+      // Handle "dbGAP"
+      oldPropConversion(dictionaries, dataset, "dbGAP", 7, PropertyType.String, studyConversion.getUrl());
     }
 
     // Handle "Data Submitter User ID"
@@ -487,7 +489,6 @@ public class DatasetService {
         datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
       }
     }
-
 
     return studyDAO.findStudyById(studyId);
   }
