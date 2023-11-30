@@ -457,6 +457,16 @@ public class DatasetService {
       newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId", PropertyType.Number, studyConversion.getDacId().toString());
     }
 
+    // Handle "Phenotype/Indication"
+    if (Objects.nonNull(studyConversion.getPhenotype())) {
+      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", 4, PropertyType.String, studyConversion.getPhenotype());
+    }
+
+    // Handle "Species"
+    if (Objects.nonNull(studyConversion.getSpecies())) {
+      oldPropConversion(dictionaries, dataset, "Species", 3, PropertyType.String, studyConversion.getSpecies());
+    }
+
     if (Objects.nonNull(studyConversion.getPiName())) {
       // Handle "PI Name"
       newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String, studyConversion.getPiName());
