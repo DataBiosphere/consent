@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.apache.commons.validator.EmailValidator;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -376,18 +377,11 @@ public class VoteService implements ConsentLogger {
       }
 
       // Data Depositors
-      List<String> depositors = d.getDataDepositors();
-      List<String> depositorEmails = new ArrayList<>();
-      String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
-          "[a-zA-Z0-9_+&*-]+)*@" +
-          "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-          "A-Z]{2,7}$";
-      depositors.forEach(e -> {
-        Pattern pat = Pattern.compile(emailRegex);
-        if (pat.matcher(e).matches()) {
-          depositorEmails.add(e);
-        }
-      });
+      EmailValidator emailValidator = EmailValidator.getInstance();
+      List<String> depositorEmails = d.getDataDepositors()
+          .stream()
+          .filter(e -> emailValidator.isValid(e))
+          .toList();
       if (!depositorEmails.isEmpty()) {
         userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
           custodianMap.putIfAbsent(u, new HashSet<>());
