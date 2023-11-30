@@ -445,9 +445,11 @@ public class DatasetService {
     if (Objects.nonNull(studyConversion.getDataUse())) {
       datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), studyConversion.getDataUse().toString());
     }
-    String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
-        DataUseTranslationType.DATASET);
-    datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
+    if (Objects.nonNull(studyConversion.getDataUse())) {
+      String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
+          DataUseTranslationType.DATASET);
+      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
+    }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Dataset Property updates
