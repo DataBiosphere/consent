@@ -443,7 +443,8 @@ public class DatasetService {
       datasetDAO.updateDatasetDacId(dataset.getDataSetId(), studyConversion.getDacId());
     }
     if (Objects.nonNull(studyConversion.getDataUse())) {
-      datasetDAO.updateDatasetDataUse(dataset.getDataSetId(), studyConversion.getDataUse().toString());
+      datasetDAO.updateDatasetDataUse(dataset.getDataSetId(),
+          studyConversion.getDataUse().toString());
     }
     if (Objects.nonNull(studyConversion.getDataUse())) {
       String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
@@ -454,50 +455,61 @@ public class DatasetService {
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Dataset Property updates
     if (Objects.nonNull(studyConversion.getDacId())) {
-      newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId", PropertyType.Number, studyConversion.getDacId().toString());
+      newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId",
+          PropertyType.Number, studyConversion.getDacId().toString());
     }
 
     // Handle "Phenotype/Indication"
     if (Objects.nonNull(studyConversion.getPhenotype())) {
-      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", 4, PropertyType.String, studyConversion.getPhenotype());
+      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", 4, PropertyType.String,
+          studyConversion.getPhenotype());
     }
 
     // Handle "Species"
     if (Objects.nonNull(studyConversion.getSpecies())) {
-      oldPropConversion(dictionaries, dataset, "Species", 3, PropertyType.String, studyConversion.getSpecies());
+      oldPropConversion(dictionaries, dataset, "Species", 3, PropertyType.String,
+          studyConversion.getSpecies());
     }
 
     if (Objects.nonNull(studyConversion.getPiName())) {
       // Handle "PI Name"
-      newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String, studyConversion.getPiName());
+      newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
+          studyConversion.getPiName());
       // Handle "Principal Investigator(PI)"
-      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", 9, PropertyType.String, studyConversion.getPiName());
+      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", 9, PropertyType.String,
+          studyConversion.getPiName());
     }
 
     if (Objects.nonNull(studyConversion.getNumberOfParticipants())) {
       // Handle "Number of Participants"
-      newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants", PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
+      newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants",
+          PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
       // Handle "# of participants"
-      oldPropConversion(dictionaries, dataset, "# of participants", 5, PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
+      oldPropConversion(dictionaries, dataset, "# of participants", 5, PropertyType.Number,
+          studyConversion.getNumberOfParticipants().toString());
     }
 
     // Handle "Data Location"
     if (Objects.nonNull(studyConversion.getDataLocation())) {
-      newPropConversion(dictionaries, dataset, "Data Location", "dataLocation", PropertyType.String, studyConversion.getDataLocation());
+      newPropConversion(dictionaries, dataset, "Data Location", "dataLocation", PropertyType.String,
+          studyConversion.getDataLocation());
     }
 
     if (Objects.nonNull(studyConversion.getUrl())) {
       // Handle "URL"
-      newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String, studyConversion.getUrl());
+      newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
+          studyConversion.getUrl());
       // Handle "dbGAP"
-      oldPropConversion(dictionaries, dataset, "dbGAP", 7, PropertyType.String, studyConversion.getUrl());
+      oldPropConversion(dictionaries, dataset, "dbGAP", 7, PropertyType.String,
+          studyConversion.getUrl());
     }
 
     // Handle "Data Submitter User ID"
     if (Objects.nonNull(studyConversion.getDataSubmitterEmail())) {
       User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
       if (Objects.nonNull(submitter)) {
-        newPropConversion(dictionaries, dataset, "Data Submitter User ID", "dataSubmitterUserId", PropertyType.Number, user.getUserId().toString());
+        newPropConversion(dictionaries, dataset, "Data Submitter User ID", "dataSubmitterUserId",
+            PropertyType.Number, user.getUserId().toString());
         datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
       }
     }
@@ -506,61 +518,75 @@ public class DatasetService {
   }
 
   /**
-   * This method is used to synchronize a new dataset property with values from the study conversion
-   * @param dictionaries List<Dictionary>
-   * @param dataset Dataset
+   * This method is used to synchronize a new dataset property with values from the study
+   * conversion
+   *
+   * @param dictionaries   List<Dictionary>
+   * @param dataset        Dataset
    * @param dictionaryName Name to look for in dictionaries
    * @param schemaProperty Schema Property to look for in properties
-   * @param propertyType Property Type of new value
-   * @param propValue New property value
+   * @param propertyType   Property Type of new value
+   * @param propValue      New property value
    */
-  private void newPropConversion(List<Dictionary> dictionaries, Dataset dataset, String dictionaryName, String schemaProperty, PropertyType propertyType, String propValue) {
-    Optional<Dictionary> maybeDict = dictionaries.stream()
-        .filter(d -> d.getKey().equals(dictionaryName)).findFirst();
+  private void newPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, String schemaProperty, PropertyType propertyType, String propValue) {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
         .filter(p -> Objects.nonNull(p.getSchemaProperty()))
         .filter(p -> p.getSchemaProperty().equals(schemaProperty))
         .findFirst();
     if (maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(), propValue);
-    } else if (maybeDict.isPresent()) {
-      DatasetProperty prop = new DatasetProperty();
-      prop.setDataSetId(dataset.getDataSetId());
-      prop.setPropertyKey(maybeDict.get().getKeyId());
-      prop.setSchemaProperty(schemaProperty);
-      prop.setPropertyValue(propValue);
-      prop.setPropertyType(propertyType);
-      prop.setCreateDate(new Date());
-      datasetDAO.insertDatasetProperties(List.of(prop));
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+          propValue);
+    } else {
+      dictionaries.stream()
+          .filter(d -> d.getKey().equals(dictionaryName))
+          .findFirst()
+          .ifPresent(dictionary -> {
+            DatasetProperty prop = new DatasetProperty();
+            prop.setDataSetId(dataset.getDataSetId());
+            prop.setPropertyKey(dictionary.getKeyId());
+            prop.setSchemaProperty(schemaProperty);
+            prop.setPropertyValue(propValue);
+            prop.setPropertyType(propertyType);
+            prop.setCreateDate(new Date());
+            datasetDAO.insertDatasetProperties(List.of(prop));
+          });
     }
   }
 
   /**
-   * This method is used to synchronize an OLD dataset property with values from the study conversion
-   * @param dictionaries List<Dictionary>
-   * @param dataset Dataset
+   * This method is used to synchronize an OLD dataset property with values from the study
+   * conversion
+   *
+   * @param dictionaries   List<Dictionary>
+   * @param dataset        Dataset
    * @param dictionaryName Name to look for in dictionaries
-   * @param propertyKey Property Key to look for in properties
-   * @param propertyType Property Type of new value
-   * @param propValue New property value
+   * @param propertyKey    Property Key to look for in properties
+   * @param propertyType   Property Type of new value
+   * @param propValue      New property value
    */
-  private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset, String dictionaryName, Integer propertyKey, PropertyType propertyType, String propValue) {
-    Optional<Dictionary> maybeDict = dictionaries.stream()
-        .filter(d -> d.getKey().equals(dictionaryName)).findFirst();
+  private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, Integer propertyKey, PropertyType propertyType, String propValue) {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
         .filter(p -> p.getPropertyKey().equals(propertyKey))
         .findFirst();
     if (maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(), propValue);
-    } else if (maybeDict.isPresent()) {
-      DatasetProperty prop = new DatasetProperty();
-      prop.setDataSetId(dataset.getDataSetId());
-      prop.setPropertyKey(maybeDict.get().getKeyId());
-      prop.setSchemaProperty(null);
-      prop.setPropertyValue(propValue);
-      prop.setPropertyType(propertyType);
-      prop.setCreateDate(new Date());
-      datasetDAO.insertDatasetProperties(List.of(prop));
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+          propValue);
+    } else {
+      dictionaries.stream()
+          .filter(d -> d.getKey().equals(dictionaryName))
+          .findFirst()
+          .ifPresent(dictionary -> {
+            DatasetProperty prop = new DatasetProperty();
+            prop.setDataSetId(dataset.getDataSetId());
+            prop.setPropertyKey(dictionary.getKeyId());
+            prop.setSchemaProperty(null);
+            prop.setPropertyValue(propValue);
+            prop.setPropertyType(propertyType);
+            prop.setCreateDate(new Date());
+            datasetDAO.insertDatasetProperties(List.of(prop));
+          });
     }
   }
 

@@ -59,6 +59,11 @@ public class StudyResource extends Resource {
     this.elasticSearchService = elasticSearchService;
   }
 
+  /**
+   * This API creates a study for a provided dataset, or updates existing study/dataset information
+   * with what is provided in the request body. It is intended to be a short-lived API that will be
+   * removed once all production datasets have been migrated.
+   */
   @PUT
   @Path("/convert/{datasetIdentifier}")
   @Consumes(MediaType.APPLICATION_JSON)

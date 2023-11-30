@@ -933,6 +933,15 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDatasetCreateUserId() {
+    Dataset dataset = insertDataset();
+    User user = createUser();
+    datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
+    Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertEquals(user.getUserId(), updated.getCreateUserId());
+  }
+
+  @Test
   void testFindDatasetWithDataUseByIdList() {
     Dataset dataset = insertDataset();
     Dac dac = insertDac();
