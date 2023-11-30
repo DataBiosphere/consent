@@ -459,7 +459,7 @@ public class DatasetService {
       // Handle "PI Name"
       newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String, studyConversion.getPiName());
       // Handle "Principal Investigator(PI)"
-      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", 5, PropertyType.String, studyConversion.getPiName());
+      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", 9, PropertyType.String, studyConversion.getPiName());
     }
 
     if (Objects.nonNull(studyConversion.getNumberOfParticipants())) {
@@ -556,7 +556,7 @@ public class DatasetService {
     Integer studyId;
     // Create or update the study:
     if (Objects.isNull(dataset.getStudy())) {
-      study = studyConversion.createStudy();
+      study = studyConversion.createNewStudyStub();
       studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
           study.getDataTypes(), study.getPublicVisibility(), dataset.getCreateUserId(),
           Instant.now(), UUID.randomUUID());

@@ -15,9 +15,6 @@ public class StudyConversion {
   private String species;
   private String piName;
   private String dataSubmitterEmail;
-  private List<String> dataCustodianEmails;
-  private String targetDeliveryDate;
-  private String targetPublicReleaseDate;
   private Boolean publicVisibility;
   private NihAnvilUse nihAnvilUse;
   private DataUse dataUse;
@@ -82,30 +79,6 @@ public class StudyConversion {
     this.dataSubmitterEmail = dataSubmitterEmail;
   }
 
-  public List<String> getDataCustodianEmails() {
-    return dataCustodianEmails;
-  }
-
-  public void setDataCustodianEmails(List<String> dataCustodianEmails) {
-    this.dataCustodianEmails = dataCustodianEmails;
-  }
-
-  public String getTargetDeliveryDate() {
-    return targetDeliveryDate;
-  }
-
-  public void setTargetDeliveryDate(String targetDeliveryDate) {
-    this.targetDeliveryDate = targetDeliveryDate;
-  }
-
-  public String getTargetPublicReleaseDate() {
-    return targetPublicReleaseDate;
-  }
-
-  public void setTargetPublicReleaseDate(String targetPublicReleaseDate) {
-    this.targetPublicReleaseDate = targetPublicReleaseDate;
-  }
-
   public Boolean getPublicVisibility() {
     return publicVisibility;
   }
@@ -163,7 +136,7 @@ public class StudyConversion {
     this.numberOfParticipants = numberOfParticipants;
   }
 
-  public Study createStudy() {
+  public Study createNewStudyStub() {
     Study study = new Study();
     study.setName(getName());
     study.setDescription(getDescription());
@@ -190,15 +163,4 @@ public class StudyConversion {
     return props;
   }
 
-  public Collection<DatasetProperty> getDatasetProperties() {
-    List<DatasetProperty> props = new ArrayList<>();
-    if (getNumberOfParticipants() != null) {
-      DatasetProperty prop = new DatasetProperty();
-      prop.setSchemaProperty("numberOfParticipants");
-      prop.setPropertyValue(getNumberOfParticipants());
-      prop.setPropertyType(PropertyType.Number);
-      props.add(prop);
-    }
-    return props;
-  }
 }
