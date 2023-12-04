@@ -18,12 +18,12 @@
     <pact.version>4.6.3</pact.version>
     <postgres.version>42.7.0</postgres.version>
     <surefire.version>3.2.2</surefire.version>
-    <swagger.ui.version>5.9.0</swagger.ui.version>
+    <swagger.ui.version>5.10.3</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.1</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.7.0</mockito.version>
+    <mockito.version>5.8.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -137,7 +137,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>9.0.1</version>
+        <version>9.0.2</version>
         <executions>
           <execution>
             <goals>
@@ -357,7 +357,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.41.3</version>
+        <version>3.42.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -426,7 +426,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.2.1</version>
+      <version>5.2.3</version>
     </dependency>
 
     <dependency>
@@ -438,7 +438,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>6.34.0</version>
+      <version>7.0.0</version>
     </dependency>
 
     <dependency>
@@ -658,7 +658,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.15.0</version>
+      <version>2.15.1</version>
     </dependency>
 
     <dependency>
