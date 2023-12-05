@@ -18,7 +18,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -39,15 +38,12 @@ import org.mockito.Mock;
  * Functional test emails will be directed to the private google group:
  * https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
-public class EmailServiceTest {
+class EmailServiceTest {
 
   private EmailService service;
 
   @Mock
   private DarCollectionDAO collectionDAO;
-
-  @Mock
-  private ConsentDAO consentDAO;
 
   @Mock
   private VoteDAO voteDAO;
@@ -68,7 +64,7 @@ public class EmailServiceTest {
   private final static String serverUrl = "http://localhost:8000/#/";
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
   }
 
   private void initService() {
@@ -85,12 +81,12 @@ public class EmailServiceTest {
     fmConfig.setDefaultEncoding("UTF-8");
     fmConfig.setTemplateDirectory("/freemarker");
     templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
-    service = new EmailService(collectionDAO, consentDAO, voteDAO, electionDAO, userDAO,
+    service = new EmailService(collectionDAO, voteDAO, electionDAO, userDAO,
         emailDAO, sendGridAPI, templateHelper, serverUrl);
   }
 
   @Test
-  public void testSendNewResearcherEmail() throws Exception {
+  void testSendNewResearcherEmail() throws Exception {
     initService();
     User user = new User();
     user.setUserId(1234);
@@ -120,7 +116,7 @@ public class EmailServiceTest {
   }
 
   @Test
-  public void testFetchEmails() {
+  void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();
     when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
@@ -129,7 +125,7 @@ public class EmailServiceTest {
   }
 
   @Test
-  public void testFetchEmailsByCreateDate() {
+  void testFetchEmailsByCreateDate() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();
     Date startDate = new Date();

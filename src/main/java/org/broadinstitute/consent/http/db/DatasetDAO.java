@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetReducer;
-import org.broadinstitute.consent.http.db.mapper.AssociationMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
@@ -15,7 +14,6 @@ import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.models.Association;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -693,31 +691,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
   List<Dictionary> getDictionaryTerms();
 
-  @SqlQuery(
-      "SELECT ds.* FROM consent_associations ca "
-          + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
-          + "WHERE ca.consent_id = :consentId")
-  List<Dataset> getDatasetsForConsent(@Bind("consentId") String consentId);
-
-  @SqlQuery(
-      "SELECT ca.consent_id FROM consent_associations ca "
-          + "INNER JOIN dataset ds on ds.dataset_id = ca.dataset_id "
-          + "WHERE ds.dataset_id = :dataSetId")
-  String getAssociatedConsentIdByDatasetId(@Bind("dataSetId") Integer dataSetId);
-
   @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
   Dataset getDatasetByName(@Bind("name") String name);
 
-  @RegisterRowMapper(AssociationMapper.class)
-  @SqlQuery(
-      "SELECT * FROM consent_associations ca "
-          + "INNER JOIN dataset ds ON ds.dataset_id = ca.dataset_id "
-          + "WHERE ds.dataset_id IN (<dataSetIdList>)")
-  List<Association> getAssociationsForDatasetIdList(
-      @BindList("dataSetIdList") List<Integer> dataSetIdList);
-
   /**
-   * DACs -> Consents -> Consent Associations -> Datasets Datasets -> DatasetProperties ->
+   * DACs -> Datasets Datasets -> DatasetProperties ->
    * Dictionary
    *
    * @return Set of datasets, with properties, that are associated with the provided DAC IDs
@@ -744,7 +722,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Dataset> findDatasetListByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   /**
-   * DACs -> Consents -> Consent Associations -> Datasets Datasets -> DatasetProperties ->
+   * DACs -> Datasets Datasets -> DatasetProperties ->
    * Dictionary
    *
    * @return Set of datasets, with properties, that are associated to any Dac.

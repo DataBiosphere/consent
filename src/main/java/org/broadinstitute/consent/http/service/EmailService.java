@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -29,7 +28,6 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
@@ -41,7 +39,6 @@ import org.broadinstitute.consent.http.models.mail.MailMessage;
 public class EmailService {
 
   private final DarCollectionDAO collectionDAO;
-  private final ConsentDAO consentDAO;
   private final UserDAO userDAO;
   private final ElectionDAO electionDAO;
   private final MailMessageDAO emailDAO;
@@ -79,12 +76,11 @@ public class EmailService {
   }
 
   @Inject
-  public EmailService(DarCollectionDAO collectionDAO, ConsentDAO consentDAO,
+  public EmailService(DarCollectionDAO collectionDAO,
       VoteDAO voteDAO, ElectionDAO electionDAO,
       UserDAO userDAO, MailMessageDAO emailDAO, SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper, String serverUrl) {
     this.collectionDAO = collectionDAO;
-    this.consentDAO = consentDAO;
     this.userDAO = userDAO;
     this.electionDAO = electionDAO;
     this.voteDAO = voteDAO;
@@ -331,8 +327,7 @@ public class EmailService {
     dataMap.put("userName", user.getDisplayName());
     dataMap.put("electionType", retrieveElectionTypeString(election.getElectionType()));
     dataMap.put("entityId", election.getReferenceId());
-    dataMap.put("entityName",
-        retrieveReferenceId(election.getElectionType(), election.getReferenceId()));
+    dataMap.put("entityName", retrieveReferenceId(election.getReferenceId()));
     dataMap.put("electionId", election.getElectionId().toString());
     dataMap.put("dacUserId", user.getUserId().toString());
     dataMap.put("email", user.getEmail());
@@ -369,14 +364,9 @@ public class EmailService {
     return dataMap;
   }
 
-  private String retrieveReferenceId(String electionType, String referenceId) {
-    if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-      Consent consent = consentDAO.findConsentById(referenceId);
-      return Objects.nonNull(consent) ? consent.getName() : " ";
-    } else {
-      DarCollection collection = collectionDAO.findDARCollectionByReferenceId(referenceId);
-      return Objects.nonNull(collection) ? collection.getDarCode() : " ";
-    }
+  private String retrieveReferenceId(String referenceId) {
+    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(referenceId);
+    return Objects.nonNull(collection) ? collection.getDarCode() : " ";
   }
 
   private String retrieveElectionTypeString(String electionType) {

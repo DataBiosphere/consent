@@ -21,7 +21,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -42,7 +41,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 
-public class DarCollectionDAOTest extends DAOTestHelper {
+class DarCollectionDAOTest extends DAOTestHelper {
 
   private void generateDatasetElectionForCollection(DarCollection collection) {
     DataAccessRequest dar = collection.getDars().values().stream()
@@ -68,7 +67,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllDARCollections() {
+  void testFindAllDARCollections() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
     assertTrue(allAfter.contains(collection));
@@ -88,7 +87,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllDarCollectionsMultipleUserProperties() {
+  void testFindAllDarCollectionsMultipleUserProperties() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     List<DarCollection> allAfter = darCollectionDAO.findAllDARCollections();
     assertTrue(allAfter.contains(collection));
@@ -100,7 +99,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByReferenceId() {
+  void testFindDARCollectionByReferenceId() {
     DataAccessRequest dar = createDataAccessRequestV3();
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
         dar.getReferenceId());
@@ -112,7 +111,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByReferenceIdNegative() {
+  void testFindDARCollectionByReferenceIdNegative() {
     //dar without a collection ID
     DataAccessRequest dar = createDraftDataAccessRequest();
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
@@ -121,7 +120,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionId() {
+  void testFindDARCollectionByCollectionId() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(
         collection.getDarCollectionId());
@@ -150,7 +149,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionIdMultipleUserProperties() {
+  void testFindDARCollectionByCollectionIdMultipleUserProperties() {
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(
         collection.getDarCollectionId());
@@ -163,7 +162,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionIdLibraryCard() {
+  void testFindDARCollectionByCollectionIdLibraryCard() {
     User user = createUser();
     LibraryCard libraryCard = createLibraryCard(user);
     String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
@@ -182,14 +181,14 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDARCollectionByCollectionIdNegative() {
+  void testFindDARCollectionByCollectionIdNegative() {
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(
         RandomUtils.nextInt(1000, 2000));
     assertNull(returned);
   }
 
   @Test
-  public void testInsertDARCollection() {
+  void testInsertDARCollection() {
     List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
     assertTrue(allBefore.isEmpty());
     DarCollection collection = createDarCollection();
@@ -199,7 +198,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertDarCollectionNegative() {
+  void testInsertDarCollectionNegative() {
     Integer userId = createUser().getUserId();
     try {
       darCollectionDAO.insertDarCollection("darCode", 0, new Date());
@@ -217,7 +216,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDARCollection() {
+  void testUpdateDARCollection() {
     DarCollection collection = createDarCollection();
     assertNotNull(collection);
     assertNull(collection.getUpdateDate());
@@ -232,7 +231,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDarCollectionNegative() {
+  void testUpdateDarCollectionNegative() {
     Integer userId = createUser().getUserId();
     try {
       darCollectionDAO.updateDarCollection(0, userId, new Date());
@@ -250,7 +249,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteByCollectionId() {
+  void testDeleteByCollectionId() {
     DarCollection collection = createDarCollection();
     collection.getDars().keySet()
         .forEach(k -> dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(k));
@@ -261,7 +260,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteByCollectionIdNegative() {
+  void testDeleteByCollectionIdNegative() {
     try {
       darCollectionDAO.deleteByCollectionId(RandomUtils.nextInt(100, 1000));
     } catch (Exception e) {
@@ -271,7 +270,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   // local method to create a test DAR
-  public DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
+  DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
     Timestamp now = new Timestamp(new Date().getTime());
     DataAccessRequest testDar = new DataAccessRequest();
     testDar.setCollectionId(collectionId);
@@ -299,7 +298,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   // local method to create a test DAC
-  public Dac createDAC() {
+  Dac createDAC() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
         "Test_" + RandomStringUtils.random(20, true, true),
@@ -310,7 +309,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
   // local method to create a test DAR Collection and dataset
   // takes in user as a parameter so we can test multiple collections with the same user
   // this method returns a list that includes: user, now, dataset, collectionId, testDar, dac, testDarCollection
-  public List<Object> createDarCollectionWithDataset(User user) {
+  List<Object> createDarCollectionWithDataset(User user) {
     Timestamp now = new Timestamp(new Date().getTime());
     String darCode = "DAR-" + RandomStringUtils.randomAlphanumeric(25);
     Dataset dataset = createDataset();
@@ -321,7 +320,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
     // create a DAC
     Dac dac = createDAC();
-    Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
     DarCollection testDarCollection = darCollectionDAO.findDARCollectionByCollectionId(
         collectionId);
@@ -331,7 +329,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
   // findDARCollectionByCollectionIds should exclude archived collections
   @Test
-  public void testFindDARCollectionIdsByCollectionIdsArchived() {
+  void testFindDARCollectionIdsByCollectionIdsArchived() {
     User user = createUserWithInstitution();
     List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
     List<Object> newDarCollection2 = createDarCollectionWithDataset(user);
@@ -357,7 +355,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
   // findAllDARCollections should exclude archived collections
   @Test
-  public void testFindAllDARCollectionsArchived() {
+  void testFindAllDARCollectionsArchived() {
     User user = createUserWithInstitution();
 
     List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
@@ -378,7 +376,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
   // findDARCollectionByReferenceId should exclude archived collections
   @Test
-  public void testFindDARCollectionByReferenceIdArchived() {
+  void testFindDARCollectionByReferenceIdArchived() {
     User user = createUserWithInstitution();
     List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
     List<Object> newDarCollection2 = createDarCollectionWithDataset(user);
@@ -400,7 +398,7 @@ public class DarCollectionDAOTest extends DAOTestHelper {
 
   // findDARCollectionByCollectionId should exclude archived collections
   @Test
-  public void testFindDARCollectionByCollectionIdArchived() {
+  void testFindDARCollectionByCollectionIdArchived() {
     User user = createUserWithInstitution();
     List<Object> newDarCollection = createDarCollectionWithDataset(user);
 
@@ -582,20 +580,6 @@ public class DarCollectionDAOTest extends DAOTestHelper {
         data
     );
     return dataAccessRequestDAO.findByReferenceId(referenceId);
-  }
-
-  private Consent createConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        "{\"generalUse\": true }",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Group");
-    return consentDAO.findConsentById(consentId);
   }
 
   private Vote createFinalVote(Integer userId, Integer electionId) {
