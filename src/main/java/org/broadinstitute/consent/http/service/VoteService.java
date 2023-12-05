@@ -367,8 +367,13 @@ public class VoteService implements ConsentLogger {
         }
       }
 
+      EmailValidator emailValidator = EmailValidator.getInstance();
+
       // Data Custodians
-      List<String> custodianEmails = d.getDataCustodianEmails();
+      List<String> custodianEmails = d.getDataCustodianEmails()
+          .stream()
+          .filter(e -> emailValidator.isValid(e))
+          .toList();
       if (!custodianEmails.isEmpty()) {
         userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
           custodianMap.putIfAbsent(u, new HashSet<>());
@@ -377,7 +382,6 @@ public class VoteService implements ConsentLogger {
       }
 
       // Data Depositors
-      EmailValidator emailValidator = EmailValidator.getInstance();
       List<String> depositorEmails = d.getDataDepositors()
           .stream()
           .filter(e -> emailValidator.isValid(e))
