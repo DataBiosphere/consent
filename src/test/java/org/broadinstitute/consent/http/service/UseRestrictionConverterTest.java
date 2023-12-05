@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,7 +27,7 @@ import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
-public class UseRestrictionConverterTest implements WithMockServer {
+class UseRestrictionConverterTest implements WithMockServer {
 
   private MockServerClient client;
 
@@ -58,11 +57,12 @@ public class UseRestrictionConverterTest implements WithMockServer {
                 .withStatusCode(200)
                 .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
                 .withBody(
-                    "Samples are restricted for use under the following conditions:\n"
-                        + "Data is limited for health/medical/biomedical research. [HMB]\n"
-                        + "Commercial use is not prohibited.\n"
-                        + "Data use for methods development research irrespective of the specified data use limitations is not prohibited.\n"
-                        + "Restrictions for use as a control set for diseases other than those defined were not specified."));
+                    """
+                        Samples are restricted for use under the following conditions:
+                        Data is limited for health/medical/biomedical research. [HMB]
+                        Commercial use is not prohibited.
+                        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
+                        Restrictions for use as a control set for diseases other than those defined were not specified."""));
   }
 
   private void mockDataUseTranslateFailure() {
@@ -87,7 +87,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
    */
   @Test
-  public void testTranslateDataUsePurpose() {
+  void testTranslateDataUsePurpose() {
     mockDataUseTranslateSuccess();
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
@@ -100,7 +100,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
    */
   @Test
-  public void testTranslateDataUseDataset() {
+  void testTranslateDataUseDataset() {
     mockDataUseTranslateSuccess();
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
@@ -113,7 +113,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Test that when the UseRestrictionConverter makes a failed call to the ontology service, a null is returned.
    */
   @Test
-  public void testFailedDataUseTranslateConverterConnection() {
+  void testFailedDataUseTranslateConverterConnection() {
     mockDataUseTranslateFailure();
 
     Client client = ClientBuilder.newClient();
@@ -127,7 +127,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Testing a fleshed out DataUse.
    */
   @Test
-  public void testParseDataUse() {
+  void testParseDataUse() {
     String json = "{ " +
         "\"methods\":true, " +
         "\"population\":true, " +
@@ -167,7 +167,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Testing a DataUse with invalid ontologies.
    */
   @Test
-  public void testParseDataUseInvalidOntologiesCase1() {
+  void testParseDataUseInvalidOntologiesCase1() {
     String json = "{ " +
         "\"hmb\":true, " +
         "\"ontologies\":[{},{},{}]" +
@@ -184,7 +184,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Testing a DataUse with invalid ontologies.
    */
   @Test
-  public void testParseDataUseInvalidOntologiesCase2() {
+  void testParseDataUseInvalidOntologiesCase2() {
     String json = "{ " +
         "\"ontologies\":[null]" +
         "}";
@@ -200,7 +200,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Test that the DataUse parser does not set false values incorrectly
    */
   @Test
-  public void testTranslateFalseValues() {
+  void testTranslateFalseValues() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     String json = "{ " +
@@ -222,16 +222,15 @@ public class UseRestrictionConverterTest implements WithMockServer {
    * Test that the DataUse parser sets true values correctly
    */
   @Test
-  public void testTranslateTrueValues() {
+  void testTranslateTrueValues() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    String json = "{ " +
-        "\"methods\":true, " +
-        "\"population\":true, " +
-        "\"controls\":true, " +
-        "\"poa\":true, " +
-        "\"hmb\":true " +
-        "}";
+    String json = """
+        { "methods":true,
+          "population":true,
+          "controls":true,
+          "poa":true,
+          "hmb":true }""";
     DataUse dataUse = converter.parseDataUsePurpose(json);
     assertTrue(dataUse.getMethodsResearch());
     assertTrue(dataUse.getPopulationStructure());
@@ -241,7 +240,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeEmpty() {
+  void testParseDataUsePurposeEmpty() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -261,7 +260,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeMethods() {
+  void testParseDataUsePurposeMethods() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -271,27 +270,17 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposePopulation() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setPopulation(true);
-    DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getPopulationStructure());
-  }
-
-  @Test
-  public void testParseDataUsePurposeControls() {
+  void testParseDataUsePurposeControls() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setControls(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertNotNull(dataUse.getControlSetOption());
+    assertTrue(dataUse.getControls());
   }
 
   @Test
-  public void testParseDataUsePurposeDisease() {
+  void testParseDataUsePurposeDisease() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -305,7 +294,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeCommercial() {
+  void testParseDataUsePurposeCommercial() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -315,7 +304,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeGender() {
+  void testParseDataUsePurposeGender() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -326,7 +315,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposePediatric() {
+  void testParseDataUsePurposePediatric() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -336,17 +325,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposePOA() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setPoa(true);
-    DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getPopulationOriginsAncestry());
-  }
-
-  @Test
-  public void testParseDataUsePurposeHMB() {
+  void testParseDataUsePurposeHMB() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -356,7 +335,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeOther1() {
+  void testParseDataUsePurposeOther1() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -366,7 +345,7 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUsePurposeOther2() {
+  void testParseDataUsePurposeOther2() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
@@ -376,36 +355,63 @@ public class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  public void testParseDataUseControl() {
+  void testParseDataUseIllegalBehavior() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setControls(true);
+    dar.getData().setIllegalBehavior(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getControls());
-    assertEquals("Yes", dataUse.getControlSetOption());
+    assertTrue(dataUse.getIllegalBehavior());
   }
 
   @Test
-  public void testParseDataUsePopulation() {
+  void testParseDataUseSexualDiseases() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setPopulation(true);
+    dar.getData().setSexualDiseases(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getPopulationStructure());
-    assertTrue(dataUse.getPopulation());
+    assertTrue(dataUse.getSexualDiseases());
   }
 
   @Test
-  public void testParseDataUseNotHealth() {
+  void testParseDataUseStigmatizeDiseases() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setStigmatizedDiseases(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getStigmatizeDiseases());
+  }
+
+  @Test
+  void testParseDataUseVulnerablePopulations() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setVulnerablePopulation(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getVulnerablePopulations());
+  }
+
+  @Test
+  void testParseDataUsePsychologicalTraits() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setPsychiatricTraits(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getPsychologicalTraits());
+  }
+
+  @Test
+  void testParseDataUseNotHealth() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setNotHealth(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertTrue(dataUse.getNotHealth());
-    assertTrue(dataUse.getNonBiomedical());
   }
 
   private DataAccessRequest createDataAccessRequest() {

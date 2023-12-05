@@ -22,25 +22,39 @@ public class DataUse {
   private Boolean hmbResearch;
   private List<String> diseaseRestrictions;
   private Boolean populationOriginsAncestry;
+  @Deprecated
   private Boolean populationStructure;
   private Boolean commercialUse;
+  private Boolean nonProfitUse;
   private Boolean methodsResearch;
+  @Deprecated
   private String aggregateResearch;
+  @Deprecated
   private String controlSetOption;
   private boolean controls;
   private String gender;
   private Boolean pediatric;
   private boolean population;
+  @Deprecated
   private List<String> populationRestrictions;
+  @Deprecated
   private Boolean otherRestrictions;
   private String dateRestriction;
+  @Deprecated
   private Boolean recontactingDataSubjects;
+  @Deprecated
   private String recontactMay;
+  @Deprecated
   private String recontactMust;
+  @Deprecated
   private String genomicPhenotypicData;
+  @Deprecated
   private String cloudStorage;
+  // Also known as "irb"
   private Boolean ethicsApprovalRequired;
+  @Deprecated
   private Boolean collaboratorRequired;
+  @Deprecated
   private String geographicalRestrictions;
   private String other;
   private String secondaryOther;
@@ -106,6 +120,14 @@ public class DataUse {
 
   public void setCommercialUse(Boolean commercialUse) {
     this.commercialUse = commercialUse;
+  }
+
+  public Boolean getNonProfitUse() {
+    return nonProfitUse;
+  }
+
+  public void setNonProfitUse(Boolean nonProfitUse) {
+    this.nonProfitUse = nonProfitUse;
   }
 
   public Boolean getMethodsResearch() {
@@ -423,6 +445,7 @@ public class DataUse {
         && Objects.equal(getPopulationOriginsAncestry(), dataUse.getPopulationOriginsAncestry())
         && Objects.equal(getPopulationStructure(), dataUse.getPopulationStructure())
         && Objects.equal(getCommercialUse(), dataUse.getCommercialUse())
+        && Objects.equal(getNonProfitUse(), dataUse.getNonProfitUse())
         && Objects.equal(getMethodsResearch(), dataUse.getMethodsResearch())
         && Objects.equal(getAggregateResearch(), dataUse.getAggregateResearch())
         && Objects.equal(getControlSetOption(), dataUse.getControlSetOption())

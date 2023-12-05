@@ -124,15 +124,13 @@ public class UseRestrictionConverter {
       //
       //    Research related entries
       //
-      if (Objects.nonNull(dar.getData().getMethods())) {
+      if (Objects.nonNull(dar.getData().getMethods()) && dar.getData().getMethods()) {
         dataUse.setMethodsResearch(dar.getData().getMethods());
       }
-      if (Objects.nonNull(dar.getData().getPopulation())) {
-        dataUse.setPopulationStructure(dar.getData().getPopulation());
+      if (Objects.nonNull(dar.getData().getPopulation()) && dar.getData().getPopulation()) {
         dataUse.setPopulation(dar.getData().getPopulation());
       }
-      if (Objects.nonNull(dar.getData().getControls())) {
-        dataUse.setControlSetOption("Yes");
+      if (Objects.nonNull(dar.getData().getControls()) && dar.getData().getControls()) {
         dataUse.setControls(dar.getData().getControls());
       }
 
@@ -140,41 +138,34 @@ public class UseRestrictionConverter {
       //    Diseases related entries
       //
 
-      List<String> ontologies = dar.getData().getOntologies()
-          .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+      List<String> ontologies = dar.getData()
+        .getOntologies()
+        .stream()
+        .map(OntologyEntry::getId)
+        .toList();
       if (CollectionUtils.isNotEmpty(ontologies)) {
         dataUse.setDiseaseRestrictions(ontologies);
       }
 
-      //
-      //    gender, age and commercial status entries
-      //
-      if (Objects.nonNull(dar.getData().getForProfit())) {
+      // commercial status
+      if (Objects.nonNull(dar.getData().getForProfit()) && dar.getData().getForProfit()) {
+        dataUse.setNonProfitUse(!dar.getData().getForProfit());
         dataUse.setCommercialUse(dar.getData().getForProfit());
       }
 
-      // limited to one gender + children analysis
-      if (Objects.nonNull(dar.getData().getOneGender()) && Objects.nonNull(
-          dar.getData().getGender())) {
-        boolean oneGenderOnly = dar.getData().getOneGender();
+      // gender
+      if (Objects.nonNull(dar.getData().getGender())) {
         String selectedGender = dar.getData().getGender();
-        if (oneGenderOnly) {
-          if (selectedGender.equalsIgnoreCase("M")) {
-            dataUse.setGender("Male");
-          } else if (selectedGender.equalsIgnoreCase("F")) {
-            dataUse.setGender("Female");
-          }
+        if (selectedGender.equalsIgnoreCase("M")) {
+          dataUse.setGender("Male");
+        } else if (selectedGender.equalsIgnoreCase("F")) {
+          dataUse.setGender("Female");
         }
       }
+      // pediatric
       if (Objects.nonNull(dar.getData().getPediatric())) {
         if (dar.getData().getPediatric()) {
           dataUse.setPediatric(true);
-        }
-      }
-
-      if (Objects.nonNull(dar.getData().getPoa())) {
-        if (dar.getData().getPoa()) {
-          dataUse.setPopulationOriginsAncestry(true);
         }
       }
 
@@ -195,6 +186,30 @@ public class UseRestrictionConverter {
       if (Objects.nonNull(dar.getData().getNotHealth())) {
         dataUse.setNotHealth(dar.getData().getNotHealth());
         dataUse.setNonBiomedical(dar.getData().getNotHealth());
+      }
+
+      if ((Objects.nonNull(dar.getData().getIllegalBehavior())) && dar.getData().getIllegalBehavior()) {
+        dataUse.setIllegalBehavior(dar.getData().getIllegalBehavior());
+      }
+
+      if ((Objects.nonNull(dar.getData().getSexualDiseases())) && dar.getData().getSexualDiseases()) {
+        dataUse.setSexualDiseases(dar.getData().getSexualDiseases());
+      }
+
+      if ((Objects.nonNull(dar.getData().getStigmatizedDiseases())) && dar.getData().getStigmatizedDiseases()) {
+        dataUse.setStigmatizeDiseases(dar.getData().getStigmatizedDiseases());
+      }
+
+      if ((Objects.nonNull(dar.getData().getVulnerablePopulation())) && dar.getData().getVulnerablePopulation()) {
+        dataUse.setVulnerablePopulations(dar.getData().getVulnerablePopulation());
+      }
+
+      if ((Objects.nonNull(dar.getData().getPsychiatricTraits())) && dar.getData().getPsychiatricTraits()) {
+        dataUse.setPsychologicalTraits(dar.getData().getPsychiatricTraits());
+      }
+
+      if ((Objects.nonNull(dar.getData().getNotHealth())) && dar.getData().getNotHealth()) {
+        dataUse.setNotHealth(dar.getData().getNotHealth());
       }
 
     }
