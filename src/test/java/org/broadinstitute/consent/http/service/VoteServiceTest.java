@@ -17,6 +17,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
@@ -781,6 +783,7 @@ public class VoteServiceTest {
     DatasetProperty depositorProp = new DatasetProperty();
     depositorProp.setPropertyName("Data Depositor");
     depositorProp.setPropertyValue("depositor@test.com");
+    depositorProp.setSchemaProperty("dataDepositorEmail");
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
@@ -836,8 +839,68 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians()
-      throws Exception {
+  public void testNotifyCustodiansOfApprovedDatasetsWithCustodianProps() {
+    User submitter = new User();
+    submitter.setEmail("submitter@test.com");
+    submitter.setDisplayName("submitter");
+    submitter.setUserId(4);
+
+    Gson gson = GsonUtil.getInstance();
+    DatasetProperty custodianProp = new DatasetProperty();
+    custodianProp.setSchemaProperty("dataCustodianEmail");
+    custodianProp.setPropertyName("Custodian Email");
+    custodianProp.setPropertyType(PropertyType.Json);
+    custodianProp.setPropertyValue(gson.toJson(List.of("custodian@test.com")));
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setAlias(1);
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setProperties(Set.of(custodianProp));
+    d1.setCreateUserId(submitter.getUserId());
+
+    Dataset d2 = new Dataset();
+    d2.setDataSetId(2);
+    d2.setName(RandomStringUtils.random(50, true, false));
+    d2.setAlias(2);
+    d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
+    d2.setProperties(Set.of(custodianProp));
+    d2.setCreateUserId(submitter.getUserId());
+
+    User researcher = new User();
+    researcher.setEmail("researcher@test.com");
+    researcher.setDisplayName("Researcher");
+    researcher.setUserId(1);
+
+    User custodian = new User();
+    custodian.setEmail("custodian@test.com");
+    custodian.setDisplayName("custodian");
+    custodian.setUserId(3);
+
+    when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
+        List.of(custodian));
+    when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
+
+    initService();
+    try {
+      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
+      verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (Exception e) {
+      fail(e.getMessage());
+
+    }
+  }
+
+  @Test
+  public void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians() throws Exception {
     User submitterNotFound = new User();
     submitterNotFound.setEmail("submitter@test.com");
     submitterNotFound.setDisplayName("submitter");
