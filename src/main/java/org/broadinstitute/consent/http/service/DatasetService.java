@@ -293,6 +293,10 @@ public class DatasetService {
     }
   }
 
+  public void deleteStudy(Study study, User user) throws Exception {
+    datasetServiceDAO.deleteStudy(study, user);
+  }
+
   public List<Dataset> searchDatasets(String query, AccessManagement accessManagement, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
     return datasets.stream().filter(ds -> ds.isDatasetMatch(query, accessManagement)).toList();

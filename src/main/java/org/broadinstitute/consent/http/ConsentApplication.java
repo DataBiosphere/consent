@@ -69,6 +69,7 @@ import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
+import org.broadinstitute.consent.http.resources.StudyResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.TDRResource;
 import org.broadinstitute.consent.http.resources.TosResource;
@@ -246,6 +247,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(
         new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
     env.jersey().register(new MailResource(emailService));
+    env.jersey().register(injector.getInstance(StudyResource.class));
 
     // Authentication filters
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

@@ -9,7 +9,6 @@ get:
       schema:
         type: integer
   tags:
-    - Dataset
     - Study
   responses:
     200:

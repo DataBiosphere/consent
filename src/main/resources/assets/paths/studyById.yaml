@@ -9,7 +9,6 @@ get:
       schema:
         type: integer
   tags:
-    - Dataset
     - Study
   responses:
     200:
@@ -26,7 +25,6 @@ put:
   summary: Update Dataset Registration By Study Id
   description: Updates Dataset Registration specified by Study Id.
   tags:
-    - Dataset
     - Study
   parameters:
     - name: studyId
@@ -77,6 +75,30 @@ put:
             $ref: '../schemas/Study.yaml'
     400:
       description: Bad Request when schema is invalid or the required consent groups are not provided.
+    404:
+      description: Not Found
+    500:
+      description: Server error
+delete:
+  summary: Delete Study
+  description: |
+    Deletes Study, Datasets, and all properties of the Study specified by id.
+    * Admins can delete any study
+    * Chairpersons and Data Submitters can delete studies they created
+  parameters:
+    - name: studyId
+      in: path
+      description: Study ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Study
+  responses:
+    200:
+      description: The Study was successfully deleted
+    400:
+      description: Study is in use and cannot be deleted
     404:
       description: Not Found
     500:
