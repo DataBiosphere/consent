@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -481,12 +482,15 @@ public class DatasetResource extends Resource {
           .collect(Collectors.toSet());
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
-        List<Integer> differences = new ArrayList<>(datasetIds);
-        differences.removeAll(foundIds);
+        List<Integer> differences = new ArrayList<>(datasetIds)
+          .stream()
+          .filter(Objects::nonNull)
+          .filter(Predicate.not(foundIds::contains))
+          .toList();
         throw new NotFoundException(
             "Could not find datasets with ids: "
                 + String.join(",",
-                differences.stream().map((i) -> i.toString()).collect(Collectors.toSet())));
+                differences.stream().map(Object::toString).collect(Collectors.toSet())));
 
       }
       return Response.ok(datasets).build();

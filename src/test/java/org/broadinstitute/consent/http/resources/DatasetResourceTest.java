@@ -712,6 +712,29 @@ class DatasetResourceTest {
     assertFalse(((Error) response.getEntity()).message().contains("1"));
   }
 
+  @Test
+  void testGetDatasetsNotFoundNullValues() {
+    Dataset ds1 = new Dataset();
+    ds1.setDataSetId(1);
+    Dataset ds3 = new Dataset();
+    ds3.setDataSetId(3);
+
+    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of(
+        ds1,
+        ds3
+    ));
+
+    initResource();
+    List<Integer> input = new ArrayList<>(List.of(1, 2, 3, 4));
+    input.add(null);
+    Response response = resource.getDatasets(input);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    assertTrue(((Error) response.getEntity()).message().contains("4"));
+    assertFalse(((Error) response.getEntity()).message().contains("3"));
+    assertTrue(((Error) response.getEntity()).message().contains("2"));
+    assertFalse(((Error) response.getEntity()).message().contains("1"));
+  }
+
 
   @Test
   void testUpdateDatasetDataUse_OK() {
