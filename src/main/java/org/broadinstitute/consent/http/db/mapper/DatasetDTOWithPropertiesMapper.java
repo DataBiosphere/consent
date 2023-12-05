@@ -32,7 +32,6 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       }
       datasetDTO.setAlias(alias);
       datasetDTO.setDataSetId(dataSetId);
-      // Both Consents and Datasets store DataUse in `data_use`.
       if (hasColumn(r, "data_use")) {
         datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
       }

@@ -825,7 +825,6 @@ class DatasetServiceTest {
           Dataset dataset = new Dataset();
           dataset.setDataSetId(i);
           dataset.setName("Test Dataset " + i);
-          dataset.setConsentName("Test Consent " + i);
           dataset.setProperties(Collections.emptySet());
           return dataset;
         }).collect(Collectors.toList());

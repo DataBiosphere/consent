@@ -12,8 +12,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.ConsentAuditDAO;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -37,8 +35,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.AuditService;
-import org.broadinstitute.consent.http.service.ConsentService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
@@ -57,7 +53,6 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ResearcherService;
-import org.broadinstitute.consent.http.service.SummaryService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -87,7 +82,6 @@ public class ConsentModule extends AbstractModule {
 
   private final Client client;
   private final Jdbi jdbi;
-  private final ConsentDAO consentDAO;
   private final CounterDAO counterDAO;
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
@@ -100,7 +94,6 @@ public class ConsentModule extends AbstractModule {
   private final MatchDAO matchDAO;
   private final MailMessageDAO mailMessageDAO;
   private final UserPropertyDAO userPropertyDAO;
-  private final ConsentAuditDAO consentAuditDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
@@ -124,7 +117,6 @@ public class ConsentModule extends AbstractModule {
     jdbi.installPlugin(new GuavaPlugin());
     jdbi.getConfig().get(Gson2Config.class).setGson(GsonUtil.buildGson());
 
-    this.consentDAO = this.jdbi.onDemand(ConsentDAO.class);
     this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
     this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
     this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
@@ -137,7 +129,6 @@ public class ConsentModule extends AbstractModule {
     this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
     this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
     this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
-    this.consentAuditDAO = this.jdbi.onDemand(ConsentAuditDAO.class);
     this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
     this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
     this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
@@ -156,8 +147,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   public DAOContainer providesDAOContainer() {
     DAOContainer container = new DAOContainer();
-    container.setConsentAuditDAO(providesConsentAuditDAO());
-    container.setConsentDAO(providesConsentDAO());
     container.setCounterDAO(providesCounterDAO());
     container.setDacDAO(providesDacDAO());
     container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
@@ -210,13 +199,6 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  AuditService providesAuditService() {
-    return new AuditService(
-        providesUserDAO(),
-        providesConsentAuditDAO());
-  }
-
-  @Provides
   DarCollectionService providesDarCollectionService() {
     return new DarCollectionService(
         providesDARCollectionDAO(),
@@ -242,18 +224,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   GCSService providesGCSService() {
     return new GCSService(config.getCloudStoreConfiguration());
-  }
-
-  @Provides
-  ConsentService providesConsentService() {
-    return new ConsentService(
-        providesConsentDAO(),
-        providesElectionDAO());
-  }
-
-  @Provides
-  ConsentDAO providesConsentDAO() {
-    return consentDAO;
   }
 
   @Provides
@@ -323,7 +293,6 @@ public class ConsentModule extends AbstractModule {
   EmailService providesEmailService() {
     return new EmailService(
         providesDARCollectionDAO(),
-        providesConsentDAO(),
         providesVoteDAO(),
         providesElectionDAO(),
         providesUserDAO(),
@@ -466,7 +435,6 @@ public class ConsentModule extends AbstractModule {
     return new MatchService(
         providesClient(),
         config.getServicesConfiguration(),
-        providesConsentDAO(),
         providesMatchDAO(),
         providesDataAccessRequestDAO(),
         providesDatasetDAO(),
@@ -498,11 +466,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   UserPropertyDAO providesUserPropertyDAO() {
     return userPropertyDAO;
-  }
-
-  @Provides
-  ConsentAuditDAO providesConsentAuditDAO() {
-    return consentAuditDAO;
   }
 
   @Provides
@@ -602,20 +565,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   NihServiceDAO providesNIHServiceDAO() {
     return new NihServiceDAO(jdbi);
-  }
-
-  @Provides
-  SummaryService providesSummaryService() {
-    return new SummaryService(
-        providesDataAccessRequestService(),
-        providesVoteDAO(),
-        providesElectionDAO(),
-        providesUserDAO(),
-        providesConsentDAO(),
-        providesDatasetDAO(),
-        providesMatchDAO(),
-        providesDARCollectionDAO()
-    );
   }
 
   @Provides

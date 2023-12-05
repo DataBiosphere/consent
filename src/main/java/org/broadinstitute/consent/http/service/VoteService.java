@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import org.apache.commons.validator.EmailValidator;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -352,8 +354,10 @@ public class VoteService implements ConsentLogger {
   protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher,
       String darCode) throws IllegalArgumentException {
     Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
+
     // Find all the custodians, data owners, and data submitters to notify for each dataset
     datasets.forEach(d -> {
+
       // Data Submitter
       if (Objects.nonNull(d.getCreateUserId())) {
         User submitter = userDAO.findUserById(d.getCreateUserId());
@@ -362,15 +366,13 @@ public class VoteService implements ConsentLogger {
           custodianMap.get(submitter).add(d);
         }
       }
-      // Data Custodians and Data Depositor
-      List<String> custodianEmails = d.getProperties()
+
+      EmailValidator emailValidator = EmailValidator.getInstance();
+
+      // Data Custodians
+      List<String> custodianEmails = d.getDataCustodianEmails()
           .stream()
-          .filter(p ->
-              (Objects.nonNull(p.getSchemaProperty()) && p.getSchemaProperty()
-                  .equalsIgnoreCase("dataCustodianEmail")) ||
-                  p.getPropertyName().equalsIgnoreCase("Data Depositor"))
-          .map(DatasetProperty::getPropertyValueAsString)
-          .distinct()
+          .filter(e -> emailValidator.isValid(e))
           .toList();
       if (!custodianEmails.isEmpty()) {
         userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
@@ -378,6 +380,19 @@ public class VoteService implements ConsentLogger {
           custodianMap.get(u).add(d);
         });
       }
+
+      // Data Depositors
+      List<String> depositorEmails = d.getDataDepositors()
+          .stream()
+          .filter(e -> emailValidator.isValid(e))
+          .toList();
+      if (!depositorEmails.isEmpty()) {
+        userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
+          custodianMap.putIfAbsent(u, new HashSet<>());
+          custodianMap.get(u).add(d);
+        });
+      }
+
       // Data Owners
       List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
       if (!ownerUserIds.isEmpty()) {

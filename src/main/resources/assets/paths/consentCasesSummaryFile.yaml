@@ -1,10 +1,7 @@
 get:
   deprecated: true
-  summary: Get Data Access Request or Consent Election Summary Details
-  description: | 
-    Returns the details of the reviewed cases by type 
-      * `DataAccess` (default option when none specified) returns Data Access Request Election details
-      * `TranslateDUL` returns Consent Election details
+  summary: Deprecated endpoint.
+  description: Deprecated endpoint. Use  `/api/tdr/{identifier}` instead.
   tags:
     - Summary
   parameters:
@@ -16,9 +13,5 @@ get:
         type: string
         enum: [DataAccess, TranslateDUL]
   responses:
-    200:
-      description: Summary data as plain text
-      content:
-        text/plain:
-          schema:
-            type: string
+    404:
+      description: Deprecated endpoint. Use  `/api/tdr/{identifier}` instead.
