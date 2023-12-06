@@ -608,9 +608,10 @@ public class DatasetService {
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
+      Integer userId = Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
       studyDAO.updateStudy(study.getStudyId(), studyConversion.getName(),
-          studyConversion.getDescription(), study.getPiName(), study.getDataTypes(),
-          study.getPublicVisibility(), dataset.getCreateUserId(), Instant.now());
+          studyConversion.getDescription(), studyConversion.getPiName(), studyConversion.getDataTypes(),
+          studyConversion.getPublicVisibility(), userId, Instant.now());
     }
     datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
 
