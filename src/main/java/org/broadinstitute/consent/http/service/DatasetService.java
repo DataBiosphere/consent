@@ -597,21 +597,21 @@ public class DatasetService {
     // Ensure that we are not trying to create a new study with an existing name
     Study study = studyDAO.findStudyByName(studyConversion.getName());
     Integer studyId;
+    Integer userId =
+        Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
     // Create or update the study:
     if (Objects.isNull(study)) {
       study = studyConversion.createNewStudyStub();
-      Integer userId =
-          Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
       studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
           study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
           UUID.randomUUID());
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
-      Integer userId = Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
       studyDAO.updateStudy(study.getStudyId(), studyConversion.getName(),
-          studyConversion.getDescription(), studyConversion.getPiName(), studyConversion.getDataTypes(),
-          studyConversion.getPublicVisibility(), userId, Instant.now());
+          studyConversion.getDescription(), studyConversion.getPiName(),
+          studyConversion.getDataTypes(), studyConversion.getPublicVisibility(), userId,
+          Instant.now());
     }
     datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
 
