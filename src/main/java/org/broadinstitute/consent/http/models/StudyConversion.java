@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 
 public class StudyConversion {
 
@@ -16,7 +15,8 @@ public class StudyConversion {
   private String piName;
   private String dataSubmitterEmail;
   private Boolean publicVisibility;
-  private NihAnvilUse nihAnvilUse;
+  private String nihAnvilUse;
+  private String datasetName;
   private DataUse dataUse;
   private Integer dacId;
   private String dataLocation;
@@ -87,13 +87,21 @@ public class StudyConversion {
     this.publicVisibility = publicVisibility;
   }
 
-  public NihAnvilUse getNihAnvilUse() {
+  public String getNihAnvilUse() {
     return nihAnvilUse;
   }
 
   public void setNihAnvilUse(
-      NihAnvilUse nihAnvilUse) {
+      String nihAnvilUse) {
     this.nihAnvilUse = nihAnvilUse;
+  }
+
+  public String getDatasetName() {
+    return datasetName;
+  }
+
+  public void setDatasetName(String datasetName) {
+    this.datasetName = datasetName;
   }
 
   public DataUse getDataUse() {
@@ -155,7 +163,7 @@ public class StudyConversion {
       props.add(new StudyProperty("species", getSpecies(), PropertyType.String));
     }
     if (getNihAnvilUse() != null) {
-      props.add(new StudyProperty("nihAnvilUse", getNihAnvilUse().value(), PropertyType.String));
+      props.add(new StudyProperty("nihAnvilUse", getNihAnvilUse(), PropertyType.String));
     }
     if (submitter != null) {
       props.add(new StudyProperty("dataSubmitterUserId", submitter.getUserId(), PropertyType.Number));
