@@ -545,6 +545,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   void updateDatasetTranslatedDataUse(@Bind("datasetId") Integer datasetId,
       @Bind("translatedDataUse") String translatedDataUse);
 
+  @SqlUpdate("UPDATE dataset SET name = :name WHERE dataset_id = :datasetId")
+  void updateDatasetName(@Bind("datasetId") Integer datasetId, @Bind("name") String name);
+
+
   @SqlBatch(
       "INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )"
           +

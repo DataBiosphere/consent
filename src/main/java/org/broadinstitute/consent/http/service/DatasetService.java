@@ -451,6 +451,9 @@ public class DatasetService {
           DataUseTranslationType.DATASET);
       datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
     }
+    if (Objects.nonNull(studyConversion.getDatasetName())) {
+      datasetDAO.updateDatasetName(dataset.getDataSetId(), studyConversion.getDatasetName());
+    }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Dataset Property updates
@@ -461,13 +464,13 @@ public class DatasetService {
 
     // Handle "Phenotype/Indication"
     if (Objects.nonNull(studyConversion.getPhenotype())) {
-      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", 4, PropertyType.String,
+      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", PropertyType.String,
           studyConversion.getPhenotype());
     }
 
     // Handle "Species"
     if (Objects.nonNull(studyConversion.getSpecies())) {
-      oldPropConversion(dictionaries, dataset, "Species", 3, PropertyType.String,
+      oldPropConversion(dictionaries, dataset, "Species", PropertyType.String,
           studyConversion.getSpecies());
     }
 
@@ -476,7 +479,7 @@ public class DatasetService {
       newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
           studyConversion.getPiName());
       // Handle "Principal Investigator(PI)"
-      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", 9, PropertyType.String,
+      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", PropertyType.String,
           studyConversion.getPiName());
     }
 
@@ -485,7 +488,7 @@ public class DatasetService {
       newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants",
           PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
       // Handle "# of participants"
-      oldPropConversion(dictionaries, dataset, "# of participants", 5, PropertyType.Number,
+      oldPropConversion(dictionaries, dataset, "# of participants", PropertyType.Number,
           studyConversion.getNumberOfParticipants().toString());
     }
 
@@ -500,7 +503,7 @@ public class DatasetService {
       newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
           studyConversion.getUrl());
       // Handle "dbGAP"
-      oldPropConversion(dictionaries, dataset, "dbGAP", 7, PropertyType.String,
+      oldPropConversion(dictionaries, dataset, "dbGAP", PropertyType.String,
           studyConversion.getUrl());
     }
 
@@ -561,14 +564,13 @@ public class DatasetService {
    * @param dictionaries   List<Dictionary>
    * @param dataset        Dataset
    * @param dictionaryName Name to look for in dictionaries
-   * @param propertyKey    Property Key to look for in properties
    * @param propertyType   Property Type of new value
    * @param propValue      New property value
    */
   private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset,
-      String dictionaryName, Integer propertyKey, PropertyType propertyType, String propValue) {
+      String dictionaryName, PropertyType propertyType, String propValue) {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
-        .filter(p -> p.getPropertyKey().equals(propertyKey))
+        .filter(p -> p.getPropertyName().equals(dictionaryName))
         .findFirst();
     if (maybeProp.isPresent()) {
       datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
@@ -590,13 +592,15 @@ public class DatasetService {
     }
   }
 
-  private Integer updateStudyFromConversion(User user, Dataset dataset, StudyConversion studyConversion) {
+  private Integer updateStudyFromConversion(User user, Dataset dataset,
+      StudyConversion studyConversion) {
     Study study;
     Integer studyId;
     // Create or update the study:
     if (Objects.isNull(dataset.getStudy()) || Objects.isNull(dataset.getStudy().getStudyId())) {
       study = studyConversion.createNewStudyStub();
-      Integer userId = Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
+      Integer userId =
+          Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
       studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
           study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
           UUID.randomUUID());
@@ -612,18 +616,26 @@ public class DatasetService {
     // Create or update study properties:
     Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();
     User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
-    // Study props to add:
-    studyConversion.getStudyProperties(submitter).stream()
-        .filter(Objects::nonNull)
-        .filter(p -> existingProps.stream().noneMatch(ep -> ep.getKey().equals(p.getKey())))
-        .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
-            p.getValue().toString()));
-    // Study props to update:
-    studyConversion.getStudyProperties(submitter).stream()
-        .filter(Objects::nonNull)
-        .filter(p -> existingProps.stream().anyMatch(ep -> ep.equals(p)))
-        .forEach(p -> studyDAO.updateStudyProperty(studyId, p.getKey(), p.getType().toString(),
-            p.getValue().toString()));
+    // If we don't have any props, we need to add all of the new ones
+    if (Objects.isNull(existingProps) || existingProps.isEmpty()) {
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+    } else {
+      // Study props to add:
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .filter(p -> existingProps.stream().noneMatch(ep -> ep.getKey().equals(p.getKey())))
+          .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+      // Study props to update:
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .filter(p -> existingProps.stream().anyMatch(ep -> ep.equals(p)))
+          .forEach(p -> studyDAO.updateStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+    }
     return studyId;
   }
 
