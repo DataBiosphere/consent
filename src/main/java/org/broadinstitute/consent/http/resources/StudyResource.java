@@ -82,7 +82,6 @@ public class StudyResource extends Resource {
     }
   }
 
-
   @GET
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
