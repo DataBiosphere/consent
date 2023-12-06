@@ -14,9 +14,9 @@ put:
     description: | 
       Converts a Dataset into a Study and updates modifiable fields
     content:
-        application/json:
-            schema:
-              $ref: '../schemas/StudyConversion.yaml'
+      application/json:
+          schema:
+            $ref: '../schemas/StudyConversion.yaml'
   responses:
     200:
       description: Converted Study

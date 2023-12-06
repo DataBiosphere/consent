@@ -436,7 +436,7 @@ public class DatasetService {
       throw new NotAuthorizedException("Admin use only");
     }
     // Study updates:
-    Integer studyId = updateStudyFromConversion(dataset, studyConversion);
+    Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);
 
     // Dataset updates
     if (Objects.nonNull(studyConversion.getDacId())) {
@@ -590,15 +590,16 @@ public class DatasetService {
     }
   }
 
-  private Integer updateStudyFromConversion(Dataset dataset, StudyConversion studyConversion) {
+  private Integer updateStudyFromConversion(User user, Dataset dataset, StudyConversion studyConversion) {
     Study study;
     Integer studyId;
     // Create or update the study:
-    if (Objects.isNull(dataset.getStudy())) {
+    if (Objects.isNull(dataset.getStudy()) || Objects.isNull(dataset.getStudy().getStudyId())) {
       study = studyConversion.createNewStudyStub();
+      Integer userId = Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
       studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
-          study.getDataTypes(), study.getPublicVisibility(), dataset.getCreateUserId(),
-          Instant.now(), UUID.randomUUID());
+          study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
+          UUID.randomUUID());
       study.setStudyId(studyId);
       datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
     } else {
@@ -613,15 +614,16 @@ public class DatasetService {
     User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
     // Study props to add:
     studyConversion.getStudyProperties(submitter).stream()
+        .filter(Objects::nonNull)
         .filter(p -> existingProps.stream().noneMatch(ep -> ep.getKey().equals(p.getKey())))
         .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
             p.getValue().toString()));
     // Study props to update:
     studyConversion.getStudyProperties(submitter).stream()
+        .filter(Objects::nonNull)
         .filter(p -> existingProps.stream().anyMatch(ep -> ep.equals(p)))
         .forEach(p -> studyDAO.updateStudyProperty(studyId, p.getKey(), p.getType().toString(),
             p.getValue().toString()));
-
     return studyId;
   }
 

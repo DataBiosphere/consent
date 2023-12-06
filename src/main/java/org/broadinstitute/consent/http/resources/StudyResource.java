@@ -69,8 +69,8 @@ public class StudyResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
-  public Response convertToStudy(@Auth AuthUser authUser, @PathParam("datasetIdentifier") String datasetIdentifier,
-      @FormDataParam("studyInfo") String json) {
+  public Response convertToStudy(@Auth AuthUser authUser,
+    @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
