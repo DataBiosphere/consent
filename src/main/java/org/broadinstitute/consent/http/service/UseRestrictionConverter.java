@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
-@SuppressWarnings("WeakerAccess")
 public class UseRestrictionConverter implements ConsentLogger {
 
   private final ServicesConfiguration servicesConfiguration;
@@ -63,9 +62,14 @@ public class UseRestrictionConverter implements ConsentLogger {
       }
 
       // commercial status
-      if (Objects.nonNull(dar.getData().getForProfit()) && Boolean.TRUE.equals(dar.getData().getForProfit())) {
-        dataUse.setNonProfitUse(!dar.getData().getForProfit());
-        dataUse.setCommercialUse(dar.getData().getForProfit());
+      if (Objects.nonNull(dar.getData().getForProfit())) {
+        if (Boolean.TRUE.equals(dar.getData().getForProfit())) {
+          dataUse.setNonProfitUse(!dar.getData().getForProfit());
+          dataUse.setCommercialUse(dar.getData().getForProfit());
+        } else {
+          dataUse.setNonProfitUse(dar.getData().getForProfit());
+          dataUse.setCommercialUse(!dar.getData().getForProfit());
+        }
       }
 
       // gender
@@ -96,10 +100,10 @@ public class UseRestrictionConverter implements ConsentLogger {
         dataUse.setOther(dar.getData().getOtherText());
       }
 
-      if (Objects.nonNull(dar.getData().getNotHealth())) {
-        dataUse.setNotHealth(dar.getData().getNotHealth());
-        dataUse.setNonBiomedical(dar.getData().getNotHealth());
-      }
+//      if (Objects.nonNull(dar.getData().getNotHealth())) {
+//        dataUse.setNotHealth(dar.getData().getNotHealth());
+//        dataUse.setNonBiomedical(dar.getData().getNotHealth());
+//      }
 
       if ((Objects.nonNull(dar.getData().getIllegalBehavior())) && Boolean.TRUE.equals(dar.getData()
           .getIllegalBehavior())) {

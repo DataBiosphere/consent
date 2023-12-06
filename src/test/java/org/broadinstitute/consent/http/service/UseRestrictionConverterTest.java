@@ -130,17 +130,81 @@ class UseRestrictionConverterTest implements WithMockServer {
     DataAccessRequest dar = createDataAccessRequest();
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNull(dataUse.getGeneralUse());
-    assertNull(dataUse.getMethodsResearch());
-    assertNull(dataUse.getControlSetOption());
     assertNull(dataUse.getDiseaseRestrictions());
+    assertNull(dataUse.getHmbResearch());
+    assertNull(dataUse.getPopulationOriginsAncestry());
+    assertNull(dataUse.getMethodsResearch());
     assertNull(dataUse.getCommercialUse());
+    assertNull(dataUse.getNonProfitUse());
+    assertNull(dataUse.getOther());
+    assertNull(dataUse.getSecondaryOther());
+    assertNull(dataUse.getEthicsApprovalRequired());
+    assertNull(dataUse.getCollaboratorRequired());
+    assertNull(dataUse.getGeographicalRestrictions());
+    assertNull(dataUse.getGeneticStudiesOnly());
+    assertNull(dataUse.getPublicationResults());
+    assertNull(dataUse.getPublicationMoratorium());
+    assertNull(dataUse.getControls());
     assertNull(dataUse.getGender());
     assertNull(dataUse.getPediatric());
-    assertNull(dataUse.getPopulationOriginsAncestry());
+    assertNull(dataUse.getPopulation());
+    assertNull(dataUse.getIllegalBehavior());
+    assertNull(dataUse.getSexualDiseases());
+    assertNull(dataUse.getStigmatizeDiseases());
+    assertNull(dataUse.getVulnerablePopulations());
+    assertNull(dataUse.getPsychologicalTraits());
+    assertNull(dataUse.getNotHealth());
+  }
+
+  @Test
+  void testParseDataUsePurposeFalseAsNull() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+
+    data.setMethods(false);
+    data.setPopulation(false);
+    data.setControls(false);
+    data.setOntologies(List.of());
+    data.setForProfit(false);
+    data.setGender("");
+    data.setPediatric(false);
+    data.setIllegalBehavior(false);
+    data.setSexualDiseases(false);
+    data.setStigmatizedDiseases(false);
+    data.setVulnerablePopulation(false);
+    data.setPsychiatricTraits(false);
+    data.setNotHealth(false);
+
+    dar.setData(data);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertNull(dataUse.getGeneralUse());
+    assertNull(dataUse.getDiseaseRestrictions());
     assertNull(dataUse.getHmbResearch());
+    assertNull(dataUse.getPopulationOriginsAncestry());
+    assertNull(dataUse.getMethodsResearch());
+    // These cases are slightly different as forProfit false means commercialUse is false and nonProfitUse is true
+    assertNotNull(dataUse.getCommercialUse());
+    assertNotNull(dataUse.getNonProfitUse());
     assertNull(dataUse.getOther());
-    assertNull(dataUse.getOtherRestrictions());
     assertNull(dataUse.getSecondaryOther());
+    assertNull(dataUse.getEthicsApprovalRequired());
+    assertNull(dataUse.getCollaboratorRequired());
+    assertNull(dataUse.getGeographicalRestrictions());
+    assertNull(dataUse.getGeneticStudiesOnly());
+    assertNull(dataUse.getPublicationResults());
+    assertNull(dataUse.getPublicationMoratorium());
+    assertNull(dataUse.getControls());
+    assertNull(dataUse.getGender());
+    assertNull(dataUse.getPediatric());
+    assertNull(dataUse.getPopulation());
+    assertNull(dataUse.getIllegalBehavior());
+    assertNull(dataUse.getSexualDiseases());
+    assertNull(dataUse.getStigmatizeDiseases());
+    assertNull(dataUse.getVulnerablePopulations());
+    assertNull(dataUse.getPsychologicalTraits());
+    assertNull(dataUse.getNotHealth());
   }
 
   @Test

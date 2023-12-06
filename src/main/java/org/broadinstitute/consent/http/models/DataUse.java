@@ -31,10 +31,10 @@ public class DataUse {
   private String aggregateResearch;
   @Deprecated
   private String controlSetOption;
-  private boolean controls;
+  private Boolean controls;
   private String gender;
   private Boolean pediatric;
-  private boolean population;
+  private Boolean population;
   @Deprecated
   private List<String> populationRestrictions;
   @Deprecated
@@ -65,12 +65,17 @@ public class DataUse {
   private Boolean vulnerablePopulations;
   private Boolean psychologicalTraits;
   private Boolean notHealth;
+  @Deprecated
   private Boolean nonBiomedical;
+  @Deprecated
   private Boolean manualReview;
   private Boolean geneticStudiesOnly;
   private Boolean publicationResults;
+  @Deprecated
   private Boolean genomicResults;
+  @Deprecated
   private String genomicSummaryResults;
+  @Deprecated
   private Boolean collaborationInvestigators;
   private String publicationMoratorium;
 
@@ -386,19 +391,19 @@ public class DataUse {
     this.publicationMoratorium = publicationMoratorium;
   }
 
-  public boolean getControls() {
+  public Boolean getControls() {
     return controls;
   }
 
-  public void setControls(boolean controls) {
+  public void setControls(Boolean controls) {
     this.controls = controls;
   }
 
-  public boolean getPopulation() {
+  public Boolean getPopulation() {
     return population;
   }
 
-  public void setPopulation(boolean population) {
+  public void setPopulation(Boolean population) {
     this.population = population;
   }
 
