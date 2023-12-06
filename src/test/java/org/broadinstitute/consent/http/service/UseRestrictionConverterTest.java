@@ -283,23 +283,14 @@ class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  void testParseDataUsePurposeOther1() {
+  void testParseDataUsePurposeOther() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setOther(true);
+    dar.getData().setOtherText("Other Text");
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertTrue(dataUse.getOtherRestrictions());
-  }
-
-  @Test
-  void testParseDataUsePurposeOther2() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataAccessRequest dar = createDataAccessRequest();
-    dar.getData().setOtherText("other");
-    DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertNotNull(dataUse.getOther());
   }
 
   @Test

@@ -93,17 +93,12 @@ public class UseRestrictionConverter implements ConsentLogger {
       }
 
       // Other Conditions
-      if (Objects.nonNull(dar.getData().getOther())) {
-        dataUse.setOtherRestrictions(dar.getData().getOther());
-      }
-      if (Objects.nonNull(dar.getData().getOtherText())) {
+      if (Objects.nonNull(dar.getData().getOther())
+        && Boolean.TRUE.equals(dar.getData().getOther())
+        && Objects.nonNull(dar.getData().getOtherText())) {
+        dataUse.setOtherRestrictions(true);
         dataUse.setOther(dar.getData().getOtherText());
       }
-
-//      if (Objects.nonNull(dar.getData().getNotHealth())) {
-//        dataUse.setNotHealth(dar.getData().getNotHealth());
-//        dataUse.setNonBiomedical(dar.getData().getNotHealth());
-//      }
 
       if ((Objects.nonNull(dar.getData().getIllegalBehavior())) && Boolean.TRUE.equals(dar.getData()
           .getIllegalBehavior())) {
