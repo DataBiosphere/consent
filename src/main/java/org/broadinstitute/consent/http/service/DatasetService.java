@@ -594,10 +594,11 @@ public class DatasetService {
 
   private Integer updateStudyFromConversion(User user, Dataset dataset,
       StudyConversion studyConversion) {
-    Study study;
+    // Ensure that we are not trying to create a new study with an existing name
+    Study study = studyDAO.findStudyByName(studyConversion.getName());
     Integer studyId;
     // Create or update the study:
-    if (Objects.isNull(dataset.getStudy()) || Objects.isNull(dataset.getStudy().getStudyId())) {
+    if (Objects.isNull(study)) {
       study = studyConversion.createNewStudyStub();
       Integer userId =
           Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
@@ -605,14 +606,14 @@ public class DatasetService {
           study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
           UUID.randomUUID());
       study.setStudyId(studyId);
-      datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
     } else {
-      study = dataset.getStudy();
       studyId = study.getStudyId();
       studyDAO.updateStudy(study.getStudyId(), studyConversion.getName(),
           studyConversion.getDescription(), study.getPiName(), study.getDataTypes(),
           study.getPublicVisibility(), dataset.getCreateUserId(), Instant.now());
     }
+    datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
+
     // Create or update study properties:
     Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();
     User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());

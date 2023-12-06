@@ -127,4 +127,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       """)
   void deleteStudyByStudyId(@Bind("studyId") Integer studyId);
 
+  @UseRowReducer(StudyReducer.class)
+  @SqlQuery("""
+      SELECT * FROM study WHERE name = :name
+      """)
+  Study findStudyByName(@Bind("name") String name);
+
 }

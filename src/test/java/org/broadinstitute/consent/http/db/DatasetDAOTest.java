@@ -390,6 +390,16 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDatasetName() {
+    Dataset dataset = insertDataset();
+    String newName = RandomStringUtils.randomAlphabetic(25);
+    datasetDAO.updateDatasetName(dataset.getDataSetId(), newName);
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertNotNull(foundDataset);
+    assertEquals(newName, foundDataset.getName());
+  }
+
+  @Test
   void testFindDatasetByAlias() {
     Dataset dataset = insertDataset();
 
