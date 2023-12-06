@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -239,6 +240,7 @@ class UseRestrictionConverterTest implements WithMockServer {
     dar.getData().setOntologies(List.of(entry));
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNotNull(dataUse.getDiseaseRestrictions());
+    assertFalse(dataUse.getDiseaseRestrictions().isEmpty());
   }
 
   @Test
