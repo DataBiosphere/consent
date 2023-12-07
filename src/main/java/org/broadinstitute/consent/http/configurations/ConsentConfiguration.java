@@ -7,8 +7,6 @@ import io.dropwizard.core.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsentConfiguration extends Configuration {
@@ -46,9 +44,6 @@ public class ConsentConfiguration extends Configuration {
   @Valid
   @NotNull
   private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
-
-  @JsonProperty("datasets")
-  private List<String> datasets = new ArrayList<>();
 
   @JsonProperty("httpClient")
   public JerseyClientConfiguration getJerseyClientConfiguration() {
@@ -91,10 +86,6 @@ public class ConsentConfiguration extends Configuration {
 
   public ElasticSearchConfiguration getElasticSearchConfiguration() {
     return elasticSearch;
-  }
-
-  public List<String> getDatasets() {
-    return datasets;
   }
 
 }
