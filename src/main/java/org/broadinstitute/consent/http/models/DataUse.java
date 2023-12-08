@@ -22,25 +22,39 @@ public class DataUse {
   private Boolean hmbResearch;
   private List<String> diseaseRestrictions;
   private Boolean populationOriginsAncestry;
+  @Deprecated
   private Boolean populationStructure;
   private Boolean commercialUse;
+  private Boolean nonProfitUse;
   private Boolean methodsResearch;
+  @Deprecated
   private String aggregateResearch;
+  @Deprecated
   private String controlSetOption;
-  private boolean controls;
+  private Boolean controls;
   private String gender;
   private Boolean pediatric;
-  private boolean population;
+  private Boolean population;
+  @Deprecated
   private List<String> populationRestrictions;
+  @Deprecated
   private Boolean otherRestrictions;
   private String dateRestriction;
+  @Deprecated
   private Boolean recontactingDataSubjects;
+  @Deprecated
   private String recontactMay;
+  @Deprecated
   private String recontactMust;
+  @Deprecated
   private String genomicPhenotypicData;
+  @Deprecated
   private String cloudStorage;
+  // Also known as "irb"
   private Boolean ethicsApprovalRequired;
+  @Deprecated
   private Boolean collaboratorRequired;
+  @Deprecated
   private String geographicalRestrictions;
   private String other;
   private String secondaryOther;
@@ -51,12 +65,17 @@ public class DataUse {
   private Boolean vulnerablePopulations;
   private Boolean psychologicalTraits;
   private Boolean notHealth;
+  @Deprecated
   private Boolean nonBiomedical;
+  @Deprecated
   private Boolean manualReview;
   private Boolean geneticStudiesOnly;
   private Boolean publicationResults;
+  @Deprecated
   private Boolean genomicResults;
+  @Deprecated
   private String genomicSummaryResults;
+  @Deprecated
   private Boolean collaborationInvestigators;
   private String publicationMoratorium;
 
@@ -106,6 +125,14 @@ public class DataUse {
 
   public void setCommercialUse(Boolean commercialUse) {
     this.commercialUse = commercialUse;
+  }
+
+  public Boolean getNonProfitUse() {
+    return nonProfitUse;
+  }
+
+  public void setNonProfitUse(Boolean nonProfitUse) {
+    this.nonProfitUse = nonProfitUse;
   }
 
   public Boolean getMethodsResearch() {
@@ -364,19 +391,19 @@ public class DataUse {
     this.publicationMoratorium = publicationMoratorium;
   }
 
-  public boolean getControls() {
+  public Boolean getControls() {
     return controls;
   }
 
-  public void setControls(boolean controls) {
+  public void setControls(Boolean controls) {
     this.controls = controls;
   }
 
-  public boolean getPopulation() {
+  public Boolean getPopulation() {
     return population;
   }
 
-  public void setPopulation(boolean population) {
+  public void setPopulation(Boolean population) {
     this.population = population;
   }
 
@@ -423,6 +450,7 @@ public class DataUse {
         && Objects.equal(getPopulationOriginsAncestry(), dataUse.getPopulationOriginsAncestry())
         && Objects.equal(getPopulationStructure(), dataUse.getPopulationStructure())
         && Objects.equal(getCommercialUse(), dataUse.getCommercialUse())
+        && Objects.equal(getNonProfitUse(), dataUse.getNonProfitUse())
         && Objects.equal(getMethodsResearch(), dataUse.getMethodsResearch())
         && Objects.equal(getAggregateResearch(), dataUse.getAggregateResearch())
         && Objects.equal(getControlSetOption(), dataUse.getControlSetOption())
