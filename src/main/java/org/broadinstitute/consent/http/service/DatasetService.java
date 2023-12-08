@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -13,12 +14,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -29,6 +32,8 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyConversion;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -48,17 +53,19 @@ public class DatasetService {
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
+  private final UserDAO userDAO;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DacDAO dacDAO,
       EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO,
-      DatasetServiceDAO datasetServiceDAO) {
+      DatasetServiceDAO datasetServiceDAO, UserDAO userDAO) {
     this.datasetDAO = dataSetDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
     this.datasetServiceDAO = datasetServiceDAO;
+    this.userDAO = userDAO;
   }
 
   public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
@@ -414,6 +421,224 @@ public class DatasetService {
       logger.error(e.getMessage());
       throw e;
     }
+  }
+
+  /**
+   * This method is used to convert a dataset into a study if none exist, or if one does, to update
+   * the dataset, study, and associated properties with new values. This is an admin function only.
+   *
+   * @param dataset         The dataset
+   * @param studyConversion Study Conversion object
+   * @return Updated/created study
+   */
+  public Study convertDatasetToStudy(User user, Dataset dataset, StudyConversion studyConversion) {
+    if (!user.hasUserRole(UserRoles.ADMIN)) {
+      throw new NotAuthorizedException("Admin use only");
+    }
+    // Study updates:
+    Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);
+
+    // Dataset updates
+    if (Objects.nonNull(studyConversion.getDacId())) {
+      datasetDAO.updateDatasetDacId(dataset.getDataSetId(), studyConversion.getDacId());
+    }
+    if (Objects.nonNull(studyConversion.getDataUse())) {
+      datasetDAO.updateDatasetDataUse(dataset.getDataSetId(),
+          studyConversion.getDataUse().toString());
+    }
+    if (Objects.nonNull(studyConversion.getDataUse())) {
+      String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
+          DataUseTranslationType.DATASET);
+      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
+    }
+    if (Objects.nonNull(studyConversion.getDatasetName())) {
+      datasetDAO.updateDatasetName(dataset.getDataSetId(), studyConversion.getDatasetName());
+    }
+
+    List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
+    // Dataset Property updates
+    if (Objects.nonNull(studyConversion.getDacId())) {
+      newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId",
+          PropertyType.Number, studyConversion.getDacId().toString());
+    }
+
+    // Handle "Phenotype/Indication"
+    if (Objects.nonNull(studyConversion.getPhenotype())) {
+      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", PropertyType.String,
+          studyConversion.getPhenotype());
+    }
+
+    // Handle "Species"
+    if (Objects.nonNull(studyConversion.getSpecies())) {
+      oldPropConversion(dictionaries, dataset, "Species", PropertyType.String,
+          studyConversion.getSpecies());
+    }
+
+    if (Objects.nonNull(studyConversion.getPiName())) {
+      // Handle "PI Name"
+      newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
+          studyConversion.getPiName());
+      // Handle "Principal Investigator(PI)"
+      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", PropertyType.String,
+          studyConversion.getPiName());
+    }
+
+    if (Objects.nonNull(studyConversion.getNumberOfParticipants())) {
+      // Handle "Number of Participants"
+      newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants",
+          PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
+      // Handle "# of participants"
+      oldPropConversion(dictionaries, dataset, "# of participants", PropertyType.Number,
+          studyConversion.getNumberOfParticipants().toString());
+    }
+
+    // Handle "Data Location"
+    if (Objects.nonNull(studyConversion.getDataLocation())) {
+      newPropConversion(dictionaries, dataset, "Data Location", "dataLocation", PropertyType.String,
+          studyConversion.getDataLocation());
+    }
+
+    if (Objects.nonNull(studyConversion.getUrl())) {
+      // Handle "URL"
+      newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
+          studyConversion.getUrl());
+      // Handle "dbGAP"
+      oldPropConversion(dictionaries, dataset, "dbGAP", PropertyType.String,
+          studyConversion.getUrl());
+    }
+
+    // Handle "Data Submitter User ID"
+    if (Objects.nonNull(studyConversion.getDataSubmitterEmail())) {
+      User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
+      if (Objects.nonNull(submitter)) {
+        newPropConversion(dictionaries, dataset, "Data Submitter User ID", "dataSubmitterUserId",
+            PropertyType.Number, user.getUserId().toString());
+        datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
+      }
+    }
+
+    return studyDAO.findStudyById(studyId);
+  }
+
+  /**
+   * This method is used to synchronize a new dataset property with values from the study
+   * conversion
+   *
+   * @param dictionaries   List<Dictionary>
+   * @param dataset        Dataset
+   * @param dictionaryName Name to look for in dictionaries
+   * @param schemaProperty Schema Property to look for in properties
+   * @param propertyType   Property Type of new value
+   * @param propValue      New property value
+   */
+  private void newPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, String schemaProperty, PropertyType propertyType, String propValue) {
+    Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
+        .filter(p -> Objects.nonNull(p.getSchemaProperty()))
+        .filter(p -> p.getSchemaProperty().equals(schemaProperty))
+        .findFirst();
+    if (maybeProp.isPresent()) {
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+          propValue);
+    } else {
+      dictionaries.stream()
+          .filter(d -> d.getKey().equals(dictionaryName))
+          .findFirst()
+          .ifPresent(dictionary -> {
+            DatasetProperty prop = new DatasetProperty();
+            prop.setDataSetId(dataset.getDataSetId());
+            prop.setPropertyKey(dictionary.getKeyId());
+            prop.setSchemaProperty(schemaProperty);
+            prop.setPropertyValue(propValue);
+            prop.setPropertyType(propertyType);
+            prop.setCreateDate(new Date());
+            datasetDAO.insertDatasetProperties(List.of(prop));
+          });
+    }
+  }
+
+  /**
+   * This method is used to synchronize an OLD dataset property with values from the study
+   * conversion
+   *
+   * @param dictionaries   List<Dictionary>
+   * @param dataset        Dataset
+   * @param dictionaryName Name to look for in dictionaries
+   * @param propertyType   Property Type of new value
+   * @param propValue      New property value
+   */
+  private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, PropertyType propertyType, String propValue) {
+    Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
+        .filter(p -> p.getPropertyName().equals(dictionaryName))
+        .findFirst();
+    if (maybeProp.isPresent()) {
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+          propValue);
+    } else {
+      dictionaries.stream()
+          .filter(d -> d.getKey().equals(dictionaryName))
+          .findFirst()
+          .ifPresent(dictionary -> {
+            DatasetProperty prop = new DatasetProperty();
+            prop.setDataSetId(dataset.getDataSetId());
+            prop.setPropertyKey(dictionary.getKeyId());
+            prop.setSchemaProperty(null);
+            prop.setPropertyValue(propValue);
+            prop.setPropertyType(propertyType);
+            prop.setCreateDate(new Date());
+            datasetDAO.insertDatasetProperties(List.of(prop));
+          });
+    }
+  }
+
+  private Integer updateStudyFromConversion(User user, Dataset dataset,
+      StudyConversion studyConversion) {
+    // Ensure that we are not trying to create a new study with an existing name
+    Study study = studyDAO.findStudyByName(studyConversion.getName());
+    Integer studyId;
+    Integer userId =
+        Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
+    // Create or update the study:
+    if (Objects.isNull(study)) {
+      study = studyConversion.createNewStudyStub();
+      studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
+          study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
+          UUID.randomUUID());
+      study.setStudyId(studyId);
+    } else {
+      studyId = study.getStudyId();
+      studyDAO.updateStudy(study.getStudyId(), studyConversion.getName(),
+          studyConversion.getDescription(), studyConversion.getPiName(),
+          studyConversion.getDataTypes(), studyConversion.getPublicVisibility(), userId,
+          Instant.now());
+    }
+    datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
+
+    // Create or update study properties:
+    Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();
+    User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
+    // If we don't have any props, we need to add all of the new ones
+    if (Objects.isNull(existingProps) || existingProps.isEmpty()) {
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+    } else {
+      // Study props to add:
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .filter(p -> existingProps.stream().noneMatch(ep -> ep.getKey().equals(p.getKey())))
+          .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+      // Study props to update:
+      studyConversion.getStudyProperties(submitter).stream()
+          .filter(Objects::nonNull)
+          .filter(p -> existingProps.stream().anyMatch(ep -> ep.equals(p)))
+          .forEach(p -> studyDAO.updateStudyProperty(studyId, p.getKey(), p.getType().toString(),
+              p.getValue().toString()));
+    }
+    return studyId;
   }
 
 }

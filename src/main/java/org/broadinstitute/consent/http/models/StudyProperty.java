@@ -11,6 +11,15 @@ public class StudyProperty {
   private PropertyType type;
   private Object value;
 
+  public StudyProperty() {
+  }
+
+  public StudyProperty(String key, Object value, PropertyType type) {
+    this.key = key;
+    this.value = value;
+    this.type = type;
+  }
+
   public Integer getStudyPropertyId() {
     return studyPropertyId;
   }

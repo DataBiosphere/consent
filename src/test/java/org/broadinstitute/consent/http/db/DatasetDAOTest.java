@@ -390,6 +390,16 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDatasetName() {
+    Dataset dataset = insertDataset();
+    String newName = RandomStringUtils.randomAlphabetic(25);
+    datasetDAO.updateDatasetName(dataset.getDataSetId(), newName);
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertNotNull(foundDataset);
+    assertEquals(newName, foundDataset.getName());
+  }
+
+  @Test
   void testFindDatasetByAlias() {
     Dataset dataset = insertDataset();
 
@@ -929,6 +939,15 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
     assertEquals(newDataUse, updated.getDataUse());
     assertNotEquals(oldDataUse, updated.getDataUse());
+  }
+
+  @Test
+  void testUpdateDatasetCreateUserId() {
+    Dataset dataset = insertDataset();
+    User user = createUser();
+    datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
+    Dataset updated = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertEquals(user.getUserId(), updated.getCreateUserId());
   }
 
   @Test

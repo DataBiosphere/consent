@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
@@ -56,6 +57,29 @@ public class StudyResource extends Resource {
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
+  }
+
+  /**
+   * This API creates a study for a provided dataset, or updates existing study/dataset information
+   * with what is provided in the request body. It is intended to be a short-lived API that will be
+   * removed once all production datasets have been migrated.
+   */
+  @PUT
+  @Path("/convert/{datasetIdentifier}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  public Response convertToStudy(@Auth AuthUser authUser,
+    @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
+      Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
+      return Response.ok(study).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @GET

@@ -263,7 +263,8 @@ public class ConsentModule extends AbstractModule {
         providesEmailService(),
         providesOntologyService(),
         providesStudyDAO(),
-        providesDatasetServiceDAO());
+        providesDatasetServiceDAO(),
+        providesUserDAO());
   }
 
   @Provides

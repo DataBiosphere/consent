@@ -34,6 +34,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -71,6 +72,8 @@ class DatasetServiceTest {
   private StudyDAO studyDAO;
   @Mock
   private DatasetServiceDAO datasetServiceDAO;
+  @Mock
+  private UserDAO userDAO;
 
   @BeforeEach
   public void setUp() {
@@ -79,7 +82,7 @@ class DatasetServiceTest {
 
   private void initService() {
     datasetService = new DatasetService(datasetDAO, dacDAO, emailService,
-      ontologyService, studyDAO, datasetServiceDAO);
+      ontologyService, studyDAO, datasetServiceDAO, userDAO);
   }
 
   @Test

@@ -363,6 +363,14 @@ class StudyDAOTest extends DAOTestHelper {
     assertNull(deletedStudy);
   }
 
+  @Test
+  void testFindStudyByName() {
+    Study study = insertStudyWithProperties();
+    Study foundStudy = studyDAO.findStudyByName(study.getName());
+    assertNotNull(foundStudy);
+    assertEquals(study.getStudyId(), foundStudy.getStudyId());
+  }
+
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
     String fileName = RandomStringUtils.randomAlphabetic(10);
     String bucketName = RandomStringUtils.randomAlphabetic(10);
