@@ -47,9 +47,9 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .stream()
         .filter(cg -> Objects.nonNull(cg.getDatasetId()))
         .filter(cg -> existingStudy
-              .getDatasetIds()
-              .stream()
-              .noneMatch(id -> id.equals(cg.getDatasetId())))
+            .getDatasetIds()
+            .stream()
+            .noneMatch(id -> id.equals(cg.getDatasetId())))
         .toList();
     if (!nonStudyConsentGroups.isEmpty()) {
       throw new BadRequestException("Invalid Consent Group changes to study");
@@ -62,11 +62,12 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .filter(cg -> Objects.nonNull(cg.getConsentGroupName()))
         // If the dataset already has a name, this consent group is invalid
         .filter(cg -> {
-          Optional<Dataset> dataset = existingStudy
+          Optional<Dataset> dataset = Objects.nonNull(existingStudy.getDatasets()) ? existingStudy
               .getDatasets()
               .stream()
               .filter(d -> d.getDataSetId().equals(cg.getDatasetId()))
-              .findFirst();
+              .findFirst() :
+              Optional.empty();
           return dataset.isPresent() && !dataset.get().getName().isBlank();
         })
         .toList();
