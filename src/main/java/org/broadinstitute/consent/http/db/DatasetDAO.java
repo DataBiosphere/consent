@@ -324,7 +324,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Dataset> findDatasetsByAuthUserEmail(@Bind("email") String email);
 
   /**
-   * Finds all datasets which are assigned to this DAC and which have been requested for this DAC.
+   * Finds all minimal dataset/study  information for datasets assigned to this DAC and which have
+   * been requested for this DAC.
    *
    * @param dacId id
    * @return all datasets associated with DAC
@@ -353,19 +354,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               sp.study_id AS sp_study_id,
               sp.key AS sp_key,
               sp.value AS sp_value,
-              sp.type AS sp_type,
-              fso.file_storage_object_id AS fso_file_storage_object_id,
-              fso.entity_id AS fso_entity_id,
-              fso.file_name AS fso_file_name,
-              fso.category AS fso_category,
-              fso.gcs_file_uri AS fso_gcs_file_uri,
-              fso.media_type AS fso_media_type,
-              fso.create_date AS fso_create_date,
-              fso.create_user_id AS fso_create_user_id,
-              fso.update_date AS fso_update_date,
-              fso.update_user_id AS fso_update_user_id,
-              fso.deleted AS fso_deleted,
-              fso.delete_user_id AS fso_delete_user_id
+              sp.type AS sp_type
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
@@ -374,7 +363,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN study s ON s.study_id = d.study_id
           LEFT JOIN study_property sp ON sp.study_id = s.study_id
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-          LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
           WHERE d.dac_id = :dacId
           OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)
       """)
