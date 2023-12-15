@@ -1,7 +1,9 @@
     get:
       summary: Get All Datasets for DAC
       operationId: getDacDatasets
-      description: List all Datasets of a DAC
+      description: |
+        List all Datasets of a DAC. The datasets returned from this endpoint are limited in the 
+        volume of data returned. To get the full dataset, use the `/datasets/{datasetId}` endpoint.
       parameters:
         - name: dacId
           in: path
