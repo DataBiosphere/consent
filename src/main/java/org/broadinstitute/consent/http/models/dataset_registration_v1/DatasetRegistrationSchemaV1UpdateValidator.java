@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.commons.collections4.SetUtils;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
@@ -47,9 +48,9 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .stream()
         .filter(cg -> Objects.nonNull(cg.getDatasetId()))
         .filter(cg -> existingStudy
-              .getDatasetIds()
-              .stream()
-              .noneMatch(id -> id.equals(cg.getDatasetId())))
+            .getDatasetIds()
+            .stream()
+            .noneMatch(id -> id.equals(cg.getDatasetId())))
         .toList();
     if (!nonStudyConsentGroups.isEmpty()) {
       throw new BadRequestException("Invalid Consent Group changes to study");
@@ -62,8 +63,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .filter(cg -> Objects.nonNull(cg.getConsentGroupName()))
         // If the dataset already has a name, this consent group is invalid
         .filter(cg -> {
-          Optional<Dataset> dataset = existingStudy
-              .getDatasets()
+          Optional<Dataset> dataset = SetUtils.emptyIfNull(existingStudy.getDatasets())
               .stream()
               .filter(d -> d.getDataSetId().equals(cg.getDatasetId()))
               .findFirst();
