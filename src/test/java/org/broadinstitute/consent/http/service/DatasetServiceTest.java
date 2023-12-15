@@ -756,6 +756,7 @@ class DatasetServiceTest {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
+    dac.setEmail("dacEmail@gmail.com");
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
 
@@ -767,7 +768,42 @@ class DatasetServiceTest {
     verify(emailService, times(1)).sendDatasetDeniedMessage(
         user,
         "DAC NAME",
-        "DUOS-000001"
+        "DUOS-000001",
+        "dacEmail@gmail.com"
+    );
+  }
+
+  @Test
+  void testApproveDataset_DenyDataset_WithNoDACEmail() throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(1);
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("asdf@gmail.com");
+    user.setDisplayName("John Doe");
+    Boolean payloadBool = false;
+    Dataset updatedDataset = new Dataset();
+    updatedDataset.setDataSetId(1);
+    updatedDataset.setDacApproval(payloadBool);
+
+    when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+    dataset.setAlias(1);
+    dataset.setDacId(3);
+    Dac dac = new Dac();
+    dac.setName("DAC NAME");
+    initService();
+    when(dacDAO.findById(3)).thenReturn(dac);
+
+    Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
+    assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+    assertFalse(returnedDataset.getDacApproval());
+
+    // send denied email
+    verify(emailService, times(1)).sendDatasetDeniedMessage(
+        user,
+        "DAC NAME",
+        "DUOS-000001",
+        ""
     );
   }
 

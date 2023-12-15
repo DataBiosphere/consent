@@ -345,10 +345,15 @@ public class DatasetService {
           dac.getName(),
           dataset.getDatasetIdentifier());
     } else {
+      String dacEmail = "";
+      if (!Objects.isNull(dac.getEmail())) {
+        dacEmail = dac.getEmail();
+      }
       emailService.sendDatasetDeniedMessage(
           user,
           dac.getName(),
-          dataset.getDatasetIdentifier());
+          dataset.getDatasetIdentifier(),
+          dacEmail);
     }
 
   }
