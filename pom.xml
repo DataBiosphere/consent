@@ -366,10 +366,16 @@
 
   <dependencies>
 
+    <!-- json-schema-validator 1.0.83 -> 1.0.84 introduced a breaking dependency change, it now requires jackson core -->
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
       <version>1.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.16.0</version>
     </dependency>
 
     <dependency>
