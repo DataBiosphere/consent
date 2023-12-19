@@ -798,13 +798,14 @@ class DatasetServiceTest {
     assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
     assertFalse(returnedDataset.getDacApproval());
 
-    // send denied email
-    verify(emailService, times(1)).sendDatasetDeniedMessage(
+    // do not send denied email
+    verify(emailService, times(0)).sendDatasetDeniedMessage(
         user,
         "DAC NAME",
         "DUOS-000001",
         ""
     );
+
   }
 
   @Test
