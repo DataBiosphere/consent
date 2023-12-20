@@ -39,11 +39,12 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class DatasetService {
+public class DatasetService implements ConsentLogger {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
@@ -345,10 +346,17 @@ public class DatasetService {
           dac.getName(),
           dataset.getDatasetIdentifier());
     } else {
-      emailService.sendDatasetDeniedMessage(
-          user,
-          dac.getName(),
-          dataset.getDatasetIdentifier());
+      if (!Objects.isNull(dac.getEmail())) {
+        String dacEmail = dac.getEmail();
+        emailService.sendDatasetDeniedMessage(
+            user,
+            dac.getName(),
+            dataset.getDatasetIdentifier(),
+            dacEmail);
+      }
+      else {
+        logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
+      }
     }
 
   }
