@@ -268,9 +268,10 @@ public class EmailService {
 
   public void sendDatasetDeniedMessage(User user,
       String dacName,
-      String datasetName) throws Exception {
+      String datasetName,
+      String dacEmail) throws Exception {
     Writer template = templateHelper.getDatasetDeniedTemplate(user.getDisplayName(), datasetName,
-        dacName);
+        dacName, dacEmail);
     Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(user.getEmail(), template);
     saveEmailAndResponse(
         response.orElse(null),
