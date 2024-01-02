@@ -37,8 +37,8 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CMG_Manton",
     "dataUse" : {
-      "hmb" : true,
-      "other" : "Samples and information may not be soldfor profit."
+      "hmbResearch" : true,
+      "other" : "Samples and information may not be sold for profit."
     },
     "dacId" : 1,
     "numberOfParticipants" : 273
@@ -78,7 +78,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CMG_White",
     "dataUse" : {
-      "hmb" : true,
+      "hmbResearch" : true,
       "nonProfitUse" : true
     },
     "dacId" : 1,
@@ -140,7 +140,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "RGP_MacArthur",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -162,7 +162,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CMG_VCGS",
     "dataUse" : {
-      "hmb" : true,
+      "hmbResearch" : true,
       "nonProfitUse" : true
     },
     "dacId" : 1,
@@ -320,7 +320,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "TumorToolbox-RegevRosen-AdultPediatricTumorsHMB-HTAPP-scRNASeqsnRNASeq",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -408,7 +408,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "AndrogenDeprivationProstate-SawyersRegev-Prostate-MSKCCBroad",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -513,7 +513,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Single-cell RNA-seq of pediatric ependymoma",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "numberOfParticipants" : 20
@@ -531,7 +531,7 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "numberOfParticipants" : 121
@@ -549,7 +549,7 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "numberOfParticipants" : 65
@@ -614,7 +614,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Sars-Cov2-Antibodies",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -656,7 +656,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "COVID-19_autopsy_tissue_RNASeq_04_ShalekVillaniVlachosRozenblatt-RosenRegev",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -805,7 +805,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Duplex-Repair enables highly accurate sequencing, despite DNA damage",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
@@ -1045,7 +1045,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CODEC_paper_data",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "secondaryDataUse" : "IRB",
     "dacId" : 1,
@@ -1067,7 +1067,7 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Stromal and immune cells in atrial disease",
     "dataUse" : {
-      "hmb" : true
+      "hmbResearch" : true
     },
     "secondaryDataUse" : "NPU",
     "dacId" : 1,
