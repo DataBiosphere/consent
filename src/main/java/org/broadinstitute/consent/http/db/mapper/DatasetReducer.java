@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -14,6 +15,8 @@ import org.jdbi.v3.core.result.RowView;
 
 public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>, RowMapperHelper {
 
+  private final DataUseParser dataUseParser = new DataUseParser();
+
   @Override
   public void accumulate(Map<Integer, Dataset> map, RowView rowView) {
     Dataset dataset =
@@ -23,11 +26,13 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
     if (hasColumn(rowView, "data_use", String.class)) {
-      dataset.setDataUse(
-          DataUse.parseDataUse(rowView.getColumn("data_use", String.class)).orElse(null));
+      String dataUseString = rowView.getColumn("data_use", String.class);
+      Optional<DataUse> dataUseOptional = Optional.ofNullable(
+          dataUseParser.parseDataUse(dataUseString));
+      dataUseOptional.ifPresent(dataset::setDataUse);
     }
     hasOptionalColumn(rowView, "translated_data_use", String.class)
-      .ifPresent(dataset::setTranslatedDataUse);
+        .ifPresent(dataset::setTranslatedDataUse);
     if (hasColumn(rowView, "in_use", Integer.class)) {
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));

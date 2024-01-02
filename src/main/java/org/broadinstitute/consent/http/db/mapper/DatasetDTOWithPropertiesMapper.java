@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
@@ -16,6 +17,7 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
   private final Map<Integer, DatasetDTO> datasetDTOs = new LinkedHashMap<>();
   private static final String PROPERTY_KEY = "key";
   private static final String PROPERTY_PROPERTYVALUE = "property_value";
+  private final DataUseParser dataUseParser = new DataUseParser();
 
   public DatasetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
@@ -33,7 +35,9 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       datasetDTO.setAlias(alias);
       datasetDTO.setDataSetId(dataSetId);
       if (hasColumn(r, "data_use")) {
-        datasetDTO.setDataUse(DataUse.parseDataUse(r.getString("data_use")).orElse(null));
+        Optional<DataUse> dataUseOptional = Optional.ofNullable(
+            dataUseParser.parseDataUse(r.getString("data_use")));
+        dataUseOptional.ifPresent(datasetDTO::setDataUse);
       }
       if (hasColumn(r, "create_date")) {
         datasetDTO.setCreateDate(r.getDate("create_date"));

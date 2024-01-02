@@ -18,6 +18,8 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+  private final DataUseParser dataUseParser = new DataUseParser();
+
   @Override
   public void accumulate(Map<Integer, Dac> container, RowView rowView) {
 
@@ -58,7 +60,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
         if (Objects.nonNull(rowView.getColumn("dataset_data_use", String.class))) {
           String duStr = rowView.getColumn("dataset_data_use", String.class);
-          Optional<DataUse> du = DataUse.parseDataUse(duStr);
+          Optional<DataUse> du = Optional.ofNullable(dataUseParser.parseDataUse(duStr));
           du.ifPresent(dataset::setDataUse);
         }
 
