@@ -116,7 +116,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -166,7 +166,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -216,7 +216,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -311,7 +311,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -357,7 +357,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               sp.type AS sp_type
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -407,7 +407,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -475,7 +475,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
@@ -510,7 +510,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
           """
                    FROM dataset d
-                   LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+                   LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
                    LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
                    LEFT JOIN dictionary k ON k.key_id = dp.property_key
                    LEFT JOIN study s ON s.study_id = d.study_id
@@ -639,7 +639,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
           """
                   FROM dataset d
-                  LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset LIMIT 1) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+                  LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
                   LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
                   LEFT JOIN dictionary k ON k.key_id = dp.property_key
                   LEFT JOIN study s ON s.study_id = d.study_id
