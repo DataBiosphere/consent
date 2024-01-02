@@ -145,7 +145,9 @@ public class DatasetRegistrationService implements ConsentLogger {
         uploadFiles
     );
 
-    return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+    Study updatedStudy = datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+    sendDatasetSubmittedEmails(createdDatasetsFromUpdatedStudy(updatedStudy, datasetUpdates));
+    return updatedStudy;
   }
 
   /**
@@ -190,19 +192,7 @@ public class DatasetRegistrationService implements ConsentLogger {
             datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
-    try {
-      for (Dataset dataset : datasets) {
-        Dac dac = dacDAO.findById(dataset.getDacId());
-        for (User dacChair : dac.getChairpersons()) {
-          emailService.sendDatasetSubmittedMessage(dacChair,
-              dataset.getCreateUser(),
-              dac.getName(),
-              dataset.getName());
-        }
-      }
-    } catch (Exception e) {
-      logException(e);
-    }
+    sendDatasetSubmittedEmails(datasets);
     elasticSearchService.indexDatasets(datasets);
     return datasets;
   }
@@ -734,5 +724,42 @@ public class DatasetRegistrationService implements ConsentLogger {
         .filter(Optional::isPresent)
         .map(Optional::get)
         .toList();
+  }
+
+  /**
+   * Extracts the datasets that were created from the given study update by subtracting the updated
+   * datasets from the list of datasets in the study.
+   *
+   * @param updatedStudy   The study that was updated
+   * @param datasetUpdates The list of datasets that were updated in the study
+   * @return The list of datasets that were created from updated study
+   */
+  public List<Dataset> createdDatasetsFromUpdatedStudy(Study updatedStudy,
+      List<DatasetServiceDAO.DatasetUpdate> datasetUpdates) {
+    List<Integer> datasetUpdateIds = datasetUpdates.stream()
+        .map(DatasetServiceDAO.DatasetUpdate::datasetId).toList();
+    return updatedStudy.getDatasets().stream().filter(
+        dataset -> !datasetUpdateIds.contains(dataset.getDataSetId())).toList();
+  }
+
+  /**
+   * Sends emails to DAC chairs when a dataset is created.
+   *
+   * @param datasets The datasets that were created
+   */
+  public void sendDatasetSubmittedEmails(List<Dataset> datasets) {
+    try {
+      for (Dataset dataset : datasets) {
+        Dac dac = dacDAO.findById(dataset.getDacId());
+        for (User dacChair : dac.getChairpersons()) {
+          emailService.sendDatasetSubmittedMessage(dacChair,
+              dataset.getCreateUser(),
+              dac.getName(),
+              dataset.getName());
+        }
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
   }
 }
