@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -51,16 +52,18 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final GCSService gcsService;
   private final ElasticSearchService elasticSearchService;
   private final StudyDAO studyDAO;
+  private final EmailService emailService;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
       DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
-      ElasticSearchService elasticSearchService, StudyDAO studyDAO) {
+      ElasticSearchService elasticSearchService, StudyDAO studyDAO, EmailService emailService) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
+    this.emailService = emailService;
   }
 
   public Study findStudyById(Integer studyId) {
@@ -187,6 +190,19 @@ public class DatasetRegistrationService implements ConsentLogger {
             datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
+    try {
+      for (Dataset dataset : datasets) {
+        Dac dac = dacDAO.findById(dataset.getDacId());
+        for (User dacChair : dac.getChairpersons()) {
+          emailService.sendDatasetSubmittedMessage(dacChair,
+              dataset.getCreateUser(),
+              dac.getName(),
+              dataset.getName());
+        }
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     elasticSearchService.indexDatasets(datasets);
     return datasets;
   }

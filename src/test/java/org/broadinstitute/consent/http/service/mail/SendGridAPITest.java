@@ -101,4 +101,13 @@ public class SendGridAPITest {
     }
   }
 
+  @Test
+  public void testSendDatasetSubmittedMessage() {
+    try {
+      sendGridAPI.sendDatasetSubmittedMessage(TO, template);
+    } catch (Exception e) {
+      fail("Should not throw exception");
+    }
+  }
+
 }

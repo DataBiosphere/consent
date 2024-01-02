@@ -77,6 +77,9 @@ public class DatasetRegistrationServiceTest {
   @Mock
   private ElasticSearchService elasticSearchService;
 
+  @Mock
+  private EmailService emailService;
+
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
@@ -84,7 +87,7 @@ public class DatasetRegistrationServiceTest {
 
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
-        datasetServiceDAO, gcsService, elasticSearchService, studyDAO);
+        datasetServiceDAO, gcsService, elasticSearchService, studyDAO, emailService);
   }
 
 

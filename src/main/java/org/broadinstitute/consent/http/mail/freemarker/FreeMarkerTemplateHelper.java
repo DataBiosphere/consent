@@ -55,6 +55,14 @@ public class FreeMarkerTemplateHelper {
         email, temp);
   }
 
+  public Writer getDatasetSubmittedTemplate(String dacChairName, String dataSubmitterName,
+      String datasetName,
+      String dacName) throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("dataset-submitted.html");
+    return generateDatasetSubmittedTemplate(dacChairName, dataSubmitterName, datasetName, dacName,
+        temp);
+  }
+
   public Writer getDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
       String dacName) throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("dataset-approved.html");
@@ -101,6 +109,17 @@ public class FreeMarkerTemplateHelper {
       String serverUrl, Template temp) throws IOException, TemplateException {
     NewResearcherLibraryRequestModel model = new NewResearcherLibraryRequestModel(researcherName,
         serverUrl);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateDatasetSubmittedTemplate(String dacChairName, String dataSubmitterName,
+      String datasetName,
+      String dacName, Template temp) throws IOException, TemplateException {
+    DatasetSubmittedModel model = new DatasetSubmittedModel(dacChairName, dataSubmitterName,
+        datasetName,
+        dacName);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
