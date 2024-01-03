@@ -1090,9 +1090,9 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CODEC_paper_data",
     "dataUse" : {
-      "hmbResearch" : true
+      "hmbResearch" : true,
+      "ethicsApprovalRequired" : true
     },
-    "secondaryDataUse" : "IRB",
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/blood-biopsy/CODEC_paper_data",
