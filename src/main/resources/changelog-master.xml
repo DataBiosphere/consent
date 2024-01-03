@@ -130,4 +130,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2023-09-20-rename-role-id-column-in-roles.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-12-18-dataset-study-indexes.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
