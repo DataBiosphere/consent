@@ -298,7 +298,7 @@
     "datasetName" : "Ulcerative_Colitis_in_Colon_Regev_Xavier",
     "dataUse" : {
       "diseaseRestrictions" : [
-        "http://purl.obolibrary.org/obo/DOID_0110904"
+        "http://purl.obolibrary.org/obo/DOID_0050589"
       ]
     },
     "dacId" : 1,
