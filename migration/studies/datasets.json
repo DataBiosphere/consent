@@ -909,13 +909,16 @@
       "RNASeq"
     ],
     "phenotype" : "Pancreatic Ductal Adenocarcinoma (Treated and Untreated)",
-    "species" : "",
     "piName" : "Will Hwang",
     "dataSubmitterEmail" : "whwang@broadinstitute.org",
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Human PDAC",
-    "dataUse" : "DS (pancreas disease)",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_26"
+      ]
+    },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/regev-development/PDAC_TME",
