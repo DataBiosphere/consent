@@ -1112,9 +1112,9 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Stromal and immune cells in atrial disease",
     "dataUse" : {
-      "hmbResearch" : true
+      "hmbResearch" : true,
+      "nonProfitUse" : true
     },
-    "secondaryDataUse" : "NPU",
     "dacId" : 1,
     "numberOfParticipants" : 12
   },
