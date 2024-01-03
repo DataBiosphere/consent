@@ -700,7 +700,9 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "COVID-19_autopsy_tissue_RNASeq_13_ShalekVillaniVlachosRozenblatt-RosenRegev",
-    "dataUse" : "GRU: Use is permitted for any research purpose",
+    "dataUse" : {
+      "generalUse" : true
+    },
     "secondaryDataUse" : "OTH2: Secondary Other: Research that includes the study of genetic predisposition is not permitted",
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
