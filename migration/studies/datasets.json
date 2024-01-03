@@ -1065,8 +1065,10 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "UCPlasmaCellRepertoire",
-    "dataUse" : "HMB: Use is permitted for a health, medical, or biomedical research purpose",
-    "secondaryDataUse" : "OTH2: Secondary Other: Genomic Summary Results are designated as SENSITIVE per NIH policy; general research use of aggregate-level data is prohibited",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "otherSecondary" : "Genomic Summary Results are designated as SENSITIVE per NIH policy; general research use of aggregate-level data is prohibited"
+    },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/microbiome-xavier-duos/UCPlasmaCellRepertoire",
