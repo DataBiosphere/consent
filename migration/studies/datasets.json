@@ -833,7 +833,11 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "MAESTRO",
-    "dataUse" : "DS (breast cancer)",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1612"
+      ]
+    },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/blood-biopsy/MAESTRO",
@@ -892,7 +896,9 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "Healthy Human Kidney Slide-seqV2 Spatial Transcriptomics",
-    "dataUse" : "OTH1: Primary Other: Disease Specific limited to gastroenterology, renal disease. Controlled-access for GSR is required.",
+    "dataUse" : {
+      "other" : "Disease Specific limited to gastroenterology, renal disease. Controlled-access for GSR is required."
+    },
     "dacId" : 1,
     "numberOfParticipants" : 9
   },
