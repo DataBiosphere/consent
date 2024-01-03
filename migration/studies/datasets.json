@@ -802,7 +802,8 @@
     "name" : "Duplex-Repair enables highly accurate sequencing, despite DNA damage",
     "description" : "Comparing Duplex-Repair to conventional ER/AT library construction by DNA sequencing of samples derived from breast cancer patients and healthy controls.",
     "dataTypes" : [
-      "Pan-cancer hybrid capture panel, WGS"
+      "Pan-cancer hybrid capture panel",
+      "WGS"
     ],
     "phenotype" : "breast cancer",
     "species" : "Human",
