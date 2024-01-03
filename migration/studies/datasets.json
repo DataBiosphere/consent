@@ -1019,8 +1019,12 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CD_Atlas_2021_PRISM",
-    "dataUse" : "DS: Use is permitted for the specified disease(s): inflammatory bowel disease",
-    "secondaryDataUse" : "OTH2: Secondary Other: Genomic Summary Results can only be shared under controlled-access; General research use of aggregate level data is prohibited.",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_0050589"
+      ],
+      "secondaryOther": "Genomic Summary Results can only be shared under controlled-access; General research use of aggregate level data is prohibited."
+    },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/genomics-xavier-fc/CD_Atlas_2021_PRISM",
@@ -1039,8 +1043,10 @@
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CD_Atlas_2021_GIDER",
-    "dataUse" : "OTH1: Primary Other: Disease-related studies: Digestive system disease",
-    "secondaryDataUse" : "OTH2: Secondary Other: Research is restricted to adults 18 years of age and older only",
+    "dataUse" : {
+      "other" : "Disease-related studies: Digestive system disease",
+      "secondaryOther": "Research is restricted to adults 18 years of age and older only"
+    },
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/genomics-xavier-fc/CD_Atlas_2021_GIDER",
