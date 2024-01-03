@@ -1132,9 +1132,9 @@
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
     "datasetName" : "CIRM iMGL",
     "dataUse" : {
-      "generalUse" : true
+      "generalUse" : true,
+      "secondaryOther": "Possible restriction on gamete research"
     },
-    "secondaryDataUse" : "Secondary Other: Possible restriction on gamete research",
     "dacId" : 1,
     "dataLocation" : "Terra Workspace",
     "url" : "https://app.terra.bio/#workspaces/broad-cfos-data-platform1/CIRM%20-%20iMGL",
