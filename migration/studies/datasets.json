@@ -537,21 +537,24 @@
     "numberOfParticipants" : 121
   },
   "DUOS-000122" : {
-    "Single-cell RNA-seq of pediatric ependymoma" : "ImmuneSepsisSignature-HacohenGoldbergBlainey",
-    "Single-cell RNA-seq (Smart-seq2) of 20 pediatric ependymoma cases" : "Single-cell RNA-seq (Smart-seq2) of 126,351 PBMCs from 29 sepsis patients and 36 controls",
+    "name" : "ImmuneSepsisSignature-HacohenGoldbergBlainey",
+    "description" : "Single-cell RNA-seq (Smart-seq2) of 20 pediatric ependymoma cases",
     "dataTypes" : [
       "RNA-seq"
     ],
     "phenotype" : "Sepsis",
-    "piName" : "Human",
-    "Mariella G. Filbin" : "Nir Hacohen",
-    "li_jiang@dfci.harvard.edu" : "chene@broadinstitute.org",
+    "species" : "Human",
+    "piName" : "Nir Hacohen",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
     "publicVisibility" : true,
     "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "ImmuneSepsisSignature-HacohenGoldbergBlainey",
     "dataUse" : {
       "hmbResearch" : true
     },
     "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/ImmuneSepsisSignature-HacohenGoldbergBlainey-Sepsis-MGHBWH-scRNASeq",
     "numberOfParticipants" : 65
   },
   "DUOS-000123" : {
