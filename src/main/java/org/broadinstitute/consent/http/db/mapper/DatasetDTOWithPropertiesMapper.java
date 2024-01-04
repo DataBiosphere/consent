@@ -5,8 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -35,9 +33,7 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       datasetDTO.setAlias(alias);
       datasetDTO.setDataSetId(dataSetId);
       if (hasColumn(r, "data_use")) {
-        Optional<DataUse> dataUseOptional = Optional.ofNullable(
-            dataUseParser.parseDataUse(r.getString("data_use")));
-        dataUseOptional.ifPresent(datasetDTO::setDataUse);
+        datasetDTO.setDataUse(dataUseParser.parseDataUse(r.getString("data_use")));
       }
       if (hasColumn(r, "create_date")) {
         datasetDTO.setCreateDate(r.getDate("create_date"));

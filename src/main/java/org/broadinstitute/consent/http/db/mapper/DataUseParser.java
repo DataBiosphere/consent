@@ -13,7 +13,7 @@ public class DataUseParser implements ConsentLogger {
   private final Map<String, DataUse> dataUseCache = new HashMap<>();
 
   public DataUse parseDataUse(String dataUseString) {
-    dataUseCache.computeIfAbsent(dataUseString, s -> {
+    return dataUseCache.computeIfAbsent(dataUseString, s -> {
       try {
         return gson.fromJson(dataUseString, DataUse.class);
       } catch (Exception e) {
@@ -21,7 +21,6 @@ public class DataUseParser implements ConsentLogger {
       }
       return null;
     });
-    return dataUseCache.get(dataUseString);
   }
 
 }

@@ -2,9 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -26,10 +24,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
     if (hasColumn(rowView, "data_use", String.class)) {
-      String dataUseString = rowView.getColumn("data_use", String.class);
-      Optional<DataUse> dataUseOptional = Optional.ofNullable(
-          dataUseParser.parseDataUse(dataUseString));
-      dataUseOptional.ifPresent(dataset::setDataUse);
+      dataset.setDataUse(dataUseParser.parseDataUse(rowView.getColumn("data_use", String.class)));
     }
     hasOptionalColumn(rowView, "translated_data_use", String.class)
         .ifPresent(dataset::setTranslatedDataUse);

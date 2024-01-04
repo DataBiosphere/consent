@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.Optional;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -47,9 +45,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       }
     }
     if (hasColumn(r, "data_use")) {
-      Optional<DataUse> dataUseOptional = Optional.ofNullable(
-          dataUseParser.parseDataUse(r.getString("data_use")));
-      dataUseOptional.ifPresent(dataset::setDataUse);
+      dataset.setDataUse(dataUseParser.parseDataUse(r.getString("data_use")));
     }
     if (hasColumn(r, "translated_data_use")) {
       dataset.setTranslatedDataUse(r.getString("translated_data_use"));
