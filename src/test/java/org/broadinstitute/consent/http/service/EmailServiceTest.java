@@ -116,6 +116,46 @@ class EmailServiceTest {
   }
 
   @Test
+  void testSendDatasetSubmittedMessage() throws Exception {
+    User dacChair = new User();
+    dacChair.setUserId(456);
+    dacChair.setDisplayName("Jane Evans");
+    dacChair.setEmail("dacchair@example.com");
+
+    User dataSubmitter = new User();
+    dataSubmitter.setUserId(123);
+    dataSubmitter.setDisplayName("John Doe");
+    dataSubmitter.setEmail("submitter@example.com");
+
+    String dacName = "DAC-123";
+    String datasetName = "testDataset";
+
+    initService();
+
+    try {
+      service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendDatasetSubmittedMessage(any(), any());
+    verify(templateHelper, times(1)).getDatasetSubmittedTemplate(dacChair.getDisplayName(),
+        dataSubmitter.getDisplayName(),
+        datasetName, dacName);
+    verify(emailDAO, times(1)).insert(
+        eq(datasetName),
+        eq(null),
+        eq(456),
+        eq(EmailType.NEW_DATASET.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();
