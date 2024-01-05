@@ -1,13 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.common.base.Objects;
 import com.google.gson.GsonBuilder;
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -418,21 +414,6 @@ public class DataUse {
   @Override
   public String toString() {
     return new GsonBuilder().create().toJson(this);
-  }
-
-  public static Optional<DataUse> parseDataUse(String str) {
-    if (str == null || str.isEmpty()) {
-      return Optional.empty();
-    } else {
-      try {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(DataUse.class);
-        return Optional.of(reader.readValue(str));
-      } catch (IOException e) {
-        logger.error(String.format("DataUse parse exception on \"%s\"", str));
-        return Optional.empty();
-      }
-    }
   }
 
   @Override
