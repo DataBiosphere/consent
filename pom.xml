@@ -138,7 +138,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>9.0.7</version>
+        <version>9.0.8</version>
         <executions>
           <execution>
             <goals>
@@ -358,7 +358,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.42.0</version>
+        <version>3.43.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
