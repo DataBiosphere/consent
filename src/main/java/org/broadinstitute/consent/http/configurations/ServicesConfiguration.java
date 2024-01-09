@@ -12,7 +12,7 @@ public class ServicesConfiguration {
   public static final String REGISTER_SELF_INFO_PATH = "register/user/v2/self/info";
   public static final String REGISTER_SELF_DIAGNOSTICS_PATH = "register/user/v2/self/diagnostics";
   public static final String REGISTER_SELF_PATH = "register/user/v2/self";
-  public static final String TOS_TEXT_PATH = "tos/text";
+  public static final String TOS_TEXT_PATH = "termsOfService/v1/docs";
   public static final String REGISTER_TOS_PATH = "register/user/v1/termsofservice";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
 
