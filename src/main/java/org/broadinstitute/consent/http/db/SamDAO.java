@@ -5,8 +5,6 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -26,7 +24,6 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -141,31 +138,27 @@ public class SamDAO implements ConsentLogger {
     return response.parseAsString();
   }
 
-  public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
-    JsonHttpContent content = new JsonHttpContent(new GsonFactory(),
-        "app.terra.bio/#terms-of-service");
-    HttpRequest request = clientUtil.buildPostRequest(genericUrl, content, authUser);
+  public int acceptTosStatus(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.acceptTosUrl());
+    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException("Error accepting Terms of Service through Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    return response.getStatusCode();
   }
 
-  public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
-    GenericUrl genericUrl = new GenericUrl(configuration.tosRegistrationUrl());
-    HttpRequest request = clientUtil.buildDeleteRequest(genericUrl, authUser);
+  public int rejectTosStatus(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.rejectTosUrl());
+    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           "Error removing Terms of Service acceptance through Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    return response.getStatusCode();
   }
 
   public EmailResponse getV1UserByEmail(AuthUser authUser, String email) throws Exception {

@@ -118,19 +118,19 @@ public class HttpClientUtil implements ConsentLogger {
     return request;
   }
 
+  public HttpRequest buildPutRequest(GenericUrl genericUrl, HttpContent content, AuthUser authUser)
+      throws Exception {
+    HttpTransport transport = new NetHttpTransport();
+    HttpRequest request = transport.createRequestFactory().buildPutRequest(genericUrl, content);
+    request.setHeaders(buildHeaders(authUser));
+    return request;
+  }
+
   public HttpRequest buildUnAuthedPostRequest(GenericUrl genericUrl, HttpContent content)
       throws Exception {
     HttpTransport transport = new NetHttpTransport();
     HttpRequest request = transport.createRequestFactory().buildPostRequest(genericUrl, content);
     request.setHeaders(new HttpHeaders().set("X-App-ID", "DUOS"));
-    return request;
-  }
-
-  public HttpRequest buildDeleteRequest(GenericUrl genericUrl, AuthUser authUser)
-      throws Exception {
-    HttpTransport transport = new NetHttpTransport();
-    HttpRequest request = transport.createRequestFactory().buildDeleteRequest(genericUrl);
-    request.setHeaders(buildHeaders(authUser));
     return request;
   }
 

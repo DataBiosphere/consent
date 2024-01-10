@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.ResourceTypeRole;
-import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -121,13 +120,7 @@ public class SamResourceTest {
 
   @Test
   public void testPostSelfTos() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
     Response response = resource.postSelfTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -135,14 +128,8 @@ public class SamResourceTest {
 
   @Test
   public void testPostSelfTos_NoConsentUser() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
     doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
-    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
 
     Response response = resource.postSelfTos(authUser);
@@ -152,14 +139,8 @@ public class SamResourceTest {
 
   @Test
   public void testPostSelfTos_ExistingSamUser() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
     doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
-    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(409);
     initResource();
 
     Response response = resource.postSelfTos(authUser);
@@ -168,13 +149,7 @@ public class SamResourceTest {
 
   @Test
   public void testRemoveSelfTos() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    when(samService.removeTosAcceptedStatus(any())).thenReturn(tosResponse);
+    when(samService.removeTosAcceptedStatus(any())).thenReturn(200);
     initResource();
     Response response = resource.removeTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

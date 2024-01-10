@@ -5,7 +5,6 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -43,11 +42,11 @@ public class SamService {
     return samDAO.getToSText();
   }
 
-  public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    return samDAO.postTosAcceptedStatus(authUser);
+  public int postTosAcceptedStatus(AuthUser authUser) throws Exception {
+    return samDAO.acceptTosStatus(authUser);
   }
 
-  public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
-    return samDAO.removeTosAcceptedStatus(authUser);
+  public int removeTosAcceptedStatus(AuthUser authUser) throws Exception {
+    return samDAO.rejectTosStatus(authUser);
   }
 }

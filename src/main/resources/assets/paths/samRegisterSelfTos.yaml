@@ -6,10 +6,6 @@ post:
   responses:
     200:
       description: Accept ToS
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/SamTosResponse.yaml'
     500:
       description: Internal Server Error
 delete:
@@ -20,9 +16,5 @@ delete:
   responses:
     200:
       description: Reject ToS
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/SamTosResponse.yaml'
     500:
       description: Internal Server Error
