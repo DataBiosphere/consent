@@ -144,7 +144,7 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = clientUtil.handleHttpRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException("Error getting Terms of Service status from Sam: " + response.getStatusMessage(),
+      logException(String.format("Error getting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
