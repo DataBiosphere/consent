@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -105,8 +104,8 @@ public class SamResource extends Resource {
         user.setDisplayName(authUser.getName());
         userService.createUser(user);
       }
-      TosResponse response = samService.postTosAcceptedStatus(authUser);
-      return Response.ok().entity(response).build();
+      TosResponse tosResponse = samService.postTosAcceptedStatus(authUser);
+      return Response.ok().entity(tosResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -119,8 +118,8 @@ public class SamResource extends Resource {
   @PermitAll
   public Response removeTos(@Auth AuthUser authUser) {
     try {
-      TosResponse response = samService.removeTosAcceptedStatus(authUser);
-      return Response.ok().entity(response).build();
+      TosResponse tosResponse = samService.removeTosAcceptedStatus(authUser);
+      return Response.ok().entity(tosResponse).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
