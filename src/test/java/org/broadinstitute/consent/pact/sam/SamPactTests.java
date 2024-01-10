@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatus.Enabled;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
@@ -78,6 +79,9 @@ public class SamPactTests {
               .setAllUsersGroup(USER_STATUS_DIAGNOSTICS.getInAllUsersGroup())
               .setLdap(true)
               .setGoogle(USER_STATUS_DIAGNOSTICS.getInGoogleProxyGroup()));
+
+  private static final TosResponse TOS_RESPONSE =
+      new TosResponse("accepted", true, "version", true);
 
   private static final EmailResponse EMAIL_RESPONSE =
       new EmailResponse("googleId", "email", "subjectId");
@@ -173,15 +177,29 @@ public class SamPactTests {
   }
 
   @Pact(consumer = CONSUMER_NAME)
-  public RequestResponsePact getTermsOfService(PactDslWithProvider builder) {
+  public RequestResponsePact getTermsOfServiceText(PactDslWithProvider builder) {
     return builder
-        .given(" GET Sam Terms of Service")
+        .given(" GET Sam Terms of Service Text")
         .uponReceiving(" GET Request: " + ServicesConfiguration.TOS_TEXT_PATH)
         .path("/" + ServicesConfiguration.TOS_TEXT_PATH)
         .method("GET")
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_OK)
         .headers(TEXT_PLAIN_HEADERS)
+        .toPact();
+  }
+
+  @Pact(consumer = CONSUMER_NAME)
+  public RequestResponsePact getTermsOfService(PactDslWithProvider builder) {
+    return builder
+        .given(" GET Sam Terms of Service")
+        .uponReceiving(" GET Request: " + ServicesConfiguration.TOS_SELF_PATH)
+        .path("/" + ServicesConfiguration.TOS_SELF_PATH)
+        .method("GET")
+        .willRespondWith()
+        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .headers(JSON_HEADERS)
+        .body(TOS_RESPONSE.toString())
         .toPact();
   }
 
@@ -276,14 +294,25 @@ public class SamPactTests {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getTermsOfService")
-  void testGetTermsOfService(MockServer mockServer) throws Exception {
+  @PactTestFor(pactMethod = "getTermsOfServiceText")
+  void testgetTermsOfServiceText(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
 
     String tosText = samDAO.getToSText();
     assertNotNull(tosText);
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "getTermsOfService")
+  void testgetTermsOfService(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    TosResponse tosResponse = samDAO.getTosResponse(authUser);
+    assertNotNull(tosResponse);
   }
 
   /**

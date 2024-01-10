@@ -13,7 +13,7 @@ public class ServicesConfiguration {
   public static final String REGISTER_SELF_DIAGNOSTICS_PATH = "register/user/v2/self/diagnostics";
   public static final String REGISTER_SELF_PATH = "register/user/v2/self";
   public static final String TOS_TEXT_PATH = "tos/text";
-  public static final String GET_TOS_PATH = "api/termsOfService/v1/user/self";
+  public static final String TOS_SELF_PATH = "api/termsOfService/v1/user/self";
   public static final String ACCEPT_TOS_PATH = "api/termsOfService/v1/user/self/accept";
   public static final String REJECT_TOS_PATH = "api/termsOfService/v1/user/self/reject";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
@@ -101,7 +101,7 @@ public class ServicesConfiguration {
   }
 
   public String getSelfTosUrl() {
-    return getSamUrl() + GET_TOS_PATH;
+    return getSamUrl() + TOS_SELF_PATH;
   }
 
   public String acceptTosUrl() {
