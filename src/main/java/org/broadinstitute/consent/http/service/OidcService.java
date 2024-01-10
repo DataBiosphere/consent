@@ -15,6 +15,8 @@ import org.broadinstitute.consent.http.models.OAuth2Configuration;
 
 public class OidcService {
   private static final String SCOPE_PARAM = "scope";
+
+  // nosemgrep
   private static final String CLIENT_SECRET_PARAM = "client_secret";
 
   private final OidcAuthorityDAO oidcAuthorityDAO;
