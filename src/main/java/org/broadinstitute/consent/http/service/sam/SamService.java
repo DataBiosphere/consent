@@ -9,8 +9,9 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class SamService {
+public class SamService implements ConsentLogger {
 
   private final SamDAO samDAO;
 
