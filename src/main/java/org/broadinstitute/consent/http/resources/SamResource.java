@@ -18,6 +18,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -104,12 +105,8 @@ public class SamResource extends Resource {
         user.setDisplayName(authUser.getName());
         userService.createUser(user);
       }
-      int status = samService.postTosAcceptedStatus(authUser);
-      if (HttpStatusCodes.isSuccess(status)) {
-        return Response.ok().build();
-      } else {
-        return Response.status(status).build();
-      }
+      TosResponse response = samService.postTosAcceptedStatus(authUser);
+      return Response.ok().entity(response).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -122,12 +119,8 @@ public class SamResource extends Resource {
   @PermitAll
   public Response removeTos(@Auth AuthUser authUser) {
     try {
-      int status = samService.removeTosAcceptedStatus(authUser);
-      if (HttpStatusCodes.isSuccess(status)) {
-        return Response.ok().build();
-      } else {
-        return Response.status(status).build();
-      }
+      TosResponse response = samService.removeTosAcceptedStatus(authUser);
+      return Response.ok().entity(response).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

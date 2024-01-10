@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.ResourceTypeRole;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -120,7 +121,8 @@ class SamResourceTest {
 
   @Test
   void testPostSelfTos() throws Exception {
-    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
     Response response = resource.postSelfTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -129,7 +131,8 @@ class SamResourceTest {
   @Test
   void testPostSelfTos_NoConsentUser() throws Exception {
     doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
-    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
     Response response = resource.postSelfTos(authUser);
@@ -139,7 +142,8 @@ class SamResourceTest {
 
   @Test
   void testPostSelfTos_ExistingSamUser() throws Exception {
-    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
     Response response = resource.postSelfTos(authUser);
@@ -148,7 +152,8 @@ class SamResourceTest {
 
   @Test
   void testRemoveSelfTos() throws Exception {
-    when(samService.removeTosAcceptedStatus(any())).thenReturn(200);
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", false);
+    when(samService.removeTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
     Response response = resource.removeTos(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

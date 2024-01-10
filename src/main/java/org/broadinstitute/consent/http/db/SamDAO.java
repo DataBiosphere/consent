@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
+import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -136,6 +137,18 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.parseAsString();
+  }
+
+  public TosResponse getTosResponse(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.getSelfTosUrl());
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (!response.isSuccessStatusCode()) {
+      logException("Error getting Terms of Service status from Sam: " + response.getStatusMessage(),
+          new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+    }
+    String body = response.parseAsString();
+    return new Gson().fromJson(body, TosResponse.class);
   }
 
   public int acceptTosStatus(AuthUser authUser) throws Exception {

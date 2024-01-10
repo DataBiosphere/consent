@@ -1,0 +1,18 @@
+type: object
+properties:
+  acceptedOn:
+    type: string
+    description: |
+      The timestamp marking when the user accepted the terms of service matching latestAcceptedVersion.
+  isCurrentVersion:
+    type: boolean
+    description: |
+      Is the Terms of Service version the user has accepted the current Terms of Service version of the system.
+  latestAcceptedVersion:
+    type: string
+    description: |
+      The latest version of the terms of service that the requesting user has accepted.
+  permitsSystemUsage:
+    type: boolean
+    description: |
+      Based on the user's currently accepted terms of service version and when the terms of service were last changed, should the user still be permitted to use the system?
