@@ -6,7 +6,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
@@ -15,7 +14,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Collections;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -27,9 +25,12 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SamResourceTest {
+@ExtendWith(MockitoExtension.class)
+class SamResourceTest {
 
   @Mock
   private AuthUser authUser;
@@ -46,8 +47,7 @@ public class SamResourceTest {
   private SamResource resource;
 
   @BeforeEach
-  public void setUp() {
-    openMocks(this);
+  void setUp() {
   }
 
   private void initResource() {
@@ -139,7 +139,6 @@ public class SamResourceTest {
 
   @Test
   void testPostSelfTos_ExistingSamUser() throws Exception {
-    doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
     when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
 
