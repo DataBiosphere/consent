@@ -55,7 +55,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testGetResourceTypes() throws Exception {
+  void testGetResourceTypes() throws Exception {
     ActionPattern pattern = new ActionPattern()
         .setAuthDomainConstrainable(true)
         .setDescription("description")
@@ -79,7 +79,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostRegistrationInfo() throws Exception {
+  void testPostRegistrationInfo() throws Exception {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
         .setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
@@ -92,7 +92,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testGetSelfDiagnostics() throws Exception {
+  void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
         .setAdminEnabled(RandomUtils.nextBoolean())
         .setEnabled(RandomUtils.nextBoolean())
@@ -106,7 +106,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testGetRegistrationInfo() throws Exception {
+  void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo = new UserStatusInfo()
         .setAdminEnabled(RandomUtils.nextBoolean())
         .setUserEmail("test@test.org")
@@ -119,7 +119,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos() throws Exception {
+  void testPostSelfTos() throws Exception {
     when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
     Response response = resource.postSelfTos(authUser);
@@ -127,7 +127,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos_NoConsentUser() throws Exception {
+  void testPostSelfTos_NoConsentUser() throws Exception {
     doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
     when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
@@ -138,9 +138,9 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos_ExistingSamUser() throws Exception {
+  void testPostSelfTos_ExistingSamUser() throws Exception {
     doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
-    when(samService.postTosAcceptedStatus(any())).thenReturn(409);
+    when(samService.postTosAcceptedStatus(any())).thenReturn(200);
     initResource();
 
     Response response = resource.postSelfTos(authUser);
@@ -148,7 +148,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testRemoveSelfTos() throws Exception {
+  void testRemoveSelfTos() throws Exception {
     when(samService.removeTosAcceptedStatus(any())).thenReturn(200);
     initResource();
     Response response = resource.removeTos(authUser);
