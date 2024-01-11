@@ -738,6 +738,9 @@ public class DatasetRegistrationService implements ConsentLogger {
       List<DatasetServiceDAO.DatasetUpdate> datasetUpdates) {
     List<Integer> datasetUpdateIds = datasetUpdates.stream()
         .map(DatasetServiceDAO.DatasetUpdate::datasetId).toList();
+    if (updatedStudy.getDatasets() == null) {
+      return List.of();
+    }
     return updatedStudy.getDatasets().stream().filter(
         dataset -> !datasetUpdateIds.contains(dataset.getDataSetId())).toList();
   }
