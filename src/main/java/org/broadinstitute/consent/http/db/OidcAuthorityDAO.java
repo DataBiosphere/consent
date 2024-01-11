@@ -4,6 +4,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.UrlEncodedContent;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -32,6 +33,11 @@ public class OidcAuthorityDAO implements ConsentLogger {
       oidcAuthorityConfiguration = loadOidcAuthorityConfiguration();
     }
     return oidcAuthorityConfiguration;
+  }
+
+  @VisibleForTesting
+  void setOidcAuthorityConfiguration(OidcAuthorityConfiguration oidcAuthorityConfiguration) {
+    this.oidcAuthorityConfiguration = oidcAuthorityConfiguration;
   }
 
   public String oauthTokenPost(MultivaluedMap<String, String> formParameters, MultivaluedMap<String, String> queryParameters) {
