@@ -38,7 +38,10 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Pact Consumer Contract and test for interactions between Consent and Sam
@@ -46,7 +49,8 @@ import org.junit.jupiter.api.Test;
 @PactConsumerTest
 @PactTestFor(providerName = SamPactTests.PROVIDER_NAME, pactVersion = PactSpecVersion.V3)
 @MockServerConfig(hostInterface = "localhost", port = "1234")
-public class SamPactTests {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class SamPactTests {
 
   protected static final String PROVIDER_NAME = "sam";
   protected static final String CONSUMER_NAME = "consent";
@@ -105,6 +109,7 @@ public class SamPactTests {
   @BeforeEach
   public void setUp(MockServer mockServer) {
     assertThat(mockServer, is(notNullValue()));
+    System.out.println(mockServer.getUrl());
   }
 
   private void initSamDAO(MockServer mockServer) {
@@ -211,7 +216,7 @@ public class SamPactTests {
         .path("/" + ServicesConfiguration.ACCEPT_TOS_PATH)
         .method("PUT")
         .willRespondWith()
-        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .status(HttpStatusCodes.STATUS_CODE_NO_CONTENT)
         .headers(JSON_HEADERS)
         .body(USER_STATUS.toString())
         .toPact();
@@ -225,7 +230,7 @@ public class SamPactTests {
         .path("/" + ServicesConfiguration.REJECT_TOS_PATH)
         .method("PUT")
         .willRespondWith()
-        .status(HttpStatusCodes.STATUS_CODE_OK)
+        .status(HttpStatusCodes.STATUS_CODE_NO_CONTENT)
         .headers(JSON_HEADERS)
         .body(USER_STATUS.toString())
         .toPact();
@@ -248,7 +253,88 @@ public class SamPactTests {
 
   //******* Tests *******//
 
+  /**
+   * TODO: The ToS Accept/Reject methods are hitting
+   * "Server Error (Unexpected end of file from server)" on request.execute() on the second PUT
+   * request when they are executed too closely together in time (within 4 seconds ...
+   * `Thread.sleep(5000);` will allow the second call to work). For that reason, we make the first
+   * call (see @Order annotation) normally and wrap the second one in a try block and execute it
+   * differently since we know that the normal path hits the mock server error
+   */
   @Test
+  @Order(1)
+  @PactTestFor(pactMethod = "acceptTermsOfService")
+  void testAcceptTermsOfService(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    int tosResponse = samDAO.acceptTosStatus(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, tosResponse);
+  }
+
+  @Test
+  @Order(2)
+  @PactTestFor(pactMethod = "getSelfInfo")
+  void testGetSelfInfo(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    UserStatusInfo info = samDAO.getRegistrationInfo(authUser);
+    assertNotNull(info);
+  }
+
+  @Test
+  @Order(3)
+  @PactTestFor(pactMethod = "getSelfDiagnostics")
+  void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
+    assertNotNull(statusDiagnostics);
+  }
+
+  @Test
+  @Order(4)
+  @PactTestFor(pactMethod = "postUserRegistration")
+  void testPostUserRegistration(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
+    assertNotNull(userStatus);
+  }
+
+  @Test
+  @Order(5)
+  @PactTestFor(pactMethod = "getTermsOfServiceText")
+  void testGetTermsOfServiceText(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    String tosText = samDAO.getToSText();
+    assertNotNull(tosText);
+  }
+
+  @Test
+  @Order(6)
+  @PactTestFor(pactMethod = "getTermsOfService")
+  void testGetTermsOfService(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+    TosResponse tosResponse = samDAO.getTosResponse(authUser);
+    assertNotNull(tosResponse);
+  }
+
+  @Test
+  @Order(7)
   @PactTestFor(pactMethod = "getResourceTypes")
   void testGetResourceTypes(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
@@ -261,105 +347,7 @@ public class SamPactTests {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getSelfInfo")
-  void testGetSelfInfo(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    UserStatusInfo info = samDAO.getRegistrationInfo(authUser);
-    assertNotNull(info);
-  }
-
-  @Test
-  @PactTestFor(pactMethod = "getSelfDiagnostics")
-  void testGetSelfDiagnostics(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
-    assertNotNull(statusDiagnostics);
-  }
-
-  @Test
-  @PactTestFor(pactMethod = "postUserRegistration")
-  void testPostUserRegistration(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
-    assertNotNull(userStatus);
-  }
-
-  @Test
-  @PactTestFor(pactMethod = "getTermsOfServiceText")
-  void testgetTermsOfServiceText(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    String tosText = samDAO.getToSText();
-    assertNotNull(tosText);
-  }
-
-  @Test
-  @PactTestFor(pactMethod = "getTermsOfService")
-  void testgetTermsOfService(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    TosResponse tosResponse = samDAO.getTosResponse(authUser);
-    assertNotNull(tosResponse);
-  }
-
-  /**
-   * TODO: The ToS Accept/Reject methods are hitting "Server Error (Unexpected end of file from server)"
-   * on request.execute(). To work around this, we make the request again with httpclient5 when that
-   * happens to make sure we're exercising these paths in pact tests.
-   */
-  @Test
-  @PactTestFor(pactMethod = "acceptTermsOfService")
-  void testAcceptTermsOfService(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    try {
-      int tosResponse = samDAO.acceptTosStatus(authUser);
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, tosResponse);
-    } catch (Exception e) {
-      ClassicHttpResponse response = (ClassicHttpResponse) Request.put(
-              mockServer.getUrl() + "/" + ServicesConfiguration.ACCEPT_TOS_PATH).execute()
-          .returnResponse();
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
-    }
-  }
-
-  /**
-   * TODO: See comments for testAcceptTermsOfService as they apply here too.
-   */
-  @Test
-  @PactTestFor(pactMethod = "rejectTermsOfService")
-  void testRejectTermsOfService(MockServer mockServer) throws Exception {
-    initSamDAO(mockServer);
-    AuthUser authUser = new AuthUser();
-    authUser.setAuthToken("auth-token");
-
-    try {
-      int tosResponse = samDAO.rejectTosStatus(authUser);
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, tosResponse);
-    } catch (Exception e) {
-      ClassicHttpResponse response = (ClassicHttpResponse) Request.put(
-              mockServer.getUrl() + "/" + ServicesConfiguration.REJECT_TOS_PATH).execute()
-          .returnResponse();
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getCode());
-    }
-  }
-
-  @Test
+  @Order(8)
   @PactTestFor(pactMethod = "getV1UserByEmail")
   void testGetV1UserByEmail(MockServer mockServer) throws Exception {
     initSamDAO(mockServer);
@@ -370,4 +358,31 @@ public class SamPactTests {
     assertNotNull(response);
   }
 
+  /**
+   * TODO: See comments for testAcceptTermsOfService as they apply here too.
+   */
+  @Test
+  @Order(9)
+  @PactTestFor(pactMethod = "rejectTermsOfService")
+  void testRejectTermsOfService(MockServer mockServer) throws Exception {
+    initSamDAO(mockServer);
+    AuthUser authUser = new AuthUser();
+    authUser.setAuthToken("auth-token");
+
+// Leaving this code here for reference. Sleeping for 5 seconds does something to the mock server
+// client that allows the following http5 client execution that to succeed.
+//    Thread.sleep(5000);
+//    int tosResponse = samDAO.rejectTosStatus(authUser);
+//    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, tosResponse);
+
+    try {
+      int tosResponse = samDAO.rejectTosStatus(authUser);
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, tosResponse);
+    } catch (Exception e) {
+      ClassicHttpResponse response = (ClassicHttpResponse) Request.put(
+              mockServer.getUrl() + "/" + ServicesConfiguration.REJECT_TOS_PATH).execute()
+          .returnResponse();
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getCode());
+    }
+  }
 }
