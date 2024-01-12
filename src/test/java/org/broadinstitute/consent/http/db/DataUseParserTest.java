@@ -27,4 +27,18 @@ class DataUseParserTest {
     assertNull(dataUse);
   }
 
+  @Test
+  void testParseNullDataUse() {
+    DataUseParser dataUseParser = new DataUseParser();
+    DataUse dataUse = dataUseParser.parseDataUse(null);
+    assertNull(dataUse);
+  }
+
+  @Test
+  void testParseEmptyDataUse() {
+    DataUseParser dataUseParser = new DataUseParser();
+    DataUse dataUse = dataUseParser.parseDataUse("");
+    assertNull(dataUse);
+  }
+
 }

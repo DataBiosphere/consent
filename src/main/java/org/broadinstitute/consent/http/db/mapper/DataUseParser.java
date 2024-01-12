@@ -13,6 +13,9 @@ public class DataUseParser implements ConsentLogger {
   private final ConcurrentMap<String, DataUse> dataUseCache = new ConcurrentHashMap<>();
 
   public DataUse parseDataUse(String dataUseString) {
+    if (null == dataUseString || dataUseString.isEmpty()) {
+      return null;
+    }
     return dataUseCache.computeIfAbsent(dataUseString, s -> {
       try {
         return gson.fromJson(dataUseString, DataUse.class);
