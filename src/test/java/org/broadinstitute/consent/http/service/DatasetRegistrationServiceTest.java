@@ -343,6 +343,17 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
+  public void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
+    Study study = mock();
+    List<DatasetUpdate> updatedDatasets = null;
+    initService();
+    when(study.getDatasets()).thenReturn(null);
+    List<Dataset> datasets = datasetRegistrationService.createdDatasetsFromUpdatedStudy(study,
+        updatedDatasets);
+    assertTrue(datasets.isEmpty());
+  }
+
+  @Test
   public void testInsertAccessManagement() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
