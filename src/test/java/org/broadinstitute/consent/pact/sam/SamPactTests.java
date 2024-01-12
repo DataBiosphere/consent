@@ -109,7 +109,6 @@ class SamPactTests {
   @BeforeEach
   public void setUp(MockServer mockServer) {
     assertThat(mockServer, is(notNullValue()));
-    System.out.println(mockServer.getUrl());
   }
 
   private void initSamDAO(MockServer mockServer) {
@@ -218,7 +217,6 @@ class SamPactTests {
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_NO_CONTENT)
         .headers(JSON_HEADERS)
-        .body(USER_STATUS.toString())
         .toPact();
   }
 
@@ -232,7 +230,6 @@ class SamPactTests {
         .willRespondWith()
         .status(HttpStatusCodes.STATUS_CODE_NO_CONTENT)
         .headers(JSON_HEADERS)
-        .body(USER_STATUS.toString())
         .toPact();
   }
 
