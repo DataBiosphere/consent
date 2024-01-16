@@ -7,6 +7,9 @@ properties:
   consentGroupName:
     type: string
     description: Consent Group Name
+  datasetId:
+    type: number
+    description: The dataset id of the consent group
   accessManagement:
     description: Access Management
     type: string
