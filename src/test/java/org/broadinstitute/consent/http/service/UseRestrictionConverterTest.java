@@ -185,9 +185,7 @@ class UseRestrictionConverterTest implements WithMockServer {
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
-    // These cases are slightly different as forProfit false means neither commercial nor non-profit
-    assertNull(dataUse.getCommercialUse());
-    assertNull(dataUse.getNonProfitUse());
+    assertNotNull(dataUse.getNonProfitUse());
     assertNull(dataUse.getOther());
     assertNull(dataUse.getSecondaryOther());
     assertNull(dataUse.getEthicsApprovalRequired());

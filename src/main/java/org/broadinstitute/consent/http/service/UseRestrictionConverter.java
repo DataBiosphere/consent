@@ -61,11 +61,12 @@ public class UseRestrictionConverter implements ConsentLogger {
         dataUse.setDiseaseRestrictions(ontologies);
       }
 
-      // When true, the DAR is explicitly commercial use.
-      // When false/null, the DAR is neither commercial nor non-profit
-      // Therefore, we only set non-profit (false) in the expressly positive for-profit case
+      // When forProfit==true, the DAR is explicitly NOT NPU
+      // When forProfit==false, the DAR is explicitly NPU.
       if (Boolean.TRUE.equals(dar.getData().getForProfit())) {
         dataUse.setNonProfitUse(Boolean.FALSE);
+      } else if (Boolean.FALSE.equals(dar.getData().getForProfit())) {
+        dataUse.setNonProfitUse(Boolean.TRUE);
       }
 
       // gender
