@@ -133,12 +133,12 @@ public class SwaggerResource {
           });
           ui.initOAuth({
             clientId: "OAUTH_CLIENT_ID",
-            clientSecret: "",
             realm: "Broad Institute",
             appName: "Consent",
             scopeSeparator: " ",
-            scopes: "profile email",
-            additionalQueryStringParams: {}
+            scopes: "openid profile email",
+            additionalQueryStringParams: {},
+            usePkceWithAuthorizationCodeGrant: true
           });
         };
         """;
