@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -46,10 +45,6 @@ class SamResourceTest {
   private UriInfo uriInfo;
 
   private SamResource resource;
-
-  @BeforeEach
-  void setUp() {
-  }
 
   private void initResource() {
     resource = new SamResource(samService, userService);
