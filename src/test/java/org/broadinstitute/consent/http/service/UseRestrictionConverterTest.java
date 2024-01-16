@@ -185,9 +185,9 @@ class UseRestrictionConverterTest implements WithMockServer {
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
-    // These cases are slightly different as forProfit false means commercialUse is false and nonProfitUse is true
-    assertNotNull(dataUse.getCommercialUse());
-    assertNotNull(dataUse.getNonProfitUse());
+    // These cases are slightly different as forProfit false means neither commercial nor non-profit
+    assertNull(dataUse.getCommercialUse());
+    assertNull(dataUse.getNonProfitUse());
     assertNull(dataUse.getOther());
     assertNull(dataUse.getSecondaryOther());
     assertNull(dataUse.getEthicsApprovalRequired());
@@ -244,13 +244,13 @@ class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  void testParseDataUsePurposeCommercial() {
+  void testParseDataUsePurposeForProfit() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setForProfit(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getCommercialUse());
+    assertFalse(dataUse.getNonProfitUse());
   }
 
   @Test
