@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
+import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -576,6 +578,16 @@ public class ConsentModule extends AbstractModule {
   @Provides
   SamDAO providesSamDAO() {
     return new SamDAO(providesHttpClientUtil(), config.getServicesConfiguration());
+  }
+
+  @Provides
+  OidcAuthorityDAO providesOidcAuthorityDAO() {
+    return new OidcAuthorityDAO(providesHttpClientUtil(), config.getOidcConfiguration());
+  }
+
+  @Provides
+  OidcService providesOidcService() {
+    return new OidcService(providesOidcAuthorityDAO(), config.getOidcConfiguration());
   }
 
   @Provides

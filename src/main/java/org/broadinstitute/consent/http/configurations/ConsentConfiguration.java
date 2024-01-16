@@ -56,6 +56,11 @@ public class ConsentConfiguration extends Configuration {
   @JsonProperty
   private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
 
+  @Valid
+  @NotNull
+  @JsonProperty
+  private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
+
   public DataSourceFactory getDataSourceFactory() {
     return database;
   }
@@ -88,4 +93,7 @@ public class ConsentConfiguration extends Configuration {
     return elasticSearch;
   }
 
+  public OidcConfiguration getOidcConfiguration() {
+    return oidcConfiguration;
+  }
 }
