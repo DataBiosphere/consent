@@ -9,19 +9,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.broadinstitute.consent.http.models.OAuth2Configuration;
 import org.broadinstitute.consent.http.service.OidcService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class OAuth2ResourceTest {
+@ExtendWith(MockitoExtension.class)
+class OAuth2ResourceTest {
   @Mock private OidcService mockOidcService;
   @Mock private UriInfo mockUriInfo;
-
-  @BeforeEach
-  public void setUp() throws Exception {
-    MockitoAnnotations.openMocks(this);
-  }
 
   @Test
   public void testGetOAuth2Redirect() throws URISyntaxException {

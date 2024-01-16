@@ -9,23 +9,19 @@ import java.net.URISyntaxException;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.models.OidcAuthorityConfiguration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class OidcServiceTest {
+@ExtendWith(MockitoExtension.class)
+class OidcServiceTest {
 
   @Mock private OidcAuthorityDAO mockOidcAuthorityDAO;
   OidcAuthorityConfiguration testConfig = new OidcAuthorityConfiguration(
       "http://example.com",
       "http://example.com/authorization",
       "http://example.com/token");
-
-  @BeforeEach
-  public void setUp() throws Exception {
-    MockitoAnnotations.openMocks(this);
-  }
 
   @Test
   public void testGetAuthorizationURI() throws URISyntaxException {

@@ -14,19 +14,17 @@ import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.models.OidcAuthorityConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
-public class OidcAuthorityDAOTest implements WithMockServer {
+class OidcAuthorityDAOTest implements WithMockServer {
 
   private OidcAuthorityDAO dao;
 
@@ -64,6 +62,25 @@ public class OidcAuthorityDAOTest implements WithMockServer {
     final String expectedIssuer = "https://example.com";
     final String expectedAuthorizationEndpoint = expectedIssuer + "/oauth2/authorize";
     final String expectedTokenEndpoint = expectedIssuer + "/oauth2/token";
+    // the only things that matter in this body are the issuer, authorization_endpoint, and token_endpoint
+    // the rest of the fields are just to simulate a real response
+    final String bodyFormat = """
+        {
+          "issuer":"%s",
+          "authorization_endpoint":"%s",
+          "token_endpoint":"%s",
+          "userinfo_endpoint":"%s/oauth2/userinfo",
+          "revocation_endpoint":"https://example.com/oauth2/revoke",
+          "jwks_uri":"https://example.com/oauth2/keys",
+          "response_types_supported":["code","token","id_token","code token","code id_token","token id_token","code token id_token","none"],
+          "subject_types_supported":["public"],
+          "id_token_signing_alg_values_supported":["RS256"],
+          "scopes_supported":["openid","profile","email","address","phone"],
+          "token_endpoint_auth_methods_supported":["client_secret_basic","client_secret_post"],
+          "claims_supported":["sub","iss","email","email_verified","phone_number","phone_number_verified","address","name","client_id"],
+          "code_challenge_methods_supported":["plain","S256"]
+        }
+        """;
 
     mockServerClient
         .when(
@@ -74,12 +91,7 @@ public class OidcAuthorityDAOTest implements WithMockServer {
             response()
                 .withStatusCode(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(
-                    "{\"issuer\":\"" + expectedIssuer + "\",\"authorization_endpoint\":\""
-                        + expectedAuthorizationEndpoint
-                        + "\",\"token_endpoint\":\"" + expectedTokenEndpoint
-                        + "\",\"userinfo_endpoint\":\"" + expectedIssuer
-                        + "/oauth2/userinfo\",\"revocation_endpoint\":\"https://example.com/oauth2/revoke\",\"jwks_uri\":\"https://example.com/oauth2/keys\",\"response_types_supported\":[\"code\",\"token\",\"id_token\",\"code token\",\"code id_token\",\"token id_token\",\"code token id_token\",\"none\"],\"subject_types_supported\":[\"public\"],\"id_token_signing_alg_values_supported\":[\"RS256\"],\"scopes_supported\":[\"openid\",\"profile\",\"email\",\"address\",\"phone\"],\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"],\"claims_supported\":[\"sub\",\"iss\",\"email\",\"email_verified\",\"phone_number\",\"phone_number_verified\",\"address\",\"name\",\"client_id\"],\"code_challenge_methods_supported\":[\"plain\",\"S256\"]}"));
+                .withBody(bodyFormat.formatted(expectedIssuer, expectedAuthorizationEndpoint, expectedTokenEndpoint, expectedIssuer)));
     var actual = dao.getOidcAuthorityConfiguration();
     assertEquals(expectedTokenEndpoint, actual.token_endpoint());
     assertEquals(expectedAuthorizationEndpoint, actual.authorization_endpoint());
@@ -88,7 +100,16 @@ public class OidcAuthorityDAOTest implements WithMockServer {
 
   @Test
   public void testOauthTokenPost() {
-    var expectedResponse = "{\"access_token\":\"1234567890\",\"token_type\":\"Bearer\",\"expires_in\":3600,\"refresh_token\":\"0987654321\",\"id_token\":\"1234567890\"}";
+    // the content of this response doesn't matter, it's just to simulate a real response
+    var expectedResponse = """
+        {
+          "access_token":"1234567890",
+          "token_type":"Bearer",
+          "expires_in":3600,
+          "refresh_token":"0987654321",
+          "id_token":"1234567890"
+        }
+        """;
     var formParameters = new MultivaluedHashMap<>(Map.of("formParam", "formValue"));
     var queryParameters = new MultivaluedHashMap<>(Map.of("queryParam", "queryValue"));
     var tokenPath = "/oauth2/token";
