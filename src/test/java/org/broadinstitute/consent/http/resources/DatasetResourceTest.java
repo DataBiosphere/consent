@@ -34,7 +34,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -83,9 +82,6 @@ class DatasetResourceTest {
 
   @Mock
   private AuthUser authUser;
-
-  @Mock
-  private GenericUser genericUser;
 
   @Mock
   private User user;
@@ -137,8 +133,6 @@ class DatasetResourceTest {
     when(datasetService.getDatasetByName("test")).thenReturn(null);
     when(datasetService.createDatasetFromDatasetDTO(any(), any(), anyInt())).thenReturn(result);
     when(datasetService.getDatasetDTO(any())).thenReturn(result);
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -249,8 +243,6 @@ class DatasetResourceTest {
     when(datasetService.getDatasetByName("test")).thenReturn(null);
     doThrow(new RuntimeException()).when(datasetService)
         .createDatasetFromDatasetDTO(any(), any(), anyInt());
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     initResource();
@@ -266,8 +258,6 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetService.updateDataset(any(), any(), any())).thenReturn(
         Optional.of(preexistingDataset));
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);
@@ -340,8 +330,6 @@ class DatasetResourceTest {
     String json = createPropertiesJson("Dataset Name", "test");
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);
@@ -1010,8 +998,6 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
         preexistingDataset);
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);
@@ -1119,8 +1105,6 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
         preexistingDataset);
-    when(authUser.getGenericUser()).thenReturn(genericUser);
-    when(genericUser.getEmail()).thenReturn("email@email.com");
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);

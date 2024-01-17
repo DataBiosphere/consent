@@ -40,9 +40,6 @@ class OAuthCustomAuthFilterTest {
   @Mock
   private AuthUser user;
 
-  @Mock
-  private GenericUser genericUser;
-
   private final String token = "0cx2G9gKm4XZdK8BFxoWy7AE025tvq";
 
   @BeforeEach
@@ -52,10 +49,7 @@ class OAuthCustomAuthFilterTest {
     when(headers.getFirst("Authorization")).thenReturn("Bearer %s".formatted(token));
     when(authenticator.authenticate(notNull())).thenReturn(Optional.of(user));
     filter = Mockito.spy(new OAuthCustomAuthFilter<>(authenticator, userRoleDAO));
-    genericUser = new GenericUser();
-    genericUser.setName("Test User");
-    genericUser.setEmail("test@gmail.com");
-    user = new AuthUser(genericUser);
+    user = new AuthUser().setName("Test User").setEmail("test@gmail.com");
   }
 
   @Test
