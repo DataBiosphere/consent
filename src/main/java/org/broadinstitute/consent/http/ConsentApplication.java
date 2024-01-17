@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
@@ -262,6 +263,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     List<AuthFilter> filters = List.of(
         defaultAuthFilter,
         new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    env.jersey().register(RequestHeaderCacheFilter.class);
     env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
     env.jersey().register(RolesAllowedDynamicFeature.class);
     env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));

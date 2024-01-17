@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Objects;
 import java.util.Optional;
+import org.broadinstitute.consent.http.filters.RequestHeaderCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -21,16 +22,20 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
   private final Client client;
   private final SamService samService;
+  private final RequestHeaderCache requestHeaderCache;
 
   @Inject
   public OAuthAuthenticator(Client client, SamService samService) {
     this.client = client;
     this.samService = samService;
+    this.requestHeaderCache = RequestHeaderCache.getInstance();
   }
 
   @Override
   public Optional<AuthUser> authenticate(String bearer) {
     try {
+      // TODO: Populate AuthUser from header values
+      var headers = requestHeaderCache.cache.getIfPresent(bearer);
       GenericUser genericUser = getUserProfileInfo(bearer);
       AuthUser user = Objects.nonNull(genericUser) ?
           new AuthUser(genericUser).setAuthToken(bearer) :
