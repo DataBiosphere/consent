@@ -9,8 +9,9 @@ import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class SamService {
+public class SamService implements ConsentLogger {
 
   private final SamDAO samDAO;
 
@@ -44,10 +45,12 @@ public class SamService {
   }
 
   public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    return samDAO.postTosAcceptedStatus(authUser);
+    samDAO.acceptTosStatus(authUser);
+    return samDAO.getTosResponse(authUser);
   }
 
   public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
-    return samDAO.removeTosAcceptedStatus(authUser);
+    samDAO.rejectTosStatus(authUser);
+    return samDAO.getTosResponse(authUser);
   }
 }
