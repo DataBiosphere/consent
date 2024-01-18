@@ -1,33 +1,18 @@
 type: object
 properties:
-  enabled:
-    type: object
-    description: Collection of enabled statuses
-    properties:
-      adminEnabled:
-        type: boolean
-        description: | 
-          Admin enabled/disabled status used to indicate whether or not a Terra admin has 
-          explicitly disabled a user in the system
-      allUsersGroup:
-        type: boolean
-        description: All Users Group status
-      google:
-        type: boolean
-        description: Google Proxy Group status
-      ldap:
-        type: boolean
-        description: LDAP status
-      tosAccepted:
-        type: boolean
-        description: Terms of Service Acceptance status
-  userInfo:
-    type: object
-    description: User Info Summary
-    properties:
-      userEmail:
-        type: string
-        description: Sam User email
-      userSubjectId:
-        type: string
-        description: Sam User subject id
+  acceptedOn:
+    type: string
+    description: |
+      The timestamp marking when the user accepted the terms of service matching latestAcceptedVersion.
+  isCurrentVersion:
+    type: boolean
+    description: |
+      Is the Terms of Service version the user has accepted the current Terms of Service version of the system.
+  latestAcceptedVersion:
+    type: string
+    description: |
+      The latest version of the terms of service that the requesting user has accepted.
+  permitsSystemUsage:
+    type: boolean
+    description: |
+      Based on the user's currently accepted terms of service version and when the terms of service were last changed, should the user still be permitted to use the system?
