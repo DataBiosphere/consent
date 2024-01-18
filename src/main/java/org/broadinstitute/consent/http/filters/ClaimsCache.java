@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * Manage a cache of bearer token to map of headers for every request. This is useful in cases
- * where components need, but do not have, access to the complete request context.
+ * Manage a cache of bearer token to map of `OAUTH2_CLAIM` headers for every request. This is
+ * useful in cases where components need, but do not have access to, the full request context.
  */
 public class ClaimsCache {
 
