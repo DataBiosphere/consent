@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.filters;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.AbstractMap;
 import java.util.List;
