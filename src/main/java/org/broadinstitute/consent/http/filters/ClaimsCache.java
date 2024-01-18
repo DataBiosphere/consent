@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
  * Manage a cache of bearer token to map of headers for every request. This is useful in cases
  * where components need, but do not have, access to the complete request context.
  */
-@Singleton
 public class ClaimsCache {
 
   private static ClaimsCache INSTANCE;
