@@ -30,7 +30,6 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   @Override
   public Optional<AuthUser> authenticate(String bearer) {
     try {
-      // TODO: Populate AuthUser from header values
       var headers = requestHeaderCache.cache.getIfPresent(bearer);
       if (headers != null) {
         AuthUser user = buildAuthUserFromHeaders(headers);
