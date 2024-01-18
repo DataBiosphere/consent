@@ -5,10 +5,10 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import jakarta.ws.rs.core.MultivaluedMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.broadinstitute.consent.http.filters.RequestHeaderCache;
+import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -19,18 +19,18 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
 
   private final SamService samService;
-  private final RequestHeaderCache requestHeaderCache;
+  private final ClaimsCache claimsCache;
 
   @Inject
   public OAuthAuthenticator(SamService samService) {
     this.samService = samService;
-    this.requestHeaderCache = RequestHeaderCache.getInstance();
+    this.claimsCache = ClaimsCache.getInstance();
   }
 
   @Override
   public Optional<AuthUser> authenticate(String bearer) {
     try {
-      var headers = requestHeaderCache.cache.getIfPresent(bearer);
+      var headers = claimsCache.cache.getIfPresent(bearer);
       if (headers != null) {
         AuthUser user = buildAuthUserFromHeaders(headers);
         AuthUser userWithStatus = getUserWithStatusInfo(user);
@@ -44,11 +44,11 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
     }
   }
 
-  private AuthUser buildAuthUserFromHeaders(MultivaluedMap<String, String> headers) {
-    String aud = headers.getFirst(RequestHeaderCache.OAUTH2_CLAIM_aud);
-    String token = headers.getFirst(RequestHeaderCache.OAUTH2_CLAIM_access_token);
-    String email = headers.getFirst(RequestHeaderCache.OAUTH2_CLAIM_email);
-    String name = headers.getFirst(RequestHeaderCache.OAUTH2_CLAIM_name);
+  private AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
+    String aud = headers.get(ClaimsCache.OAUTH2_CLAIM_aud);
+    String token = headers.get(ClaimsCache.OAUTH2_CLAIM_access_token);
+    String email = headers.get(ClaimsCache.OAUTH2_CLAIM_email);
+    String name = headers.get(ClaimsCache.OAUTH2_CLAIM_name);
     // Name is not a guaranteed header
     if (name == null) {
       name = email;

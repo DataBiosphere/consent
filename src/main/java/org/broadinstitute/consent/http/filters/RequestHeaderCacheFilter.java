@@ -11,7 +11,7 @@ import java.io.IOException;
 @Priority(Integer.MIN_VALUE)
 public class RequestHeaderCacheFilter implements ContainerRequestFilter {
 
-  private final RequestHeaderCache headerCache = RequestHeaderCache.getInstance();
+  private final ClaimsCache claimsCache = ClaimsCache.getInstance();
 
   @Override
   public void filter(ContainerRequestContext containerRequestContext) throws IOException {
@@ -19,7 +19,7 @@ public class RequestHeaderCacheFilter implements ContainerRequestFilter {
     var token = headers.getFirst(HttpHeaders.AUTHORIZATION);
     if (token != null) {
       var bearer = token.replace("Bearer ", "");
-      headerCache.loadCache(bearer, headers);
+      claimsCache.loadCache(bearer, headers);
     }
   }
 }

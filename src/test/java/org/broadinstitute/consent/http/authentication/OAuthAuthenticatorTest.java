@@ -14,7 +14,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.filters.RequestHeaderCache;
+import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,7 @@ class OAuthAuthenticatorTest {
   @Mock
   private SamService samService;
   private OAuthAuthenticator oAuthAuthenticator;
-  private final RequestHeaderCache headerCache = RequestHeaderCache.getInstance();
+  private final ClaimsCache headerCache = ClaimsCache.getInstance();
 
   @BeforeEach
   void setUp() {
@@ -40,7 +40,7 @@ class OAuthAuthenticatorTest {
   void testAuthenticateWithToken() {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
@@ -51,9 +51,9 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserInfoSuccess() {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_email, List.of("email"));
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_name, List.of("name"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
@@ -69,7 +69,7 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserInfoFailure() {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
 
@@ -85,7 +85,7 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserWithStatusInfoFailurePostUserSuccess() throws Exception {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
-    headerMap.put(RequestHeaderCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
     oAuthAuthenticator = new OAuthAuthenticator(samService);
