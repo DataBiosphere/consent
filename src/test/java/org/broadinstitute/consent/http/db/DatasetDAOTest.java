@@ -1173,6 +1173,24 @@ class DatasetDAOTest extends DAOTestHelper {
     assertTrue(summaries.isEmpty());
   }
 
+  @Test
+  void testFindDatasetSummariesByQuery_NullQuery() {
+    createDataset();
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(null);
+    assertNotNull(summaries);
+    assertTrue(summaries.isEmpty());
+  }
+
+  @Test
+  void testFindDatasetSummariesByQuery_EmptyQuery() {
+    createDataset();
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery("");
+    assertNotNull(summaries);
+    assertTrue(summaries.isEmpty());
+  }
+
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
       List<Dataset> datasets) {
     String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
