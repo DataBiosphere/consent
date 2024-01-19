@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
@@ -308,6 +309,10 @@ public class DatasetService implements ConsentLogger {
   public List<Dataset> searchDatasets(String query, AccessManagement accessManagement, User user) {
     List<Dataset> datasets = findAllDatasetsByUser(user);
     return datasets.stream().filter(ds -> ds.isDatasetMatch(query, accessManagement)).toList();
+  }
+
+  public List<DatasetSummary> searchDatasetSummaries(String query) {
+    return datasetDAO.findDatasetSummariesByQuery(query);
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

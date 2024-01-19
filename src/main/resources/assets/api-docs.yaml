@@ -612,6 +612,8 @@ paths:
     $ref: './paths/datasetIndexById.yaml'
   /api/dataset/search:
     $ref: './paths/datasetSearch.yaml'
+  /api/dataset/autocomplete:
+    $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
   /api/datasetAssociation/{datasetId}:
