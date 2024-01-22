@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -1146,6 +1147,48 @@ class DatasetDAOTest extends DAOTestHelper {
     assertFalse(datasets.isEmpty());
     assertEquals(dataset.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
     assertNotEquals(dataset2.getDataSetId(), datasets.stream().map(Dataset::getDataSetId).toList().get(0));
+  }
+
+  @Test
+  void testFindDatasetSummariesByQuery() {
+    Dataset dataset = createDataset();
+    Dataset dataset2 = createDataset();
+    User user = createUser();
+    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), dataset.getDataSetId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), dataset2.getDataSetId());
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(dataset.getName());
+    assertNotNull(summaries);
+    assertFalse(summaries.isEmpty());
+    assertEquals(dataset.getDataSetId(), summaries.stream().map(DatasetSummary::id).toList().get(0));
+    assertNotEquals(dataset2.getDataSetId(), summaries.stream().map(DatasetSummary::id).toList().get(0));
+  }
+
+  @Test
+  void testFindDatasetSummariesByQuery_NotApproved() {
+    Dataset dataset = createDataset();
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(dataset.getName());
+    assertNotNull(summaries);
+    assertTrue(summaries.isEmpty());
+  }
+
+  @Test
+  void testFindDatasetSummariesByQuery_NullQuery() {
+    createDataset();
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(null);
+    assertNotNull(summaries);
+    assertTrue(summaries.isEmpty());
+  }
+
+  @Test
+  void testFindDatasetSummariesByQuery_EmptyQuery() {
+    createDataset();
+
+    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery("");
+    assertNotNull(summaries);
+    assertTrue(summaries.isEmpty());
   }
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,

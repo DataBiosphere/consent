@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
@@ -601,6 +602,22 @@ public class DatasetResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       List<Dataset> datasets = datasetService.searchDatasets(query, accessManagement, user);
       return Response.ok().entity(unmarshal(datasets)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/autocomplete")
+  @PermitAll
+  public Response autocompleteDatasets(
+      @Auth AuthUser authUser,
+      @QueryParam("query") String query) {
+    try {
+      userService.findUserByEmail(authUser.getEmail());
+      List<DatasetSummary> datasets = datasetService.searchDatasetSummaries(query);
+      return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
