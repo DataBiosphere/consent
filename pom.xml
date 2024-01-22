@@ -16,7 +16,7 @@
     <liquibase.version>4.25.1</liquibase.version>
     <dropwizard.version>4.0.4</dropwizard.version>
     <logback.version>1.4.14</logback.version>
-    <pact.version>4.6.4</pact.version>
+    <pact.version>4.6.5</pact.version>
     <postgres.version>42.7.1</postgres.version>
     <surefire.version>3.2.5</surefire.version>
     <swagger.ui.version>5.10.3</swagger.ui.version>
@@ -138,7 +138,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>9.0.8</version>
+        <version>9.0.9</version>
         <executions>
           <execution>
             <goals>
@@ -370,7 +370,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.1.0</version>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -714,7 +714,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.11.4</version>
+      <version>8.12.0</version>
     </dependency>
 
     <dependency>
