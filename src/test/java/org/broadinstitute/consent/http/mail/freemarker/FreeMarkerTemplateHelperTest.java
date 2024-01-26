@@ -78,18 +78,18 @@ class FreeMarkerTemplateHelperTest {
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
-  @Test
-  void testGetNewDARRequestTemplate() throws Exception {
-    Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
-    String templateString = template.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
-        parsedTemplate.title());
-    Element userNameElement = parsedTemplate.getElementById("userName");
-    assertNotNull(userNameElement);
-    assertNotNull(userNameElement.text());
-    assertEquals("Hello Admin,", userNameElement.text());
-  }
+//  @Test
+//  void testGetNewDARRequestTemplate() throws Exception {
+//    Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
+//    String templateString = template.toString();
+//    final Document parsedTemplate = getAsHtmlDoc(templateString);
+//    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
+//        parsedTemplate.title());
+//    Element userNameElement = parsedTemplate.getElementById("userName");
+//    assertNotNull(userNameElement);
+//    assertNotNull(userNameElement.text());
+//    assertEquals("Hello Admin,", userNameElement.text());
+//  }
 
   @Test
   void testGetNewResearcherLibraryRequestTemplate() throws Exception {

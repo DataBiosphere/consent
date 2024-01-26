@@ -18,7 +18,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -56,6 +58,12 @@ class EmailServiceTest {
 
   @Mock
   private MailMessageDAO emailDAO;
+  @Mock
+  private DatasetDAO datasetDAO;
+  @Mock
+  private DacDAO dacDAO;
+  @Mock
+  private DarCollectionDAO darCollectionDAO;
   private SendGridAPI sendGridAPI;
 
   FreeMarkerTemplateHelper templateHelper;
@@ -82,7 +90,7 @@ class EmailServiceTest {
     fmConfig.setTemplateDirectory("/freemarker");
     templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
     service = new EmailService(collectionDAO, voteDAO, electionDAO, userDAO,
-        emailDAO, sendGridAPI, templateHelper, serverUrl);
+        emailDAO, datasetDAO, dacDAO, darCollectionDAO, sendGridAPI, templateHelper, serverUrl);
   }
 
   @Test

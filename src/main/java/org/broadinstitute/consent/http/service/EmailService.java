@@ -8,6 +8,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.Writer;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +19,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -28,10 +32,13 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
@@ -43,6 +50,9 @@ public class EmailService {
   private final ElectionDAO electionDAO;
   private final MailMessageDAO emailDAO;
   private final VoteDAO voteDAO;
+  private final DatasetDAO datasetDAO;
+  private final DacDAO dacDAO;
+  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
   private final String SERVER_URL;
@@ -76,16 +86,28 @@ public class EmailService {
   }
 
   @Inject
-  public EmailService(DarCollectionDAO collectionDAO,
-      VoteDAO voteDAO, ElectionDAO electionDAO,
-      UserDAO userDAO, MailMessageDAO emailDAO, SendGridAPI sendGridAPI,
-      FreeMarkerTemplateHelper helper, String serverUrl) {
+  public EmailService(
+      DarCollectionDAO collectionDAO,
+      VoteDAO voteDAO,
+      ElectionDAO electionDAO,
+      UserDAO userDAO,
+      MailMessageDAO emailDAO,
+      DatasetDAO datasetDAO,
+      DacDAO dacDAO,
+      DataAccessRequestDAO dataAccessRequestDAO,
+      SendGridAPI sendGridAPI,
+      FreeMarkerTemplateHelper helper,
+      String serverUrl
+  ) {
     this.collectionDAO = collectionDAO;
     this.userDAO = userDAO;
     this.electionDAO = electionDAO;
     this.voteDAO = voteDAO;
     this.templateHelper = helper;
     this.emailDAO = emailDAO;
+    this.datasetDAO = datasetDAO;
+    this.dacDAO = dacDAO;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.sendGridAPI = sendGridAPI;
     this.SERVER_URL = serverUrl;
   }
@@ -128,6 +150,11 @@ public class EmailService {
   public void sendNewDARCollectionMessage(Integer collectionId)
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(collection.getDarCode());
+    String researcherName = userDAO.findUserById(dar.getUserId()).getDisplayName();
+    Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
+    List<Dataset> datasetsInDAR = datasetDAO.findDatasetsByIdList(dar.datasetIds);
+
     List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
         true);
     List<Integer> datasetIds = collection.getDars().values().stream()
@@ -142,12 +169,38 @@ public class EmailService {
         .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
         .distinct()
         .toList();
+
+    Map<Dac, List<Dataset>> sendList = new HashMap<>();
     for (User user : distinctUsers) {
-      Writer template = templateHelper.getNewDARRequestTemplate(SERVER_URL, user.getDisplayName(),
-          collection.getDarCode());
+      List<Integer> dacIDs = user.getRoles().stream()
+          .filter(ur -> ur.getDacId() != null)
+          .map(UserRole::getDacId)
+          .toList();
+      List<Dac> matchingDacs = dacsInDAR.stream()
+          .filter(dac -> dacIDs.contains(dac.getDacId()))
+          .toList();
+      for (Dac dac : matchingDacs) {
+        List<Dataset> dacDatasets = datasetsInDAR.stream()
+            .filter(dataset -> dataset.getDacId() == dac.getDacId())
+            .toList();
+        if (dacDatasets != null) {
+          sendList.put(dac, dacDatasets);
+        }
+      }
+      Writer template = templateHelper.getNewDARRequestTemplate(
+          SERVER_URL,
+          user.getDisplayName(),
+          sendList,
+          researcherName,
+          collection.getDarCode()
+      );
       Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
-      Optional<Response> response = sendGridAPI.sendNewDARRequests(user.getEmail(),
-          data.get("entityId"), data.get("electionType"), template);
+      Optional<Response> response = sendGridAPI.sendNewDARRequests(
+          user.getEmail(),
+          data.get("entityId"),
+          data.get("electionType"),
+          template
+      );
       saveEmailAndResponse(
           response.orElse(null),
           collection.getDarCode(),

@@ -1,17 +1,34 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import java.util.List;
+import java.util.Map;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
+
 public class NewDarRequestModel {
 
   /* This model works for templates: new-request. */
 
   private final String serverUrl;
   private final String userName;
-  private final String entityId;
+  private final Map<Dac, List<Dataset>> dacDatasetGroups;
+  private final String researcherUserName;
+  private final String darID;
 
-  public NewDarRequestModel(String serverUrl, String userName, String entityId) {
+
+
+  public NewDarRequestModel(
+      String serverUrl,
+      String userName,
+      Map<Dac, List<Dataset>> dacDatasetGroups,
+      String researcherUserName,
+      String darID
+  ) {
     this.serverUrl = serverUrl;
     this.userName = userName;
-    this.entityId = entityId;
+    this.dacDatasetGroups = dacDatasetGroups;
+    this.researcherUserName = researcherUserName;
+    this.darID = darID;
   }
 
   public String getServerUrl() {
@@ -22,7 +39,16 @@ public class NewDarRequestModel {
     return userName;
   }
 
-  public String getEntityId() {
-    return entityId;
+  public Map<Dac, List<Dataset>> getDacDatasetGroups() {
+    return dacDatasetGroups;
   }
+
+  public String getResearcherUserName() {
+    return researcherUserName;
+  }
+
+  public String getDarID() {
+    return darID;
+  }
+
 }
