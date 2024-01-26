@@ -24,20 +24,23 @@
     </tr>
     <tr>
       <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
-        A researcher, ${researcherUserName}, submitted ${darID} for the ${dacName}’s datasets:
+        A researcher, ${researcherUserName}, submitted ${darID} for the following datasets:
       </td>
     </tr>
-    <list datasets>
+    <map dacDatasetGroups>
       <tr>
-        <items as d>
-          <td style="padding: 0px 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: left; line-height: 25px; display: block;">
+        <pairs as dacDatasets>
+          <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: left; line-height: 25px; display: block;">
+            <b>DAC ${dacDatasets.key}:</b>
             <ul style="padding-left: 30px;">
-              <li>${d}</li>
+              <items as dataset>
+                <li>${dataset}</li>
+              </items>
             </ul>
           </td>
-        </items>
+        </pairs>
       </tr>
-    </list>
+    </map>
     <tr>
       <td style="padding: 15px 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: center; line-height: 25px;">
         <a href="${serverUrl}"
