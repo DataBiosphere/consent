@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.passport;
 
-import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public interface VisaClaimType {
