@@ -254,6 +254,7 @@ public class ElasticSearchService implements ConsentLogger {
         .map(this::toUserTerm)
         .ifPresent(term::setUpdateUser);
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
+    term.setDeletable(dataset.getDeletable());
     term.setDatasetName(dataset.getName());
 
     if (Objects.nonNull(dataset.getStudy())) {
