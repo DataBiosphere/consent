@@ -10,6 +10,7 @@ public class DatasetTerm {
   @Deprecated // Use submitter.displayName instead
   private String createUserDisplayName;
   private String datasetIdentifier;
+  private Boolean deletable;
   private String datasetName;
   private Integer participantCount;
   private DataUseSummary dataUse;
@@ -54,6 +55,14 @@ public class DatasetTerm {
 
   public void setDatasetIdentifier(String datasetIdentifier) {
     this.datasetIdentifier = datasetIdentifier;
+  }
+
+  public Boolean getDeletable() {
+    return deletable;
+  }
+
+  public void setDeletable(Boolean deletable) {
+    this.deletable = deletable;
   }
 
   public String getDatasetName() {

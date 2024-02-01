@@ -123,6 +123,7 @@ class ElasticSearchServiceTest {
     dataset.setDataSetId(RandomUtils.nextInt(1, 100));
     dataset.setAlias(dataset.getDataSetId());
     dataset.setDatasetIdentifier();
+    dataset.setDeletable(true);
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
     dataset.setDatasetName(dataset.getName());
     dataset.setDacId(dac.getDacId());
@@ -309,6 +310,7 @@ class ElasticSearchServiceTest {
 
     assertEquals(datasetRecord.dataset.getDataSetId(), term.getDatasetId());
     assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+    assertEquals(datasetRecord.dataset.getDeletable(), term.getDeletable());
     assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
     assertEquals(datasetRecord.dataset.getDatasetName(), term.getDatasetName());
 
