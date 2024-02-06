@@ -66,6 +66,7 @@ import org.broadinstitute.consent.http.resources.MailResource;
 import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
+import org.broadinstitute.consent.http.resources.OAuth2Resource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
@@ -91,6 +92,7 @@ import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
+import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -188,6 +190,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         DatasetRegistrationService.class).get();
     final ElasticSearchService elasticSearchService = injector.getProvider(
         ElasticSearchService.class).get();
+    final OidcService oidcService = injector.getProvider(OidcService.class).get();
 
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 
@@ -248,6 +251,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
+    env.jersey().register(new OAuth2Resource(oidcService));
 
     // Authentication filters
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

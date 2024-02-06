@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
@@ -46,6 +47,7 @@ public class SendGridAPI {
   private final DataCustodianApprovalMessage dataCustodianApprovalMessage = new DataCustodianApprovalMessage();
   private final DatasetApprovedMessage datasetApprovedMessage = new DatasetApprovedMessage();
   private final DatasetDeniedMessage datasetDeniedMessage = new DatasetDeniedMessage();
+  private final DatasetSubmittedMessage datasetSubmittedMessage = new DatasetSubmittedMessage();
   private final NewResearcherLibraryRequestMessage newResearcherLibraryRequestMessage = new NewResearcherLibraryRequestMessage();
   private final UserDAO userDAO;
 
@@ -200,6 +202,13 @@ public class SendGridAPI {
       Writer template) throws MessagingException {
     Mail message = newResearcherLibraryRequestMessage.newResearcherLibraryRequestMessage(toAddress,
         fromAccount, template);
+    return sendMessage(message);
+  }
+
+  public Optional<Response> sendDatasetSubmittedMessage(String toAddress, Writer template)
+      throws MessagingException {
+    Mail message = datasetSubmittedMessage.datasetSubmittedMessage(toAddress, fromAccount,
+        template);
     return sendMessage(message);
   }
 

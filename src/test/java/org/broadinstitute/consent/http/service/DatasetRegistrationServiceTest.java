@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -34,7 +38,9 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
@@ -45,6 +51,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -77,6 +84,9 @@ public class DatasetRegistrationServiceTest {
   @Mock
   private ElasticSearchService elasticSearchService;
 
+  @Mock
+  private EmailService emailService;
+
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
@@ -84,7 +94,7 @@ public class DatasetRegistrationServiceTest {
 
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
-        datasetServiceDAO, gcsService, elasticSearchService, studyDAO);
+        datasetServiceDAO, gcsService, elasticSearchService, studyDAO, emailService);
   }
 
 
@@ -275,6 +285,72 @@ public class DatasetRegistrationServiceTest {
         schema.getConsentGroups().get(0).getNumberOfParticipants());
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
+  }
+
+  @Test
+  public void testDatasetCreateRegistrationEmails() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+
+    initService();
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+
+    DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
+    registrationSpy.createDatasetsFromRegistration(schema, user, Map.of());
+    verify(registrationSpy, times(1)).sendDatasetSubmittedEmails(any());
+  }
+
+  @Test
+  public void testStudyUpdateNewDatasetEmails() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+    Study study = mock();
+    Set<Dataset> datasets = Set.of(new Dataset());
+
+    initService();
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
+    when(study.getDatasets()).thenReturn(datasets);
+
+    DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
+    registrationSpy.updateStudyFromRegistration(1, schema, user, Map.of());
+    verify(registrationSpy, times(1)).sendDatasetSubmittedEmails(any());
+  }
+
+  @Test
+  public void testCreatedDatasetsFromUpdatedStudy() {
+    Study study = mock();
+    Set<Dataset> allDatasets = Stream.of(1, 2, 3, 4, 5).map((i) -> {
+      Dataset dataset = new Dataset();
+      dataset.setDataSetId(i);
+      return dataset;
+    }).collect(Collectors.toSet());
+    List<DatasetUpdate> updatedDatasets = Stream.of(3, 4)
+        .map((i) -> new DatasetUpdate(i, "update", 1, 1, null, null)).toList();
+
+    initService();
+    when(study.getDatasets()).thenReturn(allDatasets);
+
+    List<Dataset> datasets = datasetRegistrationService.createdDatasetsFromUpdatedStudy(study,
+        updatedDatasets);
+
+    assertEquals(3, datasets.size());
+
+    List<Integer> expectedIds = List.of(1, 2, 5);
+    List<Integer> actualIds = datasets.stream().map(Dataset::getDataSetId).toList();
+
+    assertEquals(expectedIds, actualIds);
+  }
+
+  @Test
+  public void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
+    Study study = mock();
+    List<DatasetUpdate> updatedDatasets = null;
+    initService();
+    when(study.getDatasets()).thenReturn(null);
+    List<Dataset> datasets = datasetRegistrationService.createdDatasetsFromUpdatedStudy(study,
+        updatedDatasets);
+    assertTrue(datasets.isEmpty());
   }
 
   @Test

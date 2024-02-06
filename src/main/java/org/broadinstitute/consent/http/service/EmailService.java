@@ -324,6 +324,26 @@ public class EmailService {
     );
   }
 
+  public void sendDatasetSubmittedMessage(User dacChair,
+      User dataSubmitter,
+      String dacName,
+      String datasetName) throws Exception {
+    Writer template = templateHelper.getDatasetSubmittedTemplate(dacChair.getDisplayName(),
+        dataSubmitter.getDisplayName(),
+        datasetName,
+        dacName);
+    Optional<Response> response = sendGridAPI.sendDatasetSubmittedMessage(dacChair.getEmail(),
+        template);
+    saveEmailAndResponse(
+        response.orElse(null),
+        datasetName,
+        null,
+        dacChair.getUserId(),
+        EmailType.NEW_DATASET,
+        template
+    );
+  }
+
   public void sendDatasetApprovedMessage(User user,
       String dacName,
       String datasetName) throws Exception {
@@ -342,9 +362,10 @@ public class EmailService {
 
   public void sendDatasetDeniedMessage(User user,
       String dacName,
-      String datasetName) throws Exception {
+      String datasetName,
+      String dacEmail) throws Exception {
     Writer template = templateHelper.getDatasetDeniedTemplate(user.getDisplayName(), datasetName,
-        dacName);
+        dacName, dacEmail);
     Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(user.getEmail(), template);
     saveEmailAndResponse(
         response.orElse(null),

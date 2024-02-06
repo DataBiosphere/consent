@@ -6,7 +6,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
@@ -15,7 +14,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Collections;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -26,11 +24,13 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SamResourceTest {
+@ExtendWith(MockitoExtension.class)
+class SamResourceTest {
 
   @Mock
   private AuthUser authUser;
@@ -46,17 +46,12 @@ public class SamResourceTest {
 
   private SamResource resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new SamResource(samService, userService);
   }
 
   @Test
-  public void testGetResourceTypes() throws Exception {
+  void testGetResourceTypes() throws Exception {
     ActionPattern pattern = new ActionPattern()
         .setAuthDomainConstrainable(true)
         .setDescription("description")
@@ -80,7 +75,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostRegistrationInfo() throws Exception {
+  void testPostRegistrationInfo() throws Exception {
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
         .setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
@@ -93,7 +88,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testGetSelfDiagnostics() throws Exception {
+  void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
         .setAdminEnabled(RandomUtils.nextBoolean())
         .setEnabled(RandomUtils.nextBoolean())
@@ -107,7 +102,7 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testGetRegistrationInfo() throws Exception {
+  void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo = new UserStatusInfo()
         .setAdminEnabled(RandomUtils.nextBoolean())
         .setUserEmail("test@test.org")
@@ -120,13 +115,8 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+  void testPostSelfTos() throws Exception {
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
     Response response = resource.postSelfTos(authUser);
@@ -134,14 +124,9 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos_NoConsentUser() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+  void testPostSelfTos_NoConsentUser() throws Exception {
     doThrow(new NotFoundException()).when(userService).findUserByEmail(any());
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
@@ -151,14 +136,8 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testPostSelfTos_ExistingSamUser() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
-    doThrow(new ConsentConflictException()).when(samService).postRegistrationInfo(any());
+  void testPostSelfTos_ExistingSamUser() throws Exception {
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
@@ -167,13 +146,8 @@ public class SamResourceTest {
   }
 
   @Test
-  public void testRemoveSelfTos() throws Exception {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+  void testRemoveSelfTos() throws Exception {
+    TosResponse tosResponse = new TosResponse("accepted on", true, "version", false);
     when(samService.removeTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
     Response response = resource.removeTos(authUser);

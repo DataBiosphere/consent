@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -584,6 +585,18 @@ class DatasetResourceTest {
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
+  }
+
+  @Test
+  void testAutocompleteDatasets() {
+    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
+    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(datasetService.searchDatasetSummaries(any())).thenReturn(List.of(new DatasetSummary(1, "ID", "Name")));
+
+    initResource();
+    try (Response response = resource.autocompleteDatasets(authUser, "test")) {
+      assertTrue(HttpStatusCodes.isSuccess(response.getStatus()));
+    }
   }
 
   @Test

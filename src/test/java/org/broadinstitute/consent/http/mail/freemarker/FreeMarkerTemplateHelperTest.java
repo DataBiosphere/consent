@@ -65,7 +65,8 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New DAR ready for your vote", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - New DAR ready for your vote",
+        parsedTemplate.title());
     assertEquals("Hello NewCase User,", parsedTemplate.getElementById("userName").text());
   }
 
@@ -75,7 +76,8 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR",
+        parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
@@ -119,7 +121,8 @@ class FreeMarkerTemplateHelperTest {
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
 
-    assertEquals("Broad Data Use Oversight System - Request from your researcher for Library Card permissions",
+    assertEquals(
+        "Broad Data Use Oversight System - Request from your researcher for Library Card permissions",
         parsedTemplate.title());
 
     assertTrue(parsedTemplate
@@ -149,6 +152,25 @@ class FreeMarkerTemplateHelperTest {
         .getElementById("content")
         .text()
         .contains("researcher@email.com was approved by the DAC for the following datasets"));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetDatasetSubmittedTemplate() throws Exception {
+    Writer template = helper.getDatasetSubmittedTemplate("dacChairName", "dataSubmitterName",
+        "testDataset",
+        "dacName");
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - Signing Official - Dataset Submitted Notification",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "A new dataset, testDataset, has been submitted to your DAC, dacName by dataSubmitterName. Please log in to DUOS to review and accept or reject management of this dataset."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }

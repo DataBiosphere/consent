@@ -23,6 +23,10 @@ security:
   - googleoauth:
       - email
       - profile
+  - oidc:
+      - openid
+      - email
+      - profile
 
 paths:
   /api/collections/{collectionId}:
@@ -608,6 +612,8 @@ paths:
     $ref: './paths/datasetIndexById.yaml'
   /api/dataset/search:
     $ref: './paths/datasetSearch.yaml'
+  /api/dataset/autocomplete:
+    $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
   /api/datasetAssociation/{datasetId}:
@@ -1261,6 +1267,16 @@ components:
         implicit:
           authorizationUrl: https://accounts.google.com/o/oauth2/auth
           scopes:
+            email: email authorization
+            profile: profile authorization
+    oidc:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth2/authorize
+          tokenUrl: /oauth2/token
+          scopes:
+            openid: open id authorization
             email: email authorization
             profile: profile authorization
   schemas:

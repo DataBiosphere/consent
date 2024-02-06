@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -26,7 +25,6 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
-import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -36,12 +34,15 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.MediaType;
 import org.testcontainers.containers.MockServerContainer;
 
+@ExtendWith(MockitoExtension.class)
 class SamDAOTest implements WithMockServer {
 
   private SamDAO samDAO;
@@ -65,7 +66,6 @@ class SamDAOTest implements WithMockServer {
 
   @BeforeEach
   public void init() {
-    openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
     ServicesConfiguration config = new ServicesConfiguration();
@@ -286,21 +286,27 @@ class SamDAOTest implements WithMockServer {
   }
 
   @Test
-  void testPostTosAcceptedStatus() {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(true).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
+  void testGetTosResponse() {
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(tosResponse.toString()));
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    try {
+      samDAO.getTosResponse(authUser);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  void testPostTosAcceptedStatus() {
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
-      samDAO.postTosAcceptedStatus(authUser);
+      samDAO.acceptTosStatus(authUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -308,20 +314,13 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testRemoveTosAcceptedStatus() {
-    TosResponse.Enabled enabled = new TosResponse.Enabled()
-        .setAdminEnabled(true).setTosAccepted(false).setGoogle(true).setAllUsersGroup(true)
-        .setLdap(true);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    TosResponse tosResponse = new TosResponse().setEnabled(enabled).setUserInfo(info);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(tosResponse.toString()));
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
-      samDAO.removeTosAcceptedStatus(authUser);
+      samDAO.rejectTosStatus(authUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }

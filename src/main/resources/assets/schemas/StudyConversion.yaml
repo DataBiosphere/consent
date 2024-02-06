@@ -7,8 +7,10 @@ properties:
     type: string
     description: Description
   dataTypes:
+    description: List of data types
     type: array
-    description: List of datatypes
+    items:
+      type: string
   phenotype:
     type: string
     description: The phenotype
