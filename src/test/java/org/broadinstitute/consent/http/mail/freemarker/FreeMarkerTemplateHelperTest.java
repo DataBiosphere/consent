@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -78,18 +79,38 @@ class FreeMarkerTemplateHelperTest {
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
-//  @Test
-//  void testGetNewDARRequestTemplate() throws Exception {
-//    Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
-//    String templateString = template.toString();
-//    final Document parsedTemplate = getAsHtmlDoc(templateString);
-//    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
-//        parsedTemplate.title());
-//    Element userNameElement = parsedTemplate.getElementById("userName");
-//    assertNotNull(userNameElement);
-//    assertNotNull(userNameElement.text());
-//    assertEquals("Hello Admin,", userNameElement.text());
-//  }
+  @Test
+  void testGetNewDARRequestTemplate() throws Exception {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    Dataset d1 = new Dataset();
+    d1.setDacId(1);
+    d1.setDatasetName("Dataset-01");
+    d1.setDataSetId(1);
+    d1.setAlias(1);
+    d1.setDatasetIdentifier();
+
+    Map<String, List<String>> dacDatasetGroups = new HashMap<>();
+    dacDatasetGroups.put(dac.getName(), List.of(d1.getDatasetIdentifier()));
+
+    Writer template = helper.getNewDARRequestTemplate(
+        "localhost:1234",
+        "Admin",
+        dacDatasetGroups,
+        "ResearcherName",
+        "DAR-01"
+    );
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
+        parsedTemplate.title());
+    Element userNameElement = parsedTemplate.getElementById("userName");
+    assertNotNull(userNameElement);
+    assertNotNull(userNameElement.text());
+    assertEquals("Hello Admin,", userNameElement.text());
+  }
 
   @Test
   void testGetNewResearcherLibraryRequestTemplate() throws Exception {

@@ -150,11 +150,26 @@ public class EmailService {
   public void sendNewDARCollectionMessage(Integer collectionId)
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+    List<User> distinctUsers = getDistinctUsers(collection);
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(collection.getDarCode());
     String researcherName = userDAO.findUserById(dar.getUserId()).getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
     List<Dataset> datasetsInDAR = datasetDAO.findDatasetsByIdList(dar.datasetIds);
 
+    Map<String, List<String>>  sendList = new HashMap<>();
+    for (User user : distinctUsers) {
+      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
+      for (Dac dac : matchingDacsForUser) {
+        List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
+        if (matchingDatasetsForDac != null) {
+          sendList.put(dac.getName(), matchingDatasetsForDac);
+        }
+      }
+      sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+    }
+  }
+
+  private List<User> getDistinctUsers(DarCollection collection) {
     List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
         true);
     List<Integer> datasetIds = collection.getDars().values().stream()
@@ -165,51 +180,57 @@ public class EmailService {
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     // Ensure that admins/chairs are not double emailed
     // and filter users that don't want to receive email
-    List<User> distinctUsers = Streams.concat(admins.stream(), chairPersons.stream())
+    return Streams.concat(admins.stream(), chairPersons.stream())
         .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
         .distinct()
         .toList();
+  }
 
-    Map<Dac, List<Dataset>> sendList = new HashMap<>();
-    for (User user : distinctUsers) {
-      List<Integer> dacIDs = user.getRoles().stream()
-          .filter(ur -> ur.getDacId() != null)
-          .map(UserRole::getDacId)
-          .toList();
-      List<Dac> matchingDacs = dacsInDAR.stream()
-          .filter(dac -> dacIDs.contains(dac.getDacId()))
-          .toList();
-      for (Dac dac : matchingDacs) {
-        List<Dataset> dacDatasets = datasetsInDAR.stream()
-            .filter(dataset -> dataset.getDacId() == dac.getDacId())
-            .toList();
-        if (dacDatasets != null) {
-          sendList.put(dac, dacDatasets);
-        }
-      }
-      Writer template = templateHelper.getNewDARRequestTemplate(
-          SERVER_URL,
-          user.getDisplayName(),
-          sendList,
-          researcherName,
-          collection.getDarCode()
-      );
-      Map<String, String> data = retrieveForNewDAR(collection.getDarCode(), user);
-      Optional<Response> response = sendGridAPI.sendNewDARRequests(
-          user.getEmail(),
-          data.get("entityId"),
-          data.get("electionType"),
-          template
-      );
-      saveEmailAndResponse(
-          response.orElse(null),
-          collection.getDarCode(),
-          null,
-          user.getUserId(),
-          EmailType.NEW_DAR,
-          template
-      );
-    }
+  private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
+    List<Integer> dacIDs = user.getRoles().stream()
+        .filter(ur -> ur.getDacId() != null)
+        .map(UserRole::getDacId)
+        .toList();
+    return dacsInDAR.stream()
+        .filter(dac -> dacIDs.contains(dac.getDacId()))
+        .toList();
+  }
+
+  private List<String> getMatchingDatasets(Dac dac, List<Dataset> datasetsInDAR) {
+    return datasetsInDAR.stream()
+        .filter(dataset -> dataset.getDacId() == dac.getDacId())
+        .map(dataset -> dataset.getDatasetIdentifier())
+        .toList();
+  }
+
+  private void sendNewDARRequestEmail(
+      User user,
+      Map<String, List<String>> sendList,
+      String researcherName,
+      String darCode
+  ) throws TemplateException, IOException {
+    Writer template = templateHelper.getNewDARRequestTemplate(
+        SERVER_URL,
+        user.getDisplayName(),
+        sendList,
+        researcherName,
+        darCode
+    );
+    Map<String, String> data = retrieveForNewDAR(darCode, user);
+    Optional<Response> response = sendGridAPI.sendNewDARRequests(
+        user.getEmail(),
+        data.get("entityId"),
+        data.get("electionType"),
+        template
+    );
+    saveEmailAndResponse(
+        response.orElse(null),
+        darCode,
+        null,
+        user.getUserId(),
+        EmailType.NEW_DAR,
+        template
+    );
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {

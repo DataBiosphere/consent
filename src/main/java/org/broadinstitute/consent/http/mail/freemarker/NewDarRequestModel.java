@@ -11,7 +11,7 @@ public class NewDarRequestModel {
 
   private final String serverUrl;
   private final String userName;
-  private final Map<Dac, List<Dataset>> dacDatasetGroups;
+  private final Map<String, List<String>> dacDatasetGroups;
   private final String researcherUserName;
   private final String darID;
 
@@ -20,7 +20,7 @@ public class NewDarRequestModel {
   public NewDarRequestModel(
       String serverUrl,
       String userName,
-      Map<Dac, List<Dataset>> dacDatasetGroups,
+      Map<String, List<String>> dacDatasetGroups,
       String researcherUserName,
       String darID
   ) {
@@ -39,7 +39,7 @@ public class NewDarRequestModel {
     return userName;
   }
 
-  public Map<Dac, List<Dataset>> getDacDatasetGroups() {
+  public Map<String, List<String>> getDacDatasetGroups() {
     return dacDatasetGroups;
   }
 

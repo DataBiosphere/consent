@@ -47,7 +47,7 @@ public class FreeMarkerTemplateHelper {
   public Writer getNewDARRequestTemplate(
       String serverUrl,
       String userName,
-      Map<Dac, List<Dataset>> dacDatasetGroups,
+      Map<String, List<String>> dacDatasetGroups,
       String researcherUserName,
       String darID
   )
@@ -166,7 +166,7 @@ public class FreeMarkerTemplateHelper {
       Template temp,
       String serverUrl,
       String userName,
-      Map<Dac, List<Dataset>> dacDatasetGroups,
+      Map<String, List<String>> dacDatasetGroups,
       String researcherUserName,
       String darID
   ) throws IOException, TemplateException {
