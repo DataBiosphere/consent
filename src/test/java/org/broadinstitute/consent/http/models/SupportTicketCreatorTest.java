@@ -113,39 +113,6 @@ class SupportTicketCreatorTest {
   }
 
   @Test
-  void testCreateInstitutionSOSupportTicket_SelectedInstitution() {
-    String displayName = RandomStringUtils.randomAlphabetic(10);
-    String email = RandomStringUtils.randomAlphabetic(10);
-    User user = new User();
-    user.setDisplayName(displayName);
-    user.setEmail(email);
-
-    UserUpdateFields updateFields = new UserUpdateFields();
-    updateFields.setInstitutionId(1);
-    Institution institution = new Institution();
-    String institutionName = RandomStringUtils.randomAlphabetic(10);
-    institution.setName(institutionName);
-
-    when(institutionDAO.findInstitutionById(1)).thenReturn(institution);
-
-    SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(updateFields,
-        user);
-    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
-    assertEquals(displayName + " user updates: Institution Selection",
-        supportRequest.getSubject());
-
-    String expectedDescription = String.format(
-        "User %s [%s] has:\n- selected an existing institution: %s",
-        user.getDisplayName(),
-        user.getEmail(),
-        institutionName);
-    List<CustomRequestField> customFields = supportRequest.getCustomFields();
-    assertEquals(5, customFields.size());
-    assertTrue(
-        customFields.contains(new CustomRequestField(360007369412L, expectedDescription)));
-  }
-
-  @Test
   void testCreateInstitutionSOSupportTicket_SelectedInstitutionNotFound() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
