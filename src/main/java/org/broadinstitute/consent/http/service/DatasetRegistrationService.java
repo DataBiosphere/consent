@@ -761,11 +761,15 @@ public class DatasetRegistrationService implements ConsentLogger {
             .stream()
             .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
             .toList();
-        for (User dacChair : chairPersons) {
-          emailService.sendDatasetSubmittedMessage(dacChair,
-              dataset.getCreateUser(),
-              dac.getName(),
-              dataset.getName());
+        if (chairPersons.isEmpty()) {
+          logWarn("No chairpersons found for DAC " + dac.getName());
+        } else {
+          for (User dacChair : chairPersons) {
+            emailService.sendDatasetSubmittedMessage(dacChair,
+                dataset.getCreateUser(),
+                dac.getName(),
+                dataset.getName());
+          }
         }
       }
     } catch (Exception e) {
