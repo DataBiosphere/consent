@@ -238,7 +238,15 @@ class EmailServiceTest {
         eq(null),
         eq(1234),
         eq(EmailType.NEW_DAR.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
 
+  @Test
   void testSendDatasetSubmittedMessage() throws Exception {
     User dacChair = new User();
     dacChair.setUserId(456);
