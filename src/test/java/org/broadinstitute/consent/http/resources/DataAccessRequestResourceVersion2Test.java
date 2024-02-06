@@ -54,6 +54,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 public class DataAccessRequestResourceVersion2Test {
 
@@ -292,6 +293,34 @@ public class DataAccessRequestResourceVersion2Test {
   public void testGetIrbDocumentDARNotFound() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    initResource();
+
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testGetIrbDocumentNullValues() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
+    DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
+    when(dar.getData()).thenReturn(data);
+    when(data.getIrbDocumentLocation()).thenReturn(null);
+    when(data.getIrbDocumentName()).thenReturn(null);
+    initResource();
+
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testGetIrbDocumentEmptyValues() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
+    DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
+    when(dar.getData()).thenReturn(data);
+    when(data.getIrbDocumentLocation()).thenReturn("");
+    when(data.getIrbDocumentName()).thenReturn("");
     initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
@@ -618,6 +647,34 @@ public class DataAccessRequestResourceVersion2Test {
     initResource();
 
     Response response = resource.getCollaborationDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollaborationDocumentNullValues() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
+    DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
+    when(dar.getData()).thenReturn(data);
+    when(data.getCollaborationLetterLocation()).thenReturn(null);
+    when(data.getCollaborationLetterName()).thenReturn(null);
+    initResource();
+
+    Response response = resource.getIrbDocument(authUser, "");
+    assertEquals(404, response.getStatus());
+  }
+
+  @Test
+  public void testGetCollaborationDocumentEmptyValues() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
+    DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
+    when(dar.getData()).thenReturn(data);
+    when(data.getCollaborationLetterLocation()).thenReturn("");
+    when(data.getCollaborationLetterName()).thenReturn("");
+    initResource();
+
+    Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
   }
 
