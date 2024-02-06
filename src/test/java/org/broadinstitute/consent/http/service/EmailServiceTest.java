@@ -262,13 +262,13 @@ class EmailServiceTest {
     String datasetName = "testDataset";
 
     initService();
-    
+
     try {
       service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
     } catch (Exception e) {
       fail("Should not fail sending message: " + e);
     }
-    
+
     verify(sendGridAPI, times(1)).sendDatasetSubmittedMessage(any(), any());
     verify(templateHelper, times(1)).getDatasetSubmittedTemplate(dacChair.getDisplayName(),
         dataSubmitter.getDisplayName(),
