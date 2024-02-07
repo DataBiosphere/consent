@@ -674,7 +674,7 @@ public class DatasetRegistrationService implements ConsentLogger {
             return null;
           }),
       new DatasetPropertyExtractor(
-          "Number Of Participants", "numberOfParticipants", PropertyType.Number,
+          "# of participants", "numberOfParticipants", PropertyType.Number,
           ConsentGroup::getNumberOfParticipants),
       new DatasetPropertyExtractor(
           "File Types", "fileTypes", PropertyType.Json,

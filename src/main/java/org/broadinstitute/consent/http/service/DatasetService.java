@@ -477,13 +477,13 @@ public class DatasetService implements ConsentLogger {
 
     // Handle "Phenotype/Indication"
     if (Objects.nonNull(studyConversion.getPhenotype())) {
-      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "Phenotype/Indication", null, PropertyType.String,
           studyConversion.getPhenotype());
     }
 
     // Handle "Species"
     if (Objects.nonNull(studyConversion.getSpecies())) {
-      oldPropConversion(dictionaries, dataset, "Species", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "Species", null, PropertyType.String,
           studyConversion.getSpecies());
     }
 
@@ -492,16 +492,13 @@ public class DatasetService implements ConsentLogger {
       newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
           studyConversion.getPiName());
       // Handle "Principal Investigator(PI)"
-      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "Principal Investigator(PI)", "piName", PropertyType.String,
           studyConversion.getPiName());
     }
 
     if (Objects.nonNull(studyConversion.getNumberOfParticipants())) {
-      // Handle "Number of Participants"
-      newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants",
-          PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
       // Handle "# of participants"
-      oldPropConversion(dictionaries, dataset, "# of participants", PropertyType.Number,
+      legacyPropConversion(dictionaries, dataset, "# of participants", "numberOfParticipants", PropertyType.Number,
           studyConversion.getNumberOfParticipants().toString());
     }
 
@@ -516,7 +513,7 @@ public class DatasetService implements ConsentLogger {
       newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
           studyConversion.getUrl());
       // Handle "dbGAP"
-      oldPropConversion(dictionaries, dataset, "dbGAP", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "dbGAP", "url", PropertyType.String,
           studyConversion.getUrl());
     }
 
@@ -571,17 +568,18 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * This method is used to synchronize an OLD dataset property with values from the study
+   * This method is used to synchronize legacy dataset property with values from the study
    * conversion
    *
    * @param dictionaries   List<Dictionary>
    * @param dataset        Dataset
    * @param dictionaryName Name to look for in dictionaries
+   * @param schemaProperty Schema Property to update if necessary
    * @param propertyType   Property Type of new value
    * @param propValue      New property value
    */
-  private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset,
-      String dictionaryName, PropertyType propertyType, String propValue) {
+  private void legacyPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, String schemaProperty, PropertyType propertyType, String propValue) {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
         .filter(p -> p.getPropertyName().equals(dictionaryName))
         .findFirst();
@@ -596,7 +594,7 @@ public class DatasetService implements ConsentLogger {
             DatasetProperty prop = new DatasetProperty();
             prop.setDataSetId(dataset.getDataSetId());
             prop.setPropertyKey(dictionary.getKeyId());
-            prop.setSchemaProperty(null);
+            prop.setSchemaProperty(schemaProperty);
             prop.setPropertyValue(propValue);
             prop.setPropertyType(propertyType);
             prop.setCreateDate(new Date());

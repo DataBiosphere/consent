@@ -290,8 +290,8 @@ public class ElasticSearchService implements ConsentLogger {
         datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
     );
 
-    findDatasetProperty(
-        dataset.getProperties(), "numberOfParticipants"
+    findFirstDatasetPropertyByName(
+        dataset.getProperties(), "# of participants"
     ).ifPresent(
         datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
     );
@@ -318,6 +318,15 @@ public class ElasticSearchService implements ConsentLogger {
             .stream()
             .filter(p -> Objects.nonNull(p.getSchemaProperty()))
             .filter(p -> p.getSchemaProperty().equals(schemaProp))
+            .findFirst();
+  }
+
+  Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
+      String propertyName) {
+    return
+        props
+            .stream()
+            .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
             .findFirst();
   }
 
