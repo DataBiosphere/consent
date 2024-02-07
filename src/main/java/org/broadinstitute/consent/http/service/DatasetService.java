@@ -568,7 +568,7 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * This method is used to synchronize legacy dataset property with values from the study
+   * This method is used to synchronize a legacy dataset property with values from the study
    * conversion
    *
    * @param dictionaries   List<Dictionary>
