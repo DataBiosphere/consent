@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class DatasetDAOTest extends DAOTestHelper {
@@ -997,6 +998,17 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUniqueDatasetName() {
+    Dataset dataset0 = createStaticDataset();
+    try {
+      Dataset dataset1 = createStaticDataset();
+      Assertions.fail();
+    } catch (Exception e) {
+      assertTrue(e.getMessage().contains("duplicate key value violates unique constraint"));
+    }
+  }
+
+  @Test
   void testDatasetWithStudy() {
     Study study = insertStudyWithProperties();
 
@@ -1421,6 +1433,18 @@ class DatasetDAOTest extends DAOTestHelper {
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
+    createDatasetProperties(id);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private Dataset createStaticDataset() {
+    User user = createUser();
+    String name = "test_unique_constraint_dataset_name";
+    Timestamp now = new Timestamp(new Date().getTime());
+    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
+        dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
