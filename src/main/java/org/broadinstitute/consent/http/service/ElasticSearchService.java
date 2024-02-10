@@ -314,7 +314,7 @@ public class ElasticSearchService implements ConsentLogger {
   Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,
       String schemaProp) {
     return
-        props
+        (props == null || props.isEmpty()) ? Optional.empty() : props
             .stream()
             .filter(p -> Objects.nonNull(p.getSchemaProperty()))
             .filter(p -> p.getSchemaProperty().equals(schemaProp))
