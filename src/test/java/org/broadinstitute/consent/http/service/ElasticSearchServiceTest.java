@@ -374,8 +374,6 @@ class ElasticSearchServiceTest {
   @Test
   void testToDatasetTermNullProps() {
     Dataset dataset = new Dataset();
-    when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of());
-
     initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
