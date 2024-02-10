@@ -322,16 +322,11 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
-    if (Objects.isNull(props)) {
-      return Optional.empty();
-    }
-
     return
-        props
+        (props == null || props.isEmpty()) ? Optional.empty() : props
             .stream()
             .filter(p -> p.getKey().equals(key))
             .findFirst();
   }
-
 
 }
