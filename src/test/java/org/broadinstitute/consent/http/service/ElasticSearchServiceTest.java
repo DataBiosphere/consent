@@ -372,8 +372,20 @@ class ElasticSearchServiceTest {
   }
 
   @Test
-  void testToDatasetTermNullProps() {
+  void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+  }
+
+  @Test
+  void testToDatasetTermNullStudyProps() {
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setStudyId(RandomUtils.nextInt(1, 100));
+    dataset.setStudy(study);
     initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
