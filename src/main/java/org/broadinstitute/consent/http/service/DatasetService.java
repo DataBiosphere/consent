@@ -583,23 +583,23 @@ public class DatasetService implements ConsentLogger {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
         .filter(p -> p.getPropertyName().equals(dictionaryName))
         .findFirst();
-    if (maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+    Optional<Dictionary> dictionary = dictionaries.stream()
+        .filter(d -> d.getKey().equals(dictionaryName))
+        .findFirst();
+    if (dictionary.isPresent() && maybeProp.isPresent()) {
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), dictionary.get().getKeyId(),
           propValue);
+    } else if (dictionary.isPresent()) {
+      DatasetProperty prop = new DatasetProperty();
+      prop.setDataSetId(dataset.getDataSetId());
+      prop.setPropertyKey(dictionary.get().getKeyId());
+      prop.setSchemaProperty(schemaProperty);
+      prop.setPropertyValue(propValue);
+      prop.setPropertyType(propertyType);
+      prop.setCreateDate(new Date());
+      datasetDAO.insertDatasetProperties(List.of(prop));
     } else {
-      dictionaries.stream()
-          .filter(d -> d.getKey().equals(dictionaryName))
-          .findFirst()
-          .ifPresent(dictionary -> {
-            DatasetProperty prop = new DatasetProperty();
-            prop.setDataSetId(dataset.getDataSetId());
-            prop.setPropertyKey(dictionary.getKeyId());
-            prop.setSchemaProperty(schemaProperty);
-            prop.setPropertyValue(propValue);
-            prop.setPropertyType(propertyType);
-            prop.setCreateDate(new Date());
-            datasetDAO.insertDatasetProperties(List.of(prop));
-          });
+      logWarn("Unable to find dictionary term: " + dictionaryName);
     }
   }
 
