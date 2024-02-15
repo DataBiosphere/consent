@@ -324,7 +324,7 @@ public class ElasticSearchService implements ConsentLogger {
   Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
       String propertyName) {
     return
-        props
+        (props == null) ? Optional.empty(): props
             .stream()
             .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
             .findFirst();
