@@ -586,10 +586,13 @@ public class DatasetService implements ConsentLogger {
     Optional<Dictionary> dictionary = dictionaries.stream()
         .filter(d -> d.getKey().equals(dictionaryName))
         .findFirst();
+    // Legacy property exists, update it.
     if (dictionary.isPresent() && maybeProp.isPresent()) {
       datasetDAO.updateDatasetProperty(dataset.getDataSetId(), dictionary.get().getKeyId(),
           propValue);
-    } else if (dictionary.isPresent()) {
+    }
+    // Legacy property does not exist, but we have a valid dictionary term, so create it.
+    else if (dictionary.isPresent()) {
       DatasetProperty prop = new DatasetProperty();
       prop.setDataSetId(dataset.getDataSetId());
       prop.setPropertyKey(dictionary.get().getKeyId());
@@ -598,7 +601,9 @@ public class DatasetService implements ConsentLogger {
       prop.setPropertyType(propertyType);
       prop.setCreateDate(new Date());
       datasetDAO.insertDatasetProperties(List.of(prop));
-    } else {
+    }
+    // Neither legacy property nor dictionary term does not exist, log a warning.
+    else {
       logWarn("Unable to find dictionary term: " + dictionaryName);
     }
   }
