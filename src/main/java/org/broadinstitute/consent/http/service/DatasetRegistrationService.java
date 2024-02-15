@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -755,11 +756,20 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       for (Dataset dataset : datasets) {
         Dac dac = dacDAO.findById(dataset.getDacId());
-        for (User dacChair : dac.getChairpersons()) {
-          emailService.sendDatasetSubmittedMessage(dacChair,
-              dataset.getCreateUser(),
-              dac.getName(),
-              dataset.getName());
+        List<User> chairPersons = dacDAO
+            .findMembersByDacId(dac.getDacId())
+            .stream()
+            .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
+            .toList();
+        if (chairPersons.isEmpty()) {
+          logWarn("No chairpersons found for DAC " + dac.getName());
+        } else {
+          for (User dacChair : chairPersons) {
+            emailService.sendDatasetSubmittedMessage(dacChair,
+                dataset.getCreateUser(),
+                dac.getName(),
+                dataset.getName());
+          }
         }
       }
     } catch (Exception e) {

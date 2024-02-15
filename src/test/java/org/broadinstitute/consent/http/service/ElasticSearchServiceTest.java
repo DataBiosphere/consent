@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -369,6 +370,25 @@ class ElasticSearchServiceTest {
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+  }
+
+  @Test
+  void testToDatasetTermNullDatasetProps() {
+    Dataset dataset = new Dataset();
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+  }
+
+  @Test
+  void testToDatasetTermNullStudyProps() {
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setStudyId(RandomUtils.nextInt(1, 100));
+    dataset.setStudy(study);
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
   @Captor

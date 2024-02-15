@@ -38,7 +38,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
@@ -98,11 +97,10 @@ public class UserResourceTest {
 
   @BeforeEach
   public void setUp() throws URISyntaxException {
-    GenericUser genericUser = new GenericUser();
-    genericUser.setName("Test User");
-    genericUser.setEmail(TEST_EMAIL);
-    authUser = new AuthUser(genericUser)
+    authUser = new AuthUser()
         .setAuthToken("auth-token")
+        .setName("Test User")
+        .setEmail(TEST_EMAIL)
         .setUserStatusInfo(userStatusInfo);
     openMocks(this);
     when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);

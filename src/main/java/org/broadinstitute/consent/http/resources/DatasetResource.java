@@ -134,7 +134,7 @@ public class DatasetResource extends Resource {
       throw new ClientErrorException("Dataset name: " + name + " is already in use",
           Status.CONFLICT);
     }
-    User dacUser = userService.findUserByEmail(authUser.getGenericUser().getEmail());
+    User dacUser = userService.findUserByEmail(authUser.getEmail());
     Integer userId = dacUser.getUserId();
     try {
       DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(
@@ -292,7 +292,7 @@ public class DatasetResource extends Resource {
       if (duplicateProperties.size() > 0) {
         throw new BadRequestException("Dataset contains multiple values for the same property.");
       }
-      User user = userService.findUserByEmail(authUser.getGenericUser().getEmail());
+      User user = userService.findUserByEmail(authUser.getEmail());
       // Validate that the admin/chairperson has edit access to this dataset
       validateDatasetDacAccess(user, datasetExists);
       Integer userId = user.getUserId();

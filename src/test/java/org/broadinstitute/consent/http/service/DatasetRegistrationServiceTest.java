@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -43,6 +44,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -315,6 +317,36 @@ public class DatasetRegistrationServiceTest {
     DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
     registrationSpy.updateStudyFromRegistration(1, schema, user, Map.of());
     verify(registrationSpy, times(1)).sendDatasetSubmittedEmails(any());
+  }
+
+  @Test
+  public void testSendDatasetSubmittedEmailsExistingChairs() throws Exception {
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+    Dac dac = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+
+    initService();
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(user));
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, times(1)).sendDatasetSubmittedMessage(any(), any(), any(), any());
+  }
+
+  @Test
+  public void testSendDatasetSubmittedEmailsNoChairs() throws Exception {
+    Dac dac = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+
+    initService();
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(dacDAO.findMembersByDacId(any())).thenReturn(List.of());
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
   }
 
   @Test

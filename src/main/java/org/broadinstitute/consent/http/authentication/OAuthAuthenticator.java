@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ServerErrorException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -18,29 +18,46 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
 
-  private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=";
-  private final Client client;
   private final SamService samService;
+  private final ClaimsCache claimsCache;
 
   @Inject
-  public OAuthAuthenticator(Client client, SamService samService) {
-    this.client = client;
+  public OAuthAuthenticator(SamService samService) {
     this.samService = samService;
+    this.claimsCache = ClaimsCache.getInstance();
   }
 
   @Override
   public Optional<AuthUser> authenticate(String bearer) {
     try {
-      GenericUser genericUser = getUserProfileInfo(bearer);
-      AuthUser user = Objects.nonNull(genericUser) ?
-          new AuthUser(genericUser).setAuthToken(bearer) :
-          new AuthUser().setAuthToken(bearer);
-      AuthUser userWithStatus = getUserWithStatusInfo(user);
-      return Optional.of(userWithStatus);
+      var headers = claimsCache.cache.getIfPresent(bearer);
+      if (headers != null) {
+        AuthUser user = buildAuthUserFromHeaders(headers);
+        AuthUser userWithStatus = getUserWithStatusInfo(user);
+        return Optional.of(userWithStatus);
+      }
+      logException(new ServerErrorException("Error reading request headers", 500));
+      return Optional.empty();
     } catch (Exception e) {
       logException("Error authenticating credentials", e);
       return Optional.empty();
     }
+  }
+
+  private AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
+    String aud = headers.get(ClaimsCache.OAUTH2_CLAIM_aud);
+    String token = headers.get(ClaimsCache.OAUTH2_CLAIM_access_token);
+    String email = headers.get(ClaimsCache.OAUTH2_CLAIM_email);
+    String name = headers.get(ClaimsCache.OAUTH2_CLAIM_name);
+    // Name is not a guaranteed header
+    if (name == null) {
+      name = email;
+    }
+    return new AuthUser()
+        .setAud(aud)
+        .setAuthToken(token)
+        .setEmail(email)
+        .setName(name);
   }
 
   /**
@@ -82,28 +99,6 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
           new Exception(e.getMessage()));
     }
     return authUser;
-  }
-
-  /**
-   * This method is currently google-centric. When we fully support B2C authentication, we should
-   * ensure that we can look up user info from a MS service.
-   *
-   * @param bearer Bearer Token
-   * @return GenericUser
-   */
-  private GenericUser getUserProfileInfo(String bearer) {
-    GenericUser u = null;
-    try {
-      Response response = this.client.
-          target(USER_INFO_URL + bearer).
-          request(MediaType.APPLICATION_JSON_TYPE).
-          get(Response.class);
-      String result = response.readEntity(String.class);
-      u = new GenericUser(result);
-    } catch (Exception e) {
-      logWarn("Error getting Google user info from token: " + e.getMessage());
-    }
-    return u;
   }
 
 }
