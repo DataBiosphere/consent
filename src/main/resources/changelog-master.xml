@@ -136,4 +136,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-02-09-unique-dataset-names.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-15-participants.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

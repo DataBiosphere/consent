@@ -174,10 +174,11 @@ class ElasticSearchServiceTest {
     return prop;
   }
 
-  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type) {
+  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type, String propertyName) {
     DatasetProperty prop = new DatasetProperty();
     prop.setSchemaProperty(schemaProp);
     prop.setPropertyType(type);
+    prop.setPropertyName(propertyName);
     switch (type) {
       case Boolean -> prop.setPropertyValue(true);
       case Number -> prop.setPropertyValue(RandomUtils.nextInt(1, 100));
@@ -213,10 +214,10 @@ class ElasticSearchServiceTest {
     ));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
-        createDatasetProperty("accessManagement", PropertyType.Boolean),
-        createDatasetProperty("numberOfParticipants", PropertyType.Number),
-        createDatasetProperty("url", PropertyType.String),
-        createDatasetProperty("dataLocation", PropertyType.String)
+        createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
+        createDatasetProperty("numberOfParticipants", PropertyType.Number, "# of participants"),
+        createDatasetProperty("url", PropertyType.String, "url"),
+        createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")
     ));
     dataset.setStudy(study);
     return new DatasetRecord(user, updateUser, dac, dataset, study);

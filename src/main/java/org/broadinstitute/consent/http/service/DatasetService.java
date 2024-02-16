@@ -104,7 +104,7 @@ public class DatasetService implements ConsentLogger {
   public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findDatasetByAlias(alias);
-    if (Objects.isNull(d)) {
+    if (d == null) {
       return null;
     }
 
@@ -117,7 +117,7 @@ public class DatasetService implements ConsentLogger {
   }
 
   public DatasetDTO createDatasetFromDatasetDTO(DatasetDTO dataset, String name, Integer userId) {
-    if (Objects.nonNull(getDatasetByName(name))) {
+    if (getDatasetByName(name) != null) {
       throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
     }
     Timestamp now = new Timestamp(new Date().getTime());
@@ -129,7 +129,7 @@ public class DatasetService implements ConsentLogger {
         h.insertDatasetProperties(propertyList);
         return id;
       } catch (Exception e) {
-        if (Objects.nonNull(h)) {
+        if (h != null) {
           h.rollback();
         }
         logger.error("Exception creating dataset with consent: " + e.getMessage());
@@ -164,7 +164,7 @@ public class DatasetService implements ConsentLogger {
   public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
     Timestamp now = new Timestamp(new Date().getTime());
 
-    if (Objects.isNull(dataset.getDatasetName())) {
+    if (dataset.getDatasetName() == null) {
       throw new IllegalArgumentException("Dataset 'Name' cannot be null");
     }
 
@@ -199,7 +199,7 @@ public class DatasetService implements ConsentLogger {
 
   public Dataset updateDatasetDataUse(User user, Integer datasetId, DataUse dataUse) {
     Dataset d = datasetDAO.findDatasetById(datasetId);
-    if (Objects.isNull(d)) {
+    if (d == null) {
       throw new NotFoundException("Dataset not found: " + datasetId);
     }
     if (!user.hasUserRole(UserRoles.ADMIN)) {
@@ -211,7 +211,7 @@ public class DatasetService implements ConsentLogger {
 
   public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (Objects.isNull(dataset)) {
+    if (dataset == null) {
       throw new NotFoundException("Dataset not found");
     }
 
@@ -235,10 +235,10 @@ public class DatasetService implements ConsentLogger {
   public DatasetDTO getDatasetDTO(Integer datasetId) {
     Set<DatasetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
     DatasetDTO result = new DatasetDTO();
-    if (Objects.nonNull(dataset) && !dataset.isEmpty()) {
+    if (dataset != null && !dataset.isEmpty()) {
       result = dataset.iterator().next();
     }
-    if (Objects.isNull(result.getDataSetId())) {
+    if (result.getDataSetId() == null) {
       throw new NotFoundException("Unable to find dataset with id: " + datasetId);
     }
     return result;
@@ -297,7 +297,7 @@ public class DatasetService implements ConsentLogger {
 
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (Objects.nonNull(dataset)) {
+    if (dataset != null) {
       datasetServiceDAO.deleteDataset(dataset, userId);
     }
   }
@@ -321,11 +321,11 @@ public class DatasetService implements ConsentLogger {
     Dataset datasetReturn = dataset;
     //Only update and fetch the dataset if it hasn't already been approved
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
-    if (Objects.isNull(currentApprovalState) || !currentApprovalState) {
+    if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
       datasetReturn = datasetDAO.findDatasetById(datasetId);
     } else {
-      if (Objects.isNull(approval) || !approval) {
+      if (approval == null || !approval) {
         throw new IllegalArgumentException("Dataset is already approved");
       }
     }
@@ -351,7 +351,7 @@ public class DatasetService implements ConsentLogger {
           dac.getName(),
           dataset.getDatasetIdentifier());
     } else {
-      if (!Objects.isNull(dac.getEmail())) {
+      if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
         emailService.sendDatasetDeniedMessage(
             user,
@@ -411,10 +411,10 @@ public class DatasetService implements ConsentLogger {
   public Study getStudyWithDatasetsById(Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);
-      if (Objects.isNull(study)) {
+      if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      if (Objects.nonNull(study.getDatasetIds()) && !study.getDatasetIds().isEmpty()) {
+      if (study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
         List<Dataset> datasets = findDatasetsByIds(new ArrayList<>(study.getDatasetIds()));
         study.addDatasets(datasets);
       }
@@ -452,78 +452,75 @@ public class DatasetService implements ConsentLogger {
     Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);
 
     // Dataset updates
-    if (Objects.nonNull(studyConversion.getDacId())) {
+    if (studyConversion.getDacId() != null) {
       datasetDAO.updateDatasetDacId(dataset.getDataSetId(), studyConversion.getDacId());
     }
-    if (Objects.nonNull(studyConversion.getDataUse())) {
+    if (studyConversion.getDataUse() != null) {
       datasetDAO.updateDatasetDataUse(dataset.getDataSetId(),
           studyConversion.getDataUse().toString());
     }
-    if (Objects.nonNull(studyConversion.getDataUse())) {
+    if (studyConversion.getDataUse() != null) {
       String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
           DataUseTranslationType.DATASET);
       datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
     }
-    if (Objects.nonNull(studyConversion.getDatasetName())) {
+    if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDataSetId(), studyConversion.getDatasetName());
     }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Dataset Property updates
-    if (Objects.nonNull(studyConversion.getDacId())) {
+    if (studyConversion.getDacId() != null) {
       newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId",
           PropertyType.Number, studyConversion.getDacId().toString());
     }
 
     // Handle "Phenotype/Indication"
-    if (Objects.nonNull(studyConversion.getPhenotype())) {
-      oldPropConversion(dictionaries, dataset, "Phenotype/Indication", PropertyType.String,
+    if (studyConversion.getPhenotype() != null) {
+      legacyPropConversion(dictionaries, dataset, "Phenotype/Indication", null, PropertyType.String,
           studyConversion.getPhenotype());
     }
 
     // Handle "Species"
-    if (Objects.nonNull(studyConversion.getSpecies())) {
-      oldPropConversion(dictionaries, dataset, "Species", PropertyType.String,
+    if (studyConversion.getSpecies() != null) {
+      legacyPropConversion(dictionaries, dataset, "Species", null, PropertyType.String,
           studyConversion.getSpecies());
     }
 
-    if (Objects.nonNull(studyConversion.getPiName())) {
+    if (studyConversion.getPiName() != null) {
       // Handle "PI Name"
       newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
           studyConversion.getPiName());
       // Handle "Principal Investigator(PI)"
-      oldPropConversion(dictionaries, dataset, "Principal Investigator(PI)", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "Principal Investigator(PI)", "piName", PropertyType.String,
           studyConversion.getPiName());
     }
 
-    if (Objects.nonNull(studyConversion.getNumberOfParticipants())) {
-      // Handle "Number of Participants"
-      newPropConversion(dictionaries, dataset, "Number of Participants", "numberOfParticipants",
-          PropertyType.Number, studyConversion.getNumberOfParticipants().toString());
+    if (studyConversion.getNumberOfParticipants() != null) {
       // Handle "# of participants"
-      oldPropConversion(dictionaries, dataset, "# of participants", PropertyType.Number,
+      legacyPropConversion(dictionaries, dataset, "# of participants", "numberOfParticipants", PropertyType.Number,
           studyConversion.getNumberOfParticipants().toString());
     }
 
     // Handle "Data Location"
-    if (Objects.nonNull(studyConversion.getDataLocation())) {
+    if (studyConversion.getDataLocation() != null) {
       newPropConversion(dictionaries, dataset, "Data Location", "dataLocation", PropertyType.String,
           studyConversion.getDataLocation());
     }
 
-    if (Objects.nonNull(studyConversion.getUrl())) {
+    if (studyConversion.getUrl() != null) {
       // Handle "URL"
       newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
           studyConversion.getUrl());
       // Handle "dbGAP"
-      oldPropConversion(dictionaries, dataset, "dbGAP", PropertyType.String,
+      legacyPropConversion(dictionaries, dataset, "dbGAP", "url", PropertyType.String,
           studyConversion.getUrl());
     }
 
     // Handle "Data Submitter User ID"
-    if (Objects.nonNull(studyConversion.getDataSubmitterEmail())) {
+    if (studyConversion.getDataSubmitterEmail() != null) {
       User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
-      if (Objects.nonNull(submitter)) {
+      if (submitter != null) {
         newPropConversion(dictionaries, dataset, "Data Submitter User ID", "dataSubmitterUserId",
             PropertyType.Number, user.getUserId().toString());
         datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
@@ -571,37 +568,43 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * This method is used to synchronize an OLD dataset property with values from the study
+   * This method is used to synchronize a legacy dataset property with values from the study
    * conversion
    *
    * @param dictionaries   List<Dictionary>
    * @param dataset        Dataset
    * @param dictionaryName Name to look for in dictionaries
+   * @param schemaProperty Schema Property to update if necessary
    * @param propertyType   Property Type of new value
    * @param propValue      New property value
    */
-  private void oldPropConversion(List<Dictionary> dictionaries, Dataset dataset,
-      String dictionaryName, PropertyType propertyType, String propValue) {
+  private void legacyPropConversion(List<Dictionary> dictionaries, Dataset dataset,
+      String dictionaryName, String schemaProperty, PropertyType propertyType, String propValue) {
     Optional<DatasetProperty> maybeProp = dataset.getProperties().stream()
         .filter(p -> p.getPropertyName().equals(dictionaryName))
         .findFirst();
-    if (maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+    Optional<Dictionary> dictionary = dictionaries.stream()
+        .filter(d -> d.getKey().equals(dictionaryName))
+        .findFirst();
+    // Legacy property exists, update it.
+    if (dictionary.isPresent() && maybeProp.isPresent()) {
+      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), dictionary.get().getKeyId(),
           propValue);
-    } else {
-      dictionaries.stream()
-          .filter(d -> d.getKey().equals(dictionaryName))
-          .findFirst()
-          .ifPresent(dictionary -> {
-            DatasetProperty prop = new DatasetProperty();
-            prop.setDataSetId(dataset.getDataSetId());
-            prop.setPropertyKey(dictionary.getKeyId());
-            prop.setSchemaProperty(null);
-            prop.setPropertyValue(propValue);
-            prop.setPropertyType(propertyType);
-            prop.setCreateDate(new Date());
-            datasetDAO.insertDatasetProperties(List.of(prop));
-          });
+    }
+    // Legacy property does not exist, but we have a valid dictionary term, so create it.
+    else if (dictionary.isPresent()) {
+      DatasetProperty prop = new DatasetProperty();
+      prop.setDataSetId(dataset.getDataSetId());
+      prop.setPropertyKey(dictionary.get().getKeyId());
+      prop.setSchemaProperty(schemaProperty);
+      prop.setPropertyValue(propValue);
+      prop.setPropertyType(propertyType);
+      prop.setCreateDate(new Date());
+      datasetDAO.insertDatasetProperties(List.of(prop));
+    }
+    // Neither legacy property nor dictionary term does not exist, log a warning.
+    else {
+      logWarn("Unable to find dictionary term: " + dictionaryName);
     }
   }
 
@@ -611,9 +614,9 @@ public class DatasetService implements ConsentLogger {
     Study study = studyDAO.findStudyByName(studyConversion.getName());
     Integer studyId;
     Integer userId =
-        Objects.nonNull(dataset.getCreateUserId()) ? dataset.getCreateUserId() : user.getUserId();
+        (dataset.getCreateUserId() != null) ? dataset.getCreateUserId() : user.getUserId();
     // Create or update the study:
-    if (Objects.isNull(study)) {
+    if (study == null) {
       study = studyConversion.createNewStudyStub();
       studyId = studyDAO.insertStudy(study.getName(), study.getDescription(), study.getPiName(),
           study.getDataTypes(), study.getPublicVisibility(), userId, Instant.now(),
@@ -632,7 +635,7 @@ public class DatasetService implements ConsentLogger {
     Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();
     User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
     // If we don't have any props, we need to add all of the new ones
-    if (Objects.isNull(existingProps) || existingProps.isEmpty()) {
+    if (existingProps == null || existingProps.isEmpty()) {
       studyConversion.getStudyProperties(submitter).stream()
           .filter(Objects::nonNull)
           .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
