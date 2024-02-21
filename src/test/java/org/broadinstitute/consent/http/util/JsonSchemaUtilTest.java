@@ -133,7 +133,7 @@ class JsonSchemaUtilTest {
           "publicVisibility": true,
           "piInstitution": 1,
           "nihGrantContractNumber": "1234123412341234",
-          "gbGaPPhsID": "someId",
+          "dbGaPPhsID": "someId",
           "dataSubmitterUserId": 1,
           "embargoReleaseDate": "asfd-10-20",
           "targetDeliveryDate": "asdf-10-20",
