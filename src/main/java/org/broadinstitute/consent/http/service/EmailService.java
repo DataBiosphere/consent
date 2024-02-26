@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -42,8 +41,9 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class EmailService {
+public class EmailService implements ConsentLogger {
 
   private final DarCollectionDAO collectionDAO;
   private final UserDAO userDAO;
@@ -52,7 +52,6 @@ public class EmailService {
   private final VoteDAO voteDAO;
   private final DatasetDAO datasetDAO;
   private final DacDAO dacDAO;
-  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
   private final String SERVER_URL;
@@ -94,7 +93,6 @@ public class EmailService {
       MailMessageDAO emailDAO,
       DatasetDAO datasetDAO,
       DacDAO dacDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
       String serverUrl
@@ -107,7 +105,6 @@ public class EmailService {
     this.emailDAO = emailDAO;
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.sendGridAPI = sendGridAPI;
     this.SERVER_URL = serverUrl;
   }
@@ -150,11 +147,15 @@ public class EmailService {
   public void sendNewDARCollectionMessage(Integer collectionId)
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
+    if (collection == null) {
+      logWarn("Sending new DAR Collection Message: Could not find collection for specified id : " + collectionId);
+      return;
+    }
     List<User> distinctUsers = getDistinctUsers(collection);
-    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(collection.getDarCode());
-    String researcherName = userDAO.findUserById(dar.getUserId()).getDisplayName();
+    String researcherName = userDAO.findUserById(collection.getCreateUserId()).getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
-    List<Dataset> datasetsInDAR = datasetDAO.findDatasetsByIdList(dar.datasetIds);
+    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDataSetId).toList();
+    List<Dataset> datasetsInDAR = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
     Map<String, List<String>>  sendList = new HashMap<>();
     for (User user : distinctUsers) {

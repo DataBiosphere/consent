@@ -25,7 +25,6 @@ import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -74,8 +73,6 @@ class EmailServiceTest {
   private DatasetDAO datasetDAO;
   @Mock
   private DacDAO dacDAO;
-  @Mock
-  private DataAccessRequestDAO dataAccessRequestDAO;
   private SendGridAPI sendGridAPI;
 
   FreeMarkerTemplateHelper templateHelper;
@@ -109,7 +106,6 @@ class EmailServiceTest {
         emailDAO,
         datasetDAO,
         dacDAO,
-        dataAccessRequestDAO,
         sendGridAPI,
         templateHelper,
         serverUrl);
@@ -207,7 +203,6 @@ class EmailServiceTest {
         d2.getDatasetIdentifier()));
 
     when(collectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(userDAO.findUserById(any())).thenReturn(researcher);
     when(dacDAO.findDacsForCollectionId(any())).thenReturn(Set.of(dac));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
