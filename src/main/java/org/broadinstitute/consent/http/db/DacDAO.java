@@ -222,12 +222,12 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @RegisterRowMapper(DacMapper.class)
   @SqlQuery("""
-      select dac.* 
-      from dac
-      inner join dataset d on d.dac_id = dac.dac_id
-      inner join dar_dataset dd on dd.dataset_id = d.dataset_id
-      inner join data_access_request dar on dd.reference_id = dar.reference_id
-      where dar.collection_id = :collectionId
+      SELECT dac.* 
+      FROM dac
+      INNER JOIN dataset d ON d.dac_id = dac.dac_id
+      INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id
+      INNER JOIN data_access_request dar ON dd.reference_id = dar.reference_id
+      WHERE dar.collection_id = :collectionId
       """)
   Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
 
