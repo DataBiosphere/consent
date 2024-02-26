@@ -131,7 +131,6 @@ public class DataAccessRequestResourceVersion2 extends Resource {
         authUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
-
       if (Objects.nonNull(dar)) {
         return Response.status(Response.Status.OK).entity(dar.convertToSimplifiedDar()).build();
       }
