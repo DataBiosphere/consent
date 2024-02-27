@@ -36,7 +36,6 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -144,59 +143,20 @@ class EmailServiceTest {
   @Test
   void testSendNewDARCollectionMessage() throws TemplateException, IOException {
     initService();
-    User researcher = new User();
-    researcher.setUserId(1234);
-    researcher.setDisplayName("Researcher");
-    researcher.setEmail("researcher@abc.com");
-    UserRole researcherRole = new UserRole(
-        UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName()
-    );
-    researcher.setRoles(List.of(researcherRole));
-
-    User chairperson = new User();
-    chairperson.setUserId(1234);
-    chairperson.setDisplayName("Chairperson");
-    chairperson.setEmail("chairperson@abc.com");
-    UserRole chairpersonRole = new UserRole(
-        UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName()
-    );
-    chairpersonRole.setDacId(1);
-    chairperson.setRoles(List.of(chairpersonRole));
-    chairperson.setEmailPreference(Boolean.TRUE);
-
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
     Dac dac = new Dac();
     dac.setDacId(1);
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON, dac.getDacId());
     dac.setChairpersons(List.of(chairperson));
-    dac.setMembers(List.of(researcher));
     dac.setName("DAC-01");
 
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setAlias(1);
-    d1.setDatasetIdentifier();
-    d1.setDacId(1);
-    d1.setName("d1");
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setAlias(2);
-    d2.setDatasetIdentifier();
-    d2.setDacId(1);
-    d2.setName("d2");
-
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setId(1);
-    dar.setDatasetIds(List.of(1, 2));
-    dar.setCollectionId(1);
-    dar.setUserId(researcher.getUserId());
+    Dataset d1 = createDataset(dac.getDacId());
+    Dataset d2 = createDataset(dac.getDacId());
 
     DarCollection collection = new DarCollection();
     collection.setDarCode("01");
     collection.setDarCollectionId(1);
     collection.setDatasets(Set.of(d1, d2));
-    System.out.println(collection);
 
     Map<String, List<String>> dacDatasetGroups = new HashMap<>();
     dacDatasetGroups.put(dac.getName(), List.of(d1.getDatasetIdentifier(),
@@ -204,10 +164,12 @@ class EmailServiceTest {
 
     when(collectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     when(userDAO.findUserById(any())).thenReturn(researcher);
+    when(userDAO.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
     when(dacDAO.findDacsForCollectionId(any())).thenReturn(Set.of(dac));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.describeUsersByRoleAndEmailPreference(any(), any())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(any(), any())).thenReturn(Set.of(chairperson));
+
 
     try {
       service.sendNewDARCollectionMessage(collection.getDarCollectionId());
@@ -231,7 +193,7 @@ class EmailServiceTest {
     verify(emailDAO, times(1)).insert(
         eq("01"),
         eq(null),
-        eq(1234),
+        eq(chairperson.getUserId()),
         eq(EmailType.NEW_DAR.getTypeInt()),
         any(),
         any(),
@@ -239,6 +201,33 @@ class EmailServiceTest {
         any(),
         any()
     );
+  }
+
+  private Dataset createDataset(Integer dacId) {
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(1, 100000));
+    dataset.setAlias(dataset.getDataSetId());
+    dataset.setDatasetIdentifier();
+    dataset.setDacId(dacId);
+    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10), dataset.getDataSetId()));
+    return dataset;
+  }
+
+  private User createUserWithRole(UserRoles userRoles, Integer dacId) {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100000));
+    user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
+    user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
+    UserRole role = new UserRole(
+        userRoles.getRoleId(),
+        userRoles.getRoleName()
+    );
+    if (dacId != null) {
+      role.setDacId(dacId);
+    }
+    user.setRoles(List.of(role));
+    user.setEmailPreference(Boolean.TRUE);
+    return user;
   }
 
   @Test

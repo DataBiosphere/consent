@@ -148,11 +148,15 @@ public class EmailService implements ConsentLogger {
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
     if (collection == null) {
-      logWarn("Sending new DAR Collection Message: Could not find collection for specified id : " + collectionId);
+      logWarn("Sending new DAR Collection message: Could not find collection for specified collection id: " + collectionId);
       return;
     }
-    List<User> distinctUsers = getDistinctUsers(collection);
-    String researcherName = userDAO.findUserById(collection.getCreateUserId()).getDisplayName();
+    List<User> distinctUsers = getDistinctAdminAndChairUsersForCollection(collection);
+    User researcher = userDAO.findUserById(collection.getCreateUserId());
+    if (researcher == null) {
+      logWarn("Sending new DAR Collection message: Could not find researcher for specified user id: " + collection.getCreateUserId());
+    }
+    String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
     List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDataSetId).toList();
     List<Dataset> datasetsInDAR = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
@@ -170,7 +174,7 @@ public class EmailService implements ConsentLogger {
     }
   }
 
-  private List<User> getDistinctUsers(DarCollection collection) {
+  private List<User> getDistinctAdminAndChairUsersForCollection(DarCollection collection) {
     List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
         true);
     List<Integer> datasetIds = collection.getDars().values().stream()
