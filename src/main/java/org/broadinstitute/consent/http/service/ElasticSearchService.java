@@ -293,7 +293,14 @@ public class ElasticSearchService implements ConsentLogger {
     findFirstDatasetPropertyByName(
         dataset.getProperties(), "# of participants"
     ).ifPresent(
-        datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
+        datasetProperty -> {
+          String value = datasetProperty.getPropertyValueAsString();
+          try {
+            term.setParticipantCount(Integer.valueOf(value));
+          } catch (NumberFormatException e) {
+            logWarn(String.format("Unable to coerce participant count to integer: %s for dataset: %s", value, dataset.getDatasetIdentifier()));
+          }
+        }
     );
 
     findDatasetProperty(
