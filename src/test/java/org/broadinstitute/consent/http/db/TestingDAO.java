@@ -100,4 +100,10 @@ public interface TestingDAO extends Transactional<TestingDAO> {
 
   @SqlUpdate("DELETE FROM acknowledgement")
   void deleteAllAcknowledgements();
+
+  @SqlUpdate("DELETE FROM data_access_agreement")
+  void deleteAllDataAccessAgreements();
+
+  @SqlUpdate("DELETE FROM dac_daa")
+  void deleteAllDACDAAs();
 }
