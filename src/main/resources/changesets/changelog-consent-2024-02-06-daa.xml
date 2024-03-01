@@ -54,10 +54,6 @@
         <constraints nullable="false"/>
       </column>
     </createTable>
-    <addPrimaryKey
-      columnNames="daa_id, dac_id"
-      constraintName="jointable_key"
-      tableName="dac_daa"/>
     <addForeignKeyConstraint
       baseColumnNames="daa_id"
       baseTableName="dac_daa"
