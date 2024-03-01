@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -16,6 +17,17 @@ public class DataAccessAgreementReducer
             rowView.getColumn("id", Integer.class), id -> rowView.getRow(DataAccessAgreement.class));
     if (hasColumn(rowView, "initial_dac_id", Integer.class)) {
       daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class));
+    }
+    try {
+      if (hasColumn(rowView, "d_dac_id", Integer.class)) {
+        Dac dac =
+            rowView.getRow(Dac.class);
+        if (dac != null) {
+          daa.addDac(dac);
+        }
+      }
+    } catch (Exception e) {
+      //
     }
   }
 }

@@ -61,7 +61,21 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @param dacId The initial_dac_id to lookup
    * @return Daa
    */
-  @SqlQuery("SELECT * FROM data_access_agreement WHERE initial_dac_id = :dacId")
+  @RegisterBeanMapper(value = Dac.class, prefix="d")
+  @RegisterBeanMapper(value = DataAccessAgreement.class)
+  @UseRowReducer(DataAccessAgreementReducer.class)
+  @SqlQuery("""
+  SELECT daa.*,
+         dac.dac_id as d_dac_id,
+         dac.update_date as d_update_date,
+         dac.name as d_name,
+         dac.create_date as d_create_date,
+         dac.description as d_description
+  FROM data_access_agreement daa
+  LEFT JOIN dac_daa dac_daa_join ON dac_daa_join.daa_id = daa.id AND dac_daa_join.dac_id = :dacId,
+         dac dac
+  WHERE dac.dac_id = :dacId
+  """)
   DataAccessAgreement findByDacId(@Bind("dacId") Integer dacId);
 
   /**
@@ -78,25 +92,19 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
       VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
       """)
-  @GetGeneratedKeys // do i need this?
+  @GetGeneratedKeys
   Integer createDaa(@Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate, @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Instant updateDate, @Bind("initialDacId") Integer initialDacId);
 
-  @RegisterBeanMapper(value = Dac.class)
-  @RegisterBeanMapper(value = DataAccessAgreement.class)
-  @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlUpdate("""
       INSERT INTO dac_daa (daa_id, dac_id)
       VALUES (:daaId, :dacId)
       """)
   void createDaaDacRelation(@Bind("daaId") Integer daaId, @Bind("dacId") Integer dacId);
 
-  @RegisterBeanMapper(value = Dac.class)
-  @RegisterBeanMapper(value = DataAccessAgreement.class)
-  @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlUpdate("""
-  DELETE FROM dac_daa 
+  DELETE FROM dac_daa
   WHERE dac_id = :dacId
   """)
   void deleteDaaDacRelation(@Bind("dacId") Integer dacId);
