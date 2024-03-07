@@ -13,7 +13,7 @@ public class DataAccessAgreementReducer
   public void accumulate(Map<Integer, DataAccessAgreement> map, RowView rowView) {
     DataAccessAgreement daa =
         map.computeIfAbsent(
-            rowView.getColumn("id", Integer.class), id -> rowView.getRow(DataAccessAgreement.class));
+            rowView.getColumn("daa_id", Integer.class), id -> rowView.getRow(DataAccessAgreement.class));
     if (hasColumn(rowView, "initial_dac_id", Integer.class)) {
       daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class));
     }

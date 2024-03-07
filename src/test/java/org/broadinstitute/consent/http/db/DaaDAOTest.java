@@ -78,12 +78,12 @@ public class DaaDAOTest extends DAOTestHelper {
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     assertNotNull(daaId1);
     assertNotNull(daaId2);
-    DataAccessAgreement daa1 = daaDAO.findById(1);
+    DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     assertNotNull(daa1);
-    assertEquals(daa1.getId(), 1);
-    DataAccessAgreement daa2 = daaDAO.findById(2);
+    assertEquals(daa1.getDaaId(), daaId1);
+    DataAccessAgreement daa2 = daaDAO.findById(daaId2);
     assertNotNull(daa2);
-    assertEquals(daa2.getId(), 2);
+    assertEquals(daa2.getDaaId(), daaId2);
   }
   @Test
   void testFindByIdInvalid() {
@@ -105,12 +105,12 @@ public class DaaDAOTest extends DAOTestHelper {
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(1);
+    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
-    assertEquals(daa1.getInitialDacId(), 1);
-    DataAccessAgreement daa2 = daaDAO.findByDacId(2);
+    assertEquals(daa1.getInitialDacId(), dacId);
+    DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
     assertNotNull(daa2);
-    assertEquals(daa2.getInitialDacId(), 2);
+    assertEquals(daa2.getInitialDacId(), dacId2);
     DataAccessAgreement daa3 = daaDAO.findByDacId(3);
     assertNull(daa3);
   }
@@ -137,16 +137,16 @@ public class DaaDAOTest extends DAOTestHelper {
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(1);
+    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
-    assertEquals(daa1.getInitialDacId(), 1);
-    DataAccessAgreement daa2 = daaDAO.findByDacId(2);
+    assertEquals(daa1.getInitialDacId(), dacId);
+    DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
     assertNotNull(daa2);
-    assertEquals(daa2.getInitialDacId(), 2);
+    assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDaaDacRelation(daa1.getId(),dacId);
-    daaDAO.createDaaDacRelation(daa2.getId(),dacId2);
-    daaDAO.createDaaDacRelation(daa2.getId(),dacId3);
+    daaDAO.createDaaDacRelation(daa1.getDaaId(),dacId);
+    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId2);
+    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId3);
 
     // need a way to getDaaDacRelation --> need a DaaDacRelation object?
   }
@@ -160,16 +160,16 @@ public class DaaDAOTest extends DAOTestHelper {
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(1);
+    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
-    assertEquals(daa1.getInitialDacId(), 1);
-    DataAccessAgreement daa2 = daaDAO.findByDacId(2);
+    assertEquals(daa1.getInitialDacId(), dacId);
+    DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
     assertNotNull(daa2);
-    assertEquals(daa2.getInitialDacId(), 2);
+    assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDaaDacRelation(daa1.getId(),dacId);
-    daaDAO.createDaaDacRelation(daa2.getId(),dacId2);
-    daaDAO.createDaaDacRelation(daa2.getId(),dacId3);
+    daaDAO.createDaaDacRelation(daa1.getDaaId(),dacId);
+    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId2);
+    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId3);
 
     // need a way to getDaaDacRelation --> need a DaaDacRelation object?
 

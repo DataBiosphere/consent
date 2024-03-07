@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public class DataAccessAgreement {
 
-  private Integer id;
+  private Integer daaId;
   private Integer createUserId;
   private Instant createDate;
   private Integer updateUserId;
@@ -12,12 +12,12 @@ public class DataAccessAgreement {
   private Integer initialDacId;
   private FileStorageObject file;
 
-  public Integer getId() {
-    return id;
+  public Integer getDaaId() {
+    return daaId;
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public void setDaaId(Integer daaId) {
+    this.daaId = daaId;
   }
 
   public Integer getCreateUserId() {

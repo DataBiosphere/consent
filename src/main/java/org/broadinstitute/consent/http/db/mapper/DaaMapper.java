@@ -2,12 +2,8 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -19,11 +15,11 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
   @Override
   public DataAccessAgreement map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
     DataAccessAgreement daa;
-    if (daaMap.containsKey(resultSet.getInt("id"))) {
-      daa = daaMap.get(resultSet.getInt("id"));
+    if (daaMap.containsKey(resultSet.getInt("daa_id"))) {
+      daa = daaMap.get(resultSet.getInt("daa_id"));
     } else {
       daa = new DataAccessAgreement();
-      daa.setId(resultSet.getInt("id"));
+      daa.setDaaId(resultSet.getInt("daa_id"));
     }
     daa.setCreateUserId(resultSet.getInt("create_user_id"));
     daa.setCreateDate(resultSet.getTimestamp("create_date").toInstant());
@@ -36,7 +32,7 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
     if (hasColumn(resultSet, "initial_dac_id")) {
       daa.setInitialDacId(resultSet.getInt("initial_dac_id"));
     }
-    daaMap.put(daa.getId(), daa);
+    daaMap.put(daa.getDaaId(), daa);
     return daa;
   }
 }
