@@ -8,7 +8,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
@@ -41,10 +44,23 @@ public class FreeMarkerTemplateHelper {
     return generateTemplate(user, election, entityId, temp, serverUrl);
   }
 
-  public Writer getNewDARRequestTemplate(String serverUrl, String userName, String entityId)
+  public Writer getNewDARRequestTemplate(
+      String serverUrl,
+      String userName,
+      Map<String, List<String>> dacDatasetGroups,
+      String researcherUserName,
+      String darID
+  )
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-request.html");
-    return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
+    return generateNewDARRequestTemplate(
+        temp,
+        serverUrl,
+        userName,
+        dacDatasetGroups,
+        researcherUserName,
+        darID
+    );
   }
 
   public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName,
@@ -165,9 +181,20 @@ public class FreeMarkerTemplateHelper {
     return out;
   }
 
-  private Writer generateNewDARRequestTemplate(Template temp, String serverUrl, String userName,
-      String entityId) throws IOException, TemplateException {
-    NewDarRequestModel model = new NewDarRequestModel(serverUrl, userName, entityId);
+  private Writer generateNewDARRequestTemplate(
+      Template temp,
+      String serverUrl,
+      String userName,
+      Map<String, List<String>> dacDatasetGroups,
+      String researcherUserName,
+      String darID
+  ) throws IOException, TemplateException {
+    NewDarRequestModel model = new NewDarRequestModel(
+        serverUrl,
+        userName,
+        dacDatasetGroups,
+        researcherUserName,
+        darID);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;

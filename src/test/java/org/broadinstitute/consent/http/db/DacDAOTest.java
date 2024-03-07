@@ -10,16 +10,25 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -310,6 +319,18 @@ class DacDAOTest extends DAOTestHelper {
     assertTrue(results.contains(datasetSuggestedDac));
   }
 
+  @Test
+  void testFindDacsForCollectionId() {
+    Dac dac = insertDacWithEmail();
+    Dataset d1 = createDatasetWithDac(dac.getDacId());
+    DarCollection collection = createDarCollection();
+    createDataAccessRequestInCollectionWithDataset(collection, d1);
+
+    Collection<Dac> results = dacDAO.findDacsForCollectionId(collection.getDarCollectionId());
+    assertEquals(1, results.size());
+    assertTrue(results.stream().map(d -> d.getDacId()).toList().contains(dac.getDacId()));
+  }
+
   private Dac insertDac() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
@@ -334,6 +355,82 @@ class DacDAOTest extends DAOTestHelper {
         "Test_" + RandomStringUtils.random(20, true, true),
         new Date());
     return dacDAO.findById(id);
+  }
+
+  private User createUserWithInstitution() {
+    int i1 = RandomUtils.nextInt(5, 10);
+    String email = RandomStringUtils.randomAlphabetic(i1);
+    String name = RandomStringUtils.randomAlphabetic(10);
+    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        RandomStringUtils.randomAlphabetic(10),
+        new Random().nextInt(),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        RandomStringUtils.randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        userId,
+        new Date());
+    userDAO.updateUser(name, userId, institutionId);
+    userRoleDAO.insertSingleUserRole(7, userId);
+    return userDAO.findUserById(userId);
+  }
+
+  private DarCollection createDarCollection() {
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+  }
+
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
+      String darCode) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    DatasetEntry entry = new DatasetEntry();
+    entry.setKey("key");
+    entry.setValue("value");
+    entry.setLabel("label");
+    data.setDatasets(List.of(entry));
+    data.setHmb(true);
+    data.setMethods(false);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private DataAccessRequest createDataAccessRequestInCollectionWithDataset(
+      DarCollection collection,
+      Dataset d
+  ) {
+    User user = createUser();
+    String randomUUID = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collection.getDarCollectionId(),
+        randomUUID,
+        user.getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        new Date(),
+        new DataAccessRequestData()
+    );
+    dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDataSetId());
+    return dataAccessRequestDAO.findByReferenceId(randomUUID);
   }
 
   private Dataset createDataset() {
