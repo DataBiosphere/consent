@@ -355,6 +355,32 @@ class ElasticSearchServiceTest {
   }
 
   @Test
+  void testToDatasetTerm_StringNumberOfParticipants() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Study study = createStudy(user);
+    study.setProperties(Set.of(
+        createStudyProperty("phenotypeIndication", PropertyType.String),
+        createStudyProperty("species", PropertyType.String),
+        createStudyProperty("dataCustodianEmail", PropertyType.Json)
+    ));
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    dataset.setProperties(Set.of(
+        createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),
+        createDatasetProperty("url", PropertyType.String, "url")
+    ));
+    dataset.setStudy(study);
+    DatasetRecord record = new DatasetRecord(user, updateUser, dac, dataset, study);
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+    when(dacDAO.findById(any())).thenReturn(record.dac);
+    when(userDao.findUserById(record.createUser.getUserId())).thenReturn(record.createUser);
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+  }
+
+  @Test
   void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);

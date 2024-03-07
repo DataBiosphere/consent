@@ -24,7 +24,7 @@
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.2</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.10.0</mockito.version>
+    <mockito.version>5.11.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -445,7 +445,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>7.4.0</version>
+      <version>7.5.0</version>
     </dependency>
 
     <dependency>

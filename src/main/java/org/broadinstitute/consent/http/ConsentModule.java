@@ -299,6 +299,8 @@ public class ConsentModule extends AbstractModule {
         providesElectionDAO(),
         providesUserDAO(),
         providesMailMessageDAO(),
+        providesDatasetDAO(),
+        providesDacDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
         config.getServicesConfiguration().getLocalURL()
