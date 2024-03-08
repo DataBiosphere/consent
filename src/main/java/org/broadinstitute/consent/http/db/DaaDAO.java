@@ -5,6 +5,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -25,6 +26,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @return List<DataAccessAgreement>
    */
   @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = Dac.class)
   @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
@@ -45,9 +47,15 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 fso.update_date AS update_date,
                 fso.update_user_id AS update_user_id,
                 fso.deleted AS deleted,
-                fso.delete_user_id AS delete_user_id
+                fso.delete_user_id AS delete_user_id,
+                dac.dac_id,
+                dac.email,
+                dac.name,
+                dac.description
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id
       """)
   List<DataAccessAgreement> findAll();
 
@@ -59,6 +67,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @return Daa
    */
   @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = Dac.class)
   @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
@@ -79,9 +88,15 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 fso.update_date AS update_date,
                 fso.update_user_id AS update_user_id,
                 fso.deleted AS deleted,
-                fso.delete_user_id AS delete_user_id
+                fso.delete_user_id AS delete_user_id,
+                dac.dac_id,
+                dac.email,
+                dac.name,
+                dac.description
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id
           WHERE daa.daa_id = :daaId
       """)
   DataAccessAgreement findById(@Bind("daaId") Integer daaId);
@@ -93,6 +108,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @return Daa
    */
   @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = Dac.class)
   @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
@@ -113,9 +129,15 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 fso.update_date AS update_date,
                 fso.update_user_id AS update_user_id,
                 fso.deleted AS deleted,
-                fso.delete_user_id AS delete_user_id
+                fso.delete_user_id AS delete_user_id,
+                dac.dac_id,
+                dac.email,
+                dac.name,
+                dac.description
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id
           WHERE daa.initial_dac_id = :dacId
       """)
   DataAccessAgreement findByDacId(@Bind("dacId") Integer dacId);

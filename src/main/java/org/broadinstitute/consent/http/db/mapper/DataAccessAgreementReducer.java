@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -23,6 +24,9 @@ public class DataAccessAgreementReducer
       if (hasColumn(rowView, "entity_id", String.class)) {
         FileStorageObject fso = rowView.getRow(FileStorageObject.class);
         map.get(daaId).setFile(fso);
+      }
+      if (hasColumn(rowView, "dac_id", Integer.class)) {
+        map.get(daaId).addDac(rowView.getRow(Dac.class));
       }
   }
 }

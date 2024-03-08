@@ -204,4 +204,21 @@ public class DaaDAOTest extends DAOTestHelper {
     assertEquals(fsoId, daa.getFile().getFileStorageObjectId());
   }
 
+  @Test
+  void testFindWithDacs() {
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 1", RandomStringUtils.randomAlphabetic(15),  new Date());
+    Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 2", RandomStringUtils.randomAlphabetic(15),  new Date());
+    Integer dacId3 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 3", RandomStringUtils.randomAlphabetic(15),  new Date());
+    Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId);
+    daaDAO.createDacDaaRelation(dacId2, daaId);
+    daaDAO.createDacDaaRelation(dacId3, daaId);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+
+    assertNotNull(daa);
+    assertNotNull(daa.getDacs());
+    assertEquals(3, daa.getDacs().size());
+  }
+
 }

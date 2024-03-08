@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataAccessAgreement {
 
@@ -11,6 +13,7 @@ public class DataAccessAgreement {
   private Instant updateDate;
   private Integer initialDacId;
   private FileStorageObject file;
+  private List<Dac> dacs;
 
   public Integer getDaaId() {
     return daaId;
@@ -66,5 +69,25 @@ public class DataAccessAgreement {
 
   public void setFile(FileStorageObject file) {
     this.file = file;
+  }
+
+  public List<Dac> getDacs() {
+    return dacs;
+  }
+
+  public void setDacs(List<Dac> dacs) {
+    this.dacs = dacs;
+  }
+
+  public void addDac(Dac dac) {
+    if (this.dacs == null) {
+      this.dacs = new ArrayList<>();
+    }
+    if (this.dacs
+        .stream()
+        .map(Dac::getDacId)
+        .noneMatch(d -> d.equals(dac.getDacId()))) {
+      this.dacs.add(dac);
+    }
   }
 }
