@@ -47,10 +47,10 @@
       referencedTableName="dac"
       referencedColumnNames="dac_id"/>
     <createTable tableName="dac_daa">
-      <column name="daa_id" type="bigint">
+      <column name="dac_id" type="bigint">
         <constraints nullable="false"/>
       </column>
-      <column name="dac_id" type="bigint">
+      <column name="daa_id" type="bigint">
         <constraints nullable="false"/>
       </column>
     </createTable>

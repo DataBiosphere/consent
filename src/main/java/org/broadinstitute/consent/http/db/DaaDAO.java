@@ -63,9 +63,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
           SELECT daa.daa_id as daa_daa_id,
-                daa.create_user_id as daa_create_user_id, 
+                daa.create_user_id as daa_create_user_id,
                 daa.create_date as daa_create_date,
-                daa.update_user_id as daa_update_user_id, 
+                daa.update_user_id as daa_update_user_id,
                 daa.update_date as daa_update_date,
                 daa.initial_dac_id as daa_initial_dac_id,
                 fso.file_storage_object_id AS file_storage_object_id,
@@ -97,7 +97,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
           SELECT daa.daa_id as daa_daa_id,
-                daa.create_user_id as daa_create_user_id, 
+                daa.create_user_id as daa_create_user_id,
                 daa.create_date as daa_create_date,
                 daa.update_user_id as daa_update_user_id, 
                 daa.update_date as daa_update_date,
@@ -140,15 +140,15 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       @Bind("updateDate") Instant updateDate, @Bind("initialDacId") Integer initialDacId);
 
   @SqlUpdate("""
-      INSERT INTO dac_daa (daa_id, dac_id)
-      VALUES (:daaId, :dacId)
+      INSERT INTO dac_daa (dac_id, daa_id)
+      VALUES (:dacId, :daaId)
       """)
-  void createDaaDacRelation(@Bind("daaId") Integer daaId, @Bind("dacId") Integer dacId);
+  void createDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
   @SqlUpdate("""
-      DELETE FROM dac_daa 
+      DELETE FROM dac_daa
       WHERE dac_id = :dacId
       """)
-  void deleteDaaDacRelation(@Bind("dacId") Integer dacId);
+  void deleteDacDaaRelation(@Bind("dacId") Integer dacId);
 
 }

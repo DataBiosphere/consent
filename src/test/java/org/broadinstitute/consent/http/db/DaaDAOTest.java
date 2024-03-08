@@ -151,9 +151,9 @@ public class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDaaDacRelation(daa1.getDaaId(),dacId);
-    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId2);
-    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId3);
+    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
+    daaDAO.createDacDaaRelation(dacId2, daa2.getDaaId());
+    daaDAO.createDacDaaRelation(dacId3, daa2.getDaaId());
 
     // need a way to getDaaDacRelation --> need a DaaDacRelation object?
   }
@@ -174,14 +174,14 @@ public class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDaaDacRelation(daa1.getDaaId(),dacId);
-    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId2);
-    daaDAO.createDaaDacRelation(daa2.getDaaId(),dacId3);
+    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
+    daaDAO.createDacDaaRelation(dacId2, daa2.getDaaId());
+    daaDAO.createDacDaaRelation(dacId3, daa2.getDaaId());
 
     // need a way to getDaaDacRelation --> need a DaaDacRelation object?
 
-    daaDAO.deleteDaaDacRelation(dacId);
-    daaDAO.deleteDaaDacRelation(dacId2);
+    daaDAO.deleteDacDaaRelation(dacId);
+    daaDAO.deleteDacDaaRelation(dacId2);
   }
 
   @Test
