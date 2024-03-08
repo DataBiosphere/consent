@@ -4,8 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import jakarta.ws.rs.core.MediaType;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.junit.jupiter.api.Test;
 
@@ -120,11 +125,13 @@ public class DaaDAOTest extends DAOTestHelper {
     Integer userId = userDAO.insertUser("blah", "blah", new Date());
     Integer dacId = dacDAO.createDac("blah", "blah", "",  new Date());
     Integer dacId2 = dacDAO.createDac("blah", "blah", "",  new Date());
-    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(1);
-    DataAccessAgreement daa2 = daaDAO.findByDacId(2);
-    DataAccessAgreement daa3 = daaDAO.findByDacId(3);
+    daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
+    DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
+    DataAccessAgreement daa3 = daaDAO.findByDacId(RandomUtils.nextInt(10000, 100000));
+    assertNotNull(daa1);
+    assertNotNull(daa2);
     assertNull(daa3);
   }
 
@@ -176,4 +183,25 @@ public class DaaDAOTest extends DAOTestHelper {
     daaDAO.deleteDaaDacRelation(dacId);
     daaDAO.deleteDaaDacRelation(dacId2);
   }
+
+  @Test
+  void testFindWithFileStorageObject() {
+    Integer userId = userDAO.insertUser("blah", "blah", new Date());
+    Integer dacId = dacDAO.createDac("blah", "blah", "",  new Date());
+    Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer fsoId = fileStorageObjectDAO.insertNewFile(
+        RandomStringUtils.randomAlphabetic(10),
+        FileCategory.DATA_ACCESS_AGREEMENT.getValue(),
+        RandomStringUtils.randomAlphabetic(10),
+        MediaType.TEXT_PLAIN_TYPE.getType(),
+        daaId.toString(),
+        userId,
+        Instant.now()
+    );
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    assertNotNull(daa);
+    assertNotNull(daa.getFile());
+    assertEquals(fsoId, daa.getFile().getFileStorageObjectId());
+  }
+
 }

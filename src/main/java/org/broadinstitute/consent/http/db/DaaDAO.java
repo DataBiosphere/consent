@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
+import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -14,19 +16,38 @@ import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(DaaMapper.class)
+@RegisterRowMapper(FileStorageObjectMapper.class)
 public interface DaaDAO extends Transactional<DaaDAO> {
-
-  String QUERY_FIELD_SEPARATOR = ", ";
 
   /**
    * Find all DAAs
    *
    * @return List<DataAccessAgreement>
    */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
   @SqlQuery("""
-      SELECT *
-      FROM data_access_agreement
+          SELECT daa.daa_id as daa_daa_id,
+                daa.create_user_id as daa_create_user_id,
+                daa.create_date as daa_create_date,
+                daa.update_user_id as daa_update_user_id,
+                daa.update_date as daa_update_date,
+                daa.initial_dac_id as daa_initial_dac_id,
+                fso.file_storage_object_id AS file_storage_object_id,
+                fso.entity_id AS entity_id,
+                fso.file_name AS file_name,
+                fso.category AS category,
+                fso.gcs_file_uri AS gcs_file_uri,
+                fso.media_type AS media_type,
+                fso.create_date AS create_date,
+                fso.create_user_id AS create_user_id,
+                fso.update_date AS update_date,
+                fso.update_user_id AS update_user_id,
+                fso.deleted AS deleted,
+                fso.delete_user_id AS delete_user_id
+          FROM data_access_agreement daa
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
       """)
   List<DataAccessAgreement> findAll();
 
@@ -37,8 +58,32 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @param daaId The daa_id to lookup
    * @return Daa
    */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
-  @SqlQuery("SELECT * FROM data_access_agreement WHERE daa_id = :daaId")
+  @SqlQuery("""
+          SELECT daa.daa_id as daa_daa_id,
+                daa.create_user_id as daa_create_user_id, 
+                daa.create_date as daa_create_date,
+                daa.update_user_id as daa_update_user_id, 
+                daa.update_date as daa_update_date,
+                daa.initial_dac_id as daa_initial_dac_id,
+                fso.file_storage_object_id AS file_storage_object_id,
+                fso.entity_id AS entity_id,
+                fso.file_name AS file_name,
+                fso.category AS category,
+                fso.gcs_file_uri AS gcs_file_uri,
+                fso.media_type AS media_type,
+                fso.create_date AS create_date,
+                fso.create_user_id AS create_user_id,
+                fso.update_date AS update_date,
+                fso.update_user_id AS update_user_id,
+                fso.deleted AS deleted,
+                fso.delete_user_id AS delete_user_id
+          FROM data_access_agreement daa
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          WHERE daa.daa_id = :daaId
+      """)
   DataAccessAgreement findById(@Bind("daaId") Integer daaId);
 
   /**
@@ -47,8 +92,32 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @param dacId The initial_dac_id to lookup
    * @return Daa
    */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DataAccessAgreementReducer.class)
-  @SqlQuery("SELECT * FROM data_access_agreement WHERE initial_dac_id = :dacId")
+  @SqlQuery("""
+          SELECT daa.daa_id as daa_daa_id,
+                daa.create_user_id as daa_create_user_id, 
+                daa.create_date as daa_create_date,
+                daa.update_user_id as daa_update_user_id, 
+                daa.update_date as daa_update_date,
+                daa.initial_dac_id as daa_initial_dac_id,
+                fso.file_storage_object_id AS file_storage_object_id,
+                fso.entity_id AS entity_id,
+                fso.file_name AS file_name,
+                fso.category AS category,
+                fso.gcs_file_uri AS gcs_file_uri,
+                fso.media_type AS media_type,
+                fso.create_date AS create_date,
+                fso.create_user_id AS create_user_id,
+                fso.update_date AS update_date,
+                fso.update_user_id AS update_user_id,
+                fso.deleted AS deleted,
+                fso.delete_user_id AS delete_user_id
+          FROM data_access_agreement daa
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          WHERE daa.initial_dac_id = :dacId
+      """)
   DataAccessAgreement findByDacId(@Bind("dacId") Integer dacId);
 
   /**

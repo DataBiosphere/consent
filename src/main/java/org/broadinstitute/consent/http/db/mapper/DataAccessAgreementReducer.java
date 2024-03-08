@@ -2,20 +2,27 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
 public class DataAccessAgreementReducer
-    implements LinkedHashMapRowReducer<Integer, DataAccessAgreement>, RowMapperHelper {
+    implements LinkedHashMapRowReducer<Integer, DataAccessAgreement>, RowMapperHelper,
+    ConsentLogger {
 
-  // idk if this is right?
   @Override
   public void accumulate(Map<Integer, DataAccessAgreement> map, RowView rowView) {
-    DataAccessAgreement daa =
-        map.computeIfAbsent(
-            rowView.getColumn("daa_id", Integer.class), id -> rowView.getRow(DataAccessAgreement.class));
-    if (hasColumn(rowView, "initial_dac_id", Integer.class)) {
-      daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class));
-    }
+    var daaId = hasColumn(rowView, "daa_id", Integer.class) ?
+        rowView.getColumn("daa_id", Integer.class) :
+        rowView.getColumn("daa_daa_id", Integer.class);
+      map.computeIfAbsent(
+          daaId,
+          id -> rowView.getRow(DataAccessAgreement.class)
+      );
+      if (hasColumn(rowView, "entity_id", String.class)) {
+        FileStorageObject fso = rowView.getRow(FileStorageObject.class);
+        map.get(daaId).setFile(fso);
+      }
   }
 }
