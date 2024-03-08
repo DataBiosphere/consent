@@ -178,10 +178,8 @@ public class DaaDAOTest extends DAOTestHelper {
     daaDAO.createDacDaaRelation(dacId2, daa2.getDaaId());
     daaDAO.createDacDaaRelation(dacId3, daa2.getDaaId());
 
-    // need a way to getDaaDacRelation --> need a DaaDacRelation object?
-
-    daaDAO.deleteDacDaaRelation(dacId);
-    daaDAO.deleteDacDaaRelation(dacId2);
+    daaDAO.deleteDacDaaRelation(dacId, daaId1);
+    daaDAO.deleteDacDaaRelation(dacId2, daaId2);
   }
 
   @Test

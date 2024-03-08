@@ -170,7 +170,8 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   @SqlUpdate("""
       DELETE FROM dac_daa
       WHERE dac_id = :dacId
+      AND daa_id = :daaId
       """)
-  void deleteDacDaaRelation(@Bind("dacId") Integer dacId);
+  void deleteDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
 }
