@@ -17,6 +17,11 @@ public class DaaService {
     this.daaDAO = daaDAO;
   }
 
+  /*
+   * TODO: This is just a potential implementation. The actual implementation might require an
+   *  input stream, file name, etc, which would be used to create a FileStorageObject from scratch.
+   *  This would require additional components such as GCSService.
+   */
   public DataAccessAgreement createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)
       throws Exception {
     Integer daaId = daaServiceDAO.createDaaWithFso(userId, dacId, fso);
