@@ -49,13 +49,14 @@ public class DaaServiceTest {
 
   @Test
   void testCreateDaaWithFso() throws Exception {
-    BlobId blobId = BlobId.of("bucket", "object");
+    BlobId blobId = mock(BlobId.class);
     DataAccessAgreement daa = new DataAccessAgreement();
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(blobId);
     when(daaServiceDAO.createDaaWithFso(any(), any(), any())).thenReturn(1);
     when(daaDAO.findById(any())).thenReturn(daa);
     when(daaServiceDAO.createDaaWithFso(any(), any(), any())).thenReturn(1);
     when(daaDAO.findById(any())).thenReturn(daa);
+    when(contentDisposition.getFileName()).thenReturn("file.txt");
 
     initService();
     assertDoesNotThrow(() -> service.createDaaWithFso(1, 1, inputStream, contentDisposition));
@@ -73,6 +74,7 @@ public class DaaServiceTest {
 
   @Test
   void testCreateDaaWithFsoDBError() throws Exception {
+    when(contentDisposition.getFileName()).thenReturn("file.txt");
     doThrow(new Exception("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
 
     initService();

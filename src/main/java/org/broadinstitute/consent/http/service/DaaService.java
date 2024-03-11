@@ -3,9 +3,11 @@ package org.broadinstitute.consent.http.service;
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -52,11 +54,15 @@ public class DaaService implements ConsentLogger {
     }
     Integer daaId;
     try {
+      String mediaType = switch (StringUtils.substringAfterLast(fileDetail.getFileName(), ".")) {
+        case "png", "gif", "jpg", "jpeg" -> "image";
+        default -> MediaType.APPLICATION_OCTET_STREAM;
+      };
       FileStorageObject fso = new FileStorageObject();
       fso.setBlobId(blobId);
       fso.setFileName(fileDetail.getFileName());
       fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
-      fso.setMediaType(fileDetail.getType());
+      fso.setMediaType(mediaType);
       daaId = daaServiceDAO.createDaaWithFso(userId, dacId, fso);
     } catch (Exception e) {
       try {
