@@ -422,7 +422,8 @@ public class ConsentModule extends AbstractModule {
   DaaService providesDaaService() {
     return new DaaService(
         providesDaaServiceDAO(),
-        providesDaaDAO());
+        providesDaaDAO(),
+        providesGCSService());
   }
 
   @Provides

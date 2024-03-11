@@ -2,37 +2,71 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
+import jakarta.ws.rs.ServerErrorException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
-public class DaaService {
+public class DaaService implements ConsentLogger {
 
   private final DaaServiceDAO daaServiceDAO;
   private final DaaDAO daaDAO;
+  private final GCSService gcsService;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
+    this.gcsService = gcsService;
   }
 
   /**
-   * Create a new DataAccessAgreement with all required fields of a FileStorageObject which requires
-   * that the file content has previously been uploaded to the cloud storage and is provided as a
-   * BlobId. We can't use the FileStorageObjectService here due to circular dependencies.
+   * Create a new DataAccessAgreement with file content.
+   *
+   * @param userId The create User ID
+   * @param dacId The initial DAC ID
+   * @param inputStream The file content
+   * @param fileDetail The file details
+   * @return The created DataAccessAgreement
+   * @throws ServerErrorException The Exception
    */
-  public DataAccessAgreement createDaaWithFso(Integer userId, Integer dacId, BlobId blobId,
-      String fileName, String mediaType, FileCategory category)
-      throws Exception {
-    FileStorageObject fso = new FileStorageObject();
-    fso.setBlobId(blobId);
-    fso.setFileName(fileName);
-    fso.setCategory(category);
-    fso.setMediaType(mediaType);
-    Integer daaId = daaServiceDAO.createDaaWithFso(userId, dacId, fso);
+  public DataAccessAgreement createDaaWithFso(Integer userId, Integer dacId,
+      InputStream inputStream,
+      FormDataContentDisposition fileDetail)
+      throws ServerErrorException {
+    UUID id = UUID.randomUUID();
+    BlobId blobId;
+    try {
+      blobId = gcsService.storeDocument(inputStream, fileDetail.getType(), id);
+    } catch (IOException e) {
+      logException(String.format("Error storing DAA file in GCS. User ID: %s; Dac ID: %s. ", userId, dacId), e);
+      throw new ServerErrorException("Error storing DAA file in GCS.", 500);
+    }
+    Integer daaId;
+    try {
+      FileStorageObject fso = new FileStorageObject();
+      fso.setBlobId(blobId);
+      fso.setFileName(fileDetail.getFileName());
+      fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+      fso.setMediaType(fileDetail.getType());
+      daaId = daaServiceDAO.createDaaWithFso(userId, dacId, fso);
+    } catch (Exception e) {
+      try {
+        gcsService.deleteDocument(blobId.getName());
+      } catch (Exception ex) {
+        logException(String.format("Error deleting DAA file from GCS. User ID: %s; Dac ID: %s. ", userId, dacId), ex);
+      }
+      logException(String.format("Error saving DAA. User ID: %s; Dac ID: %s. ", userId, dacId), e);
+      throw new ServerErrorException("Error saving DAA.", 500);
+    }
     return daaDAO.findById(daaId);
   }
 
