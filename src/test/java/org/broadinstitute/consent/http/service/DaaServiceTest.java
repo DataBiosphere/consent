@@ -9,7 +9,6 @@ import jakarta.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
