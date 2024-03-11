@@ -21,10 +21,9 @@ public class DaaService {
   }
 
   /**
-   * Create a new DataAccessAgreement with all required fields of a FileStorageObject and reqquires
-   * that the file content has previously been uploaded to the cloud storage.
-   * We don't use the FileStorageObjectService here to prevent circular dependencies.
-   * This method will wrap several object creations in a single transaction.
+   * Create a new DataAccessAgreement with all required fields of a FileStorageObject which requires
+   * that the file content has previously been uploaded to the cloud storage and is provided as a
+   * BlobId. We can't use the FileStorageObjectService here due to circular dependencies.
    */
   public DataAccessAgreement createDaaWithFso(Integer userId, Integer dacId, BlobId blobId,
       String fileName, String mediaType, FileCategory category)
