@@ -4,7 +4,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.core.MediaType;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -30,13 +33,13 @@ public class DaaServiceTest {
 
   @Test
   void testCreateDaaWithFso() throws Exception {
-    FileStorageObject fso = new FileStorageObject();
+    BlobId blobId = BlobId.of("bucket", "object");
     DataAccessAgreement daa = new DataAccessAgreement();
     when(daaServiceDAO.createDaaWithFso(any(), any(), any())).thenReturn(1);
     when(daaDAO.findById(any())).thenReturn(daa);
 
     initService();
-    service.createDaaWithFso(1, 1, fso);
+    service.createDaaWithFso(1, 1, blobId, "fileName", MediaType.TEXT_PLAIN_TYPE.getType(), FileCategory.DATA_ACCESS_AGREEMENT);
   }
 
   @Test
