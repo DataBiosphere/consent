@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.cloud.storage.BlobId;
@@ -41,6 +42,7 @@ public class DaaServiceDAOTest extends DAOTestHelper {
       assertNotNull(daa);
       assertNotNull(daa.getFile());
       assertNotNull(daa.getInitialDacId());
+      assertFalse(daa.getDacs().isEmpty());
     });
   }
 

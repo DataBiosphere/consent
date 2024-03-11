@@ -21,7 +21,7 @@ public class DataAccessAgreementReducer
           daaId,
           id -> rowView.getRow(DataAccessAgreement.class)
       );
-      if (hasColumn(rowView, "entity_id", String.class)) {
+      if (hasColumn(rowView, "file_storage_object_id", String.class)) {
         FileStorageObject fso = rowView.getRow(FileStorageObject.class);
         map.get(daaId).setFile(fso);
       }
