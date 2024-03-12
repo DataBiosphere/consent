@@ -8,10 +8,14 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -44,7 +48,9 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON})
   @Path("{dacId}")
-  public Response createDaa(@Auth AuthUser authUser,
+  public Response createDaaForDac(
+      @Context UriInfo info,
+      @Auth AuthUser authUser,
       @PathParam("dacId") Integer dacId,
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
@@ -61,7 +67,11 @@ public class DaaResource extends Resource implements ConsentLogger {
         }
       }
       DataAccessAgreement daa = daaService.createDaaWithFso(user.getUserId(), dacId, uploadInputStream, fileDetail);
-      return Response.ok().entity(daa).build();
+      URI uri = info.getBaseUriBuilder()
+          // This will be the GET endpoint for the created DAA
+          .replacePath("api/daa/{daaId}")
+          .build(daa.getDaaId());
+      return Response.created(uri).entity(daa).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
