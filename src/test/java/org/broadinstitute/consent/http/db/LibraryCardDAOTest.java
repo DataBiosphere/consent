@@ -189,6 +189,44 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
   }
 
+  @Test
+  public void testCreateLibraryCardDaaAssociation() {
+    User user = createUser();
+    User user2 = createUser();
+    LibraryCard card = createLibraryCard(user);
+    LibraryCard card2 = createLibraryCard(user2);
+    Integer userId = user.getUserId();
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId2);
+  }
+
+  @Test
+  public void testDeleteLibraryCardDaaAssociation() {
+    User user = createUser();
+    User user2 = createUser();
+    LibraryCard card = createLibraryCard(user);
+    LibraryCard card2 = createLibraryCard(user2);
+    Integer userId = user.getUserId();
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "", new Date());
+    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId2);
+
+    libraryCardDAO.deleteLibraryCardDaaRelation(card.getId(), daaId1);
+    libraryCardDAO.deleteLibraryCardDaaRelation(card.getId(), daaId2);
+    libraryCardDAO.deleteLibraryCardDaaRelation(card2.getId(), daaId1);
+    libraryCardDAO.deleteLibraryCardDaaRelation(card2.getId(), daaId2);
+  }
+
+
   private LibraryCard createLibraryCardForIndex(Integer institutionId) {
     Integer userId = createUser().getUserId();
     String stringValue = "value";

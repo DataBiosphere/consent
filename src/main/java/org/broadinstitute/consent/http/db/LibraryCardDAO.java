@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -70,12 +71,17 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       " FROM library_card AS lc " +
       " LEFT JOIN institution " +
       " ON lc.institution_id = institution.institution_id" +
+      " LEFT JOIN lc_daa ld ON lc.id = ld.lc_id " +
+      " LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id " +
       " WHERE lc.user_id = :userId")
   List<LibraryCard> findLibraryCardsByUserId(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT * FROM library_Card WHERE institution_id = :institutionId")
+  @SqlQuery("SELECT library_Card.* FROM library_Card " +
+      "LEFT JOIN lc_daa ld ON library_Card.id = ld.lc_id " +
+      "LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id " +
+      "WHERE library_Card.institution_id = :institutionId")
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
@@ -92,7 +98,9 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       "institution.update_user AS i_update_user_id " +
       "FROM library_card AS lc " +
       "LEFT JOIN institution " +
-      "ON lc.institution_id = institution.institution_id"
+      "ON lc.institution_id = institution.institution_id " +
+      "LEFT JOIN lc_daa ld ON lc.id = ld.lc_id " +
+      "LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id "
   )
   List<LibraryCard> findAllLibraryCards();
 
@@ -112,4 +120,17 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
+
+  @SqlUpdate("""
+      INSERT INTO lc_daa (lc_id, daa_id)
+      VALUES (:lcId, :daaId)
+      """)
+  void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+
+  @SqlUpdate("""
+      DELETE FROM lc_daa
+      WHERE lc_id = :lcId
+      AND daa_id = :daaId
+      """)
+  void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 }
