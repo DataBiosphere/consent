@@ -14,7 +14,9 @@ public enum FileCategory {
   @SerializedName("alternativeDataSharingPlan")
   ALTERNATIVE_DATA_SHARING_PLAN("alternativeDataSharingPlan"),
   @SerializedName("nihInstitutionalCertification")
-  NIH_INSTITUTIONAL_CERTIFICATION("nihInstitutionalCertification");
+  NIH_INSTITUTIONAL_CERTIFICATION("nihInstitutionalCertification"),
+  @SerializedName("dataAccessAgreement")
+  DATA_ACCESS_AGREEMENT("dataAccessAgreement");
 
   private final String value;
 
