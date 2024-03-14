@@ -35,6 +35,8 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -357,52 +359,40 @@ public class VoteService implements ConsentLogger {
 
     // Find all the custodians, data owners, and data submitters to notify for each dataset
     datasets.forEach(d -> {
+      if (Objects.nonNull(d.getStudy())) {
+        Study study = d.getStudy();
 
-      // Data Submitter
+        // Data Submitter (study)
+        if (Objects.nonNull(study.getCreateUserId())) {
+          User submitter = userDAO.findUserById(study.getCreateUserId());
+          if (Objects.nonNull(submitter)) {
+            custodianMap.putIfAbsent(submitter, new HashSet<>());
+            custodianMap.get(submitter).add(d);
+          }
+        }
+
+        // Data Custodian (study)
+        if (Objects.nonNull(study.getProperties())) {
+          Set<StudyProperty> props = study.getProperties();
+          List<User> submitters = props.stream()
+              .filter(p -> p.getKey().equals("dataCustodianEmail")) // dataCustodianEmail is a list
+              .map(p -> userDAO.findUserByEmail((String)p.getValue())).toList();
+          if (!submitters.isEmpty()) {
+            submitters.forEach(s -> {
+              custodianMap.putIfAbsent(s, new HashSet<>());
+              custodianMap.get(s).add(d);
+            });
+          }
+        }
+      }
+
+      // Data Submitter (dataset)
       if (Objects.nonNull(d.getCreateUserId())) {
         User submitter = userDAO.findUserById(d.getCreateUserId());
         if (Objects.nonNull(submitter)) {
           custodianMap.putIfAbsent(submitter, new HashSet<>());
           custodianMap.get(submitter).add(d);
         }
-      }
-
-      EmailValidator emailValidator = EmailValidator.getInstance();
-
-      // Data Custodians
-      List<String> custodianEmails = d.getDataCustodianEmails()
-          .stream()
-          .filter(e -> emailValidator.isValid(e))
-          .toList();
-      if (!custodianEmails.isEmpty()) {
-        userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      }
-
-      // Data Depositors
-      List<String> depositorEmails = d.getDataDepositors()
-          .stream()
-          .filter(e -> emailValidator.isValid(e))
-          .toList();
-      if (!depositorEmails.isEmpty()) {
-        userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      }
-
-      // Data Owners
-      List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
-      if (!ownerUserIds.isEmpty()) {
-        userDAO.findUsers(ownerUserIds).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      } else {
-        logWarn("Unable to find dataset owner associations for dataset identifier: "
-            + d.getDatasetIdentifier());
       }
     });
     if (custodianMap.isEmpty()) {

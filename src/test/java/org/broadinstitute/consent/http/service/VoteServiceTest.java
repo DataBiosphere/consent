@@ -826,7 +826,7 @@ public class VoteServiceTest {
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
@@ -886,7 +886,7 @@ public class VoteServiceTest {
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
