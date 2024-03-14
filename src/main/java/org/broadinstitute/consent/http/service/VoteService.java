@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.commons.validator.EmailValidator;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,12 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.EmailValidator;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -33,7 +31,6 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -46,7 +43,6 @@ public class VoteService implements ConsentLogger {
   private final UserDAO userDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
-  private final DatasetAssociationDAO datasetAssociationDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
@@ -58,14 +54,13 @@ public class VoteService implements ConsentLogger {
   @Inject
   public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
+      DatasetDAO datasetDAO, ElectionDAO electionDAO,
       EmailService emailService, ElasticSearchService elasticSearchService,
       UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
     this.userDAO = userDAO;
     this.darCollectionDAO = darCollectionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.datasetAssociationDAO = datasetAssociationDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.emailService = emailService;
@@ -169,21 +164,6 @@ public class VoteService implements ConsentLogger {
       }
     }
     return votes;
-  }
-
-  /**
-   * Create Votes for a data owner election
-   *
-   * @param election Election
-   * @return Votes for the election
-   */
-  @SuppressWarnings("UnusedReturnValue")
-  public List<Vote> createDataOwnersReviewVotes(Election election) {
-    List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataSet(
-        election.getDataSetId());
-    voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
-    return voteDAO.findVotesByElectionIdAndType(election.getElectionId(),
-        VoteType.DATA_OWNER.getValue());
   }
 
   public List<Vote> findVotesByIds(List<Integer> voteIds) {
@@ -393,17 +373,6 @@ public class VoteService implements ConsentLogger {
         });
       }
 
-      // Data Owners
-      List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
-      if (!ownerUserIds.isEmpty()) {
-        userDAO.findUsers(ownerUserIds).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      } else {
-        logWarn("Unable to find dataset owner associations for dataset identifier: "
-            + d.getDatasetIdentifier());
-      }
     });
     if (custodianMap.isEmpty()) {
       String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier)

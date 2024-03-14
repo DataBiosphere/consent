@@ -81,7 +81,6 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -165,8 +164,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final DacService dacService = injector.getProvider(DacService.class).get();
     final DataAccessRequestService dataAccessRequestService = injector.getProvider(
         DataAccessRequestService.class).get();
-    final DatasetAssociationService datasetAssociationService = injector.getProvider(
-        DatasetAssociationService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();
