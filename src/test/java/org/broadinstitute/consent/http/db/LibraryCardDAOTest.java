@@ -131,6 +131,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     assertNotNull(cardsFromDAO);
     assertEquals(cardsFromDAO.size(), 1);
     assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
+    assertNull(cardsFromDAO.get(0).getDaaIds());
   }
 
   @Test
@@ -145,6 +146,7 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     Institution cardInstitution = card.getInstitution();
     assertEquals(institution.getId(), cardInstitution.getId());
     assertEquals(institution.getName(), cardInstitution.getName());
+    assertNull(card.getDaaIds());
   }
 
   @Test
@@ -168,6 +170,8 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     assertEquals(2, libraryCards.size());
     assertEquals(one.getId(), libraryCards.get(0).getId());
     assertEquals(two.getId(), libraryCards.get(1).getId());
+    assertNull(one.getDaaIds());
+    assertNull(two.getDaaIds());
   }
 
   @Test
@@ -204,6 +208,16 @@ public class LibraryCardDAOTest extends DAOTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId2);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId1);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId2);
+  }
+
+  @Test
+  public void testCreateLibraryCardDaaAssociationLibraryCardNotExisting() {
+    User user = createUser();
+    LibraryCard card = createLibraryCard(user);
+    Integer userId = user.getUserId();
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), 1);
   }
 
   @Test

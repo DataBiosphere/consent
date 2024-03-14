@@ -98,6 +98,14 @@ public class LibraryCardService {
     return libraryCard;
   }
 
+  public void addDaaToLibraryCard(Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.createLibraryCardDaaRelation(libraryCardId, daaId);
+  }
+
+  public void removeDaaFromLibraryCard(Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
+  }
+
   private void checkForValidInstitution(Integer institutionId) {
     checkInstitutionId(institutionId);
     Institution institution = institutionDAO.findInstitutionById(institutionId);
