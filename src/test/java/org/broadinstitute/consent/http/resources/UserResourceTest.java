@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -417,8 +416,6 @@ public class UserResourceTest {
     response = userResource.addRoleToUser(authUser, 1, UserRoles.MEMBER.getRoleId());
     assertEquals(400, response.getStatus());
     response = userResource.addRoleToUser(authUser, 1, UserRoles.CHAIRPERSON.getRoleId());
-    assertEquals(400, response.getStatus());
-    response = userResource.addRoleToUser(authUser, 1, UserRoles.DATAOWNER.getRoleId());
     assertEquals(400, response.getStatus());
     response = userResource.addRoleToUser(authUser, 1, UserRoles.ALUMNI.getRoleId());
     assertEquals(400, response.getStatus());
@@ -839,7 +836,6 @@ public class UserResourceTest {
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
     user.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
     user.addRole(new UserRole(UserRoles.ALUMNI.getRoleId(), UserRoles.ALUMNI.getRoleName()));
-    user.addRole(new UserRole(UserRoles.DATAOWNER.getRoleId(), UserRoles.DATAOWNER.getRoleName()));
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
@@ -865,8 +861,6 @@ public class UserResourceTest {
     response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
         UserRoles.ALUMNI.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
-    response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
-        UserRoles.DATAOWNER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 

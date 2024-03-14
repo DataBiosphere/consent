@@ -795,10 +795,8 @@ public class VoteServiceTest {
     custodian.setDisplayName("custodian");
     custodian.setUserId(3);
 
-    when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
-    when(userDAO.findUsersByEmailList(List.of(depositor.getEmail()))).thenReturn(
-        List.of(depositor));
-    when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
+    when(userDAO.findUserById(any())).thenReturn(submitter);
+    when(userDAO.findUsersByEmailList(any())).thenReturn(List.of(depositor, custodian));
 
     initService();
     try {
