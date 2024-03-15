@@ -125,14 +125,38 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService);
 
+    // this should be a mock
     Response created = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     Response response = resource.findById(1);
     assert response.getStatus() == HttpStatus.SC_OK;
     assertEquals(GsonUtil.buildGson().toJson(List.of(created.getEntity())), response.getEntity());
-//    Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
   }
 
   // can't find id
+  @Test
+  void testFindDaaByDaaIdInvalidId() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    /*when(info.getRequestUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);*/
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    admin.setRoles(List.of(role));
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+
+    when(dacService.findById(any())).thenReturn(dac);
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
+
+    resource = new DaaResource(daaService, dacService, userService);
+
+    // this should be a mock
+    Response created = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
+    Response response = resource.findById(2);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
 
   // not logged in?
 
