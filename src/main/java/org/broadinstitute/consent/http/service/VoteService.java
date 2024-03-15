@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import org.apache.commons.validator.EmailValidator;
 import jakarta.ws.rs.NotFoundException;
@@ -42,6 +43,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class VoteService implements ConsentLogger {
 
@@ -375,8 +377,11 @@ public class VoteService implements ConsentLogger {
         if (Objects.nonNull(study.getProperties())) {
           Set<StudyProperty> props = study.getProperties();
           List<User> submitters = props.stream()
-              .filter(p -> p.getKey().equals("dataCustodianEmail")) // dataCustodianEmail is a list
-              .map(p -> userDAO.findUserByEmail((String)p.getValue())).toList();
+              .filter(p -> p.getKey().equals("dataCustodianEmail"))
+              .map(p -> {
+                List<String> emailList = List.of(GsonUtil.getInstance().fromJson((String)p.getValue(), String[].class));
+                return userDAO.findUsersByEmailList(emailList);
+              }).flatMap(List::stream).toList();
           if (!submitters.isEmpty()) {
             submitters.forEach(s -> {
               custodianMap.putIfAbsent(s, new HashSet<>());
