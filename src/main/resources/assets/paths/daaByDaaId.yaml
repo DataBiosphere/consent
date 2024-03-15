@@ -1,0 +1,24 @@
+get:
+  summary: Find all DAAs
+  operationId: Find DAA
+  description: Fetches DAA based on DAA id parameter
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Returns DAA with specified id
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessAgreement.yaml'
+    404:
+      description: DAA Not Found
+    500:
+      description: Internal Server Error

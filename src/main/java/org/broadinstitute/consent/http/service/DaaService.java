@@ -2,17 +2,23 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -82,6 +88,19 @@ public class DaaService implements ConsentLogger {
 
   public void removeDacFromDaa(Integer dacId, Integer daaId) {
     daaDAO.deleteDacDaaRelation(dacId, daaId);
+  }
+
+  public DataAccessAgreement findById(Integer daaId) {
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+//    List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId,
+//        UserRoles.CHAIRPERSON.getRoleId());
+//    List<User> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
+    if (Objects.nonNull(daa)) {
+//      daa.set(chairs);
+//      daa.set(members);
+      return daa;
+    }
+    throw new NotFoundException("Could not find DAA with the provided id: " + daaId);
   }
 
 }

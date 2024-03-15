@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -19,6 +20,7 @@ import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -72,6 +74,20 @@ public class DaaResource extends Resource implements ConsentLogger {
           .replacePath("api/daa/{daaId}")
           .build(daa.getDaaId());
       return Response.created(uri).entity(daa).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
+  @Path("{daaId}")
+  public Response findById(
+      @PathParam("daaId") Integer daaId) {
+    try {
+      DataAccessAgreement daa = daaService.findById(daaId);
+      return Response.ok(daa).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
