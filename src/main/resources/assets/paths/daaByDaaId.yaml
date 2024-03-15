@@ -1,5 +1,5 @@
 get:
-  summary: Find all DAAs
+  summary: Find DAA by id
   operationId: Find DAA
   description: Fetches DAA based on DAA id parameter
   parameters:
