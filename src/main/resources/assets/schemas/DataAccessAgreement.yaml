@@ -1,0 +1,28 @@
+type: object
+properties:
+  daaId:
+    type: integer
+    description: The Data Access Agreement Id
+  createUserId:
+    type: integer
+    description: The Create User Id
+  createDate:
+    type: string
+    format: date
+    description: Date created
+  updateDate:
+    type: string
+    format: date
+    description: Date last updated
+  initialDacId:
+    type: integer
+    description: The initial DAC Id
+  file:
+    description: The DAA file
+    allOf:
+      - $ref: './FileStorageObject.yaml'
+  dacs:
+    description: List of DACs using this DAA
+    type: array
+    items:
+      $ref: './Dac.yaml'
