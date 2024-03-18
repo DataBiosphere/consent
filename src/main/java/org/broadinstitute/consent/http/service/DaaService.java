@@ -2,23 +2,34 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
+<<<<<<< HEAD
 import jakarta.ws.rs.NotFoundException;
+=======
+>>>>>>> develop
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+<<<<<<< HEAD
 import java.util.List;
 import java.util.Objects;
+=======
+>>>>>>> develop
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+<<<<<<< HEAD
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+=======
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
+>>>>>>> develop
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -95,7 +106,6 @@ public class DaaService implements ConsentLogger {
     if (Objects.nonNull(daa)) {
       return daa;
     }
-    throw new NotFoundException("Could not find DAA with the provided id: " + daaId);
+    throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
   }
-
 }
