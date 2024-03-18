@@ -67,20 +67,21 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       " institution.create_user AS i_create_user_id, " +
       " institution.create_date AS i_create_date, " +
       " institution.update_date AS i_update_date, " +
-      " institution.update_user AS i_update_user_id " +
+      " institution.update_user AS i_update_user_id, " +
+      " ld.daa_id " +
       " FROM library_card AS lc " +
       " LEFT JOIN institution " +
       " ON lc.institution_id = institution.institution_id" +
       " LEFT JOIN lc_daa ld ON lc.id = ld.lc_id " +
-      " LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id " +
       " WHERE lc.user_id = :userId")
   List<LibraryCard> findLibraryCardsByUserId(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT library_Card.* FROM library_Card " +
+  @SqlQuery("SELECT library_Card.*, " +
+      "ld.daa_id " +
+      "FROM library_Card " +
       "LEFT JOIN lc_daa ld ON library_Card.id = ld.lc_id " +
-      "LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id " +
       "WHERE library_Card.institution_id = :institutionId")
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
@@ -95,12 +96,12 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       "institution.create_user AS i_create_user_id, " +
       "institution.create_date AS i_create_date, " +
       "institution.update_date AS i_update_date, " +
-      "institution.update_user AS i_update_user_id " +
+      "institution.update_user AS i_update_user_id, " +
+      "ld.daa_id " +
       "FROM library_card AS lc " +
       "LEFT JOIN institution " +
       "ON lc.institution_id = institution.institution_id " +
-      "LEFT JOIN lc_daa ld ON lc.id = ld.lc_id " +
-      "LEFT JOIN data_access_agreement daa ON daa.daa_id = ld.daa_id "
+      "LEFT JOIN lc_daa ld ON lc.id = ld.lc_id"
   )
   List<LibraryCard> findAllLibraryCards();
 

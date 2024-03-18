@@ -152,7 +152,7 @@ public class LibraryCard {
 
   public void removeDaa(Integer daaId) {
     if (this.daaIds == null) {
-      return; //not sure if this is appropriate but we should not be removing anything if nothing exists
+      return;
     }
     if (this.daaIds
         .stream()
