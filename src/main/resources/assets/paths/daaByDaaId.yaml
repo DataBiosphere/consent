@@ -1,7 +1,7 @@
 get:
-  summary: Find DAA by id
+  summary: Get DAA by id
   operationId: Find DAA
-  description: Fetches DAA based on DAA id parameter
+  description: Fetches Data Access Agreement by Id
   parameters:
     - name: daaId
       in: path
@@ -13,12 +13,12 @@ get:
     - DAA
   responses:
     200:
-      description: Returns DAA with specified id
+      description: The Data Access Agreement matching the provided ID
       content:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
     404:
-      description: DAA Not Found
+      description: No DAA found with the given ID
     500:
       description: Internal Server Error
