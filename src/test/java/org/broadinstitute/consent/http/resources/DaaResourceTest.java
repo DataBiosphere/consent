@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -46,7 +48,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_AdminCase() {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
@@ -68,7 +70,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_ChairCase() {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
@@ -108,56 +110,27 @@ class DaaResourceTest {
 
   @Test
   void testFindDaaByDaaId() {
-    UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
-    /*when(info.getRequestUriBuilder()).thenReturn(builder);
-    when(builder.replacePath(any())).thenReturn(builder);*/
-    Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
-    User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
-    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-
-    when(dacService.findById(any())).thenReturn(dac);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
 
     resource = new DaaResource(daaService, dacService, userService);
 
-    // this should be a mock
-    Response created = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    Response response = resource.findById(1);
+    Response response = resource.findById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
-    assertEquals(GsonUtil.buildGson().toJson(List.of(created.getEntity())), response.getEntity());
+    assertEquals(expectedDaa, response.getEntity());
   }
 
   // can't find id
   @Test
   void testFindDaaByDaaIdInvalidId() {
-    UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
-    /*when(info.getRequestUriBuilder()).thenReturn(builder);
-    when(builder.replacePath(any())).thenReturn(builder);*/
-    Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
-    User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
-    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
-
-    when(dacService.findById(any())).thenReturn(dac);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
-
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService);
 
-    // this should be a mock
-    Response created = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    Response response = resource.findById(2);
+    Response response = resource.findById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
-
-  // not logged in?
 
 }
