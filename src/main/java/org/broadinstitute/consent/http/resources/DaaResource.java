@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -77,4 +78,15 @@ public class DaaResource extends Resource implements ConsentLogger {
     }
   }
 
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
+  public Response findAll() {
+    try {
+      List<DataAccessAgreement> daas = daaService.findAll();
+      return Response.ok(daas).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

@@ -6,6 +6,8 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -82,6 +84,14 @@ public class DaaService implements ConsentLogger {
 
   public void removeDacFromDaa(Integer dacId, Integer daaId) {
     daaDAO.deleteDacDaaRelation(dacId, daaId);
+  }
+
+  public List<DataAccessAgreement> findAll() {
+    List<DataAccessAgreement> daas = daaDAO.findAll();
+    if (Objects.nonNull(daas)) {
+      return daas;
+    }
+    return List.of();
   }
 
 }
