@@ -92,12 +92,7 @@ public class DaaService implements ConsentLogger {
 
   public DataAccessAgreement findById(Integer daaId) {
     DataAccessAgreement daa = daaDAO.findById(daaId);
-//    List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dacId,
-//        UserRoles.CHAIRPERSON.getRoleId());
-//    List<User> members = dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId());
     if (Objects.nonNull(daa)) {
-//      daa.set(chairs);
-//      daa.set(members);
       return daa;
     }
     throw new NotFoundException("Could not find DAA with the provided id: " + daaId);
