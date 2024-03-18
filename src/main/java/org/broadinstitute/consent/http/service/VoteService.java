@@ -359,7 +359,7 @@ public class VoteService implements ConsentLogger {
       String darCode) throws IllegalArgumentException {
     Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
 
-    // Find all the custodians, data owners, and data submitters to notify for each dataset
+    // Find all the data custodians and submitters to notify for each dataset
     datasets.forEach(d -> {
       if (Objects.nonNull(d.getStudy())) {
         Study study = d.getStudy();
@@ -400,7 +400,14 @@ public class VoteService implements ConsentLogger {
         }
       }
     });
-    if (custodianMap.isEmpty()) {
+
+    // Filter out invalid emails in custodian map
+    EmailValidator emailValidator = EmailValidator.getInstance();
+    Map<User, HashSet<Dataset>> validCustodians = custodianMap.entrySet().stream()
+        .filter(e -> e.getKey().getEmail() != null && emailValidator.isValid(e.getKey().getEmail()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, HashMap::new));
+
+    if (validCustodians.isEmpty()) {
       String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier)
           .collect(Collectors.joining(", "));
       throw new IllegalArgumentException(
@@ -408,7 +415,7 @@ public class VoteService implements ConsentLogger {
               + identifiers);
     }
     // For each custodian, notify them of their approved datasets
-    for (Map.Entry<User, HashSet<Dataset>> entry : custodianMap.entrySet()) {
+    for (Map.Entry<User, HashSet<Dataset>> entry : validCustodians.entrySet()) {
       List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
           .stream()
           .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
