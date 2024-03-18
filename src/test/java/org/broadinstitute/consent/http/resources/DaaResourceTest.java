@@ -44,7 +44,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_AdminCase() {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
@@ -66,7 +66,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_ChairCase() {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
