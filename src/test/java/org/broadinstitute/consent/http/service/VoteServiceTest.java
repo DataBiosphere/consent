@@ -18,6 +18,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
@@ -826,7 +828,7 @@ public class VoteServiceTest {
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
@@ -886,7 +888,7 @@ public class VoteServiceTest {
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
@@ -951,6 +953,70 @@ public class VoteServiceTest {
         any(),
         any(),
         any());
+  }
+
+  @Test
+  public void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
+    User studySubmitter = new User();
+    studySubmitter.setEmail("submitter@example.com");
+    studySubmitter.setDisplayName("submitter");
+    studySubmitter.setUserId(4);
+
+    User datasetSubmitter = new User();
+    datasetSubmitter.setEmail("submitter2@example.com");
+    datasetSubmitter.setDisplayName("submitter2");
+    datasetSubmitter.setUserId(5);
+
+    User custodian = new User();
+    String custodianEmail = "custodian@example.com";
+    custodian.setEmail(custodianEmail);
+    custodian.setDisplayName("custodian");
+    custodian.setUserId(3);
+
+    String custodianEmailJson = GsonUtil.getInstance().toJson(List.of(custodianEmail));
+
+    StudyProperty custodianStudyProperty = new StudyProperty();
+    custodianStudyProperty.setKey("dataCustodianEmail");
+    custodianStudyProperty.setType(PropertyType.Json);
+    custodianStudyProperty.setValue(custodianEmailJson);
+
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setProperties(Set.of(custodianStudyProperty));
+    study.setCreateUserId(studySubmitter.getUserId());
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setAlias(1);
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setCreateUserId(datasetSubmitter.getUserId());
+    d1.setStudy(study);
+
+    User researcher = new User();
+    researcher.setEmail("researcher@example.com");
+    researcher.setDisplayName("Researcher");
+    researcher.setUserId(1);
+
+    when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
+    when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(List.of(custodian));
+    when(userDAO.findUserById(researcher.getUserId())).thenReturn(researcher);
+
+    initService();
+
+    try {
+      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code");
+      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
