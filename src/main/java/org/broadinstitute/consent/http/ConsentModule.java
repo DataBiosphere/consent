@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -275,16 +274,6 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DatasetAssociationService providesDatasetAssociationService() {
-    return new DatasetAssociationService(
-        providesDatasetAssociationDAO(),
-        providesUserDAO(),
-        providesDatasetDAO(),
-        providesUserRoleDAO()
-    );
-  }
-
-  @Provides
   ElectionService providesElectionService() {
     return new ElectionService(
         providesElectionDAO()
@@ -380,7 +369,6 @@ public class ConsentModule extends AbstractModule {
         providesUserDAO(),
         providesDARCollectionDAO(),
         providesDataAccessRequestDAO(),
-        providesDatasetAssociationDAO(),
         providesDatasetDAO(),
         providesElectionDAO(),
         providesEmailService(),

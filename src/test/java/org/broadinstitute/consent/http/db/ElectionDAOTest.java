@@ -348,38 +348,6 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDatasetFindElectionWithFinalVoteById() {
-    User u = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-    Dac dac = createDac();
-    User user = createUser();
-    String darCode = "DAR-1234567890";
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    Dataset d = createDataset();
-    datasetDAO.updateDatasetDacId(d.getDataSetId(), dac.getDacId());
-
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_SET.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        dar.getReferenceId(),
-        d.getDataSetId());
-    Election e = electionDAO.findElectionById(electionId);
-
-    Integer voteId = voteDAO.insertVote(u.getUserId(), e.getElectionId(),
-        VoteType.DATA_OWNER.getValue());
-    voteDAO.updateVote(true, "rationale", new Date(), voteId, false, e.getElectionId(), new Date(),
-        false);
-    Vote v = voteDAO.findVoteById(voteId);
-
-    Election election = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
-    assertNotNull(election);
-    assertEquals(e.getElectionId(), election.getElectionId());
-    assertEquals(v.getVote(), election.getFinalVote());
-  }
-
-  @Test
   void testDULFindElectionWithFinalVoteById() {
     User u = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dac dac = createDac();
