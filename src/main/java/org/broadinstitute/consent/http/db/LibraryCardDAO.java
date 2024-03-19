@@ -59,50 +59,55 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT lc.*, " +
-      " institution.institution_id AS i_institution_id, " +
-      " institution.institution_name AS i_name, " +
-      " institution.it_director_name AS i_it_director_name, " +
-      " institution.it_director_email AS i_it_director_email, " +
-      " institution.create_user AS i_create_user_id, " +
-      " institution.create_date AS i_create_date, " +
-      " institution.update_date AS i_update_date, " +
-      " institution.update_user AS i_update_user_id, " +
-      " ld.daa_id " +
-      " FROM library_card AS lc " +
-      " LEFT JOIN institution " +
-      " ON lc.institution_id = institution.institution_id" +
-      " LEFT JOIN lc_daa ld ON lc.id = ld.lc_id " +
-      " WHERE lc.user_id = :userId")
+  @SqlQuery("""
+      SELECT lc.*,
+      institution.institution_id AS i_institution_id,
+      institution.institution_name AS i_name,
+      institution.it_director_name AS i_it_director_name,
+      institution.it_director_email AS i_it_director_email,
+      institution.create_user AS i_create_user_id,
+      institution.create_date AS i_create_date,
+      institution.update_date AS i_update_date,
+      institution.update_user AS i_update_user_id,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN institution
+      ON lc.institution_id = institution.institution_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE lc.user_id = :userId
+      """)
   List<LibraryCard> findLibraryCardsByUserId(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT library_Card.*, " +
-      "ld.daa_id " +
-      "FROM library_Card " +
-      "LEFT JOIN lc_daa ld ON library_Card.id = ld.lc_id " +
-      "WHERE library_Card.institution_id = :institutionId")
+  @SqlQuery("""
+      SELECT library_Card.*,
+      ld.daa_id
+      FROM library_Card
+      LEFT JOIN lc_daa ld ON library_Card.id = ld.lc_id
+      WHERE library_Card.institution_id = :institutionId
+      """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT lc.*, " +
-      "institution.institution_id AS i_institution_id, " +
-      "institution.institution_name AS i_name, " +
-      "institution.it_director_name AS i_it_director_name, " +
-      "institution.it_director_email AS i_it_director_email, " +
-      "institution.create_user AS i_create_user_id, " +
-      "institution.create_date AS i_create_date, " +
-      "institution.update_date AS i_update_date, " +
-      "institution.update_user AS i_update_user_id, " +
-      "ld.daa_id " +
-      "FROM library_card AS lc " +
-      "LEFT JOIN institution " +
-      "ON lc.institution_id = institution.institution_id " +
-      "LEFT JOIN lc_daa ld ON lc.id = ld.lc_id"
-  )
+  @SqlQuery("""
+      SELECT lc.*,
+      institution.institution_id AS i_institution_id,
+      institution.institution_name AS i_name,
+      institution.it_director_name AS i_it_director_name,
+      institution.it_director_email AS i_it_director_email,
+      institution.create_user AS i_create_user_id,
+      institution.create_date AS i_create_date,
+      institution.update_date AS i_update_date,
+      institution.update_user AS i_update_user_id,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN institution
+      ON lc.institution_id = institution.institution_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      """)
   List<LibraryCard> findAllLibraryCards();
 
   @RegisterBeanMapper(value = LibraryCard.class)
