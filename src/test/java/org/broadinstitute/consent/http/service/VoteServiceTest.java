@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +27,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -45,10 +43,13 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -63,8 +64,6 @@ public class VoteServiceTest {
   private DarCollectionDAO darCollectionDAO;
   @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock
-  private DatasetAssociationDAO datasetAssociationDAO;
   @Mock
   private DatasetDAO datasetDAO;
   @Mock
@@ -94,7 +93,7 @@ public class VoteServiceTest {
 
   private void initService() {
     service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO,
-        datasetAssociationDAO, datasetDAO, electionDAO, emailService, elasticSearchService,
+        datasetDAO, electionDAO, emailService, elasticSearchService,
         useRestrictionConverter, voteDAO, voteServiceDAO);
   }
 
@@ -255,25 +254,6 @@ public class VoteServiceTest {
     assertFalse(votes.isEmpty());
     // Should create 1 member vote
     assertEquals(1, votes.size());
-  }
-
-  @Test
-  public void testCreateDataOwnersReviewVotes() {
-    Election e = new Election();
-    e.setElectionId(1);
-    e.setDataSetId(1);
-    when(datasetAssociationDAO.getDataOwnersOfDataSet(anyInt())).thenReturn(
-        Collections.singletonList(1));
-    Vote v = new Vote();
-    v.setVoteId(1);
-    when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(v.getVoteId());
-    when(voteDAO.findVoteById(anyInt())).thenReturn(v);
-    when(voteDAO.findVotesByElectionIdAndType(anyInt(), anyString())).thenReturn(
-        Collections.singletonList(v));
-    initService();
-
-    List<Vote> votes = service.createDataOwnersReviewVotes(e);
-    assertFalse(votes.isEmpty());
   }
 
   @Test
@@ -817,16 +797,13 @@ public class VoteServiceTest {
     custodian.setDisplayName("custodian");
     custodian.setUserId(3);
 
-    when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
-    when(userDAO.findUsersByEmailList(List.of(depositor.getEmail()))).thenReturn(
-        List.of(depositor));
-    when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of(3));
-    when(userDAO.findUsers(List.of(3))).thenReturn(List.of(custodian));
+    when(userDAO.findUserById(any())).thenReturn(submitter);
+    when(userDAO.findUsersByEmailList(any())).thenReturn(List.of(depositor, custodian));
 
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
@@ -886,7 +863,7 @@ public class VoteServiceTest {
     initService();
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(2)).sendDataCustodianApprovalMessage(
+      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
           any(),
           any(),
           any(),
@@ -939,7 +916,6 @@ public class VoteServiceTest {
 
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
     when(userDAO.findUserByEmail(depositorNotFound.getEmail())).thenReturn(null);
-    when(datasetAssociationDAO.getDataOwnersOfDataSet(any())).thenReturn(List.of());
 
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
@@ -951,6 +927,70 @@ public class VoteServiceTest {
         any(),
         any(),
         any());
+  }
+
+  @Test
+  public void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
+    User studySubmitter = new User();
+    studySubmitter.setEmail("submitter@example.com");
+    studySubmitter.setDisplayName("submitter");
+    studySubmitter.setUserId(4);
+
+    User datasetSubmitter = new User();
+    datasetSubmitter.setEmail("submitter2@example.com");
+    datasetSubmitter.setDisplayName("submitter2");
+    datasetSubmitter.setUserId(5);
+
+    User custodian = new User();
+    String custodianEmail = "custodian@example.com";
+    custodian.setEmail(custodianEmail);
+    custodian.setDisplayName("custodian");
+    custodian.setUserId(3);
+
+    String custodianEmailJson = GsonUtil.getInstance().toJson(List.of(custodianEmail));
+
+    StudyProperty custodianStudyProperty = new StudyProperty();
+    custodianStudyProperty.setKey("dataCustodianEmail");
+    custodianStudyProperty.setType(PropertyType.Json);
+    custodianStudyProperty.setValue(custodianEmailJson);
+
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setProperties(Set.of(custodianStudyProperty));
+    study.setCreateUserId(studySubmitter.getUserId());
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setAlias(1);
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setCreateUserId(datasetSubmitter.getUserId());
+    d1.setStudy(study);
+
+    User researcher = new User();
+    researcher.setEmail("researcher@example.com");
+    researcher.setDisplayName("Researcher");
+    researcher.setUserId(1);
+
+    when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
+    when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(List.of(custodian));
+    when(userDAO.findUserById(researcher.getUserId())).thenReturn(researcher);
+
+    initService();
+
+    try {
+      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code");
+      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {

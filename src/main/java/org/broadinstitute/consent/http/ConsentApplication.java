@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
+import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
@@ -47,9 +48,9 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.resources.ConsentCasesResource;
 import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
+import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
@@ -82,7 +83,6 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -166,8 +166,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final DacService dacService = injector.getProvider(DacService.class).get();
     final DataAccessRequestService dataAccessRequestService = injector.getProvider(
         DataAccessRequestService.class).get();
-    final DatasetAssociationService datasetAssociationService = injector.getProvider(
-        DatasetAssociationService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();
@@ -217,14 +215,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(ErrorResource.class);
 
     // Register standard application resources.
+    env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(
         new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
             userService, datasetService, matchService));
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService, elasticSearchService));
-    env.jersey().register(new DatasetAssociationsResource(datasetAssociationService));
+    env.jersey().register(injector.getInstance(DatasetAssociationsResource.class));
     env.jersey().register(injector.getInstance(ConsentResource.class));
-    env.jersey().register(injector.getInstance(ConsentCasesResource.class));
     env.jersey().register(new DacResource(dacService, userService, datasetService));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
@@ -264,6 +262,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     List<AuthFilter> filters = List.of(
         defaultAuthFilter,
         new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    env.jersey().register(RequestHeaderCacheFilter.class);
     env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
     env.jersey().register(RolesAllowedDynamicFeature.class);
     env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));

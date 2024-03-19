@@ -60,6 +60,7 @@ public class JsonSchemaUtil {
     SchemaValidatorsConfig config = new SchemaValidatorsConfig();
     config.setHandleNullableField(false);
     config.setTypeLoose(false);
+    config.setFormatAssertionsEnabled(true);
     return factory.getSchema(schemaString, config);
   }
 

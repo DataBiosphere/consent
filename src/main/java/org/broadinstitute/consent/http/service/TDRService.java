@@ -46,6 +46,7 @@ public class TDRService implements ConsentLogger {
         .flatMap(List::stream)
         .filter(Objects::nonNull)
         .map(Collaborator::getEmail)
+        .filter(email -> !email.isBlank())
         // Sam has an endpoint for validating a single email at a time
         .map(email -> {
           try {
@@ -62,8 +63,11 @@ public class TDRService implements ConsentLogger {
         .filter(Objects::nonNull)
         .toList();
     List<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).toList();
-    Collection<User> users = userDAO.findUsers(userIds);
-    List<String> userEmails = users.stream().map(User::getEmail).toList();
+    Collection<User> users = userIds.isEmpty() ? List.of() : userDAO.findUsers(userIds);
+    List<String> userEmails = users.stream()
+        .map(User::getEmail)
+        .filter(email -> !email.isBlank())
+        .toList();
 
     List<ApprovedUser> approvedUsers = Stream.of(labCollaborators, userEmails)
         .flatMap(List::stream)

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -123,6 +124,7 @@ class ElasticSearchServiceTest {
     dataset.setDataSetId(RandomUtils.nextInt(1, 100));
     dataset.setAlias(dataset.getDataSetId());
     dataset.setDatasetIdentifier();
+    dataset.setDeletable(true);
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
     dataset.setDatasetName(dataset.getName());
     dataset.setDacId(dac.getDacId());
@@ -172,10 +174,11 @@ class ElasticSearchServiceTest {
     return prop;
   }
 
-  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type) {
+  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type, String propertyName) {
     DatasetProperty prop = new DatasetProperty();
     prop.setSchemaProperty(schemaProp);
     prop.setPropertyType(type);
+    prop.setPropertyName(propertyName);
     switch (type) {
       case Boolean -> prop.setPropertyValue(true);
       case Number -> prop.setPropertyValue(RandomUtils.nextInt(1, 100));
@@ -211,10 +214,10 @@ class ElasticSearchServiceTest {
     ));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
-        createDatasetProperty("accessManagement", PropertyType.Boolean),
-        createDatasetProperty("numberOfParticipants", PropertyType.Number),
-        createDatasetProperty("url", PropertyType.String),
-        createDatasetProperty("dataLocation", PropertyType.String)
+        createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
+        createDatasetProperty("numberOfParticipants", PropertyType.Number, "# of participants"),
+        createDatasetProperty("url", PropertyType.String, "url"),
+        createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")
     ));
     dataset.setStudy(study);
     return new DatasetRecord(user, updateUser, dac, dataset, study);
@@ -309,6 +312,7 @@ class ElasticSearchServiceTest {
 
     assertEquals(datasetRecord.dataset.getDataSetId(), term.getDatasetId());
     assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+    assertEquals(datasetRecord.dataset.getDeletable(), term.getDeletable());
     assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
     assertEquals(datasetRecord.dataset.getDatasetName(), term.getDatasetName());
 
@@ -351,6 +355,32 @@ class ElasticSearchServiceTest {
   }
 
   @Test
+  void testToDatasetTerm_StringNumberOfParticipants() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Study study = createStudy(user);
+    study.setProperties(Set.of(
+        createStudyProperty("phenotypeIndication", PropertyType.String),
+        createStudyProperty("species", PropertyType.String),
+        createStudyProperty("dataCustodianEmail", PropertyType.Json)
+    ));
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    dataset.setProperties(Set.of(
+        createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),
+        createDatasetProperty("url", PropertyType.String, "url")
+    ));
+    dataset.setStudy(study);
+    DatasetRecord record = new DatasetRecord(user, updateUser, dac, dataset, study);
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+    when(dacDAO.findById(any())).thenReturn(record.dac);
+    when(userDao.findUserById(record.createUser.getUserId())).thenReturn(record.createUser);
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+  }
+
+  @Test
   void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(100);
@@ -366,6 +396,25 @@ class ElasticSearchServiceTest {
 
     assertEquals(dataset.getDataSetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
+  }
+
+  @Test
+  void testToDatasetTermNullDatasetProps() {
+    Dataset dataset = new Dataset();
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+  }
+
+  @Test
+  void testToDatasetTermNullStudyProps() {
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setStudyId(RandomUtils.nextInt(1, 100));
+    dataset.setStudy(study);
+    initService();
+    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
   @Captor

@@ -355,7 +355,6 @@ class DatasetServiceTest {
         UserRoles.MEMBER,
         UserRoles.RESEARCHER,
         UserRoles.SIGNINGOFFICIAL,
-        UserRoles.DATAOWNER,
         UserRoles.DATASUBMITTER,
         UserRoles.ITDIRECTOR,
         UserRoles.ALUMNI

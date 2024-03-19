@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -218,5 +219,16 @@ public interface DacDAO extends Transactional<DacDAO> {
       WHERE ds.dataset_id IN (<datasetIds>)
       """)
   Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
+
+  @RegisterRowMapper(DacMapper.class)
+  @SqlQuery("""
+      SELECT dac.* 
+      FROM dac
+      INNER JOIN dataset d ON d.dac_id = dac.dac_id
+      INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id
+      INNER JOIN data_access_request dar ON dd.reference_id = dar.reference_id
+      WHERE dar.collection_id = :collectionId
+      """)
+  Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
 
 }

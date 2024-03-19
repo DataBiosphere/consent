@@ -254,6 +254,7 @@ public class ElasticSearchService implements ConsentLogger {
         .map(this::toUserTerm)
         .ifPresent(term::setUpdateUser);
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
+    term.setDeletable(dataset.getDeletable());
     term.setDatasetName(dataset.getName());
 
     if (Objects.nonNull(dataset.getStudy())) {
@@ -289,10 +290,17 @@ public class ElasticSearchService implements ConsentLogger {
         datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
     );
 
-    findDatasetProperty(
-        dataset.getProperties(), "numberOfParticipants"
+    findFirstDatasetPropertyByName(
+        dataset.getProperties(), "# of participants"
     ).ifPresent(
-        datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
+        datasetProperty -> {
+          String value = datasetProperty.getPropertyValueAsString();
+          try {
+            term.setParticipantCount(Integer.valueOf(value));
+          } catch (NumberFormatException e) {
+            logWarn(String.format("Unable to coerce participant count to integer: %s for dataset: %s", value, dataset.getDatasetIdentifier()));
+          }
+        }
     );
 
     findDatasetProperty(
@@ -313,24 +321,28 @@ public class ElasticSearchService implements ConsentLogger {
   Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,
       String schemaProp) {
     return
-        props
+        (props == null) ? Optional.empty() : props
             .stream()
             .filter(p -> Objects.nonNull(p.getSchemaProperty()))
             .filter(p -> p.getSchemaProperty().equals(schemaProp))
             .findFirst();
   }
 
-  Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
-    if (Objects.isNull(props)) {
-      return Optional.empty();
-    }
-
+  Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
+      String propertyName) {
     return
-        props
+        (props == null) ? Optional.empty(): props
+            .stream()
+            .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
+            .findFirst();
+  }
+
+  Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
+    return
+        (props == null) ? Optional.empty() : props
             .stream()
             .filter(p -> p.getKey().equals(key))
             .findFirst();
   }
-
 
 }

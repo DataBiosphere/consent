@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -21,9 +20,13 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ResearcherServiceTest {
+@ExtendWith(MockitoExtension.class)
+class ResearcherServiceTest {
 
   @Mock
   private UserPropertyDAO userPropertyDAO;
@@ -38,16 +41,12 @@ public class ResearcherServiceTest {
   private User user;
 
   @BeforeEach
-  public void setUp() {
-    GenericUser genericUser = new GenericUser();
-    genericUser.setName("Test User");
-    genericUser.setEmail("test@gmail.com");
-    authUser = new AuthUser(genericUser);
+  void setUp() {
+    authUser = new AuthUser().setEmail("test@gmail.com").setName("Test User");
     user = new User();
     user.setEmail(authUser.getEmail());
     user.setUserId(RandomUtils.nextInt(1, 10));
     user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-    openMocks(this);
   }
 
   private void initService() {
@@ -55,12 +54,11 @@ public class ResearcherServiceTest {
   }
 
   @Test
-  public void testUpdateProperties() {
+  void testUpdateProperties() {
     when(userDAO.findUserById(any())).thenReturn(user);
     when(userDAO.findUserByEmail(any())).thenReturn(user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
         List.of());
-    doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(anyInt());
     doNothing().when(userPropertyDAO).insertAll(any());
     initService();
     Map<String, String> props = new HashMap<>();

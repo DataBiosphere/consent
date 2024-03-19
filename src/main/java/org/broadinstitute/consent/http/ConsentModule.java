@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
@@ -37,10 +38,10 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
+import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetAssociationService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -59,6 +60,7 @@ import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -90,6 +92,7 @@ public class ConsentModule extends AbstractModule {
   private final StudyDAO studyDAO;
   private final DatasetDAO datasetDAO;
   private final DatasetAssociationDAO datasetAssociationDAO;
+  private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
@@ -125,6 +128,7 @@ public class ConsentModule extends AbstractModule {
     this.studyDAO = this.jdbi.onDemand(StudyDAO.class);
     this.datasetDAO = this.jdbi.onDemand(DatasetDAO.class);
     this.datasetAssociationDAO = this.jdbi.onDemand(DatasetAssociationDAO.class);
+    this.daaDAO = this.jdbi.onDemand(DaaDAO.class);
     this.dacDAO = this.jdbi.onDemand(DacDAO.class);
     this.userDAO = this.jdbi.onDemand(UserDAO.class);
     this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
@@ -197,7 +201,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   OAuthAuthenticator providesOAuthAuthenticator() {
-    return new OAuthAuthenticator(providesClient(), providesSamService());
+    return new OAuthAuthenticator(providesSamService());
   }
 
   @Provides
@@ -270,16 +274,6 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DatasetAssociationService providesDatasetAssociationService() {
-    return new DatasetAssociationService(
-        providesDatasetAssociationDAO(),
-        providesUserDAO(),
-        providesDatasetDAO(),
-        providesUserRoleDAO()
-    );
-  }
-
-  @Provides
   ElectionService providesElectionService() {
     return new ElectionService(
         providesElectionDAO()
@@ -299,6 +293,8 @@ public class ConsentModule extends AbstractModule {
         providesElectionDAO(),
         providesUserDAO(),
         providesMailMessageDAO(),
+        providesDatasetDAO(),
+        providesDacDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
         config.getServicesConfiguration().getLocalURL()
@@ -373,7 +369,6 @@ public class ConsentModule extends AbstractModule {
         providesUserDAO(),
         providesDARCollectionDAO(),
         providesDataAccessRequestDAO(),
-        providesDatasetAssociationDAO(),
         providesDatasetDAO(),
         providesElectionDAO(),
         providesEmailService(),
@@ -394,8 +389,29 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  DaaServiceDAO providesDaaServiceDAO() {
+    return new DaaServiceDAO(
+        providesJdbi(),
+        providesDaaDAO(),
+        providesFileStorageObjectDAO());
+  }
+
+  @Provides
+  DaaDAO providesDaaDAO() {
+    return daaDAO;
+  }
+
+  @Provides
   DacDAO providesDacDAO() {
     return dacDAO;
+  }
+
+  @Provides
+  DaaService providesDaaService() {
+    return new DaaService(
+        providesDaaServiceDAO(),
+        providesDaaDAO(),
+        providesGCSService());
   }
 
   @Provides
