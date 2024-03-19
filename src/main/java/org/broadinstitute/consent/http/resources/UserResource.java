@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -59,17 +58,14 @@ public class UserResource extends Resource {
   private final Gson gson = new Gson();
   private final SamService samService;
   private final DatasetService datasetService;
-  private final SupportRequestService supportRequestService;
   private final AcknowledgementService acknowledgementService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, SupportRequestService supportRequestService,
-      AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
-    this.supportRequestService = supportRequestService;
     this.acknowledgementService = acknowledgementService;
   }
 
@@ -241,7 +237,6 @@ public class UserResource extends Resource {
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      supportRequestService.handleInstitutionSOSupportRequest(userUpdateFields, user);
       Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
           user.getUserId());
