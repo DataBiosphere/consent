@@ -41,7 +41,6 @@ class UserDAOTest extends DAOTestHelper {
 
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getUserId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getUserId());
 
     User user2 = userDAO.findUserById(user.getUserId());
     assertNotNull(user2);
@@ -54,8 +53,6 @@ class UserDAOTest extends DAOTestHelper {
         .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
     assertTrue(user2.getRoles().stream()
         .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
-    assertTrue(user2.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
 
     //assert institution base data is present if available
     User user3 = createUserWithInstitution();
@@ -94,9 +91,6 @@ class UserDAOTest extends DAOTestHelper {
 
     List<User> researchers = userDAO.describeUsersByRole(UserRoles.RESEARCHER.getRoleName());
     assertTrue(researchers.isEmpty());
-
-    List<User> dataOwners = userDAO.describeUsersByRole(UserRoles.DATAOWNER.getRoleName());
-    assertTrue(dataOwners.isEmpty());
   }
 
   @Test
@@ -133,8 +127,8 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testFindUsersWithRoles() {
-    User chair = createUserWithRole(UserRoles.ADMIN.getRoleId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getUserId());
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), chair.getUserId());
     Collection<Integer> userIds = Collections.singletonList(chair.getUserId());
     Collection<User> users = userDAO.findUsersWithRoles(userIds);
     users.forEach(u -> assertFalse(u.getRoles().isEmpty(),
@@ -151,7 +145,6 @@ class UserDAOTest extends DAOTestHelper {
     userRoleDAO.insertSingleUserRole(UserRoles.ALUMNI.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getUserId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getUserId());
     User user1 = userDAO.findUserByEmail(user.getEmail());
     assertNotNull(user1);
 
@@ -162,8 +155,6 @@ class UserDAOTest extends DAOTestHelper {
         .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
     assertTrue(user1.getRoles().stream()
         .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
-    assertTrue(user1.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
 
     User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
     assertNull(user2);
@@ -175,8 +166,6 @@ class UserDAOTest extends DAOTestHelper {
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user1.getUserId());
     User user2 = createUser();
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user2.getUserId());
-    User user3 = createUser();
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user3.getUserId());
 
     // Find only the first two users, ensure that we're not getting all 3
     List<User> users = userDAO.findUsersByEmailList(List.of(user1.getEmail(), user2.getEmail()));
@@ -185,7 +174,6 @@ class UserDAOTest extends DAOTestHelper {
     assertEquals(2, users.size());
     assertTrue(users.contains(user1));
     assertTrue(users.contains(user2));
-    assertFalse(users.contains(user3));
   }
 
   @Test
@@ -241,11 +229,6 @@ class UserDAOTest extends DAOTestHelper {
     Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher",
         true);
     assertFalse(researchers.isEmpty());
-
-    User owner = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-    userDAO.updateEmailPreference(owner.getUserId(), false);
-    Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
-    assertFalse(dataOwners.isEmpty());
   }
 
   @Test

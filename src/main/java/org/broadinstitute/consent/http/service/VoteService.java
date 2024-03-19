@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import org.apache.commons.validator.EmailValidator;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,12 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.EmailValidator;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -33,20 +31,21 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class VoteService implements ConsentLogger {
 
   private final UserDAO userDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
-  private final DatasetAssociationDAO datasetAssociationDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
@@ -58,14 +57,13 @@ public class VoteService implements ConsentLogger {
   @Inject
   public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetAssociationDAO datasetAssociationDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
+      DatasetDAO datasetDAO, ElectionDAO electionDAO,
       EmailService emailService, ElasticSearchService elasticSearchService,
       UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
     this.userDAO = userDAO;
     this.darCollectionDAO = darCollectionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.datasetAssociationDAO = datasetAssociationDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.emailService = emailService;
@@ -169,21 +167,6 @@ public class VoteService implements ConsentLogger {
       }
     }
     return votes;
-  }
-
-  /**
-   * Create Votes for a data owner election
-   *
-   * @param election Election
-   * @return Votes for the election
-   */
-  @SuppressWarnings("UnusedReturnValue")
-  public List<Vote> createDataOwnersReviewVotes(Election election) {
-    List<Integer> dataOwners = datasetAssociationDAO.getDataOwnersOfDataSet(
-        election.getDataSetId());
-    voteDAO.insertVotes(dataOwners, election.getElectionId(), VoteType.DATA_OWNER.getValue());
-    return voteDAO.findVotesByElectionIdAndType(election.getElectionId(),
-        VoteType.DATA_OWNER.getValue());
   }
 
   public List<Vote> findVotesByIds(List<Integer> voteIds) {
@@ -355,10 +338,39 @@ public class VoteService implements ConsentLogger {
       String darCode) throws IllegalArgumentException {
     Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
 
-    // Find all the custodians, data owners, and data submitters to notify for each dataset
+    // Find all the data custodians and submitters to notify for each dataset
     datasets.forEach(d -> {
+      if (Objects.nonNull(d.getStudy())) {
+        Study study = d.getStudy();
 
-      // Data Submitter
+        // Data Submitter (study)
+        if (Objects.nonNull(study.getCreateUserId())) {
+          User submitter = userDAO.findUserById(study.getCreateUserId());
+          if (Objects.nonNull(submitter)) {
+            custodianMap.putIfAbsent(submitter, new HashSet<>());
+            custodianMap.get(submitter).add(d);
+          }
+        }
+
+        // Data Custodian (study)
+        if (Objects.nonNull(study.getProperties())) {
+          Set<StudyProperty> props = study.getProperties();
+          List<User> submitters = props.stream()
+              .filter(p -> p.getKey().equals("dataCustodianEmail"))
+              .map(p -> {
+                List<String> emailList = List.of(GsonUtil.getInstance().fromJson((String)p.getValue(), String[].class));
+                return userDAO.findUsersByEmailList(emailList);
+              }).flatMap(List::stream).toList();
+          if (!submitters.isEmpty()) {
+            submitters.forEach(s -> {
+              custodianMap.putIfAbsent(s, new HashSet<>());
+              custodianMap.get(s).add(d);
+            });
+          }
+        }
+      }
+
+      // Data Submitter (dataset)
       if (Objects.nonNull(d.getCreateUserId())) {
         User submitter = userDAO.findUserById(d.getCreateUserId());
         if (Objects.nonNull(submitter)) {
@@ -366,46 +378,15 @@ public class VoteService implements ConsentLogger {
           custodianMap.get(submitter).add(d);
         }
       }
-
-      EmailValidator emailValidator = EmailValidator.getInstance();
-
-      // Data Custodians
-      List<String> custodianEmails = d.getDataCustodianEmails()
-          .stream()
-          .filter(e -> emailValidator.isValid(e))
-          .toList();
-      if (!custodianEmails.isEmpty()) {
-        userDAO.findUsersByEmailList(custodianEmails).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      }
-
-      // Data Depositors
-      List<String> depositorEmails = d.getDataDepositors()
-          .stream()
-          .filter(e -> emailValidator.isValid(e))
-          .toList();
-      if (!depositorEmails.isEmpty()) {
-        userDAO.findUsersByEmailList(depositorEmails).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      }
-
-      // Data Owners
-      List<Integer> ownerUserIds = datasetAssociationDAO.getDataOwnersOfDataSet(d.getDataSetId());
-      if (!ownerUserIds.isEmpty()) {
-        userDAO.findUsers(ownerUserIds).forEach(u -> {
-          custodianMap.putIfAbsent(u, new HashSet<>());
-          custodianMap.get(u).add(d);
-        });
-      } else {
-        logWarn("Unable to find dataset owner associations for dataset identifier: "
-            + d.getDatasetIdentifier());
-      }
     });
-    if (custodianMap.isEmpty()) {
+
+    // Filter out invalid emails in custodian map
+    EmailValidator emailValidator = EmailValidator.getInstance();
+    Map<User, HashSet<Dataset>> validCustodians = custodianMap.entrySet().stream()
+        .filter(e -> e.getKey().getEmail() != null && emailValidator.isValid(e.getKey().getEmail()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, HashMap::new));
+
+    if (validCustodians.isEmpty()) {
       String identifiers = datasets.stream().map(Dataset::getDatasetIdentifier)
           .collect(Collectors.joining(", "));
       throw new IllegalArgumentException(
@@ -413,7 +394,7 @@ public class VoteService implements ConsentLogger {
               + identifiers);
     }
     // For each custodian, notify them of their approved datasets
-    for (Map.Entry<User, HashSet<Dataset>> entry : custodianMap.entrySet()) {
+    for (Map.Entry<User, HashSet<Dataset>> entry : validCustodians.entrySet()) {
       List<DatasetMailDTO> datasetMailDTOs = entry.getValue()
           .stream()
           .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))

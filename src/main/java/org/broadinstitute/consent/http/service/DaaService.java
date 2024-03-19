@@ -93,5 +93,4 @@ public class DaaService implements ConsentLogger {
     }
     return List.of();
   }
-
 }

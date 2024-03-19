@@ -18,7 +18,6 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DacBuilder;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -145,5 +144,4 @@ class DaaResourceTest {
     JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
     assertEquals(2, daas.size());
   }
-
 }

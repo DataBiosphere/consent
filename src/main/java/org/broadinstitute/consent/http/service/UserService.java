@@ -383,7 +383,7 @@ public class UserService {
       throw new BadRequestException("Email address cannot be empty");
     }
     user.getRoles().forEach(role -> {
-      List<UserRoles> validRoles = Stream.of(UserRoles.DATAOWNER, UserRoles.RESEARCHER,
+      List<UserRoles> validRoles = Stream.of(UserRoles.RESEARCHER,
           UserRoles.ALUMNI, UserRoles.ADMIN).collect(Collectors.toList());
       List<String> validRoleNameList = validRoles.stream().map(UserRoles::getRoleName)
           .collect(Collectors.toList());
