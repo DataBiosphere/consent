@@ -350,6 +350,25 @@ public class LibraryCardServiceTest {
     assertEquals(result.getId(), libraryCard.getId());
   }
 
+  @Test
+  public void testAddDaaToLibraryCard() {
+    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
+
+    LibraryCard libraryCard = testLibraryCard(1, 1);
+    initService();
+    service.addDaaToLibraryCard(libraryCard.getId(), 1);
+  }
+
+  @Test
+  public void testRemoveDaaFromLibraryCard() {
+    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
+
+    LibraryCard libraryCard = testLibraryCard(1, 1);
+    initService();
+    service.removeDaaFromLibraryCard(libraryCard.getId(), 1);
+  }
+
+
   private User testUser(Integer institutionId) {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 10));

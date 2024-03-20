@@ -138,5 +138,8 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-02-15-participants.xml"
     relativeToChangelogFile="true"/>
-  <include file="changesets/changelog-consent-2024-02-06-daa.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-06-daa.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-12-daa-lc.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
