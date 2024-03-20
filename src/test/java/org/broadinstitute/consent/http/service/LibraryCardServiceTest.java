@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -356,7 +357,7 @@ public class LibraryCardServiceTest {
 
     LibraryCard libraryCard = testLibraryCard(1, 1);
     initService();
-    service.addDaaToLibraryCard(libraryCard.getId(), 1);
+    assertDoesNotThrow(() -> service.addDaaToLibraryCard(libraryCard.getId(), 1));
   }
 
   @Test
@@ -365,7 +366,7 @@ public class LibraryCardServiceTest {
 
     LibraryCard libraryCard = testLibraryCard(1, 1);
     initService();
-    service.removeDaaFromLibraryCard(libraryCard.getId(), 1);
+    assertDoesNotThrow(() -> service.removeDaaFromLibraryCard(libraryCard.getId(), 1));
   }
 
 
