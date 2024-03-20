@@ -2,10 +2,12 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -84,4 +86,11 @@ public class DaaService implements ConsentLogger {
     daaDAO.deleteDacDaaRelation(dacId, daaId);
   }
 
+  public DataAccessAgreement findById(Integer daaId) {
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (Objects.nonNull(daa)) {
+      return daa;
+    }
+    throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
+  }
 }

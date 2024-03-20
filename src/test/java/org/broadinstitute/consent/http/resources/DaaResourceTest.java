@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -108,4 +110,27 @@ class DaaResourceTest {
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
 
+  @Test
+  void testFindDaaByDaaId() {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
+
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+    assertEquals(expectedDaa, response.getEntity());
+  }
+
+  @Test
+  void testFindDaaByDaaIdInvalidId() {
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
 }
