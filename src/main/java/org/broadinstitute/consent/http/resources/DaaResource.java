@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -89,23 +90,26 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Path("{daaId}/{libraryCardId}")
   public Response createLibraryCardDaaRelation(
       @Context UriInfo info,
+      @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId,
       @PathParam("libraryCardId") Integer libraryCardId) {
     try {
       libraryCardService.addDaaToLibraryCard(daaId, libraryCardId);
-//      User user = userService.findUserByEmail(authUser.getEmail());
-//      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
-//      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
-//      // chairperson for.
-//      if (!user.hasUserRole(UserRoles.ADMIN)) {
-//        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-//        if (!dacIds.contains(dacId)) {
-//          return Response.status(Status.FORBIDDEN).build();
-//        }
-//      }
-      LibraryCard libraryCard = libraryCardService.findLibraryCardById();
+      DataAccessAgreement daa = daaService.findById(daaId);
+      List<Dac> dacs = daa.getDacs();
+      List<Integer> dacIdsFromDaas = dacs.stream().map(Dac::getDacId).toList();
+      User user = userService.findUserByEmail(authUser.getEmail());
+      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
+      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
+      // chairperson for.
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
+        if (!dacIds.retainAll(dacIdsFromDaas)) {
+          return Response.status(Status.FORBIDDEN).build();
+        }
+      }
+      LibraryCard libraryCard = libraryCardService.findLibraryCardById(libraryCardId);
       URI uri = info.getBaseUriBuilder()
-          // This will be the GET endpoint for the created DAA
           .replacePath("api/libraryCards/{libraryCardId}")
           .build(libraryCardId);
       return Response.created(uri).entity(libraryCard).build();
