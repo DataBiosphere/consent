@@ -96,7 +96,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("daaId") Integer daaId,
       @PathParam("libraryCardId") Integer libraryCardId) {
     try {
-      libraryCardService.addDaaToLibraryCard(daaId, libraryCardId);
+      libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
       DataAccessAgreement daa = daaService.findById(daaId);
       List<Dac> dacs = daa.getDacs();
       List<Integer> dacIdsFromDaas = dacs.stream().map(Dac::getDacId).toList();

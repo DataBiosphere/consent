@@ -117,7 +117,7 @@ class DaaResourceTest {
     expectedDaa.setDaaId(expectedDaaId);
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
 
-    resource = new DaaResource(daaService, dacService, userService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -128,7 +128,7 @@ class DaaResourceTest {
   void testFindDaaByDaaIdInvalidId() {
     int invalidId = RandomUtils.nextInt(10, 100);
     when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
-    resource = new DaaResource(daaService, dacService, userService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
