@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import freemarker.core.LibraryLoad;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
@@ -20,10 +21,12 @@ import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -36,11 +39,14 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DacService dacService;
   private final UserService userService;
 
+  private final LibraryCardService libraryCardService;
+
   @Inject
-  public DaaResource(DaaService daaService, DacService dacService, UserService userService) {
+  public DaaResource(DaaService daaService, DacService dacService, UserService userService, LibraryCardService libraryCardService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
+    this.libraryCardService = libraryCardService;
   }
 
   @POST
@@ -72,6 +78,37 @@ public class DaaResource extends Resource implements ConsentLogger {
           .replacePath("api/daa/{daaId}")
           .build(daa.getDaaId());
       return Response.created(uri).entity(daa).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  @Path("{daaId}/{libraryCardId}")
+  public Response createLibraryCardDaaRelation(
+      @Context UriInfo info,
+      @PathParam("daaId") Integer daaId,
+      @PathParam("libraryCardId") Integer libraryCardId) {
+    try {
+      libraryCardService.addDaaToLibraryCard(daaId, libraryCardId);
+//      User user = userService.findUserByEmail(authUser.getEmail());
+//      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
+//      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
+//      // chairperson for.
+//      if (!user.hasUserRole(UserRoles.ADMIN)) {
+//        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
+//        if (!dacIds.contains(dacId)) {
+//          return Response.status(Status.FORBIDDEN).build();
+//        }
+//      }
+      LibraryCard libraryCard = libraryCardService.findLibraryCardById();
+      URI uri = info.getBaseUriBuilder()
+          // This will be the GET endpoint for the created DAA
+          .replacePath("api/libraryCards/{libraryCardId}")
+          .build(libraryCardId);
+      return Response.created(uri).entity(libraryCard).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

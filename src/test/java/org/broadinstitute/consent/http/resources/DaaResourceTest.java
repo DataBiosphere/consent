@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class DaaResourceTest {
   private DacService dacService;
   @Mock
   private UserService userService;
+
+  @Mock
+  private LibraryCardService libraryCardService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
 
@@ -57,7 +61,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
 
-    resource = new DaaResource(daaService, dacService, userService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_CREATED;
   }
@@ -80,7 +84,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
 
-    resource = new DaaResource(daaService, dacService, userService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_CREATED;
   }
@@ -99,7 +103,7 @@ class DaaResourceTest {
     when(dacService.findById(any())).thenReturn(dac);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
