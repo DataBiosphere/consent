@@ -1,0 +1,32 @@
+type: object
+description: A GA4GH Visa Claim
+properties:
+  type:
+    description: The type of claim as specified by the [GA4GH spec](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#visa-type)
+    enum:
+      - AffiliationAndRole
+      - ControlledAccessGrants
+      - ResearcherStatus
+      - AcceptedTermsAndPolicies
+      - LinkedIdentities
+  asserted:
+    type: number
+    description: The Asserted timestamp
+  value:
+    type: string
+    description: A string value that conforms to the type as specified by the GA4GH spec
+  source:
+    type: string
+    description: A string source that conforms to the type as specified by the GA4GH spec
+  by:
+    description: The entity that is providing the authenticity of the claim
+    enum:
+      - dac
+      - self
+      - so
+      - system
+  conditions:
+    type: array
+    items:
+      $ref: './VisaCondition.yaml'
+
