@@ -96,10 +96,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("daaId") Integer daaId,
       @PathParam("libraryCardId") Integer libraryCardId) {
     try {
-      libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
       DataAccessAgreement daa = daaService.findById(daaId);
-      List<Dac> dacs = daa.getDacs();
-      List<Integer> dacIdsFromDaas = dacs.stream().map(Dac::getDacId).toList();
       User user = userService.findUserByEmail(authUser.getEmail());
       int userInstitutionId = user.getInstitutionId();
       LibraryCard libraryCard = libraryCardService.findLibraryCardById(libraryCardId);
@@ -112,6 +109,7 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
+      libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
       URI uri = info.getBaseUriBuilder()
           .replacePath("api/libraryCards/{libraryCardId}")
           .build(libraryCardId);
