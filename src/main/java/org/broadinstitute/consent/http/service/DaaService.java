@@ -88,7 +88,7 @@ public class DaaService implements ConsentLogger {
 
   public DataAccessAgreement findById(Integer daaId) {
     DataAccessAgreement daa = daaDAO.findById(daaId);
-    if (Objects.nonNull(daa)) {
+    if (daa != null) {
       return daa;
     }
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
