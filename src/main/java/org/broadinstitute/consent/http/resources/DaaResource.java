@@ -101,16 +101,17 @@ public class DaaResource extends Resource implements ConsentLogger {
       List<Dac> dacs = daa.getDacs();
       List<Integer> dacIdsFromDaas = dacs.stream().map(Dac::getDacId).toList();
       User user = userService.findUserByEmail(authUser.getEmail());
-      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
-      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
-      // chairperson for.
+      int userInstitutionId = user.getInstitutionId();
+      LibraryCard libraryCard = libraryCardService.findLibraryCardById(libraryCardId);
+      int libraryCardInstitutionId = libraryCard.getInstitutionId();
+      // Assert that the user has the correct institution permissions to add a DAA-LC relationship.
+      // Admins can add a DAA with any DAC, but signing officials can only create relationships for
+      // library cards associated with the same institution they are associated with.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-        if (!dacIds.retainAll(dacIdsFromDaas)) {
+        if (!(userInstitutionId == libraryCardInstitutionId)) {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-      LibraryCard libraryCard = libraryCardService.findLibraryCardById(libraryCardId);
       URI uri = info.getBaseUriBuilder()
           .replacePath("api/libraryCards/{libraryCardId}")
           .build(libraryCardId);
