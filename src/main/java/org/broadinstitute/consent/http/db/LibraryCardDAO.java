@@ -81,11 +81,11 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery("""
-      SELECT library_Card.*,
+      SELECT library_card.*,
       ld.daa_id
-      FROM library_Card
-      LEFT JOIN lc_daa ld ON library_Card.id = ld.lc_id
-      WHERE library_Card.institution_id = :institutionId
+      FROM library_card
+      LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
+      WHERE library_card.institution_id = :institutionId
       """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
