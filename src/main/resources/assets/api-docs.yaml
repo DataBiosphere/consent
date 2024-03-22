@@ -109,7 +109,7 @@ paths:
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
   /api/daa/{daaId}/{libraryCardId}:
-    $ref: 'paths/linkDaaLibraryCard.yaml'
+    $ref: 'paths/daaForLibraryCardId.yaml'
   /api/daa/dac/{dacId}:
     $ref: 'paths/daaById.yaml'
   /api/dac:
