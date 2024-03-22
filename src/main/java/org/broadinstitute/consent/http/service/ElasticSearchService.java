@@ -17,6 +17,7 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -48,6 +49,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
+  private final DatasetDAO datasetDAO;
   private final StudyDAO studyDAO;
 
   public ElasticSearchService(
@@ -58,6 +60,7 @@ public class ElasticSearchService implements ConsentLogger {
       UserDAO userDao,
       OntologyService ontologyService,
       InstitutionDAO institutionDAO,
+      DatasetDAO datasetDAO,
       StudyDAO studyDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
@@ -66,6 +69,7 @@ public class ElasticSearchService implements ConsentLogger {
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
     this.institutionDAO = institutionDAO;
+    this.datasetDAO = datasetDAO;
     this.studyDAO = studyDAO;
   }
 
@@ -242,8 +246,9 @@ public class ElasticSearchService implements ConsentLogger {
 
   public Response indexStudy(Integer studyId) {
     Study study = studyDAO.findStudyById(studyId);
-    if (study != null && study.getDatasets() != null && !study.getDatasets().isEmpty()) {
-      List<Dataset> datasets = study.getDatasets().stream().toList();
+    // The dao call above does not populate its datasets so we need to check for datasetIds
+    if (study != null && study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
+      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
       try (Response response = indexDatasets(datasets)) {
         return response;
       } catch (Exception e) {

@@ -28,6 +28,7 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -82,6 +83,8 @@ class ElasticSearchServiceTest {
   private InstitutionDAO institutionDAO;
 
   @Mock
+  private DatasetDAO datasetDAO;
+  @Mock
   private StudyDAO studyDAO;
 
   private void initService() {
@@ -93,6 +96,7 @@ class ElasticSearchServiceTest {
         userDao,
         ontologyService,
         institutionDAO,
+        datasetDAO,
         studyDAO);
   }
 
@@ -523,8 +527,10 @@ class ElasticSearchServiceTest {
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
-    study.addDatasets(List.of(d));
+    d.setDataSetId(1);
+    study.addDatasetId(d.getDataSetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 
     initService();
     assertDoesNotThrow(() -> service.indexStudy(1));
