@@ -165,6 +165,7 @@ public class DAOTestHelper {
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();
+    testingDAO.deleteAllLibraryCardDAAs();
     testingDAO.deleteAllDACDAAs();
     testingDAO.deleteAllDataAccessAgreements();
     testingDAO.deleteAllDacs();

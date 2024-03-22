@@ -239,8 +239,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
     env.jersey().register(new StatusResource(env.healthChecks()));
     env.jersey().register(
-        new UserResource(samService, userService, datasetService, supportRequestService,
-            acknowledgementService));
+        new UserResource(samService, userService, datasetService, acknowledgementService));
     env.jersey().register(new TosResource(samService));
     env.jersey().register(injector.getInstance(VersionResource.class));
     env.jersey().register(new VoteResource(userService, voteService, electionService));

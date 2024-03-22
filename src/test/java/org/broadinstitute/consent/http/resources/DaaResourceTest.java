@@ -6,12 +6,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
@@ -141,7 +141,32 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService);
     Response response = resource.findAll();
     assert response.getStatus() == HttpStatus.SC_OK;
-    JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
+    JsonArray daas = GsonUtil.buildGson()
+        .fromJson((response.getEntity().toString()), JsonArray.class);
     assertEquals(2, daas.size());
+  }
+
+ @Test
+  void testFindDaaByDaaId() {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
+
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+    assertEquals(expectedDaa, response.getEntity());
+  }
+
+  @Test
+  void testFindDaaByDaaIdInvalidId() {
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 }
