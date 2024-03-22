@@ -88,7 +88,7 @@ public class DaaService implements ConsentLogger {
 
   public List<DataAccessAgreement> findAll() {
     List<DataAccessAgreement> daas = daaDAO.findAll();
-    if (Objects.nonNull(daas)) {
+    if (daas != null) {
       return daas;
     }
     return List.of();

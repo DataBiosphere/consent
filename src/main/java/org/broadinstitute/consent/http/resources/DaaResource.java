@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -80,7 +81,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
+  @PermitAll
   public Response findAll() {
     try {
       List<DataAccessAgreement> daas = daaService.findAll();

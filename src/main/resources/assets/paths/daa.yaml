@@ -11,9 +11,5 @@ get:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
-    403:
-      description: User not authorized to request all DAAs.
-    404:
-      description: DAA Not Found
     500:
       description: Internal Server Error
