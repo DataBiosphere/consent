@@ -233,7 +233,6 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
-    System.out.println(response);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 }
