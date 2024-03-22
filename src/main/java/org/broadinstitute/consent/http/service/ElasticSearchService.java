@@ -243,7 +243,7 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexStudy(Integer studyId) {
     Study study = studyDAO.findStudyById(studyId);
     if (study != null && study.getDatasets() != null && !study.getDatasets().isEmpty()) {
-      final List<Dataset> datasets = study.getDatasets().stream().toList();
+      List<Dataset> datasets = study.getDatasets().stream().toList();
       try (Response response = indexDatasets(datasets)) {
         return response;
       } catch (Exception e) {
