@@ -5,10 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -24,6 +26,7 @@ import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,6 +115,43 @@ class DaaResourceTest {
   }
 
   @Test
+  public void testFindAllNoDaas() {
+    when(daaService.findAll()).thenReturn(Collections.emptyList());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.findAll();
+    assert response.getStatus() == HttpStatus.SC_OK;
+    JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
+    assertEquals(0, daas.size());
+  }
+
+  @Test
+  public void testFindAll() {
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    when(daaService.findAll()).thenReturn(Collections.singletonList(expectedDaa));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.findAll();
+    assert response.getStatus() == HttpStatus.SC_OK;
+    JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
+    assertEquals(1, daas.size());
+  }
+
+  @Test
+  public void testFindAllMultipleDaas() {
+    DataAccessAgreement expectedDaa1 = new DataAccessAgreement();
+    DataAccessAgreement expectedDaa2 = new DataAccessAgreement();
+    when(daaService.findAll()).thenReturn(List.of(expectedDaa1, expectedDaa2));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.findAll();
+    assert response.getStatus() == HttpStatus.SC_OK;
+    JsonArray daas = GsonUtil.buildGson()
+        .fromJson((response.getEntity().toString()), JsonArray.class);
+    assertEquals(2, daas.size());
+  }
+
+ @Test
   void testFindDaaByDaaId() {
     int expectedDaaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement expectedDaa = new DataAccessAgreement();

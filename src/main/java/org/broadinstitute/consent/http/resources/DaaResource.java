@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
-import freemarker.core.LibraryLoad;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -20,7 +20,6 @@ import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -114,6 +113,18 @@ public class DaaResource extends Resource implements ConsentLogger {
           .replacePath("api/libraryCards/{libraryCardId}")
           .build(libraryCardId);
       return Response.created(uri).entity(libraryCard).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response findAll() {
+    try {
+      List<DataAccessAgreement> daas = daaService.findAll();
+      return Response.ok(daas).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
