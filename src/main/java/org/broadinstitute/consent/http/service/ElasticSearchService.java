@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -46,6 +48,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
+  private final StudyDAO studyDAO;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -54,7 +57,8 @@ public class ElasticSearchService implements ConsentLogger {
       DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
       OntologyService ontologyService,
-      InstitutionDAO institutionDAO) {
+      InstitutionDAO institutionDAO,
+      StudyDAO studyDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -62,6 +66,7 @@ public class ElasticSearchService implements ConsentLogger {
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
     this.institutionDAO = institutionDAO;
+    this.studyDAO = studyDAO;
   }
 
 
@@ -233,6 +238,20 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexDatasets(List<Dataset> datasets) throws IOException {
     List<DatasetTerm> datasetTerms = datasets.stream().map(this::toDatasetTerm).toList();
     return indexDatasetTerms(datasetTerms);
+  }
+
+  public Response indexStudy(Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    if (study != null && study.getDatasets() != null && !study.getDatasets().isEmpty()) {
+      final List<Dataset> datasets = study.getDatasets().stream().toList();
+      try (Response response = indexDatasets(datasets)) {
+        return response;
+      } catch (Exception e) {
+        logException(String.format("Failed to index datasets for study id: %d", studyId), e);
+        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+      }
+    }
+    return Response.status(Status.NOT_FOUND).build();
   }
 
   public DatasetTerm toDatasetTerm(Dataset dataset) {
