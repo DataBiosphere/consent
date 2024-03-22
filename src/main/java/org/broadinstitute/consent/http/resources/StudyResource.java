@@ -189,7 +189,7 @@ public class StudyResource extends Resource {
             user,
             files);
         try (Response indexResponse = elasticSearchService.indexStudy(studyId))  {
-          if (indexResponse.getStatus() >= 400) {
+          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);
           }
         } catch (Exception e) {
