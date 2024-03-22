@@ -29,5 +29,13 @@ public class LibraryCardReducer implements LinkedHashMapRowReducer<Integer, Libr
     if (Objects.nonNull(institution)) {
       card.setInstitution(institution);
     }
+
+    try {
+      if (Objects.nonNull(card) && Objects.nonNull(
+          rowView.getColumn("daa_id", Integer.class))) {
+        card.addDaa(rowView.getColumn("daa_id", Integer.class));
+      }
+    } catch (MappingException e) {
+    }
   }
 }
