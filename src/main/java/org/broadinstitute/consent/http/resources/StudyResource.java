@@ -188,6 +188,13 @@ public class StudyResource extends Resource {
             registration,
             user,
             files);
+        try (Response indexResponse = elasticSearchService.indexStudy(studyId))  {
+          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+            logWarn("Non-OK response when reindexing study with id: " + studyId);
+          }
+        } catch (Exception e) {
+          logException("Exception re-indexing datasets from study id: " + studyId, e);
+        }
         return Response.ok(updatedStudy).build();
       } else {
         return Response.status(Status.BAD_REQUEST).build();

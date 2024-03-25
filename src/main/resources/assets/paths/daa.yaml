@@ -1,0 +1,15 @@
+get:
+  summary: Find all DAAs
+  operationId: Find all DAAs
+  description: Fetches all DAAs
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Fetched all Data Access Agreements
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessAgreement.yaml'
+    500:
+      description: Internal Server Error
