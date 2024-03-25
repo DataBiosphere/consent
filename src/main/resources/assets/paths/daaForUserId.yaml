@@ -3,9 +3,9 @@ delete:
   operationId: deleteDaaForUser
   description: Delete the link between a Data Access Agreement and a User
   parameters:
-    - name: dacId
+    - name: daaId
       in: path
-      description: The DAC ID
+      description: The DAA ID
       required: true
       schema:
         type: integer
