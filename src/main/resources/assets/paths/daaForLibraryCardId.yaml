@@ -1,4 +1,4 @@
-post:
+put:
   summary: Create a DAA-Library Card Relationship
   operationId: Create DAA-Library Card Relationship
   description: Create a link between a Data Access Agreement and a user's Library Card
