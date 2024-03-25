@@ -1,7 +1,7 @@
 put:
   summary: Create a DAA-Library Card Relationship
   operationId: Create DAA-Library Card Relationship
-  description: Create a link between a Data Access Agreement and a user's Library Card
+  description: Create a link between a Data Access Agreement and a User
   parameters:
     - name: daaId
       in: path
@@ -9,9 +9,9 @@ put:
       required: true
       schema:
         type: integer
-    - name: libraryCardId
+    - name: userId
       in: path
-      description: The Library Card ID
+      description: The User ID
       required: true
       schema:
         type: integer
@@ -19,13 +19,13 @@ put:
     - DAA
   responses:
     200:
-      description: Successfully created a relationship between a Data Access Agreement and a Library Card
+      description: Successfully created a relationship between a Data Access Agreement and a User
       content:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
     403:
-      description: User not authorized to create a relationship between a DAA and a Library Card.
+      description: User not authorized to create a relationship between a DAA and a User.
     404:
       description: Data Access Agreement or Library Card Not Found
     500:

@@ -199,17 +199,13 @@ class DaaResourceTest {
     LibraryCard lc = new LibraryCard();
     lc.setInstitutionId(1);
     lc.setId(1);
-//
-//    when(daaService.findById(any())).thenReturn(daa);
+
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-//    when(libraryCardService.findLibraryCardById(any())).thenReturn(lc);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
-    System.out.println(lc.getId());
-    System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
 
@@ -237,11 +233,8 @@ class DaaResourceTest {
     lc.setId(1);
     lc.setInstitutionId(1);
 
-//    when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-//    when(userService.findUserByEmail(any())).thenReturn(admin);
-//    when(libraryCardService.findLibraryCardById(any())).thenReturn(lc);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -269,13 +262,36 @@ class DaaResourceTest {
     lc.setId(1);
     lc.setInstitutionId(1);
 
-    //    when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-//    when(userService.findUserByEmail(any())).thenReturn(admin);
-//    when(libraryCardService.findLibraryCardById(any())).thenReturn(lc);
-//    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidUserCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(2);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());

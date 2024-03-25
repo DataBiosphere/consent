@@ -109,10 +109,9 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-//      DataAccessAgreement daa = daaService.findById(daaId);
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
       Optional<LibraryCard> matchingCard = libraryCards.stream()
-          .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId())
+          .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId().intValue())
           .findFirst();
       if (matchingCard.isEmpty()) {
         return Response.status(Status.NOT_FOUND).build();
