@@ -16,6 +16,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -39,14 +41,16 @@ public class DacResource extends Resource {
   private final DacService dacService;
   private final UserService userService;
   private final DatasetService datasetService;
+  private final ElasticSearchService elasticSearchService;
   private static final Logger logger = Logger.getLogger(DacResource.class.getName());
 
   @Inject
   public DacResource(DacService dacService, UserService userService,
-      DatasetService datasetService) {
+      DatasetService datasetService, ElasticSearchService elasticSearchService) {
     this.dacService = dacService;
     this.userService = userService;
     this.datasetService = datasetService;
+    this.elasticSearchService = elasticSearchService;
   }
 
   @GET
@@ -254,6 +258,13 @@ public class DacResource extends Resource {
         throw new BadRequestException("Invalid request payload");
       }
       Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
+      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset))  {
+        if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+          logWarn("Non-OK response when reindexing dataset with id: " + datasetId);
+        }
+      } catch (Exception e) {
+        logException("Exception re-indexing datasets from dataset id: " + datasetId, e);
+      }
       return Response.ok().entity(unmarshal(updatedDataset)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
