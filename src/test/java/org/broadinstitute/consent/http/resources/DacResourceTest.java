@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -19,6 +20,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -625,6 +627,51 @@ class DacResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 
+  @Test
+  void testApproveDataset_ElasticSearchNonSuccessResponseDoesNotFail() throws Exception {
+    User user = new User();
+    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
+        UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(1);
+    user.addRole(chairRole);
+    Dataset dataset = new Dataset();
+    Dataset datasetResponse = new Dataset();
+    datasetResponse.setDacId(1);
+    datasetResponse.setDacApproval(true);
+    dataset.setDacId(1);
+    dataset.setDacApproval(false);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+        .thenReturn(datasetResponse);
+    when(elasticSearchService.indexDataset(any())).thenReturn(Response.serverError().build());
+    Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
+  }
+
+  @Test
+  void testApproveDataset_ElasticSearchExceptionDoesNotFail() throws Exception {
+    User user = new User();
+    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
+        UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(1);
+    user.addRole(chairRole);
+    Dataset dataset = new Dataset();
+    Dataset datasetResponse = new Dataset();
+    datasetResponse.setDacId(1);
+    datasetResponse.setDacApproval(true);
+    dataset.setDacId(1);
+    dataset.setDacApproval(false);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+        .thenReturn(datasetResponse);
+    doThrow(new IOException("Something went wrong")).when(elasticSearchService).indexDataset(any());
+    Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
+  }
 
   private JsonArray getListFromEntityString(String str) {
     return GsonUtil.buildGson().fromJson(str, JsonArray.class);
