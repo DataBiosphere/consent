@@ -5,16 +5,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -40,6 +46,9 @@ class DaaResourceTest {
   private DacService dacService;
   @Mock
   private UserService userService;
+
+  @Mock
+  private GCSService gcsService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
 
@@ -168,5 +177,36 @@ class DaaResourceTest {
 
     Response response = resource.findById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testFindDaaFileByDaaId() throws IOException {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+
+//    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
+//    when(gcsService.getDocument(any(BlobId.class))).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+//    assertEquals(fileContent, IOUtils.toString((ByteArrayInputStream) response.getEntity(), Charset.defaultCharset()));
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdInvalid() {
+    //
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdTextFile() {
+    //
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdPdfFile() {
+    //
   }
 }

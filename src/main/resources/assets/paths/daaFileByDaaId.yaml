@@ -1,0 +1,25 @@
+get:
+  summary: Get DAA File by id
+  operationId: Find DAA File
+  description: Fetches Data Access Agreement File by Id
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: The Data Access Agreement File matching the provided ID
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    404:
+      description: No DAA File found with the given ID
+    500:
+      description: Internal Server Error
