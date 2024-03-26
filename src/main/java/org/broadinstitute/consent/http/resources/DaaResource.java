@@ -5,6 +5,7 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -21,10 +22,12 @@ import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -36,12 +39,14 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DaaService daaService;
   private final DacService dacService;
   private final UserService userService;
+  private final LibraryCardService libraryCardService;
 
   @Inject
-  public DaaResource(DaaService daaService, DacService dacService, UserService userService) {
+  public DaaResource(DaaService daaService, DacService dacService, UserService userService, LibraryCardService libraryCardService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
+    this.libraryCardService = libraryCardService;
   }
 
   @POST
@@ -98,6 +103,28 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       DataAccessAgreement daa = daaService.findById(daaId);
       return Response.ok(daa).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  @Path("{daaId}/{userId}")
+  public Response deleteDaaForUser(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId,
+      @PathParam("userId") Integer userId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        return Response.status(Status.FORBIDDEN).build();
+      }
+      List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
+      for (LibraryCard libraryCard : libraryCards) {
+        libraryCardService.removeDaaFromLibraryCard(libraryCard.getId(), daaId);
+      }
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
