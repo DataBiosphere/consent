@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.storage.BlobId;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -186,27 +185,21 @@ class DaaResourceTest {
     expectedDaa.setDaaId(expectedDaaId);
     String fileContent = RandomStringUtils.randomAlphanumeric(10);
 
-//    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
-//    when(gcsService.getDocument(any(BlobId.class))).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
+    when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
     resource = new DaaResource(daaService, dacService, userService);
 
     Response response = resource.findFileById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
-//    assertEquals(fileContent, IOUtils.toString((ByteArrayInputStream) response.getEntity(), Charset.defaultCharset()));
+    assertEquals(fileContent, IOUtils.toString((ByteArrayInputStream) response.getEntity(), Charset.defaultCharset()));
   }
 
   @Test
   void testFindDaaFileByDaaIdInvalid() {
-    //
-  }
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
+    resource = new DaaResource(daaService, dacService, userService);
 
-  @Test
-  void testFindDaaFileByDaaIdTextFile() {
-    //
-  }
-
-  @Test
-  void testFindDaaFileByDaaIdPdfFile() {
-    //
+    Response response = resource.findFileById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 }
