@@ -469,12 +469,6 @@ public class DatasetService implements ConsentLogger {
     }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
-    // Dataset Property updates
-    if (studyConversion.getDacId() != null) {
-      newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId",
-          PropertyType.Number, studyConversion.getDacId().toString());
-    }
-
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
       legacyPropConversion(dictionaries, dataset, "Phenotype/Indication", null, PropertyType.String,
