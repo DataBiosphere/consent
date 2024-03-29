@@ -6,7 +6,7 @@
       -- Remove duplicate properties
       DELETE
       FROM dataset_property
-      WHERE property_key IN (SELECT key_id FROM "dictionary" d WHERE KEY = 'DAC ID')
+      WHERE property_key IN (SELECT key_id FROM dictionary d WHERE KEY = 'DAC ID')
     </sql>
     <sql>
       -- Remove deprecated property key from dictionary
