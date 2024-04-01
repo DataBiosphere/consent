@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +43,6 @@ class DaaResourceTest {
   private DacService dacService;
   @Mock
   private UserService userService;
-
   @Mock
   private LibraryCardService libraryCardService;
 
@@ -355,5 +355,52 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testDeleteDaaForAdmin() {
+    Integer daaId = RandomUtils.nextInt(10, 100);
+
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setUserId(user.getUserId());
+    libraryCard.setDaaIds(List.of(daaId));
+
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of(libraryCard));
+    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testDeleteDaaForUserForbidden() {
+    Integer daaId = RandomUtils.nextInt(10, 100);
+
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setUserId(user.getUserId());
+    libraryCard.setDaaIds(List.of(daaId));
+
+    when(userService.findUserByEmail(any())).thenReturn(user);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testDeleteDaaForInvalidUser() {
+    when(userService.findUserByEmail(any())).thenReturn(null);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.deleteDaaForUser(authUser, RandomUtils.nextInt(10, 100), RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 }
