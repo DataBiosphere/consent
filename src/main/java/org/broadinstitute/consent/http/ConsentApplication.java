@@ -222,7 +222,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         datasetRegistrationService, elasticSearchService));
     env.jersey().register(injector.getInstance(DatasetAssociationsResource.class));
     env.jersey().register(injector.getInstance(ConsentResource.class));
-    env.jersey().register(new DacResource(dacService, userService, datasetService));
+    env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
         new DarCollectionResource(darCollectionService, userService));
