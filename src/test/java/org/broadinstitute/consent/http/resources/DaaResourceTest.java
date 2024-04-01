@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -48,9 +47,6 @@ class DaaResourceTest {
   private DacService dacService;
   @Mock
   private UserService userService;
-
-  @Mock
-  private GCSService gcsService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
 
