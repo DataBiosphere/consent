@@ -189,6 +189,7 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService);
 
     Response response = resource.findFileById(expectedDaaId);
+//    System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_OK;
     assertEquals(fileContent, IOUtils.toString((ByteArrayInputStream) response.getEntity(), Charset.defaultCharset()));
   }
