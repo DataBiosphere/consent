@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.eclipse.jetty.http.HttpTester.Input;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 public class DaaService implements ConsentLogger {

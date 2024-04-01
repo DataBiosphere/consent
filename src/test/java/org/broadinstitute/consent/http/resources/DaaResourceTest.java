@@ -202,4 +202,14 @@ class DaaResourceTest {
     Response response = resource.findFileById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
+
+  @Test
+  void testFindDaaFileByDaaIdDatabaseError() {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
+    resource = new DaaResource(daaService, dacService, userService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
 }
