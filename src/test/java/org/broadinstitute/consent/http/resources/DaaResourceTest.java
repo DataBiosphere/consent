@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -8,11 +9,12 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
@@ -24,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -183,15 +186,22 @@ class DaaResourceTest {
     int expectedDaaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement expectedDaa = new DataAccessAgreement();
     expectedDaa.setDaaId(expectedDaaId);
+    String fileName = RandomStringUtils.randomAlphanumeric(10) + ".txt";
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileName(fileName);
+    expectedDaa.setFile(fso);
     String fileContent = RandomStringUtils.randomAlphanumeric(10);
 
     when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
     resource = new DaaResource(daaService, dacService, userService);
 
     Response response = resource.findFileById(expectedDaaId);
-//    System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_OK;
-    assertEquals(fileContent, IOUtils.toString((ByteArrayInputStream) response.getEntity(), Charset.defaultCharset()));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ((StreamingOutput) response.getEntity()).write(out);
+    assertEquals(fileContent, out.toString());
   }
 
   @Test
