@@ -27,8 +27,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -40,13 +42,15 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DacService dacService;
   private final UserService userService;
   private final LibraryCardService libraryCardService;
+  private final EmailService emailService;
 
   @Inject
-  public DaaResource(DaaService daaService, DacService dacService, UserService userService, LibraryCardService libraryCardService) {
+  public DaaResource(DaaService daaService, DacService dacService, UserService userService, LibraryCardService libraryCardService, EmailService emailService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
     this.libraryCardService = libraryCardService;
+    this.emailService = emailService;
   }
 
   @POST
@@ -124,6 +128,32 @@ public class DaaResource extends Resource implements ConsentLogger {
       for (LibraryCard libraryCard : libraryCards) {
         libraryCardService.removeDaaFromLibraryCard(libraryCard.getId(), daaId);
       }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @PermitAll
+  @Path("/request/{daaId}")
+  public Response deleteDaaForUser(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      int userId = user.getUserId();
+      String userName = user.getDisplayName();
+      // right now just grabbing first for draft purposes
+      SimplifiedUser signingOfficial = user.getInstitution().getSigningOfficials().get(0);
+      String signingOfficialName = signingOfficial.displayName;
+      String signingOfficialEmail = signingOfficial.email;
+      DataAccessAgreement daa = daaService.findById(daaId);
+      String daaName = daa.getFile().getFileName();
+      // again, just grabbing first for draft purposes
+      String dacName = daa.getDacs().get(0).getName();
+      emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
+          daaName, dacName, daaId, userId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

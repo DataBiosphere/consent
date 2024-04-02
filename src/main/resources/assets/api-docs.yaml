@@ -114,6 +114,8 @@ paths:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}/{userId}:
     $ref: 'paths/daaForUserId.yaml'
+  /api/daa/request/{daaId}:
+    $ref: 'paths/daaRequestByDaaId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/{dacId}:

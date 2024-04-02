@@ -15,7 +15,8 @@ public enum EmailType {
   DELEGATE_RESPONSIBILITIES(11),
   NEW_RESEARCHER(12),
   RESEARCHER_APPROVED(13),
-  NEW_DATASET(14);
+  NEW_DATASET(14),
+  NEW_DAA_REQUEST(15);
 
   private final Integer typeInt;
 

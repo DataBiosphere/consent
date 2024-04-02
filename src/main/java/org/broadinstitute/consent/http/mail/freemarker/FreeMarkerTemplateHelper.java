@@ -105,6 +105,14 @@ public class FreeMarkerTemplateHelper {
         researcherEmail, temp);
   }
 
+  public Writer getDaaRequestTemplate(String signingOfficialUserName,
+      String userName, String daaName,
+      String dacName, String serverUrl) throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("new-daa-request.html");
+    return generateNewDAARequestTemplate(signingOfficialUserName, userName, daaName,
+        dacName, serverUrl, temp);
+  }
+
   private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
       String dacName, Template temp) throws IOException, TemplateException {
     DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
@@ -203,6 +211,21 @@ public class FreeMarkerTemplateHelper {
   private Writer generateDisabledDatasetsTemplate(String user, List<String> datasets,
       String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
     DisabledDatasetModel model = new DisabledDatasetModel(user, datasets, entityId, serverUrl);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateNewDAARequestTemplate(
+      String signingOfficialUserName,
+      String userName,
+      String daaName,
+      String dacName,
+      String serverUrl,
+      Template temp
+  ) throws IOException, TemplateException {
+    NewDaaRequestModel model = new NewDaaRequestModel(serverUrl, daaName, userName,
+        signingOfficialUserName, dacName);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
