@@ -478,8 +478,8 @@ class DatasetServiceTest {
     ds1.setName("asdf1234");
     ds1.setAlias(3);
     DatasetProperty ds1PI = new DatasetProperty();
-    ds1PI.setPropertyName("Principal Investigator(PI)");
-    ds1PI.setPropertyValue("John Doe");
+    ds1PI.setPropertyName("Species");
+    ds1PI.setPropertyValue("human");
     ds1PI.setPropertyType(PropertyType.String);
     ds1.setProperties(Set.of(ds1PI));
 
@@ -487,8 +487,8 @@ class DatasetServiceTest {
     ds2.setName("ghjk5678");
     ds2.setAlias(280);
     DatasetProperty ds2PI = new DatasetProperty();
-    ds2PI.setPropertyName("Principal Investigator(PI)");
-    ds2PI.setPropertyValue("Sally Doe");
+    ds2PI.setPropertyName("Species");
+    ds2PI.setPropertyValue("human");
     ds2PI.setPropertyType(PropertyType.String);
     ds2.setProperties(Set.of(ds2PI));
 
@@ -505,11 +505,12 @@ class DatasetServiceTest {
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));
 
-    // query pi name
-    results = datasetService.searchDatasets("John", AccessManagement.CONTROLLED, u);
+    // query species
+    results = datasetService.searchDatasets("human", AccessManagement.CONTROLLED, u);
 
-    assertEquals(1, results.size());
+    assertEquals(2, results.size());
     assertTrue(results.contains(ds1));
+    assertTrue(results.contains(ds2));
 
     // query ds identifier
     results = datasetService.searchDatasets("DUOS-000280", AccessManagement.CONTROLLED, u);
@@ -517,15 +518,13 @@ class DatasetServiceTest {
     assertEquals(1, results.size());
     assertTrue(results.contains(ds2));
 
-    // query pi name for all of them
+    // query missing pi name
     results = datasetService.searchDatasets("Doe", AccessManagement.CONTROLLED, u);
 
-    assertEquals(2, results.size());
-    assertTrue(results.contains(ds2));
-    assertTrue(results.contains(ds1));
+    assertEquals(0, results.size());
 
     // search on two things at once
-    results = datasetService.searchDatasets("Doe asdf", AccessManagement.CONTROLLED, u);
+    results = datasetService.searchDatasets("human asdf", AccessManagement.CONTROLLED, u);
 
     assertEquals(1, results.size());
     assertTrue(results.contains(ds1));

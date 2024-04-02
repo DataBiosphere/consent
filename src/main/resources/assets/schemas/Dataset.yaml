@@ -35,8 +35,6 @@ properties:
     items:
       $ref: './DatasetProperty.yaml'
     example:
-      - propertyName: Dataset Name
-        propertyValue: Dataset Name
       - propertyName: Data Type
         propertyValue: Whole Genome
       - propertyName: Species
@@ -47,12 +45,8 @@ properties:
         propertyValue: 20
       - propertyName: Description
         propertyValue: Description of Dataset
-      - propertyName: dbGAP
+      - propertyName: url
         propertyValue: http://...
-      - propertyName: Data Depositor
-        propertyValue: NHLBI
-      - propertyName: Principal Investigator(PI)
-        propertyValue: NHLBI
       - propertyName: Sample Collection ID
         propertyValue: SC-000
   study:
