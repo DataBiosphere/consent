@@ -104,10 +104,10 @@ public class DaaResource extends Resource implements ConsentLogger {
       // Assert that the user has the correct institution permissions to add a DAA-LC relationship.
       // Admins can add a DAA with any DAC, but signing officials can only create relationships for
       // library cards associated with the same institution they are associated with.
-      if (!authedUser.hasUserRole(UserRoles.ADMIN)) {
-        if (authedUserInstitutionId != userInstitutionId) {
+      if (!authedUser.hasUserRole(UserRoles.ADMIN) && !authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+        return Response.status(Status.FORBIDDEN).build();
+      } else if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && authedUserInstitutionId != userInstitutionId) {
           return Response.status(Status.FORBIDDEN).build();
-        }
       }
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
       Optional<LibraryCard> matchingCard = libraryCards.stream()
