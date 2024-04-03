@@ -53,7 +53,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  @Path("/daa/{dacId}")
+  @Path("/dac/{dacId}")
   public Response createDaaForDac(
       @Context UriInfo info,
       @Auth AuthUser authUser,
