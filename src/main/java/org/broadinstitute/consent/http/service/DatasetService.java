@@ -506,9 +506,6 @@ public class DatasetService implements ConsentLogger {
       // Handle "URL"
       newPropConversion(dictionaries, dataset, "URL", "url", PropertyType.String,
           studyConversion.getUrl());
-      // Handle "dbGAP"
-      legacyPropConversion(dictionaries, dataset, "dbGAP", "url", PropertyType.String,
-          studyConversion.getUrl());
     }
 
     // Handle "Data Submitter User ID"

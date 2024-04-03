@@ -45,7 +45,7 @@ put:
                       propertyValue: 20
                     - propertyName: Description
                       propertyValue: Description of Dataset
-                    - propertyName: dbGAP
+                    - propertyName: url
                       propertyValue: http://...
                     - propertyName: Data Depositor
                       propertyValue: NHLBI
