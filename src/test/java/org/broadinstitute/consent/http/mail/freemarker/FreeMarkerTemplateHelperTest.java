@@ -186,10 +186,20 @@ class FreeMarkerTemplateHelperTest {
         "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
         parsedTemplate.title());
     assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Hello signingOfficialUserName,"));
+    assertTrue(parsedTemplate
         .getElementById("content")
         .text()
         .contains(
-            "A new dataset, testDataset, has been submitted to your DAC, dacName by dataSubmitterName. Please log in to DUOS to review and accept or reject management of this dataset."));
+            "userName has registered with your institution and is requesting you approve them under the daaName data access agreement, so that they can request access to data."));
+    assertTrue(parsedTemplate
+        .getElementById("link")
+        .text()
+        .contains(
+            "Please login to review userName's Data Access Agreements."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }
