@@ -15,6 +15,8 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -24,12 +26,14 @@ public class DaaService implements ConsentLogger {
   private final DaaServiceDAO daaServiceDAO;
   private final DaaDAO daaDAO;
   private final GCSService gcsService;
+  private final EmailService emailService;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
+    this.emailService = emailService;
   }
 
   /**
@@ -102,12 +106,21 @@ public class DaaService implements ConsentLogger {
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
   }
 
-  // add actual emailService call here
-//  SimplifiedUser signingOfficial = user.getInstitution().getSigningOfficials().get(0);
-//  String signingOfficialName = signingOfficial.displayName;
-//  String signingOfficialEmail = signingOfficial.email;
-//  DataAccessAgreement daa = daaService.findById(daaId);
-//  String daaName = daa.getFile().getFileName();
-//      emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
-//  daaName, daaId, userId);
+  public void sendDaaRequestEmails(User user, Integer daaId) {
+    try {
+      List<SimplifiedUser> signingOfficials = user.getInstitution().getSigningOfficials();
+      int userId = user.getUserId();
+      String userName = user.getDisplayName();
+      for (SimplifiedUser signingOfficial : signingOfficials) {
+        String signingOfficialName = signingOfficial.displayName;
+        String signingOfficialEmail = signingOfficial.email;
+        DataAccessAgreement daa = findById(daaId);
+        String daaName = daa.getFile().getFileName();
+        emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
+            daaName, daaId, userId);
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
+  }
 }
