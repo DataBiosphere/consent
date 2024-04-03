@@ -108,12 +108,12 @@ paths:
           description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
+  /api/daa/{daaId}/{userId}:
+    $ref: 'paths/daaForUserId.yaml'
   /api/daa/dac/{dacId}:
     $ref: 'paths/daaById.yaml'
   /api/daa:
     $ref: 'paths/daa.yaml'
-  /api/daa/{daaId}/{userId}:
-    $ref: 'paths/daaForUserId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/{dacId}:

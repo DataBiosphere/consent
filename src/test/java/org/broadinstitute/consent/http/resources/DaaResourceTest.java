@@ -176,6 +176,188 @@ class DaaResourceTest {
   }
 
   @Test
+  void testCreateLibraryCardDaaRelation_AdminCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setInstitutionId(1);
+    lc.setId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_SigningOfficialCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidInstitutionIdCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(2);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidUserCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(2);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidDaaIdCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_NoMatchingLibraryCardsCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(2);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
   void testDeleteDaaForAdmin() {
     Integer daaId = RandomUtils.nextInt(10, 100);
 
