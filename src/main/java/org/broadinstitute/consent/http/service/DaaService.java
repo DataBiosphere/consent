@@ -101,4 +101,13 @@ public class DaaService implements ConsentLogger {
     }
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
   }
+
+  // add actual emailService call here
+//  SimplifiedUser signingOfficial = user.getInstitution().getSigningOfficials().get(0);
+//  String signingOfficialName = signingOfficial.displayName;
+//  String signingOfficialEmail = signingOfficial.email;
+//  DataAccessAgreement daa = daaService.findById(daaId);
+//  String daaName = daa.getFile().getFileName();
+//      emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
+//  daaName, daaId, userId);
 }

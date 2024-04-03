@@ -175,6 +175,25 @@ class FreeMarkerTemplateHelperTest {
     assertFalse(templateString.contains("${"));
   }
 
+  @Test
+  void testGetDaaRequestTemplate() throws Exception {
+    Writer template = helper.getDaaRequestTemplate("signingOfficialUserName", "userName",
+        "daaName",
+        "serverUrl");
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "A new dataset, testDataset, has been submitted to your DAC, dacName by dataSubmitterName. Please log in to DUOS to review and accept or reject management of this dataset."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
   /* Helper methods */
 
   private Document getAsHtmlDoc(String parsedHtml) {
