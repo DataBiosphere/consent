@@ -150,10 +150,8 @@ public class DaaResource extends Resource implements ConsentLogger {
       String signingOfficialEmail = signingOfficial.email;
       DataAccessAgreement daa = daaService.findById(daaId);
       String daaName = daa.getFile().getFileName();
-      // again, just grabbing first for draft purposes
-      String dacName = daa.getDacs().get(0).getName();
       emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
-          daaName, dacName, daaId, userId);
+          daaName, daaId, userId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

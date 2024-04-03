@@ -11,20 +11,16 @@ public class NewDaaRequestModel {
   private final String daaName;
   private final String userName;
   private final String signingOfficialUserName;
-  private final String dacName;
-
   public NewDaaRequestModel(
       String serverUrl,
       String daaName,
       String userName,
-      String signingOfficialUserName,
-      String dacName
+      String signingOfficialUserName
   ) {
     this.serverUrl = serverUrl;
     this.daaName = daaName;
     this.userName = userName;
     this.signingOfficialUserName = signingOfficialUserName;
-    this.dacName = dacName;
   }
 
   public String getServerUrl() {
@@ -41,10 +37,6 @@ public class NewDaaRequestModel {
 
   public String getSigningOfficialUserName() {
     return signingOfficialUserName;
-  }
-
-  public String getDacName() {
-    return dacName;
   }
 
 }
