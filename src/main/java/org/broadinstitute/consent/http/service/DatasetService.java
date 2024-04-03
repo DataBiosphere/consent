@@ -481,15 +481,6 @@ public class DatasetService implements ConsentLogger {
           studyConversion.getSpecies());
     }
 
-    if (studyConversion.getPiName() != null) {
-      // Handle "PI Name"
-      newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
-          studyConversion.getPiName());
-      // Handle "Principal Investigator(PI)"
-      legacyPropConversion(dictionaries, dataset, "Principal Investigator(PI)", "piName", PropertyType.String,
-          studyConversion.getPiName());
-    }
-
     if (studyConversion.getNumberOfParticipants() != null) {
       // Handle "# of participants"
       legacyPropConversion(dictionaries, dataset, "# of participants", "numberOfParticipants", PropertyType.Number,
