@@ -12,7 +12,7 @@
       -- Remove deprecated property key from dictionary
       DELETE
       FROM dictionary
-      WHERE key = 'dbGap';
+      WHERE key = 'dbGAP';
     </sql>
   </changeSet>
 </databaseChangeLog>
