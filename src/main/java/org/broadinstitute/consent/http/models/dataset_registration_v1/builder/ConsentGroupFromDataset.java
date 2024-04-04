@@ -90,7 +90,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
           .stream()
-          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
           .map(DatasetProperty::getPropertyValueAsString)
           .findFirst()
           .orElse(null);
@@ -103,7 +103,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
           .stream()
-          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
           .map(DatasetProperty::getPropertyValue)
           .map(Object::toString)
           .map(Boolean::valueOf)
@@ -118,8 +118,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
           .stream()
-          .filter(p -> p.getSchemaProperty()
-              .equalsIgnoreCase(diseaseSpecificUse))
+          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(diseaseSpecificUse))
           .map(DatasetProperty::getPropertyValue)
           .map(p -> GsonUtil.getInstance().fromJson(p.toString(), JsonElement.class))
           .map(JsonElement::getAsJsonArray)
@@ -136,7 +135,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
           .stream()
-          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(propName))
+          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
           .map(DatasetProperty::getPropertyValue)
           .map(Object::toString)
           .map(Integer::valueOf)
@@ -151,7 +150,7 @@ public class ConsentGroupFromDataset {
     if (Objects.nonNull(props) && !props.isEmpty()) {
       return props
           .stream()
-          .filter(p -> p.getSchemaProperty().equalsIgnoreCase(fileTypes))
+          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(fileTypes))
           .map(DatasetProperty::getPropertyValueAsString)
           .map(p -> GsonUtil.getInstance().fromJson(p, JsonArray.class))
           .map(JsonArray::asList)
