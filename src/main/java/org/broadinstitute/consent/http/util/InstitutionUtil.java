@@ -5,11 +5,12 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 
-public class InstitutionUtil {
+public class InstitutionUtil implements ConsentLogger {
 
   private final GsonBuilder gson;
 
@@ -28,8 +29,12 @@ public class InstitutionUtil {
 
   public Boolean checkIfAdmin(User user) {
     List<UserRole> roles = user.getRoles();
+    if (roles == null || roles.isEmpty()) {
+      logWarn("User has no roles: " + user.getEmail());
+      return false;
+    }
     return roles.stream()
-        .anyMatch((userRole) -> userRole.getRoleId() == UserRoles.ADMIN.getRoleId());
+        .anyMatch((userRole) -> Objects.equals(userRole.getRoleId(), UserRoles.ADMIN.getRoleId()));
   }
 
   private ExclusionStrategy getSerializationExclusionStrategy(Boolean isAdmin) {

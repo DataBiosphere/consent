@@ -44,11 +44,10 @@ class InstitutionUtilTest {
   }
 
   @Test
-  void testCheckIfAdmin() {
-    Boolean adminResult = util.checkIfAdmin(adminUser);
-    Boolean researcherResult = util.checkIfAdmin(researcherUser);
-    assertTrue(adminResult);
-    assertFalse(researcherResult);
+  void testCheckIfAdminAdmin() {
+    assertTrue(util.checkIfAdmin(adminUser));
+    assertFalse(util.checkIfAdmin(researcherUser));
+    assertFalse(util.checkIfAdmin(new User()));
   }
 
   @Test
