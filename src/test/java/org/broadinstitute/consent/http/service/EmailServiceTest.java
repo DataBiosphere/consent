@@ -296,18 +296,17 @@ class EmailServiceTest {
     verify(templateHelper, times(1)).getDaaRequestTemplate(signingOfficial.getDisplayName(),
         user.getDisplayName(),
         daaName, serverUrl);
-    // ??
-//    verify(emailDAO, times(1)).insert(
-//        eq(null),
-//        eq(null),
-//        eq(456),
-//        eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
-//        any(),
-//        any(),
-//        any(),
-//        any(),
-//        any()
-//    );
+    verify(emailDAO, times(1)).insert(
+        eq("456"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
   }
 
   @Test
