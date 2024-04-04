@@ -7,7 +7,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.ServerErrorException;
@@ -16,6 +19,7 @@ import java.io.InputStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -102,4 +106,13 @@ public class DaaServiceTest {
     service.removeDacFromDaa(1, 1);
   }
 
+  @Test
+  void testSendDaaRequestEmails() throws Exception {
+    User user = mock();
+    initService();
+
+    DaaService daaSpy = spy(service);
+    assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
+    verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+  }
 }

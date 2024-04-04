@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -222,6 +223,41 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.deleteDaaForUser(authUser, RandomUtils.nextInt(10, 100), RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
+
+  @Test
+  void testSendDaaRequestMessage() throws Exception {
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doNothing().when(daaService).sendDaaRequestEmails(any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testSendDaaRequestMessageUserNotFound() {
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testSendDaaRequestMessageEmailError() throws Exception {
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 }

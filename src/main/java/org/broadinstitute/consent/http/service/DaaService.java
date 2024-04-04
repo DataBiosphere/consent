@@ -106,7 +106,7 @@ public class DaaService implements ConsentLogger {
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
   }
 
-  public void sendDaaRequestEmails(User user, Integer daaId) {
+  public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
     try {
       List<SimplifiedUser> signingOfficials = user.getInstitution().getSigningOfficials();
       int userId = user.getUserId();
