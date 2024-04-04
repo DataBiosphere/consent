@@ -382,7 +382,7 @@ public class DatasetResource extends Resource {
             "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
       Study study;
-      if (Objects.nonNull(dataset.getStudy())) {
+      if (dataset.getStudy() != null && dataset.getStudy().getStudyId() != null) {
         study = datasetService.findStudyById(dataset.getStudy().getStudyId());
       } else {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
