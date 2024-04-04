@@ -142,4 +142,8 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-03-12-daa-lc.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-28-dataset-dac-id-props.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-01-rm-piname.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

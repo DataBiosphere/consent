@@ -229,8 +229,6 @@ public class DatasetRegistrationServiceTest {
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
     assertContainsDatasetProperty(datasetProps, "url",
         schema.getConsentGroups().get(0).getUrl().toString());
-    assertContainsDatasetProperty(datasetProps, "dataAccessCommitteeId",
-        schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(datasetProps, "accessManagement",
         schema.getConsentGroups().get(0).getAccessManagement().value());
 
@@ -465,8 +463,6 @@ public class DatasetRegistrationServiceTest {
     List<DatasetProperty> props = inserts.get(0).props();
     assertContainsDatasetProperty(props, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
-    assertContainsDatasetProperty(props, "dataAccessCommitteeId",
-        schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(props, "accessManagement",
         schema.getConsentGroups().get(0).getAccessManagement().value());
     assertContainsDatasetProperty(props, "numberOfParticipants",

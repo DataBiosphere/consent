@@ -700,10 +700,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               return consentGroup.getAccessManagement().value();
             }
             return null;
-          }),
-      new DatasetPropertyExtractor(
-          "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
-          ConsentGroup::getDataAccessCommitteeId)
+          })
   );
 
   private List<StudyProperty> convertRegistrationToStudyProperties(

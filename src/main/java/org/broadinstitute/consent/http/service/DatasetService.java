@@ -469,12 +469,6 @@ public class DatasetService implements ConsentLogger {
     }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
-    // Dataset Property updates
-    if (studyConversion.getDacId() != null) {
-      newPropConversion(dictionaries, dataset, "DAC ID", "dataAccessCommitteeId",
-          PropertyType.Number, studyConversion.getDacId().toString());
-    }
-
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
       legacyPropConversion(dictionaries, dataset, "Phenotype/Indication", null, PropertyType.String,
@@ -485,15 +479,6 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getSpecies() != null) {
       legacyPropConversion(dictionaries, dataset, "Species", null, PropertyType.String,
           studyConversion.getSpecies());
-    }
-
-    if (studyConversion.getPiName() != null) {
-      // Handle "PI Name"
-      newPropConversion(dictionaries, dataset, "PI Name", "piName", PropertyType.String,
-          studyConversion.getPiName());
-      // Handle "Principal Investigator(PI)"
-      legacyPropConversion(dictionaries, dataset, "Principal Investigator(PI)", "piName", PropertyType.String,
-          studyConversion.getPiName());
     }
 
     if (studyConversion.getNumberOfParticipants() != null) {
