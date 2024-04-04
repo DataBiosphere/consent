@@ -137,21 +137,11 @@ public class DaaResource extends Resource implements ConsentLogger {
   @POST
   @PermitAll
   @Path("/request/{daaId}")
-  public Response deleteDaaForUser(
+  public Response sendDaaRequestMessage(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-//      int userId = user.getUserId();
-//      String userName = user.getDisplayName();
-      // right now just grabbing first for draft purposes
-//      SimplifiedUser signingOfficial = user.getInstitution().getSigningOfficials().get(0);
-//      String signingOfficialName = signingOfficial.displayName;
-//      String signingOfficialEmail = signingOfficial.email;
-//      DataAccessAgreement daa = daaService.findById(daaId);
-//      String daaName = daa.getFile().getFileName();
-//      emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
-//          daaName, daaId, userId);
       daaService.sendDaaRequestEmails(user, daaId);
       return Response.ok().build();
     } catch (Exception e) {
