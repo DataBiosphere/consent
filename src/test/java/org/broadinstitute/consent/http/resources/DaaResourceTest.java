@@ -198,7 +198,7 @@ class DaaResourceTest {
 
     when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
     Response response = resource.findFileById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -212,7 +212,7 @@ class DaaResourceTest {
   void testFindDaaFileByDaaIdInvalid() {
     int invalidId = RandomUtils.nextInt(10, 100);
     when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
     Response response = resource.findFileById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -222,7 +222,7 @@ class DaaResourceTest {
   void testFindDaaFileByDaaIdDatabaseError() {
     int expectedDaaId = RandomUtils.nextInt(10, 100);
     when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
     Response response = resource.findFileById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
@@ -257,7 +257,7 @@ class DaaResourceTest {
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -290,7 +290,7 @@ class DaaResourceTest {
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -318,7 +318,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
@@ -346,7 +346,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
@@ -376,7 +376,7 @@ class DaaResourceTest {
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
@@ -405,7 +405,7 @@ class DaaResourceTest {
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
