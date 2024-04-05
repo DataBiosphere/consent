@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
@@ -85,7 +86,7 @@ public class StudyResource extends Resource {
   @GET
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @PermitAll
   public Response getStudyById(@PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
@@ -139,7 +140,7 @@ public class StudyResource extends Resource {
   @GET
   @Path("/registration/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @PermitAll
   public Response getRegistrationFromStudy(@Auth AuthUser authUser,
       @PathParam("studyId") Integer studyId) {
     try {

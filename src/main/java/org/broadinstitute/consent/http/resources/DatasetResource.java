@@ -372,7 +372,7 @@ public class DatasetResource extends Resource {
   @GET
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @PermitAll
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
