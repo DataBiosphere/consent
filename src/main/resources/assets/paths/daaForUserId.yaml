@@ -28,3 +28,35 @@ delete:
       description: DAA Not Found
     500:
       description: Internal Server Error
+put:
+  summary: Create a DAA-Library Card Relationship
+  operationId: Create DAA-Library Card Relationship
+  description: Create a link between a Data Access Agreement and a User
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+    - name: userId
+      in: path
+      description: The User ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully created a relationship between a Data Access Agreement and a User
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessAgreement.yaml'
+    403:
+      description: User not authorized to create a relationship between a DAA and a User.
+    404:
+      description: Data Access Agreement or Library Card Not Found
+    500:
+      description: Internal Server Error

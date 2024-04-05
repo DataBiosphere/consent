@@ -11,15 +11,6 @@
     <cpe>cpe:/a:apache:httpclient</cpe>
   </suppress>
 
-  <!-- Sendgrid dependency that does not have an upgrade -->
-  <suppress>
-    <notes><![CDATA[
-   file name: bcprov-jdk15on-1.70.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.bouncycastle/bcprov\-jdk15on@.*$</packageUrl>
-    <vulnerabilityName>CVE-2023-33201</vulnerabilityName>
-  </suppress>
-
   <!-- Dropwizard dependency that does not have an upgrade -->
   <suppress>
     <notes><![CDATA[
@@ -28,15 +19,6 @@
     <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$
     </packageUrl>
     <cve>CVE-2023-35116</cve>
-  </suppress>
-
-  <!-- Dropwizard dependency that does not have an upgrade -->
-  <suppress>
-    <notes><![CDATA[
-   file name: jetty-servlets-11.0.16.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty\-servlets@.*$</packageUrl>
-    <vulnerabilityName>CVE-2023-36479</vulnerabilityName>
   </suppress>
 
 </suppressions>

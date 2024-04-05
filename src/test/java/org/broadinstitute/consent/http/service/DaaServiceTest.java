@@ -13,9 +13,12 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+<<<<<<< HEAD
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -24,6 +27,13 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+=======
+import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
+>>>>>>> develop
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -114,6 +124,7 @@ public class DaaServiceTest {
   }
 
   @Test
+<<<<<<< HEAD
   void testSendDaaRequestEmails() throws Exception {
     User user = mock(User.class);
     when(user.getInstitutionId()).thenReturn(1);
@@ -122,12 +133,58 @@ public class DaaServiceTest {
     when(institution.getId()).thenReturn(1);
     when(institution.getSigningOfficials()).thenReturn(List.of());
 
-    when(institutionService.findAllInstitutions()).thenReturn(Collections.singletonList(institution));
+    when(institutionService.findAllInstitutions()).thenReturn(
+        Collections.singletonList(institution));
 
     initService();
 
     DaaService daaSpy = spy(service);
     assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
     verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+  }
+
+  @Test
+  void testFindFileById() {
+    BlobId blobId = mock(BlobId.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getBlobId()).thenReturn(blobId);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setFile(file);
+
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+    assertDoesNotThrow(() -> service.findFileById(1));
+  }
+
+  @Test
+  void testFindFileByIdInvalidDaaId() {
+    BlobId blobId = mock(BlobId.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setFile(file);
+
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+
+    when(daaDAO.findById(any())).thenThrow(new NotFoundException("not found"));
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.findFileById(1));
+  }
+
+  @Test
+  void testFindFileByIdNullFile() {
+    DataAccessAgreement daa = new DataAccessAgreement();
+
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.findFileById(1));
   }
 }

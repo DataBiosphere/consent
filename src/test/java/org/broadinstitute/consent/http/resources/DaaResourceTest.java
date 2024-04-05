@@ -10,17 +10,23 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -176,6 +182,231 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
     Response response = resource.findById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testFindDaaFileByDaaId() throws IOException {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    String fileName = RandomStringUtils.randomAlphanumeric(10) + ".txt";
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileName(fileName);
+    expectedDaa.setFile(fso);
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+
+    when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ((StreamingOutput) response.getEntity()).write(out);
+    assertEquals(fileContent, out.toString());
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdInvalid() {
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdDatabaseError() {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_AdminCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setInstitutionId(1);
+    lc.setId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_SigningOfficialCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidInstitutionIdCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(2);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidUserCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(2);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_InvalidDaaIdCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(1);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_NoMatchingLibraryCardsCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    admin.setRoles(List.of(role));
+    admin.setInstitutionId(1);
+    User researcher = new User();
+    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    researcher.setRoles(List.of(researcherRole));
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+    lc.setInstitutionId(2);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
