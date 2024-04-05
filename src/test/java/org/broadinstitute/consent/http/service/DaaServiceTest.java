@@ -16,10 +16,14 @@ import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -111,7 +115,15 @@ public class DaaServiceTest {
 
   @Test
   void testSendDaaRequestEmails() throws Exception {
-    User user = mock();
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    Institution institution = mock(Institution.class);
+    when(institution.getId()).thenReturn(1);
+    when(institution.getSigningOfficials()).thenReturn(List.of());
+
+    when(institutionService.findAllInstitutions()).thenReturn(Collections.singletonList(institution));
+
     initService();
 
     DaaService daaSpy = spy(service);
