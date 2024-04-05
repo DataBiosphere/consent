@@ -20,7 +20,10 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -33,7 +36,9 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("api/daa")
@@ -193,5 +198,30 @@ public class DaaResource extends Resource implements ConsentLogger {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  /**
+   * Finds and validates all the files uploaded to the multipart.
+   *
+   * @param multipart Form data
+   * @return Map of file body parts, where the key is the name of the field and the value is the
+   * body part including the file(s).
+   */
+  private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
+    if (Objects.isNull(multipart)) {
+      return Map.of();
+    }
+
+    Map<String, FormDataBodyPart> files = new HashMap<>();
+    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
+      for (FormDataBodyPart part : parts) {
+        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+          validateFileDetails(part.getContentDisposition());
+          files.put(part.getName(), part);
+        }
+      }
+    }
+
+    return files;
   }
 }
