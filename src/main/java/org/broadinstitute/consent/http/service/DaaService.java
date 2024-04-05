@@ -121,6 +121,7 @@ public class DaaService implements ConsentLogger {
       }
     } catch (Exception e) {
       logException(e);
+      throw(e);
     }
   }
 }
