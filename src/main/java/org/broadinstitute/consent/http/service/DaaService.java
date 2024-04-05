@@ -101,4 +101,15 @@ public class DaaService implements ConsentLogger {
     }
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
   }
+
+  public InputStream findFileById(Integer daaId) {
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (daa != null) {
+      FileStorageObject file = daa.getFile();
+      if (file != null) {
+        return gcsService.getDocument(file.getBlobId().getName());
+      }
+    }
+    throw new NotFoundException("Could not find DAA File with the provided ID: " + daaId);
+  }
 }

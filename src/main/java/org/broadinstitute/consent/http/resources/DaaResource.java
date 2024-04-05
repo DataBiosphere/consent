@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
@@ -148,6 +149,25 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       DataAccessAgreement daa = daaService.findById(daaId);
       return Response.ok(daa).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @PermitAll
+  @Path("{daaId}/file")
+  @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+  public Response findFileById(
+      @PathParam("daaId") Integer daaId) {
+    try {
+      InputStream daa = daaService.findFileById(daaId);
+      StreamingOutput stream = createStreamingOutput(daa);
+      DataAccessAgreement daa2 = daaService.findById(daaId);
+      String fileName = daa2.getFile().getFileName();
+      return Response.ok(stream)
+          .header("Content-Disposition", "attachment; filename=" + fileName)
+          .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

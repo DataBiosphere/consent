@@ -10,12 +10,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -99,4 +103,48 @@ public class DaaServiceTest {
     service.removeDacFromDaa(1, 1);
   }
 
+  @Test
+  void testFindFileById() {
+    BlobId blobId = mock(BlobId.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getBlobId()).thenReturn(blobId);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setFile(file);
+
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+    assertDoesNotThrow(() -> service.findFileById(1));
+  }
+
+  @Test
+  void testFindFileByIdInvalidDaaId() {
+    BlobId blobId = mock(BlobId.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setFile(file);
+
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+
+    when(daaDAO.findById(any())).thenThrow(new NotFoundException("not found"));
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.findFileById(1));
+  }
+
+  @Test
+  void testFindFileByIdNullFile() {
+    DataAccessAgreement daa = new DataAccessAgreement();
+
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.findFileById(1));
+  }
 }

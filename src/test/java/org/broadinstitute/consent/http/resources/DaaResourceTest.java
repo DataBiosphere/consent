@@ -9,17 +9,23 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -173,6 +179,49 @@ class DaaResourceTest {
 
     Response response = resource.findById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testFindDaaFileByDaaId() throws IOException {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement expectedDaa = new DataAccessAgreement();
+    expectedDaa.setDaaId(expectedDaaId);
+    String fileName = RandomStringUtils.randomAlphanumeric(10) + ".txt";
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileName(fileName);
+    expectedDaa.setFile(fso);
+    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+
+    when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
+    when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ((StreamingOutput) response.getEntity()).write(out);
+    assertEquals(fileContent, out.toString());
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdInvalid() {
+    int invalidId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(invalidId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testFindDaaFileByDaaIdDatabaseError() {
+    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    Response response = resource.findFileById(expectedDaaId);
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
   @Test
