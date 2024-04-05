@@ -42,6 +42,9 @@ public class DaaServiceTest {
   @Mock
   private EmailService emailService;
 
+  @Mock
+  private InstitutionService institutionService;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition = mock(
@@ -51,7 +54,7 @@ public class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, institutionService);
   }
 
   @Test

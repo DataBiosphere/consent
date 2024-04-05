@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -27,13 +28,15 @@ public class DaaService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final GCSService gcsService;
   private final EmailService emailService;
+  private final InstitutionService institutionService;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, InstitutionService institutionService) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
+    this.institutionService = institutionService;
   }
 
   /**
@@ -108,7 +111,12 @@ public class DaaService implements ConsentLogger {
 
   public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
     try {
-      List<SimplifiedUser> signingOfficials = user.getInstitution().getSigningOfficials();
+      List<Institution> institutions = institutionService.findAllInstitutions();
+      Institution institution = institutions.stream()
+            .filter(inst -> inst.getId().equals(user.getInstitutionId()))
+          .findFirst()
+          .orElseThrow();
+      List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
       int userId = user.getUserId();
       String userName = user.getDisplayName();
       for (SimplifiedUser signingOfficial : signingOfficials) {
