@@ -481,6 +481,17 @@ class DaaResourceTest {
   }
 
   @Test
+  void testSendDaaRequestMessageDaaNotFound() throws Exception {
+    User user = new User();
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
   void testSendDaaRequestMessageEmailError() throws Exception {
     User user = new User();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));

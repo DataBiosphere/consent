@@ -134,6 +134,7 @@ public class DaaServiceTest {
     DaaService daaSpy = spy(service);
     assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
     verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+    verify(emailService, times(0)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
   }
 
   @Test
