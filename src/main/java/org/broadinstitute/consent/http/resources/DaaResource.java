@@ -207,6 +207,10 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("daaId") Integer daaId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      if (user.getLibraryCards().stream()
+          .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
+        throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
+      }
       daaService.sendDaaRequestEmails(user, daaId);
       return Response.ok().build();
     } catch (Exception e) {
