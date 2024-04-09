@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.xml.crypto.Data;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class LibraryCard {
@@ -32,6 +33,8 @@ public class LibraryCard {
   private Institution institution;
 
   private List<Integer> daaIds;
+
+  private List<DataAccessAgreement> daas;
 
   public LibraryCard() {
     this.createDate = new Date();
@@ -127,6 +130,10 @@ public class LibraryCard {
 
   public void setDaaIds(List<Integer> daaIds) {this.daaIds = daaIds;}
 
+  public List<DataAccessAgreement> getDaas() {return daas;}
+
+  public void setDaas(List<DataAccessAgreement> daas) {this.daas = daas;}
+
   @Override
   public boolean equals(Object libraryCard) {
     if (libraryCard == this) {
@@ -158,6 +165,28 @@ public class LibraryCard {
         .stream()
         .anyMatch(d -> d.equals(daaId))) {
       this.daaIds.remove(daaId);
+    }
+  }
+
+  public void addDaaObject(DataAccessAgreement daa) {
+    if (this.daas == null) {
+      this.daas = new ArrayList<>();
+    }
+    if (this.daas
+        .stream()
+        .noneMatch(d -> d.equals(daa))) {
+      this.daas.add(daa);
+    }
+  }
+
+  public void removeDaaObject(DataAccessAgreement daa) {
+    if (this.daas == null) {
+      return;
+    }
+    if (this.daas
+        .stream()
+        .anyMatch(d -> d.equals(daas))) {
+      this.daas.remove(daas);
     }
   }
 }
