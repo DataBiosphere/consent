@@ -13,12 +13,14 @@ import static org.mockito.MockitoAnnotations.openMocks;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -349,6 +351,32 @@ public class LibraryCardServiceTest {
     LibraryCard result = service.findLibraryCardById(libraryCard.getId());
     assertNotNull(result);
     assertEquals(result.getId(), libraryCard.getId());
+  }
+
+  @Test
+  public void testFindLibraryCardDaaById_NotFound() {
+    when(libraryCardDAO.findLibraryCardDaaById(any()))
+        .thenReturn(null);
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      service.findLibraryCardWithDaasById(1);
+    });
+  }
+
+  @Test
+  public void testFindLibraryCardByIdDaa() {
+    LibraryCard libraryCard = testLibraryCard(1, 1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    libraryCard.addDaaObject(daa);
+    when(libraryCardDAO.findLibraryCardDaaById(libraryCard.getId()))
+        .thenReturn(libraryCard);
+    initService();
+    LibraryCard result = service.findLibraryCardWithDaasById(libraryCard.getId());
+    assertNotNull(result);
+    assertEquals(result.getId(), libraryCard.getId());
+    assertEquals(result.getDaas(), List.of(daa));
+    assertEquals(result.getDaas().get(0).getDaaId(), 1);
   }
 
   @Test

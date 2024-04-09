@@ -77,7 +77,7 @@ public class LibraryCardReducer implements LinkedHashMapRowReducer<Integer, Libr
     try {
       if (Objects.nonNull(card) && Objects.nonNull(
           rowView.getColumn("initial_dac_id", Integer.class))) {
-        daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class);
+        daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class));
       }
     } catch (MappingException e) {
     }

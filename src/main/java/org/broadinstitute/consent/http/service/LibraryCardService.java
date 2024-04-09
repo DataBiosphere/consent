@@ -98,6 +98,12 @@ public class LibraryCardService {
     return libraryCard;
   }
 
+  public LibraryCard findLibraryCardWithDaasById(Integer libraryCardId) {
+    LibraryCard libraryCard = libraryCardDAO.findLibraryCardDaaById(libraryCardId);
+    throwIfNull(libraryCard);
+    return libraryCard;
+  }
+
   public void addDaaToLibraryCard(Integer libraryCardId, Integer daaId) {
     libraryCardDAO.createLibraryCardDaaRelation(libraryCardId, daaId);
   }
