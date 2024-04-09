@@ -292,7 +292,7 @@ class EmailServiceTest {
       fail("Should not fail sending message: " + e);
     }
 
-    verify(sendGridAPI, times(1)).sendDaaRequestMessage(any(), any());
+    verify(sendGridAPI, times(1)).sendDaaRequestMessage(any(), any(), any());
     verify(templateHelper, times(1)).getDaaRequestTemplate(signingOfficial.getDisplayName(),
         user.getDisplayName(),
         daaName, serverUrl);

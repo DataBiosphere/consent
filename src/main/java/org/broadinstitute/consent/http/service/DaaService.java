@@ -117,6 +117,9 @@ public class DaaService implements ConsentLogger {
           .findFirst()
           .orElseThrow();
       List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
+      if (signingOfficials.isEmpty()) {
+        throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
+      }
       int userId = user.getUserId();
       String userName = user.getDisplayName();
       for (SimplifiedUser signingOfficial : signingOfficials) {

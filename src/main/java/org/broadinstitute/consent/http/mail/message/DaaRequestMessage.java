@@ -7,10 +7,9 @@ import javax.mail.MessagingException;
 public class DaaRequestMessage extends MailMessage {
   private final String NEW_DAA_LIBRARY_CARD_REQUEST = "New DAA-Library Card Relationship Request in DUOS";
 
-  public Mail newDaaRequestMessage(String toAddress, String fromAddress, Writer template)
+  public Mail newDaaRequestMessage(String toAddress, String fromAddress, Writer template, String daaId)
       throws MessagingException {
-    // not sure if referenceId should be null or not; could pass in the DAA ID?
-    return generateEmailMessage(toAddress, fromAddress, template, null, null);
+    return generateEmailMessage(toAddress, fromAddress, template, daaId, null);
   }
 
   @Override

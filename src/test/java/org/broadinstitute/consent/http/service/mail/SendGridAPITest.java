@@ -113,7 +113,7 @@ public class SendGridAPITest {
   @Test
   public void testSendDaaRequestMessage() {
     try {
-      sendGridAPI.sendDaaRequestMessage(TO, template);
+      sendGridAPI.sendDaaRequestMessage(TO, template, "1");
     } catch (Exception  e) {
       fail("Should not throw exception");
     }

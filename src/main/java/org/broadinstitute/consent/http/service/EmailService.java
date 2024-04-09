@@ -407,7 +407,7 @@ public class EmailService implements ConsentLogger {
       Integer userId) throws Exception {
     Writer template = templateHelper.getDaaRequestTemplate(signingOfficialName, userName, daaName,
         this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template);
+    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template, daaId.toString());
     saveEmailAndResponse(
         response.orElse(null),
         daaId.toString(),

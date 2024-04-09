@@ -214,10 +214,10 @@ public class SendGridAPI {
     return sendMessage(message);
   }
 
-  public Optional<Response> sendDaaRequestMessage(String toAddress, Writer template)
+  public Optional<Response> sendDaaRequestMessage(String toAddress, Writer template, String daaId)
       throws MessagingException {
     Mail message = daaRequestMessage.newDaaRequestMessage(toAddress, fromAccount,
-        template);
+        template, daaId);
     return sendMessage(message);
   }
 
