@@ -502,4 +502,19 @@ class DaaResourceTest {
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
+
+  @Test
+  void testSendDaaRequestMessageAssociationAlreadyExists() throws Exception {
+    User user = new User();
+    int daaId = RandomUtils.nextInt(10, 100);
+    LibraryCard lc = new LibraryCard();
+    lc.setDaaIds(List.of(daaId));
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setLibraryCards(List.of(lc));
+    when(userService.findUserByEmail(any())).thenReturn(user);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendDaaRequestMessage(authUser, daaId);
+    assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
+  }
 }
