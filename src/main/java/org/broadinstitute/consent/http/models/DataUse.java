@@ -20,7 +20,7 @@ public class DataUse {
   private Boolean populationOriginsAncestry;
   @Deprecated
   private Boolean populationStructure;
-  private Boolean commercialUse;
+//  private Boolean commercialUse;
   private Boolean nonProfitUse;
   private Boolean methodsResearch;
   @Deprecated
@@ -115,13 +115,13 @@ public class DataUse {
     this.populationStructure = populationStructure;
   }
 
-  public Boolean getCommercialUse() {
-    return commercialUse;
-  }
-
-  public void setCommercialUse(Boolean commercialUse) {
-    this.commercialUse = commercialUse;
-  }
+//  public Boolean getCommercialUse() {
+//    return commercialUse;
+//  }
+//
+//  public void setCommercialUse(Boolean commercialUse) {
+//    this.commercialUse = commercialUse;
+//  }
 
   public Boolean getNonProfitUse() {
     return nonProfitUse;
@@ -430,7 +430,6 @@ public class DataUse {
         && Objects.equal(getDiseaseRestrictions(), dataUse.getDiseaseRestrictions())
         && Objects.equal(getPopulationOriginsAncestry(), dataUse.getPopulationOriginsAncestry())
         && Objects.equal(getPopulationStructure(), dataUse.getPopulationStructure())
-        && Objects.equal(getCommercialUse(), dataUse.getCommercialUse())
         && Objects.equal(getNonProfitUse(), dataUse.getNonProfitUse())
         && Objects.equal(getMethodsResearch(), dataUse.getMethodsResearch())
         && Objects.equal(getAggregateResearch(), dataUse.getAggregateResearch())
@@ -472,7 +471,7 @@ public class DataUse {
   @Override
   public int hashCode() {
     return Objects.hashCode(getGeneralUse(), getHmbResearch(), getDiseaseRestrictions(),
-        getPopulationOriginsAncestry(), getPopulationStructure(), getCommercialUse(),
+        getPopulationOriginsAncestry(), getPopulationStructure(),
         getMethodsResearch(), getAggregateResearch(), getControlSetOption(), getGender(),
         getPediatric(), getPopulationRestrictions(), getOtherRestrictions(),
         getDateRestriction(),

@@ -45,8 +45,8 @@ public class DataUseBuilder {
     return this;
   }
 
-  public DataUseBuilder setCommercialUse(Boolean commercialUse) {
-    du.setCommercialUse(commercialUse);
+  public DataUseBuilder setNonProfitUse(Boolean nonProfitUse) {
+    du.setNonProfitUse(nonProfitUse);
     return this;
   }
 

@@ -148,7 +148,7 @@ class MatchServiceTest {
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-    when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+    when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
     initService();
 
     service.createMatchesForDataAccessRequest(dar);
@@ -187,7 +187,7 @@ class MatchServiceTest {
     when(response.getStatus()).thenReturn(500);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-    when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+    when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
 
     initService();
     Match match = service.singleEntitiesMatchV3(dataset, dar);
@@ -209,7 +209,7 @@ class MatchServiceTest {
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-    when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+    when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
 
     initService();
     Match match = service.singleEntitiesMatchV3(dataset, dar);
@@ -231,7 +231,7 @@ class MatchServiceTest {
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-    when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+    when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
 
     initService();
     Match match = service.singleEntitiesMatchV3(dataset, dar);
@@ -253,7 +253,7 @@ class MatchServiceTest {
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
-    when(clientMock.target(config.getMatchURL_v3())).thenReturn(target);
+    when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
 
     initService();
     Match match = service.singleEntitiesMatchV3(dataset, dar);
@@ -320,6 +320,6 @@ class MatchServiceTest {
 
   private Match createMatchObject() {
     return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, true,
-        false, new Date(), MatchAlgorithm.V3.getVersion());
+        false, new Date(), MatchAlgorithm.V4.getVersion());
   }
 }
