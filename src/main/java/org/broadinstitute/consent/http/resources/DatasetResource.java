@@ -372,7 +372,7 @@ public class DatasetResource extends Resource {
   @GET
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @PermitAll
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
@@ -382,7 +382,7 @@ public class DatasetResource extends Resource {
             "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
       Study study;
-      if (Objects.nonNull(dataset.getStudy())) {
+      if (dataset.getStudy() != null && dataset.getStudy().getStudyId() != null) {
         study = datasetService.findStudyById(dataset.getStudy().getStudyId());
       } else {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
