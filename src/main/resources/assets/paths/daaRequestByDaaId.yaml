@@ -1,6 +1,5 @@
 post:
   summary: Request that a Signing Official create a DAA-Library Card Relationship
-  operationId: Request a DAA-Library Card Relationship
   description: Request a DAA-Library Card Relationship
   parameters:
     - name: daaId
