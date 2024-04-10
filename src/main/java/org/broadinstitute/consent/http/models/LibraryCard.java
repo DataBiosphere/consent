@@ -31,7 +31,7 @@ public class LibraryCard {
 
   private Institution institution;
 
-  private List<Integer> daaIds;
+  private List<Integer> daaIds = new ArrayList<>();
 
   public LibraryCard() {
     this.createDate = new Date();
