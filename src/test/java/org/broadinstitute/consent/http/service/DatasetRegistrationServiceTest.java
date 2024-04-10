@@ -675,7 +675,7 @@ class DatasetRegistrationServiceTest {
     } else {
       assertFalse(dataUse.getMethodsResearch());
     }
-    assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
+    assertEquals(consentGroup.getNpu(), dataUse.getNonProfitUse());
     assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());
     assertEquals(consentGroup.getOtherSecondary(), dataUse.getSecondaryOther());
     assertEquals(consentGroup.getPoa(), dataUse.getPopulationOriginsAncestry());

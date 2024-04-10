@@ -68,8 +68,8 @@ public class ServicesConfiguration {
     this.localURL = localURL;
   }
 
-  public String getMatchURL_v3() {
-    return getOntologyURL() + "match/v3";
+  public String getMatchURL_v4() {
+    return getOntologyURL() + "match/v4";
   }
 
   public String getSamUrl() {
