@@ -460,7 +460,9 @@ class DaaResourceTest {
   @Test
   void testSendDaaRequestMessage() throws Exception {
     User user = new User();
+    LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doNothing().when(daaService).sendDaaRequestEmails(any(), any());
 
@@ -483,7 +485,10 @@ class DaaResourceTest {
   @Test
   void testSendDaaRequestMessageDaaNotFound() throws Exception {
     User user = new User();
+    LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.addLibraryCard(lc);
+    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
@@ -494,7 +499,9 @@ class DaaResourceTest {
   @Test
   void testSendDaaRequestMessageEmailError() throws Exception {
     User user = new User();
+    LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
 

@@ -118,7 +118,7 @@ public class DaaServiceTest {
   }
 
   @Test
-  void testSendDaaRequestEmails() throws Exception {
+  void testSendDaaRequestEmailsNoSigningOfficials() throws Exception {
     User user = mock(User.class);
     when(user.getInstitutionId()).thenReturn(1);
 
@@ -132,9 +132,8 @@ public class DaaServiceTest {
     initService();
 
     DaaService daaSpy = spy(service);
-    assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
+    assertThrows(NotFoundException.class, () -> daaSpy.sendDaaRequestEmails(user, 1));
     verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
-    verify(emailService, times(0)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
   }
 
   @Test
