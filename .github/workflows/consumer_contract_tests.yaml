@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - develop
+      - an-DUOS-2952-Consent-DAA-Management-POST-api-daa-request-daaId
     paths-ignore:
       - 'README.md'
   push:
