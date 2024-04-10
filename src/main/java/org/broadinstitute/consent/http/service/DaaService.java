@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -28,15 +29,15 @@ public class DaaService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final GCSService gcsService;
   private final EmailService emailService;
-  private final InstitutionService institutionService;
+  private final InstitutionDAO institutionDAO;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, InstitutionService institutionService) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, InstitutionDAO institutionDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
-    this.institutionService = institutionService;
+    this.institutionDAO = institutionDAO;
   }
 
   /**
@@ -111,11 +112,7 @@ public class DaaService implements ConsentLogger {
 
   public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
     try {
-      List<Institution> institutions = institutionService.findAllInstitutions();
-      Institution institution = institutions.stream()
-            .filter(inst -> inst.getId().equals(user.getInstitutionId()))
-          .findFirst()
-          .orElseThrow();
+      Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
       List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
       if (signingOfficials.isEmpty()) {
         throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
@@ -127,8 +124,8 @@ public class DaaService implements ConsentLogger {
         String signingOfficialEmail = signingOfficial.email;
         DataAccessAgreement daa = findById(daaId);
         String daaName = daa.getFile().getFileName();
-        emailService.sendDaaRequestMessage(signingOfficialName, signingOfficialEmail, userName,
-            daaName, daaId, userId);
+        emailService.sendDaaRequestMessage( signingOfficial.displayName, signingOfficial.email,
+            userName, daaName, daaId, userId);
       }
     } catch (Exception e) {
       logException(e);

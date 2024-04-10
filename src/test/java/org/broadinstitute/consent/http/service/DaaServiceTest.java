@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -18,10 +17,10 @@ import jakarta.ws.rs.ServerErrorException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -51,7 +50,7 @@ public class DaaServiceTest {
   private EmailService emailService;
 
   @Mock
-  private InstitutionService institutionService;
+  private InstitutionDAO institutionDAO;
 
   private final InputStream inputStream = mock(InputStream.class);
 
@@ -62,7 +61,7 @@ public class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, institutionService);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, institutionDAO);
   }
 
   @Test
@@ -123,17 +122,13 @@ public class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     Institution institution = mock(Institution.class);
-    when(institution.getId()).thenReturn(1);
     when(institution.getSigningOfficials()).thenReturn(List.of());
 
-    when(institutionService.findAllInstitutions()).thenReturn(
-        Collections.singletonList(institution));
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
 
     initService();
 
-    DaaService daaSpy = spy(service);
-    assertThrows(NotFoundException.class, () -> daaSpy.sendDaaRequestEmails(user, 1));
-    verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+    assertThrows(NotFoundException.class, () -> service.sendDaaRequestEmails(user, 1));
   }
 
   @Test
@@ -146,10 +141,9 @@ public class DaaServiceTest {
     signingOfficial.email = "official@example.com";
 
     Institution institution = mock(Institution.class);
-    when(institution.getId()).thenReturn(1);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
 
-    when(institutionService.findAllInstitutions()).thenReturn(Collections.singletonList(institution));
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -161,9 +155,7 @@ public class DaaServiceTest {
 
     initService();
 
-    DaaService daaSpy = spy(service);
-    assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
-    verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
     verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
   }
 
@@ -181,10 +173,9 @@ public class DaaServiceTest {
     signingOfficial2.email = "official2@example.com";
 
     Institution institution = mock(Institution.class);
-    when(institution.getId()).thenReturn(1);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
 
-    when(institutionService.findAllInstitutions()).thenReturn(Collections.singletonList(institution));
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -196,9 +187,7 @@ public class DaaServiceTest {
 
     initService();
 
-    DaaService daaSpy = spy(service);
-    assertDoesNotThrow(() -> daaSpy.sendDaaRequestEmails(user, 1));
-    verify(daaSpy, times(1)).sendDaaRequestEmails(any(), any());
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
     verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
   }
 
