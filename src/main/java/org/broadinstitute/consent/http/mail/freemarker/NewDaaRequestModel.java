@@ -1,10 +1,5 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
-import java.util.List;
-import java.util.Map;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Dataset;
-
 public class NewDaaRequestModel {
 
   private final String serverUrl;
