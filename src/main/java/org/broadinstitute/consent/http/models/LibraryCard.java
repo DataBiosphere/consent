@@ -31,10 +31,11 @@ public class LibraryCard {
 
   private Institution institution;
 
-  private List<Integer> daaIds = new ArrayList<>();
+  private List<Integer> daaIds;
 
   public LibraryCard() {
     this.createDate = new Date();
+    this.daaIds = new ArrayList<>();
   }
 
   public Integer getId() {
