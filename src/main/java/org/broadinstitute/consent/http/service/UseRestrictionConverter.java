@@ -91,7 +91,6 @@ public class UseRestrictionConverter implements ConsentLogger {
       if (Objects.nonNull(dar.getData().getOther())
         && Boolean.TRUE.equals(dar.getData().getOther())
         && Objects.nonNull(dar.getData().getOtherText())) {
-        dataUse.setOtherRestrictions(true);
         dataUse.setOther(dar.getData().getOtherText());
       }
 

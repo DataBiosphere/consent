@@ -289,7 +289,7 @@ class UseRestrictionConverterTest implements WithMockServer {
     dar.getData().setOther(true);
     dar.getData().setOtherText("Other Text");
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getOtherRestrictions());
+    assertFalse(dataUse.getOther().isEmpty());
   }
 
   @Test
