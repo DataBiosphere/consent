@@ -120,8 +120,6 @@ public class DaaService implements ConsentLogger {
       int userId = user.getUserId();
       String userName = user.getDisplayName();
       for (SimplifiedUser signingOfficial : signingOfficials) {
-        String signingOfficialName = signingOfficial.displayName;
-        String signingOfficialEmail = signingOfficial.email;
         DataAccessAgreement daa = findById(daaId);
         String daaName = daa.getFile().getFileName();
         emailService.sendDaaRequestMessage( signingOfficial.displayName, signingOfficial.email,
