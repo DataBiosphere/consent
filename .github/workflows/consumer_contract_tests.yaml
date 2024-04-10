@@ -51,7 +51,7 @@ jobs:
           fi
           echo "ref=$GITHUB_REF" >> $GITHUB_OUTPUT
           echo "sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
-          echo "sha-short=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
+          echo "sha-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "branch=${GITHUB_REF/refs\/heads\//""}" >> $GITHUB_OUTPUT
 
       - name: Echo branch information
