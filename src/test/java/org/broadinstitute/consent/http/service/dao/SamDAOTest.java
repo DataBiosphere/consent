@@ -358,10 +358,10 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testReadTimeout() {
-    int readTimeoutSeconds = samDAO.readTimeoutMilliseconds + 1;
+    int readTimeoutMilliseconds = samDAO.readTimeoutMilliseconds + 1;
     mockServerClient.when(request())
         .respond(response()
-            .withDelay(new Delay(TimeUnit.SECONDS, readTimeoutSeconds))
+            .withDelay(new Delay(TimeUnit.MILLISECONDS, readTimeoutMilliseconds))
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     assertThrows(
