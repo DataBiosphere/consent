@@ -14,8 +14,10 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
@@ -38,7 +40,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
+import org.mockserver.model.Delay;
 import org.mockserver.model.Header;
+import org.mockserver.model.HttpError;
 import org.mockserver.model.MediaType;
 import org.testcontainers.containers.MockServerContainer;
 
@@ -342,6 +346,14 @@ class SamDAOTest implements WithMockServer {
     } catch (Exception e) {
       fail(e.getMessage());
     }
+  }
+
+  @Test
+  void testConnectTimeout() {
+    mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
+    assertThrows(
+        ServerErrorException.class,
+        () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
   }
 
 }
