@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db.liquibase.changes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
   public void execute(Database database) throws CustomChangeException {
     try {
       var dbConn = (JdbcConnection) database.getConnection();
-      Map<Integer, List<String>> allCustodians = findDataDepositorsAndOwners(dbConn);
+      var allCustodians = findDataDepositorsAndOwners(dbConn);
       findDataCustodians(dbConn).forEach(
           (key, value) -> allCustodians.computeIfAbsent(key, k -> new ArrayList<>())
               .addAll(value));
@@ -53,7 +52,7 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
         """;
     try {
       logInfo(String.format("Reviewing study properties for dataset: %s", datasetId));
-      PreparedStatement selectStatement = dbConn.prepareStatement(select);
+      var selectStatement = dbConn.prepareStatement(select);
       selectStatement.setInt(1, datasetId);
       var rs = selectStatement.executeQuery();
       // We only need to insert records if we don't have anything for the study
@@ -61,8 +60,8 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
         logInfo("Study has values - we don't need to do any inserts");
       } else {
         logInfo(String.format("Inserting new study property for dataset: %s: value: %s", datasetId, custodians));
-        PreparedStatement insertStatement = dbConn.prepareStatement(insert);
-        String values = gson.toJson(custodians);
+        var insertStatement = dbConn.prepareStatement(insert);
+        var values = gson.toJson(custodians);
         insertStatement.setString(1, values);
         insertStatement.setInt(2, datasetId);
         int updateResult = insertStatement.executeUpdate();
