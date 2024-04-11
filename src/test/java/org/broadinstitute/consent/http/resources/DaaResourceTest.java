@@ -72,10 +72,12 @@ class DaaResourceTest {
     UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     admin.setRoles(List.of(role));
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
 
     when(dacService.findById(any())).thenReturn(dac);
+    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
@@ -122,6 +124,26 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testCreateDaaForDac_InvalidFile() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    admin.setRoles(List.of(role));
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenThrow(new IllegalArgumentException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
+    System.out.println(response.getStatus());
+    assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
 
   @Test

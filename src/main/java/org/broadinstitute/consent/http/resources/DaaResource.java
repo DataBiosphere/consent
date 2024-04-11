@@ -69,6 +69,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
+      validateFileDetails(fileDetail);
       dacService.findById(dacId);
       User user = userService.findUserByEmail(authUser.getEmail());
       // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.

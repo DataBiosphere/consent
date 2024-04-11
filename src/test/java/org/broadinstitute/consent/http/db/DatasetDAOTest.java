@@ -932,7 +932,7 @@ class DatasetDAOTest extends DAOTestHelper {
     DataUse oldDataUse = dataset.getDataUse();
     DataUse newDataUse = new DataUseBuilder()
         .setGeneralUse(false)
-        .setCommercialUse(true)
+        .setNonProfitUse(true)
         .setHmbResearch(true)
         .setDiseaseRestrictions(List.of("DOID_1"))
         .build();

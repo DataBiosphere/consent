@@ -34,7 +34,7 @@ public class MatchService implements ConsentLogger {
   private final UseRestrictionConverter useRestrictionConverter;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final WebTarget matchServiceTargetV3;
+  private final WebTarget matchServiceTargetV4;
 
   @Inject
   public MatchService(Client client, ServicesConfiguration config, MatchDAO matchDAO,
@@ -48,7 +48,7 @@ public class MatchService implements ConsentLogger {
     Integer timeout = 1000 * 60 * 3; // 3 minute timeout so ontology can properly do matching.
     client.property(ClientProperties.CONNECT_TIMEOUT, timeout);
     client.property(ClientProperties.READ_TIMEOUT, timeout);
-    matchServiceTargetV3 = client.target(config.getMatchURL_v3());
+    matchServiceTargetV4 = client.target(config.getMatchURL_v4());
   }
 
   public void insertMatches(List<Match> match) {
@@ -130,7 +130,7 @@ public class MatchService implements ConsentLogger {
     Match match;
     DataUseRequestMatchingObject requestObject = createRequestObject(dataset, dar);
     String json = new Gson().toJson(requestObject);
-    Response res = matchServiceTargetV3.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
+    Response res = matchServiceTargetV4.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
     String datasetId = dataset.getDatasetIdentifier();
     String darReferenceId = dar.getReferenceId();
     if (res.getStatus() == Response.Status.OK.getStatusCode()) {
