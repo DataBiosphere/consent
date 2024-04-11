@@ -47,9 +47,9 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
         AND key = 'dataCustodianEmail'
         """;
     var insert = """
-        INSERT INTO study_property
-        (study_id, key, type, value) VALUES
-        ((SELECT study_id FROM dataset WHERE dataset_id = ?), 'dataCustodianEmail', 'json', ?)
+        INSERT INTO study_property (study_id, key, type, value)
+        SELECT study_id, 'dataCustodianEmail', 'json', ?
+        FROM dataset WHERE dataset_id = ?
         """;
     try {
       logInfo(String.format("Reviewing study properties for dataset: %s", datasetId));
@@ -63,8 +63,8 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
         logInfo(String.format("Inserting new study property for dataset: %s: value: %s", datasetId, custodians));
         PreparedStatement insertStatement = dbConn.prepareStatement(insert);
         String values = gson.toJson(custodians);
-        insertStatement.setInt(1, datasetId);
-        insertStatement.setString(2, values);
+        insertStatement.setString(1, values);
+        insertStatement.setInt(2, datasetId);
         int updateResult = insertStatement.executeUpdate();
         logInfo("Inserted study property: " + updateResult);
       }
