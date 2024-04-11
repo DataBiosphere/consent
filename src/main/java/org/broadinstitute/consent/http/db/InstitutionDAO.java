@@ -120,6 +120,38 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   )
   List<Institution> findAllInstitutions();
 
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
+  @UseRowReducer(InstitutionWithUsersReducer.class)
+  @SqlQuery(
+      """
+      SELECT i.*,
+      u.user_id AS u_user_id,
+      u.email AS u_email,
+      u.display_name AS u_display_name,
+      u.create_date AS u_create_date,
+      u.email_preference AS u_email_preference,
+      u.era_commons_id AS u_era_commons_id,
+      u2.user_id AS u2_user_id, u2.email AS u2_email,
+      u2.display_name AS u2_display_name, u2.create_date AS u2_create_date,
+      u2.email_preference AS u2_email_preference,
+      u2.era_commons_id AS u2_era_commons_id,
+      so.so_user_id, so.so_email, so.so_display_name
+      FROM institution i
+      LEFT JOIN users u ON u.user_id = i.create_user
+      LEFT JOIN users u2 ON u2.user_id = i.update_user
+      LEFT JOIN
+           (SELECT
+               so.user_id AS so_user_id, so.email AS so_email,
+               so.display_name AS so_display_name, so.institution_id AS so_institution_id
+               FROM users so
+               LEFT JOIN user_role ur ON ur.user_id = so.user_id
+               WHERE ur.role_id = 7) so
+       ON i.institution_id = so.so_institution_id
+       WHERE i.institution_id = :institutionId
+  """)
+  Institution findInstitutionWithSOById(@Bind("institutionId") Integer institutionId);
+
   @SqlUpdate("DELETE FROM institution WHERE create_user = :userId OR update_user = :userId")
   void deleteAllInstitutionsByUser(@Bind("userId") Integer userId);
 }

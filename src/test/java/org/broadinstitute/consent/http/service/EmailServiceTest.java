@@ -271,6 +271,45 @@ class EmailServiceTest {
   }
 
   @Test
+  void testSendDaaRequestMessage() throws Exception {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Jane Evans");
+    signingOfficial.setEmail("signingofficial@example.com");
+
+    User user = new User();
+    user.setDisplayName("John Doe");
+    user.setUserId(123);
+
+    String daaName = "DAA-123";
+    int daaId = 456;
+
+    initService();
+
+    try {
+      service.sendDaaRequestMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+          user.getDisplayName(), daaName, daaId, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendDaaRequestMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getDaaRequestTemplate(signingOfficial.getDisplayName(),
+        user.getDisplayName(),
+        daaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("456"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();

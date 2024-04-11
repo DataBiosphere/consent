@@ -1,0 +1,19 @@
+post:
+  summary: Request that a Signing Official create a DAA-Library Card Relationship
+  description: Request a DAA-Library Card Relationship
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully sent a request to a Signing Official to create a DAA-Library Card Relationship
+    404:
+      description: DAA Not Found
+    500:
+      description: Internal Server Error
