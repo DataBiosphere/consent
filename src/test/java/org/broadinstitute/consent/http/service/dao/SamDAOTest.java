@@ -356,4 +356,17 @@ class SamDAOTest implements WithMockServer {
         () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
   }
 
+  @Test
+  void testReadTimeout() {
+    int readTimeoutSeconds = samDAO.readTimeoutMilliseconds + 1;
+    mockServerClient.when(request())
+        .respond(response()
+            .withDelay(new Delay(TimeUnit.SECONDS, readTimeoutSeconds))
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    assertThrows(
+        ServerErrorException.class,
+        () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
+  }
+
 }

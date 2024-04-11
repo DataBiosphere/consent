@@ -39,7 +39,7 @@ public class SamDAO implements ConsentLogger {
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
-  private final Integer readTimeoutMilliseconds;
+  public final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.executorService = Executors.newCachedThreadPool();
