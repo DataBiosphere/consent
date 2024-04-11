@@ -73,6 +73,7 @@ class SamDAOTest implements WithMockServer {
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
     ServicesConfiguration config = new ServicesConfiguration();
+    config.setTimeoutSeconds(1);
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
     samDAO = new SamDAO(new HttpClientUtil(config), config);
   }
@@ -358,10 +359,11 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testReadTimeout() {
-    int readTimeoutMilliseconds = samDAO.readTimeoutMilliseconds + 1;
+    // Increase the delay to push the response beyond the read timeout value
+    int delayMilliseconds = samDAO.readTimeoutMilliseconds + 10;
     mockServerClient.when(request())
         .respond(response()
-            .withDelay(new Delay(TimeUnit.MILLISECONDS, readTimeoutMilliseconds))
+            .withDelay(new Delay(TimeUnit.MILLISECONDS, delayMilliseconds))
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     assertThrows(
