@@ -140,7 +140,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenThrow(new IllegalArgumentException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
