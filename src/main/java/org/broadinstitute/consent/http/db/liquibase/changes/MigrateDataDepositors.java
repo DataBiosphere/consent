@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.liquibase.changes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,11 +26,52 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
   public void execute(Database database) throws CustomChangeException {
     try {
       var dbConn = (JdbcConnection) database.getConnection();
-      Map<Integer, List<String>> dataDepositorsOwnersMap = findDataDepositorsAndOwners(dbConn);
-      Map<Integer, List<String>> dataCustodiansMap = findDataCustodians(dbConn);
+      Map<Integer, List<String>> allCustodians = findDataDepositorsAndOwners(dbConn);
+      findDataCustodians(dbConn).forEach(
+          (key, value) -> allCustodians.computeIfAbsent(key, k -> new ArrayList<>())
+              .addAll(value));
+      // For each dataset-custodian list, ensure that we populate the correct study property
+      allCustodians.forEach((key, value) -> insertCustodiansForDataset(dbConn, key, value));
+      dbConn.commit();
     } catch (Exception e) {
       throw new CustomChangeException(e.getMessage(), e);
     }
+  }
+
+  private void insertCustodiansForDataset(JdbcConnection dbConn, Integer datasetId, List<String> custodians) {
+    Gson gson = new Gson();
+    var select = """
+        SELECT study_id
+        FROM study_property
+        WHERE study_id = (SELECT study_id FROM dataset WHERE dataset_id = ?)
+        AND key = 'dataCustodianEmail'
+        """;
+    var insert = """
+        INSERT INTO study_property
+        (study_id, key, type, value) VALUES
+        ((SELECT study_id FROM dataset WHERE dataset_id = ?), 'dataCustodianEmail', 'json', ?)
+        """;
+    try {
+      logInfo(String.format("Reviewing study properties for dataset: %s", datasetId));
+      PreparedStatement selectStatement = dbConn.prepareStatement(select);
+      selectStatement.setInt(1, datasetId);
+      var rs = selectStatement.executeQuery();
+      // We only need to insert records if we don't have anything for the study
+      if (rs.next()) {
+        logInfo("Study has values - we don't need to do any inserts");
+      } else {
+        logInfo(String.format("Inserting new study property for dataset: %s: value: %s", datasetId, custodians));
+        PreparedStatement insertStatement = dbConn.prepareStatement(insert);
+        String values = gson.toJson(custodians);
+        insertStatement.setInt(1, datasetId);
+        insertStatement.setString(2, values);
+        int updateResult = insertStatement.executeUpdate();
+        logInfo("Inserted study property: " + updateResult);
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
+
   }
 
   private Map<Integer, List<String>> findDataDepositorsAndOwners(JdbcConnection dbConn)
@@ -102,7 +144,7 @@ public class MigrateDataDepositors implements CustomTaskChange, CustomTaskRollba
 
   @Override
   public String getConfirmationMessage() {
-    return "";
+    return "Successfully Migrated Data Depositors, Owners, and Custodians";
   }
 
   @Override
