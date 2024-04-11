@@ -38,13 +38,17 @@ public class SamDAO implements ConsentLogger {
   private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
-  private final Integer timeoutMilliseconds;
+  private final Integer connectTimeoutMilliseconds;
+  private final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.executorService = Executors.newCachedThreadPool();
     this.clientUtil = clientUtil;
     this.configuration = configuration;
-    this.timeoutMilliseconds = configuration.getTimeoutSeconds() * 1000;
+    // Defaults to 10 seconds
+    this.connectTimeoutMilliseconds = configuration.getTimeoutSeconds() * 1000;
+    // Defaults to 60 seconds
+    this.readTimeoutMilliseconds = configuration.getTimeoutSeconds() * 6000;
   }
 
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
@@ -198,8 +202,8 @@ public class SamDAO implements ConsentLogger {
    * @return The HttpResponse
    */
   private HttpResponse executeRequest(HttpRequest request) {
-    request.setConnectTimeout(timeoutMilliseconds);
-    request.setReadTimeout(timeoutMilliseconds);
+    request.setConnectTimeout(connectTimeoutMilliseconds);
+    request.setReadTimeout(readTimeoutMilliseconds);
     return clientUtil.handleHttpRequest(request);
   }
 
