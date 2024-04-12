@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardWithDaaReducer;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -63,7 +64,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   LibraryCard findLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
-  @UseRowReducer(LibraryCardReducer.class)
+  @RegisterBeanMapper(value = DataAccessAgreement.class)
+  @UseRowReducer(LibraryCardWithDaaReducer.class)
   @SqlQuery("""
       SELECT lc.*,
       ld.daa_id,

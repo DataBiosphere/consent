@@ -11,6 +11,7 @@ import java.util.Random;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -128,15 +129,37 @@ class LibraryCardDAOTest extends DAOTestHelper {
   @Test
   void testFindLibraryCardDaaById() {
     LibraryCard card = createLibraryCard();
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    System.out.println("dacId: " + dacId);
+    Integer daaId = daaDAO.createDaa(card.getUserId(), new Date().toInstant(), card.getUserId(), new Date().toInstant(), dacId);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    System.out.println("daaId: " + daa.getDaaId());
+    System.out.println("create user id: " + daa.getCreateUserId());
+    System.out.println("create date: " + daa.getCreateDate());
+    System.out.println("update user id: " + daa.getUpdateUserId());
+    System.out.println("update date: " + daa.getUpdateDate());
+    System.out.println("initial dac id: " + daa.getInitialDacId());
+    card.addDaa(daa.getDaaId());
+    card.addDaaObject(daa);
+
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+
     Integer id = card.getId();
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardDaaById(id);
+//    cardFromDAO.addDaa(daa.getDaaId());
     assertEquals(cardFromDAO.getUserId(), card.getUserId());
     assertEquals(cardFromDAO.getUserName(), card.getUserName());
     assertEquals(cardFromDAO.getUserEmail(), card.getUserEmail());
     assertEquals(cardFromDAO.getCreateUserId(), card.getCreateUserId());
     assertEquals(cardFromDAO.getCreateDate(), card.getCreateDate());
     assertEquals(cardFromDAO.getDaaIds(), card.getDaaIds());
-    // this needs to be fixed!
+    DataAccessAgreement daaFromDAO = cardFromDAO.getDaas().get(0);
+    assertEquals(daaFromDAO.getDaaId(), daa.getDaaId());
+    assertEquals(daaFromDAO.getCreateUserId(), daa.getCreateUserId());
+    assertEquals(daaFromDAO.getCreateDate(), daa.getCreateDate()); //fails
+    assertEquals(daaFromDAO.getUpdateUserId(), daa.getUpdateUserId()); // fails
+    assertEquals(daaFromDAO.getUpdateDate(), daa.getUpdateDate()); // fails
+    assertEquals(daaFromDAO.getInitialDacId(), daa.getInitialDacId()); // fails
   }
 
   @Test
