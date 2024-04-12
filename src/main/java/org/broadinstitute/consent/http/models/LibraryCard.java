@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.xml.crypto.Data;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class LibraryCard {
