@@ -366,17 +366,23 @@ public class LibraryCardServiceTest {
   @Test
   public void testFindLibraryCardByIdDaa() {
     LibraryCard libraryCard = testLibraryCard(1, 1);
-    DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(1);
-    libraryCard.addDaaObject(daa);
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    int daaId1 = RandomUtils.nextInt(1, 10);
+    int daaId2 = RandomUtils.nextInt(1, 10);;
+    daa1.setDaaId(daaId1);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(daaId2);
+    libraryCard.addDaaObject(daa1);
+    libraryCard.addDaaObject(daa2);
     when(libraryCardDAO.findLibraryCardDaaById(libraryCard.getId()))
         .thenReturn(libraryCard);
     initService();
     LibraryCard result = service.findLibraryCardWithDaasById(libraryCard.getId());
     assertNotNull(result);
     assertEquals(result.getId(), libraryCard.getId());
-    assertEquals(result.getDaas(), List.of(daa));
-    assertEquals(result.getDaas().get(0).getDaaId(), 1);
+    assertEquals(result.getDaas(), List.of(daa1, daa2));
+    assertEquals(result.getDaas().get(0).getDaaId(), daaId1);
+    assertEquals(result.getDaas().get(1).getDaaId(), daaId2);
   }
 
   @Test
