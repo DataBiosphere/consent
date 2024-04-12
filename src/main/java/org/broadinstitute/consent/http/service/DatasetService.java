@@ -528,9 +528,9 @@ public class DatasetService implements ConsentLogger {
         .filter(p -> p.getKey().equals(dataCustodianEmail))
         .findFirst();
     if (optionalProp.isPresent()) {
-      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.name(), custodians);
+      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     } else {
-      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.name(), custodians);
+      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     }
     return studyDAO.findStudyById(studyId);
   }

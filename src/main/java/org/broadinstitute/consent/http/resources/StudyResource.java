@@ -88,9 +88,8 @@ public class StudyResource extends Resource {
   }
 
   /**
-   * This API creates a study for a provided dataset, or updates existing study/dataset information
-   * with what is provided in the request body. It is intended to be a short-lived API that will be
-   * removed once all production datasets have been migrated.
+   * This API adds/updates custodians for a study. The payload needs to be a JSON array of valid
+   * email addresses
    */
   @PUT
   @Path("/{studyId}/custodians")

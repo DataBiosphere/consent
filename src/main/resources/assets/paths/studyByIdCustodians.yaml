@@ -1,0 +1,36 @@
+put:
+  summary: Update Study Data Custodians by Study Id
+  description: Update Study Data Custodians by Study Id
+  tags:
+    - Admin
+  parameters:
+    - name: studyId
+      in: path
+      description: ID of the Study
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    description: |
+      The list of data custodian email addresses in JSON format
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+        example: ["user_1@test.com", "user_2@test.com"]
+  responses:
+    200:
+      description: The Updated Study
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Study.yaml'
+    400:
+      description: |
+        Bad Request when schema is invalid or the required custodian values are not valid email
+        addresses
+    404:
+      description: Not Found
+    500:
+      description: Server error
