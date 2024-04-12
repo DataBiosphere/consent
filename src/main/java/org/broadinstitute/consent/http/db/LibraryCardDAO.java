@@ -64,7 +64,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   LibraryCard findLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
-  @RegisterBeanMapper(value = DataAccessAgreement.class)
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
   @UseRowReducer(LibraryCardWithDaaReducer.class)
   @SqlQuery("""
       SELECT lc.*,
@@ -75,7 +75,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       daa.update_user_id as daa_update_user_id,
       daa.update_date as daa_update_date,
       daa.initial_dac_id as daa_initial_dac_id
-      FROM library_card AS lc
+      FROM library_card lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
       LEFT JOIN data_access_agreement daa ON ld.daa_id = daa.daa_id
       WHERE lc.id = :libraryCardId
