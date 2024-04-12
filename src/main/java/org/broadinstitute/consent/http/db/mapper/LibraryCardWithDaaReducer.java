@@ -43,54 +43,7 @@ public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Intege
     } catch (MappingException e) {
     }
 
-//    try {
-//      if (Objects.nonNull(card) && Objects.nonNull(
-//          rowView.getColumn("create_user_id", Integer.class))) {
-//        daa.setCreateUserId(rowView.getColumn("create_user_id", Integer.class));
-//      }
-//    } catch (MappingException e) {
-//    }
-//
-//    try {
-//      if (Objects.nonNull(card) && Objects.nonNull(
-//          rowView.getColumn("create_date", Instant.class))) {
-//        daa.setCreateDate(rowView.getColumn("create_date", Instant.class));
-//      }
-//    } catch (MappingException e) {
-//    }
-//
-//    try {
-//      if (Objects.nonNull(card) && Objects.nonNull(
-//          rowView.getColumn("update_user_id", Integer.class))) {
-//        daa.setUpdateUserId(rowView.getColumn("update_user_id", Integer.class));
-//      }
-//    } catch (MappingException e) {
-//    }
-//
-//    try {
-//      if (Objects.nonNull(card) && Objects.nonNull(
-//          rowView.getColumn("update_date", Instant.class))) {
-//        daa.setUpdateDate(rowView.getColumn("update_date", Instant.class));
-//      }
-//    } catch (MappingException e) {
-//    }
-//
-//    try {
-//      if (Objects.nonNull(card) && Objects.nonNull(
-//          rowView.getColumn("initial_dac_id", Integer.class))) {
-//        System.out.println("hit1");
-//        daa.setInitialDacId(rowView.getColumn("initial_dac_id", Integer.class));
-//      }
-//    } catch (MappingException e) {
-//    }
-
-    if (daa != null) {
-      System.out.println("dao id: " + daa.getDaaId());
-      System.out.println("dao create user id: " + daa.getCreateUserId());
-      System.out.println("dao crate date: " + daa.getCreateDate());
-      System.out.println("dao update id: " + daa.getUpdateUserId());
-      System.out.println("dao update date: " + daa.getUpdateDate());
-      System.out.println("dao initial dac id: " + daa.getInitialDacId());
+    if (daa.getDaaId() != null) {
       card.addDaaObject(daa);
     }
   }
