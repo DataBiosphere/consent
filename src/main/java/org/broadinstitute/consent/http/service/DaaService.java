@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -113,6 +114,9 @@ public class DaaService implements ConsentLogger {
   public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
     try {
       Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
+      if (institution == null) {
+        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+      }
       List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
       if (signingOfficials.isEmpty()) {
         throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());

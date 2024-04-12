@@ -142,7 +142,24 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    System.out.println(response.getStatus());
+    assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
+  }
+
+  @Test
+  void testCreateDaaForDac_UserWithoutInstitution() {
+    UriInfo info = mock(UriInfo.class);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    admin.setRoles(List.of(role));
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(daaService.createDaaWithFso(any(), any(), any(), any())).thenThrow(new IllegalArgumentException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
 
@@ -484,6 +501,7 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doNothing().when(daaService).sendDaaRequestEmails(any(), any());
@@ -509,6 +527,7 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
@@ -523,12 +542,14 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 

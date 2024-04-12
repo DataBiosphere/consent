@@ -13,6 +13,8 @@ post:
   responses:
     200:
       description: Successfully sent a request to a Signing Official to create a DAA-Library Card Relationship
+    400:
+      description: User without their institution set attempted to request a DAA-Library Card Relationship
     404:
       description: DAA Not Found
     500:

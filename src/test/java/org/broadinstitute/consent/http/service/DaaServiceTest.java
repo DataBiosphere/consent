@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.ByteArrayInputStream;
@@ -129,6 +130,18 @@ public class DaaServiceTest {
     initService();
 
     assertThrows(NotFoundException.class, () -> service.sendDaaRequestEmails(user, 1));
+  }
+
+  @Test
+  void testSendDaaRequestEmailsUserWithoutInstitution() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(null);
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(null);
+
+    initService();
+
+    assertThrows(BadRequestException.class, () -> service.sendDaaRequestEmails(user, 1));
   }
 
   @Test

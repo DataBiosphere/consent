@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -208,6 +209,9 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("daaId") Integer daaId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      if (user.getInstitutionId() == null) {
+        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+      }
       if (user.getLibraryCards().stream()
           .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
         throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
