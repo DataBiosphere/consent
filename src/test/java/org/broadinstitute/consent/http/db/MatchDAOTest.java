@@ -115,15 +115,15 @@ class MatchDAOTest extends DAOTestHelper {
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     //This match represents the match record generated for the target election
-    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match represents the match record generated for the ignored access election
     matchDAO.insertMatch(datasetIdentifier, ignoredAccessElection.getReferenceId(), false, false,
-        new Date(), MatchAlgorithm.V3.getVersion(), false);
+        new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), true);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), true);
 
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of(darReferenceId));
@@ -146,11 +146,11 @@ class MatchDAOTest extends DAOTestHelper {
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
-    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
@@ -194,7 +194,7 @@ class MatchDAOTest extends DAOTestHelper {
   void testInsertFailureReason() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -216,7 +216,7 @@ class MatchDAOTest extends DAOTestHelper {
   void testDeleteFailureReasonsByConsentIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -238,7 +238,7 @@ class MatchDAOTest extends DAOTestHelper {
   void testDeleteFailureReasonsByPurposeIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -267,7 +267,7 @@ class MatchDAOTest extends DAOTestHelper {
             RandomUtils.nextBoolean(),
             false,
             new Date(),
-            MatchAlgorithm.V3.getVersion(),
+            MatchAlgorithm.V4.getVersion(),
             false);
     return matchDAO.findMatchById(matchId);
   }

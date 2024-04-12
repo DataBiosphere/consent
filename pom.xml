@@ -255,7 +255,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.11</version>
+        <version>0.8.12</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -445,7 +445,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>7.6.0</version>
+      <version>7.7.0</version>
     </dependency>
 
     <dependency>
@@ -714,7 +714,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.13.0</version>
+      <version>8.13.1</version>
     </dependency>
 
     <dependency>

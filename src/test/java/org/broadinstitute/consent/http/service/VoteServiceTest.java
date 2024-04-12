@@ -500,7 +500,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     Dataset d2 = new Dataset();
     d2.setDataSetId(2);
@@ -590,7 +590,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
 
     Dataset d2 = new Dataset();
@@ -667,7 +667,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     Election e1 = new Election();
     e1.setElectionId(1);
@@ -717,7 +717,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     Election e1 = new Election();
     e1.setElectionId(1);
@@ -770,7 +770,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
     d1.setCreateUserId(submitter.getUserId());
 
@@ -833,7 +833,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(custodianProp));
     d1.setCreateUserId(submitter.getUserId());
 
@@ -892,7 +892,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
     d1.setCreateUserId(submitterNotFound.getUserId());
 
@@ -963,7 +963,7 @@ public class VoteServiceTest {
     d1.setDataSetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setCommercialUse(true).build());
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setCreateUserId(datasetSubmitter.getUserId());
     d1.setStudy(study);
 

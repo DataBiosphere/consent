@@ -18,8 +18,8 @@ jobs:
         run:
           echo "bee-name=${{ github.event.repository.name }}-${{ github.run_id }}-dev" >> $GITHUB_OUTPUT
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
@@ -36,7 +36,7 @@ jobs:
         run: |
           mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ steps.setup.outputs.bee-name }}.bee.envs-terra.bio/
       - name: Store Test Result Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-reports
