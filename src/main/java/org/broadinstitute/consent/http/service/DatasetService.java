@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
+
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -509,6 +511,27 @@ public class DatasetService implements ConsentLogger {
       }
     }
 
+    return studyDAO.findStudyById(studyId);
+  }
+
+  public Study updateStudyCustodians(User user, Integer studyId, String custodians) {
+    logInfo(String.format("User %s is updating custodians for study id: %s; custodians: %s", user.getEmail(), studyId, custodians));
+    Study study = studyDAO.findStudyById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Study not found");
+    }
+    Optional<StudyProperty> optionalProp = study.getProperties() == null ?
+        Optional.empty() :
+        study
+        .getProperties()
+        .stream()
+        .filter(p -> p.getKey().equals(dataCustodianEmail))
+        .findFirst();
+    if (optionalProp.isPresent()) {
+      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.name(), custodians);
+    } else {
+      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.name(), custodians);
+    }
     return studyDAO.findStudyById(studyId);
   }
 

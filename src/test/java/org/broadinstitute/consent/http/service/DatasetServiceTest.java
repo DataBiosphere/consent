@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,6 +14,8 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -45,6 +49,8 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -850,6 +856,40 @@ class DatasetServiceTest {
     initService();
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
     assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+  }
+
+  @Test
+  void testUpdateStudyCustodiansExisting() {
+    User user = new User();
+    user.setEmail("test@gmail.com");
+    Study study = new Study();
+    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    StudyProperty prop = new StudyProperty();
+    prop.setValue("[test@gmail.com]");
+    prop.setStudyId(study.getStudyId());
+    prop.setType(PropertyType.Json);
+    prop.setKey(dataCustodianEmail);
+    study.setProperties(Set.of(prop));
+    when(studyDAO.findStudyById(any())).thenReturn(study);
+
+    initService();
+    datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
+    verify(studyDAO, times(1)).updateStudyProperty(any(), any(), any(), any());
+    verify(studyDAO, never()).insertStudyProperty(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateStudyCustodiansNew() {
+    User user = new User();
+    user.setEmail("test@gmail.com");
+    Study study = new Study();
+    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    when(studyDAO.findStudyById(any())).thenReturn(study);
+
+    initService();
+    datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
+    verify(studyDAO, never()).updateStudyProperty(any(), any(), any(), any());
+    verify(studyDAO, times(1)).insertStudyProperty(any(), any(), any(), any());
   }
 
   /* Helper functions */
