@@ -549,7 +549,6 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
-    System.out.println(response.getStatus());
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
