@@ -10,8 +10,10 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +24,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.broadinstitute.consent.http.util.gson.TimestampTypeAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -130,7 +134,7 @@ public class InstitutionResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
     initResource();
-    String requestJson = new Gson().toJson(mockInstitution, Institution.class);
+    String requestJson = GsonUtil.buildGson().toJson(mockInstitution, Institution.class);
     Response response = resource.createInstitution(authUser, requestJson);
     String json = response.getEntity().toString();
     assertEquals(200, response.getStatus());
@@ -212,7 +216,9 @@ public class InstitutionResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.updateInstitution(authUser, 1, new Gson().toJson(mockInstitution));
+    Response response = resource.updateInstitution(authUser, 1, new GsonBuilder()
+        .registerTypeAdapter(Timestamp.class, new TimestampTypeAdapter())
+        .create().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
   }
 
