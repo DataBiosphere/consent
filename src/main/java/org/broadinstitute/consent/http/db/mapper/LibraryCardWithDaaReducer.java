@@ -38,7 +38,6 @@ public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Intege
           rowView.getColumn("daa_id", Integer.class))) {
         daa = rowView.getRow(DataAccessAgreement.class);
         card.addDaa(rowView.getColumn("daa_id", Integer.class));
-//        daa.setDaaId(rowView.getColumn("daa_id", Integer.class));
       }
     } catch (MappingException e) {
     }
