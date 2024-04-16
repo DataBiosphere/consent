@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/libraryCards")
 public class LibraryCardResource extends Resource {
@@ -84,7 +85,7 @@ public class LibraryCardResource extends Resource {
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
+      LibraryCard payload = GsonUtil.gsonBuilderWithAdapters().create().fromJson(libraryCard, LibraryCard.class);
       payload.setCreateUserId(user.getUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
@@ -102,7 +103,7 @@ public class LibraryCardResource extends Resource {
       String libraryCard) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      LibraryCard payload = new Gson().fromJson(libraryCard, LibraryCard.class);
+      LibraryCard payload = GsonUtil.gsonBuilderWithAdapters().create().fromJson(libraryCard, LibraryCard.class);
       LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id,
           user.getUserId());
       return Response.ok().entity(updatedLibraryCard).build();

@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -55,7 +56,7 @@ class InstitutionUtilTest {
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
-    Institution deserialized = new Gson().fromJson(json, Institution.class);
+    Institution deserialized = GsonUtil.gsonBuilderWithAdapters().create().fromJson(json, Institution.class);
     assertEquals(mockInstitution.getName(), deserialized.getName());
     assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
     assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());

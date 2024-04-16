@@ -24,8 +24,12 @@ public class DateTypeAdapter
       throws JsonParseException {
     try {
       return new Date(json.getAsLong());
-    } catch (DateTimeParseException e) {
-      throw new JsonParseException(e.getMessage());
+    } catch (NumberFormatException e) {
+      try {
+        return new Date(json.getAsString());
+      } catch (DateTimeParseException e1) {
+        throw new JsonParseException(e1.getMessage());
+      }
     }
   }
 }
