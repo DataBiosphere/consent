@@ -38,17 +38,23 @@ public class SamDAO implements ConsentLogger {
   private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final Integer connectTimeoutMilliseconds;
+  public final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.executorService = Executors.newCachedThreadPool();
     this.clientUtil = clientUtil;
     this.configuration = configuration;
+    // Defaults to 10 seconds
+    this.connectTimeoutMilliseconds = configuration.getTimeoutSeconds() * 1000;
+    // Defaults to 60 seconds
+    this.readTimeoutMilliseconds = configuration.getTimeoutSeconds() * 6000;
   }
 
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1ResourceTypesUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException("Error getting resource types from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
@@ -62,7 +68,7 @@ public class SamDAO implements ConsentLogger {
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getRegisterUserV2SelfInfoUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           "Error getting user registration information from Sam: " + response.getStatusMessage(),
@@ -75,7 +81,7 @@ public class SamDAO implements ConsentLogger {
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           "Error getting enabled statuses of user from Sam: " + response.getStatusMessage(),
@@ -88,7 +94,7 @@ public class SamDAO implements ConsentLogger {
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
       if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
@@ -131,7 +137,7 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
     HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
     request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException("Error getting Terms of Service text from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
@@ -142,7 +148,7 @@ public class SamDAO implements ConsentLogger {
   public TosResponse getTosResponse(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getSelfTosUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error getting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
@@ -154,7 +160,7 @@ public class SamDAO implements ConsentLogger {
   public int acceptTosStatus(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.acceptTosUrl());
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error accepting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
@@ -165,7 +171,7 @@ public class SamDAO implements ConsentLogger {
   public int rejectTosStatus(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.rejectTosUrl());
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           String.format("Error removing Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
@@ -177,7 +183,7 @@ public class SamDAO implements ConsentLogger {
   public EmailResponse getV1UserByEmail(AuthUser authUser, String email) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1UserUrl(email));
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
+    HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           "Error getting user by email from Sam: " + response.getStatusMessage(),
@@ -185,6 +191,20 @@ public class SamDAO implements ConsentLogger {
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, EmailResponse.class);
+  }
+
+  /**
+   * Private method to handle the general case of sending requests to Sam.
+   * We inject timeouts here to prevent Sam from impacting API performance.
+   * The default is 10 seconds which should be more than enough for Sam calls.
+   *
+   * @param request The HttpRequest
+   * @return The HttpResponse
+   */
+  private HttpResponse executeRequest(HttpRequest request) {
+    request.setConnectTimeout(connectTimeoutMilliseconds);
+    request.setReadTimeout(readTimeoutMilliseconds);
+    return clientUtil.handleHttpRequest(request);
   }
 
 }
