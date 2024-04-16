@@ -141,9 +141,7 @@ public class LibraryCardResourceTest {
   @Test
   public void testCreateLibraryCard() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = new GsonBuilder()
-        .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
-        .create().toJson(mockCard);
+    String payload = GsonUtil.gsonBuilderWithAdapters().create().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenReturn(
         mockCard);
@@ -205,7 +203,7 @@ public class LibraryCardResourceTest {
   @Test
   public void testUpdateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.getInstance().toJson(mockCard);
+    String payload = GsonUtil.gsonBuilderWithAdapters().create().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenReturn(mockCard);
