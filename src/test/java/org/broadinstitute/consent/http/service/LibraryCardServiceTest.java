@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -23,7 +22,6 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,11 +41,6 @@ public class LibraryCardServiceTest {
   private LibraryCardDAO libraryCardDAO;
   @Mock
   private UserDAO userDAO;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initService() {
     this.service = new LibraryCardService(libraryCardDAO, institutionDAO, userDAO);

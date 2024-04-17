@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.NotFoundException;
@@ -22,7 +21,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -57,11 +55,6 @@ public class InstitutionResourceTest {
     mockInstitution.setUpdateUserId(1);
     mockInstitution.setId(1);
     return mockInstitution;
-  }
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
   }
 
   private void initResource() {
