@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.time.Instant;
 import java.util.Map;
-import java.util.Objects;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -21,21 +19,19 @@ public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Intege
     DataAccessAgreement daa = new DataAccessAgreement();
 
     try {
-      if (Objects.nonNull(card) && Objects.nonNull(
-          rowView.getColumn("i_institution_id", Integer.class))) {
+      if (card != null && rowView.getColumn("i_institution_id", Integer.class) != null) {
         institution = rowView.getRow(Institution.class);
         institution.setId(rowView.getColumn("i_institution_id", Integer.class));
       }
     } catch (MappingException e) {
     }
 
-    if (Objects.nonNull(institution)) {
+    if (institution != null) {
       card.setInstitution(institution);
     }
 
     try {
-      if (Objects.nonNull(card) && Objects.nonNull(
-          rowView.getColumn("daa_id", Integer.class))) {
+      if (card != null && rowView.getColumn("daa_id", Integer.class) != null) {
         daa = rowView.getRow(DataAccessAgreement.class);
         card.addDaa(rowView.getColumn("daa_id", Integer.class));
       }

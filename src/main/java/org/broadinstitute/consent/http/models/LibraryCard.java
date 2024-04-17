@@ -178,15 +178,4 @@ public class LibraryCard {
       this.daas.add(daa);
     }
   }
-
-  public void removeDaaObject(DataAccessAgreement daa) {
-    if (this.daas == null) {
-      return;
-    }
-    if (this.daas
-        .stream()
-        .anyMatch(d -> d.equals(daas))) {
-      this.daas.remove(daas);
-    }
-  }
 }

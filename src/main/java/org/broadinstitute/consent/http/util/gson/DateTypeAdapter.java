@@ -8,7 +8,8 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
-import java.time.format.DateTimeParseException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DateTypeAdapter
@@ -26,8 +27,8 @@ public class DateTypeAdapter
       return new Date(json.getAsLong());
     } catch (NumberFormatException e) {
       try {
-        return new Date(json.getAsString());
-      } catch (DateTimeParseException e1) {
+        return new SimpleDateFormat("LLL dd, yyyy, hh:mm:ss a").parse(json.getAsString());
+      } catch (ParseException e1) {
         throw new JsonParseException(e1.getMessage());
       }
     }
