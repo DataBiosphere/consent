@@ -134,7 +134,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertNotNull(cardsFromDAO);
     assertEquals(cardsFromDAO.size(), 1);
     assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
-    assertNull(cardsFromDAO.get(0).getDaaIds());
+    assertEquals(cardsFromDAO.get(0).getDaaIds().size(),0);
   }
 
   @Test
@@ -149,7 +149,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Institution cardInstitution = card.getInstitution();
     assertEquals(institution.getId(), cardInstitution.getId());
     assertEquals(institution.getName(), cardInstitution.getName());
-    assertNull(card.getDaaIds());
+    assertEquals(card.getDaaIds().size(),0);
   }
 
   @Test
@@ -173,8 +173,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertEquals(2, libraryCards.size());
     assertEquals(one.getId(), libraryCards.get(0).getId());
     assertEquals(two.getId(), libraryCards.get(1).getId());
-    assertNull(one.getDaaIds());
-    assertNull(two.getDaaIds());
+    assertEquals(one.getDaaIds().size(),0);
+    assertEquals(two.getDaaIds().size(),0);
   }
 
   @Test
@@ -244,7 +244,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
     List<LibraryCard> lcs = libraryCardDAO.findAllLibraryCards();
     LibraryCard lc1 = lcs.get(0);
-    assertNull(lc1.getDaaIds());
+    assertEquals(lc1.getDaaIds().size(),0);
   }
 
   @Test
@@ -271,7 +271,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
     libraryCardDAO.deleteLibraryCardDaaRelation(card.getId(), daaId2);lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.get(0);
-    assertNull(lc1.getDaaIds());
+    assertEquals(lc1.getDaaIds().size(),0);
   }
 
 

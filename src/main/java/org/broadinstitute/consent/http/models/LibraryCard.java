@@ -35,6 +35,7 @@ public class LibraryCard {
 
   public LibraryCard() {
     this.createDate = new Date();
+    this.daaIds = new ArrayList<>();
   }
 
   public Integer getId() {

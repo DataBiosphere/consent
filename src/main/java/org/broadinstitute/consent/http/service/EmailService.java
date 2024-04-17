@@ -398,6 +398,26 @@ public class EmailService implements ConsentLogger {
     );
   }
 
+  public void sendDaaRequestMessage(
+      String signingOfficialName,
+      String signingOfficialEmail,
+      String userName,
+      String daaName,
+      Integer daaId,
+      Integer userId) throws Exception {
+    Writer template = templateHelper.getDaaRequestTemplate(signingOfficialName, userName, daaName,
+        this.SERVER_URL);
+    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template, daaId.toString());
+    saveEmailAndResponse(
+        response.orElse(null),
+        daaId.toString(),
+        null,
+        userId,
+        EmailType.NEW_DAA_REQUEST,
+        template
+    );
+  }
+
   private User findUserById(Integer id) throws IllegalArgumentException {
     User user = userDAO.findUserById(id);
     if (user == null) {

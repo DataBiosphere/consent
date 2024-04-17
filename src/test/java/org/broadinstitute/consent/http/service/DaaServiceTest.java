@@ -7,19 +7,27 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.apache.commons.lang3.RandomStringUtils;
+import java.util.List;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.User;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
@@ -39,6 +47,12 @@ public class DaaServiceTest {
   @Mock
   private GCSService gcsService;
 
+  @Mock
+  private EmailService emailService;
+
+  @Mock
+  private InstitutionDAO institutionDAO;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition = mock(
@@ -48,7 +62,7 @@ public class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, institutionDAO);
   }
 
   @Test
@@ -101,6 +115,93 @@ public class DaaServiceTest {
 
     initService();
     service.removeDacFromDaa(1, 1);
+  }
+
+  @Test
+  void testSendDaaRequestEmailsNoSigningOfficials() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    Institution institution = mock(Institution.class);
+    when(institution.getSigningOfficials()).thenReturn(List.of());
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
+
+    initService();
+
+    assertThrows(NotFoundException.class, () -> service.sendDaaRequestEmails(user, 1));
+  }
+
+  @Test
+  void testSendDaaRequestEmailsUserWithoutInstitution() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(null);
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(null);
+
+    initService();
+
+    assertThrows(BadRequestException.class, () -> service.sendDaaRequestEmails(user, 1));
+  }
+
+  @Test
+  void testSendDaaRequestEmailsWithSigningOfficials() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    Institution institution = mock(Institution.class);
+    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("daaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+
+    initService();
+
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
+    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendDaaRequestEmailsWithMultipleSigningOfficials() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
+    signingOfficial2.displayName = "Official Name2";
+    signingOfficial2.email = "official2@example.com";
+
+    Institution institution = mock(Institution.class);
+    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("daaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+
+    initService();
+
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
   }
 
   @Test

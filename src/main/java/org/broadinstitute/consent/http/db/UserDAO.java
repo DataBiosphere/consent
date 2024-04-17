@@ -91,14 +91,17 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery("SELECT "
       + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + "     ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id, "
       + "     ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name "
       + " FROM users u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
       + " LEFT JOIN roles r ON r.role_id = ur.role_id "
+      + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
       + " WHERE LOWER(u.email) = LOWER(:email)")
   User findUserByEmail(@Bind("email") String email);
 
