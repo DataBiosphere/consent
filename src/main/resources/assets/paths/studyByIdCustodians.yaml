@@ -30,6 +30,8 @@ put:
       description: |
         Bad Request when schema is invalid or the required custodian values are not valid email
         addresses
+    403:
+      description: User is not authorized
     404:
       description: Not Found
     500:
