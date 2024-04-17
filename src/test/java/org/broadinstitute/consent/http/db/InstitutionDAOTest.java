@@ -172,6 +172,15 @@ public class InstitutionDAOTest extends DAOTestHelper {
     assertNull(institutionDAO.findInstitutionById(institution.getId()));
   }
 
+  @Test
+  public void testFindInstitutionWithSOById() {
+    Institution institution = createInstitution();
+    User user = createUserWithInstitution();
+    Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
+    assertEquals(1, institutionWithSO.getSigningOfficials().size());
+    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).displayName);
+  }
+
   private Institution createInstitution() {
     User createUser = createUser();
     Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),

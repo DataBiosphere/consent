@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -30,8 +31,10 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -43,14 +46,16 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DacService dacService;
   private final UserService userService;
   private final LibraryCardService libraryCardService;
+  private final EmailService emailService;
 
   @Inject
   public DaaResource(DaaService daaService, DacService dacService, UserService userService,
-      LibraryCardService libraryCardService) {
+      LibraryCardService libraryCardService, EmailService emailService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
     this.libraryCardService = libraryCardService;
+    this.emailService = emailService;
   }
 
   @POST
@@ -190,6 +195,28 @@ public class DaaResource extends Resource implements ConsentLogger {
       for (LibraryCard libraryCard : libraryCards) {
         libraryCardService.removeDaaFromLibraryCard(libraryCard.getId(), daaId);
       }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @PermitAll
+  @Path("/request/{daaId}")
+  public Response sendDaaRequestMessage(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (user.getInstitutionId() == null) {
+        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+      }
+      if (user.getLibraryCards().stream()
+          .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
+        throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
+      }
+      daaService.sendDaaRequestEmails(user, daaId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -171,6 +172,39 @@ class FreeMarkerTemplateHelperTest {
         .text()
         .contains(
             "A new dataset, testDataset, has been submitted to your DAC, dacName by dataSubmitterName. Please log in to DUOS to review and accept or reject management of this dataset."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetDaaRequestTemplate() throws Exception {
+    String signingOfficialUserName = RandomStringUtils.randomAlphabetic(10);
+    String userName = RandomStringUtils.randomAlphabetic(10);
+    String daaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getDaaRequestTemplate(signingOfficialUserName, userName,
+        daaName,
+        serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Hello " + signingOfficialUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            userName + " has registered with your institution and is requesting you approve them under the " + daaName + " data access agreement, so that they can request access to data."));
+    assertTrue(parsedTemplate
+        .getElementById("link")
+        .text()
+        .contains(
+            "Please login to review " + userName + "'s Data Access Agreements."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }
