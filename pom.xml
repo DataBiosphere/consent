@@ -16,10 +16,10 @@
     <liquibase.version>4.27.0</liquibase.version>
     <dropwizard.version>4.0.4</dropwizard.version>
     <logback.version>1.4.14</logback.version>
-    <pact.version>4.6.8</pact.version>
+    <pact.version>4.6.9</pact.version>
     <postgres.version>42.7.3</postgres.version>
     <surefire.version>3.2.5</surefire.version>
-    <swagger.ui.version>5.15.1</swagger.ui.version>
+    <swagger.ui.version>5.15.2-1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.2</junit.version>
