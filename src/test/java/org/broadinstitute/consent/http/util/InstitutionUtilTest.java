@@ -12,9 +12,11 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
 
   private final List<UserRole> adminRoles = Collections.singletonList(
@@ -38,13 +40,13 @@ class InstitutionUtilTest {
     return mockInstitution;
   }
 
-  @BeforeEach
-  void setUp() {
+  private void initUtil() {
     util = new InstitutionUtil();
   }
 
   @Test
   void testCheckIfAdminAdmin() {
+    initUtil();
     assertTrue(util.checkIfAdmin(adminUser));
     assertFalse(util.checkIfAdmin(researcherUser));
     assertFalse(util.checkIfAdmin(new User()));
@@ -52,6 +54,7 @@ class InstitutionUtilTest {
 
   @Test
   void testGsonBuilderAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
@@ -68,6 +71,7 @@ class InstitutionUtilTest {
 
   @Test
   void testGsonBuilderNonAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);
