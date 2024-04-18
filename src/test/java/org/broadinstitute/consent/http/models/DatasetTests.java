@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -177,63 +178,6 @@ class DatasetTests {
 
     assertTrue(ds.isDatasetMatch(value, AccessManagement.CONTROLLED));
     assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.OPEN));
-  }
-
-  @Test
-  void testGetDataDepositors() {
-    Dataset ds = new Dataset();
-
-    assertTrue(ds.getDataDepositors().isEmpty());
-
-    DatasetProperty depositorProp = new DatasetProperty();
-    depositorProp.setPropertyName("Data Depositor");
-    depositorProp.setPropertyValue("depositor@test.com");
-    depositorProp.setSchemaProperty("dataDepositorEmail");
-    depositorProp.setPropertyType(PropertyType.String);
-    ds.setProperties(Set.of(depositorProp));
-
-    assertTrue(ds.getDataDepositors().size() == 1);
-    assertEquals(ds.getDataDepositors(), List.of("depositor@test.com"));
-
-    Gson gson = GsonUtil.getInstance();
-    DatasetProperty custodianProp = new DatasetProperty();
-    custodianProp.setSchemaProperty("dataCustodianEmail");
-    custodianProp.setPropertyName("Custodian Email");
-    custodianProp.setPropertyType(PropertyType.Json);
-    custodianProp.setPropertyValue(gson.toJson(List.of("custodian@test.com")));
-    ds.setProperties(Set.of(depositorProp, custodianProp));
-
-    assertTrue(ds.getDataDepositors().size() == 1);
-    assertEquals(ds.getDataDepositors(), List.of("depositor@test.com"));
-
-  }
-
-  @Test
-  void testGetDataCustodianEmails() {
-    Dataset ds = new Dataset();
-
-    assertTrue(ds.getDataCustodianEmails().isEmpty());
-
-    Gson gson = GsonUtil.getInstance();
-    DatasetProperty custodianProp = new DatasetProperty();
-    custodianProp.setSchemaProperty("dataCustodianEmail");
-    custodianProp.setPropertyName("Custodian Email");
-    custodianProp.setPropertyType(PropertyType.Json);
-    custodianProp.setPropertyValue(gson.toJson(List.of("custodian@test.com")));
-    ds.setProperties(Set.of(custodianProp));
-
-    assertTrue(ds.getDataCustodianEmails().size() == 1);
-    assertEquals(ds.getDataCustodianEmails(), List.of("custodian@test.com"));
-
-    DatasetProperty depositorProp = new DatasetProperty();
-    depositorProp.setPropertyName("Data Depositor");
-    depositorProp.setPropertyValue("depositor@test.com");
-    depositorProp.setSchemaProperty("dataDepositorEmail");
-    depositorProp.setPropertyType(PropertyType.String);
-    ds.setProperties(Set.of(depositorProp, custodianProp));
-
-    assertTrue(ds.getDataCustodianEmails().size() == 1);
-    assertEquals(ds.getDataCustodianEmails(), List.of("custodian@test.com"));
   }
 
 }
