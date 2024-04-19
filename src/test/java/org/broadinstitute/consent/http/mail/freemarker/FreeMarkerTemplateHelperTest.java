@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -27,8 +26,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class FreeMarkerTemplateHelperTest {
 
   private FreeMarkerTemplateHelper helper;
@@ -38,7 +40,6 @@ class FreeMarkerTemplateHelperTest {
 
   @BeforeEach
   public void setUp() throws IOException {
-    openMocks(this);
     when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
     when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
     helper = new FreeMarkerTemplateHelper(freeMarkerConfig);

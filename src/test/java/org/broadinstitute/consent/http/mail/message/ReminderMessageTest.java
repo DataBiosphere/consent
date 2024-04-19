@@ -8,20 +8,18 @@ import java.io.Writer;
 import javax.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ReminderMessageTest {
+@ExtendWith(MockitoExtension.class)
+class ReminderMessageTest {
 
   @Mock
   Writer template;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   @Test
-  public void testMessageSubject() throws MessagingException {
+  void testMessageSubject() throws MessagingException {
     Mail message = new ReminderMessage().reminderMessage("to@address.com", "from@address.com",
         template, "DUL-123", "Data Use Limitations");
     assertEquals("Urgent: Log vote on Data Use Limitations case id: DUL-123.",

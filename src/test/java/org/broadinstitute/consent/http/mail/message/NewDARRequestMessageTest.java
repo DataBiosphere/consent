@@ -8,20 +8,18 @@ import java.io.Writer;
 import javax.mail.MessagingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class NewDARRequestMessageTest {
+@ExtendWith(MockitoExtension.class)
+class NewDARRequestMessageTest {
 
   @Mock
   Writer template;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   @Test
-  public void testMessageSubject() throws MessagingException {
+  void testMessageSubject() throws MessagingException {
     Mail message = new NewDARRequestMessage().newDARRequestMessage("to@address.com",
         "from@address.com", template, "DAR-123", "Data Use Limitations");
     assertEquals("Create an election for Data Access Request id: DAR-123.",
