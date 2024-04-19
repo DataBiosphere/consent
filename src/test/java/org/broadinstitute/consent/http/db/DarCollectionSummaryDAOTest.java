@@ -27,8 +27,11 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DarCollectionSummaryDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   private DataAccessRequest createDataAccessRequest(Integer collectionId, Integer userId) {
     String referenceId = UUID.randomUUID().toString();
@@ -108,7 +111,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDAC() {
+  void testGetDarCollectionSummaryForDAC() {
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
     User userChair = createUserForTest();
@@ -212,7 +215,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDAC_NoElectionsPresent() {
+  void testGetDarCollectionSummaryForDAC_NoElectionsPresent() {
     User userOne = createUserForTest();
     User userChair = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -256,7 +259,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDAC_ArchivedCollection() {
+  void testGetDarCollectionSummaryForDAC_ArchivedCollection() {
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
 
@@ -282,7 +285,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForSO() {
+  void testGetDarCollectionSummaryForSO() {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
@@ -339,7 +342,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForSO_NoElectionsPresent() {
+  void testGetDarCollectionSummaryForSO_NoElectionsPresent() {
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -372,7 +375,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForSO_ArchivedCollection() {
+  void testGetDarCollectionSummaryForSO_ArchivedCollection() {
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
 
@@ -400,7 +403,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForResearcher() {
+  void testGetDarCollectionSummaryForResearcher() {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
@@ -459,7 +462,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForResearcher_NoElectionsPresent() {
+  void testGetDarCollectionSummaryForResearcher_NoElectionsPresent() {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
@@ -503,7 +506,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForResearcher_ArchivedCollection() {
+  void testGetDarCollectionSummaryForResearcher_ArchivedCollection() {
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
 
@@ -531,7 +534,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForResearcher_DraftedDarCollection() {
+  void testGetDarCollectionSummaryForResearcher_DraftedDarCollection() {
     User user = createUserForTest();
     Integer userId = user.getUserId(); //query should only pull collections made by this user
 
@@ -553,7 +556,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForAdmin() {
+  void testGetDarCollectionSummaryForAdmin() {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
@@ -617,7 +620,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForAdmin_NoPresentElections() {
+  void testGetDarCollectionSummaryForAdmin_NoPresentElections() {
 
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
@@ -662,7 +665,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForAdmin_ArchivedCollection() {
+  void testGetDarCollectionSummaryForAdmin_ArchivedCollection() {
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
 
@@ -686,7 +689,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryByCollectionId() {
+  void testGetDarCollectionSummaryByCollectionId() {
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -735,7 +738,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryByCollectionId_NoElectionsPresent() {
+  void testGetDarCollectionSummaryByCollectionId_NoElectionsPresent() {
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -771,7 +774,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDACByCollectionId() {
+  void testGetDarCollectionSummaryForDACByCollectionId() {
     User userOne = createUserForTest();
     User userTwo = createUserForTest();
     User userChair = createUserForTest();
@@ -849,7 +852,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDACByCollectionId_NoElectionsPresent() {
+  void testGetDarCollectionSummaryForDACByCollectionId_NoElectionsPresent() {
     User userOne = createUserForTest();
     User userChair = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -890,7 +893,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryForDACByCollectionId_ArchivedCollection() {
+  void testGetDarCollectionSummaryForDACByCollectionId_ArchivedCollection() {
     User userOne = createUserForTest();
     User userChair = createUserForTest();
     Integer userOneId = userOne.getUserId();
@@ -911,7 +914,7 @@ public class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDarCollectionSummaryByCollectionId_ArchivedCollection() {
+  void testGetDarCollectionSummaryByCollectionId_ArchivedCollection() {
     User userOne = createUserForTest();
     Integer userOneId = userOne.getUserId();
 

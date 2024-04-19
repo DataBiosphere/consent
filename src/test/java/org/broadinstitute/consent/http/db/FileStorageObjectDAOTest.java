@@ -15,11 +15,14 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class FileStorageObjectDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class FileStorageObjectDAOTest extends DAOTestHelper {
 
   @Test
-  public void testInsertFile() {
+  void testInsertFile() {
 
     createFileStorageObject(); // add random other files to db
     createFileStorageObject();
@@ -65,7 +68,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteFileById() {
+  void testDeleteFileById() {
     FileStorageObject origFile = createFileStorageObject();
 
     User deleteUser = createUser();
@@ -88,7 +91,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteFileByEntityId() {
+  void testDeleteFileByEntityId() {
     String entityId = RandomStringUtils.randomAlphabetic(10);
     String otherEntityId = RandomStringUtils.randomAlphabetic(8);
 
@@ -141,7 +144,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindFilesByEntityId() {
+  void testFindFilesByEntityId() {
     String entityId = RandomStringUtils.randomAlphabetic(10);
 
     createFileStorageObject();
@@ -163,7 +166,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindFilesByEntityIdAndCategory() {
+  void testFindFilesByEntityIdAndCategory() {
     String entityId = RandomStringUtils.randomAlphabetic(10);
 
     // different entity id, same category, shouldn't be returned.
@@ -190,7 +193,7 @@ public class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteFileStorageObjectByUserId() {
+  void testDeleteFileStorageObjectByUserId() {
     var file1 = createFileStorageObject();
     var fileId = file1.getFileStorageObjectId();
     var userId = file1.getCreateUserId();

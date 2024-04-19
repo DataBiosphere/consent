@@ -13,8 +13,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DaaDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testInsert() {

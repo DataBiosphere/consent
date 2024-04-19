@@ -15,19 +15,22 @@ import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
 
-public class InstitutionDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class InstitutionDAOTest extends DAOTestHelper {
 
   @Test
-  public void testInsertInstitution() {
+  void testInsertInstitution() {
     Institution institution = createInstitution();
     List<Institution> all = institutionDAO.findAllInstitutions();
     assertTrue(all.contains(institution));
   }
 
   @Test
-  public void testInsertInstitutionDuplicateName() {
+  void testInsertInstitutionDuplicateName() {
     Institution institution = createInstitution();
     Integer userId = institution.getCreateUserId();
     try {
@@ -53,7 +56,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateInstitutionById() {
+  void testUpdateInstitutionById() {
     Integer userId = createUser().getUserId();
     String newValue = "New Value";
     Institution institution = createInstitution();
@@ -74,7 +77,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateInstitutionByIdDuplicateName() {
+  void testUpdateInstitutionByIdDuplicateName() {
     Institution institution = createInstitution();
     Institution secondInstitution = createInstitution();
     try {
@@ -97,7 +100,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteInstitutionById() {
+  void testDeleteInstitutionById() {
     Institution institution = createInstitution();
     Integer id = institution.getId();
     institutionDAO.deleteInstitutionById(id);
@@ -105,7 +108,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionById() {
+  void testFindInstitutionById() {
     Institution institution = createInstitution();
     Integer id = institution.getId();
     Institution institutionFromDAO = institutionDAO.findInstitutionById(id);
@@ -121,7 +124,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllInstitutions() {
+  void testFindAllInstitutions() {
     List<Institution> instituteList = institutionDAO.findAllInstitutions();
     assertEquals(0, instituteList.size());
     createInstitution();
@@ -130,7 +133,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindAllInstitutions_InstitutionWithSOs() {
+  void testFindAllInstitutions_InstitutionWithSOs() {
     List<Institution> instituteList = institutionDAO.findAllInstitutions();
     assertEquals(0, instituteList.size());
 
@@ -148,7 +151,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionsByName() {
+  void testFindInstitutionsByName() {
     Institution institution = createInstitution();
 
     List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
@@ -158,14 +161,14 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionsByName_Missing() {
+  void testFindInstitutionsByName_Missing() {
     List<Institution> found = institutionDAO.findInstitutionsByName(
         RandomStringUtils.randomAlphabetic(10));
     assertTrue(found.isEmpty());
   }
 
   @Test
-  public void testDeleteInstitutionByUserId() {
+  void testDeleteInstitutionByUserId() {
     Institution institution = createInstitution();
     Integer userId = institution.getCreateUserId();
     institutionDAO.deleteAllInstitutionsByUser(userId);
@@ -173,7 +176,7 @@ public class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindInstitutionWithSOById() {
+  void testFindInstitutionWithSOById() {
     Institution institution = createInstitution();
     User user = createUserWithInstitution();
     Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
