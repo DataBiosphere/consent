@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -27,7 +26,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
@@ -35,7 +36,8 @@ import org.mockserver.model.HttpRequest;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
-public class SupportRequestServiceTest {
+@ExtendWith(MockitoExtension.class)
+class SupportRequestServiceTest {
 
   private SupportRequestService service;
 
@@ -53,28 +55,24 @@ public class SupportRequestServiceTest {
   private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     container.start();
   }
 
   @AfterAll
-  public static void tearDown() {
+  static void tearDown() {
     container.stop();
   }
 
   @BeforeEach
-  public void init() {
-    openMocks(this);
+  void init() {
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
     mockServerClient.reset();
     service = new SupportRequestService(config, institutionDAO, userDAO);
   }
 
   @Test
-  public void testPostTicketToSupport() throws Exception {
+  void testPostTicketToSupport() throws Exception {
     SupportTicket ticket = generateTicket();
     SupportTicket.SupportRequest supportRequest = ticket.getRequest();
 
@@ -109,6 +107,9 @@ public class SupportRequestServiceTest {
         customField.getValue(),
         supportRequest.getComment().getBody());
 
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportRequestUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -125,7 +126,7 @@ public class SupportRequestServiceTest {
   }
 
   @Test
-  public void testPostTicketToSupportNotificationsNotActivated() throws Exception {
+  void testPostTicketToSupportNotificationsNotActivated() throws Exception {
     SupportTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
@@ -134,7 +135,10 @@ public class SupportRequestServiceTest {
   }
 
   @Test
-  public void testPostTicketToSupportServerError() {
+  void testPostTicketToSupportServerError() {
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportRequestUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -145,7 +149,7 @@ public class SupportRequestServiceTest {
   }
 
   @Test
-  public void testHandleInstitutionSOSupportRequest() {
+  void testHandleInstitutionSOSupportRequest() {
     String displayName = RandomStringUtils.randomAlphabetic(10);
     String email = RandomStringUtils.randomAlphabetic(10);
     User user = new User();
@@ -154,6 +158,9 @@ public class SupportRequestServiceTest {
     UserUpdateFields updateFields = new UserUpdateFields();
     updateFields.setSuggestedInstitution(RandomStringUtils.randomAlphabetic(10));
 
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportRequestUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -163,7 +170,7 @@ public class SupportRequestServiceTest {
   }
 
   @Test
-  public void testHandleInstitutionSOSupportRequest_NoUpdates() {
+  void testHandleInstitutionSOSupportRequest_NoUpdates() {
     UserUpdateFields updateFields = new UserUpdateFields();
     // verify no requests sent if no suggested user fields are provided; fail if request attempted
     mockServerClient.when(request()).error(new HttpError());

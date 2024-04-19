@@ -9,7 +9,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -42,7 +41,9 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test. To enable
@@ -50,6 +51,7 @@ import org.mockito.Mock;
  * Functional test emails will be directed to the private google group:
  * https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
+@ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
 
   private EmailService service;
@@ -86,7 +88,6 @@ class EmailServiceTest {
   private void initService() {
     boolean serviceActive = false;
 
-    openMocks(this);
     MailConfiguration mConfig = new MailConfiguration();
     mConfig.setActivateEmailNotifications(serviceActive);
     mConfig.setGoogleAccount("");

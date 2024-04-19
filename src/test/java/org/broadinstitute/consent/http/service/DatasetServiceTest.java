@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -56,11 +55,12 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetServiceTest {
 
   private DatasetService datasetService;
@@ -80,11 +80,6 @@ class DatasetServiceTest {
   @Mock
   private UserDAO userDAO;
 
-  @BeforeEach
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   private void initService() {
     datasetService = new DatasetService(datasetDAO, dacDAO, emailService,
       ontologyService, studyDAO, datasetServiceDAO, userDAO);
@@ -94,10 +89,6 @@ class DatasetServiceTest {
   void testCreateDataset() throws Exception {
     DatasetDTO test = getDatasetDTO();
     Dataset mockDataset = getDatasets().get(0);
-    when(datasetDAO.insertDataset(anyString(), any(), anyInt(), anyString(), any(),
-        any())).thenReturn(mockDataset.getDataSetId());
-    when(datasetDAO.findDatasetById(any())).thenReturn(mockDataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(any())).thenReturn(getDatasetProperties());
     when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(
         Collections.singleton(test));
     initService();
@@ -325,7 +316,6 @@ class DatasetServiceTest {
     dataSetDTO.setProperties(dtoProps);
     dataset.setProperties(datasetProps);
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(datasetProps);
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
     initService();
 
@@ -351,7 +341,6 @@ class DatasetServiceTest {
 
   @Test
   void testUpdateDatasetDataUseNonAdmin() {
-    doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     initService();
     User u = new User();
@@ -390,7 +379,6 @@ class DatasetServiceTest {
     dataSetDTO.setProperties(updatedProperties);
 
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
     initService();
 
@@ -416,7 +404,6 @@ class DatasetServiceTest {
     dataSetDTO.setProperties(updatedProperties);
 
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
     initService();
 
@@ -439,7 +426,6 @@ class DatasetServiceTest {
     dataSetDTO.setProperties(updatedProperties);
 
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(getDatasetProperties());
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
     initService();
 
@@ -467,7 +453,6 @@ class DatasetServiceTest {
     datasetDTO.setDatasetName(name);
 
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.findDatasetPropertiesByDatasetId(datasetId)).thenReturn(datasetProps);
     when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
     initService();
 
@@ -669,7 +654,6 @@ class DatasetServiceTest {
     Dac dac = new Dac();
     dac.setName("DAC NAME");
     initService();
-    when(dacDAO.findById(3)).thenReturn(dac);
 
     Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
     assertNotNull(datasetResult);

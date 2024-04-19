@@ -47,8 +47,11 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DacServiceTest {
 
   private DacService service;
@@ -219,7 +222,6 @@ class DacServiceTest {
     Dac dac = getDacs().get(0);
     when(userDAO.findUserById(any())).thenReturn(user);
     when(userDAO.findUserById(any())).thenReturn(user);
-    when(dacDAO.findUserRolesForUser(any())).thenReturn(getDacUsers().get(0).getRoles());
     List<Election> elections = getElections().stream().
         map(e -> {
           Election newE = gson.fromJson(gson.toJson(e), Election.class);
@@ -291,8 +293,6 @@ class DacServiceTest {
     User chair = getDacUsers().get(0);
     dac.setChairpersons(Collections.singletonList(chair));
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
-    doNothing().when(dacDAO).removeDacMember(anyInt());
-    doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
     initService();
 
     assertThrows(BadRequestException.class, () -> {
@@ -419,7 +419,6 @@ class DacServiceTest {
     // Member is a member of one DAC that has a single consented dataset
     List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
     List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
     initService();
 
@@ -438,7 +437,6 @@ class DacServiceTest {
     // Member is a member of one DAC that has a single consented dataset
     List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
     List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(memberDacs);
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
     initService();
 
@@ -465,7 +463,6 @@ class DacServiceTest {
     when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
 
     // Member has no direct access to elections via DAC or DataSet
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(Collections.emptyList());
     when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
     initService();
 
@@ -488,10 +485,7 @@ class DacServiceTest {
   @Test
   void testFindDacsByUserAdminCase() {
     List<Dac> dacs = getDacs();
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
     when(dacDAO.findAll()).thenReturn(dacs);
-    // User is an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
     initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
@@ -501,10 +495,7 @@ class DacServiceTest {
   @Test
   void testFindDacsByUserChairCase() {
     List<Dac> dacs = getDacs();
-    when(dacDAO.findDacsForEmail(anyString())).thenReturn(dacs);
     when(dacDAO.findAll()).thenReturn(dacs);
-    // User is a chairperson user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getChair());
     initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);

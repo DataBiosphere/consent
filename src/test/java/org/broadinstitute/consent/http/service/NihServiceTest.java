@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,10 +21,12 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class NihServiceTest {
+@ExtendWith(MockitoExtension.class)
+class NihServiceTest {
 
   @Mock
   private ResearcherService researcherService;
@@ -41,11 +42,10 @@ public class NihServiceTest {
   private AuthUser authUser;
 
   @BeforeEach
-  public void setUp() throws Exception {
+  void setUp() throws Exception {
     nihUserAccount = new NIHUserAccount("nih username", new ArrayList(), new Date().toString(),
         true);
     authUser = new AuthUser("test@test.com");
-    MockitoAnnotations.openMocks(this);
   }
 
   private void initService() {
@@ -53,7 +53,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testAuthenticateNih_InvalidUser() {
+  void testAuthenticateNih_InvalidUser() {
     initService();
     assertThrows(NotFoundException.class, () -> {
       service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
@@ -61,7 +61,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testAuthenticateNih() {
+  void testAuthenticateNih() {
     List<UserProperty> props = Collections.singletonList(new UserProperty(1, 1, "test", "value"));
     when(researcherService.describeUserProperties(any())).thenReturn(props);
     User user = new User();
@@ -80,7 +80,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testAuthenticateNih_BadRequest() {
+  void testAuthenticateNih_BadRequest() {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
@@ -92,7 +92,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testAuthenticateNih_BadRequestNullAccount() {
+  void testAuthenticateNih_BadRequestNullAccount() {
     initService();
     assertThrows(BadRequestException.class, () -> {
       service.authenticateNih(null, authUser, 1);
@@ -100,7 +100,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testAuthenticateNih_BadRequestNullAccountExpiration() {
+  void testAuthenticateNih_BadRequestNullAccountExpiration() {
     NIHUserAccount account = new NIHUserAccount();
     account.setStatus(true);
     initService();
@@ -110,8 +110,7 @@ public class NihServiceTest {
   }
 
   @Test
-  public void testDeleteNihAccountById() {
-    doNothing().when(researcherService).deleteResearcherProperties(any());
+  void testDeleteNihAccountById() {
     initService();
     service.deleteNihAccountById(1);
   }

@@ -5,26 +5,22 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.List;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.Election;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class ElectionServiceTest {
 
   private ElectionService service;
 
   @Mock
   private ElectionDAO electionDAO;
-
-  @BeforeEach
-  public void setUp() throws Exception {
-    openMocks(this);
-  }
 
   private void initService() {
     service = new ElectionService(electionDAO);
