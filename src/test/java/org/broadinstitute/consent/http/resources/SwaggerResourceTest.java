@@ -13,20 +13,23 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SwaggerResourceTest {
+@ExtendWith(MockitoExtension.class)
+class SwaggerResourceTest {
 
   private SwaggerResource swaggerResource;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     GoogleOAuth2Config config = new GoogleOAuth2Config();
     config.setClientId(RandomStringUtils.random(10, true, true));
     swaggerResource = new SwaggerResource(config);
   }
 
   @Test
-  public void testIndex() {
+  void testIndex() {
     Response response = swaggerResource.content("index.html");
     assertTrue(checkStatusAndHeader(response, TEXT_HTML));
     String content = response.getEntity().toString()
@@ -36,7 +39,7 @@ public class SwaggerResourceTest {
   }
 
   @Test
-  public void testInitializer() {
+  void testInitializer() {
     Response response = swaggerResource.content("swagger-initializer.js");
     assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_JS));
     String content = response.getEntity().toString().trim();
@@ -44,7 +47,7 @@ public class SwaggerResourceTest {
   }
 
   @Test
-  public void testStyle() {
+  void testStyle() {
     Response response = swaggerResource.content("swagger-ui.css");
     assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
     String content = response.getEntity().toString().trim();
@@ -52,13 +55,13 @@ public class SwaggerResourceTest {
   }
 
   @Test
-  public void testNotFound() {
+  void testNotFound() {
     Response response = swaggerResource.content("foo/bar.txt");
     assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
   }
 
   @Test
-  public void testImageNotFound() {
+  void testImageNotFound() {
     Response response = swaggerResource.content("foo/bar.png");
     assertEquals(response.getStatus(), Status.NOT_FOUND.getStatusCode());
   }

@@ -6,14 +6,17 @@ import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SchemaResourceTest {
+@ExtendWith(MockitoExtension.class)
+class SchemaResourceTest {
 
 
   private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
 
   @Test
-  public void testGetDatasetRegistrationSchemaV1() {
+  void testGetDatasetRegistrationSchemaV1() {
     SchemaResource resource = new SchemaResource();
 
     Response response = resource.getDatasetRegistrationSchemaV1();

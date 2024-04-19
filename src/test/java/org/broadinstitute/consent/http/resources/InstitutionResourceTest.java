@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class InstitutionResourceTest {
+class InstitutionResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> adminRoles = Collections.singletonList(

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -23,11 +22,13 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class VoteResourceTest {
+@ExtendWith(MockitoExtension.class)
+class VoteResourceTest {
 
   @Mock
   private UserService userService;
@@ -49,24 +50,19 @@ public class VoteResourceTest {
 
   private final Gson gson = new Gson();
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new VoteResource(userService, voteService, electionService);
   }
 
   @Test
-  public void testUpdateVotes_invalidJson() {
+  void testUpdateVotes_invalidJson() {
     initResource();
     Response response = resource.updateVotes(authUser, "{\"vote\": true, \"ID\":12345}");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testUpdateVotes_nullIds() {
+  void testUpdateVotes_nullIds() {
     initResource();
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate();
     voteUpdate.setVote(true);
@@ -78,7 +74,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_noIds() {
+  void testUpdateVotes_noIds() {
     initResource();
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", new ArrayList<>());
     Response response = resource.updateVotes(authUser,
@@ -88,8 +84,7 @@ public class VoteResourceTest {
 
 
   @Test
-  public void testUpdateVotes_noVotesForIds() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testUpdateVotes_noVotesForIds() {
     when(voteService.findVotesByIds(any())).thenReturn(Collections.emptyList());
     initResource();
 
@@ -100,9 +95,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_noVoteValue() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.findVotesByIds(any())).thenReturn(List.of(vote));
+  void testUpdateVotes_noVoteValue() {
     initResource();
 
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate();
@@ -115,7 +108,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_invalidUser() {
+  void testUpdateVotes_invalidUser() {
     user.setUserId(1);
     vote.setUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -129,10 +122,9 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_closedElection() {
+  void testUpdateVotes_closedElection() {
     user.setUserId(1);
     vote.setUserId(1);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new IllegalArgumentException()).when(voteService).findVotesByIds(any());
     initResource();
 
@@ -143,7 +135,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allMemberVotes() {
+  void testUpdateVotes_allMemberVotes() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setType("DAC");
@@ -165,7 +157,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allYes_allRP() {
+  void testUpdateVotes_allYes_allRP() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setType("Chairperson");
@@ -192,7 +184,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allNo_allRP() {
+  void testUpdateVotes_allNo_allRP() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setType("Chairperson");
@@ -214,7 +206,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allYes_allDataAccess_AllCards() {
+  void testUpdateVotes_allYes_allDataAccess_AllCards() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setVoteId(1);
@@ -245,7 +237,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allNo_allDataAccess_AllCards() {
+  void testUpdateVotes_allNo_allDataAccess_AllCards() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setVoteId(1);
@@ -263,11 +255,6 @@ public class VoteResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
         .thenReturn(List.of(vote, voteTwo));
-    when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
-        .thenReturn(List.of(election));
-    when(electionService.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
-        .thenReturn(List.of(election));
-
     initResource();
 
     Response response = resource.updateVotes(authUser,
@@ -276,7 +263,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_allYes_allDataAccess_NotAllCards() {
+  void testUpdateVotes_allYes_allDataAccess_NotAllCards() {
     user.setUserId(1);
     vote.setUserId(1);
     vote.setVoteId(1);
@@ -294,8 +281,6 @@ public class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
-        .thenReturn(List.of(vote, voteTwo));
     when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
         .thenReturn(List.of(election, electionTwo));
     when(electionService.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
@@ -308,7 +293,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVotes_noRationale() {
+  void testUpdateVotes_noRationale() {
     user.setUserId(1);
     vote.setUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -325,7 +310,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVoteRationale_InvalidJson() {
+  void testUpdateVoteRationale_InvalidJson() {
     String invalidJson = "[]";
     initResource();
 
@@ -334,7 +319,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVoteRationale_EmptyVoteIds() {
+  void testUpdateVoteRationale_EmptyVoteIds() {
     Vote.RationaleUpdate update = new Vote.RationaleUpdate();
     update.setRationale("Rationale");
     initResource();
@@ -344,7 +329,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVoteRationale_NoVotesFound() {
+  void testUpdateVoteRationale_NoVotesFound() {
     user.setUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(voteService.findVotesByIds(any())).thenReturn(List.of());
@@ -358,7 +343,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVoteRationale_UserNotOwnerOfVotes() {
+  void testUpdateVoteRationale_UserNotOwnerOfVotes() {
     user.setUserId(1);
     vote.setUserId(2);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -373,7 +358,7 @@ public class VoteResourceTest {
   }
 
   @Test
-  public void testUpdateVoteRationale_Success() {
+  void testUpdateVoteRationale_Success() {
     user.setUserId(1);
     vote.setUserId(1);
     when(userService.findUserByEmail(any())).thenReturn(user);

@@ -12,20 +12,18 @@ import java.nio.charset.Charset;
 import org.eclipse.jetty.server.Request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class ErrorResourceTest {
+@ExtendWith(MockitoExtension.class)
+class ErrorResourceTest {
 
   @Mock
   private Request request;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   @Test
-  public void testNotFound() {
+  void testNotFound() {
     ErrorResource resource = new ErrorResource();
     when(request.getOriginalURI()).thenReturn("not_found");
     try (Response response = resource.notFound(request)) {
@@ -34,7 +32,7 @@ public class ErrorResourceTest {
   }
 
   @Test
-  public void testNotFoundDecoded() {
+  void testNotFoundDecoded() {
     String unicode = "¥";
     String encoded = URLEncoder.encode(unicode, Charset.defaultCharset());
     ErrorResource resource = new ErrorResource();
