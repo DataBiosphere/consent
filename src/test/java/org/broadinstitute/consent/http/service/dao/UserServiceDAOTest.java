@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Date;
 import java.util.Optional;

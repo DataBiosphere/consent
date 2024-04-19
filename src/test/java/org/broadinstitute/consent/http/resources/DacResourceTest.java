@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -67,7 +66,6 @@ class DacResourceTest {
 
   @BeforeEach
   void setUp() {
-    openMocks(this);
     dacResource = new DacResource(dacService, userService, datasetService, elasticSearchService);
   }
 
