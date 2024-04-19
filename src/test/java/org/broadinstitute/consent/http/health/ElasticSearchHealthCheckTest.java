@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.health;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -16,10 +15,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
-public class ElasticSearchHealthCheckTest implements WithMockServer {
+@ExtendWith(MockitoExtension.class)
+class ElasticSearchHealthCheckTest implements WithMockServer {
 
   private ElasticSearchHealthCheck healthCheck;
   private ElasticSearchConfiguration config;
@@ -28,18 +30,17 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
   private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     container.start();
   }
 
   @AfterAll
-  public static void tearDown() {
+  static void tearDown() {
     container.stop();
   }
 
   @BeforeEach
-  public void init() {
-    openMocks(this);
+  void init() {
 
     config = new ElasticSearchConfiguration();
     config.setServers(Collections.singletonList("localhost"));
@@ -63,7 +64,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
   }
 
   @Test
-  public void testCheckSuccessGreen() throws Exception {
+  void testCheckSuccessGreen() throws Exception {
     initHealthCheck("green", HttpStatusCodes.STATUS_CODE_OK);
 
     HealthCheck.Result result = healthCheck.check();
@@ -71,7 +72,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
   }
 
   @Test
-  public void testCheckSuccessYellow() throws Exception {
+  void testCheckSuccessYellow() throws Exception {
     initHealthCheck("yellow", HttpStatusCodes.STATUS_CODE_OK);
 
     HealthCheck.Result result = healthCheck.check();
@@ -79,7 +80,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
   }
 
   @Test
-  public void testCheckFailureRed() throws Exception {
+  void testCheckFailureRed() throws Exception {
     initHealthCheck("red", HttpStatusCodes.STATUS_CODE_OK);
 
     HealthCheck.Result result = healthCheck.check();
@@ -87,7 +88,7 @@ public class ElasticSearchHealthCheckTest implements WithMockServer {
   }
 
   @Test
-  public void testCheckServerFailure() throws Exception {
+  void testCheckServerFailure() throws Exception {
     initHealthCheck("green", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
 
     HealthCheck.Result result = healthCheck.check();
