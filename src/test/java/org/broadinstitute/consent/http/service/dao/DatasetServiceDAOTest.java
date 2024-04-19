@@ -44,6 +44,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteDataset() throws Exception {
+    Dataset dataset = createDataset();
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+    // Assert that the dataset is deleted:
+    Dataset deleted = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertNull(deleted);
+
+  }
+
+  @Test
   void testInsertDatasets() throws Exception {
 
     Dac dac = createDac();
@@ -71,7 +82,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     DatasetServiceDAO.DatasetInsert insert = new DatasetServiceDAO.DatasetInsert(
         RandomStringUtils.randomAlphabetic(20),
         dac.getDacId(),
-        new DataUseBuilder().setAddiction(true).setGeneralUse(true).build(),
+        new DataUseBuilder().setStigmatizeDiseases(true).setGeneralUse(true).build(),
         user.getUserId(),
         List.of(prop1, prop2),
         List.of(file1));
@@ -598,6 +609,32 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Dataset dataset = datasetDAO.findDatasetById(updatedStudy.getDatasetIds().stream().findFirst().get());
     assertNotNull(dataset.getNihInstitutionalCertificationFile());
     assertEquals(updatedFso2.getFileName(), dataset.getNihInstitutionalCertificationFile().getFileName());
+  }
+
+
+  @Test
+  void testDeleteStudy() throws Exception {
+    FileStorageObject fso1 = new FileStorageObject();
+    fso1.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    fso1.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso1.setFileName(RandomStringUtils.randomAlphabetic(10));
+
+    FileStorageObject fso2 = new FileStorageObject();
+    fso2.setMediaType(RandomStringUtils.randomAlphabetic(20));
+    fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    fso2.setBlobId(
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10)));
+    fso2.setFileName(RandomStringUtils.randomAlphabetic(10));
+    Study study = createStudy(List.of(fso1, fso2));
+
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
+    study.addDatasets(datasets);
+
+    serviceDAO.deleteStudy(study, createUser());
+    Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(deletedStudy);
   }
 
 

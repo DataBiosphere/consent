@@ -1,0 +1,23 @@
+get:
+  summary: Get Study Registration by Study Id
+  description: Finds Study in Dataset Registration Format
+  parameters:
+    - name: studyId
+      in: path
+      description: ID of the Study
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Study
+  responses:
+    200:
+      description: The Study Registration
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error

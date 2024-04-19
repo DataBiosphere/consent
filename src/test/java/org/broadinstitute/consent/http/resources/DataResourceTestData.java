@@ -127,7 +127,7 @@ public class DataResourceTestData {
         "alternativeDataSharingPlanDataReleased": true,
         "alternativeDataSharingPlanTargetDeliveryDate": "date",
         "alternativeDataSharingPlanTargetPublicReleaseDate": "date",
-        "alternativeDataSharingPlanControlledOpenAccess": "Open Access",
+        "alternativeDataSharingPlanAccessManagement": "Open Access",
         "consentGroups": [
           {
             "fileTypes": [{

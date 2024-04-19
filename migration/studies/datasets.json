@@ -1,0 +1,1143 @@
+{
+  "DUOS-000002" : {
+    "name" : "Melanoma_Regev",
+    "description" : "This project preformed single cell RNA-seq of >4000 cells from 19 patients with metastatic melanoma",
+    "dataTypes" : [
+      "scRNA",
+      "whole exome"
+    ],
+    "phenotype" : "melanoma",
+    "species" : "human",
+    "piName" : "Aviv Regev",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Melanoma_Regev",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Not Determined",
+    "numberOfParticipants" : 19
+  },
+  "DUOS-000003" : {
+    "name" : "DUOS-000003",
+    "description" : "Families with orphan diseases recruited by The Manton Center for Orphan Disease Research and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "orphan disease",
+    "species" : "human",
+    "piName" : "Pankaj Agrawal",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_Manton",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "other" : "Samples and information may not be sold for profit."
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 273
+  },
+  "DUOS-000004" : {
+    "name" : "CMG",
+    "description" : "Families with retinal diseases recruited by Eric Pierce (http://www.masseyeandear.org/find-a-physician/p/pierce-eric-a) and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "retinal disease",
+    "species" : "human",
+    "piName" : "Eric Pierce",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_Pierce",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 381
+  },
+  "DUOS-000005" : {
+    "name" : "CMG",
+    "description" : "Families with orphan diseases recruited by Sue White's team and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "orphan disease",
+    "species" : "human",
+    "piName" : "Sue White",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_White",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "nonProfitUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 258
+  },
+  "DUOS-000006" : {
+    "name" : "CMG",
+    "description" : "Families with neurological diseases recruited by Joseph Gleeson's team and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "primary brain disease",
+    "species" : "human",
+    "piName" : "Joseph Gleeson",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_Gleeson",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 1183
+  },
+  "DUOS-000007" : {
+    "name" : "CMG",
+    "description" : "Families with kidney diseases recruited by Friedhelm Hildebrandt's team and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "kidney disease",
+    "species" : "human",
+    "piName" : "Friedhelm Hildebrandt",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_Hildebrandt",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_557"
+      ]
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 412
+  },
+  "DUOS-000008" : {
+    "name" : "RGP",
+    "description" : "The Rare Genomes Project",
+    "dataTypes" : [
+      "Whole Genome"
+    ],
+    "phenotype" : "rare disease",
+    "species" : "human",
+    "piName" : "Heidi Rehm",
+    "dataSubmitterEmail" : "shall@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "RGP_MacArthur",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/broad-genomics-delivery/RGP_Rehm_RareDisease_WGS",
+    "numberOfParticipants" : 192
+  },
+  "DUOS-000104" : {
+    "name" : "CMG",
+    "description" : "Families with orphan diseases recruited by Sue White's team and sequenced through The Broad Center for Mendelian Genomics",
+    "dataTypes" : [
+      "DNA",
+      "whole exome"
+    ],
+    "phenotype" : "orphan disease",
+    "species" : "human",
+    "piName" : "Sue White",
+    "dataSubmitterEmail" : "smano@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CMG_VCGS",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "nonProfitUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#",
+    "numberOfParticipants" : 258
+  },
+  "DUOS-000105" : {
+    "name" : "Primate Retinal Cell Atlas",
+    "description" : "Single cell RNA-Seq of 2,383 human retinal cells",
+    "dataTypes" : [
+      "RNA-Seq"
+    ],
+    "phenotype" : "NA",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Joshua Sanes",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Primate Retinal Cell Atlas",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/PrimateRetinalCellAtlas-RegevSanes-Retina-BroadInstituteHarvardMCB-scRNA-Seq",
+    "numberOfParticipants" : 1
+  },
+  "DUOS-000106" : {
+    "name" : "MetastaticMelanoma_Regev",
+    "description" : "single-cell RNA-seq of >7000 cells from 31 patients",
+    "dataTypes" : [
+      "RNA-seq"
+    ],
+    "phenotype" : "Metatstatic Melanoma",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Ben Izar, Levi Garraway",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "MetastaticMelanoma_Regev",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#",
+    "numberOfParticipants" : 31
+  },
+  "DUOS-000107" : {
+    "name" : "Oncogenic programs in H3K27M gliomas",
+    "description" : "Full length single-cell RNA-seq (smart-seq2) of >3000 cells from 6 pediatric patients with H3K27M-midline glioma",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "Childhood Brain Stem Glioma",
+    "species" : "human",
+    "piName" : "Mariella Filbin, Aviv Regev, Brad Bernstein, Mario Suva,",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Oncogenic programs in H3K27M gliomas",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/H3K27M-midline%20gliomas-Regev-Bernstein-Suva-MGH-scRNA-Seq",
+    "numberOfParticipants" : 6
+  },
+  "DUOS-000108" : {
+    "name" : "oligodendroglioma scRNA-seq - Suva",
+    "description" : "Full length single-cell RNA-seq (SMART-seq2) of >4000 cells from patients with IDH-mutant, 1p/19q co-deleted oligodendroglioma",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "oligodendroglioma",
+    "species" : "human",
+    "piName" : "Aviv Regev, Mario Suva",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "oligodendroglioma scRNA-seq - Suva",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1319"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/IDH-mutant-oligodendroglioma-Regev-Suva-MGH-scRNA-Seq",
+    "numberOfParticipants" : 6
+  },
+  "DUOS-000109" : {
+    "name" : "IDH-mutant astrocytoma - Suva",
+    "description" : "Combined dataset of full length scRNA-seq data (SMART-seq2) and 10X Genomics 3' RNA-seq for >9,000 cells from 10 patients with IDH-mutant astrocytoma",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "astrocytoma",
+    "species" : "human",
+    "piName" : "Aviv Regev, Mario Suva",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "IDH-mutant astrocytoma - Suva",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1319"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/IDH-mutant-gliomas-Regev-Suva-MGH-scRNA-Seq",
+    "numberOfParticipants" : 10
+  },
+  "DUOS-000110" : {
+    "name" : "Ulcerative_Colitis_in_Colon_Regev_Xavier",
+    "description" : "Single cell RNA-seq of colon biopsies from 18 UC patients and 12 controls.",
+    "dataTypes" : [
+      "RNA-seq"
+    ],
+    "phenotype" : "ulcerative colitis",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Ramnik Xavier, Bruce Johnson",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Ulcerative_Colitis_in_Colon_Regev_Xavier",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_0050589"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/UlcerativeColitisColon-RegevXavier-UlcerativeColitis-Broad-scRNASeq",
+    "numberOfParticipants" : 30
+  },
+  "DUOS-000111" : {
+    "name" : "Tumor Toolbox",
+    "description" : "Toolbox for processing fresh and frozen clinical tumor samples using single cell and single nuclei RNA-Seq",
+    "dataTypes" : [
+      "RNA-Seq"
+    ],
+    "phenotype" : "Patients with non-small cell lung carcinoma for which a fresh or frozen tumor sample was available for single cell or single nucleus RNA-Seq analysis.",
+    "species" : "human",
+    "piName" : "Aviv Regev, Bruce Johnson, Mario Suva, Michael Dyer, Suzanne Baker, Catherine Wu, Charles Yoon",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "TumorToolbox-RegevRosen-AdultPediatricTumorsHMB-HTAPP-scRNASeqsnRNASeq",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/TumorToolbox-RegevRosen-AdultPediatricTumorsHMB-HTAPP-scRNASeqsnRNASeq",
+    "numberOfParticipants" : 2
+  },
+  "DUOS-000112" : {
+    "name" : "Tumor Toolbox",
+    "description" : "Toolbox for processing fresh and frozen clinical tumor samples using single cell and single nuclei RNA-Seq",
+    "dataTypes" : [
+      "RNA-Seq"
+    ],
+    "phenotype" : "Patients with metastatic breast cancer for which a fresh or frozen tumor sample was available for single cell or single nucleus RNA-Seq analysis.",
+    "species" : "human",
+    "piName" : "Aviv Regev, Bruce Johnson, Mario Suva, Michael Dyer, Suzanne Baker, Catherine Wu, Charles Yoon",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "TumorToolbox-RegevRosen-AdultPediatricTumorsDS-BC-HTAPP-scRNASeqsnRNASeq",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1612"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/TumorToolbox-RegevRosen-AdultPediatricTumorsDS-BC-HTAPP-scRNASeqsnRNASeq",
+    "numberOfParticipants" : 6
+  },
+  "DUOS-000113" : {
+    "name" : "Tumor Toolbox",
+    "description" : "Toolbox for processing fresh and frozen clinical tumor samples using single cell and single nuclei RNA-Seq",
+    "dataTypes" : [
+      "RNA-Seq"
+    ],
+    "phenotype" : "Patients with neuroblastoma or melanoma for which a fresh or frozen tumor sample was available for single cell or single nucleus RNA-Seq analysis.",
+    "species" : "human",
+    "piName" : "Aviv Regev, Bruce Johnson, Mario Suva, Michael Dyer, Suzanne Baker, Catherine Wu, Charles Yoon",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "TumorToolbox-RegevRosen-AdultPediatricTumorsDS-C-HTAPP-scRNASeqsnRNASeq",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/TumorToolbox-RegevRosen-AdultPediatricTumorsDS-C-HTAPP-scRNASeqsnRNASeq",
+    "numberOfParticipants" : 3
+  },
+  "DUOS-000114" : {
+    "name" : "Tumor Toolbox",
+    "description" : "Toolbox for processing fresh and frozen clinical tumor samples using single cell and single nuclei RNA-Seq",
+    "dataTypes" : [
+      "RNA-Seq"
+    ],
+    "phenotype" : "Patients with ovarian cancer, neuroblastoma, glioblastoma, pediatric high-grade glioma, chronic lymphocytic leukemia, or pediatric sarcoma for which a fresh or frozen tumor sample was available for single cell or single nucleus RNA-Seq analysis.",
+    "species" : "human",
+    "piName" : "Aviv Regev, Bruce Johnson, Mario Suva, Michael Dyer, Suzanne Baker, Catherine Wu, Charles Yoon",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "TumorToolbox-RegevRosen-AdultPediatricTumors-HTAPP-scRNASeqsnRNASeq",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/TumorToolbox-RegevRosen-AdultPediatricTumors-HTAPP-scRNASeqsnRNASeq",
+    "numberOfParticipants" : 11
+  },
+  "DUOS-000115" : {
+    "name" : "Androgen Deprivation Prostate",
+    "description" : "single cell RNA-seq of >4000 benign prostate cells from 8 patients with localized prostate cancer, untreated or undergoing androgen deprivation treatment.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "Localized Prostate Cancer",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Charles Sawyers",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "AndrogenDeprivationProstate-SawyersRegev-Prostate-MSKCCBroad",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/AndrogenDeprivationProstate-SawyersRegev-Prostate-MSKCCBroad-scRNASeq",
+    "numberOfParticipants" : 8
+  },
+  "DUOS-000116" : {
+    "name" : "Head and Neck Cancer_HNSCC_Bradley Bernstein",
+    "description" : "Single-Cell RNA-seq of >6000 cells from 18 patients with primary and metastatic head and neck cancer",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "head and neck cancer",
+    "species" : "human",
+    "piName" : "Aviv Regev, Bruce Johnson, Bradley Bernstein",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Head and Neck Cancer_HNSCC_Bradley Bernstein",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/HNSCC-Regev-Bernstein-MGH-scRNA-Seq/data",
+    "numberOfParticipants" : 18
+  },
+  "DUOS-000117" : {
+    "name" : "GBM-SuvaTirosh-CellularStates-MGH-scRNASeq",
+    "description" : "Single cell RNA-seq of >24,000 cells from 20 adult and 8 pediatric patients with glioblastoma. https://doi.org/10.1016/j.cell.2019.06.024",
+    "dataTypes" : [
+      "scRNA-seq"
+    ],
+    "phenotype" : "Glioblastoma",
+    "species" : "human",
+    "piName" : "Aviv Regev, Mario Suva, Mariella Filbin",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "GBM-SuvaTirosh-CellularStates-MGH-scRNASeq",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/Glioblastoma2-SuvaTiroshRegev-CellularStates-MGH-scRNASeq/data",
+    "numberOfParticipants" : 28
+  },
+  "DUOS-000118" : {
+    "name" : "Ascites-Regev-OvarianCancer-DFCI-scRNASeq",
+    "description" : "single cell RNA-seq of >11,000 cells from ascites samples from 11 patients with ovarian cancer.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "ovarian cancer",
+    "species" : "Human",
+    "piName" : "Aviv Regev",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Ascites-Regev-OvarianCancer-DFCI-scRNASeq",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/%20Ascites-Regev-OvarianCancer-DFCI-scRNASeq",
+    "numberOfParticipants" : 11
+  },
+  "DUOS-000119" : {
+    "name" : "Human Colon ENS Atlas Regev/Xavier",
+    "description" : "Single nucleus RNA-seq of 436,202 nuclei from colon myenteric plexus",
+    "dataTypes" : [
+      "snRNA-Seq"
+    ],
+    "phenotype" : "Colorectal Cancer",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Ramnik Xavier",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Human Colon ENS Atlas Regev/Xavier",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 16
+  },
+  "DUOS-000120" : {
+    "name" : "Single-cell RNA-seq of pediatric ependymoma",
+    "description" : "Single-cell RNA-seq (Smart-seq2) of 20 pediatric ependymoma cases",
+    "dataTypes" : [
+      "scRNA-seq"
+    ],
+    "phenotype" : "Ependymoma",
+    "species" : "Human",
+    "piName" : "Mariella G. Filbin",
+    "dataSubmitterEmail" : "li_jiang@dfci.harvard.edu",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Single-cell RNA-seq of pediatric ependymoma",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 20
+  },
+  "DUOS-000121" : {
+    "name" : "Human Embryonic Stem Cell Whole Genome Sequencing",
+    "description" : "Whole genome sequences of human embryonic stem cell (hESC) lines, and additional 'village data'. Once access is approved, please contact hscgp@broadinstitute.org in order to gain full access to our data portal hscgp.broadinstitute.org",
+    "dataTypes" : [
+      "WGS hg19",
+      "hg38"
+    ],
+    "species" : "Human",
+    "piName" : "Steve McCarroll, Florian Merkle",
+    "dataSubmitterEmail" : "neumann@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 121
+  },
+  "DUOS-000122" : {
+    "name" : "ImmuneSepsisSignature-HacohenGoldbergBlainey",
+    "description" : "Single-cell RNA-seq (Smart-seq2) of 20 pediatric ependymoma cases",
+    "dataTypes" : [
+      "RNA-seq"
+    ],
+    "phenotype" : "Sepsis",
+    "species" : "Human",
+    "piName" : "Nir Hacohen",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "ImmuneSepsisSignature-HacohenGoldbergBlainey",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/ImmuneSepsisSignature-HacohenGoldbergBlainey-Sepsis-MGHBWH-scRNASeq",
+    "numberOfParticipants" : 65
+  },
+  "DUOS-000123" : {
+    "name" : "Synovial_Sarcoma-Suva_Riggi_Regev",
+    "description" : "Single-cell RNA-Seq data obtained from synovial sarcoma tumors",
+    "dataTypes" : [
+      "scRNA-seq"
+    ],
+    "phenotype" : "Synovial Sarcoma Cancer",
+    "species" : "Human",
+    "piName" : "Mario L. Suva, Nicolo Riggi, Aviv Regev",
+    "dataSubmitterEmail" : "bhaas@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Synovial_Sarcoma-Suva_Riggi_Regev",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 10
+  },
+  "DUOS-000124" : {
+    "name" : "Multi-modal pooled Perturb-CITE-Seq screens in patient models define novel mechanisms of cancer immune evasion",
+    "description" : "Patient-derived melanoma cells",
+    "dataTypes" : [
+      "scRNA-seq",
+      "CITE-seq",
+      "Perturb-seq"
+    ],
+    "phenotype" : "Melanoma",
+    "species" : "Human",
+    "piName" : "Aviv Regev, Benjamin Izar",
+    "dataSubmitterEmail" : "cfrangie@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Multi-modal pooled Perturb-CITE-Seq screens in patient models define novel mechanisms of cancer immune evasion",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_162"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-melanoma/Melanoma-RegevIzar-DFCI-scRNASeq",
+    "numberOfParticipants" : 1
+  },
+  "DUOS-000125" : {
+    "name" : "Sars-Cov2-Antibodies",
+    "description" : "Single cell RNA sequencing of transcriptome and V(D)J repertoire of SARS-CoV2 specific B cells",
+    "dataTypes" : [
+      "scRNA-seq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Ramnik Xavier",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Sars-Cov2-Antibodies",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/sars-duos/Sars-Cov2-Antibodies/data",
+    "numberOfParticipants" : 22
+  },
+  "DUOS-000126" : {
+    "name" : "COVID-19 Autopsy Tissue",
+    "description" : "COVID-19, caused by SARS-CoV-2, can result in acute respiratory distress syndrome and multiple-organ failure, but little is known about its pathophysiology. Here, we generated single-cell atlases of 23 lung, 16 kidney, 15 liver and 18 heart COVID-19 auto.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Alexandra-Chloe Villani",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "COVID-19_autopsy_tissue_RNASeq_02_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/kco-duos-1/COVID-19_autopsy_tissue_RNASeq_02_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "numberOfParticipants" : 7
+  },
+  "DUOS-000127" : {
+    "name" : "COVID-19 Autopsy Tissue",
+    "description" : "COVID-19, caused by SARS-CoV-2, can result in acute respiratory distress syndrome and multiple-organ failure, but little is known about its pathophysiology. Here, we generated single-cell atlases of 23 lung, 16 kidney, 15 liver and 18 heart COVID-19 auto.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Alexandra-Chloe Villani",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "COVID-19_autopsy_tissue_RNASeq_04_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/kco-duos-1/COVID-19_autopsy_tissue_RNASeq_04_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "numberOfParticipants" : 4
+  },
+  "DUOS-000128" : {
+    "name" : "COVID-19 Autopsy Tissue",
+    "description" : "COVID-19, caused by SARS-CoV-2, can result in acute respiratory distress syndrome and multiple-organ failure, but little is known about its pathophysiology. Here, we generated single-cell atlases of 23 lung, 16 kidney, 15 liver and 18 heart COVID-19 auto.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Alexandra-Chloe Villani",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "COVID-19_autopsy_tissue_RNASeq_12_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/kco-duos-1/COVID-19_autopsy_tissue_RNASeq_12_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "numberOfParticipants" : 5
+  },
+  "DUOS-000129" : {
+    "name" : "COVID-19 Autopsy Tissue",
+    "description" : "COVID-19, caused by SARS-CoV-2, can result in acute respiratory distress syndrome and multiple-organ failure, but little is known about its pathophysiology. Here, we generated single-cell atlases of 23 lung, 16 kidney, 15 liver and 18 heart COVID-19 auto.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Alexandra-Chloe Villani",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "COVID-19_autopsy_tissue_RNASeq_13_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "secondaryDataUse" : "OTH2: Secondary Other: Research that includes the study of genetic predisposition is not permitted",
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/kco-duos-1/COVID-19_autopsy_tissue_RNASeq_13_ShalekVillaniVlachosRozenblatt-RosenRegev",
+    "numberOfParticipants" : 8
+  },
+  "DUOS-000130" : {
+    "name" : "Columbia_University_NYP_COVID-19_Lung_Atlas_snRNA-seq_Izar",
+    "description" : "We performed single-nucleus RNA-sequencing of ~116,000 nuclei of lungs from 19 COVID-19 decedents who underwent rapid autopsy and 7 control lungs.",
+    "dataTypes" : [
+      "single-nucleus RNA-seq"
+    ],
+    "phenotype" : "COVID-19",
+    "species" : "Human",
+    "piName" : "Benjamin Izar",
+    "dataSubmitterEmail" : "benjamin.izar@gmail.com",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Columbia_University_NYP_COVID-19_Lung_Atlas_snRNA-seq_Izar",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "secondaryDataUse" : "OTH2: Secondary Other: Research that includes the study of genetic predisposition is not permitted",
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/jana032621/CUIMC-NYP-COVID-19-autopsy-lung-raw-data",
+    "numberOfParticipants" : 26
+  },
+  "DUOS-000131" : {
+    "name" : "LMD",
+    "description" : "scRNA-seq and WES (from cfDNA) from individuals associated with Prakadan et al, Genomic and transcriptomic correlates of immunotherapy response within the tumor microenvironment of leptomeningeal metastases",
+    "dataTypes" : [
+      "RNASeq",
+      "WES"
+    ],
+    "phenotype" : "Cancer",
+    "species" : "Human",
+    "piName" : "Alex Shalek, Priscilla Brastianos, Scott Carter",
+    "dataSubmitterEmail" : "pbrastianos@mgh.harvard.edu",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "LMD - General",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/carterlabtest/PrakadanEtAl2021_LMD_General",
+    "numberOfParticipants" : 19
+  },
+  "DUOS-000132" : {
+    "name" : "LMD",
+    "description" : "scRNA-seq and WES (from cfDNA) from individuals associated with Prakadan et al, Genomic and transcriptomic correlates of immunotherapy response within the tumor microenvironment of leptomeningeal metastases",
+    "dataTypes" : [
+      "RNASeq",
+      "WES"
+    ],
+    "phenotype" : "Cancer",
+    "species" : "Human",
+    "piName" : "Alex Shalek, Priscilla Brastianos, Scott Carter",
+    "dataSubmitterEmail" : "pbrastianos@mgh.harvard.edu",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "LMD - Brain Cancers",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1319"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/carterlabtest/PrakadanEtAl2021_LMD_BrainCancers",
+    "numberOfParticipants" : 19
+  },
+  "DUOS-000133" : {
+    "name" : "Glioma-Suva_Landau-Suva_Landau -Single-cell RRBS_RNAseq",
+    "description" : "Single-cell multi-omics profiling of 2,304 cells from 14 patients with glioma",
+    "dataTypes" : [
+      "Single Cell multiomics profiling"
+    ],
+    "phenotype" : "glioma",
+    "species" : "Human",
+    "piName" : "Mario Suva",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Glioma-Suva_Landau-Suva_Landau -Single-cell RRBS_RNAseq",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-duos-glioma/Glioma-Suva_Landau-Suva_Landau%20-Single-cell%20RRBS_RNAseq",
+    "numberOfParticipants" : 14
+  },
+  "DUOS-000134" : {
+    "name" : "Duplex-Repair enables highly accurate sequencing, despite DNA damage",
+    "description" : "Comparing Duplex-Repair to conventional ER/AT library construction by DNA sequencing of samples derived from breast cancer patients and healthy controls.",
+    "dataTypes" : [
+      "Pan-cancer hybrid capture panel",
+      "WGS"
+    ],
+    "phenotype" : "breast cancer",
+    "species" : "Human",
+    "piName" : "Viktor Adalsteinsson",
+    "dataSubmitterEmail" : "rhoades@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Duplex-Repair enables highly accurate sequencing, despite DNA damage",
+    "dataUse" : {
+      "hmbResearch" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/blood-biopsy/Duplex-Repair_manuscript_data",
+    "numberOfParticipants" : 11
+  },
+  "DUOS-000135" : {
+    "name" : "MAESTRO",
+    "description" : "Data repository for MAESTRO affords 'breadth and depth' for mutation testing (Gydush et al.)",
+    "dataTypes" : [
+      "WGS"
+    ],
+    "phenotype" : "Breast cancer, healthy donor",
+    "species" : "Human",
+    "piName" : "Viktor Adalsteinsson",
+    "dataSubmitterEmail" : "tblewett@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "MAESTRO",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_1612"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/blood-biopsy/MAESTRO",
+    "numberOfParticipants" : 513
+  },
+  "DUOS-000136" : {
+    "name" : "Genome-edited human cell melanoma models",
+    "description" : "Raw fastq files related to the datasets presented in Hodis, Torlai Triglia et al. Healthy human melanocytes were sequentially engineered to bear mutations in up to five genes, spanning six pathways commonly dysregulated in melanoma: CDKN2A (RB pathway), BR",
+    "dataTypes" : [
+      "scRNA-seq"
+    ],
+    "phenotype" : "Skin Melanoma",
+    "species" : "Human, Mouse",
+    "piName" : "Aviv Regev",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Genome-edited human cell melanoma models",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/kco-tech/EngineeredMelanocytes-Regev-Broad-Fastqs",
+    "numberOfParticipants" : 1
+  },
+  "DUOS-000137" : {
+    "name" : "DUOS_DUOvalidation_data",
+    "description" : "This data was used in the analysis of NIH data access requests, and the review of Broad consent forms for datasets in the Broad repository.",
+    "dataTypes" : [
+      "DUL-DAR statistics"
+    ],
+    "phenotype" : "-",
+    "species" : "-",
+    "piName" : "Anthony Philippakis",
+    "dataSubmitterEmail" : "jlawson@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "DUOS_DUOvalidation_data",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 0
+  },
+  "DUOS-000138" : {
+    "name" : "Healthy Human Kidney Slide-seqV2 Spatial Transcriptomics",
+    "description" : "Slide-seqV2 spatial transcriptomics performed on cortex and medulla of human kidneys",
+    "dataTypes" : [
+      "Slide-seqV2 spatial transcriptomics"
+    ],
+    "phenotype" : "-",
+    "species" : "Human",
+    "piName" : "Anna Greka",
+    "dataSubmitterEmail" : "agreka@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Healthy Human Kidney Slide-seqV2 Spatial Transcriptomics",
+    "dataUse" : {
+      "other" : "Disease Specific limited to gastroenterology, renal disease. Controlled-access for GSR is required."
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 9
+  },
+  "DUOS-000139" : {
+    "name" : "Human PDAC",
+    "description" : "Pancreatic ductal adenocarcinoma (PDAC) is a highly lethal and treatment-refractory cancer. Molecular stratification in pancreatic cancer remains rudimentary and does not yet inform clinical management or therapeutic development.",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "Pancreatic Ductal Adenocarcinoma (Treated and Untreated)",
+    "piName" : "Will Hwang",
+    "dataSubmitterEmail" : "whwang@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Human PDAC",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_26"
+      ]
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/regev-development/PDAC_TME",
+    "numberOfParticipants" : 43
+  },
+  "DUOS-000140" : {
+    "name" : "MIT Milk Study",
+    "description" : "scRNA-Seq data of cells from human breast milk collected longitudinally over the course of lactation",
+    "dataTypes" : [
+      "scRNA-Seq"
+    ],
+    "phenotype" : "Healthy",
+    "species" : "Human",
+    "piName" : "Alex Shalek, Bonnie Berger, Brittany Goods",
+    "dataSubmitterEmail" : "snyquist@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "MIT Milk Study",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/shalek-lab-firecloud/MIT%20Milk%20Study",
+    "numberOfParticipants" : 15
+  },
+  "DUOS-000143" : {
+    "name" : "RGP",
+    "description" : "Rare Genomes Project",
+    "dataTypes" : [
+      "WGS"
+    ],
+    "phenotype" : "Rare Disease",
+    "species" : "Human",
+    "piName" : "Heidi Rehm",
+    "dataSubmitterEmail" : "shall@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "RGP_Rehm_GRU",
+    "dataUse" : {
+      "generalUse" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/broad-genomics-delivery/RGP_Rehm_RareDisease_WGS_GRU",
+    "numberOfParticipants" : 1
+  },
+  "DUOS-000144" : {
+    "name" : "iNPH-Kuopio",
+    "description" : "The iNPH-Kuopio data set contains single-nuclei RNA-sequencing data and gene expression matrices on 58 high-quality frontal cortex (Brodmann Area 8 or 9) biopsies from individuals with suspected idiopathic normal pressure hydrocephalus who have variable de",
+    "dataTypes" : [
+      "snRNAseq"
+    ],
+    "phenotype" : "Normal Pressure Hydrocephalus, Alzheimer's Disease",
+    "species" : "Human",
+    "piName" : "Evan Macosko, Beth Stevens",
+    "dataSubmitterEmail" : "akane@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "iNPH-Kuopio",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_28",
+        "http://purl.obolibrary.org/obo/DOID_374",
+        "http://purl.obolibrary.org/obo/DOID_0014667",
+        "http://purl.obolibrary.org/obo/DOID_150",
+        "http://purl.obolibrary.org/obo/DOID_331",
+        "http://purl.obolibrary.org/obo/DOID_5614",
+        "http://purl.obolibrary.org/obo/DOID_5100",
+        "http://purl.obolibrary.org/obo/DOID_379",
+        "http://purl.obolibrary.org/obo/DOID_2952",
+        "http://purl.obolibrary.org/obo/DOID_0060322",
+        "http://purl.obolibrary.org/obo/DOID_1287",
+        "http://purl.obolibrary.org/obo/DOID_17",
+        "http://purl.obolibrary.org/obo/DOID_2914",
+        "http://purl.obolibrary.org/obo/DOID_9351",
+        "http://purl.obolibrary.org/obo/DOID_65"
+      ],
+      "nonProfitUse" : true,
+      "ethicsApprovalRequired" : true,
+      "secondaryOther": "Research in Adults only"
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/broad-cfos-data-platform1/iNPH-Kuopio",
+    "numberOfParticipants" : 58
+  },
+  "DUOS-000145" : {
+    "name" : "CD Atlas",
+    "description" : "This dataset presents single cell RNA sequencing from fresh biospies or resection tissue of the ileum and colon of 46 Crohn's disease patients and 25 healthy controls. Samples were either processed into separate epithelial and lamina propria fraction, or a",
+    "dataTypes" : [
+      "scRNA-Seq"
+    ],
+    "phenotype" : "Chron's Disease",
+    "species" : "Human",
+    "piName" : "Ramnik Xavier",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CD_Atlas_2021_PRISM",
+    "dataUse" : {
+      "diseaseRestrictions" : [
+        "http://purl.obolibrary.org/obo/DOID_0050589"
+      ],
+      "secondaryOther": "Genomic Summary Results can only be shared under controlled-access; General research use of aggregate level data is prohibited."
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/genomics-xavier-fc/CD_Atlas_2021_PRISM",
+    "numberOfParticipants" : 52
+  },
+  "DUOS-000146" : {
+    "name" : "CD Atlas",
+    "description" : "This dataset presents single cell RNA sequencing from fresh biospies or resection tissue of the ileum and colon of 46 Crohn's disease patients and 25 healthy controls. Samples were either processed into separate epithelial and lamina propria fraction, or a",
+    "dataTypes" : [
+      "scRNA-Seq"
+    ],
+    "phenotype" : "Crohn's Disease",
+    "species" : "Human",
+    "piName" : "Ramnik Xavier",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CD_Atlas_2021_GIDER",
+    "dataUse" : {
+      "other" : "Disease-related studies: Digestive system disease",
+      "secondaryOther": "Research is restricted to adults 18 years of age and older only"
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/genomics-xavier-fc/CD_Atlas_2021_GIDER",
+    "numberOfParticipants" : 8
+  },
+  "DUOS-000148" : {
+    "name" : "UCPlasmaCellRepertoire",
+    "description" : "We performed scRNAseq and BCR-sequencing on B cells isolated from the mucosa of ulcerative colitis patients or healthy controls",
+    "dataTypes" : [
+      "scRNAseq"
+    ],
+    "phenotype" : "Ulcerative Colitis",
+    "species" : "Human",
+    "piName" : "Ramnik Xavier",
+    "dataSubmitterEmail" : "chene@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "UCPlasmaCellRepertoire",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "otherSecondary" : "Genomic Summary Results are designated as SENSITIVE per NIH policy; general research use of aggregate-level data is prohibited"
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/microbiome-xavier-duos/UCPlasmaCellRepertoire",
+    "numberOfParticipants" : 21
+  },
+  "DUOS-000149" : {
+    "name" : "CODEC_paper_data",
+    "description" : "NGS data for CODEC manuscript",
+    "dataTypes" : [
+      "WGS",
+      "WES",
+      "hybrid capture"
+    ],
+    "phenotype" : "Cancer",
+    "species" : "Human",
+    "piName" : "Viktor Adalsteinsson",
+    "dataSubmitterEmail" : "ruolin@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CODEC_paper_data",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "ethicsApprovalRequired" : true
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/blood-biopsy/CODEC_paper_data",
+    "numberOfParticipants" : 31
+  },
+  "DUOS-000150" : {
+    "name" : "Stromal and immune cells in atrial disease",
+    "description" : "Single-cell mRNA sequencing was used to investigate the transcriptomic differences between non-cardiomyocytes FACS-purified from left atrial tissues collected from 7 patients with persistent atrial fibrillation undergoing surgical mitral valve repair and f",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "mitral valve insufficiency, atrial fibrillation",
+    "species" : "Human",
+    "piName" : "Maarten Hulsmans, Kamila Naxerova, Matthias Nahrendorf",
+    "dataSubmitterEmail" : "MHULSMANS@partners.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "Stromal and immune cells in atrial disease",
+    "dataUse" : {
+      "hmbResearch" : true,
+      "nonProfitUse" : true
+    },
+    "dacId" : 1,
+    "numberOfParticipants" : 12
+  },
+  "DUOS-000151" : {
+    "name" : "CIRM iMGL",
+    "description" : "This dataset provides single-cell RNAseq data for iMGLs, microglia-like cells differentiated from human stem cells. We provide scRNAseq data from iMGLs differentiated from H1 after challenging these cells with a variety of CNS substrates (myelin, synthetic",
+    "dataTypes" : [
+      "RNASeq"
+    ],
+    "phenotype" : "Alzheimer's disease, neurodegenerative disease",
+    "species" : "Human",
+    "piName" : "Beth Stevens, Evan Macosko",
+    "dataSubmitterEmail" : "mwons@broadinstitute.org",
+    "publicVisibility" : true,
+    "nihAnvilUse" : "I am not NHGRI funded and do not plan to store data in AnVIL",
+    "datasetName" : "CIRM iMGL",
+    "dataUse" : {
+      "generalUse" : true,
+      "secondaryOther": "Possible restriction on gamete research"
+    },
+    "dacId" : 1,
+    "dataLocation" : "Terra Workspace",
+    "url" : "https://app.terra.bio/#workspaces/broad-cfos-data-platform1/CIRM%20-%20iMGL",
+    "numberOfParticipants" : 18
+  }
+}

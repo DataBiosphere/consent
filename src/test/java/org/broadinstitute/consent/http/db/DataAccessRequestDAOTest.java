@@ -196,6 +196,66 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUnsupportedUnicodeDarInsert() {
+    String unsupportedUnicode = "\u0000";
+    DarCollection collection = createDarCollection();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collection.getDarCollectionId(),
+        referenceId,
+        collection.getCreateUserId(),
+        now, now, now, now,
+        data);
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(dar);
+    assertFalse(dar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
+  void testUnsupportedUnicodeDarUpdate() {
+    String unsupportedUnicode = "\u0000";
+    DarCollection collection = createDarCollection();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
+    assertNotNull(dar);
+    Date now = new Date();
+
+    String rus = RandomStringUtils.random(10, true, false);
+    dar.getData().setRus(rus + String.format(" %s ", unsupportedUnicode));
+    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), collection.getCreateUserId(),
+        now, now,
+        now, dar.getData());
+
+    DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertNotNull(updatedDar);
+    assertFalse(updatedDar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
+  void testUnsupportedUnicodeDraftDar() {
+    String unsupportedUnicode = "\u0000";
+    User user = createUser();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId,
+        user.getUserId(),
+        now,
+        now,
+        now,
+        now,
+        data
+    );
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(dar);
+    assertFalse(dar.getData().getRus().contains(unsupportedUnicode));
+  }
+
+  @Test
   void testInsertDraftDataAccessRequest() {
     DataAccessRequest dar = createDraftDataAccessRequest();
     assertNotNull(dar);
@@ -358,24 +418,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, returnedDARs.size());
   }
 
-
-  // findAllDataAccessRequestsByDatasetId should exclude archived DARs
-  @Test
-  void testFindAllByDatasetIdArchived() {
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Dataset dataset = createDARDAOTestDataset();
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
-        dataset.getDataSetId());
-    assertTrue(dars.isEmpty());
-
-    User user = createUserWithInstitution();
-    DataAccessRequest testDar = createDAR(user, dataset, darCode);
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-    List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
-        dataset.getDataSetId());
-    assertTrue(returnedDARs.isEmpty());
-  }
-
   // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
   @Test
   void testEnsureOnlyDataAccessRequestsByDatasetIdReturnsJustForSpecificDatasetId() {
@@ -412,10 +454,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         dataset1.getDataSetId());
     assertEquals(1, dars.size());
-    assertTrue(dars.get(0).datasetIds.contains(dataset1.getDataSetId()));
+    assertTrue(dars.get(0).getDatasetIds().contains(dataset1.getDataSetId()));
   }
 
   @Test
@@ -427,10 +469,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Dataset dataset2 = createDARDAOTestDataset();
 
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     User user1 = createUserWithInstitution();
@@ -440,14 +482,14 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest testDar2 = createDAR(user2, dataset2, darCode2);
     DataAccessRequest testDar3 = createDAR(user3, dataset2, darCode3);
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .isEmpty());
     assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .isEmpty());
 
     assertEquals(0,
-        dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
 
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -475,17 +517,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
     assertEquals(testDar1.getUserId(),
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
-            .get(0));
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
+            .get(0).getUserId());
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
             .size());
     assertEquals(testDar2.getUserId(),
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
-            .get(0));
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId())
+            .get(0).getUserId());
 
     Election e3 = createDataAccessElection(testDar3.getReferenceId(), dataset2.getDataSetId());
     Vote v3 = createFinalVote(dataset2.getCreateUserId(), e3.getElectionId());
@@ -499,18 +541,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    assertEquals(2,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
-            .size());
-    assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
-            .contains(testDar3.getUserId()));
-    assertTrue(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
-            .contains(testDar2.getUserId()));
-    assertFalse(
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset2.getDataSetId())
-            .contains(testDar1.getUserId()));
+    List<DataAccessRequest> approvedDars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset2.getDataSetId());
+    List<Integer> approvedDarIds = approvedDars.stream().map(DataAccessRequest::getId).toList();
+    assertEquals(2, approvedDarIds.size());
+    assertTrue(approvedDarIds.contains(testDar3.getId()));
+    assertTrue(approvedDarIds.contains(testDar2.getId()));
+    assertFalse(approvedDarIds.contains(testDar1.getId()));
   }
 
   /**
@@ -537,7 +573,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(1,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
 
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDataSetId());
@@ -553,7 +589,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(0,
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(dataset1.getDataSetId())
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDataSetId())
             .size());
   }
 

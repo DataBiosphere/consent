@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -14,16 +15,26 @@ import java.util.Optional;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.elastic_search.DacTerm;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
+import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
+import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -33,21 +44,33 @@ public class ElasticSearchService implements ConsentLogger {
 
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
+  private final DacDAO dacDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
+  private final InstitutionDAO institutionDAO;
+  private final DatasetDAO datasetDAO;
+  private final StudyDAO studyDAO;
 
   public ElasticSearchService(
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
+      DacDAO dacDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
-      OntologyService ontologyService) {
+      OntologyService ontologyService,
+      InstitutionDAO institutionDAO,
+      DatasetDAO datasetDAO,
+      StudyDAO studyDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
+    this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
+    this.institutionDAO = institutionDAO;
+    this.datasetDAO = datasetDAO;
+    this.studyDAO = studyDAO;
   }
 
 
@@ -188,6 +211,30 @@ public class ElasticSearchService implements ConsentLogger {
     return term;
   }
 
+  public UserTerm toUserTerm(User user) {
+    if (Objects.isNull(user)) {
+      return null;
+    }
+    InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
+        toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
+        null;
+    return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
+  }
+
+  public DacTerm toDacTerm(Dac dac) {
+    if (Objects.isNull(dac)) {
+      return null;
+    }
+    return new DacTerm(dac.getDacId(), dac.getName(), dac.getEmail());
+  }
+
+  public InstitutionTerm toInstitutionTerm(Institution institution) {
+    if (Objects.isNull(institution)) {
+      return null;
+    }
+    return new InstitutionTerm(institution.getId(), institution.getName());
+  }
+
   public Response indexDataset(Dataset dataset) throws IOException {
     return indexDatasetTerms(List.of(toDatasetTerm(dataset)));
   }
@@ -195,6 +242,21 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexDatasets(List<Dataset> datasets) throws IOException {
     List<DatasetTerm> datasetTerms = datasets.stream().map(this::toDatasetTerm).toList();
     return indexDatasetTerms(datasetTerms);
+  }
+
+  public Response indexStudy(Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    // The dao call above does not populate its datasets so we need to check for datasetIds
+    if (study != null && study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
+      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+      try (Response response = indexDatasets(datasets)) {
+        return response;
+      } catch (Exception e) {
+        logException(String.format("Failed to index datasets for study id: %d", studyId), e);
+        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+      }
+    }
+    return Response.status(Status.NOT_FOUND).build();
   }
 
   public DatasetTerm toDatasetTerm(Dataset dataset) {
@@ -205,17 +267,38 @@ public class ElasticSearchService implements ConsentLogger {
     DatasetTerm term = new DatasetTerm();
 
     term.setDatasetId(dataset.getDataSetId());
+    Optional.ofNullable(dataset.getCreateUserId()).ifPresent(userId -> {
+      User user = userDAO.findUserById(dataset.getCreateUserId());
+      term.setCreateUserId(dataset.getCreateUserId());
+      term.setCreateUserDisplayName(user.getDisplayName());
+      term.setSubmitter(toUserTerm(user));
+    });
+    Optional.ofNullable(dataset.getUpdateUserId())
+        .map(userDAO::findUserById)
+        .map(this::toUserTerm)
+        .ifPresent(term::setUpdateUser);
     term.setDatasetIdentifier(dataset.getDatasetIdentifier());
+    term.setDeletable(dataset.getDeletable());
+    term.setDatasetName(dataset.getName());
 
     if (Objects.nonNull(dataset.getStudy())) {
       term.setStudy(toStudyTerm(dataset.getStudy()));
     }
 
-    term.setDacId(dataset.getDacId());
+    Optional.ofNullable(dataset.getDacId()).ifPresent(dacId -> {
+      Dac dac = dacDAO.findById(dataset.getDacId());
+      term.setDacId(dataset.getDacId());
+      if (Objects.nonNull(dataset.getDacApproval())) {
+        term.setDacApproval(dataset.getDacApproval());
+      }
+      term.setDac(toDacTerm(dac));
+    });
 
-    List<Integer> approvedUserIds =
-        dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
-            dataset.getDataSetId());
+    List<Integer> approvedUserIds = dataAccessRequestDAO
+        .findApprovedDARsByDatasetId(dataset.getDataSetId())
+        .stream()
+        .map(DataAccessRequest::getUserId)
+        .toList();
 
     if (!approvedUserIds.isEmpty()) {
       term.setApprovedUserIds(approvedUserIds);
@@ -226,15 +309,22 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     findDatasetProperty(
-        dataset.getProperties(), "openAccess"
+        dataset.getProperties(), "accessManagement"
     ).ifPresent(
-        datasetProperty -> term.setOpenAccess((Boolean) datasetProperty.getPropertyValue())
+        datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
     );
 
-    findDatasetProperty(
-        dataset.getProperties(), "numberOfParticipants"
+    findFirstDatasetPropertyByName(
+        dataset.getProperties(), "# of participants"
     ).ifPresent(
-        datasetProperty -> term.setParticipantCount((Integer) datasetProperty.getPropertyValue())
+        datasetProperty -> {
+          String value = datasetProperty.getPropertyValueAsString();
+          try {
+            term.setParticipantCount(Integer.valueOf(value));
+          } catch (NumberFormatException e) {
+            logWarn(String.format("Unable to coerce participant count to integer: %s for dataset: %s", value, dataset.getDatasetIdentifier()));
+          }
+        }
     );
 
     findDatasetProperty(
@@ -255,24 +345,28 @@ public class ElasticSearchService implements ConsentLogger {
   Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,
       String schemaProp) {
     return
-        props
+        (props == null) ? Optional.empty() : props
             .stream()
             .filter(p -> Objects.nonNull(p.getSchemaProperty()))
             .filter(p -> p.getSchemaProperty().equals(schemaProp))
             .findFirst();
   }
 
-  Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
-    if (Objects.isNull(props)) {
-      return Optional.empty();
-    }
-
+  Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
+      String propertyName) {
     return
-        props
+        (props == null) ? Optional.empty(): props
+            .stream()
+            .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
+            .findFirst();
+  }
+
+  Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
+    return
+        (props == null) ? Optional.empty() : props
             .stream()
             .filter(p -> p.getKey().equals(key))
             .findFirst();
   }
-
 
 }

@@ -1,0 +1,33 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2023-12-18-dataset-study-indexes.xml" author="grushton">
+    <createIndex indexName="idx_dataset_study_id" tableName="dataset">
+      <column name="study_id"/>
+    </createIndex>
+    <createIndex indexName="idx_dataset_prop_schema" tableName="dataset_property">
+      <column name="schema_property"/>
+    </createIndex>
+    <createIndex indexName="idx_study_uuid" tableName="study">
+      <column name="uuid"/>
+    </createIndex>
+    <createIndex indexName="idx_study_prop_study_id" tableName="study_property">
+      <column name="study_id"/>
+    </createIndex>
+    <createIndex indexName="idx_study_prop_key" tableName="study_property">
+      <column name="key"/>
+    </createIndex>
+    <createIndex indexName="idx_study_prop_type" tableName="study_property">
+      <column name="type"/>
+    </createIndex>
+    <createIndex indexName="idx_fso_entity" tableName="file_storage_object">
+      <column name="entity_id"/>
+    </createIndex>
+    <createIndex indexName="idx_fso_category" tableName="file_storage_object">
+      <column name="category"/>
+    </createIndex>
+    <createIndex indexName="idx_fso_deleted" tableName="file_storage_object">
+      <column name="deleted"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

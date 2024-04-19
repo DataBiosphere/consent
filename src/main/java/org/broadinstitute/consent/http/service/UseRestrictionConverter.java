@@ -1,115 +1,29 @@
 package org.broadinstitute.consent.http.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-@SuppressWarnings("WeakerAccess")
-public class UseRestrictionConverter {
+public class UseRestrictionConverter implements ConsentLogger {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger("UseRestrictionConverter");
-  private static final ObjectMapper mapper = new ObjectMapper();
   private final ServicesConfiguration servicesConfiguration;
   private final Client client;
 
   public UseRestrictionConverter(Client client, ServicesConfiguration config) {
     this.client = client;
     this.servicesConfiguration = config;
-  }
-
-  /**
-   * This method, and its counterpart that processes a DataAccessRequest, translates DAR questions
-   * to a DataUse
-   *
-   * @param json String in json form
-   * @return DataUse
-   */
-  @SuppressWarnings("unchecked")
-  public DataUse parseDataUsePurpose(String json) {
-    Map<String, Object> form = parseAsMap(json);
-    DataUse dataUse = new DataUse();
-
-    //
-    //    Research related entries
-    //
-    if (Boolean.parseBoolean(form.getOrDefault("methods", false).toString())) {
-      dataUse.setMethodsResearch(true);
-    }
-    if (Boolean.parseBoolean(form.getOrDefault("population", false).toString())) {
-      dataUse.setPopulationStructure(true);
-    }
-    if (Boolean.parseBoolean(form.getOrDefault("controls", false).toString())) {
-      dataUse.setControlSetOption("Yes");
-    }
-
-    //
-    //    Diseases related entries
-    //
-    ArrayList<HashMap<String, String>> ontologies = (ArrayList<HashMap<String, String>>) form.get(
-        "ontologies");
-    if (CollectionUtils.isNotEmpty(ontologies)) {
-      List<String> restrictions = ontologies
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(hashMap -> hashMap.containsKey("id"))
-          .map(hashMap -> hashMap.get("id"))
-          .collect(Collectors.toList());
-      if (!restrictions.isEmpty()) {
-        dataUse.setDiseaseRestrictions(restrictions);
-      }
-    }
-
-    //
-    //    gender, age and commercial status entries
-    //
-    boolean forProfitOnly = Boolean.parseBoolean(form.getOrDefault("forProfit", false).toString());
-    dataUse.setCommercialUse(forProfitOnly);
-
-    // limited to one gender + children analysis
-    boolean oneGenderOnly = Boolean.parseBoolean(form.getOrDefault("onegender", false).toString());
-    String selectedGender = (String) form.getOrDefault("gender", "X");
-    boolean pediatricsOnly = Boolean.parseBoolean(form.getOrDefault("pediatric", false).toString());
-
-    if (oneGenderOnly) {
-      if (selectedGender.equalsIgnoreCase("M")) {
-        dataUse.setGender("Male");
-      } else if (selectedGender.equalsIgnoreCase("F")) {
-        dataUse.setGender("Female");
-      }
-    }
-
-    if (pediatricsOnly) {
-      dataUse.setPediatric(true);
-    }
-
-    if (Boolean.parseBoolean(form.getOrDefault("poa", false).toString())) {
-      dataUse.setPopulationOriginsAncestry(true);
-    }
-
-    if (Boolean.parseBoolean(form.getOrDefault("hmb", false).toString())) {
-      dataUse.setHmbResearch(true);
-    }
-
-    return dataUse;
   }
 
   /**
@@ -124,15 +38,13 @@ public class UseRestrictionConverter {
       //
       //    Research related entries
       //
-      if (Objects.nonNull(dar.getData().getMethods())) {
+      if (Objects.nonNull(dar.getData().getMethods()) && Boolean.TRUE.equals(dar.getData().getMethods())) {
         dataUse.setMethodsResearch(dar.getData().getMethods());
       }
-      if (Objects.nonNull(dar.getData().getPopulation())) {
-        dataUse.setPopulationStructure(dar.getData().getPopulation());
+      if (Objects.nonNull(dar.getData().getPopulation()) && Boolean.TRUE.equals(dar.getData().getPopulation())) {
         dataUse.setPopulation(dar.getData().getPopulation());
       }
-      if (Objects.nonNull(dar.getData().getControls())) {
-        dataUse.setControlSetOption("Yes");
+      if (Objects.nonNull(dar.getData().getControls()) && Boolean.TRUE.equals(dar.getData().getControls())) {
         dataUse.setControls(dar.getData().getControls());
       }
 
@@ -140,61 +52,75 @@ public class UseRestrictionConverter {
       //    Diseases related entries
       //
 
-      List<String> ontologies = dar.getData().getOntologies()
-          .stream().map(OntologyEntry::getId).collect(Collectors.toList());
+      List<String> ontologies = dar.getData()
+          .getOntologies()
+          .stream()
+          .map(OntologyEntry::getId)
+          .toList();
       if (CollectionUtils.isNotEmpty(ontologies)) {
         dataUse.setDiseaseRestrictions(ontologies);
       }
 
-      //
-      //    gender, age and commercial status entries
-      //
+      // commercial status
       if (Objects.nonNull(dar.getData().getForProfit())) {
-        dataUse.setCommercialUse(dar.getData().getForProfit());
+        Boolean isForProfit = Boolean.TRUE.equals(dar.getData().getForProfit());
+        dataUse.setNonProfitUse(!isForProfit);
       }
 
-      // limited to one gender + children analysis
-      if (Objects.nonNull(dar.getData().getOneGender()) && Objects.nonNull(
-          dar.getData().getGender())) {
-        boolean oneGenderOnly = dar.getData().getOneGender();
+      // gender
+      if (Objects.nonNull(dar.getData().getGender())) {
         String selectedGender = dar.getData().getGender();
-        if (oneGenderOnly) {
-          if (selectedGender.equalsIgnoreCase("M")) {
-            dataUse.setGender("Male");
-          } else if (selectedGender.equalsIgnoreCase("F")) {
-            dataUse.setGender("Female");
-          }
+        if (selectedGender.equalsIgnoreCase("M")) {
+          dataUse.setGender("Male");
+        } else if (selectedGender.equalsIgnoreCase("F")) {
+          dataUse.setGender("Female");
         }
       }
-      if (Objects.nonNull(dar.getData().getPediatric())) {
-        if (dar.getData().getPediatric()) {
+      // pediatric
+      if (Objects.nonNull(dar.getData().getPediatric()) && (Boolean.TRUE.equals(dar.getData().getPediatric()))) {
           dataUse.setPediatric(true);
-        }
+
       }
 
-      if (Objects.nonNull(dar.getData().getPoa())) {
-        if (dar.getData().getPoa()) {
-          dataUse.setPopulationOriginsAncestry(true);
-        }
-      }
-
-      if (Objects.nonNull(dar.getData().getHmb())) {
-        if (dar.getData().getHmb()) {
+      if (Objects.nonNull(dar.getData().getHmb()) && (Boolean.TRUE.equals(dar.getData().getHmb()))) {
           dataUse.setHmbResearch(true);
-        }
+
       }
 
       // Other Conditions
-      if (Objects.nonNull(dar.getData().getOther())) {
-        dataUse.setOtherRestrictions(dar.getData().getOther());
-      }
-      if (Objects.nonNull(dar.getData().getOtherText())) {
+      if (Objects.nonNull(dar.getData().getOther())
+        && Boolean.TRUE.equals(dar.getData().getOther())
+        && Objects.nonNull(dar.getData().getOtherText())) {
         dataUse.setOther(dar.getData().getOtherText());
       }
 
-      if (Objects.nonNull(dar.getData().getNotHealth())) {
+      if ((Objects.nonNull(dar.getData().getIllegalBehavior())) && Boolean.TRUE.equals(dar.getData()
+          .getIllegalBehavior())) {
+        dataUse.setIllegalBehavior(dar.getData().getIllegalBehavior());
+      }
+
+      if ((Objects.nonNull(dar.getData().getSexualDiseases())) && Boolean.TRUE.equals(dar.getData()
+          .getSexualDiseases())) {
+        dataUse.setSexualDiseases(dar.getData().getSexualDiseases());
+      }
+
+      if ((Objects.nonNull(dar.getData().getStigmatizedDiseases())) && Boolean.TRUE.equals(dar.getData()
+          .getStigmatizedDiseases())) {
+        dataUse.setStigmatizeDiseases(dar.getData().getStigmatizedDiseases());
+      }
+
+      if ((Objects.nonNull(dar.getData().getVulnerablePopulation())) && Boolean.TRUE.equals(dar.getData()
+          .getVulnerablePopulation())) {
+        dataUse.setVulnerablePopulations(dar.getData().getVulnerablePopulation());
+      }
+
+      if ((Objects.nonNull(dar.getData().getPsychiatricTraits())) && Boolean.TRUE.equals(dar.getData()
+          .getPsychiatricTraits())) {
+        dataUse.setPsychologicalTraits(dar.getData().getPsychiatricTraits());
+      }
+
+      if ((Objects.nonNull(dar.getData().getNotHealth())) && Boolean.TRUE.equals(dar.getData().getNotHealth())) {
         dataUse.setNotHealth(dar.getData().getNotHealth());
-        dataUse.setNonBiomedical(dar.getData().getNotHealth());
       }
 
     }
@@ -210,20 +136,11 @@ public class UseRestrictionConverter {
       try {
         return response.readEntity(String.class);
       } catch (Exception e) {
-        LOGGER.error("Error parsing response from Ontology service: " + e);
+        logException("Error parsing response from Ontology service", e);
       }
     }
-    LOGGER.error("Error response from Ontology service: " + response.readEntity(String.class));
+    logException("Error response from Ontology service: " + response.readEntity(String.class), new InternalServerErrorException());
     return null;
   }
 
-  public Map<String, Object> parseAsMap(String str) {
-    ObjectReader reader = mapper.readerFor(Map.class);
-    try {
-      return reader.readValue(str);
-    } catch (IOException e) {
-      LOGGER.debug("While parsing as a Map ...", e);
-    }
-    return null;
-  }
 }

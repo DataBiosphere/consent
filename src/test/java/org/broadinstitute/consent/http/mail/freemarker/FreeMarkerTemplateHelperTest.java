@@ -15,7 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -64,7 +66,8 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New Case Notification", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - New DAR ready for your vote",
+        parsedTemplate.title());
     assertEquals("Hello NewCase User,", parsedTemplate.getElementById("userName").text());
   }
 
@@ -74,16 +77,37 @@ class FreeMarkerTemplateHelperTest {
         "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Vote Reminder", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR",
+        parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
 
   @Test
   void testGetNewDARRequestTemplate() throws Exception {
-    Writer template = helper.getNewDARRequestTemplate("localhost:1234", "Admin", "Entity");
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    Dataset d1 = new Dataset();
+    d1.setDacId(1);
+    d1.setDatasetName("Dataset-01");
+    d1.setDataSetId(1);
+    d1.setAlias(1);
+    d1.setDatasetIdentifier();
+
+    Map<String, List<String>> dacDatasetGroups = new HashMap<>();
+    dacDatasetGroups.put(dac.getName(), List.of(d1.getDatasetIdentifier()));
+
+    Writer template = helper.getNewDARRequestTemplate(
+        "localhost:1234",
+        "Admin",
+        dacDatasetGroups,
+        "ResearcherName",
+        "DAR-01"
+    );
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - New Data Access Request",
+    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
         parsedTemplate.title());
     Element userNameElement = parsedTemplate.getElementById("userName");
     assertNotNull(userNameElement);
@@ -98,7 +122,8 @@ class FreeMarkerTemplateHelperTest {
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
 
-    assertEquals("Broad Data Use Oversight System - New Researcher Library Request",
+    assertEquals(
+        "Broad Data Use Oversight System - Request from your researcher for Library Card permissions",
         parsedTemplate.title());
 
     assertTrue(parsedTemplate
@@ -122,12 +147,64 @@ class FreeMarkerTemplateHelperTest {
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
     assertEquals(
-        "Broad Data Use Oversight System - Researcher - DAR Approved Notification",
+        "Broad Data Use Oversight System - Researcher - A researcher was approved for your dataset",
         parsedTemplate.title());
     assertTrue(parsedTemplate
         .getElementById("content")
         .text()
         .contains("researcher@email.com was approved by the DAC for the following datasets"));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetDatasetSubmittedTemplate() throws Exception {
+    Writer template = helper.getDatasetSubmittedTemplate("dacChairName", "dataSubmitterName",
+        "testDataset",
+        "dacName");
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - Signing Official - Dataset Submitted Notification",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "A new dataset, testDataset, has been submitted to your DAC, dacName by dataSubmitterName. Please log in to DUOS to review and accept or reject management of this dataset."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetDaaRequestTemplate() throws Exception {
+    String signingOfficialUserName = RandomStringUtils.randomAlphabetic(10);
+    String userName = RandomStringUtils.randomAlphabetic(10);
+    String daaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getDaaRequestTemplate(signingOfficialUserName, userName,
+        daaName,
+        serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Hello " + signingOfficialUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            userName + " has registered with your institution and is requesting you approve them under the " + daaName + " data access agreement, so that they can request access to data."));
+    assertTrue(parsedTemplate
+        .getElementById("link")
+        .text()
+        .contains(
+            "Please login to review " + userName + "'s Data Access Agreements."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }

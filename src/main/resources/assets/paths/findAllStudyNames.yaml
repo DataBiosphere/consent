@@ -6,7 +6,7 @@ get:
     - Study
   responses:
     200:
-      description: dataset id
+      description: All study names
       content:
         application/json:
           schema:

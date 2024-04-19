@@ -23,6 +23,10 @@ security:
   - googleoauth:
       - email
       - profile
+  - oidc:
+      - openid
+      - email
+      - profile
 
 paths:
   /api/collections/{collectionId}:
@@ -43,28 +47,13 @@ paths:
     $ref: './paths/mailByType.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
-  /api/consent/cases/summary:
-    get:
-      summary: Get Consent Summary Cases
-      description: Returns number of denied, approved and pending cases.
-      tags:
-        - Consent Summary
-      responses:
-        200:
-          description: Returns the summary of cases.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Summary'
-  /api/consent/cases/summary/file:
-    $ref: './paths/consentCasesSummaryFile.yaml'
   /api/consent:
     $ref: './paths/consent.yaml'
   /api/consent/{id}:
     get:
       deprecated: true
-      summary: Get Consent by ID
-      description: Returns the consent identified by the ID.
+      summary: Deprecated endpoint.
+      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
       parameters:
         - name: id
           in: path
@@ -75,17 +64,12 @@ paths:
       tags:
         - Consent
       responses:
-        200:
-          description: Returns the requested consent.
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
         404:
-          description: The consent associated with the ID couldn't be found.
+          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
     put:
-      summary: Update Consent by ID
-      description: Updates the consent identified by the ID.
+      deprecated: true
+      summary: Deprecated endpoint.
+      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
       parameters:
         - name: id
           in: path
@@ -102,25 +86,13 @@ paths:
       tags:
         - Consent
       responses:
-        200:
-          description: Returns the requested consent.
-          content:
-            application/json:
-              schema:
-                $ref: './schemas/Consent.yaml'
-        400:
-          description:
-            Consent updates are only allowed when
-            1-There have been no previous elections created for this consent
-            2-The most recent election has been closed/cancelled AND archived
         404:
-          description: The consent associated with the ID couldn't be found.
-        500:
-          description: Internal server error
+          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
   /api/consent/{id}/matches:
     get:
-      summary: getMatches
-      description: Returns the matches that are related to this consent.
+      deprecated: true
+      summary: Deprecated endpoint.
+      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
       parameters:
         - name: id
           in: path
@@ -132,16 +104,20 @@ paths:
         - Match
         - Consent
       responses:
-        200:
-          description: Returns a list of matches.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: './schemas/MatchResult.yaml'
         404:
-          description: The consent for the id couldn't be found.
+          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
+  /api/daa/{daaId}:
+    $ref: 'paths/daaByDaaId.yaml'
+  /api/daa/{daaId}/file:
+    $ref: 'paths/daaFileByDaaId.yaml'
+  /api/daa/{daaId}/{userId}:
+    $ref: 'paths/daaForUserId.yaml'
+  /api/daa/dac/{dacId}:
+    $ref: 'paths/daaById.yaml'
+  /api/daa:
+    $ref: 'paths/daa.yaml'
+  /api/daa/request/{daaId}:
+    $ref: 'paths/daaRequestByDaaId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/{dacId}:
@@ -492,36 +468,9 @@ paths:
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
 
-  /api/dataRequest/cases/summary/DataAccess:
-    get:
-      summary: getConsentSummaryCases
-      description: Retrieves the Summary of DAR cases
-      tags:
-        - Summary
-        - Data Access Request
-      responses:
-        200:
-          description: A summary of cases
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Summary'
-  /api/dataRequest/cases/summary/RP:
-    get:
-      summary: getConsentSummaryCases
-      description: Retrieves the Summary of Research Purposes cases
-      tags:
-        - Summary
-        - Research Purpose
-      responses:
-        200:
-          description: A summary of cases
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Summary'
   /api/dataRequest/approved:
     get:
+      deprecated: true
       summary: Get a list of approved DARs
       description: Get a list of approved DARs
       tags:
@@ -536,6 +485,7 @@ paths:
                 format: binary
   /api/dataRequest/reviewed:
     get:
+      deprecated: true
       summary: Get a list of reviewed DARs
       description: Get a list of reviewed DARs
       tags:
@@ -578,10 +528,20 @@ paths:
                 type: integer
         404:
           description: Dataset not found
+  /api/dataset/registration/{datasetIdentifier}:
+    $ref: './paths/datasetRegistrationByDatasetIdentifier.yaml'
   /api/dataset/studyNames:
     $ref: './paths/findAllStudyNames.yaml'
+  /api/dataset/datasetNames:
+    $ref: './paths/findAllDatasetNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
+  /api/dataset/study/convert/{datasetIdentifier}:
+    $ref: './paths/studyConvertByIdentifier.yaml'
+  /api/dataset/study/{studyId}/custodians:
+    $ref: './paths/studyByIdCustodians.yaml'
+  /api/dataset/study/registration/{studyId}:
+    $ref: './paths/studyRegistrationByStudyId.yaml'
   /api/dataset/{id}:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
@@ -620,86 +580,36 @@ paths:
     $ref: './paths/datasetIndexById.yaml'
   /api/dataset/search:
     $ref: './paths/datasetSearch.yaml'
+  /api/dataset/autocomplete:
+    $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
   /api/datasetAssociation/{datasetId}:
     get:
+      deprecated: true
       summary: Get Dataset Associations
       description: Get all dataset associations
-      parameters:
-        - name: datasetId
-          in: path
-          description: dataset id
-          required: true
-          schema:
-            type: integer
       tags:
         - Dataset
       responses:
-        200:
-          description: Map of associated and non-associated users
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DatasetAssociationMap'
+        204:
+          description: Deprecated Endpoint
     post:
       summary: Create Dataset Associations
       operationId: Create dataset associations for the provided dataset and users
-      parameters:
-        - name: datasetId
-          in: path
-          description: dataset id
-          required: true
-          schema:
-            type: integer
-        - name: userIdList
-          in: body
-          description: list of user ids
-          required: true
-          schema:
-            type: array
-            items:
-              type: integer
       tags:
         - Dataset
       responses:
-        201:
-          description: An array of created dataset associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DatasetAssociation'
+        204:
+          description: Deprecated Endpoint
     put:
       summary: Update Dataset Associations
       operationId: Update dataset associations for the provided dataset and users
-      parameters:
-        - name: datasetId
-          in: path
-          description: dataset id
-          required: true
-          schema:
-            type: integer
-        - name: userIdList
-          in: body
-          description: list of user ids
-          required: true
-          schema:
-            type: array
-            items:
-              type: integer
       tags:
         - Dataset
       responses:
-        200:
-          description: An array of updated dataset associations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DatasetAssociation'
+        204:
+          description: Deprecated Endpoint
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -1275,6 +1185,16 @@ components:
           scopes:
             email: email authorization
             profile: profile authorization
+    oidc:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /oauth2/authorize
+          tokenUrl: /oauth2/token
+          scopes:
+            openid: open id authorization
+            email: email authorization
+            profile: profile authorization
   schemas:
     Acknowledgement:
       type: object
@@ -1360,46 +1280,6 @@ components:
       $ref: './schemas/Vote.yaml'
     MatchResult:
       $ref: './schemas/MatchResult.yaml'
-    Summary:
-      type: object
-      properties:
-        reviewedPositiveCases:
-          type: integer
-          format: int32
-          description: Describes the number of cases that were denied.
-        reviewedNegativeCases:
-          type: integer
-          format: int32
-          description: Describes the number of cases that were approved.
-        pendingCases:
-          type: integer
-          format: int32
-          description: Describes the number of cases that are opened and have to be reviewed.
-    DatasetAssociation:
-      type: object
-      properties:
-        datasetId:
-          type: integer
-          description: The dataset id
-        dacuserId:
-          type: integer
-          description: The user id
-        createDate:
-          type: string
-          description: Association creation date
-    DatasetAssociationMap:
-      type: object
-      properties:
-        associated_users:
-          description: Associated Users
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-        not_associated_users:
-          description: Non-associated Users
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SamSelfDiagnostics:

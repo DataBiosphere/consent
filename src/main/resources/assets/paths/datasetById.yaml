@@ -13,6 +13,8 @@ delete:
   responses:
     200:
       description: The Dataset was deleted.
+    400:
+      description: Dataset is in use and cannot be deleted
     404:
       description: Not Found
     500:

@@ -1,64 +1,44 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.google.common.base.Objects;
 import com.google.gson.GsonBuilder;
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-@SuppressWarnings({"unused", "SameParameterValue", "WeakerAccess"})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataUse {
-
-  private static final Logger logger = LoggerFactory.getLogger(
-      "org.broadinstitute.consent.http.models.DataUse");
 
   private Boolean generalUse;
   private Boolean hmbResearch;
   private List<String> diseaseRestrictions;
   private Boolean populationOriginsAncestry;
-  private Boolean populationStructure;
-  private Boolean commercialUse;
   private Boolean methodsResearch;
-  private String aggregateResearch;
-  private String controlSetOption;
-  private boolean controls;
-  private String gender;
-  private Boolean pediatric;
-  private boolean population;
-  private List<String> populationRestrictions;
-  private Boolean otherRestrictions;
-  private String dateRestriction;
-  private Boolean recontactingDataSubjects;
-  private String recontactMay;
-  private String recontactMust;
-  private String genomicPhenotypicData;
-  private String cloudStorage;
+  private Boolean nonProfitUse;
+  private String other;
+  private String secondaryOther;
+  // Also known as "irb"
   private Boolean ethicsApprovalRequired;
   private Boolean collaboratorRequired;
   private String geographicalRestrictions;
-  private String other;
-  private String secondaryOther;
+  private Boolean geneticStudiesOnly;
+  private Boolean publicationResults;
+  private String publicationMoratorium;
+  private Boolean controls;
+  private String gender;
+  private Boolean pediatric;
+  private Boolean population;
   private Boolean illegalBehavior;
-  private Boolean addiction;
   private Boolean sexualDiseases;
   private Boolean stigmatizeDiseases;
   private Boolean vulnerablePopulations;
   private Boolean psychologicalTraits;
   private Boolean notHealth;
-  private Boolean nonBiomedical;
-  private Boolean manualReview;
-  private Boolean geneticStudiesOnly;
-  private Boolean publicationResults;
-  private Boolean genomicResults;
-  private String genomicSummaryResults;
-  private Boolean collaborationInvestigators;
-  private String publicationMoratorium;
+
+  @Override
+  public String toString() {
+    return new GsonBuilder().create().toJson(this);
+  }
 
   public Boolean getGeneralUse() {
     return generalUse;
@@ -92,22 +72,6 @@ public class DataUse {
     this.populationOriginsAncestry = populationOriginsAncestry;
   }
 
-  public Boolean getPopulationStructure() {
-    return populationStructure;
-  }
-
-  public void setPopulationStructure(Boolean populationStructure) {
-    this.populationStructure = populationStructure;
-  }
-
-  public Boolean getCommercialUse() {
-    return commercialUse;
-  }
-
-  public void setCommercialUse(Boolean commercialUse) {
-    this.commercialUse = commercialUse;
-  }
-
   public Boolean getMethodsResearch() {
     return methodsResearch;
   }
@@ -116,100 +80,28 @@ public class DataUse {
     this.methodsResearch = methodsResearch;
   }
 
-  public String getAggregateResearch() {
-    return aggregateResearch;
+  public Boolean getNonProfitUse() {
+    return nonProfitUse;
   }
 
-  public void setAggregateResearch(String aggregateResearch) {
-    this.aggregateResearch = aggregateResearch;
+  public void setNonProfitUse(Boolean nonProfitUse) {
+    this.nonProfitUse = nonProfitUse;
   }
 
-  public String getControlSetOption() {
-    return controlSetOption;
+  public String getOther() {
+    return other;
   }
 
-  public void setControlSetOption(String controlSetOption) {
-    this.controlSetOption = controlSetOption;
+  public void setOther(String other) {
+    this.other = other;
   }
 
-  public String getGender() {
-    return gender;
+  public String getSecondaryOther() {
+    return secondaryOther;
   }
 
-  public void setGender(String gender) {
-    this.gender = gender;
-  }
-
-  public Boolean getPediatric() {
-    return pediatric;
-  }
-
-  public void setPediatric(Boolean pediatric) {
-    this.pediatric = pediatric;
-  }
-
-  public List<String> getPopulationRestrictions() {
-    return populationRestrictions;
-  }
-
-  public void setPopulationRestrictions(List<String> populationRestrictions) {
-    this.populationRestrictions = populationRestrictions;
-  }
-
-  public Boolean getOtherRestrictions() {
-    return otherRestrictions;
-  }
-
-  public void setOtherRestrictions(Boolean otherRestrictions) {
-    this.otherRestrictions = otherRestrictions;
-  }
-
-  public String getDateRestriction() {
-    return dateRestriction;
-  }
-
-  public void setDateRestriction(String dateRestriction) {
-    this.dateRestriction = dateRestriction;
-  }
-
-  public Boolean getRecontactingDataSubjects() {
-    return recontactingDataSubjects;
-  }
-
-  public void setRecontactingDataSubjects(Boolean recontactingDataSubjects) {
-    this.recontactingDataSubjects = recontactingDataSubjects;
-  }
-
-  public String getRecontactMay() {
-    return recontactMay;
-  }
-
-  public void setRecontactMay(String recontactMay) {
-    this.recontactMay = recontactMay;
-  }
-
-  public String getRecontactMust() {
-    return recontactMust;
-  }
-
-  public void setRecontactMust(String recontactMust) {
-    this.recontactMust = recontactMust;
-  }
-
-  public String getGenomicPhenotypicData() {
-    return genomicPhenotypicData;
-  }
-
-  public void setGenomicPhenotypicData(String genomicPhenotypicData) {
-    this.genomicPhenotypicData = genomicPhenotypicData;
-  }
-
-  public String getCloudStorage() {
-    return cloudStorage;
-  }
-
-  public void setCloudStorage(String cloudStorage) {
-    this.cloudStorage = cloudStorage;
+  public void setSecondaryOther(String secondaryOther) {
+    this.secondaryOther = secondaryOther;
   }
 
   public Boolean getEthicsApprovalRequired() {
@@ -236,20 +128,60 @@ public class DataUse {
     this.geographicalRestrictions = geographicalRestrictions;
   }
 
-  public String getOther() {
-    return other;
+  public Boolean getGeneticStudiesOnly() {
+    return geneticStudiesOnly;
   }
 
-  public void setOther(String other) {
-    this.other = other;
+  public void setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
+    this.geneticStudiesOnly = geneticStudiesOnly;
   }
 
-  public String getSecondaryOther() {
-    return secondaryOther;
+  public Boolean getPublicationResults() {
+    return publicationResults;
   }
 
-  public void setSecondaryOther(String secondaryOther) {
-    this.secondaryOther = secondaryOther;
+  public void setPublicationResults(Boolean publicationResults) {
+    this.publicationResults = publicationResults;
+  }
+
+  public String getPublicationMoratorium() {
+    return publicationMoratorium;
+  }
+
+  public void setPublicationMoratorium(String publicationMoratorium) {
+    this.publicationMoratorium = publicationMoratorium;
+  }
+
+  public Boolean getControls() {
+    return controls;
+  }
+
+  public void setControls(Boolean controls) {
+    this.controls = controls;
+  }
+
+  public String getGender() {
+    return gender;
+  }
+
+  public void setGender(String gender) {
+    this.gender = gender;
+  }
+
+  public Boolean getPediatric() {
+    return pediatric;
+  }
+
+  public void setPediatric(Boolean pediatric) {
+    this.pediatric = pediatric;
+  }
+
+  public Boolean getPopulation() {
+    return population;
+  }
+
+  public void setPopulation(Boolean population) {
+    this.population = population;
   }
 
   public Boolean getIllegalBehavior() {
@@ -258,14 +190,6 @@ public class DataUse {
 
   public void setIllegalBehavior(Boolean illegalBehavior) {
     this.illegalBehavior = illegalBehavior;
-  }
-
-  public Boolean getAddiction() {
-    return addiction;
-  }
-
-  public void setAddiction(Boolean addiction) {
-    this.addiction = addiction;
   }
 
   public Boolean getSexualDiseases() {
@@ -300,86 +224,6 @@ public class DataUse {
     this.psychologicalTraits = psychologicalTraits;
   }
 
-  public Boolean getNonBiomedical() {
-    return nonBiomedical;
-  }
-
-  public void setNonBiomedical(Boolean nonBiomedical) {
-    this.nonBiomedical = nonBiomedical;
-  }
-
-  public Boolean getManualReview() {
-    return manualReview;
-  }
-
-  public void setManualReview(Boolean manualReview) {
-    this.manualReview = manualReview;
-  }
-
-  public Boolean getGeneticStudiesOnly() {
-    return geneticStudiesOnly;
-  }
-
-  public void setGeneticStudiesOnly(Boolean geneticStudiesOnly) {
-    this.geneticStudiesOnly = geneticStudiesOnly;
-  }
-
-  public Boolean getPublicationResults() {
-    return publicationResults;
-  }
-
-  public void setPublicationResults(Boolean publicationResults) {
-    this.publicationResults = publicationResults;
-  }
-
-  public Boolean getGenomicResults() {
-    return genomicResults;
-  }
-
-  public void setGenomicResults(Boolean genomicResults) {
-    this.genomicResults = genomicResults;
-  }
-
-  public String getGenomicSummaryResults() {
-    return genomicSummaryResults;
-  }
-
-  public void setGenomicSummaryResults(String genomicSummaryResults) {
-    this.genomicSummaryResults = genomicSummaryResults;
-  }
-
-  public Boolean getCollaborationInvestigators() {
-    return collaborationInvestigators;
-  }
-
-  public void setCollaborationInvestigators(Boolean collaborationInvestigators) {
-    this.collaborationInvestigators = collaborationInvestigators;
-  }
-
-  public String getPublicationMoratorium() {
-    return publicationMoratorium;
-  }
-
-  public void setPublicationMoratorium(String publicationMoratorium) {
-    this.publicationMoratorium = publicationMoratorium;
-  }
-
-  public boolean getControls() {
-    return controls;
-  }
-
-  public void setControls(boolean controls) {
-    this.controls = controls;
-  }
-
-  public boolean getPopulation() {
-    return population;
-  }
-
-  public void setPopulation(boolean population) {
-    this.population = population;
-  }
-
   public Boolean getNotHealth() {
     return notHealth;
   }
@@ -389,93 +233,49 @@ public class DataUse {
   }
 
   @Override
-  public String toString() {
-    return new GsonBuilder().create().toJson(this);
-  }
-
-  public static Optional<DataUse> parseDataUse(String str) {
-    if (str == null || str.isEmpty()) {
-      return Optional.empty();
-    } else {
-      try {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(DataUse.class);
-        return Optional.of(reader.readValue(str));
-      } catch (IOException e) {
-        logger.error(String.format("DataUse parse exception on \"%s\"", str));
-        return Optional.empty();
-      }
-    }
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     DataUse dataUse = (DataUse) o;
-    return Objects.equal(getGeneralUse(), dataUse.getGeneralUse())
-        && Objects.equal(getHmbResearch(), dataUse.getHmbResearch())
-        && Objects.equal(getDiseaseRestrictions(), dataUse.getDiseaseRestrictions())
-        && Objects.equal(getPopulationOriginsAncestry(), dataUse.getPopulationOriginsAncestry())
-        && Objects.equal(getPopulationStructure(), dataUse.getPopulationStructure())
-        && Objects.equal(getCommercialUse(), dataUse.getCommercialUse())
-        && Objects.equal(getMethodsResearch(), dataUse.getMethodsResearch())
-        && Objects.equal(getAggregateResearch(), dataUse.getAggregateResearch())
-        && Objects.equal(getControlSetOption(), dataUse.getControlSetOption())
-        && Objects.equal(getGender(), dataUse.getGender())
-        && Objects.equal(getPediatric(), dataUse.getPediatric())
-        && Objects.equal(getPopulationRestrictions(), dataUse.getPopulationRestrictions())
-        && Objects.equal(getOtherRestrictions(), dataUse.getOtherRestrictions())
-        && Objects.equal(getDateRestriction(), dataUse.getDateRestriction())
-        && Objects.equal(getRecontactingDataSubjects(), dataUse.getRecontactingDataSubjects())
-        && Objects.equal(getRecontactMay(), dataUse.getRecontactMay())
-        && Objects.equal(getRecontactMust(), dataUse.getRecontactMust())
-        && Objects.equal(getGenomicPhenotypicData(), dataUse.getGenomicPhenotypicData())
-        && Objects.equal(getCloudStorage(), dataUse.getCloudStorage())
-        && Objects.equal(getEthicsApprovalRequired(), dataUse.getEthicsApprovalRequired())
-        && Objects.equal(getCollaboratorRequired(), dataUse.getCollaboratorRequired())
-        && Objects.equal(getGeographicalRestrictions(), dataUse.getGeographicalRestrictions())
-        && Objects.equal(getOther(), dataUse.getOther())
-        && Objects.equal(getSecondaryOther(), dataUse.getSecondaryOther())
-        && Objects.equal(getIllegalBehavior(), dataUse.getIllegalBehavior())
-        && Objects.equal(getAddiction(), dataUse.getAddiction())
-        && Objects.equal(getSexualDiseases(), dataUse.getSexualDiseases())
-        && Objects.equal(getStigmatizeDiseases(), dataUse.getStigmatizeDiseases())
-        && Objects.equal(getVulnerablePopulations(), dataUse.getVulnerablePopulations())
-        && Objects.equal(getPsychologicalTraits(), dataUse.getPsychologicalTraits())
-        && Objects.equal(getNonBiomedical(), dataUse.getNonBiomedical())
-        && Objects.equal(getManualReview(), dataUse.getManualReview())
-        && Objects.equal(getGeneticStudiesOnly(), dataUse.getGeneticStudiesOnly())
-        && Objects.equal(getPublicationResults(), dataUse.getPublicationResults())
-        && Objects.equal(getGenomicResults(), dataUse.getGenomicResults())
-        && Objects.equal(getGenomicSummaryResults(), dataUse.getGenomicSummaryResults())
-        && Objects.equal(getCollaborationInvestigators(), dataUse.getCollaborationInvestigators())
-        && Objects.equal(getPublicationMoratorium(), dataUse.getPublicationMoratorium())
-        && Objects.equal(getControls(), dataUse.getControls())
-        && Objects.equal(getPopulation(), dataUse.getPopulation())
-        && Objects.equal(getNotHealth(), dataUse.getNotHealth());
+
+    return new EqualsBuilder().append(generalUse, dataUse.generalUse)
+        .append(hmbResearch, dataUse.hmbResearch)
+        .append(diseaseRestrictions, dataUse.diseaseRestrictions)
+        .append(populationOriginsAncestry, dataUse.populationOriginsAncestry)
+        .append(methodsResearch, dataUse.methodsResearch).append(nonProfitUse, dataUse.nonProfitUse)
+        .append(other, dataUse.other).append(secondaryOther, dataUse.secondaryOther)
+        .append(ethicsApprovalRequired, dataUse.ethicsApprovalRequired)
+        .append(collaboratorRequired, dataUse.collaboratorRequired)
+        .append(geographicalRestrictions, dataUse.geographicalRestrictions)
+        .append(geneticStudiesOnly, dataUse.geneticStudiesOnly)
+        .append(publicationResults, dataUse.publicationResults)
+        .append(publicationMoratorium, dataUse.publicationMoratorium)
+        .append(controls, dataUse.controls).append(gender, dataUse.gender)
+        .append(pediatric, dataUse.pediatric).append(population, dataUse.population)
+        .append(illegalBehavior, dataUse.illegalBehavior)
+        .append(sexualDiseases, dataUse.sexualDiseases)
+        .append(stigmatizeDiseases, dataUse.stigmatizeDiseases)
+        .append(vulnerablePopulations, dataUse.vulnerablePopulations)
+        .append(psychologicalTraits, dataUse.psychologicalTraits)
+        .append(notHealth, dataUse.notHealth)
+        .isEquals();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getGeneralUse(), getHmbResearch(), getDiseaseRestrictions(),
-        getPopulationOriginsAncestry(), getPopulationStructure(), getCommercialUse(),
-        getMethodsResearch(), getAggregateResearch(), getControlSetOption(), getGender(),
-        getPediatric(), getPopulationRestrictions(), getOtherRestrictions(),
-        getDateRestriction(),
-        getRecontactingDataSubjects(), getRecontactMay(), getRecontactMust(),
-        getGenomicPhenotypicData(), getCloudStorage(), getEthicsApprovalRequired(),
-        getCollaboratorRequired(), getGeographicalRestrictions(), getOther(),
-        getSecondaryOther(),
-        getIllegalBehavior(), getAddiction(), getSexualDiseases(), getStigmatizeDiseases(),
-        getVulnerablePopulations(), getPsychologicalTraits(), getNonBiomedical(),
-        getManualReview(),
-        getGeneticStudiesOnly(), getPublicationResults(), getGenomicResults(),
-        getGenomicSummaryResults(), getCollaborationInvestigators(),
-        getPublicationMoratorium(), getControls(), getPopulation(), getNotHealth());
+    return new HashCodeBuilder(17, 37).append(generalUse).append(hmbResearch)
+        .append(diseaseRestrictions).append(populationOriginsAncestry).append(methodsResearch)
+        .append(nonProfitUse).append(other).append(secondaryOther).append(ethicsApprovalRequired)
+        .append(collaboratorRequired).append(geographicalRestrictions).append(geneticStudiesOnly)
+        .append(publicationResults).append(publicationMoratorium).append(controls).append(gender)
+        .append(pediatric).append(population).append(illegalBehavior).append(sexualDiseases)
+        .append(stigmatizeDiseases).append(vulnerablePopulations).append(psychologicalTraits)
+        .append(notHealth).toHashCode();
   }
 }

@@ -24,7 +24,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
         i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
-        (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
       FROM dar_collection c
       INNER JOIN users u
         ON u.user_id = c.create_user_id
@@ -61,7 +61,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name " +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -92,7 +92,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @SqlQuery("""
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
         i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
-        (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name,
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
         dac.name as dac_name
       FROM dar_collection c
       INNER JOIN users u ON u.user_id = c.create_user_id
@@ -121,8 +121,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name, " +
-              "(dar.data #>> '{}')::jsonb ->> 'status' AS dar_status " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status " +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -157,7 +157,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, u.user_id as researcher_id,
         i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
-        (dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
       FROM dar_collection c
       INNER JOIN users u
         ON u.user_id = c.create_user_id
@@ -197,8 +197,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(dar.data #>> '{}')::jsonb ->> 'projectTitle' AS name, " +
-              "(dar.data #>> '{}')::jsonb ->> 'status' AS dar_status " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status " +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +

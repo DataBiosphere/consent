@@ -16,39 +16,31 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 
-public class UserDAOTest extends DAOTestHelper {
+class UserDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindDACUserById() {
+  void testFindDACUserById() {
     User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
     assertNotNull(user);
     assertFalse(user.getRoles().isEmpty());
 
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getUserId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getUserId());
 
     User user2 = userDAO.findUserById(user.getUserId());
     assertNotNull(user2);
@@ -61,8 +53,6 @@ public class UserDAOTest extends DAOTestHelper {
         .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
     assertTrue(user2.getRoles().stream()
         .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
-    assertTrue(user2.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
 
     //assert institution base data is present if available
     User user3 = createUserWithInstitution();
@@ -73,7 +63,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsers_withIdCollection() {
+  void testFindUsers_withIdCollection() {
     User user = createUser();
     Collection<User> users = userDAO.findUsers(Collections.singletonList(user.getUserId()));
     assertNotNull(users);
@@ -82,7 +72,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDescribeUsersByRole() {
+  void testDescribeUsersByRole() {
     createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     createUserWithRole(UserRoles.MEMBER.getRoleId());
 
@@ -101,13 +91,10 @@ public class UserDAOTest extends DAOTestHelper {
 
     List<User> researchers = userDAO.describeUsersByRole(UserRoles.RESEARCHER.getRoleName());
     assertTrue(researchers.isEmpty());
-
-    List<User> dataOwners = userDAO.describeUsersByRole(UserRoles.DATAOWNER.getRoleName());
-    assertTrue(dataOwners.isEmpty());
   }
 
   @Test
-  public void testCheckChairpersonUser() {
+  void testCheckChairpersonUser() {
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     User member = createUserWithRole(UserRoles.MEMBER.getRoleId());
     assertNotNull(userDAO.checkChairpersonUser(chair.getUserId()));
@@ -115,14 +102,14 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindDACUsersEnabledToVoteByDacEmpty() {
+  void testFindDACUsersEnabledToVoteByDacEmpty() {
     Dac dac = createDac();
     Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
     assertTrue(users.isEmpty());
   }
 
   @Test
-  public void testFindDACUsersEnabledToVoteByDacNotEmpty() {
+  void testFindDACUsersEnabledToVoteByDacNotEmpty() {
     Dac dac = createDac();
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
@@ -131,7 +118,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindNonDACUsersEnabledToVote() {
+  void testFindNonDACUsersEnabledToVote() {
     createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     createUserWithRole(UserRoles.MEMBER.getRoleId());
     Collection<User> users = userDAO.findNonDacUsersEnabledToVote();
@@ -139,9 +126,9 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsersWithRoles() {
-    User chair = createUserWithRole(UserRoles.ADMIN.getRoleId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), chair.getUserId());
+  void testFindUsersWithRoles() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), chair.getUserId());
     Collection<Integer> userIds = Collections.singletonList(chair.getUserId());
     Collection<User> users = userDAO.findUsersWithRoles(userIds);
     users.forEach(u -> assertFalse(u.getRoles().isEmpty(),
@@ -153,12 +140,11 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUserByEmail() {
+  void testFindUserByEmail() {
     User user = createUser();
     userRoleDAO.insertSingleUserRole(UserRoles.ALUMNI.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user.getUserId());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user.getUserId());
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user.getUserId());
     User user1 = userDAO.findUserByEmail(user.getEmail());
     assertNotNull(user1);
 
@@ -169,21 +155,17 @@ public class UserDAOTest extends DAOTestHelper {
         .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
     assertTrue(user1.getRoles().stream()
         .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
-    assertTrue(user1.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.DATAOWNER.getRoleId())));
 
     User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
     assertNull(user2);
   }
 
   @Test
-  public void testFindUserByEmails() {
+  void testFindUserByEmails() {
     User user1 = createUser();
     userRoleDAO.insertSingleUserRole(UserRoles.ADMIN.getRoleId(), user1.getUserId());
     User user2 = createUser();
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), user2.getUserId());
-    User user3 = createUser();
-    userRoleDAO.insertSingleUserRole(UserRoles.DATAOWNER.getRoleId(), user3.getUserId());
 
     // Find only the first two users, ensure that we're not getting all 3
     List<User> users = userDAO.findUsersByEmailList(List.of(user1.getEmail(), user2.getEmail()));
@@ -192,16 +174,15 @@ public class UserDAOTest extends DAOTestHelper {
     assertEquals(2, users.size());
     assertTrue(users.contains(user1));
     assertTrue(users.contains(user2));
-    assertFalse(users.contains(user3));
   }
 
   @Test
-  public void testInsertUser() {
+  void testInsertUser() {
     // No-op ... tested in `createUser()`
   }
 
   @Test
-  public void testUpdateUser_case1() {
+  void testUpdateUser_case1() {
     User user = createUser();
     Institution firstInstitute = createInstitution();
     userDAO.updateUser(
@@ -214,12 +195,12 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteUserById() {
+  void testDeleteUserById() {
     // No-op ... tested in `tearDown()`
   }
 
   @Test
-  public void testFindUsersWithLCsAndInstitution() {
+  void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
     libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
@@ -242,21 +223,16 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDescribeUsersByRoleAndEmailPreference() {
+  void testDescribeUsersByRoleAndEmailPreference() {
     User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     userDAO.updateEmailPreference(researcher.getUserId(), true);
     Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher",
         true);
     assertFalse(researchers.isEmpty());
-
-    User owner = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
-    userDAO.updateEmailPreference(owner.getUserId(), false);
-    Collection<User> dataOwners = userDAO.describeUsersByRoleAndEmailPreference("DataOwner", false);
-    assertFalse(dataOwners.isEmpty());
   }
 
   @Test
-  public void testUpdateEmailPreference() {
+  void testUpdateEmailPreference() {
     User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     userDAO.updateEmailPreference(researcher.getUserId(), true);
     User u1 = userDAO.findUserById(researcher.getUserId());
@@ -267,7 +243,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateInstitutionId() {
+  void testUpdateInstitutionId() {
     User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     Integer institutionId = institutionDAO.insertInstitution("Institution", "it director",
         "it director email", null, null, null, null, null, null, researcher.getUserId(),
@@ -278,7 +254,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDisplayName() {
+  void testUpdateDisplayName() {
     User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     String newName = RandomStringUtils.random(10, true, false);
     userDAO.updateDisplayName(researcher.getUserId(), newName);
@@ -287,7 +263,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUserByEmailAndRoleId() {
+  void testFindUserByEmailAndRoleId() {
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(),
         UserRoles.CHAIRPERSON.getRoleId());
@@ -297,14 +273,11 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsersForDatasetsByRole() {
+  void testFindUsersForDatasetsByRole() {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
         Collections.singletonList(dataset.getDataSetId()),
@@ -317,14 +290,11 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsersForDatasetsByRoleNotFound() {
+  void testFindUsersForDatasetsByRoleNotFound() {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
         Collections.singletonList(dataset.getDataSetId()),
@@ -334,7 +304,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindUsersByInstitution() {
+  void testFindUsersByInstitution() {
     Integer institutionId = createUserWithInstitution().getInstitutionId();
     List<User> beforeList = userDAO.findUsersByInstitution(institutionId);
     //should not change results since they are not in the institution
@@ -346,7 +316,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetSOsByInstitution() {
+  void testGetSOsByInstitution() {
     //user with institutionId and SO role
     User user = createUserWithInstitution();
     Integer institutionId = user.getInstitutionId();
@@ -362,7 +332,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetUsersFromInstitutionWithCards() {
+  void testGetUsersFromInstitutionWithCards() {
     LibraryCard card = createLibraryCard();
     Integer institutionId = card.getInstitutionId();
     Integer userId = card.getUserId();
@@ -377,7 +347,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetUsersWithNoInstitution() {
+  void testGetUsersWithNoInstitution() {
     createUserWithInstitution();
     User user = createUser();
     List<User> users = userDAO.getUsersWithNoInstitution();
@@ -386,7 +356,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateEraCommonsId() {
+  void testUpdateEraCommonsId() {
     User u = createUser();
     String era = u.getEraCommonsId();
     assertNull(era);
@@ -396,7 +366,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCanAddAllRoles() {
+  void testCanAddAllRoles() {
     User u = createUser();
 
     UserRoles[] roles = UserRoles.values();
@@ -419,7 +389,7 @@ public class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCanBeChairOfTwoDACs() {
+  void testCanBeChairOfTwoDACs() {
     User u = createUser();
     Dac dac1 = createDac();
     Dac dac2 = createDac();
@@ -522,36 +492,6 @@ public class UserDAOTest extends DAOTestHelper {
     Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
         stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
-  }
-
-  private Vote createDacVote(Integer userId, Integer electionId) {
-    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
-    return voteDAO.findVoteById(voteId);
-  }
-
-  private Consent createConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        "{\"generalUse\": true }",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Group");
-    return consentDAO.findConsentById(consentId);
-  }
-
-  private Election createDataAccessElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
-    return electionDAO.findElectionById(electionId);
   }
 
   private User createUserWithRoleInDac(Integer roleId, Integer dacId) {

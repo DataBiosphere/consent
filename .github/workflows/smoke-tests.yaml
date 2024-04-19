@@ -1,0 +1,75 @@
+name: consent-smoke-tests
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  smoke-tests:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: setup
+        id: setup
+        run:
+          echo "bee-name=${{ github.event.repository.name }}-${{ github.run_id }}-dev" >> $GITHUB_OUTPUT
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: 'maven'
+      - name: Bee Create
+        uses: broadinstitute/workflow-dispatch@v4
+        with:
+          workflow: bee-create
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN}}
+          inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}", "bee-template-name": "duos", "version-template": "dev" }'
+      - name: Run Smoke Tests
+        run: |
+          mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ steps.setup.outputs.bee-name }}.bee.envs-terra.bio/
+      - name: Store Test Result Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: 'target/surefire-reports'
+      - name: Bee Destroy
+        uses: broadinstitute/workflow-dispatch@v4
+        with:
+          workflow: bee-destroy
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN}}
+          inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}" }'
+      - name: Notify Slack
+        uses: broadinstitute/action-slack@v3.15.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          status: ${{ job.status }}
+          channel: "#duos-notifications"
+          fields: repo,commit,author,action,eventName,ref,workflow,job,took
+
+  upload-test-reports:
+    needs: [smoke-tests]
+    if: always()
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@main
+    with:
+      service-name: 'duos'
+      test-uuid:  ${{ github.run_id }}
+      environment: 'dev'
+      artifact: 'test-reports'
+      big-query-table: 'broad-dsde-qa.automated_testing.test_results'
+      subuuid: ${{ github.run_id }}

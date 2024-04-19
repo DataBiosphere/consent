@@ -1,15 +1,19 @@
 package org.broadinstitute.consent.http.models;
 
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.Gson;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 class DatasetTests {
@@ -35,11 +39,12 @@ class DatasetTests {
     Dataset ds = new Dataset();
     ds.setName(name);
 
-    assertTrue(ds.isDatasetMatch(name, false));
-    assertTrue(ds.isDatasetMatch(name.substring(5, 10), false));
-    assertTrue(ds.isDatasetMatch(name.substring(10, 15), false));
+    assertTrue(ds.isDatasetMatch(name, AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch(name.substring(5, 10), AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch(name.substring(10, 15), AccessManagement.CONTROLLED));
 
-    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(30), false));
+    assertFalse(
+        ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(30), AccessManagement.CONTROLLED));
   }
 
   @Test
@@ -49,8 +54,8 @@ class DatasetTests {
     Dataset ds = new Dataset();
     ds.setName(name.toLowerCase());
 
-    assertTrue(ds.isDatasetMatch(name.toUpperCase(), false));
-    assertTrue(ds.isDatasetMatch(name.toUpperCase().substring(7, 14), false));
+    assertTrue(ds.isDatasetMatch(name.toUpperCase(), AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch(name.toUpperCase().substring(7, 14), AccessManagement.CONTROLLED));
   }
 
   @Test
@@ -64,8 +69,9 @@ class DatasetTests {
     dsp.setPropertyType(PropertyType.String);
     ds.setProperties(Set.of(dsp));
 
-    assertTrue(ds.isDatasetMatch(value, false));
-    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), false));
+    assertTrue(ds.isDatasetMatch(value, AccessManagement.CONTROLLED));
+    assertFalse(
+        ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.CONTROLLED));
   }
 
   @Test
@@ -73,56 +79,56 @@ class DatasetTests {
     Dataset ds = new Dataset();
     ds.setAlias(1235);
 
-    assertTrue(ds.isDatasetMatch("DUOS-001235", false));
-    assertTrue(ds.isDatasetMatch("DUOS", false));
-    assertTrue(ds.isDatasetMatch("123", false));
-    assertTrue(ds.isDatasetMatch("001235", false));
-    assertFalse(ds.isDatasetMatch("DUOS-123456", false));
+    assertTrue(ds.isDatasetMatch("DUOS-001235", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("DUOS", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("123", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("001235", AccessManagement.CONTROLLED));
+    assertFalse(ds.isDatasetMatch("DUOS-123456", AccessManagement.CONTROLLED));
   }
 
   @Test
   void testIsDatasetMatchDataUseCommercial() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isDatasetMatch("collaborator", false));
+    assertFalse(ds.isDatasetMatch("collaborator", AccessManagement.CONTROLLED));
 
     DataUse du = new DataUseBuilder().setCollaboratorRequired(true).build();
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isDatasetMatch("collaborator", false));
-    assertTrue(ds.isDatasetMatch("collab", false));
+    assertTrue(ds.isDatasetMatch("collaborator", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("collab", AccessManagement.CONTROLLED));
   }
 
   @Test
   void testIsDatasetMatchDataUseIrb() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isDatasetMatch("irb", false));
+    assertFalse(ds.isDatasetMatch("irb", AccessManagement.CONTROLLED));
 
     DataUse du = new DataUse();
     du.setEthicsApprovalRequired(true);
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isDatasetMatch("irb", false));
-    assertTrue(ds.isDatasetMatch("irb", false));
+    assertTrue(ds.isDatasetMatch("irb", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("irb", AccessManagement.CONTROLLED));
   }
 
   @Test
   void testIsDatasetMatchDataUseDiseases() {
     Dataset ds = new Dataset();
 
-    assertFalse(ds.isDatasetMatch("cancer", false));
-    assertFalse(ds.isDatasetMatch("alzheimers", false));
+    assertFalse(ds.isDatasetMatch("cancer", AccessManagement.CONTROLLED));
+    assertFalse(ds.isDatasetMatch("alzheimers", AccessManagement.CONTROLLED));
 
     DataUse du = new DataUse();
     du.setDiseaseRestrictions(List.of("cancer", "alzheimers"));
 
     ds.setDataUse(du);
 
-    assertTrue(ds.isDatasetMatch("cancer", false));
-    assertTrue(ds.isDatasetMatch("alzheimers", false));
+    assertTrue(ds.isDatasetMatch("cancer", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("alzheimers", AccessManagement.CONTROLLED));
   }
 
   @Test
@@ -132,45 +138,46 @@ class DatasetTests {
     ds.setName("asdf");
     ds.setAlias(1234);
 
-    assertTrue(ds.isDatasetMatch("ASD DUOS-001234", false));
-    assertTrue(ds.isDatasetMatch("asdf 123", false));
+    assertTrue(ds.isDatasetMatch("ASD DUOS-001234", AccessManagement.CONTROLLED));
+    assertTrue(ds.isDatasetMatch("asdf 123", AccessManagement.CONTROLLED));
 
-    assertFalse(ds.isDatasetMatch("asf DUOS-001234", false));
-    assertFalse(ds.isDatasetMatch("asd 122", false));
+    assertFalse(ds.isDatasetMatch("asf DUOS-001234", AccessManagement.CONTROLLED));
+    assertFalse(ds.isDatasetMatch("asd 122", AccessManagement.CONTROLLED));
 
   }
 
   @Test
-  void testIsDatasetMatchOpenAccessTrue() {
+  void testIsDatasetMatchOpenAccess() {
     Dataset ds = new Dataset();
 
-    String value = "true";
+    String value = "open";
 
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setPropertyName("Open Access");
+    dsp.setPropertyName("Access Management");
     dsp.setPropertyValue(value);
     dsp.setPropertyType(PropertyType.String);
-    dsp.setSchemaProperty("consentGroup.openAccess");
+    dsp.setSchemaProperty("consentGroup.accessManagement");
     ds.setProperties(Set.of(dsp));
 
-    assertTrue(ds.isDatasetMatch(value, true));
-    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), true));
+    assertTrue(ds.isDatasetMatch(value, AccessManagement.OPEN));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.OPEN));
   }
 
   @Test
-  void testIsDatasetMatchOpenAccessFalse() {
+  void testIsDatasetMatchControlledAccess() {
     Dataset ds = new Dataset();
 
-    String value = "false";
+    String value = "controlled";
 
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setPropertyName("Open Access");
+    dsp.setPropertyName("Access Management");
     dsp.setPropertyValue(value);
     dsp.setPropertyType(PropertyType.String);
-    dsp.setSchemaProperty("consentGroup.openAccess");
+    dsp.setSchemaProperty("consentGroup.accessManagement");
     ds.setProperties(Set.of(dsp));
 
-    assertTrue(ds.isDatasetMatch(value, false));
-    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), true));
+    assertTrue(ds.isDatasetMatch(value, AccessManagement.CONTROLLED));
+    assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.OPEN));
   }
+
 }

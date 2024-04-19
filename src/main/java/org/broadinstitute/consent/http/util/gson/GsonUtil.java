@@ -23,6 +23,10 @@ public class GsonUtil {
     return gsonBuilderWithAdapters().create();
   }
 
+  public static Gson buildGsonNullSerializer() {
+    return gsonBuilderWithAdapters().serializeNulls().create();
+  }
+
   public static GsonBuilder gsonBuilderWithAdapters() {
     return new GsonBuilder()
         .registerTypeAdapter(

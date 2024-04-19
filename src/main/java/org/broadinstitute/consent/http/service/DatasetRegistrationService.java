@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -21,6 +22,8 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -51,16 +54,18 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final GCSService gcsService;
   private final ElasticSearchService elasticSearchService;
   private final StudyDAO studyDAO;
+  private final EmailService emailService;
 
   public DatasetRegistrationService(DatasetDAO datasetDAO, DacDAO dacDAO,
       DatasetServiceDAO datasetServiceDAO, GCSService gcsService,
-      ElasticSearchService elasticSearchService, StudyDAO studyDAO) {
+      ElasticSearchService elasticSearchService, StudyDAO studyDAO, EmailService emailService) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
+    this.emailService = emailService;
   }
 
   public Study findStudyById(Integer studyId) {
@@ -142,7 +147,9 @@ public class DatasetRegistrationService implements ConsentLogger {
         uploadFiles
     );
 
-    return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+    Study updatedStudy = datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+    sendDatasetSubmittedEmails(createdDatasetsFromUpdatedStudy(updatedStudy, datasetUpdates));
+    return updatedStudy;
   }
 
   /**
@@ -187,7 +194,14 @@ public class DatasetRegistrationService implements ConsentLogger {
             datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
-    elasticSearchService.indexDatasets(datasets);
+    sendDatasetSubmittedEmails(datasets);
+    try (Response response = elasticSearchService.indexDatasets(datasets)) {
+      if (response.getStatus() >= 400) {
+        logWarn(String.format("Error indexing datasets from registration: %s", registration.getStudyName()));
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     return datasets;
   }
 
@@ -259,7 +273,13 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
-    elasticSearchService.indexDataset(updatedDataset);
+    try (Response response = elasticSearchService.indexDataset(dataset)) {
+      if (response.getStatus() >= 400) {
+        logWarn(String.format("Error indexing dataset update: %s", dataset.getName()));
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     return updatedDataset;
   }
 
@@ -330,7 +350,7 @@ public class DatasetRegistrationService implements ConsentLogger {
         Objects.nonNull(group.getMor()) && group.getMor() ? group.getMorDate() : null);
 
     dataUse.setMethodsResearch(Objects.nonNull(group.getMor()) && group.getNmds() ? false : null);
-    dataUse.setCommercialUse(Objects.nonNull(group.getNpu()) ? !group.getNpu() : null);
+    dataUse.setNonProfitUse(Objects.nonNull(group.getNpu()) ? group.getNpu() : null);
     dataUse.setOther(group.getOtherPrimary());
     dataUse.setSecondaryOther(group.getOtherSecondary());
     dataUse.setPopulationOriginsAncestry(group.getPoa());
@@ -648,10 +668,10 @@ public class DatasetRegistrationService implements ConsentLogger {
           "alternativeDataSharingPlanTargetPublicReleaseDate", PropertyType.Date,
           DatasetRegistrationSchemaV1::getAlternativeDataSharingPlanTargetPublicReleaseDate),
       new StudyPropertyExtractor(
-          "alternativeDataSharingPlanControlledOpenAccess", PropertyType.String,
+          "alternativeDataSharingPlanAccessManagement", PropertyType.String,
           (registration) -> {
-            if (Objects.nonNull(registration.getAlternativeDataSharingPlanControlledOpenAccess())) {
-              return registration.getAlternativeDataSharingPlanControlledOpenAccess().value();
+            if (Objects.nonNull(registration.getAlternativeDataSharingPlanAccessManagement())) {
+              return registration.getAlternativeDataSharingPlanAccessManagement().value();
             }
             return null;
           })
@@ -668,7 +688,7 @@ public class DatasetRegistrationService implements ConsentLogger {
             return null;
           }),
       new DatasetPropertyExtractor(
-          "Number Of Participants", "numberOfParticipants", PropertyType.Number,
+          "# of participants", "numberOfParticipants", PropertyType.Number,
           ConsentGroup::getNumberOfParticipants),
       new DatasetPropertyExtractor(
           "File Types", "fileTypes", PropertyType.Json,
@@ -682,16 +702,18 @@ public class DatasetRegistrationService implements ConsentLogger {
           "URL", "url", PropertyType.String,
           (consentGroup) -> {
             if (Objects.nonNull(consentGroup.getUrl())) {
-              return consentGroup.getUrl().toString();
+              return consentGroup.getUrl();
             }
             return null;
           }),
       new DatasetPropertyExtractor(
-          "Open Access", "openAccess", PropertyType.Boolean,
-          ConsentGroup::getOpenAccess),
-      new DatasetPropertyExtractor(
-          "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
-          ConsentGroup::getDataAccessCommitteeId)
+          "Access Management", "accessManagement", PropertyType.String,
+          (consentGroup) -> {
+            if (Objects.nonNull(consentGroup.getAccessManagement())) {
+              return consentGroup.getAccessManagement().value();
+            }
+            return null;
+          })
   );
 
   private List<StudyProperty> convertRegistrationToStudyProperties(
@@ -713,5 +735,55 @@ public class DatasetRegistrationService implements ConsentLogger {
         .filter(Optional::isPresent)
         .map(Optional::get)
         .toList();
+  }
+
+  /**
+   * Extracts the datasets that were created from the given study update by subtracting the updated
+   * datasets from the list of datasets in the study.
+   *
+   * @param updatedStudy   The study that was updated
+   * @param datasetUpdates The list of datasets that were updated in the study
+   * @return The list of datasets that were created from updated study
+   */
+  public List<Dataset> createdDatasetsFromUpdatedStudy(Study updatedStudy,
+      List<DatasetServiceDAO.DatasetUpdate> datasetUpdates) {
+    List<Integer> datasetUpdateIds = (datasetUpdates == null) ?
+        List.of() :
+        datasetUpdates.stream().map(DatasetServiceDAO.DatasetUpdate::datasetId).toList();
+    if (updatedStudy.getDatasets() == null) {
+      return List.of();
+    }
+    return updatedStudy.getDatasets().stream().filter(
+        dataset -> !datasetUpdateIds.contains(dataset.getDataSetId())).toList();
+  }
+
+  /**
+   * Sends emails to DAC chairs when a dataset is created.
+   *
+   * @param datasets The datasets that were created
+   */
+  public void sendDatasetSubmittedEmails(List<Dataset> datasets) {
+    try {
+      for (Dataset dataset : datasets) {
+        Dac dac = dacDAO.findById(dataset.getDacId());
+        List<User> chairPersons = dacDAO
+            .findMembersByDacId(dac.getDacId())
+            .stream()
+            .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
+            .toList();
+        if (chairPersons.isEmpty()) {
+          logWarn("No chairpersons found for DAC " + dac.getName());
+        } else {
+          for (User dacChair : chairPersons) {
+            emailService.sendDatasetSubmittedMessage(dacChair,
+                dataset.getCreateUser(),
+                dac.getName(),
+                dataset.getName());
+          }
+        }
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
   }
 }

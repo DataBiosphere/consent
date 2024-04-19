@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -35,7 +34,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DarCollectionServiceDAOTest extends DAOTestHelper {
+class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private DarCollectionServiceDAO serviceDAO;
 
@@ -49,7 +48,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * - Elections created should be for the DAR/Dataset for the user
    */
   @Test
-  public void testCreateElectionsForDarCollectionAdmin() throws Exception {
+  void testCreateElectionsForDarCollectionAdmin() throws Exception {
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -109,7 +108,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * - User is an Admin - Elections created should only be for ALL the DAR/Dataset combinations
    */
   @Test
-  public void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
+  void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -161,7 +160,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * combinations - Elections created should be for the DAR/Dataset for the user
    */
   @Test
-  public void testCreateElectionsForDarCollectionChair() throws Exception {
+  void testCreateElectionsForDarCollectionChair() throws Exception {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
@@ -209,7 +208,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * created should only be for the DAR/Dataset for the user
    */
   @Test
-  public void testCreateElectionsForDarCollectionWithMultipleDatasetsForChair() throws Exception {
+  void testCreateElectionsForDarCollectionWithMultipleDatasetsForChair() throws Exception {
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
@@ -274,7 +273,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * elections are correctly archived
    */
   @Test
-  public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin()
+  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin()
       throws Exception {
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
@@ -322,7 +321,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
    * correctly - Elections created should only be for the DAR/Dataset for the user
    */
   @Test
-  public void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChair()
+  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChair()
       throws Exception {
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -386,10 +385,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     createDarForCollection(user, collectionId, dataset);
@@ -413,10 +409,7 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    Consent consent = createConsent();
     Dataset dataset = createDataset();
-    consentDAO.insertConsentAssociation(consent.getConsentId(), ASSOCIATION_TYPE_TEST,
-        dataset.getDataSetId());
 
     // Create new DAR with Dataset and add it to the collection
     User user = createUser();
@@ -467,20 +460,6 @@ public class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
     return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-  }
-
-  private Consent createConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        "{\"generalUse\": true }",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Group");
-    return consentDAO.findConsentById(consentId);
   }
 
   private Dataset createDatasetWithDac(Integer dacId) {

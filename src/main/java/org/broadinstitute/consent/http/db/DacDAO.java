@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -76,7 +77,7 @@ public interface DacDAO extends Transactional<DacDAO> {
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
           + " FROM users u "
           + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id IS NOT NULL "
-          + " INNER JOIN roles r ON r.roleId = ur.role_id")
+          + " INNER JOIN roles r ON r.role_id = ur.role_id")
   List<User> findAllDACUserMemberships();
 
   /**
@@ -87,9 +88,9 @@ public interface DacDAO extends Transactional<DacDAO> {
    */
   @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery(
-      "SELECT du.*, r.roleId, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id FROM users du "
+      "SELECT du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id FROM users du "
           + " INNER JOIN user_role ur ON ur.user_id = du.user_id "
-          + " INNER JOIN roles r ON r.roleId = ur.role_id "
+          + " INNER JOIN roles r ON r.role_id = ur.role_id "
           + " WHERE LOWER(du.display_name) LIKE concat('%', LOWER(:term), '%') "
           + " OR LOWER(du.email) LIKE concat('%', LOWER(:term), '%') ")
   Set<User> findAllDACUsersBySearchString(@Bind("term") String term);
@@ -164,7 +165,7 @@ public interface DacDAO extends Transactional<DacDAO> {
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
           + " FROM users u "
           + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-          + " INNER JOIN roles r ON r.roleid = ur.role_id "
+          + " INNER JOIN roles r ON r.role_id = ur.role_id "
           + " WHERE ur.dac_id = :dacId ")
   List<User> findMembersByDacId(@Bind("dacId") Integer dacId);
 
@@ -176,7 +177,7 @@ public interface DacDAO extends Transactional<DacDAO> {
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
           + " FROM users u "
           + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
-          + " INNER JOIN roles r ON r.roleid = ur.role_id "
+          + " INNER JOIN roles r ON r.role_id = ur.role_id "
           + " WHERE ur.dac_id = :dacId "
           + " AND ur.role_id = :roleId ")
   List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId,
@@ -190,18 +191,18 @@ public interface DacDAO extends Transactional<DacDAO> {
   void removeDacMember(@Bind("userRoleId") Integer userRoleId);
 
   @UseRowMapper(RoleMapper.class)
-  @SqlQuery("SELECT * FROM roles WHERE roleId = :roleId")
+  @SqlQuery("SELECT * FROM roles WHERE role_id = :roleId")
   Role getRoleById(@Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserRoleMapper.class)
   @SqlQuery(
-      "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id = :userId")
+      "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = :userId")
   List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
 
   @UseRowMapper(UserRoleMapper.class)
   @SqlQuery(
       "SELECT ur.*, r.name FROM user_role ur "
-          + " INNER JOIN roles r ON ur.role_id = r.roleId WHERE ur.user_id IN (<userIds>)")
+          + " INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id IN (<userIds>)")
   List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
 
   /**
@@ -218,5 +219,16 @@ public interface DacDAO extends Transactional<DacDAO> {
       WHERE ds.dataset_id IN (<datasetIds>)
       """)
   Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
+
+  @RegisterRowMapper(DacMapper.class)
+  @SqlQuery("""
+      SELECT dac.* 
+      FROM dac
+      INNER JOIN dataset d ON d.dac_id = dac.dac_id
+      INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id
+      INNER JOIN data_access_request dar ON dd.reference_id = dar.reference_id
+      WHERE dar.collection_id = :collectionId
+      """)
+  Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
 
 }

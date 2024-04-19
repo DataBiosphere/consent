@@ -1,0 +1,49 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Study name
+  description:
+    type: string
+    description: Description
+  dataTypes:
+    description: List of data types
+    type: array
+    items:
+      type: string
+  phenotype:
+    type: string
+    description: The phenotype
+  species:
+    type: string
+    description: The species
+  piName:
+    type: string
+    description: The PI Name
+  dataSubmitterEmail:
+    type: string
+    description: The Data Submitter Email
+  publicVisibility:
+    type: boolean
+    description: Public Visibility
+  nihAnvilUse:
+    type: string
+    description: NIH Anvil Use
+  datasetName:
+    type: string
+    description: Dataset Name
+  dataUse:
+    type: object
+    description: Data Use
+  dacId:
+    type: number
+    description: The DAC Id
+  dataLocation:
+    type: string
+    description: Data Location
+  url:
+    type: string
+    description: Data Location URL
+  numberOfParticipants:
+    type: number
+    description: The Number of Participants

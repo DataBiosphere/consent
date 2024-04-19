@@ -1,0 +1,36 @@
+post:
+  summary: Create a DAA
+  operationId: Create DAA
+  description: Create a Data Access Agreement
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully created a Data Access Agreement
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DataAccessAgreement.yaml'
+    403:
+      description: User not authorized to request all dacs.
+    404:
+      description: Dac Not Found
+    500:
+      description: Internal Server Error

@@ -8,7 +8,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
@@ -41,10 +44,23 @@ public class FreeMarkerTemplateHelper {
     return generateTemplate(user, election, entityId, temp, serverUrl);
   }
 
-  public Writer getNewDARRequestTemplate(String serverUrl, String userName, String entityId)
+  public Writer getNewDARRequestTemplate(
+      String serverUrl,
+      String userName,
+      Map<String, List<String>> dacDatasetGroups,
+      String researcherUserName,
+      String darID
+  )
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-request.html");
-    return generateNewDARRequestTemplate(temp, serverUrl, userName, entityId);
+    return generateNewDARRequestTemplate(
+        temp,
+        serverUrl,
+        userName,
+        dacDatasetGroups,
+        researcherUserName,
+        darID
+    );
   }
 
   public Writer getResearcherDarApprovedTemplate(String darCode, String researcherName,
@@ -55,6 +71,14 @@ public class FreeMarkerTemplateHelper {
         email, temp);
   }
 
+  public Writer getDatasetSubmittedTemplate(String dacChairName, String dataSubmitterName,
+      String datasetName,
+      String dacName) throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("dataset-submitted.html");
+    return generateDatasetSubmittedTemplate(dacChairName, dataSubmitterName, datasetName, dacName,
+        temp);
+  }
+
   public Writer getDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
       String dacName) throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("dataset-approved.html");
@@ -62,9 +86,9 @@ public class FreeMarkerTemplateHelper {
   }
 
   public Writer getDatasetDeniedTemplate(String dataSubmitterName, String datasetName,
-      String dacName) throws IOException, TemplateException {
+      String dacName, String dacEmail) throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("dataset-denied.html");
-    return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, temp);
+    return generateDatasetDeniedTemplate(dataSubmitterName, datasetName, dacName, dacEmail, temp);
   }
 
   public Writer getNewResearcherLibraryRequestTemplate(String researcherName, String serverUrl)
@@ -81,6 +105,13 @@ public class FreeMarkerTemplateHelper {
         researcherEmail, temp);
   }
 
+  public Writer getDaaRequestTemplate(String signingOfficialUserName,
+      String userName, String daaName, String serverUrl) throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("new-daa-request.html");
+    return generateNewDAARequestTemplate(signingOfficialUserName, userName, daaName,
+        serverUrl, temp);
+  }
+
   private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
       String dacName, Template temp) throws IOException, TemplateException {
     DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
@@ -90,8 +121,8 @@ public class FreeMarkerTemplateHelper {
   }
 
   private Writer generateDatasetDeniedTemplate(String dataSubmitterName, String datasetName,
-      String dacName, Template temp) throws IOException, TemplateException {
-    DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName);
+      String dacName, String dacEmail, Template temp) throws IOException, TemplateException {
+    DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName, dacEmail);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
@@ -101,6 +132,17 @@ public class FreeMarkerTemplateHelper {
       String serverUrl, Template temp) throws IOException, TemplateException {
     NewResearcherLibraryRequestModel model = new NewResearcherLibraryRequestModel(researcherName,
         serverUrl);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateDatasetSubmittedTemplate(String dacChairName, String dataSubmitterName,
+      String datasetName,
+      String dacName, Template temp) throws IOException, TemplateException {
+    DatasetSubmittedModel model = new DatasetSubmittedModel(dacChairName, dataSubmitterName,
+        datasetName,
+        dacName);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
@@ -146,9 +188,20 @@ public class FreeMarkerTemplateHelper {
     return out;
   }
 
-  private Writer generateNewDARRequestTemplate(Template temp, String serverUrl, String userName,
-      String entityId) throws IOException, TemplateException {
-    NewDarRequestModel model = new NewDarRequestModel(serverUrl, userName, entityId);
+  private Writer generateNewDARRequestTemplate(
+      Template temp,
+      String serverUrl,
+      String userName,
+      Map<String, List<String>> dacDatasetGroups,
+      String researcherUserName,
+      String darID
+  ) throws IOException, TemplateException {
+    NewDarRequestModel model = new NewDarRequestModel(
+        serverUrl,
+        userName,
+        dacDatasetGroups,
+        researcherUserName,
+        darID);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
@@ -157,6 +210,20 @@ public class FreeMarkerTemplateHelper {
   private Writer generateDisabledDatasetsTemplate(String user, List<String> datasets,
       String entityId, String serverUrl, Template temp) throws IOException, TemplateException {
     DisabledDatasetModel model = new DisabledDatasetModel(user, datasets, entityId, serverUrl);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateNewDAARequestTemplate(
+      String signingOfficialUserName,
+      String userName,
+      String daaName,
+      String serverUrl,
+      Template temp
+  ) throws IOException, TemplateException {
+    NewDaaRequestModel model = new NewDaaRequestModel(serverUrl, daaName, userName,
+        signingOfficialUserName);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;

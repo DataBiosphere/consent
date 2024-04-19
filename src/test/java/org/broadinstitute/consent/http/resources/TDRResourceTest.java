@@ -29,7 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class TDRResourceTest {
+class TDRResourceTest {
 
   @Mock
   private TDRService tdrService;
@@ -62,7 +62,8 @@ public class TDRResourceTest {
   }
 
   @Test
-  public void testGetApprovedUsersForDataset() {
+  void testGetApprovedUsersForDataset() {
+    String ds = "DUOS-00003";
     List<ApprovedUser> users = List.of(
         new ApprovedUser("asdf1@gmail.com"),
         new ApprovedUser("asdf2@gmail.com"));
@@ -70,19 +71,18 @@ public class TDRResourceTest {
 
     Dataset d = new Dataset();
 
-    when(tdrService.getApprovedUsersForDataset(d)).thenReturn(approvedUsers);
-    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
+    when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(approvedUsers);
+    when(datasetService.findDatasetByIdentifier(ds)).thenReturn(d);
 
     initResource();
 
-    Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
-
+    Response r = resource.getApprovedUsers(new AuthUser(), ds);
     assertEquals(200, r.getStatus());
     assertEquals(approvedUsers, r.getEntity());
   }
 
   @Test
-  public void testGetApprovedUsersForDataset404() {
+  void testGetApprovedUsersForDataset404() {
     when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
 
     initResource();
@@ -93,7 +93,7 @@ public class TDRResourceTest {
   }
 
   @Test
-  public void testGetDatasetByIdentifier() {
+  void testGetDatasetByIdentifier() {
 
     Dataset d = new Dataset();
     d.setName("test");
@@ -110,7 +110,7 @@ public class TDRResourceTest {
 
 
   @Test
-  public void testGetDatasetByIdentifier404() {
+  void testGetDatasetByIdentifier404() {
     when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
 
     initResource();
@@ -122,7 +122,7 @@ public class TDRResourceTest {
 
   // Created response when a new DAR draft is successful
   @Test
-  public void testCreateDraftDataAccessRequest() throws Exception {
+  void testCreateDraftDataAccessRequest() throws Exception {
     String identifiers = "DUOS-00001, DUOS-00002";
     List<Integer> identifierList = Arrays.stream(identifiers.split(","))
         .map(String::trim)
@@ -155,7 +155,7 @@ public class TDRResourceTest {
 
   // Bad Request response (400) when no identifiers are provided
   @Test
-  public void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
+  void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
     when(userService.findOrCreateUser(any())).thenReturn(user);
 
     initResource();
@@ -166,7 +166,7 @@ public class TDRResourceTest {
 
   // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
   @Test
-  public void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
+  void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
     String identifiers = "DUOS-00001, DUOS-00002";
     List<Integer> identifierList = Arrays.stream(identifiers.split(","))
         .map(String::trim)
@@ -177,10 +177,6 @@ public class TDRResourceTest {
     Dataset d1 = new Dataset();
     d1.setDataSetId(1);
     d1.setAlias(1);
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setAlias(2);
 
     when(userService.findOrCreateUser(any())).thenReturn(user);
     when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1));

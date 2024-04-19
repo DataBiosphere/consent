@@ -5,11 +5,13 @@ public class DatasetDeniedModel {
   private String dataSubmitterName;
   private String datasetName;
   private String dacName;
+  private String dacEmail;
 
-  public DatasetDeniedModel(String dataSubmitterName, String datasetName, String dacName) {
+  public DatasetDeniedModel(String dataSubmitterName, String datasetName, String dacName, String dacEmail) {
     this.dataSubmitterName = dataSubmitterName;
     this.datasetName = datasetName;
     this.dacName = dacName;
+    this.dacEmail = dacEmail;
   }
 
   public String getDataSubmitterName() {
@@ -23,4 +25,9 @@ public class DatasetDeniedModel {
   public String getDacName() {
     return dacName;
   }
+
+  public String getDacEmail() {
+    return dacEmail;
+  }
+
 }

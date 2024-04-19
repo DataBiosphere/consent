@@ -1,0 +1,18 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-02-07-participants.xml" author="grushton">
+    <sql>
+      -- Convert from new property key to old property key
+      UPDATE dataset_property
+      SET property_key = (SELECT key_id FROM dictionary d WHERE key ILIKE '# of participants')
+      WHERE property_key = (SELECT key_id FROM dictionary d WHERE key ILIKE 'number of participants');
+    </sql>
+    <sql>
+      -- Remove deprecated new property from dictionary
+      DELETE
+      FROM dictionary
+      WHERE key ILIKE 'number of participants';
+    </sql>
+  </changeSet>
+</databaseChangeLog>

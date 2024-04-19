@@ -15,12 +15,16 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -37,6 +41,52 @@ public class DatasetServiceDAO implements ConsentLogger {
     this.jdbi = jdbi;
     this.datasetDAO = datasetDAO;
     this.studyDAO = studyDAO;
+  }
+
+  public void deleteDataset(Dataset dataset, Integer userId) throws Exception {
+    jdbi.useHandle(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      // Some legacy dataset names can be null
+      String dsAuditName =
+          Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
+      DatasetAudit dsAudit = new DatasetAudit(dataset.getDataSetId(), dataset.getObjectId(), dsAuditName,
+        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
+      try {
+        datasetDAO.insertDatasetAudit(dsAudit);
+        datasetDAO.deleteUserAssociationsByDatasetId(dataset.getDataSetId());
+        datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDataSetId());
+        datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDataSetId());
+        datasetDAO.deleteDatasetById(dataset.getDataSetId());
+      } catch (Exception e) {
+        handle.rollback();
+        logException(e);
+        throw e;
+      }
+      handle.commit();
+    });
+  }
+
+  public void deleteStudy(Study study, User user) throws Exception {
+    jdbi.useHandle(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      study.getDatasets().forEach(d -> {
+        try {
+          deleteDataset(d, user.getUserId());
+        } catch (Exception e) {
+          handle.rollback();
+          logException(e);
+          throw new DatasetDeletionException(e);
+        }
+      });
+      try {
+        studyDAO.deleteStudyByStudyId(study.getStudyId());
+      } catch (Exception e) {
+        handle.rollback();
+        logException(e);
+        throw e;
+      }
+      handle.commit();
+    });
   }
 
   public record StudyInsert(String name,
@@ -191,9 +241,9 @@ public class DatasetServiceDAO implements ConsentLogger {
   public Study updateStudy(StudyUpdate studyUpdate, List<DatasetUpdate> datasetUpdates,
       List<DatasetServiceDAO.DatasetInsert> datasetInserts) throws SQLException {
     jdbi.useHandle(
-    handle -> {
-      handle.getConnection().setAutoCommit(false);
-      executeUpdateStudy(handle, studyUpdate);
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          executeUpdateStudy(handle, studyUpdate);
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
                 handle,

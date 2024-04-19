@@ -1,0 +1,32 @@
+put:
+  summary: Convert Dataset to Study
+  description: Converts a Dataset into a Study and updates modifiable fields
+  tags:
+    - Admin
+  parameters:
+    - name: datasetIdentifier
+      in: path
+      description: Dataset Identifier
+      required: true
+      schema:
+        type: string
+  requestBody:
+    description: | 
+      Converts a Dataset into a Study and updates modifiable fields
+    content:
+      application/json:
+          schema:
+            $ref: '../schemas/StudyConversion.yaml'
+  responses:
+    200:
+      description: Converted Study
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Study.yaml'
+    400:
+      description: Bad Request
+    404:
+      description: Not Found
+    500:
+      description: Server error

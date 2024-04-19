@@ -45,11 +45,9 @@ public class DAOTestHelper {
 
   protected static Jdbi jdbi;
 
-  protected static ConsentAuditDAO consentAuditDAO;
-
-  protected static ConsentDAO consentDAO;
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
+  protected static DaaDAO daaDAO;
   protected static UserDAO userDAO;
   protected static DatasetDAO datasetDAO;
   protected static ElectionDAO electionDAO;
@@ -117,10 +115,9 @@ public class DAOTestHelper {
         GsonUtil.buildGson()
     );
 
-    consentAuditDAO = jdbi.onDemand(ConsentAuditDAO.class);
-    consentDAO = jdbi.onDemand(ConsentDAO.class);
     counterDAO = jdbi.onDemand(CounterDAO.class);
     dacDAO = jdbi.onDemand(DacDAO.class);
+    daaDAO = jdbi.onDemand(DaaDAO.class);
     userDAO = jdbi.onDemand(UserDAO.class);
     datasetDAO = jdbi.onDemand(DatasetDAO.class);
     electionDAO = jdbi.onDemand(ElectionDAO.class);
@@ -168,6 +165,9 @@ public class DAOTestHelper {
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();
+    testingDAO.deleteAllLibraryCardDAAs();
+    testingDAO.deleteAllDACDAAs();
+    testingDAO.deleteAllDataAccessAgreements();
     testingDAO.deleteAllDacs();
     testingDAO.deleteAllLibraryCards();
     testingDAO.deleteAllInstitutions();

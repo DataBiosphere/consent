@@ -1,0 +1,84 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-02-06-daa.xml" author="aarohinadkarni">
+    <createTable tableName="data_access_agreement">
+      <column name="daa_id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="create_user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="create_date" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="update_user_id" type="bigint"/>
+      <column name="update_date" type="timestamp"/>
+      <column name="initial_dac_id" type="bigint"/>
+    </createTable>
+    <addForeignKeyConstraint
+      baseTableName="data_access_agreement"
+      baseColumnNames="create_user_id"
+      constraintName="fk_daa_create_user_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedTableName="users"
+      referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint
+      baseTableName="data_access_agreement"
+      baseColumnNames="update_user_id"
+      constraintName="fk_daa_update_user_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedTableName="users"
+      referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint
+      baseTableName="data_access_agreement"
+      baseColumnNames="initial_dac_id"
+      constraintName="fk_daa_initial_dac_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedTableName="dac"
+      referencedColumnNames="dac_id"/>
+    <createTable tableName="dac_daa">
+      <column name="dac_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addPrimaryKey
+      columnNames="daa_id, dac_id"
+      constraintName="jointable_key"
+      tableName="dac_daa"/>
+    <addForeignKeyConstraint
+      baseColumnNames="daa_id"
+      baseTableName="dac_daa"
+      constraintName="fk_daa_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedColumnNames="daa_id"
+      referencedTableName="data_access_agreement"
+      referencesUniqueColumn="true"/>
+    <addForeignKeyConstraint
+      baseColumnNames="dac_id"
+      baseTableName="dac_daa"
+      constraintName="fk_dac_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedColumnNames="dac_id"
+      referencedTableName="dac"
+      referencesUniqueColumn="true"/>
+  </changeSet>
+</databaseChangeLog>

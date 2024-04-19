@@ -86,11 +86,11 @@ public class SupportTicketCreator {
       List<String> descriptionItems, Integer selectedInstitutionId) {
     Institution selectedInstitution = institutionDAO.findInstitutionById(selectedInstitutionId);
     subjectItems.add("Institution Selection");
-    descriptionItems.add(
-        Objects.nonNull(selectedInstitution)
-            ? "- selected an existing institution: " + selectedInstitution.getName()
-            : "- attempted to select institution with id " + selectedInstitutionId + " (not found)"
-    );
+    if (Objects.isNull(selectedInstitution)) {
+      descriptionItems.add(
+          "- attempted to select institution with id " + selectedInstitutionId + " (not found)"
+      );
+    }
   }
 
   private void addSuggestedSigningOfficialMessages(List<String> subjectItems,

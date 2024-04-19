@@ -105,7 +105,7 @@ public class MetricsServiceTest {
     collection.setDarCode("DAR-" + RandomUtils.nextInt(1, 999999999));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
-    when(darDAO.findAllApprovedDataAccessRequestsByDatasetId(any())).thenReturn(dars);
+    when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(dars);
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(collection));
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(
         election);

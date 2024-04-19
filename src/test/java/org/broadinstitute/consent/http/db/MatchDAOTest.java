@@ -15,7 +15,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -27,10 +26,10 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
-public class MatchDAOTest extends DAOTestHelper {
+class MatchDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindMatchesByConsentId() {
+  void testFindMatchesByConsentId() {
     Match m = createMatch();
 
     List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
@@ -44,7 +43,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchesByPurposeId() {
+  void testFindMatchesByPurposeId() {
     Match m = createMatch();
 
     List<Match> matches = matchDAO.findMatchesByPurposeId(m.getPurpose());
@@ -70,7 +69,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteMatchesByConsentId() {
+  void testDeleteMatchesByConsentId() {
     Match m = createMatch();
 
     matchDAO.deleteMatchesByConsentId(m.getConsent());
@@ -79,7 +78,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteMatchesByPurposeId() {
+  void testDeleteMatchesByPurposeId() {
     Match m = createMatch();
 
     matchDAO.deleteMatchesByPurposeId(m.getPurpose());
@@ -88,7 +87,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCountMatchesByResult() {
+  void testCountMatchesByResult() {
     Match m1 = createMatch();
     Match m2 = createMatch();
 
@@ -99,7 +98,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
+  void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
     Dataset dataset = createDataset();
     //query should pull the latest election for a given reference id
     //creating two access elections with the same reference id and datasetid to test that condition
@@ -113,18 +112,18 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Generate RP election to test that the query only references DataAccess elections
     Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
-    String consentId = createConsent().getConsentId();
+    String datasetIdentifier = dataset.getDatasetIdentifier();
 
     //This match represents the match record generated for the target election
-    matchDAO.insertMatch(consentId, darReferenceId, true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match represents the match record generated for the ignored access election
-    matchDAO.insertMatch(consentId, ignoredAccessElection.getReferenceId(), false, false,
-        new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, ignoredAccessElection.getReferenceId(), false, false,
+        new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), true);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), true);
 
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of(darReferenceId));
@@ -134,7 +133,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchesForLatestDataAccessElectionsByPurposeIds_NegativeTest() {
+  void testFindMatchesForLatestDataAccessElectionsByPurposeIds_NegativeTest() {
     Dataset dataset = createDataset();
     String darReferenceId = UUID.randomUUID().toString();
 
@@ -144,14 +143,14 @@ public class MatchDAOTest extends DAOTestHelper {
 
     //Generate RP election for test
     Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
-    String consentId = createConsent().getConsentId();
+    String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
-    matchDAO.insertMatch(consentId, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(consentId, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
@@ -161,7 +160,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchByPurposeIdAndConsentId() {
+  void testFindMatchByPurposeIdAndConsentId() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     matchDAO.insertMatch(
       match.getConsent(),
@@ -177,7 +176,7 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindMatchById() {
+  void testFindMatchById() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     Integer matchId = matchDAO.insertMatch(
         match.getConsent(),
@@ -192,10 +191,10 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertFailureReason() {
+  void testInsertFailureReason() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -214,10 +213,10 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteFailureReasonsByConsentIds() {
+  void testDeleteFailureReasonsByConsentIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -236,10 +235,10 @@ public class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteFailureReasonsByPurposeIds() {
+  void testDeleteFailureReasonsByPurposeIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -268,7 +267,7 @@ public class MatchDAOTest extends DAOTestHelper {
             RandomUtils.nextBoolean(),
             false,
             new Date(),
-            MatchAlgorithm.V3.getVersion(),
+            MatchAlgorithm.V4.getVersion(),
             false);
     return matchDAO.findMatchById(matchId);
   }
@@ -302,20 +301,6 @@ public class MatchDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
-  }
-
-  private Consent createConsent() {
-    String consentId = UUID.randomUUID().toString();
-    consentDAO.insertConsent(consentId,
-        false,
-        "{\"generalUse\": true }",
-        "dul",
-        consentId,
-        "dulName",
-        new Date(),
-        new Date(),
-        "Group");
-    return consentDAO.findConsentById(consentId);
   }
 
   private Election createRPElection(String referenceId, Integer datasetId) {

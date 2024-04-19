@@ -6,15 +6,24 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 public class DatasetTerm {
 
   private Integer datasetId;
+  private Integer createUserId;
+  @Deprecated // Use submitter.displayName instead
+  private String createUserDisplayName;
   private String datasetIdentifier;
+  private Boolean deletable;
+  private String datasetName;
   private Integer participantCount;
   private DataUseSummary dataUse;
   private String dataLocation;
   private String url;
   private Integer dacId;
-  private Boolean openAccess;
+  private Boolean dacApproval;
+  private String accessManagement;
   private List<Integer> approvedUserIds;
   private StudyTerm study;
+  private UserTerm submitter;
+  private UserTerm updateUser;
+  private DacTerm dac;
 
   public Integer getDatasetId() {
     return datasetId;
@@ -22,6 +31,22 @@ public class DatasetTerm {
 
   public void setDatasetId(Integer datasetId) {
     this.datasetId = datasetId;
+  }
+
+  public Integer getCreateUserId() {
+    return createUserId;
+  }
+
+  public void setCreateUserId(Integer createUserId) {
+    this.createUserId = createUserId;
+  }
+
+  public String getCreateUserDisplayName() {
+    return createUserDisplayName;
+  }
+
+  public void setCreateUserDisplayName(String createUserDisplayName) {
+    this.createUserDisplayName = createUserDisplayName;
   }
 
   public String getDatasetIdentifier() {
@@ -32,6 +57,21 @@ public class DatasetTerm {
     this.datasetIdentifier = datasetIdentifier;
   }
 
+  public Boolean getDeletable() {
+    return deletable;
+  }
+
+  public void setDeletable(Boolean deletable) {
+    this.deletable = deletable;
+  }
+
+  public String getDatasetName() {
+    return datasetName;
+  }
+
+  public void setDatasetName(String datasetName) {
+    this.datasetName = datasetName;
+  }
 
   public Integer getParticipantCount() {
     return participantCount;
@@ -40,7 +80,6 @@ public class DatasetTerm {
   public void setParticipantCount(Integer participantCount) {
     this.participantCount = participantCount;
   }
-
 
   public DataUseSummary getDataUse() {
     return dataUse;
@@ -74,12 +113,20 @@ public class DatasetTerm {
     this.dacId = dacId;
   }
 
-  public Boolean getOpenAccess() {
-    return openAccess;
+  public Boolean getDacApproval() {
+    return dacApproval;
   }
 
-  public void setOpenAccess(Boolean openAccess) {
-    this.openAccess = openAccess;
+  public void setDacApproval(Boolean dacApproval) {
+    this.dacApproval = dacApproval;
+  }
+
+  public String getAccessManagement() {
+    return accessManagement;
+  }
+
+  public void setAccessManagement(String accessManagement) {
+    this.accessManagement = accessManagement;
   }
 
   public List<Integer> getApprovedUserIds() {
@@ -96,5 +143,29 @@ public class DatasetTerm {
 
   public void setStudy(StudyTerm study) {
     this.study = study;
+  }
+
+  public UserTerm getSubmitter() {
+    return submitter;
+  }
+
+  public void setSubmitter(UserTerm submitter) {
+    this.submitter = submitter;
+  }
+
+  public UserTerm getUpdateUser() {
+    return updateUser;
+  }
+
+  public void setUpdateUser(UserTerm updateUser) {
+    this.updateUser = updateUser;
+  }
+
+  public DacTerm getDac() {
+    return dac;
+  }
+
+  public void setDac(DacTerm dac) {
+    this.dac = dac;
   }
 }

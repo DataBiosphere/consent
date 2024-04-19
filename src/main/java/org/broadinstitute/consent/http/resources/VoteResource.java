@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.NotFoundException;
@@ -13,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AuthUser;

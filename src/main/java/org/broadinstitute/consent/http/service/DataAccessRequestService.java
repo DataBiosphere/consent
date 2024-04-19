@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.consent.http.db.ConsentDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -28,7 +27,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Consent;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -42,7 +40,6 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
 
-  private final ConsentDAO consentDAO;
   private final CounterService counterService;
   private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -61,7 +58,6 @@ public class DataAccessRequestService implements ConsentLogger {
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
       DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
       UseRestrictionConverter useRestrictionConverter) {
-    this.consentDAO = container.getConsentDAO();
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -342,11 +338,8 @@ public class DataAccessRequestService implements ConsentLogger {
           User user = userDAO.findUserById(dataAccessRequest.getUserId());
           Dataset dataset = Objects.nonNull(election.getDataSetId()) ? datasetDAO.findDatasetById(
               election.getDataSetId()) : null;
+          String datasetName = Objects.nonNull(dataset) ? dataset.getName() : "";
           if (Objects.nonNull(collection) && Objects.nonNull(user) && Objects.nonNull(dataset)) {
-            String consentId = datasetDAO.getAssociatedConsentIdByDatasetId(dataset.getDataSetId());
-            Consent consent =
-                Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
-            String consentName = Objects.nonNull(consent) ? consent.getName() : "";
             String profileName = user.getDisplayName();
             if (Objects.isNull(user.getInstitutionId())) {
               logWarn(
@@ -357,7 +350,7 @@ public class DataAccessRequestService implements ConsentLogger {
                 : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
             String translatedDatasetDataUse = dataset.getTranslatedDataUse();
             dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
-                collection.getDarCode(), profileName, institution, consentName,
+                collection.getDarCode(), profileName, institution, datasetName,
                 translatedDatasetDataUse);
           }
         } catch (Exception e) {
@@ -391,16 +384,11 @@ public class DataAccessRequestService implements ConsentLogger {
         if (Objects.nonNull(dar) && Objects.nonNull(collection)) {
           Integer datasetId =
               !CollectionUtils.isEmpty(dar.getDatasetIds()) ? dar.getDatasetIds().get(0) : null;
-          String consentId =
-              Objects.nonNull(datasetId) ? datasetDAO.getAssociatedConsentIdByDatasetId(datasetId)
-                  : null;
-          Consent consent =
-              Objects.nonNull(consentId) ? consentDAO.findConsentById(consentId) : null;
-          String consentName =
-              (Objects.nonNull(consent) && Objects.nonNull(consent.getName())) ? consent.getName()
+          String datasetName =
+              (Objects.nonNull(dataset) && Objects.nonNull(dataset.getName())) ? dataset.getName()
                   : "";
           dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-              collection.getDarCode(), consentName, translatedDataUse);
+              collection.getDarCode(), datasetName, translatedDataUse);
         }
       }
     }
@@ -415,7 +403,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     StringBuilder builder = new StringBuilder();
     builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-    List<DataAccessRequest> darList = dataAccessRequestDAO.findAllApprovedDataAccessRequestsByDatasetId(
+    List<DataAccessRequest> darList = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         datasetId);
     if (CollectionUtils.isNotEmpty(darList)) {
       for (DataAccessRequest dar : darList) {
@@ -439,13 +427,8 @@ public class DataAccessRequestService implements ConsentLogger {
     return builder.toString();
   }
 
-  public Collection<User> getUsersApprovedForDataset(Dataset dataset) {
-    List<Integer> userIds = this.dataAccessRequestDAO.findAllUserIdsWithApprovedDARsByDatasetId(
-        dataset.getDataSetId());
-    if (userIds.isEmpty()) {
-      return List.of();
-    }
-    return this.userDAO.findUsers(userIds);
+  public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
+    return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDataSetId());
   }
 
 }

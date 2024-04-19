@@ -4,6 +4,8 @@ import com.google.cloud.storage.BlobId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -29,8 +31,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -257,8 +258,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
               .collect(Collectors.toList()),
           authUser, referenceId);
-      if (Objects.nonNull(dar.getData().getIrbDocumentLocation()) &&
-          Objects.nonNull(dar.getData().getIrbDocumentName())) {
+      if (dar.getData() != null &&
+          StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation()) &&
+          StringUtils.isNotEmpty(dar.getData().getIrbDocumentName())
+      ) {
         String blobIdName = dar.getData().getIrbDocumentLocation();
         String fileName = dar.getData().getIrbDocumentName();
         InputStream is = gcsService.getDocument(blobIdName);
@@ -368,8 +371,10 @@ public class DataAccessRequestResourceVersion2 extends Resource {
           Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
               .collect(Collectors.toList()),
           authUser, referenceId);
-      if (Objects.nonNull(dar.getData().getCollaborationLetterLocation()) &&
-          Objects.nonNull(dar.getData().getCollaborationLetterName())) {
+      if (dar.getData() != null &&
+          StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation()) &&
+          StringUtils.isNotEmpty(dar.getData().getCollaborationLetterName())
+      ) {
         String blobIdName = dar.getData().getCollaborationLetterLocation();
         String fileName = dar.getData().getCollaborationLetterName();
         InputStream is = gcsService.getDocument(blobIdName);

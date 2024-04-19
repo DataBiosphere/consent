@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -19,6 +20,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -33,13 +35,17 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DacResourceTest {
+@ExtendWith(MockitoExtension.class)
+class DacResourceTest {
 
   @Mock
   private DacService dacService;
@@ -50,6 +56,9 @@ public class DacResourceTest {
   @Mock
   private UserService userService;
 
+  @Mock
+  private ElasticSearchService elasticSearchService;
+
   private DacResource dacResource;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
@@ -57,13 +66,13 @@ public class DacResourceTest {
   private final Gson gson = GsonUtil.buildGson();
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     openMocks(this);
-    dacResource = new DacResource(dacService, userService, datasetService);
+    dacResource = new DacResource(dacService, userService, datasetService, elasticSearchService);
   }
 
   @Test
-  public void testFindAll_success_1() {
+  void testFindAll_success_1() {
     when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.emptyList());
 
     Response response = dacResource.findAll(authUser, Optional.of(true));
@@ -73,7 +82,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindAll_success_2() {
+  void testFindAll_success_2() {
     Dac dac = new DacBuilder()
         .setName("name")
         .setDescription("description")
@@ -87,7 +96,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindAllWithUsers() {
+  void testFindAllWithUsers() {
     when(dacService.findDacsWithMembersOption(false)).thenReturn(Collections.emptyList());
 
     Response response = dacResource.findAll(authUser, Optional.of(false));
@@ -97,7 +106,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindDatasetsAssociatedWithDac_Success_Admin() {
+  void testFindDatasetsAssociatedWithDac_Success_Admin() {
     Dataset ds = new Dataset();
     ds.setName("test");
 
@@ -115,7 +124,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindDatasetsAssociatedWithDac_NoDac() {
+  void testFindDatasetsAssociatedWithDac_NoDac() {
     Dataset ds = new Dataset();
     ds.setName("test");
 
@@ -124,8 +133,6 @@ public class DacResourceTest {
         List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
 
     when(dacService.findById(1)).thenReturn(null);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
 
     assertThrows(NotFoundException.class, () -> {
       dacResource.findAllDacDatasets(authUser, 1);
@@ -133,7 +140,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindDatasetsAssociatedWithDac_Success_Chairperson() {
+  void testFindDatasetsAssociatedWithDac_Success_Chairperson() {
     Dataset ds = new Dataset();
     ds.setName("test");
 
@@ -155,10 +162,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindDatasetsAssociatedWithDac_NotAuthorized() {
-    Dataset ds = new Dataset();
-    ds.setName("test");
-
+  void testFindDatasetsAssociatedWithDac_NotAuthorized() {
     User user = new User();
     user.setUserId(10);
     user.setRoles(List.of());
@@ -168,7 +172,6 @@ public class DacResourceTest {
 
     when(dacService.findById(1)).thenReturn(dac);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(dacService.findDatasetsByDacId(1)).thenReturn(List.of(ds));
 
     assertThrows(NotAuthorizedException.class, () -> {
       dacResource.findAllDacDatasets(authUser, 1);
@@ -177,7 +180,7 @@ public class DacResourceTest {
 
 
   @Test
-  public void testCreateDac_success() throws Exception {
+  void testCreateDac_success() throws Exception {
     Dac dac = new DacBuilder()
         .setName("name")
         .setDescription("description")
@@ -190,7 +193,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testCreateDacWithEmail_success() throws Exception {
+  void testCreateDacWithEmail_success() throws Exception {
     Dac dac = new DacBuilder()
         .setName("name")
         .setDescription("description")
@@ -204,20 +207,18 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testCreateDac_badRequest_1() {
+  void testCreateDac_badRequest_1() {
     assertThrows(BadRequestException.class, () -> {
       dacResource.createDac(authUser, null);
     });
   }
 
   @Test
-  public void testCreateDac_badRequest_2() {
+  void testCreateDac_badRequest_2() {
     Dac dac = new DacBuilder()
         .setName(null)
         .setDescription("description")
         .build();
-    when(dacService.createDac(any(), any())).thenReturn(1);
-    when(dacService.findById(1)).thenReturn(dac);
 
     assertThrows(BadRequestException.class, () -> {
       dacResource.createDac(authUser, gson.toJson(dac));
@@ -225,13 +226,11 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testCreateDac_badRequest_3() {
+  void testCreateDac_badRequest_3() {
     Dac dac = new DacBuilder()
         .setName("name")
         .setDescription(null)
         .build();
-    when(dacService.createDac(any(), any())).thenReturn(1);
-    when(dacService.findById(1)).thenReturn(dac);
 
     assertThrows(BadRequestException.class, () -> {
       dacResource.createDac(authUser, gson.toJson(dac));
@@ -240,7 +239,7 @@ public class DacResourceTest {
 
 
   @Test
-  public void testUpdateDac_success() {
+  void testUpdateDac_success() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -255,7 +254,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testUpdateDacWithEmail_success() {
+  void testUpdateDacWithEmail_success() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -271,14 +270,14 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testUpdateDac_badRequest_1() {
+  void testUpdateDac_badRequest_1() {
     assertThrows(BadRequestException.class, () -> {
       dacResource.updateDac(authUser, null);
     });
   }
 
   @Test
-  public void testUpdateDac_badRequest_2() {
+  void testUpdateDac_badRequest_2() {
     Dac dac = new DacBuilder()
         .setDacId(null)
         .setName("name")
@@ -290,7 +289,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testUpdateDac_badRequest_3() {
+  void testUpdateDac_badRequest_3() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName(null)
@@ -302,7 +301,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testUpdateDac_badRequest_4() {
+  void testUpdateDac_badRequest_4() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -314,7 +313,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindById_success() {
+  void testFindById_success() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -327,7 +326,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testFindById_failure() {
+  void testFindById_failure() {
     when(dacService.findById(1)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> {
@@ -336,7 +335,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testDeleteDac_success() {
+  void testDeleteDac_success() {
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -350,7 +349,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testDeleteDac_failure() {
+  void testDeleteDac_failure() {
     when(dacService.findById(1)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> {
@@ -359,7 +358,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacMemberAsAdmin() {
+  void testAddDacMemberAsAdmin() {
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
     User admin = buildAdmin(authUser);
@@ -372,7 +371,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacMemberAsChairSuccess() {
+  void testAddDacMemberAsChairSuccess() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(chair);
     when(dacService.findById(any())).thenReturn(dac);
@@ -385,7 +384,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacMemberAsChairFailure() {
+  void testAddDacMemberAsChairFailure() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
@@ -399,7 +398,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacMemberAsAdmin() {
+  void testRemoveDacMemberAsAdmin() {
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
     User admin = buildAdmin(authUser);
@@ -412,7 +411,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacMemberAsChairSuccess() {
+  void testRemoveDacMemberAsChairSuccess() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(chair);
     when(dacService.findById(any())).thenReturn(dac);
@@ -425,7 +424,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacMemberAsChairFailure() {
+  void testRemoveDacMemberAsChairFailure() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
@@ -439,7 +438,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacChairAsAdmin() {
+  void testAddDacChairAsAdmin() {
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
     User admin = buildAdmin(authUser);
@@ -452,7 +451,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacChairAsChairSuccess() {
+  void testAddDacChairAsChairSuccess() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(chair);
     when(dacService.findById(any())).thenReturn(dac);
@@ -465,7 +464,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testAddDacChairAsChairFailure() {
+  void testAddDacChairAsChairFailure() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
@@ -479,7 +478,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacChairAsAdmin() {
+  void testRemoveDacChairAsAdmin() {
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
     User admin = buildAdmin(authUser);
@@ -492,7 +491,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacChairAsChairSuccess() {
+  void testRemoveDacChairAsChairSuccess() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(chair);
     when(dacService.findById(any())).thenReturn(dac);
@@ -505,7 +504,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testRemoveDacChairAsChairFailure() {
+  void testRemoveDacChairAsChairFailure() {
     User chair = buildChair(authUser);
     Dac dac = buildDac(null);
     when(dacService.findById(any())).thenReturn(dac);
@@ -519,14 +518,14 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testApproveDataset_UserNotFound() {
+  void testApproveDataset_UserNotFound() {
     when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
     Response response = dacResource.approveDataset(authUser, 1, 1, "test");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
-  public void testApproveDataset_DacIdMismatch() {
+  void testApproveDataset_DacIdMismatch() {
     User user = new User();
     Dataset dataset = new Dataset();
     dataset.setDacId(2);
@@ -538,7 +537,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testApproveDataset_UserDifferentChair() {
+  void testApproveDataset_UserDifferentChair() {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -553,7 +552,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testApproveDataset_EmptyPayload() {
+  void testApproveDataset_EmptyPayload() {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -568,7 +567,7 @@ public class DacResourceTest {
   }
 
   @Test
-  public void testApproveDataset_AlreadyApproved_TrueSubmission() {
+  void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -581,13 +580,14 @@ public class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(dataset);
+    when(elasticSearchService.indexDataset(any())).thenReturn(Response.ok().build());
     Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
   }
 
   @Test
-  public void testApproveDataset() {
+  void testApproveDataset() throws Exception {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -603,13 +603,14 @@ public class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
+    when(elasticSearchService.indexDataset(any())).thenReturn(Response.ok().build());
     Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
   }
 
   @Test
-  public void testApproveDataset_AlreadyApproved_NonTrueSubmission() {
+  void testApproveDataset_AlreadyApproved_NonTrueSubmission() {
     User user = new User();
     UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
         UserRoles.CHAIRPERSON.getRoleName());
@@ -626,6 +627,51 @@ public class DacResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 
+  @Test
+  void testApproveDataset_ElasticSearchNonSuccessResponseDoesNotFail() throws Exception {
+    User user = new User();
+    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
+        UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(1);
+    user.addRole(chairRole);
+    Dataset dataset = new Dataset();
+    Dataset datasetResponse = new Dataset();
+    datasetResponse.setDacId(1);
+    datasetResponse.setDacApproval(true);
+    dataset.setDacId(1);
+    dataset.setDacApproval(false);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+        .thenReturn(datasetResponse);
+    when(elasticSearchService.indexDataset(any())).thenReturn(Response.serverError().build());
+    Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
+  }
+
+  @Test
+  void testApproveDataset_ElasticSearchExceptionDoesNotFail() throws Exception {
+    User user = new User();
+    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
+        UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(1);
+    user.addRole(chairRole);
+    Dataset dataset = new Dataset();
+    Dataset datasetResponse = new Dataset();
+    datasetResponse.setDacId(1);
+    datasetResponse.setDacApproval(true);
+    dataset.setDacId(1);
+    dataset.setDacApproval(false);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
+        .thenReturn(datasetResponse);
+    doThrow(new IOException("Something went wrong")).when(elasticSearchService).indexDataset(any());
+    Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
+  }
 
   private JsonArray getListFromEntityString(String str) {
     return GsonUtil.buildGson().fromJson(str, JsonArray.class);

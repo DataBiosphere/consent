@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -52,48 +53,67 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT * FROM library_card WHERE id = :libraryCardId")
+  @SqlQuery("""
+      SELECT lc.*,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE lc.id = :libraryCardId
+      """)
   LibraryCard findLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT lc.*, " +
-      " institution.institution_id AS i_institution_id, " +
-      " institution.institution_name AS i_name, " +
-      " institution.it_director_name AS i_it_director_name, " +
-      " institution.it_director_email AS i_it_director_email, " +
-      " institution.create_user AS i_create_user_id, " +
-      " institution.create_date AS i_create_date, " +
-      " institution.update_date AS i_update_date, " +
-      " institution.update_user AS i_update_user_id " +
-      " FROM library_card AS lc " +
-      " LEFT JOIN institution " +
-      " ON lc.institution_id = institution.institution_id" +
-      " WHERE lc.user_id = :userId")
+  @SqlQuery("""
+      SELECT lc.*,
+      institution.institution_id AS i_institution_id,
+      institution.institution_name AS i_name,
+      institution.it_director_name AS i_it_director_name,
+      institution.it_director_email AS i_it_director_email,
+      institution.create_user AS i_create_user_id,
+      institution.create_date AS i_create_date,
+      institution.update_date AS i_update_date,
+      institution.update_user AS i_update_user_id,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN institution
+      ON lc.institution_id = institution.institution_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE lc.user_id = :userId
+      """)
   List<LibraryCard> findLibraryCardsByUserId(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT * FROM library_Card WHERE institution_id = :institutionId")
+  @SqlQuery("""
+      SELECT library_card.*,
+      ld.daa_id
+      FROM library_card
+      LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
+      WHERE library_card.institution_id = :institutionId
+      """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT lc.*, " +
-      "institution.institution_id AS i_institution_id, " +
-      "institution.institution_name AS i_name, " +
-      "institution.it_director_name AS i_it_director_name, " +
-      "institution.it_director_email AS i_it_director_email, " +
-      "institution.create_user AS i_create_user_id, " +
-      "institution.create_date AS i_create_date, " +
-      "institution.update_date AS i_update_date, " +
-      "institution.update_user AS i_update_user_id " +
-      "FROM library_card AS lc " +
-      "LEFT JOIN institution " +
-      "ON lc.institution_id = institution.institution_id"
-  )
+  @SqlQuery("""
+      SELECT lc.*,
+      institution.institution_id AS i_institution_id,
+      institution.institution_name AS i_name,
+      institution.it_director_name AS i_it_director_name,
+      institution.it_director_email AS i_it_director_email,
+      institution.create_user AS i_create_user_id,
+      institution.create_date AS i_create_date,
+      institution.update_date AS i_update_date,
+      institution.update_user AS i_update_user_id,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN institution
+      ON lc.institution_id = institution.institution_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      """)
   List<LibraryCard> findAllLibraryCards();
 
   @RegisterBeanMapper(value = LibraryCard.class)
@@ -112,4 +132,17 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
+
+  @SqlUpdate("""
+      INSERT INTO lc_daa (lc_id, daa_id)
+      VALUES (:lcId, :daaId)
+      """)
+  void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+
+  @SqlUpdate("""
+      DELETE FROM lc_daa
+      WHERE lc_id = :lcId
+      AND daa_id = :daaId
+      """)
+  void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 }

@@ -4,19 +4,17 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, Dac> {
+public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, Dac>,
+    ConsentLogger {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final DataUseParser dataUseParser = new DataUseParser();
 
   @Override
   public void accumulate(Map<Integer, Dac> container, RowView rowView) {
@@ -32,23 +30,22 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
         try {
           //aliased columns must be set directly
-
-          if (Objects.nonNull(rowView.getColumn("dataset_alias", String.class))) {
-            String dsAlias = rowView.getColumn("dataset_alias", String.class);
+          String dsAlias = rowView.getColumn("dataset_alias", String.class);
+          if (dsAlias != null) {
             try {
               dataset.setAlias(Integer.parseInt(dsAlias));
             } catch (Exception e) {
-              logger.error("Exception parsing dataset alias: " + dsAlias, e);
+              logException("Exception parsing dataset alias: " + dsAlias, e);
             }
           }
 
-          if (Objects.nonNull(rowView.getColumn("dataset_create_date", Date.class))) {
-            Date createDate = rowView.getColumn("dataset_create_date", Date.class);
+          Date createDate = rowView.getColumn("dataset_create_date", Date.class);
+          if (createDate != null) {
             dataset.setCreateDate(createDate);
           }
 
-          if (Objects.nonNull(rowView.getColumn("dataset_update_date", Timestamp.class))) {
-            Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
+          Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
+          if (updateDate != null) {
             dataset.setUpdateDate(updateDate);
           }
 
@@ -56,10 +53,9 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           //no values for these columns
         }
 
-        if (Objects.nonNull(rowView.getColumn("dataset_data_use", String.class))) {
-          String duStr = rowView.getColumn("dataset_data_use", String.class);
-          Optional<DataUse> du = DataUse.parseDataUse(duStr);
-          du.ifPresent(dataset::setDataUse);
+        String duStr = rowView.getColumn("dataset_data_use", String.class);
+        if (duStr != null) {
+          dataset.setDataUse(dataUseParser.parseDataUse(duStr));
         }
 
         if (Objects.nonNull(dataset)) {
@@ -68,7 +64,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
 
       }
     } catch (MappingException e) {
-      logger.warn(e.getMessage());
+      logWarn(e.getMessage());
     }
   }
 }

@@ -1,0 +1,7 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="2023-09-20-capitalize-datasets-used-in-user-role-dao.xml" author="hamsini">
+    <renameColumn newColumnName="role_id" oldColumnName="roleid" tableName="roles"/>
+  </changeSet>
+</databaseChangeLog>

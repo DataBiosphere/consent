@@ -7,7 +7,6 @@ package org.broadinstitute.consent.http.db;
 @SuppressWarnings("unused")
 public class DAOContainer {
 
-  private ConsentDAO consentDAO;
   private CounterDAO counterDAO;
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
@@ -23,18 +22,9 @@ public class DAOContainer {
   private UserRoleDAO userRoleDAO;
   private VoteDAO voteDAO;
   private StudyDAO studyDAO;
-  private ConsentAuditDAO consentAuditDAO;
   private InstitutionDAO institutionDAO;
   private FileStorageObjectDAO fileStorageObjectDAO;
   private AcknowledgementDAO acknowledgementDAO;
-
-  public ConsentDAO getConsentDAO() {
-    return consentDAO;
-  }
-
-  public void setConsentDAO(ConsentDAO consentDAO) {
-    this.consentDAO = consentDAO;
-  }
 
   public CounterDAO getCounterDAO() {
     return counterDAO;
@@ -160,14 +150,6 @@ public class DAOContainer {
 
   public void setStudyDAO(StudyDAO studyDAO) {
     this.studyDAO = studyDAO;
-  }
-
-  public ConsentAuditDAO getConsentAuditDAO() {
-    return consentAuditDAO;
-  }
-
-  public void setConsentAuditDAO(ConsentAuditDAO consentAuditDAO) {
-    this.consentAuditDAO = consentAuditDAO;
   }
 
   public InstitutionDAO getInstitutionDAO() {

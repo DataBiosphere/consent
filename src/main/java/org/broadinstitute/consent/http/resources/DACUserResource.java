@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -14,7 +15,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
@@ -31,7 +31,7 @@ public class DACUserResource extends Resource {
 
   @POST
   @Consumes("application/json")
-  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  @RolesAllowed({ADMIN})
   public Response createDACUser(@Context UriInfo info, String json) {
     try {
       User user = userService.createUser(new User(json));

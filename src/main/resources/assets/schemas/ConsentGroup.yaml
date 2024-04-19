@@ -7,15 +7,22 @@ properties:
   consentGroupName:
     type: string
     description: Consent Group Name
+  datasetId:
+    type: number
+    description: The dataset id of the consent group
+  accessManagement:
+    description: Access Management
+    type: string
+    enum:
+      - controlled
+      - open
+      - external
   numberOfParticipants:
     type: number
     description: Number of Participants
   generalResearchUse:
     type: boolean
     description: General Research Use
-  openAccess:
-    type: boolean
-    description: Open Access
   hmb:
     type: boolean
     description: Health/Medical/Biomedical Research Use

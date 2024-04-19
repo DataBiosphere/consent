@@ -1,9 +1,0 @@
-{{with $environment := env "ENVIRONMENT"}}
-
-consent {
-  baseUrl = {{if eq $environment "local"}}"https://local.broadinstitute.org:27443/"{{else}}"https://consent.dsde-dev.broadinstitute.org/"{{end}},
-  profileUrl = "https://profile-dot-broad-shibboleth-prod.appspot.com/dev",
-  ontologyUrl = "https://consent-ontology.dsde-dev.broadinstitute.org/"
-}
-
-{{end}}

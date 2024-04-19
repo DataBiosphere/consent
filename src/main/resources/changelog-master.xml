@@ -128,4 +128,24 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2023-07-27-match-rationale.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-09-20-rename-role-id-column-in-roles.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-12-18-dataset-study-indexes.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2023-12-20-dataset-study-indexes.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-09-unique-dataset-names.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-15-participants.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-06-daa.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-12-daa-lc.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-28-dataset-dac-id-props.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-01-rm-piname.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-02-rm-old-dbgap-url.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,0 +1,12 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2023-12-20-dataset-study-indexes.xml" author="grushton">
+    <createIndex indexName="idx_dataset_dac_id" tableName="dataset">
+      <column name="dac_id"/>
+    </createIndex>
+    <createIndex indexName="idx_study_public_visibility" tableName="study">
+      <column name="public_visibility"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

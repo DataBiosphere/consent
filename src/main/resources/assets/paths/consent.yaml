@@ -1,6 +1,7 @@
 get:
-  summary: Find Consent by name
-  description: Returns the Consent identified by the name.
+  deprecated: true
+  summary: Deprecated endpoint.
+  description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
   parameters:
     - name: name
       in: query
@@ -11,19 +12,12 @@ get:
   tags:
     - Consent
   responses:
-    200:
-      description: Returns the requested consent.
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/Consent.yaml'
-    400:
-      description: The consent associated with the provided name has not been approved.
     404:
-      description: The consent associated with the provided name could not be found.
+      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
 post:
-  summary: Create new Consent
-  description: Creates the consent sent with the request.
+  deprecated: true
+  summary: Deprecated endpoint.
+  description: Deprecated endpoint.
   requestBody:
     description: Object that represents a Consent
     required: true
@@ -34,7 +28,5 @@ post:
   tags:
     - Consent
   responses:
-    201:
-      description: Returns the URL to find the created consent.
-    500:
-      description: Internal Server Error.
+    404:
+      description: Deprecated endpoint.

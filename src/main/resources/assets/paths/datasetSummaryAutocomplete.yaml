@@ -1,0 +1,21 @@
+get:
+  summary: Autocomplete Datasets
+  description: Returns all DAC approved dataset summaries matching a search query.
+  parameters:
+    - name: query
+      in: query
+      description: Search Query
+      required: true
+      schema:
+        type: string
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: A list of Dataset Summary objects
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DatasetSummary.yaml'

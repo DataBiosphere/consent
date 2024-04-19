@@ -133,7 +133,7 @@ class JsonSchemaUtilTest {
           "publicVisibility": true,
           "piInstitution": 1,
           "nihGrantContractNumber": "1234123412341234",
-          "gbGaPPhsID": "someId",
+          "dbGaPPhsID": "someId",
           "dataSubmitterUserId": 1,
           "embargoReleaseDate": "asfd-10-20",
           "targetDeliveryDate": "asdf-10-20",
@@ -415,13 +415,13 @@ class JsonSchemaUtilTest {
             }],
             "numberOfParticipants": 2,
             "consentGroupName": "name",
-            "openAccess": true,
+            "accessManagement": "open",
             "url": "https://asdf.com"
           }]
         }
         """;
 
-    String openAccessFalseNoDacId = """
+    String controlledAccessNoDacId = """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -441,14 +441,14 @@ class JsonSchemaUtilTest {
             }],
             "numberOfParticipants": 2,
             "consentGroupName": "name",
-            "openAccess": false,
+            "accessManagement": "controlled",
             "poa": true,
             "url": "https://asdf.com"
           }]
         }
         """;
 
-    String noOpenAccessNoDacId = """
+    String noAccessManagementNoDacId = """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -478,9 +478,9 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
 
     // only errors if not open access & no dac id present
-    errors = schemaUtil.validateSchema_v1(openAccessFalseNoDacId);
+    errors = schemaUtil.validateSchema_v1(controlledAccessNoDacId);
     assertFieldHasError(errors, "dataAccessCommitteeId");
-    errors = schemaUtil.validateSchema_v1(noOpenAccessNoDacId);
+    errors = schemaUtil.validateSchema_v1(noAccessManagementNoDacId);
     assertFieldHasError(errors, "dataAccessCommitteeId");
 
     errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
@@ -530,7 +530,7 @@ class JsonSchemaUtilTest {
   }
 
   @Test
-  void testValidateDatasetRegistrationObject_v1_file_types_required() {
+  void testValidateDatasetRegistrationObject_v1_file_types_not_required() {
     String noFileTypes = """
         {
           "studyType": "Observational",
@@ -545,6 +545,7 @@ class JsonSchemaUtilTest {
           "dataSubmitterUserId": 1,
           "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
           "consentGroups": [{
+            "numberOfParticipants": 1,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -568,6 +569,7 @@ class JsonSchemaUtilTest {
           "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
           "consentGroups": [{
             "fileTypes": [],
+            "numberOfParticipants": 1,
             "consentGroupName": "name",
             "generalResearchUse": true,
             "dataAccessCommitteeId": 1,
@@ -577,10 +579,10 @@ class JsonSchemaUtilTest {
         """;
 
     Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(noFileTypes);
-    assertFieldHasError(errors, "fileTypes");
+    assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(emptyFileTypes);
-    assertFieldHasError(errors, "fileTypes");
+    assertNoErrors(errors);
   }
 
 
@@ -698,7 +700,7 @@ class JsonSchemaUtilTest {
             "numberOfParticipants": 2,
             "consentGroupName": "name!",
             "diseaseSpecificUse": ["some disease"],
-            "openAccess": true,
+            "accessManagement": "open",
             "dataAccessCommitteeId": 1,
             "url": "https://asdf.com"
           }]

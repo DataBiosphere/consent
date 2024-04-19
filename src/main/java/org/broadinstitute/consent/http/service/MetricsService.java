@@ -244,7 +244,7 @@ public class MetricsService {
 
     //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
     //convert all dars into smaller objects that only contain the information needed
-    List<DataAccessRequest> dars = darDAO.findAllApprovedDataAccessRequestsByDatasetId(datasetId);
+    List<DataAccessRequest> dars = darDAO.findApprovedDARsByDatasetId(datasetId);
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId)
         .collect(Collectors.toList());
     List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :

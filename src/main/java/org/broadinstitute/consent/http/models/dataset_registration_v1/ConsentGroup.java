@@ -16,8 +16,9 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "datasetId",
+    "datasetIdentifier",
     "consentGroupName",
-    "openAccess",
+    "accessManagement",
     "generalResearchUse",
     "hmb",
     "diseaseSpecificUse",
@@ -36,6 +37,7 @@ import java.util.Objects;
     "dataAccessCommitteeId",
     "dataLocation",
     "url",
+    "numberOfParticipants",
     "fileTypes"
 })
 public class ConsentGroup {
@@ -47,6 +49,12 @@ public class ConsentGroup {
   @JsonPropertyDescription("Dataset Id")
   private Integer datasetId;
   /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  @JsonPropertyDescription("Dataset Identifier")
+  private String datasetIdentifier;
+  /**
    * Consent Group Name
    */
   @JsonProperty("consentGroupName")
@@ -55,9 +63,9 @@ public class ConsentGroup {
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
-  @JsonPropertyDescription("No Restrictions")
-  private Boolean openAccess;
+  @JsonProperty("accessManagement")
+  @JsonPropertyDescription("One of Controlled, Open, or External")
+  private AccessManagement accessManagement;
   /**
    * General Research Use
    */
@@ -182,6 +190,7 @@ public class ConsentGroup {
   /**
    * Dataset Id
    */
+  @JsonProperty("datasetId")
   public Integer getDatasetId() {
     return datasetId;
   }
@@ -189,8 +198,25 @@ public class ConsentGroup {
   /**
    * Dataset Id
    */
+  @JsonProperty("datasetId")
   public void setDatasetId(Integer datasetId) {
     this.datasetId = datasetId;
+  }
+
+  /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  public String getDatasetIdentifier() {
+    return datasetIdentifier;
+  }
+
+  /**
+   * Dataset Identifier
+   */
+  @JsonProperty("datasetIdentifier")
+  public void setDatasetIdentifier(String datasetIdentifier) {
+    this.datasetIdentifier = datasetIdentifier;
   }
 
   /**
@@ -212,17 +238,17 @@ public class ConsentGroup {
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
-  public Boolean getOpenAccess() {
-    return openAccess;
+  @JsonProperty("accessManagement")
+  public AccessManagement getAccessManagement() {
+    return accessManagement;
   }
 
   /**
    * No Restrictions
    */
-  @JsonProperty("openAccess")
-  public void setOpenAccess(Boolean openAccess) {
-    this.openAccess = openAccess;
+  @JsonProperty("accessManagement")
+  public void setAccessManagement(AccessManagement accessManagement) {
+    this.accessManagement = accessManagement;
   }
 
   /**
@@ -513,10 +539,18 @@ public class ConsentGroup {
     this.url = url;
   }
 
+  /**
+   * # of Participants (Required)
+   */
+  @JsonProperty("numberOfParticipants")
   public Integer getNumberOfParticipants() {
     return numberOfParticipants;
   }
 
+  /**
+   * # of Participants (Required)
+   */
+  @JsonProperty("numberOfParticipants")
   public void setNumberOfParticipants(Integer numberOfParticipants) {
     this.numberOfParticipants = numberOfParticipants;
   }
@@ -546,13 +580,17 @@ public class ConsentGroup {
     sb.append('=');
     sb.append(((this.datasetId == null) ? "<null>" : this.datasetId));
     sb.append(',');
+    sb.append("datasetIdentifier");
+    sb.append('=');
+    sb.append(((this.datasetIdentifier == null) ? "<null>" : this.datasetIdentifier));
+    sb.append(',');
     sb.append("consentGroupName");
     sb.append('=');
     sb.append(((this.consentGroupName == null) ? "<null>" : this.consentGroupName));
     sb.append(',');
-    sb.append("openAccess");
+    sb.append("accessManagement");
     sb.append('=');
-    sb.append(((this.openAccess == null) ? "<null>" : this.openAccess));
+    sb.append(((this.accessManagement == null) ? "<null>" : this.accessManagement));
     sb.append(',');
     sb.append("generalResearchUse");
     sb.append('=');
@@ -662,12 +700,15 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.diseaseSpecificUse == null) ? 0
         : this.diseaseSpecificUse.hashCode()));
     result = ((result * 31) + ((this.datasetId == null) ? 0 : this.datasetId.hashCode()));
+    result = ((result * 31) + ((this.datasetIdentifier == null) ? 0
+        : this.datasetIdentifier.hashCode()));
     result = ((result * 31) + ((this.consentGroupName == null) ? 0
         : this.consentGroupName.hashCode()));
     result = ((result * 31) + ((this.mor == null) ? 0 : this.mor.hashCode()));
     result = ((result * 31) + ((this.npu == null) ? 0 : this.npu.hashCode()));
     result = ((result * 31) + ((this.dataLocation == null) ? 0 : this.dataLocation.hashCode()));
-    result = ((result * 31) + ((this.openAccess == null) ? 0 : this.openAccess.hashCode()));
+    result = ((result * 31) + ((this.accessManagement == null) ? 0
+        : this.accessManagement.hashCode()));
     result = ((result * 31) + ((this.irb == null) ? 0 : this.irb.hashCode()));
     result = ((result * 31) + ((this.hmb == null) ? 0 : this.hmb.hashCode()));
     result = ((result * 31) + ((this.pub == null) ? 0 : this.pub.hashCode()));
@@ -704,13 +745,18 @@ public class ConsentGroup {
         (this.diseaseSpecificUse != null) && this.diseaseSpecificUse.equals(
             rhs.diseaseSpecificUse)))) && ((this.datasetId == rhs.datasetId) || (
         (this.datasetId != null) && this.datasetId.equals(rhs.datasetId))) && (
+        (this.datasetIdentifier == rhs.datasetIdentifier) || (
+            (this.datasetIdentifier != null) && this.datasetIdentifier.equals(
+                rhs.datasetIdentifier))) && (
         (this.consentGroupName == rhs.consentGroupName) || (
             (this.consentGroupName != null) && this.consentGroupName.equals(rhs.consentGroupName))))
         && ((this.mor == rhs.mor) || ((this.mor != null) && this.mor.equals(rhs.mor)))) && (
         (this.npu == rhs.npu) || ((this.npu != null) && this.npu.equals(rhs.npu)))) && (
         (this.dataLocation == rhs.dataLocation) || ((this.dataLocation != null)
-            && this.dataLocation.equals(rhs.dataLocation)))) && ((this.openAccess == rhs.openAccess)
-        || ((this.openAccess != null) && this.openAccess.equals(rhs.openAccess)))) && (
+            && this.dataLocation.equals(rhs.dataLocation)))) && (
+        (this.accessManagement == rhs.accessManagement)
+            || ((this.accessManagement != null) && this.accessManagement.equals(
+            rhs.accessManagement)))) && (
         (this.irb == rhs.irb) || ((this.irb != null) && this.irb.equals(rhs.irb)))) && (
         (this.hmb == rhs.hmb) || ((this.hmb != null) && this.hmb.equals(rhs.hmb)))) && (
         (this.pub == rhs.pub) || ((this.pub != null) && this.pub.equals(rhs.pub)))) && (
@@ -764,8 +810,49 @@ public class ConsentGroup {
 
   }
 
+  /*
+   * Access Management
+   */
+  public enum AccessManagement {
+    OPEN("open"),
+    CONTROLLED("controlled"),
+    EXTERNAL("external");
+    private final String value;
+    private final static Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
+
+    static {
+      for (ConsentGroup.AccessManagement c : values()) {
+        CONSTANTS.put(c.value, c);
+      }
+    }
+
+    AccessManagement(String value) {
+      this.value = value;
+    }
+
+    @Override
+    public String toString() {
+      return this.value;
+    }
+
+    @JsonValue
+    public String value() {
+      return this.value;
+    }
+
+    @JsonCreator
+    public static ConsentGroup.AccessManagement fromValue(String value) {
+      ConsentGroup.AccessManagement constant = CONSTANTS.get(value);
+      if (constant == null) {
+        throw new IllegalArgumentException(value);
+      } else {
+        return constant;
+      }
+    }
+  }
+
   public boolean isInvalidForUpdate() {
-    return Objects.nonNull(this.openAccess) ||
+    return Objects.nonNull(this.accessManagement) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
@@ -784,7 +871,7 @@ public class ConsentGroup {
   }
 
   public boolean hasPrimaryDataUse() {
-    return Objects.nonNull(this.openAccess) ||
+    return Objects.nonNull(this.accessManagement) ||
         Objects.nonNull(this.generalResearchUse) ||
         Objects.nonNull(this.hmb) ||
         (Objects.nonNull(this.diseaseSpecificUse) && !this.diseaseSpecificUse.isEmpty()) ||

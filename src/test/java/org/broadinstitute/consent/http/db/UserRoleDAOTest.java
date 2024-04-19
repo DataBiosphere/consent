@@ -140,9 +140,9 @@ public class UserRoleDAOTest extends DAOTestHelper {
 
   @Test
   public void testFindRoleByUserIdAndRoleId() {
-    User user = createUserWithRole(UserRoles.DATAOWNER.getRoleId());
+    User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getUserId(),
-        UserRoles.DATAOWNER.getRoleId());
+        UserRoles.CHAIRPERSON.getRoleId());
     assertNotNull(userRole);
   }
 

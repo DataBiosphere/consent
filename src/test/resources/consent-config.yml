@@ -55,6 +55,5 @@ elasticSearch:
     - localhost
   indexName: iName
   datasetIndexName: dataset
-datasets:
-  - Melanoma-Regev-Izar-Garraway-DFCI-ICR
-  - Melanoma_Regev
+oidcConfiguration:
+  authorityEndpoint: http://localhost:8000

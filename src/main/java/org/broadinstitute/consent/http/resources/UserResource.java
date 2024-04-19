@@ -8,6 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -33,9 +35,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import org.broadinstitute.consent.http.authentication.GenericUser;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -48,7 +47,6 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -60,17 +58,14 @@ public class UserResource extends Resource {
   private final Gson gson = new Gson();
   private final SamService samService;
   private final DatasetService datasetService;
-  private final SupportRequestService supportRequestService;
   private final AcknowledgementService acknowledgementService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, SupportRequestService supportRequestService,
-      AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
-    this.supportRequestService = supportRequestService;
     this.acknowledgementService = acknowledgementService;
   }
 
@@ -242,7 +237,6 @@ public class UserResource extends Resource {
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      supportRequestService.handleInstitutionSOSupportRequest(userUpdateFields, user);
       Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
           user.getUserId());
@@ -387,17 +381,15 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
-  public Response createResearcher(@Context UriInfo info, @Auth AuthUser user) {
-    GenericUser genericUser = user.getGenericUser();
-    if (genericUser == null || genericUser.getEmail() == null || genericUser.getName() == null) {
+  public Response createResearcher(@Context UriInfo info, @Auth AuthUser authUser) {
+    if (authUser == null || authUser.getEmail() == null || authUser.getName() == null) {
       return Response.
           status(Response.Status.BAD_REQUEST).
           entity(new Error("Unable to verify google identity",
               Response.Status.BAD_REQUEST.getStatusCode())).
           build();
-    }
-    try {
-      if (userService.findUserByEmail(genericUser.getEmail()) != null) {
+    }    try {
+      if (userService.findUserByEmail(authUser.getEmail()) != null) {
         return Response.
             status(Response.Status.CONFLICT).
             entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
@@ -406,15 +398,17 @@ public class UserResource extends Resource {
     } catch (NotFoundException nfe) {
       // no-op, we expect to not find the new user in this case.
     }
-    User dacUser = new User(genericUser);
+    User user = new User();
+    user.setEmail(authUser.getEmail());
+    user.setDisplayName(authUser.getName());
     UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
         UserRoles.RESEARCHER.getRoleName());
-    dacUser.setRoles(Collections.singletonList(researcher));
+    user.setRoles(Collections.singletonList(researcher));
     try {
       URI uri;
-      dacUser = userService.createUser(dacUser);
-      uri = info.getRequestUriBuilder().path("{email}").build(dacUser.getEmail());
-      return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(dacUser)
+      user = userService.createUser(user);
+      uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+      return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(user)
           .build();
     } catch (Exception e) {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
