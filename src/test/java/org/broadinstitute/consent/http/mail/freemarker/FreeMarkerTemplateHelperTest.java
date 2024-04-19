@@ -18,8 +18,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -216,28 +214,12 @@ class FreeMarkerTemplateHelperTest {
     return Jsoup.parse(parsedHtml);
   }
 
-  private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date());
-  private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date());
-  private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date());
-  private User testUser = new User(1, "testuser@email.com", "Test User", new Date(), null);
-  private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null, true, 1);
-  private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null, false, 2);
-  private Election e3 = new Election(3, "DataSet", "Closed", new Date(), "DAR-2", null, true, 1);
+  private final Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date());
+  private final Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date());
+  private final Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date());
 
   private List<Dataset> sampleDatasets() {
     return Arrays.asList(ds1, ds2, ds3);
   }
 
-  private Map<User, List<Dataset>> getApprovedDarMap() {
-    Map<User, List<Dataset>> approvedDarMap = new HashMap<>();
-    approvedDarMap.put(testUser, sampleDatasets());
-    return approvedDarMap;
-  }
-
-  private Map<String, List<Election>> getClosedDsElections() {
-    Map<String, List<Election>> closedDatasetElections = new HashMap<>();
-    closedDatasetElections.put("DAR-1", List.of(e1, e2));
-    closedDatasetElections.put("DAR-2", List.of(e3));
-    return closedDatasetElections;
-  }
 }
