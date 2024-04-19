@@ -19,21 +19,23 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 // This is a utility test to verify a pattern for Database Transactions continues to be supported and works as expected.
 // It should be updated to include new patterns that are developed.
-public class UserServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class UserServiceDAOTest extends DAOTestHelper {
 
   private UserServiceDAO serviceDAO;
 
   @BeforeEach
-  public void setup() {
-    openMocks(this);
+  void setup() {
     serviceDAO = new UserServiceDAO(jdbi, userDAO, userRoleDAO);
   }
 
   @Test
-  public void testTransactionPatternHappyPathInActualService() {
+  void testTransactionPatternHappyPathInActualService() {
     User testUser = createUser();
     Institution institution = createInstitution();
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
@@ -46,7 +48,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testTransactionRollbackAfterMultipleInserts() {
+  void testTransactionRollbackAfterMultipleInserts() {
     boolean exceptionCaught = false;
     User testUser = createUser();
     Institution institution = createInstitution();
