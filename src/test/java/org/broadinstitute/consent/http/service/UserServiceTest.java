@@ -775,6 +775,53 @@ public class UserServiceTest {
     assertTrue(encounteredException);
   }
 
+  @Test
+  void testFindUsersInJsonArray() {
+    String json = "{users:[1,2,3]}";
+    List<User> users = List.of(generateUser(), generateUser(), generateUser());
+    when(userDAO.findUserById(anyInt())).thenReturn(users.get(0), users.get(1), users.get(2));
+    initService();
+    List<User> foundUsers = service.findUsersInJsonArray(json, "users");
+    assertEquals(3, foundUsers.size());
+  }
+
+  @Test
+  void testFindUsersInJsonArrayRemoveDuplicates() {
+    String json = "{users:[1,1,2,3]}";
+    List<User> users = List.of(generateUser(), generateUser(), generateUser());
+    when(userDAO.findUserById(anyInt())).thenReturn(users.get(0), users.get(1), users.get(2));
+    initService();
+    List<User> foundUsers = service.findUsersInJsonArray(json, "users");
+    assertEquals(3, foundUsers.size());
+  }
+
+  @Test
+  void testFindUsersInJsonArrayEmptyArray() {
+    String json = "{users:[]}";
+    initService();
+    List<User> foundUsers = service.findUsersInJsonArray(json, "users");
+    assertTrue(foundUsers.isEmpty());
+  }
+
+  @Test
+  void testFindUsersInJsonArrayInvalidJson() {
+    // Missing closing bracket
+    String json = "{users:[1,2,3}";
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.findUsersInJsonArray(json, "users");
+    });
+  }
+
+  @Test
+  void testFindUsersInJsonArrayInvalidKey() {
+    String json = "{users:[1,2,3]}";
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.findUsersInJsonArray(json, "invalidKey");
+    });
+  }
+
   private User generateUserWithoutInstitution() {
     User u = generateUser();
     u.setInstitutionId(null);
