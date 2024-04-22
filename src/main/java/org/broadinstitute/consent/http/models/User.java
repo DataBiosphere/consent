@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -186,6 +187,36 @@ public class User {
 
   public void setRoles(List<UserRole> roles) {
     this.roles = roles;
+  }
+
+  public void setAdminRole() {
+    this.roles = Collections.singletonList(UserRoles.AdminRole());
+  }
+
+  public void setChairpersonRole() {
+    this.roles = Collections.singletonList(UserRoles.ChairpersonRole());
+  }
+
+  public void setChairpersonRoleWithDAC(Integer dacId) {
+    UserRole chairpersonRole = UserRoles.ChairpersonRole();
+    chairpersonRole.setDacId(dacId);
+    this.roles = Collections.singletonList(chairpersonRole);
+  }
+
+  public void setITDirectorRole() {
+    this.roles = Collections.singletonList(UserRoles.ITDirectorRole());
+  }
+
+  public void setMemberRole() {
+    this.roles = Collections.singletonList(UserRoles.MemberRole());
+  }
+
+  public void setResearcherRole() {
+    this.roles = Collections.singletonList(UserRoles.ResearcherRole());
+  }
+
+  public void setSigningOfficialRole() {
+    this.roles = Collections.singletonList(UserRoles.SigningOfficialRole());
   }
 
   public List<UserProperty> getProperties() {

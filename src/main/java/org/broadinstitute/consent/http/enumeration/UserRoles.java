@@ -4,6 +4,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 
 public enum UserRoles {
@@ -35,6 +36,38 @@ public enum UserRoles {
   UserRoles(String roleName, Integer roleId) {
     this.roleName = roleName;
     this.roleId = roleId;
+  }
+
+  public static UserRole AdminRole() {
+    return new UserRole(ADMIN.getRoleId(), ADMIN.getRoleName());
+  }
+
+  public static UserRole AlumniRole() {
+    return new UserRole(ALUMNI.getRoleId(), ALUMNI.getRoleName());
+  }
+
+  public static UserRole ChairpersonRole() {
+    return new UserRole(CHAIRPERSON.getRoleId(), CHAIRPERSON.getRoleName());
+  }
+
+  public static UserRole DataSubmitterRole() {
+    return new UserRole(DATASUBMITTER.getRoleId(), DATASUBMITTER.getRoleName());
+  }
+
+  public static UserRole ITDirectorRole() {
+    return new UserRole(ITDIRECTOR.getRoleId(), ITDIRECTOR.getRoleName());
+  }
+
+  public static UserRole MemberRole() {
+    return new UserRole(MEMBER.getRoleId(), MEMBER.getRoleName());
+  }
+
+  public static UserRole ResearcherRole() {
+    return new UserRole(RESEARCHER.getRoleId(), RESEARCHER.getRoleName());
+  }
+
+  public static UserRole SigningOfficialRole() {
+    return new UserRole(SIGNINGOFFICIAL.getRoleId(), SIGNINGOFFICIAL.getRoleName());
   }
 
   public String getRoleName() {

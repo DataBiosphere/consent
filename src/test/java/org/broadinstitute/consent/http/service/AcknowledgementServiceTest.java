@@ -42,8 +42,7 @@ public class AcknowledgementServiceTest {
   @Test
   public void test_noAcknowledgementsForUser() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.ResearcherRole()));
     when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
     when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(
         null);
@@ -55,8 +54,7 @@ public class AcknowledgementServiceTest {
   @Test
   public void test_makeAndDeleteAcknowledgementForUser() {
     User user = new User(2, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.ResearcherRole()));
     String key = "key2";
     List<String> keys = List.of(key);
     Timestamp timestamp = new Timestamp(new Date().getTime());

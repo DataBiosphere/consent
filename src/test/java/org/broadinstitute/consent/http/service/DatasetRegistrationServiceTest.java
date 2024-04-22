@@ -330,7 +330,7 @@ class DatasetRegistrationServiceTest {
   @Test
   void testSendDatasetSubmittedEmailsExistingChairs() throws Exception {
     User user = new User();
-    user.setRoles(List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+    user.setChairpersonRole();
     Dac dac = mock();
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
