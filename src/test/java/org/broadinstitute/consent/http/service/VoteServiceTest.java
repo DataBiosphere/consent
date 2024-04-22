@@ -15,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +46,7 @@ import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -819,6 +821,74 @@ public class VoteServiceTest {
     custodianStudyProperty.setValue(custodianEmailJson);
 
     Study study = new Study();
+    study.setStudyId(1);
+    study.setProperties(Set.of(custodianStudyProperty));
+    study.setCreateUserId(studySubmitter.getUserId());
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setAlias(1);
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
+    d1.setCreateUserId(datasetSubmitter.getUserId());
+    d1.setStudy(study);
+
+    User researcher = new User();
+    researcher.setEmail("researcher@example.com");
+    researcher.setDisplayName("Researcher");
+    researcher.setUserId(1);
+
+    when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
+    when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(List.of(custodian));
+
+    initService();
+
+    try {
+      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code");
+      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+  }
+
+  /**
+   * This test exercises the bug seen in DUOS-3066:
+   * java.lang.ClassCastException: class com.google.gson.JsonArray cannot be cast to class java.lang.String
+   */
+  @Test
+  public void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
+    User studySubmitter = new User();
+    studySubmitter.setEmail("submitter@example.com");
+    studySubmitter.setDisplayName("submitter");
+    studySubmitter.setUserId(4);
+
+    User datasetSubmitter = new User();
+    datasetSubmitter.setEmail("submitter2@example.com");
+    datasetSubmitter.setDisplayName("submitter2");
+    datasetSubmitter.setUserId(5);
+
+    User custodian = new User();
+    String custodianEmail = "custodian@example.com";
+    custodian.setEmail(custodianEmail);
+    custodian.setDisplayName("custodian");
+    custodian.setUserId(3);
+
+    StudyProperty custodianStudyProperty = new StudyProperty();
+    custodianStudyProperty.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    custodianStudyProperty.setType(PropertyType.Json);
+    JsonArray jsonArray = new JsonArray();
+    jsonArray.add(custodianEmail);
+    custodianStudyProperty.setValue(jsonArray);
+
+    Study study = new Study();
+    study.setName(RandomStringUtils.randomAlphabetic(10));
     study.setStudyId(1);
     study.setProperties(Set.of(custodianStudyProperty));
     study.setCreateUserId(studySubmitter.getUserId());
