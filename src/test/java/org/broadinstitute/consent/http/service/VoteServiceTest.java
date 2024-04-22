@@ -106,9 +106,7 @@ public class VoteServiceTest {
     Vote v = setUpTestVote(false, false);
     initService();
 
-    assertThrows(NotFoundException.class, () -> {
-      service.updateVote(v, 11, "test");
-    });
+    assertThrows(NotFoundException.class, () -> service.updateVote(v, 11, "test"));
   }
 
   @Test
@@ -120,8 +118,7 @@ public class VoteServiceTest {
     v.setIsReminderSent(false);
     v.setVote(false);
     when(voteDAO.findVoteById(anyInt())).thenReturn(v);
-    when(voteDAO.checkVoteById("test", v.getVoteId()))
-        .thenReturn(v.getVoteId());
+    when(voteDAO.checkVoteById("test", v.getVoteId())).thenReturn(v.getVoteId());
     initService();
 
     Vote vote = service.updateVote(v, v.getVoteId(), "test");
@@ -129,7 +126,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue() throws Exception {
+  public void testUpdateVotesWithValue() {
     initService();
 
     List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
@@ -286,7 +283,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_ClosedElection() throws Exception {
+  public void testUpdateVotesWithValue_ClosedElection() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -296,15 +293,12 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     initService();
-
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
   }
 
 
   @Test
-  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() throws Exception {
+  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -322,9 +316,7 @@ public class VoteServiceTest {
 
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
   }
 
   @Test
@@ -439,9 +431,7 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -452,9 +442,7 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -839,9 +827,7 @@ public class VoteServiceTest {
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
 
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code"));
     verify(emailService, times(0)).sendDataCustodianApprovalMessage(
         any(),
         any(),
