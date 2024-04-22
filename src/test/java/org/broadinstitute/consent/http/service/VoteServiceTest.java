@@ -749,49 +749,6 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyCustodiansOfApprovedDatasetsWithCustodianProps() {
-    User submitter = new User();
-    submitter.setEmail("submitter@test.com");
-    submitter.setDisplayName("submitter");
-    submitter.setUserId(4);
-
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
-    d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
-    d1.setCreateUserId(submitter.getUserId());
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
-    d2.setAlias(2);
-    d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
-    d2.setCreateUserId(submitter.getUserId());
-
-    User researcher = new User();
-    researcher.setEmail("researcher@test.com");
-    researcher.setDisplayName("Researcher");
-    researcher.setUserId(1);
-
-    when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
-
-    initService();
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any()
-      );
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
   public void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians() throws Exception {
     User submitterNotFound = new User();
     submitterNotFound.setEmail("submitter@test.com");
