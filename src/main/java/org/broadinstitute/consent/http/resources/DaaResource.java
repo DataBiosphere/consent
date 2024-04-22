@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -34,7 +35,6 @@ import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -217,6 +217,34 @@ public class DaaResource extends Resource implements ConsentLogger {
         throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
       }
       daaService.sendDaaRequestEmails(user, daaId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("/bulk/{daaId}")
+  public Response bulkAddUsersToDaa(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId,
+      String json) {
+    try {
+      User authedUser = userService.findUserByEmail(authUser.getEmail());
+      List<User> users = userService.findUsersInJsonArray(json, "users");
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+        for (User user : users) {
+          if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+            return Response.status(Status.FORBIDDEN).build();
+          }
+        }
+      }
+      daaService.findById(daaId);
+      for (User user : users) {
+        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daaId);
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
