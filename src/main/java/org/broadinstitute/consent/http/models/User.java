@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -190,33 +189,33 @@ public class User {
   }
 
   public void setAdminRole() {
-    this.roles = Collections.singletonList(UserRoles.Admin());
+    this.roles = List.of(UserRoles.Admin());
   }
 
   public void setChairpersonRole() {
-    this.roles = Collections.singletonList(UserRoles.Chairperson());
+    this.roles = List.of(UserRoles.Chairperson());
   }
 
   public void setChairpersonRoleWithDAC(int dacId) {
     UserRole chairpersonRole = UserRoles.Chairperson();
     chairpersonRole.setDacId(dacId);
-    this.roles = Collections.singletonList(chairpersonRole);
+    this.roles = List.of(chairpersonRole);
   }
 
   public void setITDirectorRole() {
-    this.roles = Collections.singletonList(UserRoles.ITDirector());
+    this.roles = List.of(UserRoles.ITDirector());
   }
 
   public void setMemberRole() {
-    this.roles = Collections.singletonList(UserRoles.Member());
+    this.roles = List.of(UserRoles.Member());
   }
 
   public void setResearcherRole() {
-    this.roles = Collections.singletonList(UserRoles.Researcher());
+    this.roles = List.of(UserRoles.Researcher());
   }
 
   public void setSigningOfficialRole() {
-    this.roles = Collections.singletonList(UserRoles.SigningOfficial());
+    this.roles = List.of(UserRoles.SigningOfficial());
   }
 
   public List<UserProperty> getProperties() {
