@@ -148,4 +148,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-04-02-rm-old-dbgap-url.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-23-standardize-dataset-association.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
