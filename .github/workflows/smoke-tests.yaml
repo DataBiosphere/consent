@@ -56,7 +56,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@main
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@DDO-3624-download-artifact-cross-compat
     with:
       service-name: 'duos'
       test-uuid:  ${{ github.run_id }}
