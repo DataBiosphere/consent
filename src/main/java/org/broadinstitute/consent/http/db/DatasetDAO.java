@@ -560,7 +560,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
 
-  @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
+  @SqlUpdate("DELETE FROM dataset_user_association WHERE dataset_id = :datasetId")
   void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   @SqlUpdate(
