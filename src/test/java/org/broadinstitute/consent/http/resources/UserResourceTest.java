@@ -21,7 +21,6 @@ import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -41,7 +40,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
@@ -199,8 +197,8 @@ class UserResourceTest {
   void testCreateExistingUser() {
     User user = new User();
     user.setEmail(TEST_EMAIL);
-    user.addRole(UserRoles.AdminRole());
-    user.addRole(UserRoles.ResearcherRole());
+    user.addRole(UserRoles.Admin());
+    user.addRole(UserRoles.Researcher());
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     initResource();
 
@@ -696,14 +694,14 @@ class UserResourceTest {
   void testDeleteDeniedRoleBySoShouldFail() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(UserRoles.AdminRole());
-    user.addRole(UserRoles.ChairpersonRole());
-    user.addRole(UserRoles.MemberRole());
-    user.addRole(UserRoles.AlumniRole());
+    user.addRole(UserRoles.Admin());
+    user.addRole(UserRoles.Chairperson());
+    user.addRole(UserRoles.Member());
+    user.addRole(UserRoles.Alumni());
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    activeUser.addRole(UserRoles.SigningOfficialRole());
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -730,13 +728,13 @@ class UserResourceTest {
   void testDeletePermittedRolesBySoShouldSucceedForUserWithSameInstitution() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(UserRoles.SigningOfficialRole());
-    user.addRole(UserRoles.DataSubmitterRole());
-    user.addRole(UserRoles.ITDirectorRole());
+    user.addRole(UserRoles.SigningOfficial());
+    user.addRole(UserRoles.DataSubmitter());
+    user.addRole(UserRoles.ITDirector());
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    activeUser.addRole(UserRoles.SigningOfficialRole());
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -756,12 +754,12 @@ class UserResourceTest {
   void testDeletePermittedRolesBySoShouldFailForUserWitNullInstitution() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(UserRoles.SigningOfficialRole());
-    user.addRole(UserRoles.DataSubmitterRole());
-    user.addRole(UserRoles.ITDirectorRole());
+    user.addRole(UserRoles.SigningOfficial());
+    user.addRole(UserRoles.DataSubmitter());
+    user.addRole(UserRoles.ITDirector());
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    activeUser.addRole(UserRoles.SigningOfficialRole());
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -1064,7 +1062,7 @@ class UserResourceTest {
     user.setUserId(RandomUtils.nextInt(1, 100));
     user.setDisplayName("Test");
     user.setEmail("Test");
-    user.addRole(UserRoles.ResearcherRole());
+    user.addRole(UserRoles.Researcher());
     return user;
   }
 

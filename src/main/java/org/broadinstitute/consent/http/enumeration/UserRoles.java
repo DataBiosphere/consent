@@ -38,35 +38,35 @@ public enum UserRoles {
     this.roleId = roleId;
   }
 
-  public static UserRole AdminRole() {
+  public static UserRole Admin() {
     return new UserRole(ADMIN.getRoleId(), ADMIN.getRoleName());
   }
 
-  public static UserRole AlumniRole() {
+  public static UserRole Alumni() {
     return new UserRole(ALUMNI.getRoleId(), ALUMNI.getRoleName());
   }
 
-  public static UserRole ChairpersonRole() {
+  public static UserRole Chairperson() {
     return new UserRole(CHAIRPERSON.getRoleId(), CHAIRPERSON.getRoleName());
   }
 
-  public static UserRole DataSubmitterRole() {
+  public static UserRole DataSubmitter() {
     return new UserRole(DATASUBMITTER.getRoleId(), DATASUBMITTER.getRoleName());
   }
 
-  public static UserRole ITDirectorRole() {
+  public static UserRole ITDirector() {
     return new UserRole(ITDIRECTOR.getRoleId(), ITDIRECTOR.getRoleName());
   }
 
-  public static UserRole MemberRole() {
+  public static UserRole Member() {
     return new UserRole(MEMBER.getRoleId(), MEMBER.getRoleName());
   }
 
-  public static UserRole ResearcherRole() {
+  public static UserRole Researcher() {
     return new UserRole(RESEARCHER.getRoleId(), RESEARCHER.getRoleName());
   }
 
-  public static UserRole SigningOfficialRole() {
+  public static UserRole SigningOfficial() {
     return new UserRole(SIGNINGOFFICIAL.getRoleId(), SIGNINGOFFICIAL.getRoleName());
   }
 

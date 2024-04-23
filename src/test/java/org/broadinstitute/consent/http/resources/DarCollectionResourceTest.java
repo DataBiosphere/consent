@@ -40,10 +40,10 @@ import org.mockito.Mock;
 public class DarCollectionResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final List<UserRole> researcherRole = List.of(UserRoles.ResearcherRole());
+  private final List<UserRole> researcherRole = List.of(UserRoles.Researcher());
   private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(),
       researcherRole);
-  private final List<UserRole> signingOfficialRole = List.of(UserRoles.SigningOfficialRole());
+  private final List<UserRole> signingOfficialRole = List.of(UserRoles.SigningOfficial());
   private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(),
       signingOfficialRole);
 
@@ -110,7 +110,7 @@ public class DarCollectionResourceTest {
   @Test
   public void testGetCollectionByIdAdmin() {
     DarCollection collection = mockDarCollection();
-    UserRole adminRole = UserRoles.AdminRole();
+    UserRole adminRole = UserRoles.Admin();
     User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -187,7 +187,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdChair() {
-    List<UserRole> chairRole = List.of(UserRoles.ChairpersonRole());
+    List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
@@ -208,7 +208,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdDacMember() {
-    List<UserRole> chairRole = List.of(UserRoles.MemberRole());
+    List<UserRole> chairRole = List.of(UserRoles.Member());
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
@@ -229,7 +229,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdDacMemberNoDatasetIdMatch() {
-    List<UserRole> chairRole = List.of(UserRoles.ChairpersonRole());
+    List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
@@ -250,8 +250,8 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testGetCollectionByIdMultipleRoles() {
-    UserRole chairRole = UserRoles.ChairpersonRole();
-    UserRole researcherRole = UserRoles.ResearcherRole();
+    UserRole chairRole = UserRoles.Chairperson();
+    UserRole researcherRole = UserRoles.Researcher();
     User user = new User(1, authUser.getEmail(), "Display Name", new Date(),
         List.of(chairRole, researcherRole));
     DarCollection collection = mockDarCollection();
@@ -350,7 +350,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testCancelDarCollection_asAdmin() {
-    List<UserRole> adminRole = List.of(UserRoles.AdminRole());
+    List<UserRole> adminRole = List.of(UserRoles.Admin());
     User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), adminRole);
 
     DarCollection collection = mockDarCollection();
@@ -365,7 +365,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testCancelDarCollection_asChair() {
-    List<UserRole> chairRole = List.of(UserRoles.ChairpersonRole());
+    List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();
@@ -381,7 +381,7 @@ public class DarCollectionResourceTest {
 
   @Test
   public void testCancelDarCollection_asChairAsAdmin() {
-    List<UserRole> chairRole = List.of(UserRoles.ChairpersonRole());
+    List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(1, authUser.getEmail(), "Display Name", new Date(), chairRole);
 
     DarCollection collection = mockDarCollection();

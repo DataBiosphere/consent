@@ -37,7 +37,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
     User testUser = createUser();
     Institution institution = createInstitution();
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
-    UserRole userRole = UserRoles.ResearcherRole();
+    UserRole userRole = UserRoles.Researcher();
     serviceDAO.insertRoleAndInstitutionTxn(userRole, institution.getId(), testUser.getUserId());
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
@@ -50,7 +50,7 @@ public class UserServiceDAOTest extends DAOTestHelper {
     User testUser = createUser();
     Institution institution = createInstitution();
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
-    UserRole userRole = UserRoles.SigningOfficialRole();
+    UserRole userRole = UserRoles.SigningOfficial();
     try {
       //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
       //does indeed roll back from postgres.  mocking won't confirm that behavior.

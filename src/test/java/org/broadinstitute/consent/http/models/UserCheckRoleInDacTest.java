@@ -28,9 +28,9 @@ class UserCheckRoleInDacTest {
   @Test
   void testCheckIfUserHasRole() {
     User user = new User();
-    UserRole chairRole = UserRoles.ChairpersonRole();
+    UserRole chairRole = UserRoles.Chairperson();
     chairRole.setDacId(1);
-    UserRole adminRole = UserRoles.AdminRole();
+    UserRole adminRole = UserRoles.Admin();
     user.setRoles(List.of(chairRole, adminRole));
     Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
     Boolean isUserAdmin = user.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), null);

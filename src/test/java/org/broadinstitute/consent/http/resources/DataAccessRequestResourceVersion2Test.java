@@ -82,10 +82,10 @@ public class DataAccessRequestResourceVersion2Test {
   private final AuthUser chairpersonUser = new AuthUser("chariperson@test.com");
   private final AuthUser memberUser = new AuthUser("member@test.com");
   private final AuthUser anotherUser = new AuthUser("bob@test.com");
-  private final List<UserRole> roles = Collections.singletonList(UserRoles.ResearcherRole());
-  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.AdminRole());
-  private final List<UserRole> chairpersonRoles = Collections.singletonList(UserRoles.ChairpersonRole());
-  private final List<UserRole> memberRoles = Collections.singletonList(UserRoles.MemberRole());
+  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> chairpersonRoles = Collections.singletonList(UserRoles.Chairperson());
+  private final List<UserRole> memberRoles = Collections.singletonList(UserRoles.Member());
   private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
   private final User admin = new User(2, adminUser.getEmail(), "Admin user", new Date(),
       adminRoles);

@@ -19,8 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
 
-  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.AdminRole());
-  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.ResearcherRole());
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
   private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles);
   private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(),
       researcherRoles);

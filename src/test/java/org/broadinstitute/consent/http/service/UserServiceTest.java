@@ -106,10 +106,10 @@ public class UserServiceTest {
 
   @Test
   public void testUpdateUserFieldsById() {
-    UserRole admin = UserRoles.AdminRole();
-    UserRole researcher = UserRoles.ResearcherRole();
-    UserRole chair = UserRoles.ChairpersonRole();
-    UserRole so = UserRoles.SigningOfficialRole();
+    UserRole admin = UserRoles.Admin();
+    UserRole researcher = UserRoles.Researcher();
+    UserRole chair = UserRoles.Chairperson();
+    UserRole so = UserRoles.SigningOfficial();
 
     User user = new User();
     user.setUserId(1);
@@ -157,9 +157,9 @@ public class UserServiceTest {
 
   @Test
   public void testUpdateUserFieldsById_SendsEmailWhenSOInitalized() throws Exception {
-    UserRole admin = UserRoles.AdminRole();
-    UserRole researcher = UserRoles.ResearcherRole();
-    UserRole chair = UserRoles.ChairpersonRole();
+    UserRole admin = UserRoles.Admin();
+    UserRole researcher = UserRoles.Researcher();
+    UserRole chair = UserRoles.Chairperson();
 
     User user = new User();
     user.setUserId(1);
@@ -194,9 +194,9 @@ public class UserServiceTest {
 
   @Test
   public void testUpdateUserFieldsById_NoEmailOnSOChange() throws Exception {
-    UserRole admin = UserRoles.AdminRole();
-    UserRole researcher = UserRoles.ResearcherRole();
-    UserRole chair = UserRoles.ChairpersonRole();
+    UserRole admin = UserRoles.Admin();
+    UserRole researcher = UserRoles.Researcher();
+    UserRole chair = UserRoles.Chairperson();
 
     User user = new User();
     user.setUserId(1);
@@ -233,9 +233,9 @@ public class UserServiceTest {
 
   @Test
   public void testUpdateUserFieldsById_NoEmailOnNoChange() throws Exception {
-    UserRole admin = UserRoles.AdminRole();
-    UserRole researcher = UserRoles.ResearcherRole();
-    UserRole chair = UserRoles.ChairpersonRole();
+    UserRole admin = UserRoles.Admin();
+    UserRole researcher = UserRoles.Researcher();
+    UserRole chair = UserRoles.Chairperson();
 
     User user = new User();
     user.setUserId(1);
@@ -740,7 +740,7 @@ public class UserServiceTest {
     returnUser.setEmail(testUser.getEmail());
     returnUser.setDisplayName(testUser.getDisplayName());
     returnUser.setInstitutionId(1);
-    UserRole role = UserRoles.ResearcherRole();
+    UserRole role = UserRoles.Researcher();
     assertNotEquals(testUser.getInstitutionId(), returnUser.getInstitutionId());
     doNothing().when(userServiceDAO).insertRoleAndInstitutionTxn(any(), any(), any());
     when(userDAO.findUserById(anyInt())).thenReturn(returnUser);
@@ -762,7 +762,7 @@ public class UserServiceTest {
     Integer institutionId = 1;
     User testUser = generateUserWithoutInstitution();
     assertNull(testUser.getInstitutionId());
-    UserRole role = UserRoles.ResearcherRole();
+    UserRole role = UserRoles.Researcher();
     when(userDAO.findUserById(anyInt())).thenReturn(testUser);
     doThrow(new RuntimeException("txn error")).when(userServiceDAO)
         .insertRoleAndInstitutionTxn(any(), any(), any());

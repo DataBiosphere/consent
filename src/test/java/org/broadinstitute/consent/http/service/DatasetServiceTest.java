@@ -842,7 +842,7 @@ class DatasetServiceTest {
   @Test
   void testGetApprovedDatasets() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.ResearcherRole()));
+        List.of(UserRoles.Researcher()));
     ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
         new Date());
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));

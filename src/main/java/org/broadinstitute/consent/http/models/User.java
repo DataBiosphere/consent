@@ -190,33 +190,33 @@ public class User {
   }
 
   public void setAdminRole() {
-    this.roles = Collections.singletonList(UserRoles.AdminRole());
+    this.roles = Collections.singletonList(UserRoles.Admin());
   }
 
   public void setChairpersonRole() {
-    this.roles = Collections.singletonList(UserRoles.ChairpersonRole());
+    this.roles = Collections.singletonList(UserRoles.Chairperson());
   }
 
   public void setChairpersonRoleWithDAC(int dacId) {
-    UserRole chairpersonRole = UserRoles.ChairpersonRole();
+    UserRole chairpersonRole = UserRoles.Chairperson();
     chairpersonRole.setDacId(dacId);
     this.roles = Collections.singletonList(chairpersonRole);
   }
 
   public void setITDirectorRole() {
-    this.roles = Collections.singletonList(UserRoles.ITDirectorRole());
+    this.roles = Collections.singletonList(UserRoles.ITDirector());
   }
 
   public void setMemberRole() {
-    this.roles = Collections.singletonList(UserRoles.MemberRole());
+    this.roles = Collections.singletonList(UserRoles.Member());
   }
 
   public void setResearcherRole() {
-    this.roles = Collections.singletonList(UserRoles.ResearcherRole());
+    this.roles = Collections.singletonList(UserRoles.Researcher());
   }
 
   public void setSigningOfficialRole() {
-    this.roles = Collections.singletonList(UserRoles.SigningOfficialRole());
+    this.roles = Collections.singletonList(UserRoles.SigningOfficial());
   }
 
   public List<UserProperty> getProperties() {

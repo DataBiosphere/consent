@@ -393,10 +393,10 @@ class UserDAOTest extends DAOTestHelper {
     User u = createUser();
     Dac dac1 = createDac();
     Dac dac2 = createDac();
-    UserRole chairperson1 = UserRoles.ChairpersonRole();
+    UserRole chairperson1 = UserRoles.Chairperson();
     chairperson1.setDacId(dac1.getDacId());
     chairperson1.setUserId(u.getUserId());
-    UserRole chairperson2 = UserRoles.ChairpersonRole();
+    UserRole chairperson2 = UserRoles.Chairperson();
     chairperson2.setDacId(dac2.getDacId());
     chairperson2.setUserId(u.getUserId());
     assertNotEquals(chairperson1, chairperson2);

@@ -30,8 +30,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class InstitutionResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.AdminRole());
-  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.ResearcherRole());
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
   private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
       adminRoles);
   private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
