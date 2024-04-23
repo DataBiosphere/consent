@@ -25,6 +25,7 @@ jobs:
           java-version: 17
           cache: 'maven'
       - name: Bee Create
+        if: github.event.pull_request.merged == true
         uses: broadinstitute/workflow-dispatch@v4
         with:
           workflow: bee-create
@@ -42,6 +43,7 @@ jobs:
           name: test-reports
           path: 'target/surefire-reports'
       - name: Bee Destroy
+        if: github.event.pull_request.merged == true
         uses: broadinstitute/workflow-dispatch@v4
         with:
           workflow: bee-destroy
