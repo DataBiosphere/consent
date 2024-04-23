@@ -397,6 +397,53 @@ public class LibraryCardServiceTest {
     assertEquals(0, cards.size());
   }
 
+  @Test
+  void testRemoveDaaFromUserLibraryCardByInstitution() {
+    User user = testUser(1);
+    Integer userId = user.getUserId();
+    List<LibraryCard> libraryCards = List.of(
+        testLibraryCard(1, userId),
+        testLibraryCard(2, userId),
+        testLibraryCard(1, userId),
+        testLibraryCard(3, userId)
+    );
+    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
+        .thenReturn(libraryCards);
+    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
+    initService();
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1, 1);
+    assertEquals(2, cards.size());
+  }
+
+  @Test
+  void testRemoveDaaFromUserLibraryCardByInstitutionNoMatchingInstitutions() {
+    User user = testUser(1);
+    Integer userId = user.getUserId();
+    List<LibraryCard> libraryCards = List.of(
+        testLibraryCard(1, userId),
+        testLibraryCard(2, userId),
+        testLibraryCard(1, userId),
+        testLibraryCard(3, userId)
+    );
+    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
+        .thenReturn(libraryCards);
+    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
+    initService();
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 4, 1);
+    assertEquals(0, cards.size());
+  }
+
+  @Test
+  void testRemoveDaaFromUserLibraryCardByInstitutionNoLibraryCards() {
+    User user = testUser(1);
+    Integer userId = user.getUserId();
+    when(libraryCardDAO.findLibraryCardsByUserId(userId))
+        .thenReturn(Collections.emptyList());
+    initService();
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1, 1);
+    assertEquals(0, cards.size());
+  }
+
   private User testUser(Integer institutionId) {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 10));

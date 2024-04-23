@@ -39,3 +39,44 @@ post:
       description: Daa Not Found
     500:
       description: Internal Server Error
+delete:
+  summary: Bulk remove users from a DAA
+  operationId: bulkRemoveUsersFromDAA
+  description: Bulk remove users from a Data Access Agreement
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            users:
+            type: array
+            items:
+              type: integer
+        examples:
+          example1:
+            summary: Bulk remove users from a DAA
+            value:
+              users:
+                - 1
+                - 2
+                - 3
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully removed users from a DAA
+    403:
+      description: User not authorized to remove users from DAA
+    404:
+      description: Daa Not Found
+    500:
+      description: Internal Server Error

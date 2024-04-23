@@ -250,4 +250,32 @@ public class DaaResource extends Resource implements ConsentLogger {
       return createExceptionResponse(e);
     }
   }
+
+  @DELETE
+  @Consumes(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("/bulk/{daaId}")
+  public Response bulkRemoveUsersFromDaa(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId,
+      String json) {
+    try {
+      User authedUser = userService.findUserByEmail(authUser.getEmail());
+      List<User> users = userService.findUsersInJsonArray(json, "users");
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+        for (User user : users) {
+          if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+            return Response.status(Status.FORBIDDEN).build();
+          }
+        }
+      }
+      daaService.findById(daaId);
+      for (User user : users) {
+        libraryCardService.removeDaaFromUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daaId);
+      }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }
