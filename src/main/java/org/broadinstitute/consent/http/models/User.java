@@ -188,6 +188,36 @@ public class User {
     this.roles = roles;
   }
 
+  public void setAdminRole() {
+    this.roles = List.of(UserRoles.Admin());
+  }
+
+  public void setChairpersonRole() {
+    this.roles = List.of(UserRoles.Chairperson());
+  }
+
+  public void setChairpersonRoleWithDAC(int dacId) {
+    UserRole chairpersonRole = UserRoles.Chairperson();
+    chairpersonRole.setDacId(dacId);
+    this.roles = List.of(chairpersonRole);
+  }
+
+  public void setITDirectorRole() {
+    this.roles = List.of(UserRoles.ITDirector());
+  }
+
+  public void setMemberRole() {
+    this.roles = List.of(UserRoles.Member());
+  }
+
+  public void setResearcherRole() {
+    this.roles = List.of(UserRoles.Researcher());
+  }
+
+  public void setSigningOfficialRole() {
+    this.roles = List.of(UserRoles.SigningOfficial());
+  }
+
   public List<UserProperty> getProperties() {
     return properties;
   }

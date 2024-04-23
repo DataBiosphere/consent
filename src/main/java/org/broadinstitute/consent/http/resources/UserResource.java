@@ -401,9 +401,7 @@ public class UserResource extends Resource {
     User user = new User();
     user.setEmail(authUser.getEmail());
     user.setDisplayName(authUser.getName());
-    UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName());
-    user.setRoles(Collections.singletonList(researcher));
+    user.setResearcherRole();
     try {
       URI uri;
       user = userService.createUser(user);

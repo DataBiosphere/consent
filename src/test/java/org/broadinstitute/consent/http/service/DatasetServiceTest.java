@@ -340,7 +340,7 @@ class DatasetServiceTest {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     initService();
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
@@ -498,7 +498,7 @@ class DatasetServiceTest {
     ds2.setProperties(Set.of(ds2PI));
 
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
 
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
 
@@ -561,7 +561,7 @@ class DatasetServiceTest {
     ds2.setProperties(Set.of(ds2PI));
 
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
 
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
 
@@ -587,8 +587,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser_Admin() {
     User user = new User();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(admin);
+    user.setAdminRole();
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(dataset));
@@ -606,9 +605,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser_Chair() {
     User user = new User();
-    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    user.addRole(chair);
+    user.setChairpersonRole();
     Dataset d1 = new Dataset();
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
@@ -634,9 +631,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser() {
     User user = new User();
-    UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName());
-    user.addRole(researcher);
+    user.setResearcherRole();
     Dataset d1 = new Dataset();
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
@@ -847,8 +842,7 @@ class DatasetServiceTest {
   @Test
   void testGetApprovedDatasets() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.Researcher()));
     ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
         new Date());
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
