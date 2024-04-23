@@ -197,7 +197,7 @@ public class User {
     this.roles = Collections.singletonList(UserRoles.ChairpersonRole());
   }
 
-  public void setChairpersonRoleWithDAC(Integer dacId) {
+  public void setChairpersonRoleWithDAC(int dacId) {
     UserRole chairpersonRole = UserRoles.ChairpersonRole();
     chairpersonRole.setDacId(dacId);
     this.roles = Collections.singletonList(chairpersonRole);
