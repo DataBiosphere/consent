@@ -724,7 +724,6 @@ class UserServiceTest {
     User testUser = generateUserWithoutInstitution();
     assertNull(testUser.getInstitutionId());
     UserRole role = UserRoles.Researcher();
-    when(userDAO.findUserById(anyInt())).thenReturn(testUser);
     doThrow(new RuntimeException("txn error")).when(userServiceDAO)
         .insertRoleAndInstitutionTxn(any(), any(), any());
     initService();
