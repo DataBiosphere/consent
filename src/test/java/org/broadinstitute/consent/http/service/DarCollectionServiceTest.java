@@ -755,7 +755,6 @@ class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
 
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
@@ -1120,7 +1119,6 @@ class DarCollectionServiceTest {
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(),
         List.of(), collectionId))
         .thenReturn(summary);
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
 
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
