@@ -2,12 +2,12 @@ name: consent-smoke-tests
 
 on:
   pull_request:
-#    types:
-#      - closed
+    types:
+      - closed
 
 jobs:
   smoke-tests:
-#    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -25,7 +25,6 @@ jobs:
           java-version: 17
           cache: 'maven'
       - name: Bee Create
-        if: github.event.pull_request.merged == true
         uses: broadinstitute/workflow-dispatch@v4
         with:
           workflow: bee-create
@@ -43,7 +42,6 @@ jobs:
           name: test-reports
           path: 'target/surefire-reports'
       - name: Bee Destroy
-        if: github.event.pull_request.merged == true
         uses: broadinstitute/workflow-dispatch@v4
         with:
           workflow: bee-destroy
@@ -58,7 +56,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@DDO-3624-download-artifact-cross-compat
+    uses: broadinstitute/dsp-reusable-workflows/.github/workflows/upload_test_results_to_biquery.yaml@main
     with:
       service-name: 'duos'
       test-uuid:  ${{ github.run_id }}
