@@ -426,8 +426,7 @@ class DatasetResourceTest {
     dataSet.setDacId(1);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole role = UserRoles.Chairperson();
     role.setDacId(1);
     when(user.getRoles()).thenReturn(List.of(role));
 
@@ -444,8 +443,7 @@ class DatasetResourceTest {
     Dataset dataSet = new Dataset();
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole role = UserRoles.Chairperson();
     when(user.getRoles()).thenReturn(List.of(role));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
@@ -462,8 +460,7 @@ class DatasetResourceTest {
     dataSet.setDataSetId(1);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole role = UserRoles.Chairperson();
     role.setDacId(1);
     when(user.getRoles()).thenReturn(List.of(role));
 
@@ -482,8 +479,7 @@ class DatasetResourceTest {
     dataSet.setDacId(2);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
-    UserRole role = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole role = UserRoles.Chairperson();
     role.setDacId(1);
     when(user.getRoles()).thenReturn(List.of(role));
 

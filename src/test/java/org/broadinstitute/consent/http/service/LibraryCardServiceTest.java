@@ -299,8 +299,7 @@ public class LibraryCardServiceTest {
   void testDeleteLibraryCard_NotFound() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(admin);
+    user.setAdminRole();
     LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
     when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
         .thenReturn(null);

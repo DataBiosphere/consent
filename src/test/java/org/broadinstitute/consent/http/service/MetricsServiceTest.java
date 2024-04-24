@@ -147,16 +147,12 @@ class MetricsServiceTest {
     chairUser.setUserId(1);
     chairUser.setEmail("chair@test.org");
     chairUser.setDisplayName("Chair");
-    UserRole chairRole =
-        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-    chairUser.setRoles(Collections.singletonList(chairRole));
+    chairUser.setChairpersonRole();
     User memberUser = new User();
     memberUser.setUserId(2);
     memberUser.setEmail("member@test.org");
     memberUser.setDisplayName("Member");
-    UserRole memberRole =
-        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
-    memberUser.setRoles(Collections.singletonList(memberRole));
+    memberUser.setMemberRole();
     dac.setChairpersons(Collections.singletonList(chairUser));
     dac.setMembers(Collections.singletonList(memberUser));
     return dac;

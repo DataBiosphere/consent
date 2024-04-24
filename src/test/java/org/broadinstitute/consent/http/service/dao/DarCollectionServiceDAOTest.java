@@ -53,7 +53,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateElectionsForDarCollectionAdmin() throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
@@ -113,7 +113,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
@@ -279,7 +279,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin()
       throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);

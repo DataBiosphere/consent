@@ -69,8 +69,7 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
@@ -93,9 +92,7 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    role.setDacId(dac.getDacId());
-    admin.setRoles(List.of(role));
+    admin.setChairpersonRoleWithDAC(dac.getDacId());
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
 
     when(dacService.findById(any())).thenReturn(dac);
@@ -113,9 +110,7 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    role.setDacId(1); // Note that this will not be the DAC we provide for DAA creation
-    admin.setRoles(List.of(role));
+    admin.setChairpersonRoleWithDAC(1);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
 
     when(dacService.findById(any())).thenReturn(dac);
@@ -133,8 +128,7 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -151,8 +145,7 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -276,13 +269,11 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setAdminRole();
     admin.setInstitutionId(1);
 
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
 
 
@@ -310,13 +301,11 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
 
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
 
     DataAccessAgreement daa = new DataAccessAgreement();
@@ -341,12 +330,10 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setSigningOfficialRole();
     admin.setInstitutionId(2);
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
@@ -369,12 +356,10 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setResearcherRole();
     admin.setInstitutionId(2);
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
@@ -397,12 +382,10 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
@@ -427,12 +410,10 @@ class DaaResourceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
-    UserRole role = (new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    admin.setRoles(List.of(role));
+    admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
     User researcher = new User();
-    UserRole researcherRole = (new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
-    researcher.setRoles(List.of(researcherRole));
+    researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
@@ -454,7 +435,7 @@ class DaaResourceTest {
     Integer daaId = RandomUtils.nextInt(10, 100);
 
     User user = new User();
-    user.setRoles(List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    user.setAdminRole();
 
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setUserId(user.getUserId());
@@ -474,7 +455,7 @@ class DaaResourceTest {
     Integer daaId = RandomUtils.nextInt(10, 100);
 
     User user = new User();
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
 
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setUserId(user.getUserId());
@@ -500,7 +481,7 @@ class DaaResourceTest {
   void testSendDaaRequestMessage() throws Exception {
     User user = new User();
     LibraryCard lc = new LibraryCard();
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
     user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -514,7 +495,7 @@ class DaaResourceTest {
   @Test
   void testSendDaaRequestMessageUserNotFound() {
     User user = new User();
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
@@ -526,7 +507,7 @@ class DaaResourceTest {
   void testSendDaaRequestMessageDaaNotFound() throws Exception {
     User user = new User();
     LibraryCard lc = new LibraryCard();
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
     user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -541,7 +522,7 @@ class DaaResourceTest {
   void testSendDaaRequestMessageEmailError() throws Exception {
     User user = new User();
     LibraryCard lc = new LibraryCard();
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
     user.setInstitutionId(RandomUtils.nextInt(0,10));
     user.addLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -558,7 +539,7 @@ class DaaResourceTest {
     int daaId = RandomUtils.nextInt(10, 100);
     LibraryCard lc = new LibraryCard();
     lc.setDaaIds(List.of(daaId));
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    user.setResearcherRole();
     user.setLibraryCards(List.of(lc));
     when(userService.findUserByEmail(any())).thenReturn(user);
 

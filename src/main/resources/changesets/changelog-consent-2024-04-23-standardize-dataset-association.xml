@@ -1,0 +1,12 @@
+
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+<changeSet id="changelog-consent-2024-04-23-standardize-dataset-association" author="grushton">
+  <renameColumn tableName="dataset_user_association" oldColumnName="createdate" newColumnName="create_date"/>
+  <renameColumn tableName="dataset_user_association" oldColumnName="datasetid" newColumnName="dataset_id"/>
+  <renameColumn tableName="dataset_user_association" oldColumnName="dacuserid" newColumnName="user_id"/>
+</changeSet>
+</databaseChangeLog>

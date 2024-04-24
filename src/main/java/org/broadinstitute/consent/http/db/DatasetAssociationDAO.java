@@ -10,7 +10,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(DatasetAssociationMapper.class)
 public interface DatasetAssociationDAO extends Transactional<DatasetAssociationDAO> {
 
-  @SqlUpdate("DELETE FROM dataset_user_association WHERE dacuserId = :userId")
+  @SqlUpdate("DELETE FROM dataset_user_association WHERE user_id = :userId")
   void deleteAllDatasetUserAssociationsByUser(@Bind("userId") Integer userId);
 
 }

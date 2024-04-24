@@ -318,10 +318,7 @@ class DarCollectionServiceTest {
   void testDeleteAsResearcherNoElections() {
     User user = new User();
     user.setUserId(1);
-    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
-    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
-    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-    user.addRole(memberRole);
+    user.setResearcherRole();
 
     Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
@@ -352,10 +349,7 @@ class DarCollectionServiceTest {
   void testDeleteAsResearcherWithElections() {
     User user = new User();
     user.setUserId(1);
-    String dacRoleName = UserRoles.RESEARCHER.getRoleName();
-    Integer dacRoleId = UserRoles.RESEARCHER.getRoleId();
-    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-    user.addRole(memberRole);
+    user.setResearcherRole();
 
     Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
@@ -379,10 +373,7 @@ class DarCollectionServiceTest {
   void testDeleteAsAdminWithElections() {
     User user = new User();
     user.setUserId(1);
-    String dacRoleName = UserRoles.ADMIN.getRoleName();
-    Integer dacRoleId = UserRoles.ADMIN.getRoleId();
-    UserRole memberRole = new UserRole(dacRoleId, dacRoleName);
-    user.addRole(memberRole);
+    user.setAdminRole();
 
     Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
@@ -718,9 +709,7 @@ class DarCollectionServiceTest {
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
-    user.setRoles(List.of(
-        new UserRole(1, user.getUserId(), UserRoles.MEMBER.getRoleId(),
-            UserRoles.MEMBER.name(), dac.getDacId())));
+    user.setMemberRole();
 
     //summaryOne -> no open elections (no action)
     //summaryTwo -> at least one open election, member has submitted all votes (Update button)
@@ -811,9 +800,7 @@ class DarCollectionServiceTest {
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
-    user.setRoles(List.of(
-        new UserRole(1, user.getUserId(), UserRoles.CHAIRPERSON.getRoleId(),
-            UserRoles.CHAIRPERSON.name(), dac.getDacId())));
+    user.setChairpersonRoleWithDAC(dac.getDacId());
 
     DarCollectionSummary summaryOne = new DarCollectionSummary();
     Dataset datasetOne = new Dataset();
@@ -1065,9 +1052,7 @@ class DarCollectionServiceTest {
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
-    user.setRoles(List.of(
-        new UserRole(1, user.getUserId(), UserRoles.CHAIRPERSON.getRoleId(),
-            UserRoles.CHAIRPERSON.name(), dac.getDacId())));
+    user.setChairpersonRoleWithDAC(dac.getDacId());
     DarCollectionSummary summary = new DarCollectionSummary();
     Integer collectionId = RandomUtils.nextInt(1, 100);
     summary.setDarCollectionId(collectionId);
@@ -1111,9 +1096,7 @@ class DarCollectionServiceTest {
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
-    user.setRoles(List.of(
-        new UserRole(1, user.getUserId(), UserRoles.MEMBER.getRoleId(),
-            UserRoles.MEMBER.name(), dac.getDacId())));
+    user.setMemberRole();
 
     DarCollectionSummary summary = new DarCollectionSummary();
     Integer collectionId = RandomUtils.nextInt(1, 100);

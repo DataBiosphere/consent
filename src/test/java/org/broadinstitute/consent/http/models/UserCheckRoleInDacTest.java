@@ -15,8 +15,7 @@ class UserCheckRoleInDacTest {
   @Test
   void testCheckIfUserHasRole_RoleNotFound() {
     User user = new User();
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.setRoles(List.of(adminRole));
+    user.setAdminRole();
     Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
     assertFalse(isUserChair);
   }
@@ -24,10 +23,7 @@ class UserCheckRoleInDacTest {
   @Test
   void testCheckIfUserHasRole_RoleTypeFoundDifferentDacId() {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.setRoles(List.of(chairRole));
+    user.setChairpersonRoleWithDAC(1);
     Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
     assertFalse(isUserChair);
   }
@@ -35,10 +31,9 @@ class UserCheckRoleInDacTest {
   @Test
   void testCheckIfUserHasRole() {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole chairRole = UserRoles.Chairperson();
     chairRole.setDacId(1);
-    UserRole adminRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    UserRole adminRole = UserRoles.Admin();
     user.setRoles(List.of(chairRole, adminRole));
     Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
     Boolean isUserAdmin = user.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), null);

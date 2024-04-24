@@ -10,13 +10,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.gson.Gson;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.List;
@@ -109,9 +107,7 @@ public class VoteServiceTest {
     Vote v = setUpTestVote(false, false);
     initService();
 
-    assertThrows(NotFoundException.class, () -> {
-      service.updateVote(v, 11, "test");
-    });
+    assertThrows(NotFoundException.class, () -> service.updateVote(v, 11, "test"));
   }
 
   @Test
@@ -127,7 +123,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue() throws Exception {
+  public void testUpdateVotesWithValue() {
     initService();
 
     List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
@@ -284,7 +280,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_ClosedElection() throws Exception {
+  public void testUpdateVotesWithValue_ClosedElection() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -294,15 +290,12 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     initService();
-
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
   }
 
 
   @Test
-  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() throws Exception {
+  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -320,9 +313,7 @@ public class VoteServiceTest {
 
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
   }
 
   @Test
@@ -438,9 +429,7 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -451,9 +440,7 @@ public class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -646,12 +633,6 @@ public class VoteServiceTest {
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
-    Election e1 = new Election();
-    e1.setElectionId(1);
-    e1.setReferenceId(referenceId1);
-    e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e1.setDataSetId(1);
-
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
     dar1.addDatasetId(d1.getDataSetId());
@@ -690,12 +671,6 @@ public class VoteServiceTest {
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
-
-    Election e1 = new Election();
-    e1.setElectionId(1);
-    e1.setReferenceId(referenceId1);
-    e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e1.setDataSetId(1);
 
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
@@ -754,16 +729,6 @@ public class VoteServiceTest {
     researcher.setDisplayName("Researcher");
     researcher.setUserId(1);
 
-    User depositor = new User();
-    depositor.setEmail("depositor@test.com");
-    depositor.setDisplayName("depositor");
-    depositor.setUserId(2);
-
-    User custodian = new User();
-    custodian.setEmail("custodian@test.com");
-    custodian.setDisplayName("custodian");
-    custodian.setUserId(3);
-
     when(userDAO.findUserById(any())).thenReturn(submitter);
 
     initService();
@@ -778,64 +743,6 @@ public class VoteServiceTest {
       );
     } catch (Exception e) {
       fail(e.getMessage());
-    }
-  }
-
-  @Test
-  public void testNotifyCustodiansOfApprovedDatasetsWithCustodianProps() {
-    User submitter = new User();
-    submitter.setEmail("submitter@test.com");
-    submitter.setDisplayName("submitter");
-    submitter.setUserId(4);
-
-    Gson gson = GsonUtil.getInstance();
-    DatasetProperty custodianProp = new DatasetProperty();
-    custodianProp.setSchemaProperty("dataCustodianEmail");
-    custodianProp.setPropertyName("Custodian Email");
-    custodianProp.setPropertyType(PropertyType.Json);
-    custodianProp.setPropertyValue(gson.toJson(List.of("custodian@test.com")));
-
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
-    d1.setAlias(1);
-    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
-    d1.setProperties(Set.of(custodianProp));
-    d1.setCreateUserId(submitter.getUserId());
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
-    d2.setAlias(2);
-    d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
-    d2.setProperties(Set.of(custodianProp));
-    d2.setCreateUserId(submitter.getUserId());
-
-    User researcher = new User();
-    researcher.setEmail("researcher@test.com");
-    researcher.setDisplayName("Researcher");
-    researcher.setUserId(1);
-
-    User custodian = new User();
-    custodian.setEmail("custodian@test.com");
-    custodian.setDisplayName("custodian");
-    custodian.setUserId(3);
-
-    when(userDAO.findUserById(submitter.getUserId())).thenReturn(submitter);
-
-    initService();
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any()
-      );
-    } catch (Exception e) {
-      fail(e.getMessage());
-
     }
   }
 
@@ -872,17 +779,10 @@ public class VoteServiceTest {
     researcher.setDisplayName("Researcher");
     researcher.setUserId(1);
 
-    User depositorNotFound = new User();
-    depositorNotFound.setEmail("depositor@test.com");
-    depositorNotFound.setDisplayName("depositor");
-    depositorNotFound.setUserId(2);
-
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
 
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code");
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code"));
     verify(emailService, times(0)).sendDataCustodianApprovalMessage(
         any(),
         any(),
@@ -977,7 +877,6 @@ public class VoteServiceTest {
     v.setElectionId(RandomUtils.nextInt(1, 10));
     v.setIsReminderSent(reminderSent);
     v.setVote(vote);
-
     return v;
   }
 

@@ -315,8 +315,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(1);
     User user = new User();
-    UserRole userRole = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(userRole);
+    user.setAdminRole();
     user.setUserId(1);
     user.setDisplayName("displayName");
     user.setInstitutionId(1);
@@ -536,7 +535,7 @@ class DataAccessRequestServiceTest {
   void testDeleteByReferenceIdAdmin() {
     String referenceId = UUID.randomUUID().toString();
     User adminUser = new User();
-    adminUser.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    adminUser.setAdminRole();
     Election election = new Election();
     election.setElectionId(1);
     election.setReferenceId(referenceId);
@@ -557,8 +556,7 @@ class DataAccessRequestServiceTest {
   void testDeleteByReferenceIdResearcherSuccess() {
     String referenceId = UUID.randomUUID().toString();
     User user = new User();
-    user.addRole(
-        new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    user.setResearcherRole();
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of());
     doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
     doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
@@ -572,8 +570,7 @@ class DataAccessRequestServiceTest {
   void testDeleteByReferenceIdResearcherFailure() {
     String referenceId = UUID.randomUUID().toString();
     User user = new User();
-    user.addRole(
-        new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    user.setResearcherRole();
     Election election = new Election();
     election.setElectionId(1);
     election.setReferenceId(referenceId);

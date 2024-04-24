@@ -109,8 +109,7 @@ class DacResourceTest {
     ds.setName("test");
 
     User user = new User();
-    user.setRoles(
-        List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    user.setAdminRole();
 
     when(dacService.findById(1)).thenReturn(new Dac());
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
@@ -127,8 +126,7 @@ class DacResourceTest {
     ds.setName("test");
 
     User user = new User();
-    user.setRoles(
-        List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    user.setAdminRole();
 
     when(dacService.findById(1)).thenReturn(null);
 
@@ -144,8 +142,7 @@ class DacResourceTest {
 
     User user = new User();
     user.setUserId(10);
-    user.setRoles(List.of(
-        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+    user.setChairpersonRole();
 
     Dac dac = new Dac();
     dac.setChairpersons(List.of(user));
@@ -537,10 +534,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_UserDifferentChair() {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(2);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(2);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -552,10 +546,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_EmptyPayload() {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -567,10 +558,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     dataset.setDacApproval(true);
@@ -587,10 +575,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset() throws Exception {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     Dataset datasetResponse = new Dataset();
     datasetResponse.setDacId(1);
@@ -610,10 +595,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_AlreadyApproved_NonTrueSubmission() {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     dataset.setDacApproval(true);
@@ -628,10 +610,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_ElasticSearchNonSuccessResponseDoesNotFail() throws Exception {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     Dataset datasetResponse = new Dataset();
     datasetResponse.setDacId(1);
@@ -651,10 +630,7 @@ class DacResourceTest {
   @Test
   void testApproveDataset_ElasticSearchExceptionDoesNotFail() throws Exception {
     User user = new User();
-    UserRole chairRole = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chairRole.setDacId(1);
-    user.addRole(chairRole);
+    user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     Dataset datasetResponse = new Dataset();
     datasetResponse.setDacId(1);
@@ -691,8 +667,7 @@ class DacResourceTest {
     User user = buildUser();
     user.setUserId(RandomUtils.nextInt());
     user.setEmail(authUser.getEmail());
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.setRoles(Collections.singletonList(admin));
+    user.setAdminRole();
     return user;
   }
 
@@ -700,9 +675,7 @@ class DacResourceTest {
     User user = buildUser();
     user.setUserId(RandomUtils.nextInt());
     user.setEmail(authUser.getEmail());
-    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    user.setRoles(Collections.singletonList(chair));
+    user.setChairpersonRole();
     return user;
   }
 
