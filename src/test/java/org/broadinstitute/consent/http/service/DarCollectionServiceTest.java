@@ -170,8 +170,6 @@ class DarCollectionServiceTest {
 
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(
         List.of(new Election()));
-//    doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
-//    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
 
     assertThrows(BadRequestException.class, () -> {
       service.cancelDarCollectionAsResearcher(collection);
