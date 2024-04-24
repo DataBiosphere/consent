@@ -278,4 +278,52 @@ public class DaaResource extends Resource implements ConsentLogger {
       return createExceptionResponse(e);
     }
   }
+
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("/bulk/user/{userId}")
+  public Response bulkAddDAAsToUser(
+      @Auth AuthUser authUser,
+      @PathParam("userId") Integer userId,
+      String json) {
+    try {
+      User authedUser = userService.findUserByEmail(authUser.getEmail());
+      User user = userService.findUserById(userId);
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+        return Response.status(Status.FORBIDDEN).build();
+      }
+      List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
+      for (DataAccessAgreement daa : daaList) {
+        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daa.getDaaId());
+      }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Consumes(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("/bulk/user/{userId}")
+  public Response bulkRemoveDAAsFromUser(
+      @Auth AuthUser authUser,
+      @PathParam("userId") Integer userId,
+      String json) {
+    try {
+      User authedUser = userService.findUserByEmail(authUser.getEmail());
+      User user = userService.findUserById(userId);
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+        return Response.status(Status.FORBIDDEN).build();
+      }
+      List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
+      for (DataAccessAgreement daa : daaList) {
+        libraryCardService.removeDaaFromUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daa.getDaaId());
+      }
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

@@ -22,14 +22,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -703,6 +701,196 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
     Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  DataAccessAgreement createDAA(int daaId) {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    return daa;
+  }
+
+  @Test
+  void testBulkAddDAAsToUserAsSigningOfficial() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(institutionId);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+    List<DataAccessAgreement> agreements = List.of(
+        createDAA(1),
+        createDAA(2),
+        createDAA(3)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
+    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testBulkAddDAAsToUserAsAdmin() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setAdminRole();
+    authedUser.setInstitutionId(institutionId);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+    List<DataAccessAgreement> agreements = List.of(
+        createDAA(1),
+        createDAA(2),
+        createDAA(3)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
+    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testBulkAddDAAsToUserForbidden() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(4);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testBulkAddDAAsToUserNotFound() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(institutionId);
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testBulkRemoveDAAsFromUserAsSigningOfficial() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(institutionId);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+    List<DataAccessAgreement> agreements = List.of(
+        createDAA(1),
+        createDAA(2),
+        createDAA(3)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
+    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testBulkRemoveDAAsFromUserAsAdmin() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setAdminRole();
+    authedUser.setInstitutionId(institutionId);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+    List<DataAccessAgreement> agreements = List.of(
+        createDAA(1),
+        createDAA(2),
+        createDAA(3)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
+    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testBulkRemoveDAAsFromUserForbidden() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(4);
+
+    User researcher = researcherWithInstitution(userId, institutionId);
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
+
+  @Test
+  void testBulkRemoveDAAsFromUserNotFound() {
+    int userId = 1;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    authedUser.setInstitutionId(institutionId);
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUserById(userId)).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 }
