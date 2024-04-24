@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -45,6 +48,8 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -335,7 +340,7 @@ class DatasetServiceTest {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     initService();
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
@@ -493,7 +498,7 @@ class DatasetServiceTest {
     ds2.setProperties(Set.of(ds2PI));
 
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
 
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
 
@@ -556,7 +561,7 @@ class DatasetServiceTest {
     ds2.setProperties(Set.of(ds2PI));
 
     User u = new User();
-    u.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u.setAdminRole();
 
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(ds1, ds2));
 
@@ -582,8 +587,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser_Admin() {
     User user = new User();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(admin);
+    user.setAdminRole();
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     when(datasetDAO.findAllDatasets()).thenReturn(List.of(dataset));
@@ -601,9 +605,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser_Chair() {
     User user = new User();
-    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    user.addRole(chair);
+    user.setChairpersonRole();
     Dataset d1 = new Dataset();
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
@@ -629,9 +631,7 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsByUser() {
     User user = new User();
-    UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName());
-    user.addRole(researcher);
+    user.setResearcherRole();
     Dataset d1 = new Dataset();
     d1.setDataSetId(1);
     Dataset d2 = new Dataset();
@@ -842,14 +842,47 @@ class DatasetServiceTest {
   @Test
   void testGetApprovedDatasets() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.Researcher()));
     ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
         new Date());
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
     initService();
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
     assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+  }
+
+  @Test
+  void testUpdateStudyCustodiansExisting() {
+    User user = new User();
+    user.setEmail("test@gmail.com");
+    Study study = new Study();
+    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    StudyProperty prop = new StudyProperty();
+    prop.setValue("[test@gmail.com]");
+    prop.setStudyId(study.getStudyId());
+    prop.setType(PropertyType.Json);
+    prop.setKey(dataCustodianEmail);
+    study.setProperties(Set.of(prop));
+    when(studyDAO.findStudyById(any())).thenReturn(study);
+
+    initService();
+    datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
+    verify(studyDAO, times(1)).updateStudyProperty(any(), any(), any(), any());
+    verify(studyDAO, never()).insertStudyProperty(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateStudyCustodiansNew() {
+    User user = new User();
+    user.setEmail("test@gmail.com");
+    Study study = new Study();
+    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    when(studyDAO.findStudyById(any())).thenReturn(study);
+
+    initService();
+    datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
+    verify(studyDAO, never()).updateStudyProperty(any(), any(), any(), any());
+    verify(studyDAO, times(1)).insertStudyProperty(any(), any(), any(), any());
   }
 
   /* Helper functions */

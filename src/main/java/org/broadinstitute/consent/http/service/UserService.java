@@ -215,9 +215,7 @@ public class UserService {
   public User createUser(User user) {
     // Default role is researcher.
     if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
-      UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-          UserRoles.RESEARCHER.getRoleName());
-      user.setRoles(Collections.singletonList(researcher));
+      user.setResearcherRole();
     }
     validateRequiredFields(user);
     User existingUser = userDAO.findUserByEmail(user.getEmail());

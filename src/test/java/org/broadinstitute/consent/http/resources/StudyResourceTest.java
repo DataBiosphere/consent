@@ -34,10 +34,13 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class StudyResourceTest {
 
   @Mock
@@ -70,6 +73,28 @@ class StudyResourceTest {
   }
 
   @Test
+  void testUpdateCustodiansSuccess() {
+    initResource();
+    Response response = resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testUpdateCustodiansInvalidEmails() {
+    initResource();
+    Response response = resource.updateCustodians(authUser, 1, "[\"user_1\", \"@test.com\"]");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
+  void testUpdateCustodiansNotFound() {
+    when(datasetService.updateStudyCustodians(any(), any(), any())).thenThrow(new NotFoundException("Study not found"));
+    initResource();
+    Response response = resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]");
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
   void testGetStudyByIdNoDatasets() {
     Study study = new Study();
     study.setStudyId(1);
@@ -95,10 +120,7 @@ class StudyResourceTest {
     study.setStudyId(12345);
     study.setDatasetIds(Set.of(1, 2, 3));
 
-    List<Integer> datasetIds = new ArrayList<>(study.getDatasetIds());
-
     when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
-    when(datasetService.findDatasetsByIds(datasetIds)).thenReturn(datasets);
 
     initResource();
     Response response = resource.getStudyById(12345);

@@ -12,9 +12,9 @@ public class DatasetAssociationMapper implements RowMapper<DatasetAssociation> {
   public DatasetAssociation map(ResultSet r, StatementContext statementContext)
       throws SQLException {
     DatasetAssociation association = new DatasetAssociation();
-    association.setDatasetId(r.getInt("datasetId"));
-    association.setDacuserId(r.getInt("dacuserId"));
-    association.setCreateDate(r.getDate("createDate"));
+    association.setDatasetId(r.getInt("dataset_id"));
+    association.setUserId(r.getInt("user_id"));
+    association.setCreateDate(r.getDate("create_date"));
     return association;
   }
 }

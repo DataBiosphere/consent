@@ -7,13 +7,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -25,17 +21,17 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class InstitutionResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final List<UserRole> adminRoles = Collections.singletonList(
-      new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-  private final List<UserRole> researcherRoles = Collections.singletonList(
-      new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
   private final User adminUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
       adminRoles);
   private final User researcherUser = new User(1, authUser.getEmail(), "Display Name", new Date(),
@@ -59,17 +55,12 @@ public class InstitutionResourceTest {
     return mockInstitution;
   }
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new InstitutionResource(userService, institutionService);
   }
 
   @Test
-  public void testGetInstitutionsForAdmin() {
+  void testGetInstitutionsForAdmin() {
     List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findAllInstitutions()).thenReturn(institutions);
@@ -81,7 +72,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testGetInstitutionsForNonAdmin() {
+  void testGetInstitutionsForNonAdmin() {
     List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
     when(institutionService.findAllInstitutions()).thenReturn(institutions);
@@ -93,7 +84,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testGetInstitutionAdmin() {
+  void testGetInstitutionAdmin() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -105,7 +96,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testGetInstitutionNonAdmin() {
+  void testGetInstitutionNonAdmin() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(researcherUser);
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -117,7 +108,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testGetInstitutionFail() {
+  void testGetInstitutionFail() {
     Exception error = new NotFoundException("Institution not found");
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
@@ -128,7 +119,7 @@ public class InstitutionResourceTest {
 
 
   @Test
-  public void testCreateInstitution() {
+  void testCreateInstitution() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
@@ -141,7 +132,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testCreateInstitutionNullName() {
+  void testCreateInstitutionNullName() {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
@@ -153,7 +144,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testCreateInstitutionBlankName() {
+  void testCreateInstitutionBlankName() {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
@@ -165,7 +156,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testCreateInstitutionDuplicate() {
+  void testCreateInstitutionDuplicate() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
@@ -176,7 +167,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testUpdateInstitution() {
+  void testUpdateInstitution() {
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
@@ -189,7 +180,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testUpdateInstitutionNotFound() {
+  void testUpdateInstitutionNotFound() {
     Exception error = new NotFoundException("Institution not found");
     Institution mockInstitution = mockInstitutionSetup();
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
@@ -201,7 +192,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testUpdateInstiutionNullName() {
+  void testUpdateInstiutionNullName() {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName(null);
@@ -214,7 +205,7 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testUpdateInstiutionBlankName() {
+  void testUpdateInstiutionBlankName() {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName("");
@@ -227,17 +218,15 @@ public class InstitutionResourceTest {
   }
 
   @Test
-  public void testDeleteInstitution() {
-    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
+  void testDeleteInstitution() {
     initResource();
     Response response = resource.deleteInstitution(authUser, 1);
     assertEquals(204, response.getStatus());
   }
 
   @Test
-  public void testDeleteInstitutionNotFound() {
+  void testDeleteInstitutionNotFound() {
     Exception error = new NotFoundException("Institution not found");
-    when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
     initResource();
     Response response = resource.deleteInstitution(authUser, 1);

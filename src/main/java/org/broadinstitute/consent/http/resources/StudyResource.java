@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -18,11 +19,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -77,6 +81,35 @@ public class StudyResource extends Resource {
       Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
+      return Response.ok(study).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * This API adds/updates custodians for a study. The payload needs to be a JSON array of valid
+   * email addresses
+   */
+  @PUT
+  @Path("/{studyId}/custodians")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  public Response updateCustodians(@Auth AuthUser authUser,
+    @PathParam("studyId") Integer studyId, String json) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Gson gson = new Gson();
+      Type listOfStringObject = new TypeToken<ArrayList<String>>() {}.getType();
+      List<String> custodians = gson.fromJson(json, listOfStringObject);
+      // Validate that the custodians are all valid email addresses:
+      EmailValidator emailValidator = EmailValidator.getInstance();
+      List<Boolean> valid = custodians.stream().map(emailValidator::isValid).toList();
+      if (valid.contains(false)) {
+        throw new BadRequestException(String.format("Invalid email address: %s", json));
+      }
+      Study study = datasetService.updateStudyCustodians(user, studyId, json);
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

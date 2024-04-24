@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -25,10 +24,15 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class LibraryCardServiceTest {
 
   private LibraryCardService service;
@@ -40,18 +44,13 @@ public class LibraryCardServiceTest {
   @Mock
   private UserDAO userDAO;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initService() {
     this.service = new LibraryCardService(libraryCardDAO, institutionDAO, userDAO);
   }
 
   @Test
   // Test LC create with userId and email
-  public void testCreateLibraryCardFullUserDetails() {
+  void testCreateLibraryCardFullUserDetails() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -73,7 +72,7 @@ public class LibraryCardServiceTest {
 
   @Test
   //Test LC create with only user email (no userId)
-  public void testCreateLibraryCardPartialUserDetailsEmail() {
+  void testCreateLibraryCardPartialUserDetailsEmail() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -81,9 +80,7 @@ public class LibraryCardServiceTest {
     user.setUserId(null);
     user.setEmail("testemail");
 
-    when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
 
     // last two calls in the function, no need to test within this service test file
     when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
@@ -97,7 +94,7 @@ public class LibraryCardServiceTest {
 
   @Test
   //Test LC create with only user id (no email)
-  public void testCreateLibraryCardPartialUserDetailsId() {
+  void testCreateLibraryCardPartialUserDetailsId() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -118,7 +115,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testCreateLibraryCardAsSO() {
+  void testCreateLibraryCardAsSO() {
     initService();
     Institution institution = testInstitution();
     User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
@@ -141,7 +138,7 @@ public class LibraryCardServiceTest {
 
   @Test
   //Negative test, checks if error is thrown if payload email and userId don't match up to those on user record
-  public void testCreateLibraryCardIncorrectUserIdAndEmail() {
+  void testCreateLibraryCardIncorrectUserIdAndEmail() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -153,10 +150,6 @@ public class LibraryCardServiceTest {
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
 
-    when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
-        .thenReturn(1);
-    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
-
     LibraryCard payload = testLibraryCard(institution.getId(), user.getUserId());
     payload.setUserEmail("differentemail");
     assertThrows(ConsentConflictException.class, () -> {
@@ -166,7 +159,7 @@ public class LibraryCardServiceTest {
 
   @Test
   //Negative test, checks to see if error thrown if card already exists on user id and institution id
-  public void testCreateLibraryCardAlreadyExistsOnUserId() {
+  void testCreateLibraryCardAlreadyExistsOnUserId() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -174,7 +167,6 @@ public class LibraryCardServiceTest {
     LibraryCard savedCard = testLibraryCard(institution.getId(), user.getUserId());
     LibraryCard payload = savedCard;
 
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(
         Collections.singletonList(savedCard));
     assertThrows(ConsentConflictException.class, () -> {
@@ -184,7 +176,7 @@ public class LibraryCardServiceTest {
 
   @Test
   // Negative test, checks to see if error thrown if card already exists on user email and institution id
-  public void testCreateLibraryCardAlreadyExistsOnUserEmail() {
+  void testCreateLibraryCardAlreadyExistsOnUserEmail() {
     initService();
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -195,7 +187,6 @@ public class LibraryCardServiceTest {
 
     LibraryCard payload = savedCard;
 
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(
         Collections.singletonList(savedCard));
     assertThrows(ConsentConflictException.class, () -> {
@@ -205,12 +196,11 @@ public class LibraryCardServiceTest {
 
   @Test
   //Negative test, checks to see if error is thrown if email and userId are not provided
-  public void testCreateLibraryCardNoUserDetails() {
+  void testCreateLibraryCardNoUserDetails() {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     initService();
     Institution institution = testInstitution();
     LibraryCard payload = testLibraryCard(institution.getId(), null);
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
 
     assertThrows(BadRequestException.class, () -> {
       service.createLibraryCard(payload, adminUser);
@@ -219,17 +209,13 @@ public class LibraryCardServiceTest {
 
   @Test
   //Negative test, checks if error is thrown on null institutionId
-  public void testCreateLibraryCard_InvalidInstitution() {
+  void testCreateLibraryCard_InvalidInstitution() {
     User user = testUser(1);
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     LibraryCard libraryCard = testLibraryCard(1, user.getUserId());
 
-    when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
-        .thenReturn(libraryCard);
     when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
         .thenReturn(null);
-    when(userDAO.findUserById(user.getUserId()))
-        .thenReturn(user);
 
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
@@ -239,7 +225,7 @@ public class LibraryCardServiceTest {
 
   @Test
   //Negative test, checks to see if error is thrown on null payload
-  public void testCreateLibraryCardNullPayload() {
+  void testCreateLibraryCardNullPayload() {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     initService();
     assertThrows(NotFoundException.class, () -> {
@@ -248,7 +234,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testCreateLibraryCard_InvalidInstitutionId() {
+  void testCreateLibraryCard_InvalidInstitutionId() {
     User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
         UserRoles.SIGNINGOFFICIAL.getRoleName());
     soUser.setInstitutionId(1);
@@ -261,7 +247,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testUpdateLibraryCard() {
+  void testUpdateLibraryCard() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
@@ -281,14 +267,10 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testUpdateLibraryCard_NotFound() {
+  void testUpdateLibraryCard_NotFound() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
-    when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
-        .thenReturn(institution);
-    when(userDAO.findUserById(user.getUserId()))
-        .thenReturn(user);
     when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
         .thenReturn(null);
 
@@ -299,7 +281,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testUpdateLibraryCard_InvalidInstitution() {
+  void testUpdateLibraryCard_InvalidInstitution() {
     User user = testUser(1);
     LibraryCard libraryCard = testLibraryCard(1, user.getUserId());
     when(institutionDAO.findInstitutionById(libraryCard.getInstitutionId()))
@@ -316,15 +298,13 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testDeleteLibraryCard_NotFound() {
+  void testDeleteLibraryCard_NotFound() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    user.addRole(admin);
+    user.setAdminRole();
     LibraryCard libraryCard = testLibraryCard(institution.getId(), user.getUserId());
     when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
         .thenReturn(null);
-    doNothing().when(libraryCardDAO).deleteLibraryCardById(any());
 
     initService();
     assertThrows(NotFoundException.class, () -> {
@@ -333,7 +313,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testFindLibraryCardById_NotFound() {
+  void testFindLibraryCardById_NotFound() {
     when(libraryCardDAO.findLibraryCardById(any()))
         .thenReturn(null);
     initService();
@@ -343,7 +323,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testFindLibraryCardById() {
+  void testFindLibraryCardById() {
     LibraryCard libraryCard = testLibraryCard(1, 1);
     when(libraryCardDAO.findLibraryCardById(libraryCard.getId()))
         .thenReturn(libraryCard);
@@ -354,7 +334,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testFindLibraryCardDaaById_NotFound() {
+  void testFindLibraryCardDaaById_NotFound() {
     when(libraryCardDAO.findLibraryCardDaaById(any()))
         .thenReturn(null);
     initService();
@@ -364,7 +344,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testFindLibraryCardByIdDaa() {
+  void testFindLibraryCardByIdDaa() {
     LibraryCard libraryCard = testLibraryCard(1, 1);
     DataAccessAgreement daa1 = new DataAccessAgreement();
     int daaId1 = RandomUtils.nextInt(1, 10);
@@ -386,7 +366,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testAddDaaToLibraryCard() {
+  void testAddDaaToLibraryCard() {
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
 
     LibraryCard libraryCard = testLibraryCard(1, 1);
@@ -395,7 +375,7 @@ public class LibraryCardServiceTest {
   }
 
   @Test
-  public void testRemoveDaaFromLibraryCard() {
+  void testRemoveDaaFromLibraryCard() {
     doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
 
     LibraryCard libraryCard = testLibraryCard(1, 1);

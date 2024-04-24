@@ -1,10 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 
 public class DatasetAssociation {
@@ -14,22 +11,13 @@ public class DatasetAssociation {
   private Integer datasetId;
 
   @JsonProperty
-  private Integer dacuserId;
+  private Integer userId;
 
   @JsonProperty
   private Date createDate;
 
   public DatasetAssociation() {
   }
-
-  ;
-
-  public DatasetAssociation(Integer datasetId, Integer dacuserId) {
-    this.datasetId = datasetId;
-    this.dacuserId = dacuserId;
-    this.createDate = new Date();
-  }
-
 
   public Integer getDatasetId() {
     return datasetId;
@@ -39,8 +27,8 @@ public class DatasetAssociation {
     this.datasetId = datasetId;
   }
 
-  public void setDacuserId(Integer dacuserId) {
-    this.dacuserId = dacuserId;
+  public void setUserId(Integer userId) {
+    this.userId = userId;
   }
 
   public Date getCreateDate() {
@@ -51,15 +39,8 @@ public class DatasetAssociation {
     this.createDate = createDate;
   }
 
-  public Integer getDacuserId() {
-    return dacuserId;
+  public Integer getUserId() {
+    return userId;
   }
 
-  public static List<DatasetAssociation> createDatasetAssociations(Integer datasetId,
-      Collection<Integer> usersIdList) {
-    ArrayList<DatasetAssociation> associationList = new ArrayList<>();
-    usersIdList.forEach(
-        dacUserId -> associationList.add(new DatasetAssociation(datasetId, dacUserId)));
-    return associationList;
-  }
 }

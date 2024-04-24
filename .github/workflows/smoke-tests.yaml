@@ -36,7 +36,7 @@ jobs:
         run: |
           mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ steps.setup.outputs.bee-name }}.bee.envs-terra.bio/
       - name: Store Test Result Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: test-reports
@@ -49,15 +49,6 @@ jobs:
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}" }'
-      - name: Notify Slack
-        uses: broadinstitute/action-slack@v3.8.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          status: ${{ job.status }}
-          channel: "#duos-notifications"
-          fields: repo,commit,author,action,eventName,ref,workflow,job,took
 
   upload-test-reports:
     needs: [smoke-tests]
@@ -73,3 +64,12 @@ jobs:
       artifact: 'test-reports'
       big-query-table: 'broad-dsde-qa.automated_testing.test_results'
       subuuid: ${{ github.run_id }}
+
+  report-workflow:
+    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
+    with:
+      relates-to-chart-releases: 'consent-dev'
+      notify-slack-channels-upon-workflow-failure: ${{ vars.SLACK_NOTIFICATION_CHANNELS }}
+      notify-slack-channels-upon-workflow-retry: ${{ vars.SLACK_NOTIFICATION_CHANNELS }}
+    permissions:
+      id-token: write

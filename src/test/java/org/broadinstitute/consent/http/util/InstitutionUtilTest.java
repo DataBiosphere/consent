@@ -13,15 +13,15 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
 
-  private final List<UserRole> adminRoles = Collections.singletonList(
-      new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-  private final List<UserRole> researcherRoles = Collections.singletonList(
-      new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
   private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles);
   private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(),
       researcherRoles);
@@ -39,13 +39,13 @@ class InstitutionUtilTest {
     return mockInstitution;
   }
 
-  @BeforeEach
-  void setUp() {
+  private void initUtil() {
     util = new InstitutionUtil();
   }
 
   @Test
   void testCheckIfAdminAdmin() {
+    initUtil();
     assertTrue(util.checkIfAdmin(adminUser));
     assertFalse(util.checkIfAdmin(researcherUser));
     assertFalse(util.checkIfAdmin(new User()));
@@ -53,6 +53,7 @@ class InstitutionUtilTest {
 
   @Test
   void testGsonBuilderAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
@@ -69,6 +70,7 @@ class InstitutionUtilTest {
 
   @Test
   void testGsonBuilderNonAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);

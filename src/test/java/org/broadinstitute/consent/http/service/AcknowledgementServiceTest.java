@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -42,8 +41,7 @@ public class AcknowledgementServiceTest {
   @Test
   public void test_noAcknowledgementsForUser() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.Researcher()));
     when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
     when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(
         null);
@@ -55,8 +53,7 @@ public class AcknowledgementServiceTest {
   @Test
   public void test_makeAndDeleteAcknowledgementForUser() {
     User user = new User(2, "test@domain.com", "Test User", new Date(),
-        List.of(
-            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+        List.of(UserRoles.Researcher()));
     String key = "key2";
     List<String> keys = List.of(key);
     Timestamp timestamp = new Timestamp(new Date().getTime());
