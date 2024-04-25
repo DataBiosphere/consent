@@ -53,6 +53,16 @@ public interface ConsentLogger {
   }
 
   /**
+   * Logs a warning message and throwable to the console
+   *
+   * @param message Error Message
+   * @param t       Exception
+   */
+  default void logWarn(String message, Throwable t) {
+    getLogger(this.getClass()).warn(message, t);
+  }
+
+  /**
    * Logs an info message to the console
    *
    * @param message Error Message
