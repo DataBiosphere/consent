@@ -58,9 +58,9 @@ delete:
           type: object
           properties:
             users:
-            type: array
-            items:
-              type: integer
+              type: array
+              items:
+                type: integer
         examples:
           example1:
             summary: Bulk remove users from a DAA
