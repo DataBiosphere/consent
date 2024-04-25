@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
-import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -136,6 +135,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlUpdate("""
       INSERT INTO lc_daa (lc_id, daa_id)
       VALUES (:lcId, :daaId)
+      ON CONFLICT DO NOTHING
       """)
   void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 
