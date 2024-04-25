@@ -225,7 +225,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkAddUsersToDaa(
       @Auth AuthUser authUser,
@@ -253,7 +253,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @DELETE
   @Consumes(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkRemoveUsersFromDaa(
       @Auth AuthUser authUser,
