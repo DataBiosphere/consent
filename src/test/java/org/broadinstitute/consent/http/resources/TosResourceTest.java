@@ -3,33 +3,29 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class TosResourceTest {
+@ExtendWith(MockitoExtension.class)
+class TosResourceTest {
 
   @Mock
   private SamService service;
 
   private TosResource resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new TosResource(service);
   }
 
   @Test
-  public void testGetToSText() throws Exception {
+  void testGetToSText() throws Exception {
     String mockText = "Plain Text";
     when(service.getToSText()).thenReturn(mockText);
     initResource();
@@ -40,7 +36,7 @@ public class TosResourceTest {
   }
 
   @Test
-  public void testGetDuosToSText() throws Exception {
+  void testGetDuosToSText() throws Exception {
     String mockText = "Sample Terra ToS";
     when(service.getToSText()).thenReturn(mockText);
     initResource();

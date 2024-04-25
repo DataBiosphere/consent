@@ -9,20 +9,16 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -31,19 +27,20 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"unchecked", "resource"})
+@SuppressWarnings({"unchecked"})
+@ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
 
   @Mock
@@ -78,15 +75,9 @@ class MatchServiceTest {
   public static void setUpClass() {
   }
 
-  @BeforeEach
-  public void setUp() throws UnknownIdentifierException, IOException {
-    openMocks(this);
-  }
-
   @Test
   void testInsertMatches() {
     when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-    doNothing().when(matchDAO).insertRationale(any(), any());
     initService();
 
     service.insertMatches(List.of(new Match()));
@@ -142,12 +133,7 @@ class MatchServiceTest {
   void testFindMatchForDataAccessRequest() {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
-    DataUseResponseMatchingObject responseObject = Mockito.mock(
-        DataUseResponseMatchingObject.class);
-    when(response.readEntity(any(GenericType.class))).thenReturn(responseObject);
-    when(response.getStatus()).thenReturn(200);
-    when(builder.post(any())).thenReturn(response);
-    when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
+    Mockito.mock(DataUseResponseMatchingObject.class);
     when(clientMock.target(config.getMatchURL_v4())).thenReturn(target);
     initService();
 
@@ -183,7 +169,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
 
     Response response = Mockito.mock(Response.class);
-    when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.getStatus()).thenReturn(500);
     when(builder.post(any())).thenReturn(response);
     when(target.request(MediaType.APPLICATION_JSON)).thenReturn(builder);
@@ -204,7 +189,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"APPROVE\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
@@ -226,7 +210,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"DENY\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);
@@ -248,7 +231,6 @@ class MatchServiceTest {
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"ABSTAIN\", \"matchPair\": {}, \"failureReasons\": []}";
 
-    when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(List.of(dar));
     when(response.readEntity(any(Class.class))).thenReturn(stringEntity);
     when(response.getStatus()).thenReturn(200);
     when(builder.post(any())).thenReturn(response);

@@ -20,11 +20,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
-public class OntologyServiceTest implements WithMockServer {
+@ExtendWith(MockitoExtension.class)
+class OntologyServiceTest implements WithMockServer {
 
   private MockServerClient client;
 
@@ -33,22 +36,22 @@ public class OntologyServiceTest implements WithMockServer {
   private OntologyService service;
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     container.start();
   }
 
   @AfterAll
-  public static void tearDown() {
+  static void tearDown() {
     container.stop();
   }
 
   @BeforeEach
-  public void startUp() {
+  void startUp() {
     client = new MockServerClient(container.getHost(), container.getServerPort());
     client.reset();
   }
 
-  public ServicesConfiguration config() {
+  ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setLocalURL("http://localhost:8180/");
     config.setOntologyURL(getRootUrl(container));
@@ -61,7 +64,7 @@ public class OntologyServiceTest implements WithMockServer {
   }
 
   @Test
-  public void testTranslateDataUseSummary() {
+  void testTranslateDataUseSummary() {
     mockDataUseTranslateSummarySuccess();
     initService();
 
@@ -99,7 +102,7 @@ public class OntologyServiceTest implements WithMockServer {
 
 
   @Test
-  public void testTranslateDataUse() {
+  void testTranslateDataUse() {
     mockDataUseTranslateSuccess();
     initService();
 

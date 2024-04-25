@@ -32,7 +32,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 @ExtendWith(MockitoExtension.class)
-public class LibraryCardResourceTest {
+class LibraryCardResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());

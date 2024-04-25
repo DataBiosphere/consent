@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -23,8 +22,11 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DataAccessReportsParserTest {
 
   @Mock
@@ -48,7 +50,6 @@ class DataAccessReportsParserTest {
 
   @BeforeEach
   public void setUp() {
-    openMocks(this);
     Dataset d = new Dataset();
     d.setDataSetId(1); // This translates to an identifier of "DUOS-000001"
     d.setAlias(1);

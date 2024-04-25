@@ -3,9 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
@@ -20,9 +18,12 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class MailResourceTest {
+@ExtendWith(MockitoExtension.class)
+class MailResourceTest {
 
   @Mock
   private EmailService emailService;
@@ -31,12 +32,11 @@ public class MailResourceTest {
   private MailResource mailResource;
 
   private void initResource() {
-    openMocks(this);
     mailResource = new MailResource(emailService);
   }
 
   @Test
-  public void test_MailResource() {
+  void test_MailResource() {
     initResource();
     when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(
         generateMailMessageList());
@@ -45,7 +45,7 @@ public class MailResourceTest {
   }
 
   @Test
-  public void test_MailResourceEmptyListResponse() {
+  void test_MailResourceEmptyListResponse() {
     initResource();
     when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(new ArrayList<>());
     Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
@@ -53,9 +53,9 @@ public class MailResourceTest {
   }
 
   @Test
-  public void test_MailResource_date_range_EmptyListResponse() {
+  void test_MailResource_date_range_EmptyListResponse() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
+    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), any(), any())).thenReturn(
         new ArrayList<>());
     Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
         null);
@@ -63,9 +63,9 @@ public class MailResourceTest {
   }
 
   @Test
-  public void test_MailResource_date_range_ListResponse() {
+  void test_MailResource_date_range_ListResponse() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
+    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), any(), any())).thenReturn(
         generateMailMessageList());
     Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null,
         null);
@@ -73,40 +73,32 @@ public class MailResourceTest {
   }
 
   @Test
-  public void test_MailResource_date_range_invalid_limit() {
+  void test_MailResource_date_range_invalid_limit() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
-        generateMailMessageList());
     assertThrows(BadRequestException.class, () -> {
       mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5, null);
     });
   }
 
   @Test
-  public void test_MailResource_date_range_invalid_offset() {
+  void test_MailResource_date_range_invalid_offset() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
-        generateMailMessageList());
     assertThrows(BadRequestException.class, () -> {
       mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, -1);
     });
   }
 
   @Test
-  public void test_MailResource_invalid_start_date() {
+  void test_MailResource_invalid_start_date() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
-        new ArrayList<>());
     Response response = mailResource.getEmailByDateRange(authUser, "55/11/2021", "05/11/2022", null,
         null);
     assertEquals(400, response.getStatus());
   }
 
   @Test
-  public void test_MailResource_invalid_end_date() {
+  void test_MailResource_invalid_end_date() {
     initResource();
-    when(emailService.fetchEmailMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
-        new ArrayList<>());
     Response response = mailResource.getEmailByDateRange(authUser, "05/11/2021", "65/98/20229",
         null, null);
     assertEquals(400, response.getStatus());

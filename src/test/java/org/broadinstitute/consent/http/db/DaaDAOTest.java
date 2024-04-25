@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
@@ -13,8 +13,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DaaDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testInsert() {

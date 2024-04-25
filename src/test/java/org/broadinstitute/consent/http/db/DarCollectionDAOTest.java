@@ -37,10 +37,12 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
-
+@ExtendWith(MockitoExtension.class)
 class DarCollectionDAOTest extends DAOTestHelper {
 
   private void generateDatasetElectionForCollection(DarCollection collection) {

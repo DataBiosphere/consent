@@ -21,11 +21,14 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class UserRoleDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class UserRoleDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindRolesByUserId() {
+  void testFindRolesByUserId() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
     List<UserRole> roles = userRoleDAO.findRolesByUserId(user.getUserId());
@@ -33,7 +36,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindRolesByUserEmail() {
+  void testFindRolesByUserEmail() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
     List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
@@ -41,7 +44,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindRolesByUserMixedCaseEmail() {
+  void testFindRolesByUserMixedCaseEmail() {
     User user = createUserWithRole(UserRoles.ADMIN.getRoleId());
     user.setEmail(randomizeCase(user.getEmail()));
     List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());
@@ -57,13 +60,13 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindRoles() {
+  void testFindRoles() {
     List<Role> roles = userRoleDAO.findRoles();
     assertFalse(roles.isEmpty());
   }
 
   @Test
-  public void testFindRoleIdByName() {
+  void testFindRoleIdByName() {
     List<String> roleNames = userRoleDAO.
         findRoles().
         stream().
@@ -74,7 +77,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertUserRoles() {
+  void testInsertUserRoles() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     UserRole r = new UserRole();
     r.setRoleId(UserRoles.MEMBER.getRoleId());
@@ -86,7 +89,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateUserRoles() {
+  void testUpdateUserRoles() {
     User user = createUserWithRole(UserRoles.MEMBER.getRoleId());
     List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
     userRoleDAO.updateUserRoles(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(),
@@ -96,7 +99,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testRemoveUserRoles() {
+  void testRemoveUserRoles() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     List<UserRole> currentRoles = userRoleDAO.findRolesByUserId(user.getUserId());
     assertFalse(currentRoles.isEmpty());
@@ -108,12 +111,12 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testInsertSingleUserRole() {
+  void testInsertSingleUserRole() {
     // No-op: tested in set up and tear down
   }
 
   @Test
-  public void testRemoveSingleUserRole() {
+  void testRemoveSingleUserRole() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     List<UserRole> userRoles = userRoleDAO.findRolesByUserId(user.getUserId());
     assertFalse(userRoles.isEmpty());
@@ -127,7 +130,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindRoleByNameAndUser() {
+  void testFindRoleByNameAndUser() {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Integer roleId = userRoleDAO.findRoleByNameAndUser(UserRoles.CHAIRPERSON.getRoleName(),
         user.getUserId());
@@ -139,7 +142,7 @@ public class UserRoleDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindRoleByUserIdAndRoleId() {
+  void testFindRoleByUserIdAndRoleId() {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     UserRole userRole = userRoleDAO.findRoleByUserIdAndRoleId(user.getUserId(),
         UserRoles.CHAIRPERSON.getRoleId());

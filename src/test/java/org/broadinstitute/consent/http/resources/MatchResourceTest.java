@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
@@ -15,11 +14,13 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.service.MatchService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class MatchResourceTest {
+@ExtendWith(MockitoExtension.class)
+class MatchResourceTest {
 
   @Mock
   private MatchService service;
@@ -29,18 +30,12 @@ public class MatchResourceTest {
 
   private MatchResource resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new MatchResource(service);
   }
 
   @Test
-  public void testGetMatchesForPurpose() {
-    when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
+  void testGetMatchesForPurpose() {
     initResource();
 
     Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
@@ -49,14 +44,14 @@ public class MatchResourceTest {
   }
 
   @Test
-  public void testGetMatchesForPurpose_EmptyParam() {
+  void testGetMatchesForPurpose_EmptyParam() {
     initResource();
     Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testGetMatchesForPurpose_CommaSeparatedBlanks() {
+  void testGetMatchesForPurpose_CommaSeparatedBlanks() {
     initResource();
     Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
         " , , ,");
@@ -64,7 +59,7 @@ public class MatchResourceTest {
   }
 
   @Test
-  public void testGetMatchesForPurpose_PartialValidIds() {
+  void testGetMatchesForPurpose_PartialValidIds() {
     Match match = new Match();
     match.setId(2);
     when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
@@ -77,7 +72,7 @@ public class MatchResourceTest {
   }
 
   @Test
-  public void testReprocessPurposeMatches() {
+  void testReprocessPurposeMatches() {
     doNothing().when(service).reprocessMatchesForPurpose(any());
     when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();

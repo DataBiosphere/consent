@@ -14,7 +14,10 @@ import java.util.Date;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class GsonUtilTest {
 
   @Test

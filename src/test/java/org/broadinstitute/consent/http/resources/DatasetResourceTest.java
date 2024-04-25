@@ -14,7 +14,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -61,10 +60,12 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetResourceTest {
 
   @Mock
@@ -94,11 +95,6 @@ class DatasetResourceTest {
   private UriBuilder uriBuilder;
 
   private DatasetResource resource;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initResource() {
     resource = new DatasetResource(datasetService, userService, darService,
@@ -133,12 +129,11 @@ class DatasetResourceTest {
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
     when(datasetService.createDatasetFromDatasetDTO(any(), any(), anyInt())).thenReturn(result);
-    when(datasetService.getDatasetDTO(any())).thenReturn(result);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
     when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
-    when(uriBuilder.build(anyString())).thenReturn(new URI("/api/dataset/1"));
+    when(uriBuilder.build(any())).thenReturn(new URI("/api/dataset/1"));
     initResource();
     Response response = resource.createDataset(authUser, uriInfo, json);
 
@@ -238,7 +233,7 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testCreateDatasetError() throws Exception {
+  void testCreateDatasetError() {
     String json = createPropertiesJson("Dataset Name", "test");
 
     when(datasetService.getDatasetByName("test")).thenReturn(null);
@@ -334,8 +329,6 @@ class DatasetResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     when(user.hasUserRole(any())).thenReturn(true);
-    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-    when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
     initResource();
     Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, json);
     assertEquals(204, responseNoContent.getStatus());
@@ -540,7 +533,6 @@ class DatasetResourceTest {
     AccessManagement accessManagement = AccessManagement.CONTROLLED;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(0);
     when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
         List.of(ds));
 
@@ -559,7 +551,6 @@ class DatasetResourceTest {
     AccessManagement accessManagement = AccessManagement.OPEN;
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(0);
     when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
         List.of(ds));
 
@@ -590,7 +581,6 @@ class DatasetResourceTest {
     Response mockResponse = Response.ok().entity(query).build();
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(0);
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     initResource();
@@ -739,7 +729,6 @@ class DatasetResourceTest {
   @Test
   void testUpdateDatasetDataUse_BadRequestJson() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
-    when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(new Dataset());
 
     initResource();
     Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
@@ -764,8 +753,6 @@ class DatasetResourceTest {
   void testUpdateDatasetDataUse_NotFound() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     when(datasetService.findDatasetById(any())).thenThrow(new NotFoundException());
-    when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(
-        new NotFoundException());
 
     initResource();
     String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
@@ -780,7 +767,6 @@ class DatasetResourceTest {
     DataUse du = new DataUseBuilder().setGeneralUse(true).build();
     d.setDataUse(du);
     when(datasetService.findDatasetById(any())).thenReturn(d);
-    when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
 
     initResource();
     Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
@@ -910,7 +896,6 @@ class DatasetResourceTest {
         .name("notFile")
         .build();
     FormDataBodyPart formDataBodyPartNotFile = mock(FormDataBodyPart.class);
-    when(formDataBodyPartNotFile.getName()).thenReturn("notFile");
     when(formDataBodyPartNotFile.getContentDisposition()).thenReturn(contentNotFile);
 
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
@@ -1009,7 +994,6 @@ class DatasetResourceTest {
         preexistingDataset);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
-    when(user.hasUserRole(any())).thenReturn(true);
     String json = createDataset(user);
 
     FormDataContentDisposition content = FormDataContentDisposition
@@ -1035,12 +1019,7 @@ class DatasetResourceTest {
         .name("file")
         .fileName("validFile.txt")
         .build();
-
-    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
-
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
-    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -1052,14 +1031,8 @@ class DatasetResourceTest {
         .name("file")
         .fileName("validFile.txt")
         .build();
-
     String json = createInvalidDataset(user);
-
-    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
-
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
-    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -1094,12 +1067,7 @@ class DatasetResourceTest {
         .name("file")
         .fileName("validFile.txt")
         .build();
-
-    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
-    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
-
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
-    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     String json = createDatasetRegistrationMock(user);
     when(datasetService.findDatasetById(anyInt())).thenReturn(null);
 
@@ -1109,14 +1077,11 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testUpdateDatasetInvalidFileName() throws SQLException, IOException {
+  void testUpdateDatasetInvalidFileName() {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
-        preexistingDataset);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
-    when(user.hasUserRole(any())).thenReturn(true);
     String json = createDatasetRegistrationMock(user);
 
     FormDataContentDisposition content = FormDataContentDisposition

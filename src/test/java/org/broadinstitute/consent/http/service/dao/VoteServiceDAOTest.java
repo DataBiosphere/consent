@@ -28,18 +28,21 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class VoteServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class VoteServiceDAOTest extends DAOTestHelper {
 
   private VoteServiceDAO serviceDAO;
 
   @BeforeEach
-  public void initService() {
+  void initService() {
     serviceDAO = new VoteServiceDAO(jdbi, voteDAO);
   }
 
   @Test
-  public void testUpdateVotesWithValue_FinalVote() throws Exception {
+  void testUpdateVotesWithValue_FinalVote() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
@@ -58,7 +61,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_NoRationale() throws Exception {
+  void testUpdateVotesWithValue_NoRationale() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
@@ -74,7 +77,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_DacVote() throws Exception {
+  void testUpdateVotesWithValue_DacVote() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
@@ -93,7 +96,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateVotesWithValue_MultipleVotes() throws Exception {
+  void testUpdateVotesWithValue_MultipleVotes() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
@@ -120,7 +123,7 @@ public class VoteServiceDAOTest extends DAOTestHelper {
 
 
   @Test
-  public void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
+  void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
     User user = createUser();
     DataAccessRequest dar = createDataAccessRequestV3();
     Dataset dataset = createDataset();
