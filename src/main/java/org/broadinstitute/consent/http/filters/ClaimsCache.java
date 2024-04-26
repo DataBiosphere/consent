@@ -9,12 +9,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /**
  * Manage a cache of bearer token to map of `OAUTH2_CLAIM` headers for every request. This is
  * useful in cases where components need, but do not have access to, the full request context.
  */
-public class ClaimsCache {
+public class ClaimsCache implements ConsentLogger {
 
   private static ClaimsCache INSTANCE;
   public final Cache<String, Map<String, String>> cache;
@@ -45,6 +46,7 @@ public class ClaimsCache {
   }
 
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
+    headers.forEach((key, value) -> logInfo("Load cache entry: " + key + ": " + value));
     if (this.cache.getIfPresent(token) == null) {
       Map<String, String> claimsMap = headers.entrySet()
           .stream()
