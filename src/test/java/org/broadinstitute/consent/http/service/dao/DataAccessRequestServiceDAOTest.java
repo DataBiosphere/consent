@@ -31,18 +31,21 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DataAccessRequestServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
-  public DataAccessRequestServiceDAO serviceDAO;
+  DataAccessRequestServiceDAO serviceDAO;
 
   @BeforeEach
-  public void initService() {
+  void initService() {
     serviceDAO = new DataAccessRequestServiceDAO(dataAccessRequestDAO, jdbi, darCollectionDAO);
   }
 
   @Test
-  public void testUpdateByReferenceId() throws Exception {
+  void testUpdateByReferenceId() throws Exception {
 
     Dataset datasetOne = createDataset();
     Dataset datasetTwo = createDataset();

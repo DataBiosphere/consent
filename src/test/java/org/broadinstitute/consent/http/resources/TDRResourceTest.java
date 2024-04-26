@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -25,10 +24,12 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class TDRResourceTest {
 
   @Mock
@@ -47,11 +48,6 @@ class TDRResourceTest {
   private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
 
   private TDRResource resource;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initResource() {
     try {

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -21,9 +20,12 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 
+@ExtendWith(MockitoExtension.class)
 class OidcAuthorityDAOTest implements WithMockServer {
 
   private OidcAuthorityDAO dao;
@@ -44,7 +46,6 @@ class OidcAuthorityDAOTest implements WithMockServer {
 
   @BeforeEach
   public void init() {
-    openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
     OidcConfiguration config = new OidcConfiguration();

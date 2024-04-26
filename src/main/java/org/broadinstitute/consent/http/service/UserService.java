@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -475,4 +476,14 @@ public class UserService {
     return user;
   }
 
+  public List<User> findUsersInJsonArray(String json, String arrayKey) {
+    List<JsonElement> jsonElementList;
+    try {
+      JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+      jsonElementList = jsonObject.getAsJsonArray(arrayKey).asList();
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
+    }
+    return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
+  }
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -12,19 +11,16 @@ import java.util.LinkedHashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.broadinstitute.consent.http.ConsentApplication;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class StatusResourceTest {
+@ExtendWith(MockitoExtension.class)
+class StatusResourceTest {
 
   @Mock
   private HealthCheckRegistry healthChecks;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private StatusResource initStatusResource(SortedMap<String, Result> checks) {
     when(healthChecks.runHealthChecks()).thenReturn(checks);
@@ -32,7 +28,7 @@ public class StatusResourceTest {
   }
 
   @Test
-  public void testHealthy() {
+  void testHealthy() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
     checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
@@ -43,7 +39,7 @@ public class StatusResourceTest {
   }
 
   @Test
-  public void testUnhealthyDatabase() {
+  void testUnhealthyDatabase() {
     Result postgresql = Result.unhealthy(
         new Exception("Cannot connect to the postgresql database"));
     SortedMap<String, Result> checks = new TreeMap<>();
@@ -56,7 +52,7 @@ public class StatusResourceTest {
   }
 
   @Test
-  public void testUnhealthyOntology() {
+  void testUnhealthyOntology() {
     Result ontology = Result.unhealthy("Ontology is down");
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
@@ -69,7 +65,7 @@ public class StatusResourceTest {
   }
 
   @Test
-  public void testNotDegraded() {
+  void testNotDegraded() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
     checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
@@ -87,7 +83,7 @@ public class StatusResourceTest {
   }
 
   @Test
-  public void testDegraded() {
+  void testDegraded() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
     checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());

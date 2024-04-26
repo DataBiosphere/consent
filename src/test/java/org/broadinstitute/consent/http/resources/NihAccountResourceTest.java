@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
@@ -14,11 +13,13 @@ import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class NihAccountResourceTest {
+@ExtendWith(MockitoExtension.class)
+class NihAccountResourceTest {
 
   @Mock
   private NihService nihService;
@@ -37,15 +38,8 @@ public class NihAccountResourceTest {
 
   private NihAccountResource resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-    when(nihAccount.getStatus()).thenReturn(true);
-    when(nihAccount.getEraExpiration()).thenReturn("test");
-  }
-
   @Test
-  public void testRegisterResearcherSuccess() {
+  void testRegisterResearcherSuccess() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     resource = new NihAccountResource(nihService, userService);
     Response response = resource.registerResearcher(nihAccount, authUser);
@@ -53,7 +47,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testRegisterResearcherNoAuth() {
+  void testRegisterResearcherNoAuth() {
     when(userService.findUserByEmail(any())).thenReturn(null);
     resource = new NihAccountResource(nihService, userService);
     Response response = resource.registerResearcher(nihAccount, authUser);
@@ -61,7 +55,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testRegisterResearcherError() {
+  void testRegisterResearcherError() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(nihService).authenticateNih(any(), any(), any());
     resource = new NihAccountResource(nihService, userService);
@@ -70,7 +64,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testRegisterResearcherNullAccountError() {
+  void testRegisterResearcherNullAccountError() {
     doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
     resource = new NihAccountResource(nihService, userService);
     Response response = resource.registerResearcher(null, authUser);
@@ -78,7 +72,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testDeleteNihAccountSuccess() {
+  void testDeleteNihAccountSuccess() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     resource = new NihAccountResource(nihService, userService);
     Response response = resource.deleteNihAccount(authUser);
@@ -86,7 +80,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testDeleteNihAccountNoAuth() {
+  void testDeleteNihAccountNoAuth() {
     when(userService.findUserByEmail(any())).thenReturn(null);
     resource = new NihAccountResource(nihService, userService);
     Response response = resource.deleteNihAccount(authUser);
@@ -94,7 +88,7 @@ public class NihAccountResourceTest {
   }
 
   @Test
-  public void testDeleteNihAccountError() {
+  void testDeleteNihAccountError() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(any());
     resource = new NihAccountResource(nihService, userService);

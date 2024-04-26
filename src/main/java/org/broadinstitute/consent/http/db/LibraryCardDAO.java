@@ -156,6 +156,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlUpdate("""
       INSERT INTO lc_daa (lc_id, daa_id)
       VALUES (:lcId, :daaId)
+      ON CONFLICT DO NOTHING
       """)
   void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 

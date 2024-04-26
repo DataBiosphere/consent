@@ -106,16 +106,18 @@ paths:
       responses:
         404:
           description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
+  /api/daa:
+    $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
   /api/daa/{daaId}/file:
     $ref: 'paths/daaFileByDaaId.yaml'
   /api/daa/{daaId}/{userId}:
     $ref: 'paths/daaForUserId.yaml'
+  /api/daa/bulk/{daaId}:
+    $ref: 'paths/daaBulkByDaaId.yaml'
   /api/daa/dac/{dacId}:
     $ref: 'paths/daaById.yaml'
-  /api/daa:
-    $ref: 'paths/daa.yaml'
   /api/daa/request/{daaId}:
     $ref: 'paths/daaRequestByDaaId.yaml'
   /api/dac:

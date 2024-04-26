@@ -8,11 +8,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
@@ -58,8 +56,11 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DarCollectionServiceTest {
 
   private DarCollectionService service;
@@ -85,7 +86,6 @@ class DarCollectionServiceTest {
 
   @BeforeEach
   public void setUp() {
-    openMocks(this);
     initService();
   }
 
@@ -155,10 +155,6 @@ class DarCollectionServiceTest {
     Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
-    List<Election> elections = new ArrayList<>();
-    when(electionDAO.findLastElectionsByReferenceIdsAndType(anyList(), anyString())).thenReturn(
-        elections);
-    doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
 
     DarCollection canceledCollection = service.cancelDarCollectionAsResearcher(collection);
@@ -174,8 +170,6 @@ class DarCollectionServiceTest {
 
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(
         List.of(new Election()));
-    doNothing().when(dataAccessRequestDAO).cancelByReferenceIds(anyList());
-    when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
 
     assertThrows(BadRequestException.class, () -> {
       service.cancelDarCollectionAsResearcher(collection);
@@ -309,8 +303,6 @@ class DarCollectionServiceTest {
     election.setStatus(ElectionStatus.CANCELED.getValue());
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     election.setElectionId(1);
-    when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    when(electionDAO.findLastElectionByReferenceIdAndType(any(), any())).thenReturn(election);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
 
     service.createElectionsForDarCollection(user, collection);
@@ -367,7 +359,6 @@ class DarCollectionServiceTest {
       add(e);
     }});
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-    collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).toList();
 
     Integer collectionId = collection.getDarCollectionId();
 
@@ -419,7 +410,6 @@ class DarCollectionServiceTest {
     Integer collectionId = collection.getDarCollectionId();
 
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
-    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 
     assertThrows(NotAuthorizedException.class, () -> {
       service.deleteByCollectionId(user, collectionId);
@@ -439,7 +429,6 @@ class DarCollectionServiceTest {
     Integer collectionId = collection.getDarCollectionId();
 
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(null);
-    when(electionDAO.findElectionsByReferenceIds(any())).thenReturn(new ArrayList<>());
 
     assertThrows(NotFoundException.class, () -> {
       service.deleteByCollectionId(user, collectionId);
@@ -766,7 +755,6 @@ class DarCollectionServiceTest {
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
 
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
@@ -1131,7 +1119,6 @@ class DarCollectionServiceTest {
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(),
         List.of(), collectionId))
         .thenReturn(summary);
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
 
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
@@ -1156,9 +1143,9 @@ class DarCollectionServiceTest {
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(null);
 
+    String reasearcherRoleName = UserRoles.RESEARCHER.getRoleName();
     assertThrows(NotFoundException.class, () -> {
-      service.getSummaryForRoleNameByCollectionId(user, UserRoles.RESEARCHER.getRoleName(),
-          collectionId);
+      service.getSummaryForRoleNameByCollectionId(user, reasearcherRoleName, collectionId);
     });
   }
 

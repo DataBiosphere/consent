@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
@@ -51,12 +50,14 @@ import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DataAccessRequestResourceVersion2Test {
+@ExtendWith(MockitoExtension.class)
+class DataAccessRequestResourceVersion2Test {
 
   @Mock
   private DataAccessRequestService dataAccessRequestService;
@@ -97,16 +98,8 @@ public class DataAccessRequestResourceVersion2Test {
 
   private DataAccessRequestResourceVersion2 resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     try {
-      when(builder.path(anyString())).thenReturn(builder);
-      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
-      when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
           new DataAccessRequestResourceVersion2(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
@@ -117,7 +110,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testCreateDataAccessRequestNoLibraryCard() {
+  void testCreateDataAccessRequestNoLibraryCard() {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       DataAccessRequest dar = new DataAccessRequest();
@@ -126,20 +119,17 @@ public class DataAccessRequestResourceVersion2Test {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
-          .thenReturn(dar);
-      doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailService).sendNewDARCollectionMessage(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
     initResource();
+
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testCreateDataAccessRequest() {
+  void testCreateDataAccessRequest() {
     try {
       User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
       userWithCards.setLibraryCards(List.of(new LibraryCard()));
@@ -154,25 +144,32 @@ public class DataAccessRequestResourceVersion2Test {
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
+      resource =
+          new DataAccessRequestResourceVersion2(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
-    initResource();
+
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void testGetByReferenceId() {
+  void testGetByReferenceId() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
+
     Response response = resource.getByReferenceId(authUser, "");
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void testGetByReferenceIdForbidden() {
+  void testGetByReferenceIdForbidden() {
     when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
     when(userService.findUserByEmail(any())).thenReturn(mockUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
@@ -184,54 +181,67 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUpdateByReferenceId() {
+  void testUpdateByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      resource =
+          new DataAccessRequestResourceVersion2(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
-    initResource();
+
     Response response = resource.updateByReferenceId(authUser, "", "{}");
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void testUpdateByReferenceIdForbidden() {
+  void testUpdateByReferenceIdForbidden() {
     User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
     DataAccessRequest dar = generateDataAccessRequest();
     try {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
-      doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      resource =
+          new DataAccessRequestResourceVersion2(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
-    initResource();
+
     Response response = resource.updateByReferenceId(authUser, "", "{}");
     assertEquals(403, response.getStatus());
   }
 
   @Test
-  public void testCreateDraftDataAccessRequest() {
+  void testCreateDraftDataAccessRequest() {
     DataAccessRequest dar = generateDataAccessRequest();
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+      when(builder.path(anyString())).thenReturn(builder);
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
+      resource =
+          new DataAccessRequestResourceVersion2(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
-    initResource();
+
     Response response = resource.createDraftDataAccessRequest(authUser, info, "");
     assertEquals(201, response.getStatus());
   }
 
   @Test
-  public void testUpdatePartialDataAccessRequest() {
+  void testUpdatePartialDataAccessRequest() {
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -243,12 +253,11 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUpdatePartialDataAccessRequestForbidden() {
+  void testUpdatePartialDataAccessRequestForbidden() {
     User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(invalidUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     initResource();
 
     Response response = resource.updatePartialDataAccessRequest(authUser, "", "{}");
@@ -256,7 +265,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetIrbDocument() {
+  void testGetIrbDocument() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
     when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
@@ -276,7 +285,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetIrbDocumentNotFound() {
+  void testGetIrbDocumentNotFound() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
@@ -286,8 +295,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetIrbDocumentDARNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testGetIrbDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     initResource();
 
@@ -296,13 +304,9 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetIrbDocumentNullValues() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testGetIrbDocumentNullValues() {
     DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
     DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
-    when(dar.getData()).thenReturn(data);
-    when(data.getIrbDocumentLocation()).thenReturn(null);
-    when(data.getIrbDocumentName()).thenReturn(null);
     initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
@@ -310,13 +314,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetIrbDocumentEmptyValues() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
-    DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
-    when(dar.getData()).thenReturn(data);
-    when(data.getIrbDocumentLocation()).thenReturn("");
-    when(data.getIrbDocumentName()).thenReturn("");
+  void testGetIrbDocumentEmptyValues() {
     initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
@@ -324,7 +322,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadIrbDocument() throws Exception {
+  void testUploadIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
@@ -342,15 +340,11 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadIrbDocumentDARNotFound() throws Exception {
+  void testUploadIrbDocumentDARNotFound() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn("temp.txt");
-    when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     initResource();
 
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
@@ -358,7 +352,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
+  void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(RandomStringUtils.randomAlphabetic(10));
@@ -380,22 +374,17 @@ public class DataAccessRequestResourceVersion2Test {
 
   private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName) {
     String name = FilenameUtils.removeExtension(fileName);
-    String ext = FilenameUtils.getExtension(fileName);
-
     InputStream inputStream = IOUtils.toInputStream(name, Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn(fileName);
-    when(formData.getType()).thenReturn(ext);
-    when(formData.getSize()).thenReturn(1L);
-    when(formData.getName()).thenReturn(name);
-
     return Pair.of(inputStream, formData);
   }
 
   @Test
-  public void testPostProgressReportCollabAndEthicsFiles() throws IOException {
+  void testPostProgressReportCollabAndEthicsFiles() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setCollaborationLetterLocation("collaborationLetterLocation");
+    parentDar.getData().setIrbDocumentLocation("irbDocumentLocation");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
@@ -418,7 +407,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportUserNotAuthorized() throws IOException {
+  void testPostProgressReportUserNotAuthorized() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(member);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -433,7 +422,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportMissingParentDar() throws IOException {
+  void testPostProgressReportMissingParentDar() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
@@ -447,7 +436,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportInvalidJson() {
+  void testPostProgressReportInvalidJson() {
     String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
@@ -463,7 +452,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportNullCollabFile() throws IOException {
+  void testPostProgressReportNullCollabFile() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -477,9 +466,6 @@ public class DataAccessRequestResourceVersion2Test {
         .setCollaboratorRequired(true)
         .setEthicsApprovalRequired(true).build();
     when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -489,7 +475,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportEmptyEthicsFile() throws IOException {
+  void testPostProgressReportEmptyEthicsFile() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -497,16 +483,12 @@ public class DataAccessRequestResourceVersion2Test {
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
-    when(ethicsFile.getRight().getSize()).thenReturn(0L);
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseCollabAndEthics = new DataUseBuilder()
         .setCollaboratorRequired(true)
         .setEthicsApprovalRequired(true).build();
     when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -516,7 +498,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportNullDataset() throws IOException {
+  void testPostProgressReportNullDataset() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -534,7 +516,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportNullDataUse() throws IOException {
+  void testPostProgressReportNullDataUse() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -545,9 +527,6 @@ public class DataAccessRequestResourceVersion2Test {
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     when(dataset.getDataUse()).thenReturn(null);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -557,7 +536,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportNullCollaboratorDataUse() throws IOException {
+  void testPostProgressReportNullCollaboratorDataUse() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -569,9 +548,6 @@ public class DataAccessRequestResourceVersion2Test {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseEthicsOnly = new DataUseBuilder().setEthicsApprovalRequired(true).build();
     when(dataset.getDataUse()).thenReturn(dataUseEthicsOnly);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -581,7 +557,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testPostProgressReportNullEthicsApprovalDataUse() throws IOException {
+  void testPostProgressReportNullEthicsApprovalDataUse() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -593,9 +569,6 @@ public class DataAccessRequestResourceVersion2Test {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseCollaboratorOnly = new DataUseBuilder().setCollaboratorRequired(true).build();
     when(dataset.getDataUse()).thenReturn(dataUseCollaboratorOnly);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -605,7 +578,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetCollaborationDocument() {
+  void testGetCollaborationDocument() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
     when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
@@ -627,7 +600,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetCollaborationDocumentNotFound() {
+  void testGetCollaborationDocumentNotFound() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
     initResource();
@@ -637,8 +610,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetCollaborationDocumentDARNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testGetCollaborationDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     initResource();
 
@@ -647,13 +619,9 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetCollaborationDocumentNullValues() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testGetCollaborationDocumentNullValues() {
     DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
     DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
-    when(dar.getData()).thenReturn(data);
-    when(data.getCollaborationLetterLocation()).thenReturn(null);
-    when(data.getCollaborationLetterName()).thenReturn(null);
     initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
@@ -661,13 +629,9 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testGetCollaborationDocumentEmptyValues() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
+  void testGetCollaborationDocumentEmptyValues() {
     DataAccessRequest dar = Mockito.mock(DataAccessRequest.class);
     DataAccessRequestData data = Mockito.mock(DataAccessRequestData.class);
-    when(dar.getData()).thenReturn(data);
-    when(data.getCollaborationLetterLocation()).thenReturn("");
-    when(data.getCollaborationLetterName()).thenReturn("");
     initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
@@ -675,7 +639,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadCollaborationDocument() throws Exception {
+  void testUploadCollaborationDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
@@ -694,15 +658,11 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadCollaborationDocumentDARNotFound() throws Exception {
+  void testUploadCollaborationDocumentDARNotFound() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    when(formData.getFileName()).thenReturn("temp.txt");
-    when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     initResource();
 
     Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream,
@@ -711,7 +671,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
+  void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
     when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(RandomStringUtils.randomAlphabetic(10));
@@ -748,7 +708,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDataAccessRequests() {
+  void getDataAccessRequests() {
     initResource();
     List<DataAccessRequest> list = Collections.emptyList();
     when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
@@ -758,7 +718,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDataAccessRequests() {
+  void getDraftDataAccessRequests() {
     initResource();
     List<DataAccessRequest> list = Collections.emptyList();
     User user = new User();
@@ -771,7 +731,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDataAccessRequests_UserNotFound() {
+  void getDraftDataAccessRequests_UserNotFound() {
     initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     resource.getDraftDataAccessRequests(authUser);
@@ -780,7 +740,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDar() {
+  void getDraftDar() {
     initResource();
     User user = new User();
     user.setUserId(10);
@@ -794,7 +754,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDar_UserNotFound() {
+  void getDraftDar_UserNotFound() {
     initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     Response res = resource.getDraftDar(authUser, "id");
@@ -802,7 +762,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDar_DarNotFound() {
+  void getDraftDar_DarNotFound() {
     initResource();
     User user = new User();
     user.setUserId(10);
@@ -813,7 +773,7 @@ public class DataAccessRequestResourceVersion2Test {
   }
 
   @Test
-  public void getDraftDar_UserNotAllowed() {
+  void getDraftDar_UserNotAllowed() {
     initResource();
     User user = new User();
     user.setUserId(10);

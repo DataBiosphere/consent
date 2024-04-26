@@ -24,10 +24,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
+@ExtendWith(MockitoExtension.class)
 class UseRestrictionConverterTest implements WithMockServer {
 
   private MockServerClient client;

@@ -106,10 +106,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         logException("AuthUser not able to be registered: '" + gson.toJson(authUser), exc);
       }
     } catch (Throwable e) {
-      logWarn(String.format(
-          "Exception retrieving Sam user info for '%s': Exception: %s",
-          authUser.getEmail(),
-          e.getMessage()));
+      logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
     return authUser;
   }

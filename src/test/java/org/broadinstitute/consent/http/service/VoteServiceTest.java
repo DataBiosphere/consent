@@ -55,7 +55,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class VoteServiceTest {
+class VoteServiceTest {
 
   private VoteService service;
 
@@ -87,7 +87,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVote() {
+  void testUpdateVote() {
     Vote v = new Vote();
     v.setVoteId(RandomUtils.nextInt(1, 10));
     v.setUserId(RandomUtils.nextInt(1, 10));
@@ -102,7 +102,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVote_InvalidReferenceId() {
+  void testUpdateVote_InvalidReferenceId() {
     when(voteDAO.checkVoteById("test", 11))
         .thenReturn(null);
     Vote v = setUpTestVote(false, false);
@@ -112,7 +112,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVote_ByReferenceId() {
+  void testUpdateVote_ByReferenceId() {
     Vote v = new Vote();
     v.setVoteId(RandomUtils.nextInt(1, 10));
     v.setUserId(RandomUtils.nextInt(1, 10));
@@ -128,7 +128,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue() {
+  void testUpdateVotesWithValue() {
     initService();
 
     List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
@@ -137,7 +137,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testFindVotesByIds() {
+  void testFindVotesByIds() {
     when(voteDAO.findVotesByIds(any())).thenReturn(List.of(new Vote()));
     initService();
     List<Vote> votes = service.findVotesByIds(List.of(1));
@@ -146,7 +146,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testFindVotesByIds_emptyList() {
+  void testFindVotesByIds_emptyList() {
     initService();
     List<Vote> votes = service.findVotesByIds(List.of());
     assertNotNull(votes);
@@ -154,7 +154,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testChairCreateVotesDataAccess() {
+  void testChairCreateVotesDataAccess() {
     setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
     initService();
 
@@ -169,7 +169,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testMemberCreateVotesDataAccess() {
+  void testMemberCreateVotesDataAccess() {
     setUpUserAndElectionVotes(UserRoles.MEMBER);
     initService();
 
@@ -180,7 +180,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testChairCreateVotesDataAccessManualReview() {
+  void testChairCreateVotesDataAccessManualReview() {
     setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
     initService();
 
@@ -194,7 +194,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testMemberCreateVotesDataAccessManualReview() {
+  void testMemberCreateVotesDataAccessManualReview() {
     setUpUserAndElectionVotes(UserRoles.MEMBER);
     initService();
 
@@ -205,7 +205,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testChairCreateVotesTranslateDUL() {
+  void testChairCreateVotesTranslateDUL() {
     setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
     initService();
 
@@ -218,7 +218,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testMemberCreateVotesTranslateDUL() {
+  void testMemberCreateVotesTranslateDUL() {
     setUpUserAndElectionVotes(UserRoles.MEMBER);
     initService();
 
@@ -229,7 +229,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testChairCreateVotesRP() {
+  void testChairCreateVotesRP() {
     setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
     initService();
 
@@ -242,7 +242,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testMemberCreateVotesRP() {
+  void testMemberCreateVotesRP() {
     setUpUserAndElectionVotes(UserRoles.MEMBER);
     initService();
 
@@ -253,7 +253,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_NoRationale() throws Exception {
+  void testUpdateVotesWithValue_NoRationale() throws Exception {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
@@ -276,7 +276,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_emptyList() throws Exception {
+  void testUpdateVotesWithValue_emptyList() throws Exception {
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
     initService();
     List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
@@ -285,7 +285,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_ClosedElection() {
+  void testUpdateVotesWithValue_ClosedElection() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -300,7 +300,7 @@ public class VoteServiceTest {
 
 
   @Test
-  public void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
+  void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
 
@@ -322,32 +322,32 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateVotesWithValue_OpenRPElection() throws Exception {
+  void testUpdateVotesWithValue_OpenRPElection() throws Exception {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.OPEN);
   }
 
   @Test
-  public void testUpdateVotesWithValue_ClosedRPElection() throws Exception {
+  void testUpdateVotesWithValue_ClosedRPElection() throws Exception {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CLOSED);
   }
 
   @Test
-  public void testUpdateVotesWithValue_CanceledRPElection() throws Exception {
+  void testUpdateVotesWithValue_CanceledRPElection() throws Exception {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CANCELED);
   }
 
   @Test
-  public void testUpdateVotesWithValue_FinalRPElection() throws Exception {
+  void testUpdateVotesWithValue_FinalRPElection() throws Exception {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.FINAL);
   }
 
   @Test
-  public void testUpdateVotesWithValue_PendingApprovalRPElection() throws Exception {
+  void testUpdateVotesWithValue_PendingApprovalRPElection() throws Exception {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
   }
 
   @Test
-  public void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
+  void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote(true, true);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
@@ -391,7 +391,7 @@ public class VoteServiceTest {
 
 
   @Test
-  public void testUpdateRationaleByVoteIds() {
+  void testUpdateRationaleByVoteIds() {
     doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     initService();
@@ -404,7 +404,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateRationaleByVoteIds_DataAccessAndRPElections() {
+  void testUpdateRationaleByVoteIds_DataAccessAndRPElections() {
     doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
 
@@ -426,7 +426,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateRationaleByVoteIds_NonOpenDataAccessElection() {
+  void testUpdateRationaleByVoteIds_NonOpenDataAccessElection() {
     Election election = new Election();
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     election.setStatus(ElectionStatus.CLOSED.getValue());
@@ -437,7 +437,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testUpdateRationaleByVoteIds_NonDataAccessElection() {
+  void testUpdateRationaleByVoteIds_NonDataAccessElection() {
     Election election = new Election();
     election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
     election.setStatus(ElectionStatus.OPEN.getValue());
@@ -448,7 +448,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyResearchersOfDarApproval_2Dars_1Collection() throws Exception {
+  void testNotifyResearchersOfDarApproval_2Dars_1Collection() throws Exception {
     String referenceId1 = UUID.randomUUID().toString();
     String referenceId2 = UUID.randomUUID().toString();
 
@@ -533,7 +533,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyResearchersOfDarApproval_2Dars_2Collections() throws Exception {
+  void testNotifyResearchersOfDarApproval_2Dars_2Collections() throws Exception {
     String referenceId1 = UUID.randomUUID().toString();
     String referenceId2 = UUID.randomUUID().toString();
 
@@ -622,7 +622,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyResearchersOfDarApproval_FalseVote() throws Exception {
+  void testNotifyResearchersOfDarApproval_FalseVote() throws Exception {
     String referenceId1 = UUID.randomUUID().toString();
 
     Vote v1 = new Vote();
@@ -661,7 +661,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyResearchersOfDarApproval_NonFinalVote() throws Exception {
+  void testNotifyResearchersOfDarApproval_NonFinalVote() throws Exception {
     String referenceId1 = UUID.randomUUID().toString();
 
     Vote v1 = new Vote();
@@ -700,7 +700,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyCustodiansOfApprovedDatasets() {
+  void testNotifyCustodiansOfApprovedDatasets() {
     User submitter = new User();
     submitter.setEmail("submitter@test.com");
     submitter.setDisplayName("submitter");
@@ -751,7 +751,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians() throws Exception {
+  void testNotifyCustodiansOfApprovedDatasetsNoSubmitterOrDepositorOrCustodians() throws Exception {
     User submitterNotFound = new User();
     submitterNotFound.setEmail("submitter@test.com");
     submitterNotFound.setDisplayName("submitter");
@@ -796,7 +796,7 @@ public class VoteServiceTest {
   }
 
   @Test
-  public void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -863,7 +863,7 @@ public class VoteServiceTest {
    * java.lang.ClassCastException: class com.google.gson.JsonArray cannot be cast to class java.lang.String
    */
   @Test
-  public void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");

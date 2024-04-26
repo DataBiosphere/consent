@@ -4,16 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.cloud.storage.Bucket;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class GCSHealthCheckTest {
+@ExtendWith(MockitoExtension.class)
+class GCSHealthCheckTest {
 
   private GCSHealthCheck healthCheck;
 
@@ -24,13 +26,12 @@ public class GCSHealthCheckTest {
   private Bucket bucket;
 
   @BeforeEach
-  public void setUpClass() {
-    openMocks(this);
+  void setUpClass() {
     healthCheck = new GCSHealthCheck(store);
   }
 
   @Test
-  public void testBucketExists() {
+  void testBucketExists() {
     when(store.getRootBucketWithMetadata()).thenReturn(bucket);
 
     HealthCheck.Result result = healthCheck.execute();
@@ -38,7 +39,7 @@ public class GCSHealthCheckTest {
   }
 
   @Test
-  public void testBucketMissing() {
+  void testBucketMissing() {
     when(store.getRootBucketWithMetadata()).thenReturn(null);
 
     HealthCheck.Result result = healthCheck.execute();
@@ -47,7 +48,7 @@ public class GCSHealthCheckTest {
   }
 
   @Test
-  public void testException() {
+  void testException() {
     doThrow(new RuntimeException()).when(store).getRootBucketWithMetadata();
 
     HealthCheck.Result result = healthCheck.execute();

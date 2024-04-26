@@ -7,7 +7,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class BlobIdTypeAdapterTest {
 
   @Test

@@ -76,7 +76,10 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetRegistrationSchemaV1BuilderTest {
 
   @Test

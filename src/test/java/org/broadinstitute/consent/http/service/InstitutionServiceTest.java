@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
@@ -22,11 +21,13 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class InstitutionServiceTest {
+@ExtendWith(MockitoExtension.class)
+class InstitutionServiceTest {
 
   private InstitutionService service;
 
@@ -35,11 +36,6 @@ public class InstitutionServiceTest {
 
   @Mock
   private UserDAO userDAO;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initService() {
     service = new InstitutionService(institutionDAO, userDAO);
@@ -52,7 +48,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testCreateInstitutionSuccess() {
+  void testCreateInstitutionSuccess() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initService();
@@ -61,7 +57,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testCreateInstitutionBlankName() {
+  void testCreateInstitutionBlankName() {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName("");
     initService();
@@ -71,7 +67,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testCreateInstitutionNullName() {
+  void testCreateInstitutionNullName() {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName(null);
     initService();
@@ -81,7 +77,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testUpdateInstitutionById() {
+  void testUpdateInstitutionById() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initService();
@@ -92,7 +88,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testUpdateInstitutionByIdNotFound() {
+  void testUpdateInstitutionByIdNotFound() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
     initService();
@@ -102,7 +98,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testUpdateInstitutionBlankNameFail() {
+  void testUpdateInstitutionBlankNameFail() {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName("");
     initService();
@@ -113,7 +109,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testUpdateInstitutionNullNameFail() {
+  void testUpdateInstitutionNullNameFail() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initService();
@@ -124,7 +120,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testDeleteInstitutionById() {
+  void testDeleteInstitutionById() {
     Institution mockInstitution = initMockModel();
     initService();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
@@ -136,7 +132,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testDeleteInstitutionByIdFail() {
+  void testDeleteInstitutionByIdFail() {
     initService();
     when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
     assertThrows(NotFoundException.class, () -> {
@@ -145,7 +141,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testFindInstitutionByIdNoSigningOfficials() {
+  void testFindInstitutionByIdNoSigningOfficials() {
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(getInstitutions().get(0));
     when(userDAO.getSOsByInstitution(anyInt())).thenReturn(Collections.emptyList());
     initService();
@@ -156,7 +152,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testFindInstitutionByIdWithSigningOfficials() {
+  void testFindInstitutionByIdWithSigningOfficials() {
     User u = new User();
     String email = RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(10, 50));
     String displayName = RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(10, 50));
@@ -178,7 +174,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testFindInstitutionByIdFail() {
+  void testFindInstitutionByIdFail() {
     initService();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(null);
     assertThrows(NotFoundException.class, () -> {
@@ -187,7 +183,7 @@ public class InstitutionServiceTest {
   }
 
   @Test
-  public void testFindAllInstitutions() {
+  void testFindAllInstitutions() {
     initService();
     when(institutionDAO.findAllInstitutions()).thenReturn(Collections.emptyList());
     assertTrue(service.findAllInstitutions().isEmpty());

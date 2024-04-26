@@ -11,12 +11,15 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 
-public class AcknowledgementDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class AcknowledgementDAOTest extends DAOTestHelper {
 
   @Test
-  public void createAndRetrieveAcknowledgement() throws InterruptedException {
+  void createAndRetrieveAcknowledgement() throws InterruptedException {
     User user = createUser();
     Integer user_id = user.getUserId();
     String key = RandomStringUtils.randomAlphabetic(100);
@@ -50,7 +53,7 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void createAndDeleteAcknowledgement() {
+  void createAndDeleteAcknowledgement() {
     User user = createUser();
     Integer user_id = user.getUserId();
     String key1 = RandomStringUtils.randomAlphabetic(100);
@@ -73,7 +76,7 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void ensureMissingAcknowledgementWorks() {
+  void ensureMissingAcknowledgementWorks() {
     User user2 = createUser();
     User user3 = createUser();
     Integer user1Id = user2.getUserId();
@@ -113,7 +116,7 @@ public class AcknowledgementDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteAcknowledgmentByUserId() {
+  void testDeleteAcknowledgmentByUserId() {
     User user = createUser();
     String ack = RandomStringUtils.randomAlphabetic(100);
     acknowledgementDAO.upsertAcknowledgement(ack, user.getUserId());
