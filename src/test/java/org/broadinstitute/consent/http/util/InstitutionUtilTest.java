@@ -57,7 +57,7 @@ class InstitutionUtilTest {
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
-    Institution deserialized = GsonUtil.gsonBuilderWithAdapters().create().fromJson(json, Institution.class);
+    Institution deserialized = GsonUtil.getInstance().fromJson(json, Institution.class);
     assertEquals(mockInstitution.getName(), deserialized.getName());
     assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
     assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());

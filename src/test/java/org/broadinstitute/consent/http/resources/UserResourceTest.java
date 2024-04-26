@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -81,7 +80,7 @@ class UserResourceTest {
 
   private final String TEST_EMAIL = "test@gmail.com";
 
-  private final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+  private final Gson gson = GsonUtil.getInstance();
 
   private final AuthUser authUser = new AuthUser()
       .setAuthToken("auth-token")

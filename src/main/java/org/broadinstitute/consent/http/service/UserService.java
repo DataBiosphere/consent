@@ -355,7 +355,7 @@ public class UserService {
    * @return JsonObject.
    */
   public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
-    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     List<LibraryCard> entries =

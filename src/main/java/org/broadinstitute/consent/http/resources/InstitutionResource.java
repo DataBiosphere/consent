@@ -81,7 +81,7 @@ public class InstitutionResource extends Resource {
   public Response createInstitution(@Auth AuthUser authUser, String institution) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Institution payload = GsonUtil.gsonBuilderWithAdapters().create().fromJson(institution, Institution.class);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
       if (!conflicts.isEmpty()) {
         throw new ConsentConflictException(
@@ -103,7 +103,7 @@ public class InstitutionResource extends Resource {
       String institution) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Institution payload = GsonUtil.gsonBuilderWithAdapters().create().fromJson(institution, Institution.class);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id,
           user.getUserId());
       return Response.ok().entity(updatedInstitution).build();

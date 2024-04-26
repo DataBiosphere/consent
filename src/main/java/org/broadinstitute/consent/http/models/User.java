@@ -96,7 +96,7 @@ public class User {
    * @param json A json string that may or may not be correctly structured as a DACUser
    */
   public User(String json) {
-    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    Gson gson = GsonUtil.getInstance();
     JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
     // There are no cases where we want to pull the create date/update date from user-provided data.
     // Nor do we need to retrieve the full institution object from user-provided data.

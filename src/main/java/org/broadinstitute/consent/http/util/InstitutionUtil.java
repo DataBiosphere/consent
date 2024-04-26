@@ -4,20 +4,19 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class InstitutionUtil implements ConsentLogger {
 
   private final GsonBuilder gson;
 
   public InstitutionUtil() {
-    this.gson = new GsonBuilder().registerTypeAdapter(Instant.class, new InstantTypeAdapter());
+    this.gson = GsonUtil.gsonBuilderWithAdapters();
   }
 
   // Gson builder and exclusion strategy helpers

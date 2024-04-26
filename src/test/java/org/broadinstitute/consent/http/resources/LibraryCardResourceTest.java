@@ -9,12 +9,9 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +23,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.broadinstitute.consent.http.util.gson.InstantTypeAdapter;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -129,7 +125,7 @@ public class LibraryCardResourceTest {
   @Test
   void testCreateLibraryCard() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.gsonBuilderWithAdapters().create().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenReturn(
         mockCard);
@@ -191,7 +187,7 @@ public class LibraryCardResourceTest {
   @Test
   void testUpdateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.gsonBuilderWithAdapters().create().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenReturn(mockCard);

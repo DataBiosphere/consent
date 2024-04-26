@@ -124,7 +124,7 @@ public class InstitutionResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(adminUser);
     when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
     initResource();
-    String requestJson = GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution, Institution.class);
+    String requestJson = GsonUtil.getInstance().toJson(mockInstitution, Institution.class);
     Response response = resource.createInstitution(authUser, requestJson);
     String json = response.getEntity().toString();
     assertEquals(200, response.getStatus());
@@ -139,7 +139,7 @@ public class InstitutionResourceTest {
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
     initResource();
     Response response = resource.createInstitution(authUser,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
   }
 
@@ -151,7 +151,7 @@ public class InstitutionResourceTest {
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
     initResource();
     Response response = resource.createInstitution(authUser,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
   }
 
@@ -162,7 +162,7 @@ public class InstitutionResourceTest {
     when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
     initResource();
     Response response = resource.createInstitution(authUser,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(409, response.getStatus());
   }
 
@@ -174,7 +174,7 @@ public class InstitutionResourceTest {
         mockInstitution);
     initResource();
     Response response = resource.updateInstitution(authUser, 1,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(200, response.getStatus());
     assertNotNull(response.getEntity().toString());
   }
@@ -187,7 +187,7 @@ public class InstitutionResourceTest {
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
     Response response = resource.updateInstitution(authUser, 1,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(404, response.getStatus());
   }
 
@@ -200,7 +200,7 @@ public class InstitutionResourceTest {
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
     Response response = resource.updateInstitution(authUser, 1,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
   }
 
@@ -213,7 +213,7 @@ public class InstitutionResourceTest {
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
     Response response = resource.updateInstitution(authUser, 1,
-        GsonUtil.gsonBuilderWithAdapters().create().toJson(mockInstitution));
+        GsonUtil.getInstance().toJson(mockInstitution));
     assertEquals(400, response.getStatus());
   }
 
