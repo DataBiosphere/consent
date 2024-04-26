@@ -106,6 +106,30 @@ public class LibraryCardService {
     libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
   }
 
+  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
+    List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
+    List<LibraryCard> matchingLibraryCards = libraryCards.stream()
+        .filter(card -> Objects.equals(card.getInstitutionId(), institutionId))
+        .toList();
+    // typically there should be one library card per user per institution
+    for (LibraryCard libraryCard : matchingLibraryCards) {
+      addDaaToLibraryCard(libraryCard.getId(), daaId);
+    }
+    return matchingLibraryCards;
+  }
+
+  public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
+    List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
+    List<LibraryCard> matchingLibraryCards = libraryCards.stream()
+        .filter(card -> Objects.equals(card.getInstitutionId(), institutionId))
+        .toList();
+    // typically there should be one library card per user per institution
+    for (LibraryCard libraryCard : matchingLibraryCards) {
+      removeDaaFromLibraryCard(libraryCard.getId(), daaId);
+    }
+    return matchingLibraryCards;
+  }
+
   private void checkForValidInstitution(Integer institutionId) {
     checkInstitutionId(institutionId);
     Institution institution = institutionDAO.findInstitutionById(institutionId);
