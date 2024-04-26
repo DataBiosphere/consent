@@ -33,6 +33,8 @@ public class LibraryCard {
 
   private List<Integer> daaIds;
 
+  private List<DataAccessAgreement> daas;
+
   public LibraryCard() {
     this.createDate = new Date();
     this.daaIds = new ArrayList<>();
@@ -128,6 +130,10 @@ public class LibraryCard {
 
   public void setDaaIds(List<Integer> daaIds) {this.daaIds = daaIds;}
 
+  public List<DataAccessAgreement> getDaas() {return daas;}
+
+  public void setDaas(List<DataAccessAgreement> daas) {this.daas = daas;}
+
   @Override
   public boolean equals(Object libraryCard) {
     if (libraryCard == this) {
@@ -159,6 +165,17 @@ public class LibraryCard {
         .stream()
         .anyMatch(d -> d.equals(daaId))) {
       this.daaIds.remove(daaId);
+    }
+  }
+
+  public void addDaaObject(DataAccessAgreement daa) {
+    if (this.daas == null) {
+      this.daas = new ArrayList<>();
+    }
+    if (this.daas
+        .stream()
+        .noneMatch(d -> d.equals(daa))) {
+      this.daas.add(daa);
     }
   }
 }

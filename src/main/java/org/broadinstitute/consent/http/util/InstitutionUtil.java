@@ -9,13 +9,14 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class InstitutionUtil implements ConsentLogger {
 
   private final GsonBuilder gson;
 
   public InstitutionUtil() {
-    this.gson = new GsonBuilder();
+    this.gson = GsonUtil.gsonBuilderWithAdapters();
   }
 
   // Gson builder and exclusion strategy helpers

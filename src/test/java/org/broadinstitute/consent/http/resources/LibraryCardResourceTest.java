@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -23,6 +22,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -125,7 +125,7 @@ class LibraryCardResourceTest {
   @Test
   void testCreateLibraryCard() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = new Gson().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenReturn(
         mockCard);
@@ -139,7 +139,7 @@ class LibraryCardResourceTest {
   @Test
   void testCreateLibraryCardThrowsIllegalArgumentException() throws Exception {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = new Gson().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
         new IllegalArgumentException());
@@ -151,7 +151,7 @@ class LibraryCardResourceTest {
   @Test
   void testCreateLibraryCardThrowsConflictException() throws Exception {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
-    String json = new Gson().toJson(mockLibraryCardSetup());
+    String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
         exception);
@@ -163,7 +163,7 @@ class LibraryCardResourceTest {
   @Test
   void testCreateLibraryCardThrowsBadRequestException() throws Exception {
     BadRequestException exception = new BadRequestException();
-    String json = new Gson().toJson(mockLibraryCardSetup());
+    String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
         exception);
@@ -175,7 +175,7 @@ class LibraryCardResourceTest {
   @Test
   void testCreateLibraruCardThrowsNotFoundException() throws Exception {
     NotFoundException exception = new NotFoundException();
-    String json = new Gson().toJson(mockLibraryCardSetup());
+    String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
         exception);
@@ -187,7 +187,7 @@ class LibraryCardResourceTest {
   @Test
   void testUpdateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = new Gson().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenReturn(mockCard);
@@ -201,7 +201,7 @@ class LibraryCardResourceTest {
   @Test
   void testUpdateLibraryCardThrowsIllegalArgumentException() {
     LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = new Gson().toJson(mockCard);
+    String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenThrow(new IllegalArgumentException());
@@ -215,7 +215,7 @@ class LibraryCardResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenThrow(new NotFoundException());
-    String payload = new Gson().toJson(mockLibraryCardSetup());
+    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     initResource();
     Response response = resource.updateLibraryCard(authUser, 1, payload);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -227,7 +227,7 @@ class LibraryCardResourceTest {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
         .thenThrow(exception);
-    String payload = new Gson().toJson(mockLibraryCardSetup());
+    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     initResource();
     Response response = resource.updateLibraryCard(authUser, 1, payload);
     assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());

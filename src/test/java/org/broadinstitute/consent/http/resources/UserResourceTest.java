@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -78,6 +79,8 @@ class UserResourceTest {
   private AcknowledgementService acknowledgementService;
 
   private final String TEST_EMAIL = "test@gmail.com";
+
+  private final Gson gson = GsonUtil.getInstance();
 
   private final AuthUser authUser = new AuthUser()
       .setAuthToken("auth-token")
@@ -444,7 +447,6 @@ class UserResourceTest {
   void testUpdateSelf() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -459,7 +461,6 @@ class UserResourceTest {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setUserRoleIds(List.of(1)); // any roles
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
@@ -472,7 +473,6 @@ class UserResourceTest {
     user.setSigningOfficialRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -489,7 +489,6 @@ class UserResourceTest {
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(20);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
@@ -503,7 +502,6 @@ class UserResourceTest {
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -519,7 +517,6 @@ class UserResourceTest {
     user.setITDirectorRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -536,7 +533,6 @@ class UserResourceTest {
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(20);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
@@ -550,7 +546,6 @@ class UserResourceTest {
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(null);
-    Gson gson = new Gson();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -631,7 +626,6 @@ class UserResourceTest {
   void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -668,7 +662,6 @@ class UserResourceTest {
     activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());
@@ -816,7 +809,6 @@ class UserResourceTest {
     activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());

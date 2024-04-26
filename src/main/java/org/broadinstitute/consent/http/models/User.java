@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class User {
 
@@ -95,7 +96,7 @@ public class User {
    * @param json A json string that may or may not be correctly structured as a DACUser
    */
   public User(String json) {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
     // There are no cases where we want to pull the create date/update date from user-provided data.
     // Nor do we need to retrieve the full institution object from user-provided data.

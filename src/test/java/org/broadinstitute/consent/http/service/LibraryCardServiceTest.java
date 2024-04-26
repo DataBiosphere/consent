@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -330,6 +331,38 @@ public class LibraryCardServiceTest {
     LibraryCard result = service.findLibraryCardById(libraryCard.getId());
     assertNotNull(result);
     assertEquals(result.getId(), libraryCard.getId());
+  }
+
+  @Test
+  void testFindLibraryCardDaaById_NotFound() {
+    when(libraryCardDAO.findLibraryCardDaaById(any()))
+        .thenReturn(null);
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      service.findLibraryCardWithDaasById(1);
+    });
+  }
+
+  @Test
+  void testFindLibraryCardByIdDaa() {
+    LibraryCard libraryCard = testLibraryCard(1, 1);
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    int daaId1 = RandomUtils.nextInt(1, 10);
+    int daaId2 = RandomUtils.nextInt(1, 10);;
+    daa1.setDaaId(daaId1);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(daaId2);
+    libraryCard.addDaaObject(daa1);
+    libraryCard.addDaaObject(daa2);
+    when(libraryCardDAO.findLibraryCardDaaById(libraryCard.getId()))
+        .thenReturn(libraryCard);
+    initService();
+    LibraryCard result = service.findLibraryCardWithDaasById(libraryCard.getId());
+    assertNotNull(result);
+    assertEquals(result.getId(), libraryCard.getId());
+    assertEquals(result.getDaas(), List.of(daa1, daa2));
+    assertEquals(result.getDaas().get(0).getDaaId(), daaId1);
+    assertEquals(result.getDaas().get(1).getDaaId(), daaId2);
   }
 
   @Test

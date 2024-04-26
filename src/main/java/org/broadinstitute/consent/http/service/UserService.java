@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,7 +356,7 @@ public class UserService {
    * @return JsonObject.
    */
   public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     List<LibraryCard> entries =
