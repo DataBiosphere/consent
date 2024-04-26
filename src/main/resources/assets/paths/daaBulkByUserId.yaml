@@ -1,11 +1,11 @@
 post:
-  summary: Bulk add users to a DAA
-  operationId: bulkAddUsersToDAA
-  description: Bulk add users to a Data Access Agreement
+  summary: Bulk add DAAs to a user
+  operationId: bulkAddDAAsToUser
+  description: Bulk add Data Access Agreements to a user
   parameters:
-    - name: daaId
+    - name: userId
       in: path
-      description: The DAA ID
+      description: The user ID
       required: true
       schema:
         type: integer
@@ -16,15 +16,15 @@ post:
         schema:
           type: object
           properties:
-            users:
+            daaList:
               type: array
               items:
                 type: integer
         examples:
           example1:
-            summary: Bulk add users to a DAA
+            summary: Bulk add DAAs to a user
             value:
-              users:
+              daaList:
                 - 1
                 - 2
                 - 3
@@ -32,21 +32,21 @@ post:
     - DAA
   responses:
     200:
-      description: Successfully added users to a DAA
+      description: Successfully added DAAs to a user
     403:
-      description: User not authorized to add users to DAA
+      description: User not authorized to add DAAs to a user
     404:
-      description: Daa Not Found
+      description: User Not Found
     500:
       description: Internal Server Error
 delete:
-  summary: Bulk remove users from a DAA
-  operationId: bulkRemoveUsersFromDAA
-  description: Bulk remove users from a Data Access Agreement
+  summary: Bulk remove DAAs from a user
+  operationId: bulkRemoveDAAsFromUser
+  description: Bulk remove Data Access Agreements from a user
   parameters:
-    - name: daaId
+    - name: userId
       in: path
-      description: The DAA ID
+      description: The user ID
       required: true
       schema:
         type: integer
@@ -57,15 +57,15 @@ delete:
         schema:
           type: object
           properties:
-            users:
+            daaList:
               type: array
               items:
                 type: integer
         examples:
           example1:
-            summary: Bulk remove users from a DAA
+            summary: Bulk remove DAAs from a user
             value:
-              users:
+              daaList:
                 - 1
                 - 2
                 - 3
@@ -73,10 +73,10 @@ delete:
     - DAA
   responses:
     200:
-      description: Successfully removed users from a DAA
+      description: Successfully removed DAAs from a user
     403:
-      description: User not authorized to remove users from DAA
+      description: User not authorized to remove DAAs from a user
     404:
-      description: Daa Not Found
+      description: User Not Found
     500:
       description: Internal Server Error

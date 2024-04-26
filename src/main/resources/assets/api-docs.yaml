@@ -116,6 +116,8 @@ paths:
     $ref: 'paths/daaForUserId.yaml'
   /api/daa/bulk/{daaId}:
     $ref: 'paths/daaBulkByDaaId.yaml'
+  /api/daa/bulk/user/{userId}:
+    $ref: 'paths/daaBulkByUserId.yaml'
   /api/daa/dac/{dacId}:
     $ref: 'paths/daaById.yaml'
   /api/daa/request/{daaId}:

@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -247,5 +249,54 @@ class DaaServiceTest {
 
     initService();
     assertThrows(NotFoundException.class, () -> service.findFileById(1));
+  }
+
+  private DataAccessAgreement createDaa(int daaId) {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    return daa;
+  }
+
+  @Test
+  void testFindDAAsInJsonArray() {
+    String json = "{daaList:[1,2,3]}";
+    List <DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
+    when(daaDAO.findById(any())).thenReturn(daaList.get(0), daaList.get(1), daaList.get(2));
+    initService();
+    List<DataAccessAgreement> result = service.findDAAsInJsonArray(json, "daaList");
+    assertEquals(3, result.size());
+  }
+
+  @Test
+  void testFindDAAsInJsonArrayRemoveDuplicates() {
+    String json = "{daaList:[1,1,2,3]}";
+    List <DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
+    when(daaDAO.findById(any())).thenReturn(daaList.get(0), daaList.get(1), daaList.get(2));
+    initService();
+    List<DataAccessAgreement> result = service.findDAAsInJsonArray(json, "daaList");
+    assertEquals(3, result.size());
+  }
+
+  @Test
+  void testFindDAAsInJsonArrayEmptyArray() {
+    String json = "{daaList:[]}";
+    initService();
+    List<DataAccessAgreement> result = service.findDAAsInJsonArray(json, "daaList");
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testFindDAAsInJsonArrayInvalidJson() {
+    // Missing closing bracket
+    String json = "{daaList:[1,2,3}";
+    initService();
+    assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "daaList"));
+  }
+
+  @Test
+  void testFindDAAsInJsonArrayInvalidArrayKey() {
+    String json = "{daaList:[1,2,3]}";
+    initService();
+    assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "invalidKey"));
   }
 }
