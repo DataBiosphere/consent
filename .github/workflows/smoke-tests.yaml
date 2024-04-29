@@ -45,6 +45,7 @@ jobs:
           path: 'target/surefire-reports'
       - name: Bee Destroy
         uses: broadinstitute/workflow-dispatch@v4
+        if: always()
         with:
           workflow: bee-destroy
           repo: broadinstitute/terra-github-workflows
