@@ -424,11 +424,11 @@
       <version>1.4.1</version>
     </dependency>
 
-   <!--
-    See
-    https://broadworkbench.atlassian.net/browse/DCJ-274
-    org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
-   -->
+    <!--
+     See
+     https://broadworkbench.atlassian.net/browse/DCJ-274
+     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
+    -->
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
