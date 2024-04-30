@@ -19,7 +19,7 @@
     <pact.version>4.6.9</pact.version>
     <postgres.version>42.7.3</postgres.version>
     <surefire.version>3.2.5</surefire.version>
-    <swagger.ui.version>5.15.2-1</swagger.ui.version>
+    <swagger.ui.version>5.17.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.2</junit.version>
@@ -306,7 +306,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.2</version>
+        <version>3.5.3</version>
         <configuration>
           <finalName>consent</finalName>
           <createDependencyReducedPom>true</createDependencyReducedPom>
@@ -672,7 +672,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>2.4.0</version>
+      <version>2.4.1</version>
     </dependency>
 
     <dependency>
