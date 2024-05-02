@@ -121,7 +121,15 @@ public class DaaResource extends Resource implements ConsentLogger {
           .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId().intValue())
           .findFirst();
       if (matchingCard.isEmpty()) {
-        return Response.status(Status.NOT_FOUND).build();
+        LibraryCard lc = new LibraryCard();
+        lc.setUserId(user.getUserId());
+        lc.setInstitutionId(authedUser.getInstitutionId());
+        lc.setEraCommonsId(user.getEraCommonsId());
+        lc.setUserName(user.getDisplayName());
+        lc.setUserEmail(user.getEmail());
+        lc.setCreateUserId(authedUser.getUserId());
+        LibraryCard createdLc = libraryCardService.createLibraryCard(lc, user);
+        matchingCard = Optional.of(createdLc);
       }
       int libraryCardId = matchingCard.get().getId();
       libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
