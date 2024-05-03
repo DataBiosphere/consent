@@ -428,7 +428,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
-    when(libraryCardService.createLibraryCard(any(), any())).thenReturn(newLc);
+    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -459,7 +459,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of());
-    when(libraryCardService.createLibraryCard(any(), any())).thenReturn(newLc);
+    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());

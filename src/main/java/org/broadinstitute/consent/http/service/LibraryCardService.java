@@ -136,6 +136,18 @@ public class LibraryCardService {
     return matchingLibraryCards;
   }
 
+  public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {
+    LibraryCard lc = new LibraryCard();
+    lc.setUserId(user.getUserId());
+    lc.setInstitutionId(signingOfficial.getInstitutionId());
+    lc.setEraCommonsId(user.getEraCommonsId());
+    lc.setUserName(user.getDisplayName());
+    lc.setUserEmail(user.getEmail());
+    lc.setCreateUserId(signingOfficial.getUserId());
+    LibraryCard createdLc = createLibraryCard(lc, user);
+    return createdLc;
+  }
+
   private void checkForValidInstitution(Integer institutionId) {
     checkInstitutionId(institutionId);
     Institution institution = institutionDAO.findInstitutionById(institutionId);

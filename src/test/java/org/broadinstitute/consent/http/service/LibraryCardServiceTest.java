@@ -467,6 +467,33 @@ public class LibraryCardServiceTest {
   }
 
   @Test
+  void testCreateLibraryCardForSigningOfficial() {
+    Institution institution = testInstitution();
+    User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    user.setInstitutionId(institution.getId());
+    User signingOfficial = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
+    signingOfficial.setInstitutionId(institution.getId());
+    user.setEmail("testemail");
+    LibraryCard newLc = new LibraryCard();
+    newLc.setId(1);
+    newLc.setInstitutionId(institution.getId());
+
+    when(userDAO.findUserById(anyInt())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
+    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
+
+    when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(),
+        any())).thenReturn(1);
+    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(newLc);
+
+    initService();
+    LibraryCard card = service.createLibraryCardForSigningOfficial(user, signingOfficial);
+    assertNotNull(card);
+    assertEquals(card.getId(), newLc.getId());
+    assertEquals(card.getInstitutionId(), newLc.getInstitutionId());
+  }
+
+  @Test
   void testRemoveDaaFromUserLibraryCardByInstitutionNoLibraryCards() {
     User user = testUser(1);
     Integer userId = user.getUserId();
