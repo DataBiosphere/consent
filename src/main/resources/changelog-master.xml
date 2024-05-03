@@ -150,4 +150,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-04-23-standardize-dataset-association.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-05-03-rm-submitter-prop.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

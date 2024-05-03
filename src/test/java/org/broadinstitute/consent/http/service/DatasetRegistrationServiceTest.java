@@ -39,7 +39,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -47,7 +46,6 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -177,7 +175,6 @@ class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
     assertContainsStudyProperty(studyProps, "dataCustodianEmail",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getDataCustodianEmail())));
     assertContainsStudyProperty(studyProps, "nihAnvilUse", schema.getNihAnvilUse().value());
@@ -290,7 +287,6 @@ class DatasetRegistrationServiceTest {
     List<StudyProperty> studyProps = capturedStudyInsert.props();
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
     assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
         schema.getConsentGroups().get(0).getNumberOfParticipants());
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
@@ -479,7 +475,6 @@ class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
 
     List<DatasetProperty> props = inserts.get(0).props();
     assertContainsDatasetProperty(props, "fileTypes", PropertyType.coerceToJson(
