@@ -7,6 +7,8 @@
       DELETE
       FROM dataset_property
       WHERE property_key IN (SELECT key_id FROM dictionary d WHERE KEY = 'Data Submitter User ID')
+    </sql>
+    <sql>
       -- Remove duplicated study properties
       DELETE
       FROM study_property
