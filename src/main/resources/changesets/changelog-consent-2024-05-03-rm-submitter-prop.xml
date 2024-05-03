@@ -1,0 +1,18 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-04-01-rm-piname.xml" author="grushton">
+    <sql>
+      -- Remove duplicated properties
+      DELETE
+      FROM dataset_property
+      WHERE property_key IN (SELECT key_id FROM dictionary d WHERE KEY = 'Data Submitter User ID')
+    </sql>
+    <sql>
+      -- Remove deprecated property key from dictionary
+      DELETE
+      FROM dictionary
+      WHERE key = 'Data Submitter User ID';
+    </sql>
+  </changeSet>
+</databaseChangeLog>

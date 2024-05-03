@@ -505,8 +505,6 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDataSubmitterEmail() != null) {
       User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
       if (submitter != null) {
-        newPropConversion(dictionaries, dataset, "Data Submitter User ID", "dataSubmitterUserId",
-            PropertyType.Number, user.getUserId().toString());
         datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
       }
     }
