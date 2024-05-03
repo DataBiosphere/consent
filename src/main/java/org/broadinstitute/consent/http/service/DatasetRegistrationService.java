@@ -554,9 +554,6 @@ public class DatasetRegistrationService implements ConsentLogger {
           "species", PropertyType.String,
           DatasetRegistrationSchemaV1::getSpecies),
       new StudyPropertyExtractor(
-          "dataSubmitterUserId", PropertyType.Number,
-          DatasetRegistrationSchemaV1::getDataSubmitterUserId),
-      new StudyPropertyExtractor(
           "dataCustodianEmail", PropertyType.Json,
           (registration) -> {
             if (Objects.nonNull(registration.getDataCustodianEmail())) {

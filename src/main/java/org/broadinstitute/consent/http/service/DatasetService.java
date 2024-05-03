@@ -636,22 +636,21 @@ public class DatasetService implements ConsentLogger {
 
     // Create or update study properties:
     Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();
-    User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
     // If we don't have any props, we need to add all of the new ones
     if (existingProps == null || existingProps.isEmpty()) {
-      studyConversion.getStudyProperties(submitter).stream()
+      studyConversion.getStudyProperties().stream()
           .filter(Objects::nonNull)
           .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
               p.getValue().toString()));
     } else {
       // Study props to add:
-      studyConversion.getStudyProperties(submitter).stream()
+      studyConversion.getStudyProperties().stream()
           .filter(Objects::nonNull)
           .filter(p -> existingProps.stream().noneMatch(ep -> ep.getKey().equals(p.getKey())))
           .forEach(p -> studyDAO.insertStudyProperty(studyId, p.getKey(), p.getType().toString(),
               p.getValue().toString()));
       // Study props to update:
-      studyConversion.getStudyProperties(submitter).stream()
+      studyConversion.getStudyProperties().stream()
           .filter(Objects::nonNull)
           .filter(p -> existingProps.stream().anyMatch(ep -> ep.equals(p)))
           .forEach(p -> studyDAO.updateStudyProperty(studyId, p.getKey(), p.getType().toString(),

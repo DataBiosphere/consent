@@ -154,7 +154,7 @@ public class StudyConversion {
     return study;
   }
 
-  public Collection<StudyProperty> getStudyProperties(User submitter) {
+  public Collection<StudyProperty> getStudyProperties() {
     List<StudyProperty> props = new ArrayList<>();
     if (getPhenotype() != null) {
       props.add(new StudyProperty("phenotypeIndication", getPhenotype(), PropertyType.String));
@@ -164,9 +164,6 @@ public class StudyConversion {
     }
     if (getNihAnvilUse() != null) {
       props.add(new StudyProperty("nihAnvilUse", getNihAnvilUse(), PropertyType.String));
-    }
-    if (submitter != null) {
-      props.add(new StudyProperty("dataSubmitterUserId", submitter.getUserId(), PropertyType.Number));
     }
     return props;
   }
