@@ -53,5 +53,6 @@ properties:
     format: date-time
     description: The timestamp of last update.
   updateUserId:
-    type: boolean
+    type: integer
+    format: int32
     description: The id of the user which last updated this study.
