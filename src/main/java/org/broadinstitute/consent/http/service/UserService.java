@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 public class UserService {
 
   public final static String LIBRARY_CARDS_FIELD = "libraryCards";
-  public final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+  public final static String USER_PROPERTIES_FIELD = "properties";
   public final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
   private final UserPropertyDAO userPropertyDAO;
@@ -364,7 +364,7 @@ public class UserService {
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
     JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-    userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
+    userJson.add(USER_PROPERTIES_FIELD, propsJson);
     userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
     if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
         authUser.getUserStatusInfo())) {
