@@ -405,6 +405,8 @@ class DaaResourceTest {
   void testCreateLibraryCardDaaRelation_NoMatchingLibraryCardsCase() {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
@@ -418,14 +420,50 @@ class DaaResourceTest {
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
     lc.setInstitutionId(2);
+    LibraryCard newLc = new LibraryCard();
+    newLc.setId(2);
+    newLc.setInstitutionId(1);
+
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
+    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
-    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testCreateLibraryCardDaaRelation_NoLibraryCardsCase() {
+    UriInfo info = mock(UriInfo.class);
+    UriBuilder builder = mock(UriBuilder.class);
+    when(info.getBaseUriBuilder()).thenReturn(builder);
+    when(builder.replacePath(any())).thenReturn(builder);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    User admin = new User();
+    admin.setSigningOfficialRole();
+    admin.setInstitutionId(1);
+    User researcher = new User();
+    researcher.setResearcherRole();
+    researcher.setInstitutionId(1);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard newLc = new LibraryCard();
+    newLc.setId(1);
+    newLc.setInstitutionId(1);
+
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findUserById(any())).thenReturn(researcher);
+    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of());
+    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
+    assert response.getStatus() == HttpStatus.SC_OK;
   }
 
   @Test
