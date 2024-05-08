@@ -49,7 +49,10 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Date updateDate);
 
-  @SqlUpdate("DELETE FROM library_card WHERE id = :libraryCardId")
+  @SqlUpdate("""
+      WITH daa_deletes AS (DELETE FROM lc_daa lc_daa WHERE lc_daa.lc_id = :libraryCardId)
+      DELETE FROM library_card lc WHERE lc.id = :libraryCardId
+      """)
   void deleteLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
 
   @RegisterBeanMapper(value = LibraryCard.class)

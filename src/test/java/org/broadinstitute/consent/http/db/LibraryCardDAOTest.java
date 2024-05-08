@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -99,13 +100,30 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteLbraryCardByIdNegative() {
+  void testDeleteLibraryCardByIdNegative() {
     try {
       libraryCardDAO.deleteLibraryCardById(RandomUtils.nextInt(1, 1000));
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
     }
+  }
+
+  @Test
+  void testDeleteLibraryCardWithDaaRelationships() {
+    // This test creates several relationships:
+    // 1. Library Card for a user as a top level object that will be deleted
+    // 2. Dac so we can create a DAA
+    // 3. DAA so we can associate link it to a user's Library Card
+    // 4. Library Card - DAA relationship that represents a user's acceptance of a DAA
+    LibraryCard card = createLibraryCard();
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date());
+    int daaId = daaDAO.createDaa(card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+
+    libraryCardDAO.deleteLibraryCardById(card.getId());
+    assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
   }
 
   @Test
