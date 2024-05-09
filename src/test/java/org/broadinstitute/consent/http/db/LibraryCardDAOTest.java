@@ -115,7 +115,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // 1. Library Card for a user as a top level object that will be deleted
     // 2. Dac so we can create a DAA
     // 3. DAA so we can link it to a user's Library Card
-    // 4. Library Card <-> DAA relationship that represents a user's acceptance of a DAA
+    // 4. Library Card <-> DAA relationship that represents a Signing Official's acceptance of a DAA for the user
     LibraryCard card = createLibraryCard();
     int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), new Date());
     int daaId = daaDAO.createDaa(card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
