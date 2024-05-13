@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -112,11 +114,15 @@ public class LibraryCardService {
     libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
   }
 
-  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
+  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
     List<LibraryCard> matchingLibraryCards = libraryCards.stream()
-        .filter(card -> Objects.equals(card.getInstitutionId(), institutionId))
-        .toList();
+        .filter(card -> Objects.equals(card.getInstitutionId(), signingOfficial.getInstitutionId()))
+        .collect(Collectors.toCollection(ArrayList::new));
+    if (matchingLibraryCards.isEmpty()) {
+      LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
+      matchingLibraryCards.add(lc);
+    }
     // typically there should be one library card per user per institution
     for (LibraryCard libraryCard : matchingLibraryCards) {
       addDaaToLibraryCard(libraryCard.getId(), daaId);

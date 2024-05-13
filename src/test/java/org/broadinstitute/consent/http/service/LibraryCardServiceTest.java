@@ -386,6 +386,7 @@ public class LibraryCardServiceTest {
   @Test
   void testAddDaaToUserLibraryCardByInstitution() {
     User user = testUser(1);
+    User signingOfficial = testUser(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
         testLibraryCard(1, userId),
@@ -397,13 +398,16 @@ public class LibraryCardServiceTest {
         .thenReturn(libraryCards);
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
     initService();
-    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, 1, 1);
+    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
     assertEquals(2, cards.size());
   }
 
   @Test
   void testAddDaaToUserLibraryCardByInstitutionNoMatchingInstitutions() {
     User user = testUser(1);
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(4);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
         testLibraryCard(1, userId),
@@ -415,19 +419,32 @@ public class LibraryCardServiceTest {
         .thenReturn(libraryCards);
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
     initService();
-    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, 4, 1);
-    assertEquals(0, cards.size());
+    assertThrows(BadRequestException.class, () -> {
+      service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
+    });
   }
 
   @Test
   void testAddDaaToUserLibraryCardByInstitutionNoLibraryCards() {
-    User user = testUser(1);
+    initService();
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(institution.getId());
     Integer userId = user.getUserId();
+    LibraryCard payload = testLibraryCard(institution.getId(), signingOfficial.getUserId());
+    payload.setUserEmail("testemail");
     when(libraryCardDAO.findLibraryCardsByUserId(userId))
         .thenReturn(Collections.emptyList());
-    initService();
-    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, 1, 1);
-    assertEquals(0, cards.size());
+    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
+    when(userDAO.findUserById(anyInt())).thenReturn(signingOfficial);
+    when(service.createLibraryCard(payload, signingOfficial)).thenReturn(payload);
+    when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
+        .thenReturn(1);
+    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
+    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
+    assertEquals(1, cards.size());
   }
 
   @Test
