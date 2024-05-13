@@ -269,13 +269,27 @@ public class UserService {
       case Resource.SIGNINGOFFICIAL:
         Integer institutionId = user.getInstitutionId();
         if (Objects.nonNull(user.getInstitutionId())) {
-          return userDAO.getUsersFromInstitutionWithCards(institutionId);
+          List<User> users = userDAO.getUsersFromInstitutionWithCards(institutionId);
+          for (User u: users) {
+            List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(u.getUserId());
+            if (Objects.nonNull(cards) && !cards.isEmpty()) {
+              u.setLibraryCards(cards);
+            }
+          }
+          return users;
         } else {
           throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
               + ") is not associated with an Institution.");
         }
       case Resource.ADMIN:
-        return userDAO.findUsersWithLCsAndInstitution();
+        List<User> users = userDAO.findUsersWithLCsAndInstitution();
+        for (User u: users) {
+          List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(u.getUserId());
+          if (Objects.nonNull(cards) && !cards.isEmpty()) {
+            u.setLibraryCards(cards);
+          }
+        }
+        return users;
     }
     return Collections.emptyList();
   }
