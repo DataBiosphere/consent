@@ -532,13 +532,17 @@ class UserServiceTest {
   void testGetUsersByUserRole_SO() {
     User u = generateUser();
     u.setInstitutionId(1);
+    LibraryCard lc = generateLibraryCard(u);
+    u.setLibraryCards(List.of(lc));
     when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(
         List.of(new User(), new User()));
+    when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(lc));
     initService();
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertNotNull(users);
     assertEquals(2, users.size());
+    assertEquals(List.of(lc), users.get(0).getLibraryCards());
   }
 
   @Test
@@ -564,11 +568,16 @@ class UserServiceTest {
     if (!returnedUsers.contains(u3)) {
       returnedUsers.add(u3);
     }
+    LibraryCard lc = generateLibraryCard(u1);
+    u1.setLibraryCards(List.of(lc));
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
+    when(libraryCardDAO.findLibraryCardsByUserId(u1.getUserId())).thenReturn(List.of(lc));
     initService();
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
+    assertEquals(List.of(lc), users.get(0).getLibraryCards());
+    assertNull(users.get(1).getLibraryCards());
   }
 
   @Test
