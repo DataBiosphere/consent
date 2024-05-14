@@ -118,19 +118,16 @@ public class LibraryCardService {
     if (signingOfficial.getInstitutionId() == null) {
       throw new BadRequestException("This signing official does not have an institution.");
     }
-    List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
-    List<LibraryCard> matchingLibraryCards = libraryCards.stream()
-        .filter(card -> Objects.equals(card.getInstitutionId(), signingOfficial.getInstitutionId()))
-        .collect(Collectors.toCollection(ArrayList::new));
-    if (matchingLibraryCards.isEmpty()) {
+    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId()));
+    if (libraryCards.isEmpty()) {
       LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
-      matchingLibraryCards.add(lc);
+      libraryCards.add(lc);
     }
     // typically there should be one library card per user per institution
-    for (LibraryCard libraryCard : matchingLibraryCards) {
+    for (LibraryCard libraryCard : libraryCards) {
       addDaaToLibraryCard(libraryCard.getId(), daaId);
     }
-    return matchingLibraryCards;
+    return libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId());
   }
 
   public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {

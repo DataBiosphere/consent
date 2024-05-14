@@ -386,15 +386,15 @@ public class LibraryCardServiceTest {
   @Test
   void testAddDaaToUserLibraryCardByInstitution() {
     User user = testUser(1);
-    User signingOfficial = testUser(1);
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
         testLibraryCard(1, userId),
-        testLibraryCard(2, userId),
-        testLibraryCard(1, userId),
-        testLibraryCard(3, userId)
+        testLibraryCard(1, userId)
     );
-    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
+    when(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), user.getInstitutionId()))
         .thenReturn(libraryCards);
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
     initService();
@@ -437,11 +437,15 @@ public class LibraryCardServiceTest {
     payload.setUserEmail("testemail");
     when(libraryCardDAO.findLibraryCardsByUserId(userId))
         .thenReturn(Collections.emptyList());
+    when(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(userId, institution.getId()))
+        .thenReturn(Collections.emptyList(),Collections.singletonList(payload));
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(userDAO.findUserById(anyInt())).thenReturn(signingOfficial);
+    when(service.createLibraryCardForSigningOfficial(user, signingOfficial)).thenReturn(payload);
     when(service.createLibraryCard(payload, signingOfficial)).thenReturn(payload);
     when(libraryCardDAO.insertLibraryCard(anyInt(), anyInt(), any(), any(), any(), anyInt(), any()))
         .thenReturn(1);
+    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
     List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
     assertEquals(1, cards.size());

@@ -220,6 +220,20 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindLibraryCardByUserIdInstitutionId() {
+    LibraryCard libraryCard = createLibraryCard();
+    List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByUserIdInstitutionId(
+        libraryCard.getUserId(),
+        libraryCard.getInstitutionId());
+
+    assertNotNull(cardsFromDAO);
+    assertEquals(cardsFromDAO.size(), 1);
+    assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
+    assertEquals(cardsFromDAO.get(0).getUserId(), libraryCard.getUserId());
+    assertTrue(cardsFromDAO.get(0).getDaaIds().isEmpty());
+  }
+
+  @Test
   void testFindAllLibraryCards() {
     List<LibraryCard> cardList = libraryCardDAO.findAllLibraryCards();
     assertEquals(0, cardList.size());
