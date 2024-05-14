@@ -115,6 +115,9 @@ public class LibraryCardService {
   }
 
   public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
+    if (signingOfficial.getInstitutionId() == null) {
+      throw new BadRequestException("This signing official does not have an institution.");
+    }
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
     List<LibraryCard> matchingLibraryCards = libraryCards.stream()
         .filter(card -> Objects.equals(card.getInstitutionId(), signingOfficial.getInstitutionId()))

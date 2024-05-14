@@ -448,6 +448,27 @@ public class LibraryCardServiceTest {
   }
 
   @Test
+  void testAddDaaToUserLibraryCardByInstitutionSigningOfficialNoInstitution() {
+    User user = testUser(1);
+    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    Integer userId = user.getUserId();
+    List<LibraryCard> libraryCards = List.of(
+        testLibraryCard(1, userId),
+        testLibraryCard(2, userId),
+        testLibraryCard(1, userId),
+        testLibraryCard(3, userId)
+    );
+    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
+        .thenReturn(libraryCards);
+    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
+    });
+  }
+
+  @Test
   void testRemoveDaaFromUserLibraryCardByInstitution() {
     User user = testUser(1);
     Integer userId = user.getUserId();
