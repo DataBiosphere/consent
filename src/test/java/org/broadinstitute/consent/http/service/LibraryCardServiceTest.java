@@ -455,7 +455,8 @@ public class LibraryCardServiceTest {
   void testAddDaaToUserLibraryCardByInstitutionSigningOfficialNoInstitution() {
     User user = testUser(1);
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
         testLibraryCard(1, userId),
