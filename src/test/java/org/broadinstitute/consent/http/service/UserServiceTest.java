@@ -535,8 +535,7 @@ class UserServiceTest {
     LibraryCard lc = generateLibraryCard(u);
     u.setLibraryCards(List.of(lc));
     when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(
-        List.of(new User(), new User()));
-    when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(List.of(lc));
+        List.of(u, new User()));
     initService();
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
@@ -571,7 +570,6 @@ class UserServiceTest {
     LibraryCard lc = generateLibraryCard(u1);
     u1.setLibraryCards(List.of(lc));
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
-    when(libraryCardDAO.findLibraryCardsByUserId(u1.getUserId())).thenReturn(List.of(lc));
     initService();
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
