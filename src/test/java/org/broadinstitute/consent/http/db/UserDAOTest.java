@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -205,12 +206,17 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
-    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
+    int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
+    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(lcId1, daaId);
 
     User user2 = createUserWithInstitution();
-    libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf",
+    int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf",
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
     assertNotNull(users);
@@ -222,7 +228,6 @@ class UserDAOTest extends DAOTestHelper {
     assertNotNull(users.get(1).getInstitution());
     assertNotNull(users.get(1).getLibraryCards());
     assertEquals(1, users.get(1).getLibraryCards().size());
-
   }
 
   @Test
@@ -336,7 +341,11 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     Integer institutionId = card.getInstitutionId();
     Integer userId = card.getUserId();
     List<User> users = userDAO.getUsersFromInstitutionWithCards(institutionId);

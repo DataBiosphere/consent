@@ -269,17 +269,15 @@ public class UserService {
       case Resource.SIGNINGOFFICIAL:
         Integer institutionId = user.getInstitutionId();
         if (Objects.nonNull(user.getInstitutionId())) {
-          List<User> users = userDAO.getUsersFromInstitutionWithCards(institutionId);
-          populateLibraryCardsOnUsers(users);
-          return users;
+          return userDAO.getUsersFromInstitutionWithCards(institutionId);
         } else {
           throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
               + ") is not associated with an Institution.");
         }
       case Resource.ADMIN:
-        List<User> users = userDAO.findUsersWithLCsAndInstitution();
-        populateLibraryCardsOnUsers(users);
-        return users;
+        return userDAO.findUsersWithLCsAndInstitution();
+      default:
+        // do nothing
     }
     return Collections.emptyList();
   }
@@ -458,15 +456,6 @@ public class UserService {
         });
 
     userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
-  }
-
-  private void populateLibraryCardsOnUsers(List<User> users) {
-    for (User user: users) {
-      List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-      if (Objects.nonNull(cards) && !cards.isEmpty()) {
-        user.setLibraryCards(cards);
-      }
-    }
   }
 
   public User findOrCreateUser(AuthUser authUser) throws Exception {

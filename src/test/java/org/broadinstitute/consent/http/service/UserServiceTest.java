@@ -581,6 +581,16 @@ class UserServiceTest {
   }
 
   @Test
+  void testGetUsersAsRoleInvalidRole() {
+    User u1 = generateUser();
+    initService();
+    List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
+    assertNotNull(users);
+    assertEquals(0, users.size());
+    assertEquals(Collections.emptyList(), users);
+  }
+
+  @Test
   void testFindUsersWithNoInstitution() {
     User user = generateUser();
     when(userDAO.getUsersWithNoInstitution()).thenReturn(List.of(user));
