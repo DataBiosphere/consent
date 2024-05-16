@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 
 import java.time.Instant;
 import java.util.Date;
@@ -222,15 +224,19 @@ class LibraryCardDAOTest extends DAOTestHelper {
   @Test
   void testFindLibraryCardByUserIdInstitutionId() {
     LibraryCard libraryCard = createLibraryCard();
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
+    int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(libraryCard.getId(), daaId);
     List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByUserIdInstitutionId(
         libraryCard.getUserId(),
         libraryCard.getInstitutionId());
-
     assertNotNull(cardsFromDAO);
     assertEquals(cardsFromDAO.size(), 1);
     assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
     assertEquals(cardsFromDAO.get(0).getUserId(), libraryCard.getUserId());
-    assertTrue(cardsFromDAO.get(0).getDaaIds().isEmpty());
+    assertFalse(cardsFromDAO.get(0).getDaaIds().isEmpty());
   }
 
   @Test
