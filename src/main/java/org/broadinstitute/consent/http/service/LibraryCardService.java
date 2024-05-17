@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -112,16 +114,20 @@ public class LibraryCardService {
     libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
   }
 
-  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
-    List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
-    List<LibraryCard> matchingLibraryCards = libraryCards.stream()
-        .filter(card -> Objects.equals(card.getInstitutionId(), institutionId))
-        .toList();
+  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
+    if (signingOfficial.getInstitutionId() == null) {
+      throw new BadRequestException("This signing official does not have an institution.");
+    }
+    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId()));
+    if (libraryCards.isEmpty()) {
+      LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
+      libraryCards.add(lc);
+    }
     // typically there should be one library card per user per institution
-    for (LibraryCard libraryCard : matchingLibraryCards) {
+    for (LibraryCard libraryCard : libraryCards) {
       addDaaToLibraryCard(libraryCard.getId(), daaId);
     }
-    return matchingLibraryCards;
+    return libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId());
   }
 
   public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
