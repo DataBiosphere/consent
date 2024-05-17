@@ -276,6 +276,8 @@ public class UserService {
         }
       case Resource.ADMIN:
         return userDAO.findUsersWithLCsAndInstitution();
+      default:
+        // do nothing
     }
     return Collections.emptyList();
   }
