@@ -121,7 +121,8 @@ public class DaaResource extends Resource implements ConsentLogger {
           .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId().intValue())
           .findFirst();
       if (matchingCard.isEmpty()) {
-        return Response.status(Status.NOT_FOUND).build();
+        LibraryCard createdLc = libraryCardService.createLibraryCardForSigningOfficial(user, authedUser);
+        matchingCard = Optional.of(createdLc);
       }
       int libraryCardId = matchingCard.get().getId();
       libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
@@ -243,7 +244,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       }
       daaService.findById(daaId);
       for (User user : users) {
-        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daaId);
+        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser, daaId);
       }
       return Response.ok().build();
     } catch (Exception e) {
@@ -295,7 +296,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
       for (DataAccessAgreement daa : daaList) {
-        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daa.getDaaId());
+        libraryCardService.addDaaToUserLibraryCardByInstitution(user, authedUser, daa.getDaaId());
       }
       return Response.ok().build();
     } catch (Exception e) {

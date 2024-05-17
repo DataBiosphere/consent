@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -49,7 +50,10 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Date updateDate);
 
-  @SqlUpdate("DELETE FROM library_card WHERE id = :libraryCardId")
+  @SqlUpdate("""
+      WITH daa_deletes AS (DELETE FROM lc_daa lc_daa WHERE lc_daa.lc_id = :libraryCardId)
+      DELETE FROM library_card lc WHERE lc.id = :libraryCardId
+      """)
   void deleteLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
@@ -114,6 +118,29 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       WHERE library_card.institution_id = :institutionId
       """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
+
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
+  @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("""
+      SELECT lc.*,
+      institution.institution_id AS i_institution_id,
+      institution.institution_name AS i_name,
+      institution.it_director_name AS i_it_director_name,
+      institution.it_director_email AS i_it_director_email,
+      institution.create_user AS i_create_user_id,
+      institution.create_date AS i_create_date,
+      institution.update_date AS i_update_date,
+      institution.update_user AS i_update_user_id,
+      ld.daa_id
+      FROM library_card AS lc
+      LEFT JOIN institution
+      ON lc.institution_id = :institutionId
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE lc.user_id = :userId
+      """)
+  List<LibraryCard> findLibraryCardsByUserIdInstitutionId(@Bind("userId") Integer userId,
+      @Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
