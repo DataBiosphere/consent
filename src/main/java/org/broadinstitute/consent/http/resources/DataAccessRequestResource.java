@@ -301,7 +301,7 @@ public class DataAccessRequestResource extends Resource {
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
-  @Path("/v2/draft/{referenceId}")
+  @Path("/v3/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
   public Response updatePartialDataAccessRequestWithDAARestrictions(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
