@@ -164,7 +164,6 @@ public class TDRResource extends Resource {
       @QueryParam("identifiers") String identifiers,
       @QueryParam("projectTitle") String projectTitle) {
     try {
-      // TODO: Do the DAA Enforcement
       // Ensure that the user is a registered DUOS and SAM user
       User user = userService.findOrCreateUser(authUser);
       if (Objects.isNull(identifiers) || identifiers.isBlank()) {
@@ -200,6 +199,8 @@ public class TDRResource extends Resource {
             .stream()
             .map(Dataset::getDataSetId)
             .toList();
+        // DAA Enforcement
+        datasetService.enforceDAARestrictions(user, datasetIds);
         DataAccessRequest newDar = new DataAccessRequest();
         newDar.setCreateDate(new Timestamp(new Date().getTime()));
         DataAccessRequestData data = new DataAccessRequestData();

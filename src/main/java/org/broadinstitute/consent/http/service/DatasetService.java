@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,8 +21,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -52,20 +55,24 @@ public class DatasetService implements ConsentLogger {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
   private final DatasetDAO datasetDAO;
+  private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
   private final EmailService emailService;
+  private final LibraryCardDAO libraryCardDAO;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
 
   @Inject
-  public DatasetService(DatasetDAO dataSetDAO, DacDAO dacDAO,
-      EmailService emailService, OntologyService ontologyService, StudyDAO studyDAO,
+  public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
+      LibraryCardDAO libraryCardDAO, OntologyService ontologyService, StudyDAO studyDAO,
       DatasetServiceDAO datasetServiceDAO, UserDAO userDAO) {
     this.datasetDAO = dataSetDAO;
+    this.daaDAO = daaDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
+    this.libraryCardDAO = libraryCardDAO;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
     this.datasetServiceDAO = datasetServiceDAO;
@@ -531,6 +538,19 @@ public class DatasetService implements ConsentLogger {
       studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     }
     return studyDAO.findStudyById(studyId);
+  }
+
+  /**
+   * Ensure that all requested datasetIds exist in the user's list of accepted DAAs
+   * @param user The requesting User
+   * @param datasetIds The list of dataset ids the user is requesting access to
+   */
+  public void enforceDAARestrictions(User user, List<Integer> datasetIds) {
+    List<Integer> userDaaDatasetIds = daaDAO.findDaaDatasetIdsByUserId(user.getUserId());
+    boolean containsAll = new HashSet<>(userDaaDatasetIds).containsAll(datasetIds);
+    if (!containsAll) {
+      throw new NotAuthorizedException("User does not have appropriate Data Access Agreements for provided datasets");
+    }
   }
 
   /**

@@ -129,13 +129,13 @@ public class DataAccessRequestResource extends Resource {
   public Response createDataAccessRequestWithDAARestrictions(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
-      // TODO: Do the DAA Enforcement
       User user = findUserByEmail(authUser.getEmail());
       if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
         throw new IllegalArgumentException("User must have a library card to create a DAR.");
       }
-
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
       try {
@@ -261,9 +261,10 @@ public class DataAccessRequestResource extends Resource {
   public Response createDraftDataAccessRequestWithDAARestrictions(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
-      // TODO: Do the DAA Enforcement
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, newDar.getDatasetIds());
       DataAccessRequest result =
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
@@ -306,10 +307,11 @@ public class DataAccessRequestResource extends Resource {
   public Response updatePartialDataAccessRequestWithDAARestrictions(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
-      // TODO: Do the DAA Enforcement
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, originalDar.getDatasetIds());
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
