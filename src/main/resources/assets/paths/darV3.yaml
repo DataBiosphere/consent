@@ -1,0 +1,25 @@
+post:
+  summary: Create Data Access Request, version 2
+  description: |
+    Creates a Data Access Request
+    Datasets are restricted to those for which the user has a Library Card with a Data Access Agreement for the dataset's Data Access Committee
+  requestBody:
+    description: The fields that represent a DAR in json format.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DataAccessRequest.yaml'
+  tags:
+    - Data Access Request
+  responses:
+    200:
+      description: Returns the created Data Access Request.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DataAccessRequest.yaml'
+    500:
+      description: Internal Server Error.

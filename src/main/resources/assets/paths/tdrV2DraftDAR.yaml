@@ -1,0 +1,27 @@
+post:
+  summary: createDraftDataAccessRequest
+  description: Create Draft Data Access Request
+  parameters:
+    - name: identifiers
+      in: query
+      description: |
+        Dataset identifiers to be included in the Data Access Request (comma separated). e.g. DUOS-123456, DUOS-123457
+        Datasets are restricted to those for which the user has a Library Card with a Data Access Agreement for the dataset's Data Access Committee
+      required: true
+      schema:
+        type: string
+    - name: projectTitle
+      in: query
+      description: Project title for the new Data Access Request.
+      required: false
+      schema:
+        type: string
+  tags:
+    - TDR
+  responses:
+    201:
+      description: Returns the created draft Data Access Request
+    404:
+      description: Bad request invalid dataset identifiers were provided
+    500:
+      description: Server error

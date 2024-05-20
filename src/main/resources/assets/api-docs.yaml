@@ -275,10 +275,19 @@ paths:
           description: Internal Server Error
   /api/dacuser:
     $ref: './paths/dacuser.yaml'
+
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
+
+  /api/dar/v3:
+    $ref: './paths/darV3.yaml'
+
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
+
+  /api/dar/v3/{referenceId}:
+    $ref: './paths/darV3ByReferenceId.yaml'
+
   /api/dar/v2/draft:
     post:
       summary: Create Draft Data Access Request
@@ -313,6 +322,10 @@ paths:
                   $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
+
+  /api/dar/v3/draft:
+    $ref: './paths/darV3Draft.yaml'
+
   /api/dar/v2/draft/{referenceId}:
     put:
       summary: Update Draft Data Access Request
@@ -360,6 +373,10 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
+
+  /api/dar/v3/draft/{referenceId}:
+    $ref: './paths/darV3DraftByReferenceId.yaml'
+
   /api/dar/v2/{referenceId}/irbDocument:
     get:
       summary: Retrieve DAR IRB Document
@@ -620,6 +637,8 @@ paths:
     $ref: './paths/tdrDataset.yaml'
   /api/tdr/dar/draft:
     $ref: './paths/tdrDraftDAR.yaml'
+  /api/tdr/v2/dar/draft:
+    $ref: './paths/tdrV2DraftDAR.yaml'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
