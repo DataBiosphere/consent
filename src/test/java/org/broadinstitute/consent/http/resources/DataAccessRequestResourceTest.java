@@ -57,7 +57,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DataAccessRequestResourceVersion2Test {
+class DataAccessRequestResourceTest {
 
   @Mock
   private DataAccessRequestService dataAccessRequestService;
@@ -96,12 +96,12 @@ class DataAccessRequestResourceVersion2Test {
       memberRoles);
   private final User bob = new User(5, anotherUser.getEmail(), "Bob", new Date(), roles);
 
-  private DataAccessRequestResourceVersion2 resource;
+  private DataAccessRequestResource resource;
 
   private void initResource() {
     try {
       resource =
-          new DataAccessRequestResourceVersion2(
+          new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -147,7 +147,7 @@ class DataAccessRequestResourceVersion2Test {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResourceVersion2(
+          new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -189,7 +189,7 @@ class DataAccessRequestResourceVersion2Test {
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       resource =
-          new DataAccessRequestResourceVersion2(
+          new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -208,7 +208,7 @@ class DataAccessRequestResourceVersion2Test {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       resource =
-          new DataAccessRequestResourceVersion2(
+          new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -229,7 +229,7 @@ class DataAccessRequestResourceVersion2Test {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResourceVersion2(
+          new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
