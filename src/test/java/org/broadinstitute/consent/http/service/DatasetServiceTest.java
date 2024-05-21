@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -873,6 +875,30 @@ class DatasetServiceTest {
     datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
     verify(studyDAO, never()).updateStudyProperty(any(), any(), any(), any());
     verify(studyDAO, times(1)).insertStudyProperty(any(), any(), any(), any());
+  }
+
+  @Test
+  void testEnforceDAARestrictions() {
+    final User user = new User(1, "test@domain.com", "Test User", new Date(),
+        List.of(UserRoles.Researcher()));
+    when(daaDAO.findDaaDatasetIdsByUserId(any())).thenReturn(List.of(1, 2, 3));
+
+    initService();
+    assertDoesNotThrow(() -> {
+        datasetService.enforceDAARestrictions(user, List.of(1));
+    });
+    assertDoesNotThrow(() -> {
+        datasetService.enforceDAARestrictions(user, List.of(1, 2));
+    });
+    assertDoesNotThrow(() -> {
+        datasetService.enforceDAARestrictions(user, List.of(1, 2, 3));
+    });
+    assertThrows(NotAuthorizedException.class, () -> {
+        datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4));
+    });
+    assertThrows(NotAuthorizedException.class, () -> {
+        datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5));
+    });
   }
 
   /* Helper functions */
