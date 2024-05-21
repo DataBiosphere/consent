@@ -183,10 +183,10 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   @SqlQuery(
       """
       SELECT DISTINCT d.dataset_id
-      FROM library_card lc
-      INNER JOIN lc_daa ON lc.id = lc_daa.lc_id
-      INNER JOIN dac_daa ON dac_daa.daa_id = lc_daa.daa_id
-      INNER JOIN dataset d ON dac_daa.dac_id = d.dac_id
+      FROM dataset d
+      INNER JOIN dac_daa ON dac_daa.dac_id = d.dac_id
+      INNER JOIN lc_daa ON dac_daa.daa_id = lc_daa.daa_id
+      INNER JOIN library_card lc on lc.id = lc_daa.lc_id
       WHERE lc.user_id = :userId
       """)
   List<Integer> findDaaDatasetIdsByUserId(Integer userId);
