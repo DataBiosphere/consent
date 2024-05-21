@@ -189,6 +189,6 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       INNER JOIN library_card lc on lc.id = lc_daa.lc_id
       WHERE lc.user_id = :userId
       """)
-  List<Integer> findDaaDatasetIdsByUserId(Integer userId);
+  List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
 
 }
