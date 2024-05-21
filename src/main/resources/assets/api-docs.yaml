@@ -290,8 +290,11 @@ paths:
 
   /api/dar/v2/draft:
     post:
+      deprecated: true
       summary: Create Draft Data Access Request
-      description: Create Draft Data Access Request
+      description: |
+        Create Draft Data Access Request.
+        Deprecated in favor of /api/dar/v3/draft
       parameters:
         - name: dar
           in: body

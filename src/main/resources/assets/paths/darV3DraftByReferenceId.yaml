@@ -15,7 +15,7 @@ put:
       description: The fields that represent a Data Access Request, json format.
       required: true
       schema:
-        $ref: './schemas/DataAccessRequest.yaml'
+        $ref: '../schemas/DataAccessRequest.yaml'
   tags:
     - Data Access Request
   responses:
