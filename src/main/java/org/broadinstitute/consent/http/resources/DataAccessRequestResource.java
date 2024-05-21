@@ -310,14 +310,14 @@ public class DataAccessRequestResource extends Resource {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
-      // DAA Enforcement
-      datasetService.enforceDAARestrictions(user, originalDar.getDatasetIds());
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       originalDar.setDatasetIds(data.getDatasetIds());
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, originalDar.getDatasetIds());
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceId(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
