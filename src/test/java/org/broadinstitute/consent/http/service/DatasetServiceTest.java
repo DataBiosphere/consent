@@ -145,17 +145,13 @@ class DatasetServiceTest {
   @Test
   void testFindDatasetsByDacIdsEmptyList() {
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      datasetService.findDatasetsByDacIds(Collections.emptyList());
-    });
+    assertThrows(BadRequestException.class, () -> datasetService.findDatasetsByDacIds(Collections.emptyList()));
   }
 
   @Test
   void testFindDatasetsByDacIdsNullList() {
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      datasetService.findDatasetsByDacIds(null);
-    });
+    assertThrows(BadRequestException.class, () -> datasetService.findDatasetsByDacIds(null));
   }
 
   @Test
@@ -169,17 +165,13 @@ class DatasetServiceTest {
   @Test
   void testFindDatasetListByDacIdsEmptyList() {
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      datasetService.findDatasetListByDacIds(Collections.emptyList());
-    });
+    assertThrows(BadRequestException.class, () -> datasetService.findDatasetListByDacIds(Collections.emptyList()));
   }
 
   @Test
   void testFindDatasetListByDacIdsNullList() {
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      datasetService.findDatasetListByDacIds(null);
-    });
+    assertThrows(BadRequestException.class, () -> datasetService.findDatasetListByDacIds(null));
   }
 
   @Test
@@ -275,9 +267,7 @@ class DatasetServiceTest {
     when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(
         Collections.emptySet());
     initService();
-    assertThrows(NotFoundException.class, () -> {
-      datasetService.getDatasetDTO(1);
-    });
+    assertThrows(NotFoundException.class, () -> datasetService.getDatasetDTO(1));
   }
 
   @Test
@@ -359,9 +349,7 @@ class DatasetServiceTest {
         UserRoles.DATASUBMITTER,
         UserRoles.ITDIRECTOR,
         UserRoles.ALUMNI
-    ).forEach(r -> {
-      u.addRole(new UserRole(r.getRoleId(), r.getRoleName()));
-    });
+    ).forEach(r -> u.addRole(new UserRole(r.getRoleId(), r.getRoleName())));
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
@@ -677,9 +665,7 @@ class DatasetServiceTest {
     dataset.setDacApproval(true);
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      datasetService.approveDataset(dataset, user, false);
-    });
+    assertThrows(IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, false));
   }
 
   @Test
@@ -689,9 +675,7 @@ class DatasetServiceTest {
     dataset.setDacApproval(true);
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      datasetService.approveDataset(dataset, user, null);
-    });
+    assertThrows(IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, null));
   }
 
   @Test
@@ -824,9 +808,7 @@ class DatasetServiceTest {
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     initService();
-    assertThrows(NotFoundException.class, () -> {
-      datasetService.syncDatasetDataUseTranslation(1);
-    });
+    assertThrows(NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1));
 
   }
 
@@ -883,21 +865,11 @@ class DatasetServiceTest {
     when(daaDAO.findDaaDatasetIdsByUserId(any())).thenReturn(List.of(1, 2, 3));
 
     initService();
-    assertDoesNotThrow(() -> {
-        datasetService.enforceDAARestrictions(user, List.of(1));
-    });
-    assertDoesNotThrow(() -> {
-        datasetService.enforceDAARestrictions(user, List.of(1, 2));
-    });
-    assertDoesNotThrow(() -> {
-        datasetService.enforceDAARestrictions(user, List.of(1, 2, 3));
-    });
-    assertThrows(BadRequestException.class, () -> {
-        datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4));
-    });
-    assertThrows(BadRequestException.class, () -> {
-        datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5));
-    });
+    assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1)));
+    assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2)));
+    assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
+    assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
+    assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
   }
 
   /* Helper functions */
