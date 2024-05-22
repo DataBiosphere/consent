@@ -20,7 +20,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -893,10 +892,10 @@ class DatasetServiceTest {
     assertDoesNotThrow(() -> {
         datasetService.enforceDAARestrictions(user, List.of(1, 2, 3));
     });
-    assertThrows(NotAuthorizedException.class, () -> {
+    assertThrows(BadRequestException.class, () -> {
         datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4));
     });
-    assertThrows(NotAuthorizedException.class, () -> {
+    assertThrows(BadRequestException.class, () -> {
         datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5));
     });
   }
