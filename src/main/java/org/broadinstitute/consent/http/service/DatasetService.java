@@ -549,7 +549,7 @@ public class DatasetService implements ConsentLogger {
     List<Integer> userDaaDatasetIds = daaDAO.findDaaDatasetIdsByUserId(user.getUserId());
     boolean containsAll = new HashSet<>(userDaaDatasetIds).containsAll(datasetIds);
     if (!containsAll) {
-      throw new NotAuthorizedException("User does not have appropriate Data Access Agreements for provided datasets");
+      throw new BadRequestException("User does not have appropriate Data Access Agreements for provided datasets");
     }
   }
 

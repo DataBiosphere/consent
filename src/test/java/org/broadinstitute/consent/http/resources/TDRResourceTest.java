@@ -7,7 +7,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
@@ -241,12 +241,12 @@ class TDRResourceTest {
 
     when(userService.findOrCreateUser(any())).thenReturn(user);
     when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
-    doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+    doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
 
     initResource();
 
     try (Response r = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, identifiers, "New Project")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, r.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, r.getStatus());
     }
   }
 

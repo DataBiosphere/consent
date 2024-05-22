@@ -15,7 +15,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -830,7 +829,7 @@ class DataAccessRequestResourceTest {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
       resource =
           new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
@@ -840,7 +839,7 @@ class DataAccessRequestResourceTest {
     }
 
     try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info, "")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
@@ -870,7 +869,7 @@ class DataAccessRequestResourceTest {
   void testCreateDraftDataAccessRequestWithDAARestrictionsFailure() {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
-      doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
       resource =
           new DataAccessRequestResource(
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
@@ -880,7 +879,7 @@ class DataAccessRequestResourceTest {
     }
 
     try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, info, "")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
@@ -902,11 +901,11 @@ class DataAccessRequestResourceTest {
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+    doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
     initResource();
 
     try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
