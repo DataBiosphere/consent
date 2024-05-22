@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -783,6 +785,129 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     Response res = resource.getDraftDar(authUser, "id");
     assertEquals(res.getStatus(), HttpStatusCodes.STATUS_CODE_FORBIDDEN);
+  }
+
+  @Test
+  void testCreateDataAccessRequestWithDAARestrictions() {
+    try {
+      User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+      userWithCards.setLibraryCards(List.of(new LibraryCard()));
+      when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+      DataAccessRequest dar = new DataAccessRequest();
+      dar.setReferenceId(UUID.randomUUID().toString());
+      dar.setCollectionId(1);
+      DataAccessRequestData data = new DataAccessRequestData();
+      data.setReferenceId(dar.getReferenceId());
+      dar.setData(data);
+      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
+          .thenReturn(dar);
+      doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
+      resource =
+          new DataAccessRequestResource(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+
+    try (Response response = resource.createDataAccessRequest(authUser, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateDataAccessRequestWithDAARestrictionsFailure() {
+    try {
+      User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+      userWithCards.setLibraryCards(List.of(new LibraryCard()));
+      when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+      DataAccessRequest dar = new DataAccessRequest();
+      dar.setReferenceId(UUID.randomUUID().toString());
+      dar.setCollectionId(1);
+      DataAccessRequestData data = new DataAccessRequestData();
+      data.setReferenceId(dar.getReferenceId());
+      dar.setData(data);
+      doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      resource =
+          new DataAccessRequestResource(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestWithDAARestrictions() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+      when(builder.path(anyString())).thenReturn(builder);
+      when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+      when(info.getRequestUriBuilder()).thenReturn(builder);
+      resource =
+          new DataAccessRequestResource(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+
+    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestWithDAARestrictionsFailure() {
+    try {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      resource =
+          new DataAccessRequestResource(
+              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              matchService);
+    } catch (Exception e) {
+      fail("Initialization Exception: " + e.getMessage());
+    }
+
+    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestWithDAARestrictions() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    initResource();
+
+    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestWithDAARestrictionsFailure() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+    initResource();
+
+    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
   }
 
 }
