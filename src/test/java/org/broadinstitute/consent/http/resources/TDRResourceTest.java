@@ -3,8 +3,11 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
@@ -184,6 +187,67 @@ class TDRResourceTest {
     Error notFoundError = (Error) r.getEntity();
     assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
         notFoundError.message());
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestWithDAARestrictions() throws Exception {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+        .map(String::trim)
+        .filter(identifier -> !identifier.isBlank())
+        .map(Dataset::parseIdentifierToAlias)
+        .toList();
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setAlias(1);
+
+    Dataset d2 = new Dataset();
+    d2.setDataSetId(2);
+    d2.setAlias(2);
+
+    DataAccessRequest newDar = generateDataAccessRequest();
+
+    when(userService.findOrCreateUser(any())).thenReturn(user);
+    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
+
+    initResource();
+
+    String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
+
+    try (Response r = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, identifiers, "New Project")) {
+      assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
+      assertEquals(r.getLocation().toString(), expectedUri);
+    }
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestWithDAARestrictionsFailure() throws Exception {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
+        .map(String::trim)
+        .filter(identifier -> !identifier.isBlank())
+        .map(Dataset::parseIdentifierToAlias)
+        .toList();
+
+    Dataset d1 = new Dataset();
+    d1.setDataSetId(1);
+    d1.setAlias(1);
+
+    Dataset d2 = new Dataset();
+    d2.setDataSetId(2);
+    d2.setAlias(2);
+
+    when(userService.findOrCreateUser(any())).thenReturn(user);
+    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    doThrow(NotAuthorizedException.class).when(datasetService).enforceDAARestrictions(any(), any());
+
+    initResource();
+
+    try (Response r = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, identifiers, "New Project")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, r.getStatus());
+    }
   }
 
   private DataAccessRequest generateDataAccessRequest() {
