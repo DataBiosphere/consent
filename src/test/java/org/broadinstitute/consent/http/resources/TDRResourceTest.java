@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Arrays;
@@ -123,70 +124,52 @@ class TDRResourceTest {
   @Test
   void testCreateDraftDataAccessRequest() throws Exception {
     String identifiers = "DUOS-00001, DUOS-00002";
-    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
-        .map(String::trim)
-        .filter(identifier -> !identifier.isBlank())
-        .map(Dataset::parseIdentifierToAlias)
-        .toList();
-
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setAlias(1);
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setAlias(2);
-
     DataAccessRequest newDar = generateDataAccessRequest();
-
     when(userService.findOrCreateUser(any())).thenReturn(user);
-    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    when(tdrService.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project")).thenReturn(newDar);
     when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
-
     initResource();
 
     String expectedUri = "api/dar/v2/" + newDar.getReferenceId();
 
-    Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-    assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
-    assertEquals(r.getLocation().toString(), expectedUri);
+    try (Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project")) {
+      assertEquals(Status.CREATED.getStatusCode(), r.getStatus());
+      assertEquals(r.getLocation().toString(), expectedUri);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   // Bad Request response (400) when no identifiers are provided
   @Test
   void testCreateDraftDataAccessRequestNoIdentifiers() throws Exception {
     when(userService.findOrCreateUser(any())).thenReturn(user);
-
     initResource();
 
-    Response r = resource.createDraftDataAccessRequest(authUser, null, null);
-    assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
+    try (Response r = resource.createDraftDataAccessRequest(authUser, null, null)) {
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), r.getStatus());
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   // Not Found response (404) with list of invalid identifiers if any do not match to a dataset
   @Test
   void testCreateDraftDataAccessRequestInvalidIdentifiers() throws Exception {
     String identifiers = "DUOS-00001, DUOS-00002";
-    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
-        .map(String::trim)
-        .filter(identifier -> !identifier.isBlank())
-        .map(Dataset::parseIdentifierToAlias)
-        .toList();
-
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setAlias(1);
-
     when(userService.findOrCreateUser(any())).thenReturn(user);
-    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1));
-
+    doThrow(new NotFoundException("Invalid dataset identifiers were provided: [DUOS-00002]")).when(tdrService).populateDraftDarStubFromDatasetIdentifiers(any(), any());
     initResource();
 
-    Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project");
-    assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
-    Error notFoundError = (Error) r.getEntity();
-    assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
-        notFoundError.message());
+    try (Response r = resource.createDraftDataAccessRequest(authUser, identifiers, "New Project")) {
+      Error notFoundError;
+      assertEquals(Status.NOT_FOUND.getStatusCode(), r.getStatus());
+      notFoundError = (Error) r.getEntity();
+      assertEquals("Invalid dataset identifiers were provided: [DUOS-00002]",
+          notFoundError.message());
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -198,18 +181,10 @@ class TDRResourceTest {
         .map(Dataset::parseIdentifierToAlias)
         .toList();
 
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setAlias(1);
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setAlias(2);
-
     DataAccessRequest newDar = generateDataAccessRequest();
 
     when(userService.findOrCreateUser(any())).thenReturn(user);
-    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    when(tdrService.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project")).thenReturn(newDar);
     when(darService.insertDraftDataAccessRequest(any(), any())).thenReturn(newDar);
 
     initResource();
@@ -231,16 +206,10 @@ class TDRResourceTest {
         .map(Dataset::parseIdentifierToAlias)
         .toList();
 
-    Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
-    d1.setAlias(1);
-
-    Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
-    d2.setAlias(2);
+    DataAccessRequest newDar = generateDataAccessRequest();
 
     when(userService.findOrCreateUser(any())).thenReturn(user);
-    when(tdrService.getDatasetsByIdentifier(identifierList)).thenReturn(List.of(d1, d2));
+    when(tdrService.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project")).thenReturn(newDar);
     doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
 
     initResource();
