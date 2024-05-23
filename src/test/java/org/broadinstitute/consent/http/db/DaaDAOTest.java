@@ -224,8 +224,7 @@ class DaaDAOTest extends DAOTestHelper {
     assertEquals(3, daa.getDacs().size());
   }
 
-
-  @Test
+    @Test
   void testFindDaaDatasetIdsByUserId() {
     // Testing the case of a user requesting DAR access to a datataset.
     // That user must have an LC with a DAA associated to the same DAC that the dataset is associated to.
@@ -251,6 +250,12 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(datasetIds.contains(dataset1.getDataSetId()));
     assertTrue(datasetIds.contains(dataset2.getDataSetId()));
     assertFalse(datasetIds.contains(dataset3.getDataSetId()));
+  }
+
+  @Test
+  void testFindDaaDatasetIdsByUserIdNullUser() {
+    List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(null);
+    assertTrue(datasetIds.isEmpty());
   }
 
   private User createRandomUser() {
