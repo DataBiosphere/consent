@@ -812,7 +812,7 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDataAccessRequest(authUser, info, "")) {
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
