@@ -227,7 +227,7 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindDaaDatasetIdsByUserId() {
-    // Testing the case of a user requesting DAR access to a datataset.
+    // Testing the case of a user requesting DAR access to a dataset.
     // That user must have an LC with a DAA associated to the same DAC that the dataset is associated to.
     User user = createRandomUser();
     Institution institution = createRandomInstitution(user.getUserId());
