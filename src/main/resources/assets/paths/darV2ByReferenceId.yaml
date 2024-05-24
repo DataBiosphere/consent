@@ -24,11 +24,8 @@ get:
     500:
       description: Server Error
 put:
-  deprecated: true
-  summary: Update a Data Access Request by Reference Id.
-  description: |
-    Update a Data Access Request by Reference Id.
-    Deprecated in favor of /api/dar/v3/{referenceId}
+  summary: Update a Data Access Request by Reference Id
+  description: Returns the updated Data Access Request.
   parameters:
     - name: referenceId
       in: path
