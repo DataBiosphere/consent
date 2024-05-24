@@ -1,13 +1,12 @@
 post:
-  deprecated: true
   summary: Create Draft Data Access Request
-  description: |
-    Create Draft Data Access Request.
-    Deprecated in favor of /api/tdr/v2/dar/draft
+  description: Create Draft Data Access Request
   parameters:
     - name: identifiers
       in: query
-      description: Dataset identifiers to be included in the Data Access Request (comma separated). e.g. DUOS-123456, DUOS-123457
+      description: |
+        Dataset identifiers to be included in the Data Access Request (comma separated). e.g. DUOS-123456, DUOS-123457
+        Datasets are restricted to those for which the user has a Library Card with a Data Access Agreement for the dataset's Data Access Committee
       required: true
       schema:
         type: string
@@ -22,6 +21,10 @@ post:
   responses:
     201:
       description: Returns the created draft Data Access Request
+    400:
+      description: |
+        Bad Request. Input is malformed or user does not have appropriate Data Access Agreement
+        for the requested Datasets
     404:
       description: Bad request invalid dataset identifiers were provided
     500:

@@ -332,7 +332,7 @@ public class User {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public boolean hasUserRole(UserRoles role) {

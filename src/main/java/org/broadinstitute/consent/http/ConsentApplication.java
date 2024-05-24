@@ -53,7 +53,7 @@ import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
-import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
+import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
 import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
 import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
@@ -216,7 +216,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(
-        new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
+        new DataAccessRequestResource(dataAccessRequestService, emailService, gcsService,
             userService, datasetService, matchService));
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService, elasticSearchService));

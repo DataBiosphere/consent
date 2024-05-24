@@ -50,8 +50,8 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-@Path("api/dar/v2")
-public class DataAccessRequestResourceVersion2 extends Resource {
+@Path("api/dar")
+public class DataAccessRequestResource extends Resource {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailService emailService;
@@ -61,7 +61,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   private final DatasetService datasetService;
 
   @Inject
-  public DataAccessRequestResourceVersion2(
+  public DataAccessRequestResource(
       DataAccessRequestService dataAccessRequestService,
       EmailService emailService,
       GCSService gcsService,
@@ -80,6 +80,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
+  @Path("/v2")
   public Response getDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -94,6 +95,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
+  @Path("/v2")
   public Response createDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
@@ -119,8 +121,39 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  @Path("/v3")
+  public Response createDataAccessRequestWithDAARestrictions(
+      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getEmail());
+      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+      }
+      DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
+      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+      Integer collectionId = newDar.getCollectionId();
+      try {
+        emailService.sendNewDARCollectionMessage(collectionId);
+      } catch (Exception e) {
+        // non-fatal exception
+        logException("Exception sending email for collection id: " + collectionId, e);
+      }
+      URI uri = info.getRequestUriBuilder().build();
+      matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
+      return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
-  @Path("/{referenceId}")
+  @Path("/v2/{referenceId}")
   @Produces("application/json")
   @PermitAll
   public Response getByReferenceId(
@@ -146,7 +179,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @PUT
-  @Path("/{referenceId}")
+  @Path("/v2/{referenceId}")
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
   public Response updateByReferenceId(
@@ -171,7 +204,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @Path("/draft")
+  @Path("/v2/draft")
   @RolesAllowed(RESEARCHER)
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
@@ -186,7 +219,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces("application/json")
-  @Path("/draft/{referenceId}")
+  @Path("/v2/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
   public Response getDraftDar(@Auth AuthUser authUser, @PathParam("referenceId") String id) {
     try {
@@ -204,7 +237,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @POST
   @Consumes("application/json")
   @Produces("application/json")
-  @Path("/draft")
+  @Path("/v2/draft")
   @RolesAllowed(RESEARCHER)
   public Response createDraftDataAccessRequest(
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
@@ -220,10 +253,31 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/v3/draft")
+  @RolesAllowed(RESEARCHER)
+  public Response createDraftDataAccessRequestWithDAARestrictions(
+      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getEmail());
+      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, newDar.getDatasetIds());
+      DataAccessRequest result =
+          dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
+      URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
+      return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
-  @Path("/draft/{referenceId}")
+  @Path("/v2/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
   public Response updatePartialDataAccessRequest(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
@@ -245,9 +299,36 @@ public class DataAccessRequestResourceVersion2 extends Resource {
     }
   }
 
+  @PUT
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/v3/draft/{referenceId}")
+  @RolesAllowed(RESEARCHER)
+  public Response updatePartialDataAccessRequestWithDAARestrictions(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+    try {
+      User user = findUserByEmail(authUser.getEmail());
+      DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
+      checkAuthorizedUpdateUser(user, originalDar);
+      DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      // Keep dar data reference id in sync with the dar until we fully deprecate
+      // it in dar data.
+      data.setReferenceId(originalDar.getReferenceId());
+      originalDar.setData(data);
+      originalDar.setDatasetIds(data.getDatasetIds());
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, originalDar.getDatasetIds());
+      DataAccessRequest updatedDar =
+          dataAccessRequestService.updateByReferenceId(user, originalDar);
+      return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @GET
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-  @Path("/{referenceId}/irbDocument")
+  @Path("/v2/{referenceId}/irbDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getIrbDocument(
       @Auth AuthUser authUser,
@@ -279,7 +360,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/{referenceId}/irbDocument")
+  @Path("/v2/{referenceId}/irbDocument")
   @RolesAllowed({RESEARCHER})
   public Response uploadIrbDocument(
       @Auth AuthUser authUser,
@@ -301,7 +382,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/progress_report/{parentReferenceId}")
+  @Path("/v2/progress_report/{parentReferenceId}")
   @RolesAllowed({RESEARCHER})
   public Response postProgressReport(
       @Auth AuthUser authUser,
@@ -360,7 +441,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
 
   @GET
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-  @Path("/{referenceId}/collaborationDocument")
+  @Path("/v2/{referenceId}/collaborationDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getCollaborationDocument(
       @Auth AuthUser authUser,
@@ -392,7 +473,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/{referenceId}/collaborationDocument")
+  @Path("/v2/{referenceId}/collaborationDocument")
   @RolesAllowed({RESEARCHER})
   public Response uploadCollaborationDocument(
       @Auth AuthUser authUser,
@@ -412,7 +493,7 @@ public class DataAccessRequestResourceVersion2 extends Resource {
   }
 
   @DELETE
-  @Path("/{referenceId}")
+  @Path("/v2/{referenceId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {

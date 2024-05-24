@@ -1,17 +1,26 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.ws.rs.core.MediaType;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -93,6 +102,7 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa2);
     assertEquals(daa2.getDaaId(), daaId2);
   }
+
   @Test
   void testFindByIdInvalid() {
     DataAccessAgreement daa3 = daaDAO.findById(RandomUtils.nextInt(10000, 100000));
@@ -212,6 +222,103 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa);
     assertNotNull(daa.getDacs());
     assertEquals(3, daa.getDacs().size());
+  }
+
+    @Test
+  void testFindDaaDatasetIdsByUserId() {
+    // Testing the case of a user requesting DAR access to a dataset.
+    // That user must have an LC with a DAA associated to the same DAC that the dataset is associated to.
+    User user = createRandomUser();
+    Institution institution = createRandomInstitution(user.getUserId());
+    LibraryCard lc = createRandomLibraryCard(user, institution);
+    Dac dac1 = createRandomDac();
+    Dac dac2 = createRandomDac();
+    DataAccessAgreement daa = createRandomDataAccessAgreement(user, dac1);
+    // Associate the DAC to the Data Access Agreeement:
+    daaDAO.createDacDaaRelation(dac1.getDacId(), daa.getDaaId());
+    // Associate the user's Library Card to the Data Access Agreeement:
+    libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daa.getDaaId());
+    // Create two datasets associated to the DAC and DAA
+    Dataset dataset1 = createRandomDataset(user, dac1);
+    Dataset dataset2 = createRandomDataset(user, dac1);
+    // Create a third dataset that should not be returned
+    Dataset dataset3 = createRandomDataset(user, dac2);
+
+    List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(user.getUserId());
+    assertFalse(datasetIds.isEmpty());
+    assertEquals(2, datasetIds.size());
+    assertTrue(datasetIds.contains(dataset1.getDataSetId()));
+    assertTrue(datasetIds.contains(dataset2.getDataSetId()));
+    assertFalse(datasetIds.contains(dataset3.getDataSetId()));
+  }
+
+  @Test
+  void testFindDaaDatasetIdsByUserIdNullUser() {
+    List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(null);
+    assertTrue(datasetIds.isEmpty());
+  }
+
+  private User createRandomUser() {
+    int userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15),
+        RandomStringUtils.randomAlphabetic(5), new Date());
+    return userDAO.findUserById(userId);
+  }
+
+  private Institution createRandomInstitution(int userId) {
+    int institutionId = institutionDAO.insertInstitution(
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        null,
+        null,
+        null,
+        null,
+        null,
+        userId,
+        new Date());
+    return institutionDAO.findInstitutionById(institutionId);
+  }
+
+  private LibraryCard createRandomLibraryCard(User user, Institution institution) {
+    int lcId = libraryCardDAO.insertLibraryCard(
+        user.getUserId(),
+        institution.getId(),
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        user.getUserId(),
+        new Date());
+    return libraryCardDAO.findLibraryCardById(lcId);
+  }
+
+  private Dac createRandomDac() {
+    int dacId = dacDAO.createDac(
+        RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5),
+        new Date());
+    return dacDAO.findById(dacId);
+  }
+
+  private DataAccessAgreement createRandomDataAccessAgreement(User user, Dac dac) {
+    int daaId = daaDAO.createDaa(
+        user.getUserId(),
+        Instant.now(),
+        user.getUserId(),
+        Instant.now(),
+        dac.getDacId());
+    return daaDAO.findById(daaId);
+  }
+
+  private Dataset createRandomDataset(User user, Dac dac) {
+    int datasetId = datasetDAO.insertDataset(
+        RandomStringUtils.randomAlphabetic(5),
+        new Timestamp(Instant.now().getEpochSecond()),
+        user.getUserId(),
+        null,
+        new DataUseBuilder().setGeneralUse(true).build().toString(),
+        dac.getDacId());
+    return datasetDAO.findDatasetById(datasetId);
   }
 
 }

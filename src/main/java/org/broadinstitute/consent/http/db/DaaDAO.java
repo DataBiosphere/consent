@@ -174,4 +174,21 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       """)
   void deleteDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
+  /**
+   * Relationship chain:
+   * User -> Library Card -> Data Access Agreement -> DAC -> Dataset
+   * @param userId The requesting User ID
+   * @return List of Dataset Ids for which a user has DAA acceptances
+   */
+  @SqlQuery(
+      """
+      SELECT DISTINCT d.dataset_id
+      FROM dataset d
+      INNER JOIN dac_daa ON dac_daa.dac_id = d.dac_id
+      INNER JOIN lc_daa ON dac_daa.daa_id = lc_daa.daa_id
+      INNER JOIN library_card lc on lc.id = lc_daa.lc_id
+      WHERE lc.user_id = :userId
+      """)
+  List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
+
 }
