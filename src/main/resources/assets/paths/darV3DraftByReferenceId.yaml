@@ -21,6 +21,10 @@ put:
   responses:
     201:
       description: Returns the upated draft Data Access Request.
+    400:
+      description: |
+        Bad Request. Input is malformed or user does not have appropriate Data Access Agreement
+        for the requested Datasets
     403:
       description: Updates are restricted to the create user.
     500:

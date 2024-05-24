@@ -15,5 +15,9 @@ post:
   responses:
     201:
       description: Returns the created draft Data Access Request.
+    400:
+      description: |
+        Bad Request. Input is malformed or user does not have appropriate Data Access Agreement
+        for the requested Datasets
     500:
       description: Internal Server Error.

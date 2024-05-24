@@ -1,5 +1,5 @@
 post:
-  summary: createDraftDataAccessRequest
+  summary: Create Draft Data Access Request
   description: Create Draft Data Access Request
   parameters:
     - name: identifiers
@@ -21,6 +21,10 @@ post:
   responses:
     201:
       description: Returns the created draft Data Access Request
+    400:
+      description: |
+        Bad Request. Input is malformed or user does not have appropriate Data Access Agreement
+        for the requested Datasets
     404:
       description: Bad request invalid dataset identifiers were provided
     500:
