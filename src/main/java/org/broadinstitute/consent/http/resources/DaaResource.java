@@ -327,4 +327,34 @@ public class DaaResource extends Resource implements ConsentLogger {
       return createExceptionResponse(e);
     }
   }
+
+  @PUT
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("{daaId}/dac/{dacId}")
+  public Response addDacToDaa(
+      @Context UriInfo info,
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId,
+      @PathParam("dacId") Integer dacId) {
+    try {
+      dacService.findById(dacId);
+      daaService.findById(daaId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
+      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
+      // chairperson for.
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
+        if (!dacIds.contains(dacId)) {
+          return Response.status(Status.FORBIDDEN).build();
+        }
+      }
+      daaService.addDacToDaa(dacId,daaId);
+      DataAccessAgreement daa = daaService.findById(daaId);
+      return Response.ok().entity(daa).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

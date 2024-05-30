@@ -1,0 +1,30 @@
+put:
+  summary: Add DAA to DAC
+  operationId: addDacToDaa
+  description: Create a link between a Data Access Agreement and a DAC
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+    - name: dacUd
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: false
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully created a relationship between a DAA and a DAC.
+    403:
+      description: User not authorized to create a relationship between a DAA and a DAC.
+    404:
+      description: Data Access Agreement or Data Access Committee Not Found
+    500:
+      description: Internal Server Error
