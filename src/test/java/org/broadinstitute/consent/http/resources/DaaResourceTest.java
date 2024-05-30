@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -930,5 +931,119 @@ class DaaResourceTest {
 
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testAddDacToDaaAdmin() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_OK, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaChairperson() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User chairperson = new User();
+    chairperson.setChairpersonRoleWithDAC(dac.getDacId());
+
+    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_OK, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaChairpersonNoMatchingDac() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User chairperson = new User();
+    chairperson.setChairpersonRoleWithDAC(RandomUtils.nextInt(100,200));
+
+    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaFromUserForbidden() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User researcher = new User();
+    researcher.setResearcherRole();
+
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaDaaNotFound() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(daaService.findById(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaDacNotFound() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(dacService.findById(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
   }
 }

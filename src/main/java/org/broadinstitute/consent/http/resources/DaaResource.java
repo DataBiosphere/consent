@@ -333,7 +333,6 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, CHAIRPERSON})
   @Path("{daaId}/dac/{dacId}")
   public Response addDacToDaa(
-      @Context UriInfo info,
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId,
       @PathParam("dacId") Integer dacId) {
