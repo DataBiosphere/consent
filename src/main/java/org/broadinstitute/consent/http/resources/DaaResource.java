@@ -340,8 +340,8 @@ public class DaaResource extends Resource implements ConsentLogger {
       dacService.findById(dacId);
       daaService.findById(daaId);
       User user = userService.findUserByEmail(authUser.getEmail());
-      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
-      // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
+      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided DacId.
+      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
         List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
