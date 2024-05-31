@@ -258,6 +258,26 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(datasetIds.isEmpty());
   }
 
+  @Test
+  void testDeleteDaa() {
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    User user = userDAO.findUserById(userId);
+    Institution institution = createRandomInstitution(user.getUserId());
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());;
+    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    LibraryCard lc = createRandomLibraryCard(user, institution);
+    DataAccessAgreement daa1 = daaDAO.findById(daaId1);
+
+    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
+    libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daaId1);
+
+    daaDAO.deleteDaa(daa1.getDaaId());
+
+    List<DataAccessAgreement> daas = daaDAO.findAll();
+    assertTrue(daas.isEmpty());
+    assertTrue(lc.getDaaIds().isEmpty());
+  }
+
   private User createRandomUser() {
     int userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15),
         RandomStringUtils.randomAlphabetic(5), new Date());

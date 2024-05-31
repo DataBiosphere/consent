@@ -931,4 +931,57 @@ class DaaResourceTest {
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
+
+  @Test
+  void testDeleteDaaAdmin() {
+    int daaId = RandomUtils.nextInt(10, 100);
+
+    User admin = new User();
+    admin.setAdminRole();
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(daaService.findById(daaId)).thenReturn(daa);
+    doNothing().when(daaService).deleteDaa(any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.deleteDaa(authUser, daaId);
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testDeleteDaaDaaNotFound() {
+    int daaId = RandomUtils.nextInt(10, 100);
+
+    User admin = new User();
+    admin.setAdminRole();
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+
+    when(daaService.findById(daaId)).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.deleteDaa(authUser, daaId);
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testDeleteDaaForbiddenUser() {
+    int daaId = RandomUtils.nextInt(10, 100);
+
+    User researcher = new User();
+    researcher.setResearcherRole();
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.deleteDaa(authUser, daaId);
+    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
+  }
 }

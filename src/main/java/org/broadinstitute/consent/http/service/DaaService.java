@@ -161,6 +161,11 @@ public class DaaService implements ConsentLogger {
   }
 
   public void deleteDaa(Integer daaId) {
-    daaDAO.deleteDaa(daaId);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (daa != null) {
+      daaDAO.deleteDaa(daaId);
+    } else {
+      throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
+    }
   }
 }
