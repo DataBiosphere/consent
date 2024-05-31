@@ -159,4 +159,8 @@ public class DaaService implements ConsentLogger {
     }
     return jsonElementList.stream().distinct().map(e -> findById(e.getAsInt())).toList();
   }
+
+  public void deleteDaa(Integer daaId) {
+    daaDAO.deleteDaa(daaId);
+  }
 }

@@ -22,3 +22,24 @@ get:
       description: No DAA found with the given ID
     500:
       description: Internal Server Error
+delete:
+  summary: Delete DAA by id
+  description: Deletes Data Access Agreement by Id
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: The Data Access Agreement matching the provided ID was successfully deleted
+    403:
+      description: User not authorized to delete DAA
+    404:
+      description: No DAA found with the given ID
+    500:
+      description: Internal Server Error
