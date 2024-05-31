@@ -209,8 +209,8 @@ public class DaaResource extends Resource implements ConsentLogger {
   public Response deleteDaa(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId) {
-    daaService.findById(daaId);
     try {
+      daaService.findById(daaId);
       User user = userService.findUserByEmail(authUser.getEmail());
       if (!user.hasUserRole(UserRoles.ADMIN)) {
         return Response.status(Status.FORBIDDEN).build();
@@ -218,7 +218,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       daaService.deleteDaa(daaId);
       return Response.ok().build();
     } catch (Exception e) {
-      return Response.serverError().entity("Unable to delete Data Access Agreement with the provided id: " + daaId).build();
+      return createExceptionResponse(e);
     }
   }
 
