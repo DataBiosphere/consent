@@ -943,6 +943,7 @@ class DaaResourceTest {
     User admin = new User();
     admin.setAdminRole();
 
+    when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
@@ -962,6 +963,7 @@ class DaaResourceTest {
     User chairperson = new User();
     chairperson.setChairpersonRoleWithDAC(dac.getDacId());
 
+    when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
@@ -1019,6 +1021,7 @@ class DaaResourceTest {
     User admin = new User();
     admin.setAdminRole();
 
+    when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.findById(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
@@ -1044,5 +1047,25 @@ class DaaResourceTest {
 
     Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testAddDacToDaaAlreadyExists() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(daaService.findById(any())).thenReturn(daa);
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 }

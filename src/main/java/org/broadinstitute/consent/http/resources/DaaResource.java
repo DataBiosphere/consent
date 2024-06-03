@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -338,7 +339,6 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("dacId") Integer dacId) {
     try {
       dacService.findById(dacId);
-      daaService.findById(daaId);
       User user = userService.findUserByEmail(authUser.getEmail());
       // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided DacId.
       // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
@@ -349,9 +349,18 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-      daaService.addDacToDaa(dacId,daaId);
       DataAccessAgreement daa = daaService.findById(daaId);
-      return Response.ok().entity(daa).build();
+      Optional<Dac> matchingDac = Optional.empty();
+      if (daa.getDacs() != null) {
+        matchingDac = daa.getDacs().stream()
+            .filter(dac -> Objects.equals(dac.getDacId(), dacId))
+            .findFirst();
+      }
+      if (matchingDac.isEmpty()) {
+        daaService.addDacToDaa(dacId,daaId);
+      }
+      DataAccessAgreement updatedDaa = daaService.findById(daaId);
+      return Response.ok().entity(updatedDaa).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
