@@ -11,6 +11,7 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
@@ -91,6 +92,8 @@ public class DaaService implements ConsentLogger {
   }
 
   public void addDacToDaa(Integer dacId, Integer daaId) {
+    Date updateDate = new Date();
+    daaDAO.updateDaa(updateDate, daaId);
     daaDAO.createDacDaaRelation(dacId, daaId);
   }
 
@@ -158,5 +161,10 @@ public class DaaService implements ConsentLogger {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findById(e.getAsInt())).toList();
+  }
+
+  public void updateDateDaa(Integer daaId) {
+    Date updateDate = new Date();
+    daaDAO.updateDaa(updateDate, daaId);
   }
 }

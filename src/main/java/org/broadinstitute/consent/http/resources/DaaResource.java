@@ -358,6 +358,8 @@ public class DaaResource extends Resource implements ConsentLogger {
       }
       if (matchingDac.isEmpty()) {
         daaService.addDacToDaa(dacId,daaId);
+      } else {
+        daaService.updateDateDaa(daaId);
       }
       DataAccessAgreement updatedDaa = daaService.findById(daaId);
       return Response.ok().entity(updatedDaa).build();

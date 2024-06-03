@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
@@ -190,5 +191,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       WHERE lc.user_id = :userId
       """)
   List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
+
+  @SqlUpdate("UPDATE data_access_agreement SET update_date = :updateDate WHERE daa_id = :daaId")
+  void updateDaa(@Bind("updateDate") Date updateDate, @Bind("daaId") Integer dacId);
+
 
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -256,6 +257,18 @@ class DaaDAOTest extends DAOTestHelper {
   void testFindDaaDatasetIdsByUserIdNullUser() {
     List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(null);
     assertTrue(datasetIds.isEmpty());
+  }
+
+  @Test
+  void testUpdateDaa() {
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    daaDAO.updateDaa(new Date(), daa.getDaaId());
+    DataAccessAgreement updatedDaa = daaDAO.findById(daaId);
+    assertNotEquals(daa.getUpdateDate(), updatedDaa.getUpdateDate());
   }
 
   private User createRandomUser() {
