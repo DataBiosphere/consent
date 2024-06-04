@@ -163,9 +163,10 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       @Bind("updateDate") Instant updateDate, @Bind("initialDacId") Integer initialDacId);
 
   @SqlUpdate("""
-      INSERT INTO dac_daa (dac_id, daa_id)
-      VALUES (:dacId, :daaId)
-      """)
+    INSERT INTO dac_daa (dac_id, daa_id)
+    VALUES (:dacId, :daaId)
+    ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
+  """)
   void createDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
   @SqlUpdate("""
@@ -194,6 +195,4 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate("UPDATE data_access_agreement SET update_date = :updateDate WHERE daa_id = :daaId")
   void updateDaa(@Bind("updateDate") Date updateDate, @Bind("daaId") Integer dacId);
-
-
 }

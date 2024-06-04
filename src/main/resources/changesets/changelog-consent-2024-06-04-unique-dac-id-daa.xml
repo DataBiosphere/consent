@@ -1,0 +1,10 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-06-04-unique-dac-id-daa" author="aarohinadkarni">
+    <sql>
+      ALTER TABLE dac_daa
+        ADD CONSTRAINT dac_id_unique UNIQUE (dac_id);
+    </sql>
+  </changeSet>
+</databaseChangeLog>

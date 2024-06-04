@@ -92,8 +92,6 @@ public class DaaService implements ConsentLogger {
   }
 
   public void addDacToDaa(Integer dacId, Integer daaId) {
-    Date updateDate = new Date();
-    daaDAO.updateDaa(updateDate, daaId);
     daaDAO.createDacDaaRelation(dacId, daaId);
   }
 
@@ -161,10 +159,5 @@ public class DaaService implements ConsentLogger {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findById(e.getAsInt())).toList();
-  }
-
-  public void updateDateDaa(Integer daaId) {
-    Date updateDate = new Date();
-    daaDAO.updateDaa(updateDate, daaId);
   }
 }
