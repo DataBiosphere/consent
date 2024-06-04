@@ -206,15 +206,12 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Path("{daaId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDaa(
+  public Response adminDeleteDaa(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId) {
     try {
       daaService.findById(daaId);
       User user = userService.findUserByEmail(authUser.getEmail());
-      if (!user.hasUserRole(UserRoles.ADMIN)) {
-        return Response.status(Status.FORBIDDEN).build();
-      }
       daaService.deleteDaa(daaId);
       return Response.ok().build();
     } catch (Exception e) {

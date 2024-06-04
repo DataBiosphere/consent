@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -947,7 +948,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.deleteDaa(authUser, daaId);
+    Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_OK;
   }
 
@@ -964,7 +965,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.deleteDaa(authUser, daaId);
+    Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
@@ -977,11 +978,12 @@ class DaaResourceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
 
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    when(userService.findUserByEmail(any())).thenThrow(new ForbiddenException());
+    when(daaService.findById(daaId)).thenReturn(daa);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.deleteDaa(authUser, daaId);
+    Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
 }

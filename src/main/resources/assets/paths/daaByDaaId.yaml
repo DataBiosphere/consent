@@ -34,6 +34,7 @@ delete:
         type: integer
   tags:
     - DAA
+    - Admin
   responses:
     200:
       description: The Data Access Agreement matching the provided ID was successfully deleted
