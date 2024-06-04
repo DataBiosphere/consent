@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -332,7 +333,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PUT
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  @Path("{daaId}/dac/{dacId}")
+  @Path("/{daaId}/dac/{dacId}")
   public Response addDacToDaa(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId,
@@ -345,7 +346,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
         List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-        if (!dacIds.contains(dacId)) {
+        if (!new HashSet<>(dacIds).contains(dacId)) {
           return Response.status(Status.FORBIDDEN).build();
         }
       }

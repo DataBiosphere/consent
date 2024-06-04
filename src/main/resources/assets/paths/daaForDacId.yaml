@@ -9,14 +9,12 @@ put:
       required: true
       schema:
         type: integer
-    - name: dacUd
+    - name: dacId
       in: path
       description: The DAC ID
       required: true
       schema:
         type: integer
-  requestBody:
-    required: false
   tags:
     - DAA
   responses:
