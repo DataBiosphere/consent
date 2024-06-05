@@ -21,7 +21,6 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -362,14 +361,11 @@ public class DaaResource extends Resource implements ConsentLogger {
       // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        List<Integer> matchedChairpersonDacIds = user
-            .getRoles()
+        if (user.getRoles()
             .stream()
             .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
             .map(UserRole::getDacId)
-            .filter(id -> Objects.equals(id, dacId))
-            .toList();
-        if (matchedChairpersonDacIds.isEmpty()) {
+            .noneMatch(dacId::equals)) {
           return Response.status(Status.FORBIDDEN).build();
         }
       }

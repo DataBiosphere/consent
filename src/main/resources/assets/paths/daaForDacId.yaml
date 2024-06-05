@@ -1,6 +1,5 @@
 put:
   summary: Add DAA to DAC
-  operationId: addDacToDaa
   description: Create a link between a Data Access Agreement and a DAC
   parameters:
     - name: daaId
