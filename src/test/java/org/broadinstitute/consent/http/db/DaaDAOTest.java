@@ -259,18 +259,6 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(datasetIds.isEmpty());
   }
 
-  @Test
-  void testUpdateDaa() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
-    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
-    Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-
-    DataAccessAgreement daa = daaDAO.findById(daaId);
-    daaDAO.updateDaa(new Date(), daa.getDaaId());
-    DataAccessAgreement updatedDaa = daaDAO.findById(daaId);
-    assertNotEquals(daa.getUpdateDate(), updatedDaa.getUpdateDate());
-  }
-
   private User createRandomUser() {
     int userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15),
         RandomStringUtils.randomAlphabetic(5), new Date());

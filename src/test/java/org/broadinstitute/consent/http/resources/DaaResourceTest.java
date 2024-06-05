@@ -948,7 +948,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 
@@ -968,7 +968,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 
@@ -987,7 +987,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
   }
 
@@ -1006,7 +1006,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
   }
 
@@ -1026,7 +1026,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
   }
 
@@ -1045,7 +1045,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
   }
 
@@ -1065,7 +1065,7 @@ class DaaResourceTest {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
 
-    Response response = resource.addDacToDaa(authUser, daaId, dac.getDacId());
+    Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 }

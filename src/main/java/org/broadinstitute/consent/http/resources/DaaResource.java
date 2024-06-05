@@ -79,8 +79,14 @@ public class DaaResource extends Resource implements ConsentLogger {
       // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-        if (!dacIds.contains(dacId)) {
+        List<Integer> matchedChairpersonDacIds = user
+            .getRoles()
+            .stream()
+            .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
+            .map(UserRole::getDacId)
+            .filter(id -> Objects.equals(id, dacId))
+            .toList();
+        if (matchedChairpersonDacIds.isEmpty()) {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
@@ -334,7 +340,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON})
   @Path("/{daaId}/dac/{dacId}")
-  public Response addDacToDaa(
+  public Response modifyDacDaaRelationship(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId,
       @PathParam("dacId") Integer dacId) {

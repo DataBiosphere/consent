@@ -192,7 +192,4 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       WHERE lc.user_id = :userId
       """)
   List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
-
-  @SqlUpdate("UPDATE data_access_agreement SET update_date = :updateDate WHERE daa_id = :daaId")
-  void updateDaa(@Bind("updateDate") Date updateDate, @Bind("daaId") Integer dacId);
 }
