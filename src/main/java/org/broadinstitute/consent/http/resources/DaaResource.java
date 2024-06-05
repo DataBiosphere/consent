@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,8 +79,14 @@ public class DaaResource extends Resource implements ConsentLogger {
       // Admins can add a DAA with any DAC, but chairpersons can only add DAAs for DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-        if (!dacIds.contains(dacId)) {
+        List<Integer> matchedChairpersonDacIds = user
+            .getRoles()
+            .stream()
+            .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
+            .map(UserRole::getDacId)
+            .filter(id -> Objects.equals(id, dacId))
+            .toList();
+        if (matchedChairpersonDacIds.isEmpty()) {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
@@ -341,6 +348,43 @@ public class DaaResource extends Resource implements ConsentLogger {
         libraryCardService.removeDaaFromUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daa.getDaaId());
       }
       return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("/{daaId}/dac/{dacId}")
+  public Response modifyDacDaaRelationship(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId,
+      @PathParam("dacId") Integer dacId) {
+    try {
+      dacService.findById(dacId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided DacId.
+      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
+      // chairperson for.
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
+        if (!new HashSet<>(dacIds).contains(dacId)) {
+          return Response.status(Status.FORBIDDEN).build();
+        }
+      }
+      DataAccessAgreement daa = daaService.findById(daaId);
+      Optional<Dac> matchingDac = Optional.empty();
+      if (daa.getDacs() != null) {
+        matchingDac = daa.getDacs().stream()
+            .filter(dac -> Objects.equals(dac.getDacId(), dacId))
+            .findFirst();
+      }
+      if (matchingDac.isEmpty()) {
+        daaService.addDacToDaa(dacId,daaId);
+      }
+      DataAccessAgreement updatedDaa = daaService.findById(daaId);
+      return Response.ok().entity(updatedDaa).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
