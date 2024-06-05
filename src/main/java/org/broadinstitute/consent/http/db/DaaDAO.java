@@ -199,4 +199,5 @@ public interface DaaDAO extends Transactional<DaaDAO> {
     DELETE FROM data_access_agreement WHERE daa_id = :daaId
     """)
   void deleteDaa(@Bind("daaId") Integer daaId);
+
 }
