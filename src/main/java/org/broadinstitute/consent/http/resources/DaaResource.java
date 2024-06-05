@@ -210,6 +210,23 @@ public class DaaResource extends Resource implements ConsentLogger {
     }
   }
 
+  @DELETE
+  @Path("{daaId}")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN})
+  public Response adminDeleteDaa(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId) {
+    try {
+      daaService.findById(daaId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      daaService.deleteDaa(daaId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @POST
   @PermitAll
   @Path("/request/{daaId}")
