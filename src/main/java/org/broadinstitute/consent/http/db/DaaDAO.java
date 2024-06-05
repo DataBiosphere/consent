@@ -191,4 +191,11 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       """)
   List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
 
+  @SqlUpdate("""
+    WITH lc_deletes AS (DELETE FROM lc_daa WHERE lc_daa.daa_id = :daaId),
+    dac_delete AS (DELETE FROM dac_daa WHERE dac_daa.daa_id = :daaId)
+    DELETE FROM data_access_agreement WHERE daa_id = :daaId
+    """)
+  void deleteDaa(@Bind("daaId") Integer daaId);
+
 }

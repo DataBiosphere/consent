@@ -299,4 +299,18 @@ class DaaServiceTest {
     initService();
     assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "invalidKey"));
   }
+
+  @Test
+  void testDeleteDaa() {
+    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
+    doNothing().when(daaDAO).deleteDaa(any());
+    initService();
+    service.deleteDaa(1);
+  }
+
+  @Test
+  void testDeleteDaaDaaNotFound() {
+    initService();
+    assertThrows(NotFoundException.class, () -> service.deleteDaa(1));
+  }
 }
