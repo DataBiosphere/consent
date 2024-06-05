@@ -934,7 +934,7 @@ class DaaResourceTest {
   }
 
   @Test
-  void testAddDacToDaaAdmin() throws Exception {
+  void testAddDacToDaaAdmin() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
@@ -954,7 +954,7 @@ class DaaResourceTest {
   }
 
   @Test
-  void testAddDacToDaaChairperson() throws Exception {
+  void testAddDacToDaaChairperson() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
@@ -977,7 +977,6 @@ class DaaResourceTest {
   void testAddDacToDaaChairpersonNoMatchingDac() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 
@@ -996,7 +995,6 @@ class DaaResourceTest {
   void testAddDacToDaaFromUserForbidden() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 
@@ -1015,7 +1013,6 @@ class DaaResourceTest {
   void testAddDacToDaaDaaNotFound() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 
@@ -1035,7 +1032,6 @@ class DaaResourceTest {
   void testAddDacToDaaDacNotFound() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 
@@ -1051,7 +1047,7 @@ class DaaResourceTest {
   }
 
   @Test
-  void testAddDacToDaaAlreadyExists() throws Exception {
+  void testAddDacToDaaAlreadyExists() {
     int daaId = RandomUtils.nextInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
