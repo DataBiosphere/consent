@@ -25,3 +25,32 @@ put:
       description: Data Access Agreement or Data Access Committee Not Found
     500:
       description: Internal Server Error
+delete:
+  summary: Remove DAC from DAA
+  description: Remove a link between a Data Access Agreement and a DAC
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully removed a relationship between a DAA and a DAC.
+    400:
+      description: Relationship between DAA and DAC does not exist.
+    403:
+      description: User not authorized to create a relationship between a DAA and a DAC.
+    404:
+      description: Data Access Agreement or Data Access Committee Not Found
+    500:
+      description: Internal Server Error

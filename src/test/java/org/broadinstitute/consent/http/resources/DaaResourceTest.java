@@ -1095,6 +1095,150 @@ class DaaResourceTest {
   }
 
   @Test
+  void testRemoveDacFromDaaAdmin() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(daaService.findById(any())).thenReturn(daa);
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_OK, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaChairperson() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User chairperson = new User();
+    chairperson.setChairpersonRoleWithDAC(dac.getDacId());
+
+    when(daaService.findById(any())).thenReturn(daa);
+    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_OK, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaChairpersonNoMatchingDac() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User chairperson = new User();
+    chairperson.setChairpersonRoleWithDAC(RandomUtils.nextInt(100,200));
+
+    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaFromUserForbidden() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User researcher = new User();
+    researcher.setResearcherRole();
+
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaDaaNotFound() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(daaService.findById(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaDacNotFound() {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+    daa.addDac(dac);
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(dacService.findById(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testRemoveDacFromDaaDoesNotExist() throws Exception {
+    int daaId = RandomUtils.nextInt(10, 100);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(10, 100));
+
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(daaService.findById(any())).thenReturn(daa);
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService,
+        emailService);
+
+    Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
+    assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   void testDeleteDaaAdmin() {
     int daaId = RandomUtils.nextInt(10, 100);
 
