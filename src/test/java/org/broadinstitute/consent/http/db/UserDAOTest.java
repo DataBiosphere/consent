@@ -359,6 +359,31 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testGetUsersWithCardsByDaaId() {
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
+    LibraryCard card = createLibraryCard();
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    LibraryCard card2 = createLibraryCard();
+    int daaId2 = daaDAO.createDaa(card2.getUserId(), now, card2.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId2);
+    Integer institutionId = card.getInstitutionId();
+    Integer userId = card.getUserId();
+    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
+    List<User> users2 = userDAO.getUsersWithCardsByDaaId(daaId2);
+    assertEquals(1, users.size());
+    assertEquals(1, users2.size());
+    User returnedUser = users.get(0);
+
+    LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
+    assertEquals(card.getId(), returnedCard.getId());
+    assertEquals(returnedCard.getDaaIds(), List.of(daaId));
+    assertEquals(userId, returnedCard.getUserId());
+    assertNotEquals(users, users2);
+  }
+
+  @Test
   void testGetUsersWithNoInstitution() {
     createUserWithInstitution();
     User user = createUser();

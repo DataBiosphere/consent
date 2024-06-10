@@ -415,6 +415,7 @@ public class ConsentModule extends AbstractModule {
         providesDaaDAO(),
         providesGCSService(),
         providesEmailService(),
+        providesUserService(),
         providesInstitutionDAO());
   }
 
@@ -568,6 +569,7 @@ public class ConsentModule extends AbstractModule {
         providesFileStorageObjectDAO(),
         providesSamDAO(),
         providesUserServiceDAO(),
+        providesDaaDAO(),
         providesEmailService());
   }
 

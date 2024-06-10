@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -33,14 +34,16 @@ public class DaaService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final GCSService gcsService;
   private final EmailService emailService;
+  private final UserService userService;
   private final InstitutionDAO institutionDAO;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, InstitutionDAO institutionDAO) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, UserService userService, InstitutionDAO institutionDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
+    this.userService = userService;
     this.institutionDAO = institutionDAO;
   }
 
@@ -138,27 +141,25 @@ public class DaaService implements ConsentLogger {
     }
   }
 
-  public void sendNewDaaEmails(User user, Integer daaId) throws Exception {
+  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName) throws Exception {
     try {
-      // this will be used by a DAC Chair
-      // i want to get the dac details from this user
-      // once i get the dac id, i need to find all SOs or just the SOs that have issues LC-DAA relationships with this DAC?
-      // once i get the dac id, i need to find all researchers who have requested data from this DAC
-//      Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
-//      if (institution == null) {
-//        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
-//      }
-      List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
-      if (signingOfficials.isEmpty()) {
-        throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
-      }
-      int userId = user.getUserId();
-      String userName = user.getDisplayName();
-      for (SimplifiedUser signingOfficial : signingOfficials) {
-        DataAccessAgreement daa = findById(daaId);
-        String daaName = daa.getFile().getFileName();
-        emailService.sendDaaRequestMessage( signingOfficial.displayName, signingOfficial.email,
-            userName, daaName, daaId, userId);
+      DataAccessAgreement daa = findById(daaId);
+      if (daa != null) {
+        String previousDaaName = daa.getFile().getFileName();
+        List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
+        List<SimplifiedUser> signingOfficials = researchers.stream()
+            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.institutionId).stream())
+            .distinct()
+            .collect(Collectors.toList());
+
+        for (SimplifiedUser researcher : researchers) {
+          emailService.sendNewDAAUploadResearcherMessage(researcher.displayName, researcher.email,
+              dacName, previousDaaName, newDaaName, user.getUserId()); // TODO: what is this user Id actually being used for? can't figure out
+        }
+        for (SimplifiedUser signingOfficial : signingOfficials) {
+          emailService.sendNewDAAUploadSOMessage(signingOfficial.displayName, signingOfficial.email,
+              dacName, previousDaaName, newDaaName, user.getUserId()); // TODO: what is this user Id actually being used for? can't figure out
+        }
       }
     } catch (Exception e) {
       logException(e);

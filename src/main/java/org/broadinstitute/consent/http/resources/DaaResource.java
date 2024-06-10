@@ -432,21 +432,20 @@ public class DaaResource extends Resource implements ConsentLogger {
   }
 
   @POST
-  @PermitAll
-  @Path("/request/{daaId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("{dacId}/upload/{oldDaaId}/{newDaaName}")
   public Response sendNewDaaMessage(
       @Auth AuthUser authUser,
-      @PathParam("daaId") Integer daaId) {
+      @PathParam("dacId") Integer dacId,
+      @PathParam("oldDaaId") Integer oldDaaId,
+      @PathParam("newDaaName") String newDaaName
+      ) {
     try {
+      //TODO: is there any check we have to do here?
       User user = userService.findUserByEmail(authUser.getEmail());
-      if (user.getInstitutionId() == null) {
-        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
-      }
-      if (user.getLibraryCards().stream()
-          .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
-        throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
-      }
-      daaService.sendDaaRequestEmails(user, daaId);
+      Dac dac = dacService.findById(dacId);
+      String dacName = dac.getName();
+      daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -53,6 +53,9 @@ class DaaServiceTest {
   private EmailService emailService;
 
   @Mock
+  private UserService userService;
+
+  @Mock
   private InstitutionDAO institutionDAO;
 
   private final InputStream inputStream = mock(InputStream.class);
@@ -64,7 +67,7 @@ class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, institutionDAO);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO);
   }
 
   @Test
