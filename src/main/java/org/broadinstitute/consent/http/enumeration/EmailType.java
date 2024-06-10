@@ -16,7 +16,8 @@ public enum EmailType {
   NEW_RESEARCHER(12),
   RESEARCHER_APPROVED(13),
   NEW_DATASET(14),
-  NEW_DAA_REQUEST(15);
+  NEW_DAA_REQUEST(15),
+  NEW_DAA_UPLOAD(16);
 
   private final Integer typeInt;
 

@@ -138,6 +138,34 @@ public class DaaService implements ConsentLogger {
     }
   }
 
+  public void sendNewDaaEmails(User user, Integer daaId) throws Exception {
+    try {
+      // this will be used by a DAC Chair
+      // i want to get the dac details from this user
+      // once i get the dac id, i need to find all SOs or just the SOs that have issues LC-DAA relationships with this DAC?
+      // once i get the dac id, i need to find all researchers who have requested data from this DAC
+//      Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
+//      if (institution == null) {
+//        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+//      }
+      List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
+      if (signingOfficials.isEmpty()) {
+        throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
+      }
+      int userId = user.getUserId();
+      String userName = user.getDisplayName();
+      for (SimplifiedUser signingOfficial : signingOfficials) {
+        DataAccessAgreement daa = findById(daaId);
+        String daaName = daa.getFile().getFileName();
+        emailService.sendDaaRequestMessage( signingOfficial.displayName, signingOfficial.email,
+            userName, daaName, daaId, userId);
+      }
+    } catch (Exception e) {
+      logException(e);
+      throw(e);
+    }
+  }
+
   public InputStream findFileById(Integer daaId) {
     DataAccessAgreement daa = daaDAO.findById(daaId);
     if (daa != null) {

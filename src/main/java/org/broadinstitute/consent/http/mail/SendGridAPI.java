@@ -26,6 +26,8 @@ import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.mail.message.DisabledDatasetMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
@@ -51,6 +53,8 @@ public class SendGridAPI {
   private final DatasetSubmittedMessage datasetSubmittedMessage = new DatasetSubmittedMessage();
   private final NewResearcherLibraryRequestMessage newResearcherLibraryRequestMessage = new NewResearcherLibraryRequestMessage();
   private final DaaRequestMessage daaRequestMessage = new DaaRequestMessage();
+  private final NewDAAUploadSOMessage newDAAUploadSOMessage = new NewDAAUploadSOMessage();
+  private final NewDAAUploadResearcherMessage newDAAUploadResearcherMessage = new NewDAAUploadResearcherMessage();
   private final UserDAO userDAO;
 
   public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
@@ -218,6 +222,20 @@ public class SendGridAPI {
       throws MessagingException {
     Mail message = daaRequestMessage.newDaaRequestMessage(toAddress, fromAccount,
         template, daaId);
+    return sendMessage(message);
+  }
+
+  public Optional<Response> sendNewDAAUploadSOMessage(String toAddress, Writer template, String dacName)
+      throws MessagingException {
+    Mail message = newDAAUploadSOMessage.newDAAUploadSOMessage(toAddress, fromAccount,
+        template, dacName);
+    return sendMessage(message);
+  }
+
+  public Optional<Response> sendNewDAAUploadResearcherMessage(String toAddress, Writer template, String dacName)
+      throws MessagingException {
+    Mail message = newDAAUploadResearcherMessage.newDAAUploadResearcherMessage(toAddress, fromAccount,
+        template, dacName);
     return sendMessage(message);
   }
 

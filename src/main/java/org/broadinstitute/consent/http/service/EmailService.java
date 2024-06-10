@@ -418,6 +418,46 @@ public class EmailService implements ConsentLogger {
     );
   }
 
+  public void sendNewDAAUploadSOMessage(
+      String signingOfficialName,
+      String signingOfficialEmail,
+      String dacName,
+      String previousDaaName,
+      String newDaaName,
+      Integer userId) throws Exception {
+    Writer template = templateHelper.getNewDaaUploadSOTemplate(signingOfficialName, dacName,
+        previousDaaName, newDaaName, this.SERVER_URL);
+    Optional<Response> response = sendGridAPI.sendNewDAAUploadSOMessage(signingOfficialEmail, template, dacName);
+    saveEmailAndResponse(
+        response.orElse(null),
+        dacName,
+        null,
+        userId,
+        EmailType.NEW_DAA_UPLOAD,
+        template
+    );
+  }
+
+  public void sendNewDAAUploadResearcherMessage(
+      String researcherUserName,
+      String researcherEmail,
+      String dacName,
+      String previousDaaName,
+      String newDaaName,
+      Integer userId) throws Exception {
+    Writer template = templateHelper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
+        previousDaaName, newDaaName, this.SERVER_URL);
+    Optional<Response> response = sendGridAPI.sendNewDAAUploadResearcherMessage(researcherEmail, template, dacName);
+    saveEmailAndResponse(
+        response.orElse(null),
+        dacName,
+        null,
+        userId,
+        EmailType.NEW_DAA_UPLOAD,
+        template
+    );
+  }
+
   private User findUserById(Integer id) throws IllegalArgumentException {
     User user = userDAO.findUserById(id);
     if (user == null) {

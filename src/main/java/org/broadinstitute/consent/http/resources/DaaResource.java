@@ -430,4 +430,26 @@ public class DaaResource extends Resource implements ConsentLogger {
       return createExceptionResponse(e);
     }
   }
+
+  @POST
+  @PermitAll
+  @Path("/request/{daaId}")
+  public Response sendNewDaaMessage(
+      @Auth AuthUser authUser,
+      @PathParam("daaId") Integer daaId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (user.getInstitutionId() == null) {
+        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+      }
+      if (user.getLibraryCards().stream()
+          .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
+        throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
+      }
+      daaService.sendDaaRequestEmails(user, daaId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }
