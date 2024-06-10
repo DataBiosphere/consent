@@ -116,14 +116,14 @@ public class FreeMarkerTemplateHelper {
       String dacName, String newDaaName, String previousDaaName, String serverUrl)
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-daa-upload-signing-official.html");
-    return generateNewDAAUploadSOTemplate(signingOfficialUserName, dacName, newDaaName, previousDaaName, serverUrl, temp);
+    return generateNewDAAUploadSOTemplate(signingOfficialUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
   }
 
   public Writer getNewDaaUploadResearcherTemplate(String researcherUserName,
       String dacName, String newDaaName, String previousDaaName, String serverUrl)
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-daa-upload-researcher.html");
-    return generateNewDAAUploadResearcherTemplate(researcherUserName, dacName, newDaaName, previousDaaName, serverUrl, temp);
+    return generateNewDAAUploadResearcherTemplate(researcherUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
   }
 
   private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
