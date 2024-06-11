@@ -585,6 +585,82 @@ class DaaResourceTest {
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
 
+  @Test
+  void testSendNewDAAMessage() throws Exception {
+    User user = new User();
+    int dacId = RandomUtils.nextInt(10,20);
+    Dac dac = new Dac();
+    dac.setDacId(dacId);
+    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    user.setChairpersonRoleWithDAC(dacId);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dacService.findById(any())).thenReturn(dac);
+    doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  void testSendNewDAAMessageUserNotFound() {
+    User user = new User();
+    int dacId = RandomUtils.nextInt(10,20);
+    user.setChairpersonRoleWithDAC(dacId);
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testSendNewDAAMessageDacNotFound() {
+    User user = new User();
+    int dacId = RandomUtils.nextInt(10,20);
+    user.setChairpersonRoleWithDAC(dacId);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dacService.findById(dacId)).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testSendNewDAAMessageDaaNotFound() throws Exception {
+    User user = new User();
+    int dacId = RandomUtils.nextInt(10,20);
+    Dac dac = new Dac();
+    dac.setDacId(dacId);
+    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    user.setChairpersonRoleWithDAC(dacId);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dacService.findById(dacId)).thenReturn(dac);
+    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
+  }
+
+  @Test
+  void testSendNewDAAMessageEmailError() throws Exception {
+    User user = new User();
+    int dacId = RandomUtils.nextInt(10,20);
+    Dac dac = new Dac();
+    dac.setDacId(dacId);
+    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    user.setChairpersonRoleWithDAC(dacId);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dacService.findById(dacId)).thenReturn(dac);
+    doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
+  }
+
   User researcherWithInstitution(int userId, int institutionId) {
     User user = new User();
     user.setUserId(userId);
