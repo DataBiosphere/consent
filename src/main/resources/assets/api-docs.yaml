@@ -124,6 +124,8 @@ paths:
     $ref: 'paths/daaById.yaml'
   /api/daa/request/{daaId}:
     $ref: 'paths/daaRequestByDaaId.yaml'
+  /api/daa/{dacId}/upload/{oldDaaId}/{newDaaName}:
+    $ref: 'paths/daaUploadByDacId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/{dacId}:
