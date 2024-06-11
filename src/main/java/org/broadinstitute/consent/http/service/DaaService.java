@@ -154,11 +154,11 @@ public class DaaService implements ConsentLogger {
 
         for (SimplifiedUser researcher : researchers) {
           emailService.sendNewDAAUploadResearcherMessage(researcher.displayName, researcher.email,
-              dacName, previousDaaName, newDaaName, user.getUserId()); // TODO: what is this user Id actually being used for? can't figure out
+              dacName, previousDaaName, newDaaName, user.getUserId());
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
           emailService.sendNewDAAUploadSOMessage(signingOfficial.displayName, signingOfficial.email,
-              dacName, previousDaaName, newDaaName, user.getUserId()); // TODO: what is this user Id actually being used for? can't figure out
+              dacName, previousDaaName, newDaaName, user.getUserId());
         }
       }
     } catch (Exception e) {

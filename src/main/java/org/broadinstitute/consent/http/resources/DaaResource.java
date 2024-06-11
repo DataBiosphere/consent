@@ -441,7 +441,6 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("newDaaName") String newDaaName
       ) {
     try {
-      //TODO: is there any check we have to do here?
       User user = userService.findUserByEmail(authUser.getEmail());
       Dac dac = dacService.findById(dacId);
       String dacName = dac.getName();
