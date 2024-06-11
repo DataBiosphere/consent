@@ -311,6 +311,90 @@ class EmailServiceTest {
   }
 
   @Test
+  void testSendNewDAAUploadResearcherMessage() throws Exception {
+    User researcher = new User();
+    researcher.setDisplayName("Jane Evans");
+    researcher.setEmail("signingofficial@example.com");
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    User user = new User();
+    user.setUserId(123);
+
+    String previousDaaName = "DAA-123";
+
+    String newDaaName = "DAA-456";
+
+    initService();
+
+    try {
+      service.sendNewDAAUploadResearcherMessage(researcher.getDisplayName(), researcher.getEmail(),
+          dac.getName(), previousDaaName, newDaaName, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getNewDaaUploadResearcherTemplate(researcher.getDisplayName(),
+        dac.getName(), newDaaName, previousDaaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("DAC-01"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_UPLOAD.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
+  void testSendNewDAAUploadSOMessage() throws Exception {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Jane Evans");
+    signingOfficial.setEmail("signingofficial@example.com");
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    User user = new User();
+    user.setUserId(123);
+
+    String previousDaaName = "DAA-123";
+
+    String newDaaName = "DAA-456";
+
+    initService();
+
+    try {
+      service.sendNewDAAUploadResearcherMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+          dac.getName(), previousDaaName, newDaaName, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getNewDaaUploadResearcherTemplate(signingOfficial.getDisplayName(),
+        dac.getName(), newDaaName, previousDaaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("DAC-01"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_UPLOAD.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();

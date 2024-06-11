@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -590,6 +592,107 @@ class UserServiceTest {
     assertNotNull(users);
     assertEquals(0, users.size());
     assertEquals(Collections.emptyList(), users);
+  }
+
+  @Test
+  void testGetUsersByDaaId() {
+    User u1 = generateUser();
+    int dacId = RandomUtils.nextInt(0,50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(any())).thenReturn(daa);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(1, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1)), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdMultipleUsers() {
+    User u1 = generateUser();
+    User u2= generateUser();
+    int dacId = RandomUtils.nextInt(0,50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    LibraryCard card2 = generateLibraryCard(u2);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(daaId)).thenReturn(daa);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(2, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdMultipleUsersMultipleDaas() {
+    User u1 = generateUser();
+    User u2 = generateUser();
+    User u3 = generateUser();
+    int dacId = RandomUtils.nextInt(0,50);
+    int dacId2 = RandomUtils.nextInt(0,50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    LibraryCard card2 = generateLibraryCard(u2);
+    LibraryCard card3 = generateLibraryCard(u3);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId2 = daaDAO.createDaa(card3.getUserId(), now, card3.getUserId(), now, dacId2);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(daaId2);
+    when(daaDAO.findById(any())).thenReturn(daa, daa2);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2), List.of(u3));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card3.getId(), daaId2);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(2, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+
+    List<SimplifiedUser> users2 = service.getUsersByDaaId(daaId2);
+    assertNotNull(users2);
+    assertEquals(1, users2.size());
+    assertEquals(List.of(new SimplifiedUser(u3)), users2);
+  }
+
+  @Test
+  void testGetUsersByDaaIdNoMatchingUsers() {
+    User u1 = generateUser();
+    int dacId = RandomUtils.nextInt(0,50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(any())).thenReturn(daa);
+//    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(0, users.size());
+    assertEquals(Collections.emptyList(), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdNoMatchingDaa() {
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      service.getUsersByDaaId(RandomUtils.nextInt(10, 50));
+    });
   }
 
   @Test
