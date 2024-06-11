@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -179,6 +180,174 @@ class DaaServiceTest {
 
   @Test
   void testSendDaaRequestEmailsWithMultipleSigningOfficials() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
+    signingOfficial2.displayName = "Official Name2";
+    signingOfficial2.email = "official2@example.com";
+
+    Institution institution = mock(Institution.class);
+    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("daaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+
+    initService();
+
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendNewDaaEmails() throws Exception {
+    User user = mock(User.class);
+
+    SimplifiedUser researcher = mock(SimplifiedUser.class);
+    researcher.displayName = "Official Name";
+    researcher.email = "official@example.com";
+    researcher.institutionId = RandomUtils.nextInt(0,50);
+
+    SimplifiedUser researcher2 = mock(SimplifiedUser.class);
+    researcher2.displayName = "Official Name2";
+    researcher2.email = "official2@example.com";
+    researcher2.institutionId = RandomUtils.nextInt(0,50);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
+    signingOfficial2.displayName = "Official Name2";
+    signingOfficial2.email = "official2@example.com";
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("previousDaaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+
+    when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendNewDaaEmailsOneResearcher() throws Exception {
+    User user = mock(User.class);
+
+    SimplifiedUser researcher = mock(SimplifiedUser.class);
+    researcher.displayName = "Official Name";
+    researcher.email = "official@example.com";
+    researcher.institutionId = RandomUtils.nextInt(0,50);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
+    signingOfficial2.displayName = "Official Name2";
+    signingOfficial2.email = "official2@example.com";
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("previousDaaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    initService();
+
+    when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendNewDaaEmailsDAANotFound() throws Exception {
+    User user = mock(User.class);
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+  }
+
+  @Test
+  void testSendNewDaaEmailsDAANoResearchersAndSOs() throws Exception {
+    User user = mock(User.class);
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("previousDaaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+
+    initService();
+
+    when(userService.getUsersByDaaId(any())).thenReturn(List.of());
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    verify(emailService, times(0)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(0)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendNewDaaEmailsUserWithoutInstitution() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(null);
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(null);
+
+    initService();
+
+    assertThrows(BadRequestException.class, () -> service.sendDaaRequestEmails(user, 1));
+  }
+
+  @Test
+  void testSendNewDaaEmailsWithSigningOfficials() throws Exception {
+    User user = mock(User.class);
+    when(user.getInstitutionId()).thenReturn(1);
+
+    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
+    signingOfficial.displayName = "Official Name";
+    signingOfficial.email = "official@example.com";
+
+    Institution institution = mock(Institution.class);
+    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
+
+    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
+
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("daaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+
+    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+
+    initService();
+
+    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
+    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testSendNewDaaEmailsWithMultipleSigningOfficials() throws Exception {
     User user = mock(User.class);
     when(user.getInstitutionId()).thenReturn(1);
 
