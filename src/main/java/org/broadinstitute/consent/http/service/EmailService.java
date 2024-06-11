@@ -446,7 +446,7 @@ public class EmailService implements ConsentLogger {
       String newDaaName,
       Integer userId) throws Exception {
     Writer template = templateHelper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
-        previousDaaName, newDaaName, this.SERVER_URL);
+        newDaaName, previousDaaName, this.SERVER_URL);
     Optional<Response> response = sendGridAPI.sendNewDAAUploadResearcherMessage(researcherEmail, template, dacName);
     saveEmailAndResponse(
         response.orElse(null),
