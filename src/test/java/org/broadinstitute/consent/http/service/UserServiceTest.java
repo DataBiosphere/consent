@@ -679,7 +679,6 @@ class UserServiceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);
-//    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     initService();
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);

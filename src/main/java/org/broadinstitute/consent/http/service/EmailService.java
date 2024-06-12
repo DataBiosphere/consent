@@ -426,14 +426,14 @@ public class EmailService implements ConsentLogger {
       String newDaaName,
       Integer userId) throws Exception {
     Writer template = templateHelper.getNewDaaUploadSOTemplate(signingOfficialName, dacName,
-        previousDaaName, newDaaName, this.SERVER_URL);
+        newDaaName, previousDaaName, this.SERVER_URL);
     Optional<Response> response = sendGridAPI.sendNewDAAUploadSOMessage(signingOfficialEmail, template, dacName);
     saveEmailAndResponse(
         response.orElse(null),
         dacName,
         null,
         userId,
-        EmailType.NEW_DAA_UPLOAD,
+        EmailType.NEW_DAA_UPLOAD_SO,
         template
     );
   }
@@ -453,7 +453,7 @@ public class EmailService implements ConsentLogger {
         dacName,
         null,
         userId,
-        EmailType.NEW_DAA_UPLOAD,
+        EmailType.NEW_DAA_UPLOAD_RESEARCHER,
         template
     );
   }

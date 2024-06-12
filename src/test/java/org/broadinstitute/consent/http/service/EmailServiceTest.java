@@ -343,7 +343,7 @@ class EmailServiceTest {
         eq("DAC-01"),
         eq(null),
         eq(user.getUserId()),
-        eq(EmailType.NEW_DAA_UPLOAD.getTypeInt()),
+        eq(EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt()),
         any(),
         any(),
         any(),
@@ -372,20 +372,20 @@ class EmailServiceTest {
     initService();
 
     try {
-      service.sendNewDAAUploadResearcherMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
           dac.getName(), previousDaaName, newDaaName, user.getUserId());
     } catch (Exception e) {
       fail("Should not fail sending message: " + e);
     }
 
-    verify(sendGridAPI, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any());
-    verify(templateHelper, times(1)).getNewDaaUploadResearcherTemplate(signingOfficial.getDisplayName(),
+    verify(sendGridAPI, times(1)).sendNewDAAUploadSOMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getNewDaaUploadSOTemplate(signingOfficial.getDisplayName(),
         dac.getName(), newDaaName, previousDaaName, serverUrl);
     verify(emailDAO, times(1)).insert(
         eq("DAC-01"),
         eq(null),
         eq(user.getUserId()),
-        eq(EmailType.NEW_DAA_UPLOAD.getTypeInt()),
+        eq(EmailType.NEW_DAA_UPLOAD_SO.getTypeInt()),
         any(),
         any(),
         any(),
