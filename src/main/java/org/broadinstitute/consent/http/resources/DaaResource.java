@@ -430,4 +430,25 @@ public class DaaResource extends Resource implements ConsentLogger {
       return createExceptionResponse(e);
     }
   }
+
+  @POST
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @Path("{dacId}/updated/{oldDaaId}/{newDaaName}")
+  public Response sendNewDaaMessage(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
+      @PathParam("oldDaaId") Integer oldDaaId,
+      @PathParam("newDaaName") String newDaaName
+      ) {
+    try {
+      daaService.findById(oldDaaId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dac dac = dacService.findById(dacId);
+      String dacName = dac.getName();
+      daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -33,14 +34,16 @@ public class DaaService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final GCSService gcsService;
   private final EmailService emailService;
+  private final UserService userService;
   private final InstitutionDAO institutionDAO;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, InstitutionDAO institutionDAO) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, UserService userService, InstitutionDAO institutionDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
+    this.userService = userService;
     this.institutionDAO = institutionDAO;
   }
 
@@ -131,6 +134,32 @@ public class DaaService implements ConsentLogger {
         String daaName = daa.getFile().getFileName();
         emailService.sendDaaRequestMessage( signingOfficial.displayName, signingOfficial.email,
             userName, daaName, daaId, userId);
+      }
+    } catch (Exception e) {
+      logException(e);
+      throw(e);
+    }
+  }
+
+  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName) throws Exception {
+    try {
+      DataAccessAgreement daa = findById(daaId);
+      if (daa != null) {
+        String previousDaaName = daa.getFile().getFileName();
+        List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
+        List<SimplifiedUser> signingOfficials = researchers.stream()
+            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.institutionId).stream())
+            .distinct()
+            .collect(Collectors.toList());
+
+        for (SimplifiedUser researcher : researchers) {
+          emailService.sendNewDAAUploadResearcherMessage(researcher.displayName, researcher.email,
+              dacName, previousDaaName, newDaaName, user.getUserId());
+        }
+        for (SimplifiedUser signingOfficial : signingOfficials) {
+          emailService.sendNewDAAUploadSOMessage(signingOfficial.displayName, signingOfficial.email,
+              dacName, previousDaaName, newDaaName, user.getUserId());
+        }
       }
     } catch (Exception e) {
       logException(e);

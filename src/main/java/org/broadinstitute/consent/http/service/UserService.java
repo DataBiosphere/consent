@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -60,6 +62,7 @@ public class UserService {
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final SamDAO samDAO;
   private final UserServiceDAO userServiceDAO;
+  private final DaaDAO daaDAO;
   private final EmailService emailService;
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -70,7 +73,7 @@ public class UserService {
       LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO,
-      UserServiceDAO userServiceDAO, EmailService emailService) {
+      UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -82,6 +85,7 @@ public class UserService {
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.samDAO = samDAO;
     this.userServiceDAO = userServiceDAO;
+    this.daaDAO = daaDAO;
     this.emailService = emailService;
   }
 
@@ -173,11 +177,13 @@ public class UserService {
     public Integer userId;
     public String displayName;
     public String email;
+    public Integer institutionId;
 
     public SimplifiedUser(User user) {
       this.userId = user.getUserId();
       this.displayName = user.getDisplayName();
       this.email = user.getEmail();
+      this.institutionId = user.getInstitutionId();
     }
 
     public SimplifiedUser() {
@@ -193,6 +199,10 @@ public class UserService {
 
     public void setEmail(String email) {
       this.email = email;
+    }
+
+    public void setInstitutionId(Integer institutionId) {
+      this.institutionId = institutionId;
     }
 
     @Override
@@ -280,6 +290,18 @@ public class UserService {
         // do nothing
     }
     return Collections.emptyList();
+  }
+
+  public List<SimplifiedUser> getUsersByDaaId(Integer daaId) {
+    if (Objects.isNull(daaId)) {
+      throw new IllegalArgumentException();
+    }
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (Objects.isNull(daa)) {
+      throw new NotFoundException();
+    }
+    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
+    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
   }
 
   public void deleteUserByEmail(String email) {

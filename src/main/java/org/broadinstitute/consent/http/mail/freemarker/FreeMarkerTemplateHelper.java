@@ -112,6 +112,20 @@ public class FreeMarkerTemplateHelper {
         serverUrl, temp);
   }
 
+  public Writer getNewDaaUploadSOTemplate(String signingOfficialUserName,
+      String dacName, String newDaaName, String previousDaaName, String serverUrl)
+      throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("new-daa-upload-signing-official.html");
+    return generateNewDAAUploadSOTemplate(signingOfficialUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
+  }
+
+  public Writer getNewDaaUploadResearcherTemplate(String researcherUserName,
+      String dacName, String newDaaName, String previousDaaName, String serverUrl)
+      throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("new-daa-upload-researcher.html");
+    return generateNewDAAUploadResearcherTemplate(researcherUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
+  }
+
   private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
       String dacName, Template temp) throws IOException, TemplateException {
     DatasetApprovedModel model = new DatasetApprovedModel(dataSubmitterName, datasetName, dacName);
@@ -224,6 +238,36 @@ public class FreeMarkerTemplateHelper {
   ) throws IOException, TemplateException {
     NewDaaRequestModel model = new NewDaaRequestModel(serverUrl, daaName, userName,
         signingOfficialUserName);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateNewDAAUploadSOTemplate(
+      String signingOfficialUserName,
+      String dacName,
+      String previousDaaName,
+      String newDaaName,
+      String serverUrl,
+      Template temp
+  ) throws IOException, TemplateException {
+    NewDAAUploadSOModel model = new NewDAAUploadSOModel(serverUrl, dacName, signingOfficialUserName,
+        previousDaaName, newDaaName);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateNewDAAUploadResearcherTemplate(
+      String researcherUserName,
+      String dacName,
+      String previousDaaName,
+      String newDaaName,
+      String serverUrl,
+      Template temp
+  ) throws IOException, TemplateException {
+    NewDAAUploadResearcherModel model = new NewDAAUploadResearcherModel(serverUrl, dacName,
+        researcherUserName, previousDaaName, newDaaName);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
