@@ -433,7 +433,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @POST
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  @Path("{dacId}/upload/{oldDaaId}/{newDaaName}")
+  @Path("{dacId}/updated/{oldDaaId}/{newDaaName}")
   public Response sendNewDaaMessage(
       @Auth AuthUser authUser,
       @PathParam("dacId") Integer dacId,
@@ -441,6 +441,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("newDaaName") String newDaaName
       ) {
     try {
+      daaService.findById(oldDaaId);
       User user = userService.findUserByEmail(authUser.getEmail());
       Dac dac = dacService.findById(dacId);
       String dacName = dac.getName();

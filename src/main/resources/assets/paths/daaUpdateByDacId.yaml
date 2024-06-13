@@ -22,6 +22,7 @@ post:
         type: string
   tags:
     - DAA
+    - Mail
   responses:
     200:
       description: Successfully sent emails to Signing Officials and Researchers about the newly uploaded DAA
