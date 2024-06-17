@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -97,13 +98,37 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindById() {
+  void testFindByIdNoDaa() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
         "Test_" + RandomStringUtils.random(20, true, true),
         new Date());
+    User user = createUser();
+    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), id);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
     Dac dac = dacDAO.findById(id);
     assertEquals(id, dac.getDacId());
+    assertNull(dac.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindByIdWithDaa() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), id);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    daaDAO.createDacDaaRelation(id, daaId);
+    Dac dac = dacDAO.findById(id);
+    assertEquals(id, dac.getDacId());
+    assertEquals(daa.getDaaId(), dac.getAssociatedDaa().getDaaId());
+    assertEquals(daa.getCreateUserId(), dac.getAssociatedDaa().getCreateUserId());
+    assertEquals(daa.getCreateDate(), dac.getAssociatedDaa().getCreateDate());
+    assertEquals(daa.getUpdateUserId(), dac.getAssociatedDaa().getUpdateUserId());
+    assertEquals(daa.getUpdateDate(), dac.getAssociatedDaa().getUpdateDate());
+    assertEquals(daa.getInitialDacId(), dac.getAssociatedDaa().getInitialDacId());
   }
 
   @Test
