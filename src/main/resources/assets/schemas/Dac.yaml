@@ -13,8 +13,7 @@ properties:
     type: string
     description: Optional DAC Email address
   associatedDaa:
-    type: string
-    description: The DAA currently associated with the DAC
+    $ref: './DataAccessAgreement.yaml'
   createDate:
     type: string
     format: date
