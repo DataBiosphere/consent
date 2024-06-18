@@ -5,13 +5,15 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, Dac>,
+public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
     ConsentLogger {
 
   private final DataUseParser dataUseParser = new DataUseParser();
@@ -24,6 +26,32 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
       Dac dac =
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
+
+      if (Objects.nonNull(rowView.getColumn("daa_daa_id", Integer.class))) {
+        DataAccessAgreement daa = new DataAccessAgreement();
+
+        try {
+          if (dac != null && rowView.getColumn("daa_daa_id", Integer.class) != null) {
+            daa = rowView.getRow(DataAccessAgreement.class);
+          }
+        } catch (MappingException e) {
+          logException(e);
+        }
+
+        try {
+          if (dac != null && rowView.getColumn("file_storage_object_id", String.class) != null) {
+            FileStorageObject fso = rowView.getRow(FileStorageObject.class);
+            daa.setFile(fso);
+          }
+        } catch (MappingException e) {
+          logException(e);
+        }
+
+        if (daa.getDaaId() != null) {
+          dac.setAssociatedDaa(daa);
+        }
+
+      }
 
       if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
         Dataset dataset = rowView.getRow(Dataset.class);
@@ -50,7 +78,7 @@ public class DacWithDatasetsReducer implements LinkedHashMapRowReducer<Integer, 
           }
 
         } catch (Exception e) {
-          //no values for these columns
+          logException(e);
         }
 
         String duStr = rowView.getColumn("dataset_data_use", String.class);

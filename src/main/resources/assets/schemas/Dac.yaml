@@ -12,6 +12,9 @@ properties:
   email:
     type: string
     description: Optional DAC Email address
+  associatedDaa:
+    type: string
+    description: The DAA currently associated with the DAC
   createDate:
     type: string
     format: date
