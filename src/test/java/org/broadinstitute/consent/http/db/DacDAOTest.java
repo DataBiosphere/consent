@@ -122,13 +122,14 @@ class DacDAOTest extends DAOTestHelper {
     DataAccessAgreement daa = daaDAO.findById(daaId);
     daaDAO.createDacDaaRelation(id, daaId);
     Dac dac = dacDAO.findById(id);
+    DataAccessAgreement dacDaa = dac.getAssociatedDaa();
     assertEquals(id, dac.getDacId());
-    assertEquals(daa.getDaaId(), dac.getAssociatedDaa().getDaaId());
-    assertEquals(daa.getCreateUserId(), dac.getAssociatedDaa().getCreateUserId());
-    assertEquals(daa.getCreateDate(), dac.getAssociatedDaa().getCreateDate());
-    assertEquals(daa.getUpdateUserId(), dac.getAssociatedDaa().getUpdateUserId());
-    assertEquals(daa.getUpdateDate(), dac.getAssociatedDaa().getUpdateDate());
-    assertEquals(daa.getInitialDacId(), dac.getAssociatedDaa().getInitialDacId());
+    assertEquals(daa.getDaaId(), dacDaa.getDaaId());
+    assertEquals(daa.getCreateUserId(), dacDaa.getCreateUserId());
+    assertEquals(daa.getCreateDate(), dacDaa.getCreateDate());
+    assertEquals(daa.getUpdateUserId(), dacDaa.getUpdateUserId());
+    assertEquals(daa.getUpdateDate(), dacDaa.getUpdateDate());
+    assertEquals(daa.getInitialDacId(), dacDaa.getInitialDacId());
   }
 
   @Test

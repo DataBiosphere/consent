@@ -30,21 +30,15 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
       if (Objects.nonNull(rowView.getColumn("daa_daa_id", Integer.class))) {
         DataAccessAgreement daa = new DataAccessAgreement();
 
-        try {
-          if (dac != null && rowView.getColumn("daa_daa_id", Integer.class) != null) {
-            daa = rowView.getRow(DataAccessAgreement.class);
-          }
-        } catch (MappingException e) {
-          logException(e);
+
+        if (rowView.getColumn("daa_daa_id", Integer.class) != null) {
+          daa = rowView.getRow(DataAccessAgreement.class);
         }
 
-        try {
-          if (dac != null && rowView.getColumn("file_storage_object_id", String.class) != null) {
-            FileStorageObject fso = rowView.getRow(FileStorageObject.class);
-            daa.setFile(fso);
-          }
-        } catch (MappingException e) {
-          logException(e);
+
+        if (rowView.getColumn("file_storage_object_id", String.class) != null) {
+          FileStorageObject fso = rowView.getRow(FileStorageObject.class);
+          daa.setFile(fso);
         }
 
         if (daa.getDaaId() != null) {
@@ -56,29 +50,20 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
       if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
-        try {
-          //aliased columns must be set directly
-          String dsAlias = rowView.getColumn("dataset_alias", String.class);
-          if (dsAlias != null) {
-            try {
-              dataset.setAlias(Integer.parseInt(dsAlias));
-            } catch (Exception e) {
-              logException("Exception parsing dataset alias: " + dsAlias, e);
-            }
-          }
+        //aliased columns must be set directly
+        String dsAlias = rowView.getColumn("dataset_alias", String.class);
+        if (dsAlias != null) {
+            dataset.setAlias(Integer.parseInt(dsAlias));
+        }
 
-          Date createDate = rowView.getColumn("dataset_create_date", Date.class);
-          if (createDate != null) {
-            dataset.setCreateDate(createDate);
-          }
+        Date createDate = rowView.getColumn("dataset_create_date", Date.class);
+        if (createDate != null) {
+          dataset.setCreateDate(createDate);
+        }
 
-          Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
-          if (updateDate != null) {
-            dataset.setUpdateDate(updateDate);
-          }
-
-        } catch (Exception e) {
-          logException(e);
+        Timestamp updateDate = rowView.getColumn("dataset_update_date", Timestamp.class);
+        if (updateDate != null) {
+          dataset.setUpdateDate(updateDate);
         }
 
         String duStr = rowView.getColumn("dataset_data_use", String.class);
