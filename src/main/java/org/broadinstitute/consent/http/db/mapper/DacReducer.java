@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
-import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -27,7 +26,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
-      if (Objects.nonNull(rowView.getColumn("daa_daa_id", Integer.class))) {
+      if (rowView.getColumn("daa_daa_id", Integer.class) != null) {
         DataAccessAgreement daa = new DataAccessAgreement();
 
 
@@ -47,13 +46,17 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
 
       }
 
-      if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
+      if (rowView.getColumn("dataset_id", Integer.class) != null) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
         //aliased columns must be set directly
         String dsAlias = rowView.getColumn("dataset_alias", String.class);
         if (dsAlias != null) {
+          try {
             dataset.setAlias(Integer.parseInt(dsAlias));
+          } catch (Exception e) {
+            logException("Exception parsing dataset alias: " + dsAlias, e);
+          }
         }
 
         Date createDate = rowView.getColumn("dataset_create_date", Date.class);
@@ -71,7 +74,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           dataset.setDataUse(dataUseParser.parseDataUse(duStr));
         }
 
-        if (Objects.nonNull(dataset)) {
+        if (dataset != null) {
           dac.addDataset(dataset);
         }
 
