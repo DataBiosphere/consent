@@ -26,14 +26,13 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
-      if (hasColumn(rowView, "daa_daa_id", Integer.class) && rowView.getColumn("daa_daa_id", Integer.class) > 0) {
+      if (hasColumn(rowView, "daa_daa_id", Integer.class)
+          && rowView.getColumn("daa_daa_id", Integer.class) > 0) {
         DataAccessAgreement daa = new DataAccessAgreement();
-
 
         if (rowView.getColumn("daa_daa_id", Integer.class) != null) {
           daa = rowView.getRow(DataAccessAgreement.class);
         }
-
 
         if (rowView.getColumn("file_storage_object_id", String.class) != null) {
           FileStorageObject fso = rowView.getRow(FileStorageObject.class);
@@ -46,7 +45,8 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
 
       }
 
-      if (hasColumn(rowView, "dataset_id", Integer.class) && rowView.getColumn("dataset_id", Integer.class) > 0) {
+      if (hasColumn(rowView, "dataset_id", Integer.class)
+          && rowView.getColumn("dataset_id", Integer.class) > 0) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
         //aliased columns must be set directly
