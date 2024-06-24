@@ -157,7 +157,7 @@ class DacDAOTest extends DAOTestHelper {
     List<Integer> datasetIds2 = dac2.getDatasetIds();
     assertEquals(id2, dac2.getDacId());
     assertEquals(1, datasetIds2.size());
-    assertEquals(datasetId, datasetIds2.get(0));
+    assertEquals(datasetId2, datasetIds2.get(0));
     assertNull(dac2.getAssociatedDaa());
   }
 
