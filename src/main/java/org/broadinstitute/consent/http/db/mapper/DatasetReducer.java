@@ -28,9 +28,11 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     }
     hasOptionalColumn(rowView, "translated_data_use", String.class)
         .ifPresent(dataset::setTranslatedDataUse);
-    if (hasColumn(rowView, "in_use", Integer.class) && rowView.getColumn("in_use", Integer.class) > 0) {
+    if (hasColumn(rowView, "in_use", Integer.class)) {
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));
+    } else {
+      dataset.setDeletable(true);
     }
     if (hasColumn(rowView, "dac_approval", Boolean.class)) {
       dataset.setDacApproval(rowView.getColumn("dac_approval", Boolean.class));
