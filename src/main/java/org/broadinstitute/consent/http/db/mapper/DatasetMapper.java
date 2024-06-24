@@ -15,7 +15,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(r.getInt("dataset_id"));
 
-    if (hasColumn(r, "dac_id")) {
+    if (hasColumn(r, "dac_id") && r.getInt("dac_id") > 0) {
       dataset.setDacId(r.getInt("dac_id"));
     }
 
@@ -50,7 +50,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "translated_data_use")) {
       dataset.setTranslatedDataUse(r.getString("translated_data_use"));
     }
-    dataset.setAlias(r.getInt("alias"));
+    if (hasColumn(r, "alias") && r.getInt("alias") > 0) {
+      dataset.setAlias(r.getInt("alias"));
+    }
 
     return dataset;
   }

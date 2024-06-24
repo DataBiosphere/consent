@@ -20,7 +20,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     Dataset dataset =
         map.computeIfAbsent(
             rowView.getColumn("dataset_id", Integer.class), id -> rowView.getRow(Dataset.class));
-    if (hasColumn(rowView, "dac_id", Integer.class)) {
+    if (hasColumn(rowView, "dac_id", Integer.class) && rowView.getColumn("dac_id", Integer.class) > 0) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
     if (hasColumn(rowView, "data_use", String.class)) {
@@ -28,7 +28,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     }
     hasOptionalColumn(rowView, "translated_data_use", String.class)
         .ifPresent(dataset::setTranslatedDataUse);
-    if (hasColumn(rowView, "in_use", Integer.class)) {
+    if (hasColumn(rowView, "in_use", Integer.class) && rowView.getColumn("in_use", Integer.class) > 0) {
       Integer dsIdInUse = rowView.getColumn("in_use", Integer.class);
       dataset.setDeletable(Objects.isNull(dsIdInUse));
     }
@@ -47,7 +47,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       if (Objects.nonNull(keyName) && Objects.nonNull(propVal)) {
         try {
           DatasetProperty prop = new DatasetProperty();
-          if (hasColumn(rowView, "property_id", Integer.class)) {
+          if (hasColumn(rowView, "property_id", Integer.class) && rowView.getColumn("property_id", Integer.class) > 0) {
             prop.setPropertyId(rowView.getColumn("property_id", Integer.class));
           }
           prop.setDataSetId(dataset.getDataSetId());
@@ -64,16 +64,15 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
 
-    if (hasColumn(rowView, "s_study_id", Integer.class)) {
+    if (hasColumn(rowView, "s_study_id", Integer.class) && rowView.getColumn("s_study_id", Integer.class) > 0) {
       if (Objects.isNull(dataset.getStudy())) {
         dataset.setStudy(rowView.getRow(Study.class));
       }
       new StudyReducer().reduceStudy(dataset.getStudy(), rowView);
     }
 
-    if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class)
-        && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))
-    ) {
+    if (hasColumn(rowView, "fso_file_storage_object_id", Integer.class) &&
+        rowView.getColumn("fso_file_storage_object_id", Integer.class) > 0) {
       FileStorageObject fileStorageObject = rowView.getRow(FileStorageObject.class);
 
       switch (fileStorageObject.getCategory()) {
@@ -87,7 +86,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
 
-    if (hasColumn(rowView, "u_user_id", Integer.class)) {
+    if (hasColumn(rowView, "u_user_id", Integer.class) && rowView.getColumn("u_user_id", Integer.class) > 0) {
       User user = rowView.getRow(User.class);
       dataset.setCreateUser(user);
     }
