@@ -27,8 +27,7 @@ public interface RowMapperHelper {
    */
   default boolean hasColumn(RowView rowView, String columnName, Class clazz) {
     try {
-      rowView.getColumn(columnName, clazz);
-      return true;
+      return rowView.getColumn(columnName, clazz) != null;
     } catch (Exception e) {
       log.debug("RowView does not contain column " + columnName);
       return false;
