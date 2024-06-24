@@ -87,6 +87,26 @@ public interface RowMapperHelper {
     return false;
   }
 
+  /*
+   * Utility method to check if a column exists and has a non-zero value.
+   *
+   * @param rowView The RowView
+   * @param columnName The column name
+   * @return True if the column has non-zero results, false otherwise
+   */
+  default boolean hasNonZeroColumn(ResultSet rs, String columnName) throws SQLException {
+    ResultSetMetaData rsmd = rs.getMetaData();
+    int columns = rsmd.getColumnCount();
+    for (int x = 1; x <= columns; x++) {
+      // postgres -> case insensitive columns
+      if (columnName.equalsIgnoreCase(rsmd.getColumnName(x))) {
+        return rs.getInt(columnName) > 0;
+      }
+    }
+    return false;
+  }
+
+
   static String unescapeJava(String value) {
     return StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(value));
   }

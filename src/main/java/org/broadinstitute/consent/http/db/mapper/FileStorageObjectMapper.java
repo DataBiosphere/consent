@@ -49,7 +49,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setMediaType(r.getString(addPrefix("media_type")));
     }
 
-    if (hasColumn(r, addPrefix("create_user_id")) && r.getInt(addPrefix("create_user_id")) > 0) {
+    if (hasNonZeroColumn(r, addPrefix("create_user_id"))) {
       file.setCreateUserId(r.getInt(addPrefix("create_user_id")));
     }
 
@@ -62,9 +62,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setDeleted(r.getBoolean(addPrefix("deleted")));
     }
 
-    if (hasColumn(r, addPrefix("delete_user_id"))) {
-      Integer id = r.getInt(addPrefix("delete_user_id"));
-      file.setDeleteUserId(id.equals(0) ? null : id);
+    if (hasNonZeroColumn(r, addPrefix("delete_user_id"))) {
+      file.setDeleteUserId(r.getInt(addPrefix("delete_user_id")));
     }
 
     if (hasColumn(r, addPrefix("delete_date"))) {
@@ -72,9 +71,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setDeleteDate((Objects.nonNull(deleteDate) ? deleteDate.toInstant() : null));
     }
 
-    if (hasColumn(r, addPrefix("update_user_id"))) {
-      Integer id = r.getInt(addPrefix("update_user_id"));
-      file.setUpdateUserId(id.equals(0) ? null : id);
+    if (hasNonZeroColumn(r, addPrefix("update_user_id"))) {
+      file.setUpdateUserId(r.getInt(addPrefix("update_user_id")));
     }
 
     if (hasColumn(r, addPrefix("update_date"))) {

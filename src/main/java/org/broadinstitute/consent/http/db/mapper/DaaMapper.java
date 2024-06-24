@@ -15,9 +15,9 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
   @Override
   public DataAccessAgreement map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
     DataAccessAgreement daa;
-    Integer daaId = hasColumn(resultSet, "daa_id") && resultSet.getInt("daa_id") > 0 ? resultSet.getInt("daa_id") : null;
+    Integer daaId = hasNonZeroColumn(resultSet, "daa_id") ? resultSet.getInt("daa_id") : null;
     if (daaId == null) {
-      if (hasColumn(resultSet, "daa_daa_id")) {
+      if (hasNonZeroColumn(resultSet, "daa_daa_id")) {
         daaId = resultSet.getInt("daa_daa_id");
       } else {
         return null;
@@ -30,9 +30,9 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
       daa.setDaaId(daaId);
     }
 
-    if (hasColumn(resultSet, "create_user_id") && resultSet.getInt("create_user_id") > 0) {
+    if (hasNonZeroColumn(resultSet, "create_user_id")) {
       daa.setCreateUserId(resultSet.getInt("create_user_id"));
-    } else if (hasColumn(resultSet, "daa_create_user_id")) {
+    } else if (hasNonZeroColumn(resultSet, "daa_create_user_id")) {
       daa.setCreateUserId(resultSet.getInt("daa_create_user_id"));
     }
 
@@ -42,9 +42,9 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
       daa.setCreateDate(resultSet.getTimestamp("daa_create_date").toInstant());
     }
 
-    if (hasColumn(resultSet, "update_user_id") && resultSet.getInt("update_user_id") > 0) {
+    if (hasNonZeroColumn(resultSet, "update_user_id")) {
       daa.setUpdateUserId(resultSet.getInt("update_user_id"));
-    } else if (hasColumn(resultSet, "daa_update_user_id")) {
+    } else if (hasNonZeroColumn(resultSet, "daa_update_user_id")) {
       daa.setUpdateUserId(resultSet.getInt("daa_update_user_id"));
     }
 
@@ -54,9 +54,9 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
       daa.setUpdateDate(resultSet.getTimestamp("daa_update_date").toInstant());
     }
 
-    if (hasColumn(resultSet, "initial_dac_id") && resultSet.getInt("initial_dac_id") > 0) {
+    if (hasNonZeroColumn(resultSet, "initial_dac_id")) {
       daa.setInitialDacId(resultSet.getInt("initial_dac_id"));
-    } else if (hasColumn(resultSet, "daa_initial_dac_id")) {
+    } else if (hasNonZeroColumn(resultSet, "daa_initial_dac_id")) {
       daa.setInitialDacId(resultSet.getInt("daa_initial_dac_id"));
     }
 
