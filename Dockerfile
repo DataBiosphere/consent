@@ -1,5 +1,5 @@
 # Builder
-FROM maven:3.8.3-eclipse-temurin-17 AS build
+FROM maven:3.9.7-eclipse-temurin-21 AS build
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
