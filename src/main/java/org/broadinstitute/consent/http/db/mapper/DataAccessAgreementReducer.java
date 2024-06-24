@@ -25,8 +25,7 @@ public class DataAccessAgreementReducer
       FileStorageObject fso = rowView.getRow(FileStorageObject.class);
       map.get(daaId).setFile(fso);
     }
-    if (hasColumn(rowView, "dac_id", Integer.class)
-        && rowView.getColumn("dac_id", Integer.class) > 0) {
+    if (hasNonZeroColumn(rowView, "dac_id")) {
       map.get(daaId).addDac(rowView.getRow(Dac.class));
     }
   }
