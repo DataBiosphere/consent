@@ -22,9 +22,11 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
   public void accumulate(Map<Integer, User> map, RowView rowView) {
     // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
     Integer userId = 0;
-    if (hasColumn(rowView, "user_id", Integer.class)) {
+    if (hasColumn(rowView, "user_id", Integer.class)
+        && rowView.getColumn("user_id", Integer.class) > 0) {
       userId = rowView.getColumn("user_id", Integer.class);
-    } else if (hasColumn(rowView, "u_user_id", Integer.class)) {
+    } else if (hasColumn(rowView, "u_user_id", Integer.class)
+        && rowView.getColumn("u_user_id", Integer.class) > 0) {
       userId = rowView.getColumn("u_user_id", Integer.class);
     }
     User user =
@@ -35,9 +37,11 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     try {
       // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
       Integer userRoleId = null;
-      if (hasColumn(rowView, "user_role_id", Integer.class)) {
+      if (hasColumn(rowView, "user_role_id", Integer.class)
+          && rowView.getColumn("user_role_id", Integer.class) > 0) {
         userRoleId = rowView.getColumn("user_role_id", Integer.class);
-      } else if (hasColumn(rowView, "ur_user_role_id", Integer.class)) {
+      } else if (hasColumn(rowView, "ur_user_role_id", Integer.class)
+          && rowView.getColumn("ur_user_role_id", Integer.class) > 0) {
         userRoleId = rowView.getColumn("ur_user_role_id", Integer.class);
       }
       if (Objects.nonNull(userRoleId)) {
@@ -68,8 +72,8 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         Optional<LibraryCard> existingLibraryCard = user.getLibraryCards() == null ?
             Optional.empty() :
             user.getLibraryCards().stream()
-            .filter(card -> card.getId().equals(lcId))
-            .findFirst();
+                .filter(card -> card.getId().equals(lcId))
+                .findFirst();
         lc = existingLibraryCard.orElseGet(() -> rowView.getRow(LibraryCard.class));
         try {
           if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {

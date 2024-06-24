@@ -49,7 +49,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setMediaType(r.getString(addPrefix("media_type")));
     }
 
-    if (hasColumn(r, addPrefix("create_user_id"))) {
+    if (hasColumn(r, addPrefix("create_user_id")) && r.getInt(addPrefix("create_user_id")) > 0) {
       file.setCreateUserId(r.getInt(addPrefix("create_user_id")));
     }
 

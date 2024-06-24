@@ -25,10 +25,10 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     dac.setDescription(resultSet.getString("description"));
     dac.setCreateDate(resultSet.getDate("create_date"));
     dac.setUpdateDate(resultSet.getDate("update_date"));
-    if (hasColumn(resultSet, "election_id")) {
+    if (hasColumn(resultSet, "election_id") && resultSet.getInt("election_id") > 0) {
       dac.addElectionId(resultSet.getInt("election_id"));
     }
-    if (hasColumn(resultSet, "dataset_id")) {
+    if (hasColumn(resultSet, "dataset_id") && resultSet.getInt("dataset_id") > 0) {
       dac.addDatasetId(resultSet.getInt("dataset_id"));
     }
     if (hasColumn(resultSet, "email")) {

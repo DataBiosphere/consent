@@ -23,7 +23,8 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
 
   public void reduceStudy(Study study, RowView rowView) {
 
-    if (hasColumn(rowView, "s_dataset_id", Integer.class)) {
+    if (hasColumn(rowView, "s_dataset_id", Integer.class)
+        && rowView.getColumn("s_dataset_id", Integer.class) > 0) {
       study.addDatasetId(rowView.getColumn("s_dataset_id", Integer.class));
     }
 
