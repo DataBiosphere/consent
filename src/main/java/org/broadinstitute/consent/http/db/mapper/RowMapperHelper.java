@@ -35,6 +35,22 @@ public interface RowMapperHelper {
   }
 
   /*
+   * Utility method to check if a column exists and has a non-zero value.
+   *
+   * @param rowView The RowView
+   * @param columnName The column name
+   * @return True if the column has non-zero results, false otherwise
+   */
+  default boolean hasNonZeroColumn(RowView rowView, String columnName) {
+    try {
+      return rowView.getColumn(columnName, Integer.class) != null && rowView.getColumn(columnName, Integer.class) > 0;
+    } catch (Exception e) {
+      log.debug("RowView does not contain column " + columnName);
+      return false;
+    }
+  }
+
+  /*
    * Utility method to check if a column exists in the row view or not.
    *
    * @param rowView The RowView

@@ -14,8 +14,7 @@ public class DataAccessAgreementReducer
 
   @Override
   public void accumulate(Map<Integer, DataAccessAgreement> map, RowView rowView) {
-    var daaId = hasColumn(rowView, "daa_id", Integer.class)
-        && rowView.getColumn("daa_id", Integer.class) > 0 ?
+    var daaId = hasNonZeroColumn(rowView, "daa_id") ?
         rowView.getColumn("daa_id", Integer.class) :
         rowView.getColumn("daa_daa_id", Integer.class);
     map.computeIfAbsent(

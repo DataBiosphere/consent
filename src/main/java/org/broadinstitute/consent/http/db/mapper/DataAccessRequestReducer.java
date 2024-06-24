@@ -13,8 +13,7 @@ public class DataAccessRequestReducer
     DataAccessRequest dar =
         map.computeIfAbsent(
             rowView.getColumn("id", Integer.class), id -> rowView.getRow(DataAccessRequest.class));
-    if (hasColumn(rowView, "dataset_id", Integer.class)
-        && rowView.getColumn("dataset_id", Integer.class) > 0) {
+    if (hasNonZeroColumn(rowView, "dataset_id")) {
       dar.addDatasetId(rowView.getColumn("dataset_id", Integer.class));
     }
   }
