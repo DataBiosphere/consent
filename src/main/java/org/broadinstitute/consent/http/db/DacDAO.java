@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DacReducer;
+import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;

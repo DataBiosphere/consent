@@ -13,7 +13,7 @@ import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
 public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
-    ConsentLogger {
+    ConsentLogger, RowMapperHelper {
 
   private final DataUseParser dataUseParser = new DataUseParser();
 
@@ -26,7 +26,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           container.computeIfAbsent(
               rowView.getColumn("dac_id", Integer.class), id -> rowView.getRow(Dac.class));
 
-      if (rowView.getColumn("daa_daa_id", Integer.class) != null && rowView.getColumn("daa_daa_id", Integer.class) > 0) {
+      if (hasColumn(rowView, "daa_daa_id", Integer.class) && rowView.getColumn("daa_daa_id", Integer.class) > 0) {
         DataAccessAgreement daa = new DataAccessAgreement();
 
 
@@ -46,11 +46,12 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
 
       }
 
-      if (rowView.getColumn("dataset_id", Integer.class) != null && rowView.getColumn("dataset_id", Integer.class) > 0) {
+      if (hasColumn(rowView, "dataset_id", Integer.class) && rowView.getColumn("dataset_id", Integer.class) > 0) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
         //aliased columns must be set directly
         String dsAlias = rowView.getColumn("dataset_alias", String.class);
+        System.out.println("dsAlias: " + dsAlias);
         if (dsAlias != null) {
           try {
             dataset.setAlias(Integer.parseInt(dsAlias));
@@ -59,7 +60,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           }
         }
 
-        Date createDate = rowView.getColumn("dataset_create_date", Date.class);
+        Timestamp createDate = rowView.getColumn("dataset_create_date", Timestamp.class);
         if (createDate != null) {
           dataset.setCreateDate(createDate);
         }
@@ -70,6 +71,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
         }
 
         String duStr = rowView.getColumn("dataset_data_use", String.class);
+        System.out.println("duStr: " + duStr);
         if (duStr != null) {
           dataset.setDataUse(dataUseParser.parseDataUse(duStr));
         }
@@ -79,6 +81,8 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
         }
 
       }
+
+
     } catch (MappingException e) {
       logWarn(e.getMessage());
     }

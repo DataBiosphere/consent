@@ -98,6 +98,70 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllNoDatasets() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    Integer id2 = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    List<Dac> dacs = dacDAO.findAll();
+
+    Dac dac1 = dacs.get(0);
+    assertEquals(id, dac1.getDacId());
+    assertEquals(0, dac1.getDatasetIds().size());
+    assertNull(dac1.getAssociatedDaa());
+
+    Dac dac2 = dacs.get(1);
+    assertEquals(id2, dac2.getDacId());
+    assertEquals(0, dac2.getDatasetIds().size());
+    assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindAllWithDataset() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    Integer id2 = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), id);
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+    Integer datasetId2 = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), id2);
+    Dataset dataset1 = datasetDAO.findDatasetById(datasetId);
+    Dataset dataset2 = datasetDAO.findDatasetById(datasetId2);
+    List<Dac> dacs = dacDAO.findAll();
+
+    Dac dac1 = dacs.get(0);
+    List<Integer> datasetIds = dac1.getDatasetIds();
+    assertEquals(id, dac1.getDacId());
+    assertEquals(1, datasetIds.size());
+    assertEquals(datasetId, datasetIds.get(0));
+    assertNull(dac1.getAssociatedDaa());
+
+    Dac dac2 = dacs.get(1);
+    List<Integer> datasetIds2 = dac2.getDatasetIds();
+    assertEquals(id2, dac2.getDacId());
+    assertEquals(1, datasetIds2.size());
+    assertEquals(datasetId, datasetIds2.get(0));
+    assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
   void testFindByIdNoDaa() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
