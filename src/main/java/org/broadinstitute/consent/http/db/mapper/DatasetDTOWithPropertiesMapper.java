@@ -24,11 +24,8 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
     Integer alias = r.getInt("alias");
     if (!datasetDTOs.containsKey(dataSetId)) {
       datasetDTO = new DatasetDTO(new ArrayList<>());
-      if (hasColumn(r, "dac_id")) {
-        int dacId = r.getInt("dac_id");
-        if (dacId > 0) {
-          datasetDTO.setDacId(dacId);
-        }
+      if (hasNonZeroColumn(r, "dac_id")) {
+        datasetDTO.setDacId(r.getInt("dac_id"));
       }
       datasetDTO.setAlias(alias);
       datasetDTO.setDataSetId(dataSetId);
@@ -38,20 +35,14 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
       if (hasColumn(r, "create_date")) {
         datasetDTO.setCreateDate(r.getDate("create_date"));
       }
-      if (hasColumn(r, "create_user_id")) {
-        int userId = r.getInt("create_user_id");
-        if (userId > 0) {
-          datasetDTO.setCreateUserId(userId);
-        }
+      if (hasNonZeroColumn(r, "create_user_id")) {
+        datasetDTO.setCreateUserId(r.getInt("create_user_id"));
       }
       if (hasColumn(r, "update_date")) {
         datasetDTO.setUpdateDate(r.getTimestamp("update_date"));
       }
-      if (hasColumn(r, "update_user_id")) {
-        int userId = r.getInt("update_user_id");
-        if (userId > 0) {
-          datasetDTO.setUpdateUserId(userId);
-        }
+      if (hasNonZeroColumn(r, "update_user_id")) {
+        datasetDTO.setUpdateUserId(r.getInt("update_user_id"));
       }
       DatasetPropertyDTO property = new DatasetPropertyDTO("Dataset Name", r.getString("name"));
       datasetDTO.addProperty(property);
