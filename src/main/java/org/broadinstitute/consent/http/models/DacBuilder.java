@@ -38,6 +38,11 @@ public class DacBuilder {
     return this;
   }
 
+  public DacBuilder setAssociatedDaa(DataAccessAgreement associatedDaa) {
+    this.dac.setAssociatedDaa(associatedDaa);
+    return this;
+  }
+
   public DacBuilder setCreateDate(Date createDate) {
     this.dac.setCreateDate(createDate);
     return this;

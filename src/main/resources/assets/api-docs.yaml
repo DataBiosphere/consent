@@ -1258,6 +1258,8 @@ components:
       $ref: './schemas/ConsentAssociation.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
+    Data Access Agreement:
+      $ref: './schemas/DataAccessAgreement.yaml'
     Data Access Committee:
       $ref: './schemas/Dac.yaml'
     DataAccessRequest:

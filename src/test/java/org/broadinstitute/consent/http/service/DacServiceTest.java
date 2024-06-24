@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -126,6 +127,7 @@ class DacServiceTest {
     assertNotNull(dac);
     assertFalse(dac.getChairpersons().isEmpty());
     assertFalse(dac.getMembers().isEmpty());
+    assertNotNull(dac.getAssociatedDaa());
   }
 
   @Test
@@ -567,6 +569,7 @@ class DacServiceTest {
           dac.setDacId(i);
           dac.setDescription("Dac " + i);
           dac.setName("Dac " + i);
+          dac.setAssociatedDaa(new DataAccessAgreement());
           return dac;
         }).collect(Collectors.toList());
   }
