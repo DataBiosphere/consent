@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.Dac;
@@ -51,7 +50,6 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
 
         //aliased columns must be set directly
         String dsAlias = rowView.getColumn("dataset_alias", String.class);
-        System.out.println("dsAlias: " + dsAlias);
         if (dsAlias != null) {
           try {
             dataset.setAlias(Integer.parseInt(dsAlias));
@@ -71,7 +69,6 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
         }
 
         String duStr = rowView.getColumn("dataset_data_use", String.class);
-        System.out.println("duStr: " + duStr);
         if (duStr != null) {
           dataset.setDataUse(dataUseParser.parseDataUse(duStr));
         }
