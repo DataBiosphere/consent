@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -24,6 +25,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -38,22 +40,33 @@ public class DacService {
   private final DatasetDAO dataSetDAO;
   private final ElectionDAO electionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
+  private final DaaDAO daaDAO;
   private final VoteService voteService;
+  private final DaaService daaService;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService) {
+      VoteService voteService, DaaService daaService, DaaDAO daaDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
+    this.daaDAO = daaDAO;
     this.voteService = voteService;
+    this.daaService = daaService;
   }
 
   public List<Dac> findAll() {
-    return dacDAO.findAll();
+    List<Dac> dacs = dacDAO.findAll();
+    List<DataAccessAgreement> allDaas = daaDAO.findAll();
+    for (Dac dac : dacs) {
+      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), allDaas, dacs));
+      dac.setAssociatedDaa(associatedDaa);
+    }
+    return dacs;
   }
 
   public List<User> findAllDACUsersBySearchString(String term) {
@@ -137,6 +150,9 @@ public class DacService {
     if (Objects.nonNull(dac)) {
       dac.setChairpersons(chairs);
       dac.setMembers(members);
+      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+      dac.setAssociatedDaa(associatedDaa);
       return dac;
     }
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);

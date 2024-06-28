@@ -25,6 +25,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -59,6 +60,9 @@ class DaaServiceTest {
   @Mock
   private InstitutionDAO institutionDAO;
 
+  @Mock
+  private DacDAO dacDAO;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition = mock(
@@ -68,7 +72,7 @@ class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO, dacDAO);
   }
 
   @Test

@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -73,9 +74,15 @@ class DacServiceTest {
   @Mock
   private VoteService voteService;
 
+  @Mock
+  private DaaService daaService;
+
+  @Mock
+  private DaaDAO daaDAO;
+
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService);
+        voteService, daaService, daaDAO);
   }
 
   @Test

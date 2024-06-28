@@ -14,6 +14,7 @@ public class DataAccessAgreement {
   private Integer initialDacId;
   private FileStorageObject file;
   private List<Dac> dacs;
+  private Boolean broadDaa = false;
 
   public Integer getDaaId() {
     return daaId;
@@ -79,6 +80,14 @@ public class DataAccessAgreement {
     this.dacs = dacs;
   }
 
+  public Boolean getBroadDaa() {
+    return broadDaa;
+  }
+
+  public void setBroadDaa(Boolean broadDaa) {
+    this.broadDaa = broadDaa;
+  }
+
   public void addDac(Dac dac) {
     if (this.dacs == null) {
       this.dacs = new ArrayList<>();
@@ -90,4 +99,8 @@ public class DataAccessAgreement {
       this.dacs.add(dac);
     }
   }
+
+
+
+
 }
