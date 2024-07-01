@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class UserPropertyDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindResearcherProperties() {
+  public void testFindUserProperties() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
     UserProperty suggestedInstitution = new UserProperty();
