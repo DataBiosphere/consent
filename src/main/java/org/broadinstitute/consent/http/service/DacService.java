@@ -63,7 +63,7 @@ public class DacService {
     List<DataAccessAgreement> allDaas = daaDAO.findAll();
     for (Dac dac : dacs) {
       DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), allDaas, dacs));
+      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
       dac.setAssociatedDaa(associatedDaa);
     }
     return dacs;
