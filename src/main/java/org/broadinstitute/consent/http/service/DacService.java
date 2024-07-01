@@ -150,9 +150,11 @@ public class DacService {
     if (Objects.nonNull(dac)) {
       dac.setChairpersons(chairs);
       dac.setMembers(members);
-      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
-      dac.setAssociatedDaa(associatedDaa);
+      if (dac.getAssociatedDaa() != null) {
+        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+        associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+        dac.setAssociatedDaa(associatedDaa);
+      }
       return dac;
     }
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
