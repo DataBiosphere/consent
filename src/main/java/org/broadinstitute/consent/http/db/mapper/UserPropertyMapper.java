@@ -12,9 +12,9 @@ public class UserPropertyMapper implements RowMapper<UserProperty> {
   public UserProperty map(ResultSet r, StatementContext statementContext)
       throws SQLException {
     return new UserProperty(
-        r.getInt("propertyId"),
-        r.getInt("userId"),
-        r.getString("propertyKey"),
-        r.getString("propertyValue"));
+        r.getInt("property_id"),
+        r.getInt("user_id"),
+        r.getString("property_key"),
+        r.getString("property_value"));
   }
 }
