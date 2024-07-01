@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -94,6 +95,39 @@ class DacServiceTest {
   }
 
   @Test
+  void testFindAllWithDaas() {
+    Dac broadDac = new Dac();
+    int broadDacId = RandomUtils.nextInt(3,50);
+    broadDac.setName("broadDac");
+    broadDac.setDacId(broadDacId);
+
+    Dac dac2 = new Dac();
+    int dac2Id = RandomUtils.nextInt(3,50);
+    dac2.setName("dac2");
+    dac2.setDacId(dac2Id);
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(broadDacId);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(2);
+    daa2.setInitialDacId(dac2Id);
+
+    broadDac.setAssociatedDaa(daa1);
+    dac2.setAssociatedDaa(daa2);
+
+    when(dacDAO.findAll()).thenReturn(List.of(broadDac, dac2));
+    when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true); // Mock isBroadDAA method
+
+    initService();
+
+    List<Dac> foundDacs = service.findAll();
+    assertEquals(2, foundDacs.size());
+    assertTrue(foundDacs.get(0).getAssociatedDaa().getBroadDaa());
+    assertTrue(foundDacs.get(1).getAssociatedDaa().getBroadDaa());
+  }
+
+  @Test
   void testFindAllDACUsersBySearchString_case1() {
     when(dacDAO.findAll()).thenReturn(Collections.emptyList());
     when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
@@ -128,6 +162,7 @@ class DacServiceTest {
         Collections.singletonList(getDacUsers().get(0)));
     when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId())).thenReturn(
         Collections.singletonList(getDacUsers().get(1)));
+    when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true);
     initService();
 
     Dac dac = service.findById(dacId);
@@ -135,6 +170,7 @@ class DacServiceTest {
     assertFalse(dac.getChairpersons().isEmpty());
     assertFalse(dac.getMembers().isEmpty());
     assertNotNull(dac.getAssociatedDaa());
+    assertTrue(dac.getAssociatedDaa().getBroadDaa());
   }
 
   @Test
@@ -570,13 +606,15 @@ class DacServiceTest {
    * @return A list of 5 dacs
    */
   private List<Dac> getDacs() {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dac dac = new Dac();
           dac.setDacId(i);
           dac.setDescription("Dac " + i);
           dac.setName("Dac " + i);
-          dac.setAssociatedDaa(new DataAccessAgreement());
+          dac.setAssociatedDaa(daa);
           return dac;
         }).collect(Collectors.toList());
   }
