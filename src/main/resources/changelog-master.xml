@@ -154,4 +154,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-06-04-unique-dac-id-daa.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-07-01-user-property-dao-fixes.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

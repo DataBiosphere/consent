@@ -1,0 +1,18 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-07-01-user-property-dao-fixes" author="grushton">
+    <renameColumn tableName="user_property"
+      oldColumnName="propertyid"
+      newColumnName="property_id"/>
+    <renameColumn tableName="user_property"
+      oldColumnName="userid"
+      newColumnName="user_id"/>
+    <renameColumn tableName="user_property"
+      oldColumnName="propertykey"
+      newColumnName="property_key"/>
+    <renameColumn tableName="user_property"
+      oldColumnName="propertyvalue"
+      newColumnName="property_value"/>
+  </changeSet>
+</databaseChangeLog>
