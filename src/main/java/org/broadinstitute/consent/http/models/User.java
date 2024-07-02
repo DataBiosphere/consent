@@ -217,7 +217,6 @@ public class User {
     this.roles = List.of(memberRole);
   }
 
-
   public void setResearcherRole() {
     this.roles = List.of(UserRoles.Researcher());
   }
