@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -702,12 +704,38 @@ class DarCollectionServiceTest {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForDACMemberNoDatasets() {
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(1, 10));
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 10));
+    user.setMemberRole();
+    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
+        UserRoles.MEMBER.getRoleName());
+    assertTrue(summaries.isEmpty());
+    verify(darCollectionSummaryDAO, never()).getDarCollectionSummariesForDAC(any(), any());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForDACChairNoDatasets() {
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(1, 10));
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 10));
+    user.setChairpersonRole();
+    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
+        UserRoles.CHAIRPERSON.getRoleName());
+    assertTrue(summaries.isEmpty());
+    verify(darCollectionSummaryDAO, never()).getDarCollectionSummariesForDAC(any(), any());
+  }
+
+  @Test
   void testProcessDarCollectionSummariesForDACMember() {
     Dac dac = new Dac();
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
-    user.setMemberRole();
+    user.setMemberRoleWithDAC(dac.getDacId());
 
     //summaryOne -> no open elections (no action)
     //summaryTwo -> at least one open election, member has submitted all votes (Update button)
@@ -753,6 +781,20 @@ class DarCollectionServiceTest {
     summaryFour.addElection(electionFour);
     summaryFour.setVotes(List.of(voteTwo, voteThree));
 
+    List<Dataset> datasets = Stream.of(
+            summary.getDatasetIds(),
+            summaryTwo.getDatasetIds(),
+            summaryThree.getDatasetIds(),
+            summaryFour.getDatasetIds()
+        ).flatMap(Set::stream)
+        .distinct()
+        .map(id -> {
+          Dataset d = new Dataset();
+          d.setDataSetId(id);
+          return d;
+        })
+        .toList();
+    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(datasets);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
 
@@ -876,8 +918,13 @@ class DarCollectionServiceTest {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(
             List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
-
+    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of(datasetOne,
+        datasetTwo,
+        datasetThree,
+        datasetFour,
+        datasetFive,
+        datasetFive,
+        datasetSix));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
         UserRoles.CHAIRPERSON.getRoleName());

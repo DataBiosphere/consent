@@ -298,12 +298,12 @@ public class DarCollectionService {
         break;
       case CHAIRPERSON:
         datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summaries = datasetIds.isEmpty() ? List.of() : darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForChair(summaries);
         break;
       case MEMBER:
         datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summaries = datasetIds.isEmpty() ? List.of() : darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
         processDarCollectionSummariesForMember(summaries, userId);
         break;
       case RESEARCHER:

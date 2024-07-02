@@ -211,6 +211,13 @@ public class User {
     this.roles = List.of(UserRoles.Member());
   }
 
+  public void setMemberRoleWithDAC(int dacId) {
+    UserRole memberRole = UserRoles.Member();
+    memberRole.setDacId(dacId);
+    this.roles = List.of(memberRole);
+  }
+
+
   public void setResearcherRole() {
     this.roles = List.of(UserRoles.Researcher());
   }
