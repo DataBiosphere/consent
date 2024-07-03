@@ -1,3 +1,9 @@
+# Note that the token used for this action is manually maintained via Google Secrets Manager
+# To update the value, regenerate a new token in Coveralls: https://coveralls.io/github/DataBiosphere/consent
+# and save it in a data file: coveralls.txt
+# Update the value in GSM:
+# gcloud secrets versions add consent-coveralls-token --data-file="coveralls.txt" --project broad-dsde-dev
+# That value will be automatically synced to `secrets.COVERALLS_TOKEN`
 name: Coverage
 on:
   push:
