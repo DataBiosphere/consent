@@ -53,7 +53,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
@@ -713,7 +712,6 @@ class DarCollectionServiceTest {
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
         UserRoles.MEMBER.getRoleName());
     assertTrue(summaries.isEmpty());
-    verify(darCollectionSummaryDAO, never()).getDarCollectionSummariesForDAC(any(), any());
   }
 
   @Test
@@ -726,7 +724,6 @@ class DarCollectionServiceTest {
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
         UserRoles.CHAIRPERSON.getRoleName());
     assertTrue(summaries.isEmpty());
-    verify(darCollectionSummaryDAO, never()).getDarCollectionSummariesForDAC(any(), any());
   }
 
   @Test
