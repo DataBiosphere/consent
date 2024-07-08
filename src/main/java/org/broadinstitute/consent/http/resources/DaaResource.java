@@ -190,9 +190,6 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("userId") Integer userId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      if (!user.hasUserRole(UserRoles.ADMIN) && !user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-        return Response.status(Status.FORBIDDEN).build();
-      }
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
       for (LibraryCard libraryCard : libraryCards) {
         libraryCardService.removeDaaFromLibraryCard(libraryCard.getId(), daaId);
