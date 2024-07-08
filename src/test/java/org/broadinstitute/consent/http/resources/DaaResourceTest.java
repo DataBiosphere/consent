@@ -518,7 +518,7 @@ class DaaResourceTest {
     libraryCard.setUserId(user.getUserId());
     libraryCard.setDaaIds(List.of(daaId));
 
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.findUserByEmail(any())).thenThrow(new ForbiddenException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
@@ -527,7 +527,7 @@ class DaaResourceTest {
 
   @Test
   void testDeleteDaaForInvalidUser() {
-    when(userService.findUserByEmail(any())).thenReturn(null);
+    when(userService.findUserByEmail(any())).thenThrow(new RuntimeException("Internal server error"));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.deleteDaaForUser(authUser, RandomUtils.nextInt(10, 100), RandomUtils.nextInt(10, 100));
