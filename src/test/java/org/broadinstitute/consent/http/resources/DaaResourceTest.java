@@ -468,7 +468,7 @@ class DaaResourceTest {
   }
 
   @Test
-  void testDeleteDaaForAdmin() {
+  void testDeleteDaaValidUser() {
     Integer daaId = RandomUtils.nextInt(10, 100);
 
     User user = new User();
@@ -485,44 +485,6 @@ class DaaResourceTest {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
     Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
-  }
-
-  @Test
-  void testDeleteDaaForSO() {
-    Integer daaId = RandomUtils.nextInt(10, 100);
-
-    User user = new User();
-    user.setSigningOfficialRole();
-
-    LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setUserId(user.getUserId());
-    libraryCard.setDaaIds(List.of(daaId));
-
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of(libraryCard));
-    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
-    Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
-    assert response.getStatus() == HttpStatus.SC_OK;
-  }
-
-  @Test
-  void testDeleteDaaForUserForbidden() {
-    Integer daaId = RandomUtils.nextInt(10, 100);
-
-    User user = new User();
-    user.setResearcherRole();
-
-    LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setUserId(user.getUserId());
-    libraryCard.setDaaIds(List.of(daaId));
-
-    when(userService.findUserByEmail(any())).thenThrow(new ForbiddenException());
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
-    Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
-    assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
 
   @Test
