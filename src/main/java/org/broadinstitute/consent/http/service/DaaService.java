@@ -107,6 +107,8 @@ public class DaaService implements ConsentLogger {
     daaDAO.deleteDacDaaRelation(dacId, daaId);
   }
 
+  // Note: This method/implementation is not the permanent solution to identifying the Broad DAA.
+  // Work is ticketed to refactor this logic.
   public boolean isBroadDAA(int daaId, List<DataAccessAgreement> allDaas, List<Dac> allDacs) {
     // Artificially tag the Broad/DUOS DAA as a reference DAA.
     Optional<Dac> broadDac = allDacs.stream()
