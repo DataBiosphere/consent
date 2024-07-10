@@ -11,14 +11,18 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
@@ -36,15 +40,17 @@ public class DaaService implements ConsentLogger {
   private final EmailService emailService;
   private final UserService userService;
   private final InstitutionDAO institutionDAO;
+  private final DacDAO dacDAO;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, UserService userService, InstitutionDAO institutionDAO) {
+  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, UserService userService, InstitutionDAO institutionDAO, DacDAO dacDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
     this.userService = userService;
     this.institutionDAO = institutionDAO;
+    this.dacDAO = dacDAO;
   }
 
   /**
@@ -101,11 +107,40 @@ public class DaaService implements ConsentLogger {
     daaDAO.deleteDacDaaRelation(dacId, daaId);
   }
 
-  public List<DataAccessAgreement> findAll() {
-    List<DataAccessAgreement> daas = daaDAO.findAll();
-    if (daas != null) {
-      return daas;
+  // Note: This method/implementation is not the permanent solution to identifying the Broad DAA.
+  // Work is ticketed to refactor this logic.
+  public boolean isBroadDAA(int daaId, List<DataAccessAgreement> allDaas, List<Dac> allDacs) {
+    // Artificially tag the Broad/DUOS DAA as a reference DAA.
+    Optional<Dac> broadDac = allDacs.stream()
+        .filter(dac -> dac.getName().toLowerCase().contains("broad")).findFirst();
+    if (broadDac.isPresent()) {
+      Optional<DataAccessAgreement> broadDAA = allDaas.stream()
+          .filter(daa -> daa.getInitialDacId().equals(broadDac.get().getDacId())).findFirst();
+      broadDAA.ifPresent(daa -> daa.setBroadDaa(true));
+    } else {
+      // In this case, we want the first created DAA to be the Broad default DAA.
+      allDaas.stream().min(Comparator.comparing(DataAccessAgreement::getDaaId))
+          .ifPresent(daa -> daa.setBroadDaa(true));
     }
+    Optional<DataAccessAgreement> broadDaa = allDaas.stream().filter(daa -> daa.getDaaId().equals(daaId)).findFirst();
+    if (broadDaa.isPresent()) {
+      return broadDaa.get().getBroadDaa();
+    } else {
+      return false;
+    }
+  }
+
+  public List<DataAccessAgreement> findAll() {
+      List<DataAccessAgreement> daas = daaDAO.findAll();
+      List<Dac> allDacs = dacDAO.findAll();
+      if (daas != null) {
+        daas.forEach(daa -> {
+          daa.setBroadDaa(
+              isBroadDAA(daa.getDaaId(), daas, allDacs)
+          );
+        });
+        return daas;
+      }
     return List.of();
   }
 

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -25,7 +26,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
@@ -59,6 +62,9 @@ class DaaServiceTest {
   @Mock
   private InstitutionDAO institutionDAO;
 
+  @Mock
+  private DacDAO dacDAO;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition = mock(
@@ -68,7 +74,7 @@ class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO, dacDAO);
   }
 
   @Test
@@ -121,6 +127,48 @@ class DaaServiceTest {
 
     initService();
     service.removeDacFromDaa(1, 1);
+  }
+
+  @Test
+  void testFindAllNoDaas() {
+    when(daaDAO.findAll()).thenReturn(List.of());
+
+    initService();
+    assertEquals(List.of(), service.findAll());
+  }
+
+  @Test
+  void testFindAllWithBroadDaa() {
+    Dac broadDac = new Dac();
+    int broadDacId = RandomUtils.nextInt(3,50);
+    broadDac.setName("broadDac");
+    broadDac.setDacId(broadDacId);
+
+    Dac dac2 = new Dac();
+    int dac2Id = RandomUtils.nextInt(3,50);
+    dac2.setName("dac2");
+    dac2.setDacId(dac2Id);
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(dac2Id);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(2);
+    daa2.setInitialDacId(broadDacId);
+    DataAccessAgreement daa3 = new DataAccessAgreement();
+    daa3.setDaaId(3);
+    daa3.setInitialDacId(dac2Id);
+
+    when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2, daa3));
+    when(dacDAO.findAll()).thenReturn(List.of(broadDac, dac2));
+
+    initService();
+    List<DataAccessAgreement> foundDaas = service.findAll();
+    assertEquals(List.of(daa1, daa2, daa3), foundDaas);
+    assertFalse(foundDaas.get(0).getBroadDaa());
+    assertTrue(foundDaas.get(1).getBroadDaa());
+    assertFalse(foundDaas.get(2).getBroadDaa());
+
   }
 
   @Test
@@ -484,5 +532,89 @@ class DaaServiceTest {
   void testDeleteDaaDaaNotFound() {
     initService();
     assertThrows(NotFoundException.class, () -> service.deleteDaa(1));
+  }
+
+  @Test
+  void testIsBroadDAANoDaasNoDacs() {
+    initService();
+    assertFalse(service.isBroadDAA(RandomUtils.nextInt(0,50), List.of(), List.of()));
+  }
+
+  @Test
+  void testIsBroadDAANoDacs() {
+    initService();
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa2.setDaaId(2);
+
+    assertTrue(service.isBroadDAA(1, List.of(daa1, daa2), List.of()));
+    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of()));
+  }
+
+  @Test
+  void testIsBroadDAANoBroadDacs() {
+    initService();
+
+    Dac dac = new Dac();
+    dac.setName("dacName");
+
+    Dac dac2= new Dac();
+    dac2.setName("dacName2");
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa2.setDaaId(2);
+
+    assertTrue(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
+    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
+  }
+
+  @Test
+  void testIsBroadDAANoMatchingDaa() {
+    initService();
+
+    Dac dac = new Dac();
+    dac.setName("dacName");
+    dac.setDacId(1);
+
+    Dac dac2= new Dac();
+    dac2.setName("broadDac");
+    dac2.setDacId(2);
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(RandomUtils.nextInt(3,50));
+    daa2.setDaaId(2);
+    daa2.setInitialDacId(RandomUtils.nextInt(3,50));
+
+    assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
+    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
+  }
+
+  @Test
+  void testIsBroadDAAMatching() {
+    initService();
+
+    Dac dac = new Dac();
+    dac.setName("dacName");
+    dac.setDacId(1);
+
+    Dac dac2= new Dac();
+    dac2.setName("broadDac");
+    dac2.setDacId(2);
+
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(RandomUtils.nextInt(3,50));
+    daa2.setDaaId(2);
+    daa2.setInitialDacId(2);
+
+    assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
+    assertTrue(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
   }
 }

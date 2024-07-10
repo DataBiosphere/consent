@@ -416,7 +416,8 @@ public class ConsentModule extends AbstractModule {
         providesGCSService(),
         providesEmailService(),
         providesUserService(),
-        providesInstitutionDAO());
+        providesInstitutionDAO(),
+        providesDacDAO());
   }
 
   @Provides
@@ -427,7 +428,9 @@ public class ConsentModule extends AbstractModule {
         providesDatasetDAO(),
         providesElectionDAO(),
         providesDataAccessRequestDAO(),
-        providesVoteService());
+        providesVoteService(),
+        providesDaaService(),
+        providesDaaDAO());
   }
 
   @Provides
