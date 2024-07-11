@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
@@ -46,6 +47,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.statement.Update;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -860,6 +862,21 @@ class DatasetDAOTest extends DAOTestHelper {
     List<Integer> foundDatasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
     assertTrue(foundDatasetIds.containsAll(insertedDatasetIds));
     assertTrue(insertedDatasetIds.containsAll(foundDatasetIds));
+  }
+
+  @Test
+  void testZeroAliasValuesValid() {
+    Dataset dataset = insertDataset();
+    jdbi.useHandle(handle -> {
+      Update update = handle.createUpdate(" UPDATE dataset SET alias = 0 WHERE dataset_id = :dataset_id ");
+      update.bind("dataset_id", dataset.getDataSetId());
+      update.execute();
+      handle.commit();
+    });
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertEquals(0, updatedDataset.getAlias());
+    updatedDataset.setDatasetIdentifier();
+    assertNotNull(updatedDataset.getDatasetIdentifier());
   }
 
   @Test
