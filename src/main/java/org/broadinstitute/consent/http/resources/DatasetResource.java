@@ -233,12 +233,10 @@ public class DatasetResource extends Resource {
       @FormDataParam("dataset") String json) {
 
     try {
-
-      DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
-
-      if (Objects.isNull(update)) {
+      if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset is required");
       }
+      DatasetUpdate update = new DatasetUpdate(json);
 
       Dataset datasetExists = datasetService.findDatasetById(datasetId);
       if (Objects.isNull(datasetExists)) {
