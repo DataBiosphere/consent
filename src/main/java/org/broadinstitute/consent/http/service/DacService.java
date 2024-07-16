@@ -180,6 +180,14 @@ public class DacService {
   }
 
   public void deleteDac(Integer dacId) {
+    Dac fullDac = dacDAO.findById(dacId);
+    List<DataAccessAgreement> daas = daaDAO.findAll();
+    List<Dac> dacs = dacDAO.findAll();
+    daas.stream()
+        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs));
+    if (daaService.isBroadDAA(fullDac.getAssociatedDaa().getDaaId(), daas, dacs)) {
+      daaService.removeDacFromDaa(dacId, fullDac.getAssociatedDaa().getDaaId());
+    }
     dacDAO.deleteDacMembers(dacId);
     dacDAO.deleteDac(dacId);
   }
