@@ -184,7 +184,8 @@ public class DacService {
     List<DataAccessAgreement> daas = daaDAO.findAll();
     List<Dac> dacs = dacDAO.findAll();
     daas.stream()
-        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs));
+        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs))
+        .forEach(daa -> daaService.deleteDaa(daa.getDaaId()));
     if (daaService.isBroadDAA(fullDac.getAssociatedDaa().getDaaId(), daas, dacs)) {
       daaService.removeDacFromDaa(dacId, fullDac.getAssociatedDaa().getDaaId());
     }
