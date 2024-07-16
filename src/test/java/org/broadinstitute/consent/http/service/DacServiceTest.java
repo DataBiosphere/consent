@@ -218,6 +218,78 @@ class DacServiceTest {
 
   @Test
   void testDeleteDac() {
+    List<Dac> dacs = getDacs();
+    when(dacDAO.findAll()).thenReturn(dacs);
+    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(daaDAO.findAll()).thenReturn(List.of());
+    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false);
+    doNothing().when(dacDAO).deleteDacMembers(anyInt());
+    doNothing().when(dacDAO).deleteDac(anyInt());
+    initService();
+
+    try {
+      service.deleteDac(1);
+    } catch (Exception e) {
+      fail("Delete should not fail");
+    }
+  }
+
+  @Test
+  void testDeleteDacWithDaas() {
+    List<Dac> dacs = getDacs();
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(1);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(2);
+    daa2.setInitialDacId(2);
+    when(dacDAO.findAll()).thenReturn(dacs);
+    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2));
+    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false);
+    doNothing().when(daaService).deleteDaa(anyInt());
+    doNothing().when(dacDAO).deleteDacMembers(anyInt());
+    doNothing().when(dacDAO).deleteDac(anyInt());
+    initService();
+
+    try {
+      service.deleteDac(1);
+    } catch (Exception e) {
+      fail("Delete should not fail");
+    }
+  }
+
+  @Test
+  void testDeleteDacWithDaasAndBroadDaa() {
+    List<Dac> dacs = getDacs();
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    daa1.setDaaId(1);
+    daa1.setInitialDacId(1);
+    when(dacDAO.findAll()).thenReturn(dacs);
+    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(daaDAO.findAll()).thenReturn(List.of(daa1));
+    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false, true);
+    doNothing().when(daaService).removeDacFromDaa(anyInt(),anyInt());
+    doNothing().when(daaService).deleteDaa(anyInt());
+    doNothing().when(dacDAO).deleteDacMembers(anyInt());
+    doNothing().when(dacDAO).deleteDac(anyInt());
+    initService();
+
+    try {
+      service.deleteDac(1);
+    } catch (Exception e) {
+      fail("Delete should not fail");
+    }
+  }
+
+  @Test
+  void testDeleteDacWithBroadDaa() {
+    List<Dac> dacs = getDacs();
+    when(dacDAO.findAll()).thenReturn(dacs);
+    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(daaDAO.findAll()).thenReturn(List.of());
+    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(true);
+    doNothing().when(daaService).removeDacFromDaa(anyInt(),anyInt());
     doNothing().when(dacDAO).deleteDacMembers(anyInt());
     doNothing().when(dacDAO).deleteDac(anyInt());
     initService();
