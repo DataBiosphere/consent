@@ -61,6 +61,7 @@ import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -399,6 +400,12 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  DacServiceDAO providesDacServiceDAO() {
+    return new DacServiceDAO(
+        providesJdbi());
+  }
+
+  @Provides
   DaaDAO providesDaaDAO() {
     return daaDAO;
   }
@@ -430,7 +437,8 @@ public class ConsentModule extends AbstractModule {
         providesDataAccessRequestDAO(),
         providesVoteService(),
         providesDaaService(),
-        providesDaaDAO());
+        providesDaaDAO(),
+        providesDacServiceDAO());
   }
 
   @Provides

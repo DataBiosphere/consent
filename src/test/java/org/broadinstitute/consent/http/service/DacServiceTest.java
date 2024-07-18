@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +48,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -81,9 +83,12 @@ class DacServiceTest {
   @Mock
   private DaaDAO daaDAO;
 
+  @Mock
+  private DacServiceDAO dacServiceDAO;
+
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService, daaService, daaDAO);
+        voteService, daaService, daaDAO, dacServiceDAO);
   }
 
   @Test
@@ -217,14 +222,12 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDac() {
+  void testDeleteDac() throws SQLException {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
     when(daaDAO.findAll()).thenReturn(List.of());
-    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false);
-    doNothing().when(dacDAO).deleteDacMembers(anyInt());
-    doNothing().when(dacDAO).deleteDac(anyInt());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
 
     try {
@@ -235,7 +238,7 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDacWithDaas() {
+  void testDeleteDacWithDaas() throws SQLException {
     List<Dac> dacs = getDacs();
     DataAccessAgreement daa1 = new DataAccessAgreement();
     daa1.setDaaId(1);
@@ -246,10 +249,7 @@ class DacServiceTest {
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
     when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2));
-    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false);
-    doNothing().when(daaService).deleteDaa(anyInt());
-    doNothing().when(dacDAO).deleteDacMembers(anyInt());
-    doNothing().when(dacDAO).deleteDac(anyInt());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
 
     try {
@@ -260,7 +260,7 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDacWithDaasAndBroadDaa() {
+  void testDeleteDacWithDaasAndBroadDaa() throws SQLException {
     List<Dac> dacs = getDacs();
     DataAccessAgreement daa1 = new DataAccessAgreement();
     daa1.setDaaId(1);
@@ -268,11 +268,7 @@ class DacServiceTest {
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
     when(daaDAO.findAll()).thenReturn(List.of(daa1));
-    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(false, true);
-    doNothing().when(daaService).removeDacFromDaa(anyInt(),anyInt());
-    doNothing().when(daaService).deleteDaa(anyInt());
-    doNothing().when(dacDAO).deleteDacMembers(anyInt());
-    doNothing().when(dacDAO).deleteDac(anyInt());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
 
     try {
@@ -283,15 +279,12 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDacWithBroadDaa() {
+  void testDeleteDacWithBroadDaa() throws SQLException {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
     when(daaDAO.findAll()).thenReturn(List.of());
-    when(daaService.isBroadDAA(anyInt(),any(),any())).thenReturn(true);
-    doNothing().when(daaService).removeDacFromDaa(anyInt(),anyInt());
-    doNothing().when(dacDAO).deleteDacMembers(anyInt());
-    doNothing().when(dacDAO).deleteDac(anyInt());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
 
     try {
@@ -299,6 +292,20 @@ class DacServiceTest {
     } catch (Exception e) {
       fail("Delete should not fail");
     }
+  }
+
+  @Test
+  void testDeleteDacBroadDac() throws SQLException {
+    List<Dac> dacs = getDacs();
+    dacs.get(0).setName("Broad DAC");
+    when(dacDAO.findAll()).thenReturn(dacs);
+    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(daaDAO.findAll()).thenReturn(List.of());
+    initService();
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.deleteDac(1);
+    });
   }
 
   @Test

@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.groupingBy;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -32,7 +33,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 public class DacService {
 
   private final DacDAO dacDAO;
@@ -43,11 +44,13 @@ public class DacService {
   private final DaaDAO daaDAO;
   private final VoteService voteService;
   private final DaaService daaService;
+  private final DacServiceDAO dacServiceDAO;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService, DaaService daaService, DaaDAO daaDAO) {
+      VoteService voteService, DaaService daaService, DaaDAO daaDAO,
+      DacServiceDAO dacServiceDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
@@ -56,6 +59,7 @@ public class DacService {
     this.daaDAO = daaDAO;
     this.voteService = voteService;
     this.daaService = daaService;
+    this.dacServiceDAO = dacServiceDAO;
   }
 
   public List<Dac> findAll() {
@@ -179,18 +183,22 @@ public class DacService {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(Integer dacId) {
+  public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
     Dac fullDac = dacDAO.findById(dacId);
     List<DataAccessAgreement> daas = daaDAO.findAll();
     List<Dac> dacs = dacDAO.findAll();
-    daas.stream()
-        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs))
-        .forEach(daa -> daaService.deleteDaa(daa.getDaaId()));
-    if (daaService.isBroadDAA(fullDac.getAssociatedDaa().getDaaId(), daas, dacs)) {
-      daaService.removeDacFromDaa(dacId, fullDac.getAssociatedDaa().getDaaId());
+    Optional<Dac> broadDac = dacs.stream()
+        .filter(dac -> dac.getName().toLowerCase().contains("broad") && dac.getDacId().equals(dacId)).findFirst();
+    if (broadDac.isPresent()) {
+      throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
-    dacDAO.deleteDacMembers(dacId);
-    dacDAO.deleteDac(dacId);
+    List<DataAccessAgreement> filteredDaas = daas.stream()
+        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs)).toList();
+    try {
+      dacServiceDAO.deleteDacAndDaas(fullDac, filteredDaas);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Could not find DAC with the provided id: " + dacId);
+    }
   }
 
   public User findUserById(Integer id) throws IllegalArgumentException {
