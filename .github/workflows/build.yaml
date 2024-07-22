@@ -53,6 +53,7 @@ jobs:
       uses: 'google-github-actions/auth@v2'
       with:
         # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
+        token_format: 'id_token'
         workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
         service_account: 'gha-iap-accessor@dsp-devops-super-prod.iam.gserviceaccount.com'
     - name: Auth Docker for GCR
