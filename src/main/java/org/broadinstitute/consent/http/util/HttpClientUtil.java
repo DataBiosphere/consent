@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.util;
 
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpHeaders;
@@ -20,7 +22,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -135,10 +136,17 @@ public class HttpClientUtil implements ConsentLogger {
   }
 
   public HttpResponse handleHttpRequest(HttpRequest request) {
+    String timerName = String.format("org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
+        request.getRequestMethod(), request.getUrl().toString());
+    Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
     try {
       request.setThrowExceptionOnExecuteError(false);
-      HttpResponse response = request.execute();
-      if (Objects.nonNull(response)) {
+      HttpResponse response;
+      try (Timer.Context context = timer.time()) {
+        response = request.execute();
+        context.stop();
+      }
+      if (response != null) {
         return switch (response.getStatusCode()) {
           case HttpStatusCodes.STATUS_CODE_BAD_REQUEST ->
               throw new BadRequestException(response.getStatusMessage());
