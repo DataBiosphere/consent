@@ -97,7 +97,6 @@ class SamPactTests {
   public static void beforeClass() {
     System.setProperty("pact_do_not_track", "true");
     System.setProperty("pact.writer.overwrite", "true");
-    SharedMetricRegistries.setDefault("default", new MetricRegistry());
   }
 
   private void initSamDAO(MockServer mockServer) {

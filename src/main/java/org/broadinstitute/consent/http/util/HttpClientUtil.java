@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.google.api.client.http.GenericUrl;
@@ -138,6 +139,10 @@ public class HttpClientUtil implements ConsentLogger {
   public HttpResponse handleHttpRequest(HttpRequest request) {
     String timerName = String.format("org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
         request.getRequestMethod(), request.getUrl().toString());
+    if (SharedMetricRegistries.tryGetDefault() == null) {
+      logWarn("This should only happen in testing conditions");
+      SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
+    }
     Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
     try {
       request.setThrowExceptionOnExecuteError(false);
