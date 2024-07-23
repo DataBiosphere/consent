@@ -193,7 +193,7 @@ public class DacService {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     List<DataAccessAgreement> filteredDaas = daas.stream()
-        .filter(daa -> daa.getInitialDacId().equals(dacId) && ! daaService.isBroadDAA(daa.getDaaId(), daas, dacs)).toList();
+        .filter(daa -> daa.getInitialDacId().equals(dacId)).toList();
     try {
       dacServiceDAO.deleteDacAndDaas(fullDac, filteredDaas);
     } catch (IllegalArgumentException e) {
