@@ -763,6 +763,9 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       for (Dataset dataset : datasets) {
         Dac dac = dacDAO.findById(dataset.getDacId());
+        if (dac == null) {
+          logWarn("Could not find DAC for dataset with identifier: " + dataset.getDatasetIdentifier());
+        }
         List<User> chairPersons = (dac == null) ? List.of() :
             dacDAO
                 .findMembersByDacId(dac.getDacId())
