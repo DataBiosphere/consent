@@ -185,17 +185,14 @@ public class DacService {
 
   public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
     Dac fullDac = dacDAO.findById(dacId);
-    List<DataAccessAgreement> daas = daaDAO.findAll();
     List<Dac> dacs = dacDAO.findAll();
     Optional<Dac> broadDac = dacs.stream()
         .filter(dac -> dac.getName().toLowerCase().contains("broad") && dac.getDacId().equals(dacId)).findFirst();
     if (broadDac.isPresent()) {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
-    List<DataAccessAgreement> filteredDaas = daas.stream()
-        .filter(daa -> daa.getInitialDacId().equals(dacId)).toList();
     try {
-      dacServiceDAO.deleteDacAndDaas(fullDac, filteredDaas);
+      dacServiceDAO.deleteDacAndDaas(fullDac);
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException("Could not find DAC with the provided id: " + dacId);
     }

@@ -226,8 +226,7 @@ class DacServiceTest {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    when(daaDAO.findAll()).thenReturn(List.of());
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
     try {
@@ -248,8 +247,7 @@ class DacServiceTest {
     daa2.setInitialDacId(2);
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
     try {
@@ -267,8 +265,7 @@ class DacServiceTest {
     daa1.setInitialDacId(1);
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    when(daaDAO.findAll()).thenReturn(List.of(daa1));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
     try {
@@ -283,8 +280,7 @@ class DacServiceTest {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    when(daaDAO.findAll()).thenReturn(List.of());
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any(), any());
+    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
     try {
@@ -300,7 +296,6 @@ class DacServiceTest {
     dacs.get(0).setName("Broad DAC");
     when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    when(daaDAO.findAll()).thenReturn(List.of());
     initService();
 
     assertThrows(IllegalArgumentException.class, () -> {

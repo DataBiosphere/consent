@@ -24,7 +24,7 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setUp() {
-    serviceDAO = new DacServiceDAO(jdbi);
+    serviceDAO = new DacServiceDAO(jdbi, daaDAO);
   }
 
   @Test
@@ -36,7 +36,7 @@ class DacServiceDAOTest extends DAOTestHelper {
 
     Dac fullDac = dacDAO.findById(dacsInDatabase.get(0).getDacId());
     try {
-      serviceDAO.deleteDacAndDaas(fullDac, List.of());
+      serviceDAO.deleteDacAndDaas(fullDac);
     } catch (Exception e) {
       fail("Delete should not fail");
     }
@@ -55,10 +55,9 @@ class DacServiceDAOTest extends DAOTestHelper {
     daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacsInDatabase.get(0).getDacId());
     daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacsInDatabase.get(0).getDacId());
     Dac fullDac = dacDAO.findById(dacsInDatabase.get(0).getDacId());
-    List<DataAccessAgreement> daaList = daaDAO.findAll();
 
     try {
-      serviceDAO.deleteDacAndDaas(fullDac, daaList);
+      serviceDAO.deleteDacAndDaas(fullDac);
     } catch (Exception e) {
       fail("Delete should not fail");
     }
@@ -82,7 +81,7 @@ class DacServiceDAOTest extends DAOTestHelper {
     Dac fullDac = dacDAO.findById(dacId);
 
     try {
-      serviceDAO.deleteDacAndDaas(fullDac, List.of(daa));
+      serviceDAO.deleteDacAndDaas(fullDac);
     } catch (Exception e) {
       fail("Delete should not fail");
     }
@@ -101,10 +100,9 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), broadDacId);
     daaDAO.createDacDaaRelation(dacId, daaId);
     Dac fullDac = dacDAO.findById(dacId);
-    List<DataAccessAgreement> daaList = daaDAO.findAll();
 
     try {
-      serviceDAO.deleteDacAndDaas(fullDac, daaList);
+      serviceDAO.deleteDacAndDaas(fullDac);
     } catch (Exception e) {
       fail("Delete should not fail");
     }

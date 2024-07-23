@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -13,18 +14,23 @@ import org.jdbi.v3.core.statement.Update;
 public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
+  private final DaaDAO daaDAO;
 
   @Inject
-  public DacServiceDAO(Jdbi jdbi) {
+  public DacServiceDAO(Jdbi jdbi, DaaDAO daaDAO) {
     this.jdbi = jdbi;
+    this.daaDAO = daaDAO;
   }
 
-  public void deleteDacAndDaas(Dac dac, List<DataAccessAgreement> daas)
+  public void deleteDacAndDaas(Dac dac)
       throws IllegalArgumentException, SQLException {
     // fail fast
     if (Objects.isNull(dac)) {
       throw new IllegalArgumentException("Invalid DAC");
     }
+    List<DataAccessAgreement> daas = daaDAO.findAll();
+    List<DataAccessAgreement> filteredDaas = daas.stream()
+        .filter(daa -> daa.getInitialDacId().equals(dac.getDacId())).toList();
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
 
@@ -44,7 +50,7 @@ public class DacServiceDAO implements ConsentLogger {
         dacDaaDeletion.bind("dacId", dac.getDacId());
         dacDaaDeletion.execute();
 
-        daas.forEach(id -> {
+        filteredDaas.forEach(id -> {
           Update daaDeletion = handler.createUpdate(deleteFromDaa);
           daaDeletion.bind("dacId", dac.getDacId());
           daaDeletion.execute();
