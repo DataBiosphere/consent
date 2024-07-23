@@ -5,25 +5,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.collections4.SetUtils;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.service.DatasetService;
 
 public class DatasetRegistrationSchemaV1UpdateValidator {
 
-  public DatasetRegistrationSchemaV1UpdateValidator() {
+  private final DatasetService datasetService;
+
+  public DatasetRegistrationSchemaV1UpdateValidator(DatasetService datasetService) {
+    this.datasetService = datasetService;
   }
 
   public boolean validate(Study existingStudy, DatasetRegistrationSchemaV1 registration) {
 
-    // Not modifiable: Study Name, Data Submitter Name/Email, Primary Data Use,
-    // Secondary Data Use
-    if (Objects.nonNull(registration.getStudyName()) && !registration.getStudyName()
-        .equals(existingStudy.getName())) {
+    // Validate that the new study name is unique
+    Set<String> studyNames = datasetService.findAllStudyNames();
+    if (studyNames.contains(registration.getStudyName()) &&
+        !registration.getStudyName().equals(existingStudy.getName())) {
       throw new BadRequestException("Invalid change to Study Name");
     }
-    if (Objects.nonNull(registration.getDataSubmitterUserId())
+
+    // Not modifiable: Data Submitter Name/Email, Primary Data Use,
+    // Secondary Data Use
+    if (registration.getDataSubmitterUserId() != null
         && !registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
       throw new BadRequestException("Invalid change to Data Submitter");
     }

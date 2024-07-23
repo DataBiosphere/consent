@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
@@ -10,24 +11,29 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetRegistrationSchemaV1UpdateValidatorTest {
 
+  @Mock
+  private DatasetService datasetService;
   private DatasetRegistrationSchemaV1UpdateValidator validator;
 
   @BeforeEach
   void setUp() {
-    validator = new DatasetRegistrationSchemaV1UpdateValidator();
+    validator = new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
   }
 
   @Test
@@ -40,10 +46,23 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   }
 
   @Test
-  void testValidation_study_name() {
+  void testValidation_valid_study_name_change() {
     Study study = createMockStudy();
+    when(datasetService.findAllStudyNames()).thenReturn(Set.of(study.getName()));
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setStudyName("New Name");
+
+    boolean valid = validator.validate(study, registration);
+    assertTrue(valid);
+  }
+
+  @Test
+  void testValidation_invalid_study_name_change() {
+    String existingStudyName = RandomStringUtils.randomAlphabetic(10);
+    Study study = createMockStudy();
+    when(datasetService.findAllStudyNames()).thenReturn(Set.of(study.getName(), existingStudyName));
+    DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
+    registration.setStudyName(existingStudyName);
 
     assertThrows(BadRequestException.class, () -> {
       validator.validate(study, registration);
