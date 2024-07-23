@@ -58,7 +58,7 @@ jobs:
     - name: Push Image to GCR
       if: github.actor != 'dependabot[bot]'
       run: |
-        gcloud auth configure-docker
+        gcloud auth configure-docker --quiet
         docker push ${{ steps.construct-tags.outputs.sha-tag }}
         docker push ${{ steps.construct-tags.outputs.environment-tag }}
   report-to-sherlock:
