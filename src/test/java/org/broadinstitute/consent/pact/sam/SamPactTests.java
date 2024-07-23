@@ -12,6 +12,8 @@ import au.com.dius.pact.consumer.junit5.PactTestFor;
 import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -95,6 +97,7 @@ class SamPactTests {
   public static void beforeClass() {
     System.setProperty("pact_do_not_track", "true");
     System.setProperty("pact.writer.overwrite", "true");
+    SharedMetricRegistries.setDefault("default", new MetricRegistry());
   }
 
   private void initSamDAO(MockServer mockServer) {
