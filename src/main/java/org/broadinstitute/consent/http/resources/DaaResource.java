@@ -250,7 +250,7 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       List<User> users = userService.findUsersInJsonArray(json, "users");
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
           if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
             return Response.status(Status.FORBIDDEN).build();
@@ -278,7 +278,7 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       List<User> users = userService.findUsersInJsonArray(json, "users");
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
           if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
             return Response.status(Status.FORBIDDEN).build();
