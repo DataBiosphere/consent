@@ -61,8 +61,8 @@ jobs:
     - name: Push Image to GCR
       if: github.actor != 'dependabot[bot]'
       run: |
-        docker push ${{ steps.construct-tags.outputs.sha-tag }}
-        docker push ${{ steps.construct-tags.outputs.environment-tag }}
+        gcloud docker -- push ${{ steps.construct-tags.outputs.sha-tag }}
+        gcloud docker -- push ${{ steps.construct-tags.outputs.environment-tag }}
   report-to-sherlock:
     uses: broadinstitute/sherlock/.github/workflows/client-report-app-version.yaml@main
     needs: [ tag-build-push ]
