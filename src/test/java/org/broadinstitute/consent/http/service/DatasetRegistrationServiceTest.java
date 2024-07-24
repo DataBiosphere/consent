@@ -354,6 +354,16 @@ class DatasetRegistrationServiceTest {
   }
 
   @Test
+  void testSendDatasetSubmittedEmailsNoDAC() throws Exception {
+    Dataset dataset = new Dataset();
+    initService();
+    when(dacDAO.findById(any())).thenReturn(null);
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+  }
+
+  @Test
   void testCreatedDatasetsFromUpdatedStudy() {
     Study study = mock();
     Set<Dataset> allDatasets = Stream.of(1, 2, 3, 4, 5).map((i) -> {
