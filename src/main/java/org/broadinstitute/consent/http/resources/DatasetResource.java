@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -609,6 +610,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/autocomplete")
   @PermitAll
+  @Timed
   public Response autocompleteDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query) {
@@ -626,6 +628,7 @@ public class DatasetResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
+  @Timed
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());

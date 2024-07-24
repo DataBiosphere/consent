@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -101,6 +102,7 @@ public class UserResource extends Resource {
   @Path("/me")
   @Produces("application/json")
   @PermitAll
+  @Timed
   public Response getUser(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
