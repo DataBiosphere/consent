@@ -140,7 +140,7 @@ public class HttpClientUtil implements ConsentLogger {
     String timerName = String.format("org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
         request.getRequestMethod(), request.getUrl().toString());
     if (SharedMetricRegistries.tryGetDefault() == null) {
-      logWarn("This should only happen in testing conditions");
+      logWarn("Default SharedMetricRegistries is null, setting default");
       SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
     }
     Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
