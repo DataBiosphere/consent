@@ -232,4 +232,8 @@ public class DaaService implements ConsentLogger {
       throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
     }
   }
+
+  public List<DataAccessAgreement> findByDarReferenceId(String referenceId) {
+    return daaDAO.findByDarReferenceId(referenceId);
+  }
 }

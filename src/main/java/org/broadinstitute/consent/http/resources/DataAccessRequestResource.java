@@ -36,12 +36,14 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -53,6 +55,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
 
+  private final DaaService daaService;
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailService emailService;
   private final GCSService gcsService;
@@ -62,6 +65,7 @@ public class DataAccessRequestResource extends Resource {
 
   @Inject
   public DataAccessRequestResource(
+      DaaService daaService,
       DataAccessRequestService dataAccessRequestService,
       EmailService emailService,
       GCSService gcsService,
@@ -69,6 +73,7 @@ public class DataAccessRequestResource extends Resource {
       DatasetService datasetService,
       MatchService matchService
   ) {
+    this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailService = emailService;
     this.gcsService = gcsService;
@@ -173,6 +178,24 @@ public class DataAccessRequestResource extends Resource {
                   "Unable to find Data Access Request with reference id: " + referenceId,
                   Response.Status.NOT_FOUND.getStatusCode()))
           .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/v2/{referenceId}/daas")
+  @Produces("application/json")
+  @PermitAll
+  public Response getDAAsByReferenceId(
+      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+    try {
+      validateAuthedRoleUser(
+          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
+              .collect(Collectors.toList()),
+          authUser, referenceId);
+      List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
+      return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

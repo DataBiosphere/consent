@@ -617,4 +617,25 @@ class DaaServiceTest {
     assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
     assertTrue(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
   }
+
+  @Test
+  void testFindByDarReferenceId() {
+    initService();
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of(daa1));
+
+    List<DataAccessAgreement> daas = service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    assertFalse(daas.isEmpty());
+    assertTrue(daas.stream().map(DataAccessAgreement::getDaaId).toList().contains(daa1.getDaaId()));
+  }
+
+  @Test
+  void testFindByDarReferenceIdNoResults() {
+    initService();
+    when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of());
+
+    List<DataAccessAgreement> daas = service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    assertTrue(daas.isEmpty());
+  }
+
 }

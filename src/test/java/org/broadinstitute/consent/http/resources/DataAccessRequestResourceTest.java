@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -60,6 +61,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestResourceTest {
 
+  @Mock
+  private DaaService daaService;
   @Mock
   private DataAccessRequestService dataAccessRequestService;
   @Mock
@@ -102,7 +105,7 @@ class DataAccessRequestResourceTest {
   private void initResource() {
     try {
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -148,7 +151,7 @@ class DataAccessRequestResourceTest {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -190,7 +193,7 @@ class DataAccessRequestResourceTest {
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -209,7 +212,7 @@ class DataAccessRequestResourceTest {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -230,7 +233,7 @@ class DataAccessRequestResourceTest {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -805,7 +808,7 @@ class DataAccessRequestResourceTest {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -831,7 +834,7 @@ class DataAccessRequestResourceTest {
       dar.setData(data);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -853,7 +856,7 @@ class DataAccessRequestResourceTest {
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -871,7 +874,7 @@ class DataAccessRequestResourceTest {
       when(userService.findUserByEmail(any())).thenReturn(user);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
       resource =
-          new DataAccessRequestResource(
+          new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
               matchService);
     } catch (Exception e) {
@@ -906,6 +909,30 @@ class DataAccessRequestResourceTest {
 
     try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetDAAsByReferenceId() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(daaService.findByDarReferenceId(any())).thenReturn(List.of());
+    initResource();
+
+    try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetDAAsByReferenceIdNotFound() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+    initResource();
+
+    try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
