@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -321,6 +322,20 @@ public class DatasetResource extends Resource {
           datasetService.findDatasetsByCustodian(user) :
           datasetService.findAllDatasetsByUser(user);
       return Response.ok(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/v3")
+  public Response findAllDatasetStudySummaries(@Auth AuthUser authUser) {
+    try {
+      userService.findUserByEmail(authUser.getEmail());
+      List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries();
+      return Response.ok(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

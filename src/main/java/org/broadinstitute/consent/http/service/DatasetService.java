@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
@@ -58,7 +59,6 @@ public class DatasetService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
   private final EmailService emailService;
-  private final LibraryCardDAO libraryCardDAO;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
@@ -66,13 +66,12 @@ public class DatasetService implements ConsentLogger {
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
-      LibraryCardDAO libraryCardDAO, OntologyService ontologyService, StudyDAO studyDAO,
+      OntologyService ontologyService, StudyDAO studyDAO,
       DatasetServiceDAO datasetServiceDAO, UserDAO userDAO) {
     this.datasetDAO = dataSetDAO;
     this.daaDAO = daaDAO;
     this.dacDAO = dacDAO;
     this.emailService = emailService;
-    this.libraryCardDAO = libraryCardDAO;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
     this.datasetServiceDAO = datasetServiceDAO;
@@ -322,6 +321,10 @@ public class DatasetService implements ConsentLogger {
 
   public List<DatasetSummary> searchDatasetSummaries(String query) {
     return datasetDAO.findDatasetSummariesByQuery(query);
+  }
+
+  public List<DatasetStudySummary> findAllDatasetStudySummaries() {
+    return datasetDAO.findAllDatasetStudySummaries();
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

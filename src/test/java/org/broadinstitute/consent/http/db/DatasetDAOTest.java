@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
@@ -39,6 +38,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Election;
@@ -55,6 +55,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetDAOTest extends DAOTestHelper {
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetAndStudy() {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDataSetId(), study.getStudyId());
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertFalse(summaries.isEmpty());
+    assertEquals( 1, summaries.size());
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertEquals(study.getStudyId(), summaries.get(0).study_id());
+  }
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetOnly() {
+    Dataset dataset = insertDataset();
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertFalse(summaries.isEmpty());
+    assertEquals( 1, summaries.size());
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertNull(summaries.get(0).study_id());
+  }
 
   @Test
   void testFindDatasetByIdWithDacAndConsent() {
