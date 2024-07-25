@@ -14,12 +14,10 @@ import org.jdbi.v3.core.statement.Update;
 public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
-  private final DaaDAO daaDAO;
 
   @Inject
-  public DacServiceDAO(Jdbi jdbi, DaaDAO daaDAO) {
+  public DacServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.daaDAO = daaDAO;
   }
 
   public void deleteDacAndDaas(Dac dac)
@@ -28,9 +26,6 @@ public class DacServiceDAO implements ConsentLogger {
     if (Objects.isNull(dac)) {
       throw new IllegalArgumentException("Invalid DAC");
     }
-    List<DataAccessAgreement> daas = daaDAO.findAll();
-    List<DataAccessAgreement> filteredDaas = daas.stream()
-        .filter(daa -> daa.getInitialDacId().equals(dac.getDacId())).toList();
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
 
@@ -50,11 +45,9 @@ public class DacServiceDAO implements ConsentLogger {
         dacDaaDeletion.bind("dacId", dac.getDacId());
         dacDaaDeletion.execute();
 
-        filteredDaas.forEach(id -> {
-          Update daaDeletion = handler.createUpdate(deleteFromDaa);
-          daaDeletion.bind("dacId", dac.getDacId());
-          daaDeletion.execute();
-        });
+        Update daaDeletion = handler.createUpdate(deleteFromDaa);
+        daaDeletion.bind("dacId", dac.getDacId());
+        daaDeletion.execute();
 
         Update memberDeletion = handler.createUpdate(deleteMembers);
         memberDeletion.bind("dacId", dac.getDacId());

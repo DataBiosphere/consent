@@ -24,7 +24,7 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setUp() {
-    serviceDAO = new DacServiceDAO(jdbi, daaDAO);
+    serviceDAO = new DacServiceDAO(jdbi);
   }
 
   @Test

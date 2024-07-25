@@ -402,8 +402,7 @@ public class ConsentModule extends AbstractModule {
   @Provides
   DacServiceDAO providesDacServiceDAO() {
     return new DacServiceDAO(
-        providesJdbi(),
-        providesDaaDAO());
+        providesJdbi());
   }
 
   @Provides
