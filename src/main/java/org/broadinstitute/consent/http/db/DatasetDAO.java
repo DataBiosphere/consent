@@ -556,9 +556,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           " VALUES (:dataSetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
 
-  @SqlBatch("DELETE FROM dataset_property WHERE dataset_id = :dataSetId")
-  void deleteDatasetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
-
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
   void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 

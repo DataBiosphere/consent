@@ -90,7 +90,7 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testCreateDataset() throws Exception {
+  void testCreateDataset() {
     DatasetDTO test = getDatasetDTO();
     Dataset mockDataset = getDatasets().get(0);
     when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(

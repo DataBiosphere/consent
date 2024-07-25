@@ -314,6 +314,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
+  @Deprecated
   public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser,
       @QueryParam("asCustodian") Boolean asCustodian) {
     try {
@@ -646,7 +647,7 @@ public class DatasetResource extends Resource {
   @Timed
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);

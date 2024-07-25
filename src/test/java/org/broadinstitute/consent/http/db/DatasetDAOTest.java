@@ -484,7 +484,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -536,7 +536,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestCreated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestCreated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -1087,7 +1087,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasets() throws Exception {
+  void testGetApprovedDatasets() {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
@@ -1161,7 +1161,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenNone() throws Exception {
+  void testGetApprovedDatasetsWhenNone() {
 
     // user with only unapproved datasets
     User user = createUser();
@@ -1191,7 +1191,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenEmpty() throws Exception {
+  void testGetApprovedDatasetsWhenEmpty() {
 
     // user with no datasets
     User user = createUser();
