@@ -30,7 +30,7 @@ class DacServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDac() {
 
-    List<Dac> dacs = getDacs();
+    List<Dac> dacs = createMockDACs(4);
     dacs.forEach(dac -> dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date()));
     List<Dac> dacsInDatabase = dacDAO.findAll();
 
@@ -47,7 +47,7 @@ class DacServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDacWithDaas() {
 
-    List<Dac> dacs = getDacs();
+    List<Dac> dacs = createMockDACs(4);
     dacs.forEach(dac -> dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date()));
 
     List<Dac> dacsInDatabase = dacDAO.findAll();
@@ -69,7 +69,7 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDacWithDaasAndBroadDaa() {
-    getDacs();
+    createMockDACs(4);
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
     Integer broadDacId = dacDAO.createDac("Broad", RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
     User user = createUser();
@@ -93,7 +93,7 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDacWithBroadDaa() {
-    getDacs();
+    createMockDACs(4);
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
     Integer broadDacId = dacDAO.createDac("Broad", RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
     User user = createUser();
@@ -113,12 +113,13 @@ class DacServiceDAOTest extends DAOTestHelper {
   }
 
   /**
-   * @return A list of 5 dacs
+   * @param numDacs The number of dacs to create
+   * @return A list of numDacs dacs
    */
-  private List<Dac> getDacs() {
+  private List<Dac> createMockDACs(Integer numDacs) {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
-    return IntStream.range(1, 5).
+    return IntStream.range(0, numDacs).
         mapToObj(i -> {
           Dac dac = new Dac();
           dac.setDacId(i);

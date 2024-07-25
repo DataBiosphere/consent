@@ -23,7 +23,7 @@ public class DacServiceDAO implements ConsentLogger {
   public void deleteDacAndDaas(Dac dac)
       throws IllegalArgumentException, SQLException {
     // fail fast
-    if (Objects.isNull(dac)) {
+    if (dac == null) {
       throw new IllegalArgumentException("Invalid DAC");
     }
     jdbi.useHandle(handle -> {
