@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Prepopulate the system with a Broad Data Access Agreement (DAA) and add it to
 # all existing Data Access Committees (DACs). Next, add all users with a library
@@ -104,11 +104,11 @@ get_broad_daa() {
 }
 
 get_broad_dac() {
-  DAC_LIST=$(curl_get "$API/dac" | sed 's/\\n/ /g')
+  DAC_LIST=$(curl_get "$API/dac")
   if [ "$DAA_DAC_ID" = "null" ]; then
-    BROAD_DAC_JSON=$(echo "$DAC_LIST" | jq '.[] | select(.name=="Broad DAC")')
+    BROAD_DAC_JSON=$(echo -E "$DAC_LIST" | jq '.[] | select(.name=="Broad DAC")')
   else
-    BROAD_DAC_JSON=$(echo "$DAC_LIST" | jq ".[] | select(.dacId==$DAA_DAC_ID)")
+    BROAD_DAC_JSON=$(echo -E "$DAC_LIST" | jq ".[] | select(.dacId==$DAA_DAC_ID)")
   fi
   BROAD_DAC_ID=$(echo "$BROAD_DAC_JSON" | jq -r '.dacId')
   if [ -z "$BROAD_DAC_JSON" ]; then
