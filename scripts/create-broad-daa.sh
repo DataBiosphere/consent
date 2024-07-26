@@ -97,9 +97,10 @@ check_broad_daa() {
 get_broad_daa() {
   DAA_JSON=$(curl_get "$API/daa")
   DAA_NUM=$(echo "$DAA_JSON" | jq '. | length')
-  BROAD_DAA_ID=$(echo "$DAA_JSON" | jq '.[0].daaId')
-  DAA_IS_BROAD=$(echo "$DAA_JSON" | jq '.[0].broadDaa')
-  DAA_DAC_ID=$(echo "$DAA_JSON" | jq '.[0].initialDacId')
+  FIRST_DAA_JSON=$(echo "$DAA_JSON" | jq '. | sort_by(.daaId) | first')
+  BROAD_DAA_ID=$(echo "$FIRST_DAA_JSON" | jq '.daaId')
+  DAA_IS_BROAD=$(echo "$FIRST_DAA_JSON" | jq '.broadDaa')
+  DAA_DAC_ID=$(echo "$FIRST_DAA_JSON" | jq '.initialDacId')
 }
 
 get_broad_dac() {
