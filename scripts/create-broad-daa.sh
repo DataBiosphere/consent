@@ -46,11 +46,11 @@ parse_cli_args() {
             ;;
         esac
         ENV="$2"
-        shift
+        shift 2
         ;;
       --file)
         FILE="$2"
-        shift
+        shift 2
         ;;
       --help)
         usage
