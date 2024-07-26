@@ -118,6 +118,10 @@ get_broad_dac() {
 
 post_broad_daa() {
   BROAD_DAA_JSON=$(curl_post_file "$API/daa/dac/$BROAD_DAC_ID" "$FILE")
+  IS_UNAUTHORIZED=$(echo "$BROAD_DAA_JSON" | jq -r '.code==403')
+  if [ "$IS_UNAUTHORIZED" = "true" ]; then
+    error "User is not authorized to create a DAA"
+  fi
   BROAD_DAA_ID=$(echo "$BROAD_DAA_JSON" | jq -r '.daaId')
   echo "Created Broad DAA '$BROAD_DAA_ID' with DAC '$BROAD_DAC_ID'"
 }
