@@ -34,7 +34,7 @@ public class DacServiceDAO implements ConsentLogger {
         final String deleteFromDacDaa = "DELETE FROM dac_daa WHERE dac_id = :dacId";
         final String deleteFromDaa = "DELETE FROM data_access_agreement WHERE initial_dac_id = :dacId";
         final String deleteMembers = "DELETE FROM user_role WHERE dac_id = :dacId";
-        final String updateDatasets = "UPDATE dataset SET dac_id = null, needs_approval = true WHERE dac_id = :dacId";
+        final String updateDatasets = "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
         final String deleteDac = "DELETE FROM dac where dac_id = :dacId";
 
         Update lcDaaDeletion = handler.createUpdate(deleteFromLcDaa);
