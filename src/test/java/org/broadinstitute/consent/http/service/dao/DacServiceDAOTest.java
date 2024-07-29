@@ -1,16 +1,22 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,97 +35,74 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDac() {
-
-    List<Dac> dacs = createMockDACs(4);
-    dacs.forEach(dac -> dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date()));
-    List<Dac> dacsInDatabase = dacDAO.findAll();
-
-    Dac fullDac = dacDAO.findById(dacsInDatabase.get(0).getDacId());
-    try {
-      serviceDAO.deleteDacAndDaas(fullDac);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-    List<Dac> dacListRemoved = dacDAO.findAll();
-    assertEquals(3, dacListRemoved.size());
-  }
-
-  @Test
-  void testDeleteDacWithDaas() {
-
-    List<Dac> dacs = createMockDACs(4);
-    dacs.forEach(dac -> dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date()));
-
-    List<Dac> dacsInDatabase = dacDAO.findAll();
-    User user = createUser();
-    daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacsInDatabase.get(0).getDacId());
-    daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacsInDatabase.get(0).getDacId());
-    Dac fullDac = dacDAO.findById(dacsInDatabase.get(0).getDacId());
-
-    try {
-      serviceDAO.deleteDacAndDaas(fullDac);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-    List<Dac> dacListRemoved = dacDAO.findAll();
-    assertEquals(3, dacListRemoved.size());
-    List<DataAccessAgreement> daaListRemoved = daaDAO.findAll();
-    assertEquals(0, daaListRemoved.size());
-  }
-
-  @Test
-  void testDeleteDacWithDaasAndBroadDaa() {
-    createMockDACs(4);
-    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
-    Integer broadDacId = dacDAO.createDac("Broad", RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
-    User user = createUser();
-    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacId);
-    DataAccessAgreement daa = daaDAO.findById(daaId);
-    Integer daaId2 = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), broadDacId);
-    daaDAO.createDacDaaRelation(dacId, daaId2);
-
-    Dac fullDac = dacDAO.findById(dacId);
-
-    try {
-      serviceDAO.deleteDacAndDaas(fullDac);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-    List<Dac> dacListRemoved = dacDAO.findAll();
-    assertEquals(1, dacListRemoved.size());
-    List<DataAccessAgreement> daaListRemoved = daaDAO.findAll();
-    assertEquals(1, daaListRemoved.size());
-  }
-
-  @Test
-  void testDeleteDacWithBroadDaa() {
-    createMockDACs(4);
-    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
-    Integer broadDacId = dacDAO.createDac("Broad", RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
-    User user = createUser();
-    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), broadDacId);
-    daaDAO.createDacDaaRelation(dacId, daaId);
-    Dac fullDac = dacDAO.findById(dacId);
-
-    try {
-      serviceDAO.deleteDacAndDaas(fullDac);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-    List<Dac> dacListRemoved = dacDAO.findAll();
-    assertEquals(1, dacListRemoved.size());
-    List<DataAccessAgreement> daaListRemoved = daaDAO.findAll();
-    assertEquals(1, daaListRemoved.size());
+    User superUser = createUser();
+    // Create DACs and all associated objects subject to deletion
+    List<Dac> dacs = createMockDACs();
+    dacs.forEach(dac -> {
+      // DAC
+      int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
+      // DAA
+      int daaId = daaDAO.createDaa(superUser.getUserId(), new Date().toInstant(), superUser.getUserId(), new Date().toInstant(), dacId);
+      // DAC-DAA Association
+      daaDAO.createDacDaaRelation(dacId, daaId);
+      // Library Card User with Institution
+      User lcUser = createUser();
+      int institutionId = institutionDAO.insertInstitution(
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomUtils.nextInt(10, 100),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          superUser.getUserId(),
+          new Date());
+      int lcId = libraryCardDAO.insertLibraryCard(
+          lcUser.getUserId(),
+          institutionId,
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          superUser.getUserId(),
+          new Date());
+      // Library Card User DAA association
+      libraryCardDAO.createLibraryCardDaaRelation(lcId, daaId);
+      // DAC Member User
+      User member = createUser();
+      userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), member.getUserId());
+      // DAC Chair User
+      User chair = createUser();
+      userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId());
+      // DAC associated Dataset
+      int datasetId = datasetDAO.insertDataset(
+          RandomStringUtils.randomAlphabetic(10),
+          Timestamp.from(Instant.now()),
+          superUser.getUserId(),
+          RandomStringUtils.randomAlphabetic(10),
+          RandomStringUtils.randomAlphabetic(10),
+          dacId);
+      datasetDAO.updateDatasetDacId(datasetId, dacId);
+    });
+    dacDAO.findAll().forEach(dac -> {
+      assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(dac), "Delete should not fail");
+      List<Dataset> datasets = datasetDAO.findDatasetListByDacIds(List.of(dac.getDacId()));
+      assertTrue(datasets.isEmpty());
+    });
+    datasetDAO.findAllDatasets().forEach(ds -> {
+      assertNull(ds.getDacId(), "Dataset should not have a DAC");
+      assertNull(ds.getDacApproval(), "Dataset should not have a DAC approval");
+    });
   }
 
   /**
-   * @param numDacs The number of dacs to create
-   * @return A list of numDacs dacs
+   * @return A list of random, unsaved dac objects
    */
-  private List<Dac> createMockDACs(Integer numDacs) {
+  private List<Dac> createMockDACs() {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
-    return IntStream.range(0, numDacs).
+    return IntStream.range(0, 5).
         mapToObj(i -> {
           Dac dac = new Dac();
           dac.setDacId(i);
