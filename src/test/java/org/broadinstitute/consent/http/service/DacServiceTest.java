@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -223,48 +224,7 @@ class DacServiceTest {
 
   @Test
   void testDeleteDac() throws SQLException {
-    List<Dac> dacs = getDacs();
-    when(dacDAO.findAll()).thenReturn(dacs);
-    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
-    initService();
-
-    try {
-      service.deleteDac(1);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-  }
-
-  @Test
-  void testDeleteDacWithDaas() throws SQLException {
-    List<Dac> dacs = getDacs();
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa1.setInitialDacId(1);
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa2.setDaaId(2);
-    daa2.setInitialDacId(2);
-    when(dacDAO.findAll()).thenReturn(dacs);
-    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
-    initService();
-
-    try {
-      service.deleteDac(1);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-  }
-
-  @Test
-  void testDeleteDacWithDaasAndBroadDaa() throws SQLException {
-    List<Dac> dacs = getDacs();
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa1.setInitialDacId(1);
-    when(dacDAO.findAll()).thenReturn(dacs);
-    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+    when(dacDAO.findById(any())).thenReturn(getDacs().get(0));
     doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
@@ -278,23 +238,19 @@ class DacServiceTest {
   @Test
   void testDeleteDacWithBroadDaa() throws SQLException {
     List<Dac> dacs = getDacs();
-    when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
+    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
-    try {
-      service.deleteDac(1);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.deleteDac(dacs.get(0).getDacId());
+    });
   }
 
   @Test
-  void testDeleteDacBroadDac() throws SQLException {
+  void testDeleteDacBroadDac() {
     List<Dac> dacs = getDacs();
     dacs.get(0).setName("Broad DAC");
-    when(dacDAO.findAll()).thenReturn(dacs);
     when(dacDAO.findById(any())).thenReturn(dacs.get(0));
     initService();
 

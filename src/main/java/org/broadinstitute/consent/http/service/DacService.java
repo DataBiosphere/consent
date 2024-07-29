@@ -185,10 +185,8 @@ public class DacService {
 
   public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
     Dac fullDac = dacDAO.findById(dacId);
-    List<Dac> dacs = dacDAO.findAll();
-    Optional<Dac> broadDac = dacs.stream()
-        .filter(dac -> dac.getName().toLowerCase().contains("broad") && dac.getDacId().equals(dacId)).findFirst();
-    if (broadDac.isPresent()) {
+    // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
+    if (fullDac.getName().toLowerCase().contains("broad")) {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     try {
