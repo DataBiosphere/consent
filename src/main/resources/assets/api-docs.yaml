@@ -289,6 +289,9 @@ paths:
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
 
+  /api/dar/v2/{referenceId}/daas:
+    $ref: './paths/darV2DAAsByReferenceId.yaml'
+
   /api/dar/v2/draft:
     post:
       deprecated: true

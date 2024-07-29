@@ -16,6 +16,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Institution;
@@ -276,6 +277,52 @@ class DaaDAOTest extends DAOTestHelper {
     List<DataAccessAgreement> daas = daaDAO.findAll();
     assertTrue(daas.isEmpty());
     assertTrue(lc.getDaaIds().isEmpty());
+  }
+
+  @Test
+  void testFindByDarReferenceId() {
+    // This test requires a good deal of model setup: DAR, Dataset, DAC, and DataAccessAgreements
+    // We'll create a single DAR with 2 datasets, each one in a separate DAC with separate DAAs
+    // and a third dac/dataset/daa that should not be found.
+    Integer dataSubmitterId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    User dataSubmitter = userDAO.findUserById(dataSubmitterId);
+
+    // DAC/Dataset/DAA 1
+    Integer dac1Id = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Dac dac1 = dacDAO.findById(dac1Id);
+    Integer daaId1 = daaDAO.createDaa(dataSubmitterId, new Date().toInstant(), dataSubmitterId, new Date().toInstant(), dac1Id);
+    daaDAO.createDacDaaRelation(dac1Id, daaId1);
+    DataAccessAgreement daa1 = daaDAO.findById(daaId1);
+    Dataset d1 = createRandomDataset(dataSubmitter, dac1);
+
+    // Dac/Dataset/DAA 2
+    Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Dac dac2 = dacDAO.findById(dacId2);
+    Integer daaId2 = daaDAO.createDaa(dataSubmitterId, new Date().toInstant(), dataSubmitterId, new Date().toInstant(), dacId2);
+    daaDAO.createDacDaaRelation(dacId2, daaId2);
+    DataAccessAgreement daa2 = daaDAO.findById(daaId2);
+    Dataset d2 = createRandomDataset(dataSubmitter, dac2);
+
+    // Dac/Dataset/DAA 3 which should not be in the returned results
+    Integer dacId3 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
+    Dac dac3 = dacDAO.findById(dacId3);
+    Integer daaId3 = daaDAO.createDaa(dataSubmitterId, new Date().toInstant(), dataSubmitterId, new Date().toInstant(), dacId3);
+    daaDAO.createDacDaaRelation(dacId3, daaId3);
+    DataAccessAgreement daa3 = daaDAO.findById(daaId3);
+    createRandomDataset(dataSubmitter, dac3);
+
+    // DAR and associated datasets
+    DataAccessRequest dar = createDataAccessRequestV3();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
+
+    List<DataAccessAgreement> daas = daaDAO.findByDarReferenceId(dar.getReferenceId());
+    assertFalse(daas.isEmpty());
+    assertEquals(2, daas.size());
+    List<Integer> daaIds = daas.stream().map(DataAccessAgreement::getDaaId).toList();
+    assertTrue(daaIds.contains(daa1.getDaaId()));
+    assertTrue(daaIds.contains(daa2.getDaaId()));
+    assertFalse(daaIds.contains(daa3.getDaaId()));
   }
 
   private User createRandomUser() {
