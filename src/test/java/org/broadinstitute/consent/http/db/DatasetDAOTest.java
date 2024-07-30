@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -73,8 +75,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
 
     List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
-    assertFalse(summaries.isEmpty());
-    assertEquals( 1, summaries.size());
+    assertThat(summaries, hasSize(1));
     assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
     assertNull(summaries.get(0).study_id());
   }
