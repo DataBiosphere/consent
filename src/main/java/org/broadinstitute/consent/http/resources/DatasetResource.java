@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -44,6 +45,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Dictionary;
@@ -312,6 +314,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
+  @Deprecated
   public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser,
       @QueryParam("asCustodian") Boolean asCustodian) {
     try {
@@ -320,6 +323,20 @@ public class DatasetResource extends Resource {
           datasetService.findDatasetsByCustodian(user) :
           datasetService.findAllDatasetsByUser(user);
       return Response.ok(datasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @PermitAll
+  @Path("/v3")
+  public Response findAllDatasetStudySummaries(@Auth AuthUser authUser) {
+    try {
+      userService.findUserByEmail(authUser.getEmail());
+      List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries();
+      return Response.ok(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -609,6 +626,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/autocomplete")
   @PermitAll
+  @Timed
   public Response autocompleteDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query) {
@@ -626,9 +644,10 @@ public class DatasetResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
+  @Timed
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);

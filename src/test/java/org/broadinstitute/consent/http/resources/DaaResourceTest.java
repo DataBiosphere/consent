@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -678,6 +679,30 @@ class DaaResourceTest {
   }
 
   @Test
+  public void testBulkAddUsersWithAdminAndSO() {
+    int daaId = 4;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setRoles(List.of(UserRoles.Admin(), UserRoles.SigningOfficial()));
+    authedUser.setInstitutionId(5);
+
+    List<User> users = List.of(
+        researcherWithInstitution(1, institutionId),
+        researcherWithInstitution(2, institutionId),
+        researcherWithInstitution(3, institutionId)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkAddUsersToDaa(authUser, daaId, "{users:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
   void testBulkAddUsersToDaaForbidden() {
     int daaId = 4;
     int institutionId = 2;
@@ -734,6 +759,32 @@ class DaaResourceTest {
     User authedUser = new User();
     authedUser.setAdminRole();
     authedUser.setInstitutionId(institutionId);
+
+    List<User> users = List.of(
+        researcherWithInstitution(1, institutionId),
+        researcherWithInstitution(2, institutionId),
+        researcherWithInstitution(3, institutionId)
+    );
+
+    when(userService.findUserByEmail(any())).thenReturn(authedUser);
+    when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
+    when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+
+    Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
+    assert response.getStatus() == HttpStatus.SC_OK;
+  }
+
+  @Test
+  public void testBulkRemoveUsersWithAdminAndSO() {
+    int daaId = 4;
+    int institutionId = 2;
+
+    User authedUser = new User();
+    authedUser.setRoles(List.of(UserRoles.Admin(), UserRoles.SigningOfficial()));
+    authedUser.setInstitutionId(5);
 
     List<User> users = List.of(
         researcherWithInstitution(1, institutionId),

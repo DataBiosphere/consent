@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
+import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -46,6 +48,15 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   String CHAIRPERSON = Resource.CHAIRPERSON;
+
+  @UseRowMapper(DatasetStudySummaryMapper.class)
+  @SqlQuery("""
+      SELECT d.dataset_id, d.name AS dataset_name, d.alias, s.study_id, s.name AS study_name
+        FROM dataset d
+        LEFT JOIN study s ON s.study_id = d.study_id
+        ORDER BY dataset_id
+      """)
+  List<DatasetStudySummary> findAllDatasetStudySummaries();
 
   @SqlUpdate(
       """
@@ -544,9 +555,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           +
           " VALUES (:dataSetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
-
-  @SqlBatch("DELETE FROM dataset_property WHERE dataset_id = :dataSetId")
-  void deleteDatasetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
 
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
   void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);

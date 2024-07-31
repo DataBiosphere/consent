@@ -809,6 +809,15 @@ class DatasetResourceTest {
   }
 
   @Test
+  void testFindAllDatasetStudySummaries() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetService.findAllDatasetStudySummaries()).thenReturn(List.of());
+    initResource();
+    Response response = resource.findAllDatasetStudySummaries(authUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
   void testCreateDatasetRegistration_invalidSchema_case1() {
     initResource();
     Response response = resource.createDatasetRegistration(authUser, null, "");

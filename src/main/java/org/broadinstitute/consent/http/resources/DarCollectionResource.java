@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -46,6 +47,7 @@ public class DarCollectionResource extends Resource {
   @Path("role/{roleName}/summary")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  @Timed
   public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser,
       @PathParam("roleName") String roleName) {
     try {

@@ -763,13 +763,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       for (Dataset dataset : datasets) {
         Dac dac = dacDAO.findById(dataset.getDacId());
-        List<User> chairPersons = dacDAO
-            .findMembersByDacId(dac.getDacId())
-            .stream()
-            .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
-            .toList();
+        if (dac == null) {
+          logWarn("Could not find DAC for dataset with identifier: " + dataset.getDatasetIdentifier());
+        }
+        List<User> chairPersons = (dac == null) ? List.of() :
+            dacDAO
+                .findMembersByDacId(dac.getDacId())
+                .stream()
+                .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
+                .toList();
         if (chairPersons.isEmpty()) {
-          logWarn("No chairpersons found for DAC " + dac.getName());
+          logWarn("No chairpersons found for Dataset " + dataset.getDatasetIdentifier());
         } else {
           for (User dacChair : chairPersons) {
             emailService.sendDatasetSubmittedMessage(dacChair,

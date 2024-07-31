@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jersey3.InstrumentedResourceMethodApplicationListener;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -194,6 +196,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     env.jersey().register(JerseyGsonProvider.class);
 
+    // Metric Registry
+    MetricRegistry metricRegistry = new MetricRegistry();
+    env.jersey().register(new InstrumentedResourceMethodApplicationListener(metricRegistry));
+
     // Health Checks
     env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
     env.healthChecks()
@@ -215,9 +221,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));
-    env.jersey().register(
-        new DataAccessRequestResource(dataAccessRequestService, emailService, gcsService,
-            userService, datasetService, matchService));
+    env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService, elasticSearchService));
     env.jersey().register(injector.getInstance(DatasetAssociationsResource.class));
