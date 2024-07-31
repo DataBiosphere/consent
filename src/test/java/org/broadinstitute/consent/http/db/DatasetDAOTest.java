@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
@@ -39,6 +40,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Election;
@@ -55,6 +57,28 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetDAOTest extends DAOTestHelper {
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetAndStudy() {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDataSetId(), study.getStudyId());
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertThat(summaries, hasSize(1));
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertEquals(study.getStudyId(), summaries.get(0).study_id());
+  }
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetOnly() {
+    Dataset dataset = insertDataset();
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertThat(summaries, hasSize(1));
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertNull(summaries.get(0).study_id());
+  }
 
   @Test
   void testFindDatasetByIdWithDacAndConsent() {
@@ -460,7 +484,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -512,7 +536,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestCreated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestCreated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -1063,7 +1087,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasets() throws Exception {
+  void testGetApprovedDatasets() {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
@@ -1137,7 +1161,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenNone() throws Exception {
+  void testGetApprovedDatasetsWhenNone() {
 
     // user with only unapproved datasets
     User user = createUser();
@@ -1167,7 +1191,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenEmpty() throws Exception {
+  void testGetApprovedDatasetsWhenEmpty() {
 
     // user with no datasets
     User user = createUser();
