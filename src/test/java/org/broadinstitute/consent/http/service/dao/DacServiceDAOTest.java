@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,18 +37,26 @@ class DacServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDac() {
     User superUser = createUser();
-    // Create DACs and all associated objects subject to deletion
+    // Create DACs and all associated objects subject to update based on DAC deletion:
+    //  * DAC
+    //  * Data Access Agreement
+    //  * User with:
+    //    * Library Card
+    //    * Institution
+    //  * DAC Member and Chairperson
+    //  * Dataset associated to the DAC
     List<Dac> dacs = createMockDACs();
     dacs.forEach(dac -> {
       // DAC
       int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
-      // DAA
+      // Data Access Agreement
       int daaId = daaDAO.createDaa(superUser.getUserId(), new Date().toInstant(), superUser.getUserId(), new Date().toInstant(), dacId);
-      // DAC-DAA Association
+      // DAC->DAA Association.
       daaDAO.createDacDaaRelation(dacId, daaId);
-      // Library Card User with Institution
+      // Library Card User
       User lcUser = createUser();
-      int institutionId = institutionDAO.insertInstitution(
+      // A user's library card needs an institution
+      int userInstitutionId = institutionDAO.insertInstitution(
           RandomStringUtils.randomAlphabetic(10),
           RandomStringUtils.randomAlphabetic(10),
           RandomStringUtils.randomAlphabetic(10),
@@ -59,29 +68,29 @@ class DacServiceDAOTest extends DAOTestHelper {
           RandomStringUtils.randomAlphabetic(10),
           superUser.getUserId(),
           new Date());
-      int lcId = libraryCardDAO.insertLibraryCard(
+      int userLcId = libraryCardDAO.insertLibraryCard(
           lcUser.getUserId(),
-          institutionId,
+          userInstitutionId,
           RandomStringUtils.randomAlphabetic(10),
           RandomStringUtils.randomAlphabetic(10),
           RandomStringUtils.randomAlphabetic(10),
           superUser.getUserId(),
           new Date());
-      // Library Card User DAA association
-      libraryCardDAO.createLibraryCardDaaRelation(lcId, daaId);
-      // DAC Member User
+      // Library Card User to Data Access Agreement association
+      libraryCardDAO.createLibraryCardDaaRelation(userLcId, daaId);
+      // DAC Member User. When deleting the dac, this role will be deleted
       User member = createUser();
       userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), member.getUserId());
-      // DAC Chair User
+      // DAC Chair User. When deleting the dac, this role will be deleted
       User chair = createUser();
       userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId());
-      // DAC associated Dataset
+      // Dataset associated to the DAC. The Dataset will become dissociated from the deleted DAC.
       int datasetId = datasetDAO.insertDataset(
           RandomStringUtils.randomAlphabetic(10),
           Timestamp.from(Instant.now()),
           superUser.getUserId(),
           RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
+          new DataUseBuilder().setGeneralUse(true).build().toString(),
           dacId);
       datasetDAO.updateDatasetDacId(datasetId, dacId);
     });
