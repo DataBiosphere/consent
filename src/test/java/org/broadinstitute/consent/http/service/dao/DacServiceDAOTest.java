@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -107,6 +108,22 @@ class DacServiceDAOTest extends DAOTestHelper {
       assertTrue(members.isEmpty());
       DataAccessAgreement daa = daaDAO.findByDacId(dac.getDacId());
       assertNull(daa);
+      // Assert that there are no DAAs that reference this DAC
+      daaDAO.findAll().forEach(d -> {
+        List<Integer> daaDacIds = d.getDacs().stream().map(Dac::getDacId).toList();
+        assertFalse(daaDacIds.contains(dac.getDacId()), "There should be no DAAs that have DACs matching this deleted Dac ID");
+      });
+      // Assert that there are no Library Cards with DAAs that reference this DAC
+      libraryCardDAO.findAllLibraryCards().forEach(lc -> {
+        List<Integer> daaIds = lc.getDaaIds();
+        if (!daaIds.isEmpty()) {
+          daaIds.forEach(daaId -> {
+            DataAccessAgreement innerDaa = daaDAO.findById(daaId);
+            List<Integer> innerDacIds = innerDaa.getDacs().stream().map(Dac::getDacId).toList();
+            assertFalse(innerDacIds.contains(dac.getDacId()), "There should be no Library Cards with DAAs that have DACs matching this deleted Dac ID");
+          });
+        }
+      });
     });
     datasetDAO.findAllDatasets().forEach(ds -> {
       assertNull(ds.getDacId(), "Dataset should not have a DAC");
