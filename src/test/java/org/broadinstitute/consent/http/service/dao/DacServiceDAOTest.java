@@ -48,7 +48,11 @@ class DacServiceDAOTest extends DAOTestHelper {
     List<Dac> dacs = createMockDACs();
     dacs.forEach(dac -> {
       // DAC
-      int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
+      int dacId = dacDAO.createDac(
+          "dac name: " + RandomStringUtils.randomAlphabetic(10),
+          "dac description: " + RandomStringUtils.randomAlphabetic(10),
+          "dac email: " + RandomStringUtils.randomAlphabetic(10),
+          new Date());
       // Data Access Agreement
       int daaId = daaDAO.createDaa(superUser.getUserId(), new Date().toInstant(), superUser.getUserId(), new Date().toInstant(), dacId);
       // DAC->DAA Association.
@@ -56,24 +60,25 @@ class DacServiceDAOTest extends DAOTestHelper {
       // Library Card User
       User lcUser = createUser();
       // A user's library card needs an institution
+      int dunsNumber = RandomUtils.nextInt(10, 100);
       int userInstitutionId = institutionDAO.insertInstitution(
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomUtils.nextInt(10, 100),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
+          "institution name: " + RandomStringUtils.randomAlphabetic(10),
+          "it director name: " + RandomStringUtils.randomAlphabetic(10),
+          "it director email: " + RandomStringUtils.randomAlphabetic(10),
+          "institution url: " + RandomStringUtils.randomAlphabetic(10),
+          dunsNumber,
+          "org chart url: " + RandomStringUtils.randomAlphabetic(10),
+          "verification url: " + RandomStringUtils.randomAlphabetic(10),
+          "verification file name: " + RandomStringUtils.randomAlphabetic(10),
+          "org type: " + RandomStringUtils.randomAlphabetic(10),
           superUser.getUserId(),
           new Date());
       int userLcId = libraryCardDAO.insertLibraryCard(
           lcUser.getUserId(),
           userInstitutionId,
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
-          RandomStringUtils.randomAlphabetic(10),
+          "era commons id: " + RandomStringUtils.randomAlphabetic(10),
+          "library card user name: " + RandomStringUtils.randomAlphabetic(10),
+          "library card user email: " + RandomStringUtils.randomAlphabetic(10),
           superUser.getUserId(),
           new Date());
       // Library Card User to Data Access Agreement association
@@ -86,10 +91,10 @@ class DacServiceDAOTest extends DAOTestHelper {
       userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId());
       // Dataset associated to the DAC. The Dataset will become dissociated from the deleted DAC.
       int datasetId = datasetDAO.insertDataset(
-          RandomStringUtils.randomAlphabetic(10),
+          "dataset name: " + RandomStringUtils.randomAlphabetic(10),
           Timestamp.from(Instant.now()),
           superUser.getUserId(),
-          RandomStringUtils.randomAlphabetic(10),
+          "object id: " + RandomStringUtils.randomAlphabetic(10),
           new DataUseBuilder().setGeneralUse(true).build().toString(),
           dacId);
       datasetDAO.updateDatasetDacId(datasetId, dacId);
