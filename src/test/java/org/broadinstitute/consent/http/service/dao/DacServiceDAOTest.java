@@ -103,6 +103,10 @@ class DacServiceDAOTest extends DAOTestHelper {
       assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(dac), "Delete should not fail");
       List<Dataset> datasets = datasetDAO.findDatasetListByDacIds(List.of(dac.getDacId()));
       assertTrue(datasets.isEmpty());
+      List<User> members = dacDAO.findMembersByDacId(dac.getDacId());
+      assertTrue(members.isEmpty());
+      DataAccessAgreement daa = daaDAO.findByDacId(dac.getDacId());
+      assertNull(daa);
     });
     datasetDAO.findAllDatasets().forEach(ds -> {
       assertNull(ds.getDacId(), "Dataset should not have a DAC");
