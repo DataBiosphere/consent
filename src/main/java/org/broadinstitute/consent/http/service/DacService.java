@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.groupingBy;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -32,9 +33,14 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DacService {
+public class DacService implements ConsentLogger {
 
+  private static final Logger log = LoggerFactory.getLogger(DacService.class);
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final DatasetDAO dataSetDAO;
@@ -43,11 +49,13 @@ public class DacService {
   private final DaaDAO daaDAO;
   private final VoteService voteService;
   private final DaaService daaService;
+  private final DacServiceDAO dacServiceDAO;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService, DaaService daaService, DaaDAO daaDAO) {
+      VoteService voteService, DaaService daaService, DaaDAO daaDAO,
+      DacServiceDAO dacServiceDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
@@ -56,6 +64,7 @@ public class DacService {
     this.daaDAO = daaDAO;
     this.voteService = voteService;
     this.daaService = daaService;
+    this.dacServiceDAO = dacServiceDAO;
   }
 
   public List<Dac> findAll() {
@@ -179,9 +188,19 @@ public class DacService {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(Integer dacId) {
-    dacDAO.deleteDacMembers(dacId);
-    dacDAO.deleteDac(dacId);
+  public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
+    Dac fullDac = dacDAO.findById(dacId);
+    // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
+    if (fullDac.getName().toLowerCase().contains("broad")) {
+      throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
+    }
+    try {
+      dacServiceDAO.deleteDacAndDaas(fullDac);
+    } catch (IllegalArgumentException e) {
+      String logMessage = "Could not find DAC with the provided id: " + dacId;
+      logException(logMessage, e);
+      throw new IllegalArgumentException(logMessage);
+    }
   }
 
   public User findUserById(Integer id) throws IllegalArgumentException {

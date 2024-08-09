@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,12 +13,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,9 +49,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -81,9 +86,12 @@ class DacServiceTest {
   @Mock
   private DaaDAO daaDAO;
 
+  @Mock
+  private DacServiceDAO dacServiceDAO;
+
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService, daaService, daaDAO);
+        voteService, daaService, daaDAO, dacServiceDAO);
   }
 
   @Test
@@ -217,15 +225,43 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDac() {
-    doNothing().when(dacDAO).deleteDacMembers(anyInt());
-    doNothing().when(dacDAO).deleteDac(anyInt());
+  void testDeleteDacServiceDAOException() throws SQLException {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDescription("DAC description");
+    dac.setName("DAC name");
+    dac.setAssociatedDaa(daa);
+    when(dacDAO.findById(any())).thenReturn(dac);
+    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "Broad DAC",
+      "Dac 2",
+      "Dac 3",
+      "Dac 4",
+      "Dac 5"
+  })
+  void testDeleteDac(String dacName) {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDescription(dacName + " description");
+    dac.setName(dacName);
+    dac.setAssociatedDaa(daa);
+    when(dacDAO.findById(any())).thenReturn(dac);
     initService();
 
-    try {
-      service.deleteDac(1);
-    } catch (Exception e) {
-      fail("Delete should not fail");
+    if (dac.getName().toLowerCase().contains("broad")) {
+      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+    } else {
+      assertDoesNotThrow(() -> service.deleteDac(dac.getDacId()));
     }
   }
 
@@ -585,18 +621,6 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dataset dataSet = new Dataset();
-          dataSet.setDataSetId(i);
-          return dataSet;
-        }).collect(Collectors.toList());
-  }
-
-  /**
-   * @return A list of 5 datasets with ids
-   */
-  private List<DatasetDTO> getDatasetDTOs() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          DatasetDTO dataSet = new DatasetDTO();
           dataSet.setDataSetId(i);
           return dataSet;
         }).collect(Collectors.toList());
