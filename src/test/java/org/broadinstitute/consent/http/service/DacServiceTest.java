@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,10 +49,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -223,40 +225,47 @@ class DacServiceTest {
   }
 
   @Test
-  void testDeleteDac() throws SQLException {
-    when(dacDAO.findById(any())).thenReturn(getDacs().get(0));
-    doNothing().when(dacServiceDAO).deleteDacAndDaas(any());
-    initService();
-
-    try {
-      service.deleteDac(1);
-    } catch (Exception e) {
-      fail("Delete should not fail");
-    }
-  }
-
-  @Test
-  void testDeleteDacWithBroadDaa() throws SQLException {
-    List<Dac> dacs = getDacs();
-    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+  void testDeleteDacServiceDAOException() throws SQLException {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDescription("DAC description");
+    dac.setName("DAC name");
+    dac.setAssociatedDaa(daa);
+    when(dacDAO.findById(any())).thenReturn(dac);
     doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
 
     assertThrows(IllegalArgumentException.class, () -> {
-      service.deleteDac(dacs.get(0).getDacId());
+      service.deleteDac(dac.getDacId());
     });
   }
 
-  @Test
-  void testDeleteDacBroadDac() {
-    List<Dac> dacs = getDacs();
-    dacs.get(0).setName("Broad DAC");
-    when(dacDAO.findById(any())).thenReturn(dacs.get(0));
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "Broad DAC",
+      "Dac 2",
+      "Dac 3",
+      "Dac 4",
+      "Dac 5"
+  })
+  void testDeleteDac(String dacName) {
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDescription(dacName + " description");
+    dac.setName(dacName);
+    dac.setAssociatedDaa(daa);
+    when(dacDAO.findById(any())).thenReturn(dac);
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.deleteDac(1);
-    });
+    if (dac.getName().toLowerCase().contains("broad")) {
+      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+    } else {
+      assertDoesNotThrow(() -> service.deleteDac(dac.getDacId()));
+    }
   }
 
   @Test
@@ -615,18 +624,6 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dataset dataSet = new Dataset();
-          dataSet.setDataSetId(i);
-          return dataSet;
-        }).collect(Collectors.toList());
-  }
-
-  /**
-   * @return A list of 5 datasets with ids
-   */
-  private List<DatasetDTO> getDatasetDTOs() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          DatasetDTO dataSet = new DatasetDTO();
           dataSet.setDataSetId(i);
           return dataSet;
         }).collect(Collectors.toList());
