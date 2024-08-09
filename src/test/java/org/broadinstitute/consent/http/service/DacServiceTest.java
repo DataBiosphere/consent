@@ -236,10 +236,7 @@ class DacServiceTest {
     when(dacDAO.findById(any())).thenReturn(dac);
     doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
     initService();
-
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.deleteDac(dac.getDacId());
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
   }
 
   @ParameterizedTest
