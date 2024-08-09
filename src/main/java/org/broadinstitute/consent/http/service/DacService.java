@@ -34,8 +34,13 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
-public class DacService {
+import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class DacService implements ConsentLogger {
+
+  private static final Logger log = LoggerFactory.getLogger(DacService.class);
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final DatasetDAO dataSetDAO;
@@ -192,7 +197,9 @@ public class DacService {
     try {
       dacServiceDAO.deleteDacAndDaas(fullDac);
     } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Could not find DAC with the provided id: " + dacId);
+      String logMessage = "Could not find DAC with the provided id: " + dacId;
+      logException(logMessage, e);
+      throw new IllegalArgumentException(logMessage);
     }
   }
 
