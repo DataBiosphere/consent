@@ -791,20 +791,11 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testFindAllDatasetsAvailableToUser() {
+  void testFindAllDatasetsStreaming() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
     initResource();
-    Response response = resource.findAllDatasetsAvailableToUser(authUser, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  void testFindAllDatasetsAvailableToUserAsCustodian() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetService.findDatasetsByCustodian(any())).thenReturn(List.of(new Dataset()));
-    initResource();
-    Response response = resource.findAllDatasetsAvailableToUser(authUser, true);
+    Response response = resource.findAllDatasetsStreaming(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
