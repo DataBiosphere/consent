@@ -889,6 +889,25 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllDatasetIds() {
+    List<Dataset> datasetList = IntStream.range(1, 5).mapToObj(i -> {
+      Dataset dataset = insertDataset();
+      return dataset;
+    }).toList();
+
+    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
+    assertFalse(datasetIds.isEmpty());
+    assertEquals(datasetList.size(), datasetIds.size());
+    // Assert that the two lists of ids have all of the same values
+    List<Integer> insertedDatasetIds = datasetList.stream().map(Dataset::getDataSetId).toList();
+    assertTrue(datasetIds.containsAll(insertedDatasetIds));
+    assertTrue(insertedDatasetIds.containsAll(datasetIds));
+    // Assert the list order was preserved in the query
+    assertEquals(datasetList.get(0).getDataSetId(), datasetIds.get(0));
+    assertEquals(datasetList.get(datasetList.size() - 1).getDataSetId(), datasetIds.get(datasetIds.size() - 1));
+  }
+
+  @Test
   void testZeroAliasValuesValid() {
     Dataset dataset = insertDataset();
     jdbi.useHandle(handle -> {
