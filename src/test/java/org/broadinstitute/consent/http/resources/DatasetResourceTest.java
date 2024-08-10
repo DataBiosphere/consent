@@ -793,7 +793,6 @@ class DatasetResourceTest {
   @Test
   void testFindAllDatasetsStreaming() {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
     initResource();
     Response response = resource.findAllDatasetsStreaming(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
