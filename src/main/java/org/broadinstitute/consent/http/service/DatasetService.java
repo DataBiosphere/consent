@@ -414,7 +414,7 @@ public class DatasetService implements ConsentLogger {
     final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, DATASET_BATCH_SIZE);
     final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
     final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
-    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    Gson gson = GsonUtil.buildGson();
     return output -> {
       output.write("[".getBytes());
       datasetIdSubLists.forEach(subList -> {

@@ -647,7 +647,7 @@ class DatasetServiceTest {
     output.write(baos);
     var datasetsJson = baos.toString();
     var listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
-    var gson = GsonUtil.gsonBuilderWithAdapters().create();
+    var gson = GsonUtil.buildGson();
     List<Dataset> returnedDatasets = gson.fromJson(datasetsJson, listOfDatasetsType);
     assertFalse(returnedDatasets.isEmpty());
     assertEquals(datasets.size(), returnedDatasets.size());

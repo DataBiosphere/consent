@@ -799,7 +799,7 @@ class DatasetResourceTest {
     var dataset = new Dataset();
     dataset.setDataSetId(RandomUtils.nextInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    final Gson gson = GsonUtil.buildGson();
     StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
     when(datasetService.findAllDatasetsAsStreamingOutput()).thenReturn(output);
     initResource();
