@@ -19,8 +19,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,6 +59,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -627,6 +630,32 @@ class DatasetServiceTest {
   }
 
   @Test
+  void testFindAllDatasetsAsStreamingOutput() throws Exception {
+    var datasets = getDatasets(RandomUtils.nextInt(10, 20));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDataSetId).toList());
+    datasets.forEach(d -> {
+      System.out.println(d);
+      when(datasetDAO.findDatasetsByIdList(List.of(d.getDataSetId()))).thenReturn(List.of(d));
+    });
+    initService();
+    // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
+    // the number of datasets generated in the test.
+    datasetService.setDatasetBatchSize(1);
+
+    var output = datasetService.findAllDatasetsAsStreamingOutput();
+    var baos = new ByteArrayOutputStream();
+    output.write(baos);
+    var datasetsJson = baos.toString();
+    var listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    var gson = GsonUtil.gsonBuilderWithAdapters().create();
+    List<Dataset> returnedDatasets = gson.fromJson(datasetsJson, listOfDatasetsType);
+    assertFalse(returnedDatasets.isEmpty());
+    assertEquals(datasets.size(), returnedDatasets.size());
+    datasets.forEach(d -> assertTrue(returnedDatasets.contains(d)));
+    verify(datasetDAO, times(datasets.size())).findDatasetsByIdList(any());
+  }
+
+  @Test
   void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
     Dataset dataset = new Dataset();
     User user = new User();
@@ -873,6 +902,23 @@ class DatasetServiceTest {
 
   private List<Dataset> getDatasets() {
     return IntStream.range(1, 3)
+        .mapToObj(i -> {
+          Dataset dataset = new Dataset();
+          dataset.setDataSetId(i);
+          dataset.setName("Test Dataset " + i);
+          dataset.setProperties(Collections.emptySet());
+          return dataset;
+        }).collect(Collectors.toList());
+  }
+
+  /**
+   * Minimum count is 1
+   * @param count The number of required datasets
+   * @return List of datasets with minimum default mocked fields.
+   */
+  private List<Dataset> getDatasets(Integer count) {
+    if (count < 1) { count = 1; }
+    return IntStream.range(1, count + 1)
         .mapToObj(i -> {
           Dataset dataset = new Dataset();
           dataset.setDataSetId(i);
