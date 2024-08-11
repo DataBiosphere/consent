@@ -191,6 +191,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
+  @Deprecated
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
