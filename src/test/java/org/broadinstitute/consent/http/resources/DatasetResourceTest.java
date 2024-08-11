@@ -17,13 +17,20 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -791,11 +798,26 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testFindAllDatasetsStreaming() {
+  void testFindAllDatasetsStreaming() throws Exception {
+    var dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
+    final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
+    when(datasetService.findAllDatasetsAsStreamingOutput()).thenReturn(output);
     initResource();
+
     Response response = resource.findAllDatasetsStreaming(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    var entity = (StreamingOutput) response.getEntity();
+    var baos = new ByteArrayOutputStream();
+    entity.write(baos);
+    var entityString = baos.toString();
+    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
+    assertFalse(returnedDatasets.isEmpty());
+    assertEquals(1, returnedDatasets.size());
+    assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());
   }
 
   @Test
