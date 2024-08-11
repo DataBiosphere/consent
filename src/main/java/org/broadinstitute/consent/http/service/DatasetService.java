@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -67,6 +68,7 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
+  public Integer DATASET_BATCH_SIZE = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
@@ -402,13 +404,14 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
+  @Deprecated
   public List<Dataset> findAllDatasets() {
     return datasetDAO.findAllDatasets();
   }
 
   public StreamingOutput findAllDatasetsAsStreamingOutput() {
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, 50);
+    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, DATASET_BATCH_SIZE);
     final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
     final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
@@ -706,6 +709,11 @@ public class DatasetService implements ConsentLogger {
               p.getValue().toString()));
     }
     return studyId;
+  }
+
+  @VisibleForTesting
+  public void setDatasetBatchSize(Integer DATASET_BATCH_SIZE) {
+    this.DATASET_BATCH_SIZE = DATASET_BATCH_SIZE;
   }
 
 }
