@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,13 +19,17 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -791,21 +797,25 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testFindAllDatasetsAvailableToUser() {
+  void testFindAllDatasetsStreaming() throws Exception {
+    var dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetService.findAllDatasetsByUser(any())).thenReturn(List.of(new Dataset()));
+    final Gson gson = GsonUtil.buildGson();
+    StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
+    when(datasetService.findAllDatasetsAsStreamingOutput()).thenReturn(output);
     initResource();
-    Response response = resource.findAllDatasetsAvailableToUser(authUser, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
 
-  @Test
-  void testFindAllDatasetsAvailableToUserAsCustodian() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetService.findDatasetsByCustodian(any())).thenReturn(List.of(new Dataset()));
-    initResource();
-    Response response = resource.findAllDatasetsAvailableToUser(authUser, true);
+    Response response = resource.findAllDatasetsStreaming(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    var entity = (StreamingOutput) response.getEntity();
+    var baos = new ByteArrayOutputStream();
+    entity.write(baos);
+    var entityString = baos.toString();
+    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
+    assertThat(returnedDatasets, hasSize(1));
+    assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());
   }
 
   @Test

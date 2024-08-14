@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -889,6 +890,16 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllDatasetIds() {
+    List<Integer> insertedDatasetIds = IntStream.range(1, 5).mapToObj(i -> {
+      Dataset dataset = insertDataset();
+      return dataset.getDataSetId();
+    }).toList();
+    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
+    assertThat(datasetIds, contains(insertedDatasetIds.toArray()));
+  }
+
+  @Test
   void testZeroAliasValuesValid() {
     Dataset dataset = insertDataset();
     jdbi.useHandle(handle -> {
@@ -1198,24 +1209,6 @@ class DatasetDAOTest extends DAOTestHelper {
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
 
-  }
-
-  @Test
-  void testFindDatasetsByCustodian() {
-    Dataset dataset = createDataset();
-    User user = dataset.getCreateUser();
-    createDatasetProperty(dataset.getDataSetId(), "studyName", "Study Name", PropertyType.String);
-    createDatasetProperty(dataset.getDataSetId(), "dataCustodianEmail", user.getEmail(),
-        PropertyType.String);
-    Dataset dataset2 = createDataset();
-
-    List<Dataset> datasets = datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
-    assertNotNull(datasets);
-    assertFalse(datasets.isEmpty());
-    assertEquals(dataset.getDataSetId(),
-        datasets.stream().map(Dataset::getDataSetId).toList().get(0));
-    assertNotEquals(dataset2.getDataSetId(),
-        datasets.stream().map(Dataset::getDataSetId).toList().get(0));
   }
 
   @Test

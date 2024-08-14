@@ -187,9 +187,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
           LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
           WHERE d.dataset_id in (<datasetIds>)
+          ORDER BY d.dataset_id
       """)
   List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
+  @Deprecated
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -238,6 +240,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
       """)
   List<Dataset> findAllDatasets();
+
+  @SqlQuery("""
+        SELECT dataset_id FROM dataset ORDER BY dataset_id
+        """)
+  List<Integer> findAllDatasetIds();
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
@@ -782,14 +789,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         WHERE d.dac_approval = TRUE AND dar.user_id = :userId
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
-
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-      WHERE d.create_user_id = :userId
-      OR (dp.schema_property = 'dataCustodianEmail' AND LOWER(dp.property_value) = LOWER(:email))
-      """)
-  List<Dataset> findDatasetsByCustodian(@Bind("userId") Integer userId, @Bind("email") String email);
 
   @RegisterRowMapper(DatasetSummaryMapper.class)
   @SqlQuery("""

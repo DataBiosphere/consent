@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
@@ -314,15 +315,11 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  @Deprecated
-  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser,
-      @QueryParam("asCustodian") Boolean asCustodian) {
+  public Response findAllDatasetsStreaming(@Auth AuthUser authUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = (Objects.nonNull(asCustodian) && asCustodian) ?
-          datasetService.findDatasetsByCustodian(user) :
-          datasetService.findAllDatasetsByUser(user);
-      return Response.ok(datasets).build();
+      userService.findUserByEmail(authUser.getEmail());
+      StreamingOutput streamedDatasets = datasetService.findAllDatasetsAsStreamingOutput();
+      return Response.ok().entity(streamedDatasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

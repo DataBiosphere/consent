@@ -2,10 +2,14 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -46,6 +50,7 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +67,7 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
+  public Integer datasetBatchSize = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
@@ -397,18 +403,41 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
+  @Deprecated
   public List<Dataset> findAllDatasets() {
     return datasetDAO.findAllDatasets();
+  }
+
+  public StreamingOutput findAllDatasetsAsStreamingOutput() {
+    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
+    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
+    final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
+    final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
+    Gson gson = GsonUtil.buildGson();
+    return output -> {
+      output.write("[".getBytes());
+      datasetIdSubLists.forEach(subList -> {
+        List<Dataset> datasets = findDatasetsByIds(subList);
+        datasets.forEach(d -> {
+          try {
+            output.write(gson.toJson(d).getBytes());
+            if (!Objects.equals(d.getDataSetId(), lastIndex)) {
+              output.write(",".getBytes());
+            }
+            output.write("\n".getBytes());
+          } catch (IOException e) {
+            logException("Error writing dataset to streaming output, dataset id: " + d.getDataSetId(), e);
+          }
+        });
+      });
+      output.write("]".getBytes());
+    };
   }
 
   public List<Dataset> findDatasetsForChairperson(User user) {
     List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
 
     return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
-  }
-
-  public List<Dataset> findDatasetsByCustodian(User user) {
-    return datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
   }
 
   public List<Dataset> findDatasetsForDataSubmitter(User user) {
@@ -679,6 +708,10 @@ public class DatasetService implements ConsentLogger {
               p.getValue().toString()));
     }
     return studyId;
+  }
+
+  public void setDatasetBatchSize(Integer datasetBatchSize) {
+    this.datasetBatchSize = datasetBatchSize;
   }
 
 }
