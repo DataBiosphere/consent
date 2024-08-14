@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -890,21 +891,12 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAllDatasetIds() {
-    List<Dataset> datasetList = IntStream.range(1, 5).mapToObj(i -> {
+    List<Integer> insertedDatasetIds = IntStream.range(1, 5).mapToObj(i -> {
       Dataset dataset = insertDataset();
-      return dataset;
+      return dataset.getDataSetId();
     }).toList();
-
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    assertFalse(datasetIds.isEmpty());
-    assertEquals(datasetList.size(), datasetIds.size());
-    // Assert that the two lists of ids have all of the same values
-    List<Integer> insertedDatasetIds = datasetList.stream().map(Dataset::getDataSetId).toList();
-    assertTrue(datasetIds.containsAll(insertedDatasetIds));
-    assertTrue(insertedDatasetIds.containsAll(datasetIds));
-    // Assert the list order was preserved in the query
-    assertEquals(datasetList.get(0).getDataSetId(), datasetIds.get(0));
-    assertEquals(datasetList.get(datasetList.size() - 1).getDataSetId(), datasetIds.get(datasetIds.size() - 1));
+    assertThat(datasetIds, contains(insertedDatasetIds.toArray()));
   }
 
   @Test
