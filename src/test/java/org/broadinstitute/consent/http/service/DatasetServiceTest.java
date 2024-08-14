@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -633,10 +635,7 @@ class DatasetServiceTest {
   void testFindAllDatasetsAsStreamingOutput() throws Exception {
     var datasets = getDatasets(RandomUtils.nextInt(10, 20));
     when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDataSetId).toList());
-    datasets.forEach(d -> {
-      System.out.println(d);
-      when(datasetDAO.findDatasetsByIdList(List.of(d.getDataSetId()))).thenReturn(List.of(d));
-    });
+    datasets.forEach(d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDataSetId()))).thenReturn(List.of(d)));
     initService();
     // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
     // the number of datasets generated in the test.
@@ -651,6 +650,7 @@ class DatasetServiceTest {
     List<Dataset> returnedDatasets = gson.fromJson(datasetsJson, listOfDatasetsType);
     assertFalse(returnedDatasets.isEmpty());
     assertEquals(datasets.size(), returnedDatasets.size());
+    assertThat(returnedDatasets, contains(datasets.toArray()));
     datasets.forEach(d -> assertTrue(returnedDatasets.contains(d)));
     verify(datasetDAO, times(datasets.size())).findDatasetsByIdList(any());
   }
