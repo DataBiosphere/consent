@@ -68,7 +68,7 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
-  public Integer DATASET_BATCH_SIZE = 50;
+  public Integer datasetBatchSize = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
@@ -411,7 +411,7 @@ public class DatasetService implements ConsentLogger {
 
   public StreamingOutput findAllDatasetsAsStreamingOutput() {
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, DATASET_BATCH_SIZE);
+    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
     final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
     final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
     Gson gson = GsonUtil.buildGson();
@@ -712,8 +712,8 @@ public class DatasetService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void setDatasetBatchSize(Integer DATASET_BATCH_SIZE) {
-    this.DATASET_BATCH_SIZE = DATASET_BATCH_SIZE;
+  public void setDatasetBatchSize(Integer datasetBatchSize) {
+    this.datasetBatchSize = datasetBatchSize;
   }
 
 }
