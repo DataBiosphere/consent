@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -812,8 +814,7 @@ class DatasetResourceTest {
     var entityString = baos.toString();
     Type listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
     List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
-    assertFalse(returnedDatasets.isEmpty());
-    assertEquals(1, returnedDatasets.size());
+    assertThat(returnedDatasets, hasSize(1));
     assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());
   }
 
