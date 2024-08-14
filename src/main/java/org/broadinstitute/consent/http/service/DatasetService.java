@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -711,7 +710,6 @@ public class DatasetService implements ConsentLogger {
     return studyId;
   }
 
-  @VisibleForTesting
   public void setDatasetBatchSize(Integer datasetBatchSize) {
     this.datasetBatchSize = datasetBatchSize;
   }
