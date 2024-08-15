@@ -174,6 +174,12 @@ public class ElasticSearchService implements ConsentLogger {
     term.setPublicVisibility(study.getPublicVisibility());
 
     findStudyProperty(
+        study.getProperties(), "dbGaPPhsID"
+    ).ifPresent(
+        prop -> term.setPhsId(prop.getValue().toString())
+    );
+
+    findStudyProperty(
         study.getProperties(), "phenotypeIndication"
     ).ifPresent(
         prop -> term.setPhenotype(prop.getValue().toString())
