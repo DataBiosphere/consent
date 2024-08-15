@@ -217,6 +217,7 @@ class ElasticSearchServiceTest {
     Dac dac = createDac();
     Study study = createStudy(user);
     study.setProperties(Set.of(
+        createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
@@ -279,6 +280,10 @@ class ElasticSearchServiceTest {
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
     assertEquals(datasetRecord.study.getStudyId(), term.getStudy().getStudyId());
+    Optional<StudyProperty> phsIdProp = datasetRecord.study.getProperties().stream()
+        .filter(p -> p.getKey().equals("dbGaPPhsID")).findFirst();
+    assertTrue(phsIdProp.isPresent());
+    assertEquals(phsIdProp.get().getValue().toString(), term.getStudy().getPhsId());
     Optional<StudyProperty> phenoProp = datasetRecord.study.getProperties().stream()
         .filter(p -> p.getKey().equals("phenotypeIndication")).findFirst();
     assertTrue(phenoProp.isPresent());
