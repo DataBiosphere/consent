@@ -18,11 +18,11 @@
     <logback.version>1.5.7</logback.version>
     <pact.version>4.6.13</pact.version>
     <postgres.version>42.7.3</postgres.version>
-    <surefire.version>3.3.1</surefire.version>
+    <surefire.version>3.4.0</surefire.version>
     <swagger.ui.version>5.17.14</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.10.3</junit.version>
+    <junit.version>5.11.0</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.12.0</mockito.version>
 
@@ -467,7 +467,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>7.13.0</version>
+      <version>7.14.0</version>
     </dependency>
 
     <dependency>
@@ -658,7 +658,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.2.1-jre</version>
+      <version>33.3.0-jre</version>
     </dependency>
 
     <dependency>
