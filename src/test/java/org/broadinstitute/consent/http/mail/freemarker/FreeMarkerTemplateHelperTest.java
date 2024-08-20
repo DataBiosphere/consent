@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dac;
@@ -42,21 +41,6 @@ class FreeMarkerTemplateHelperTest {
     when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
     helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
 
-  }
-
-  @Test
-  void testGetDisabledDatasetsTemplate() throws Exception {
-    Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User",
-        sampleDatasets().stream().map(Dataset::getObjectId).collect(Collectors.toList()),
-        "entityId", "serverUrl");
-    String templateString = template.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Disabled Datasets Notification",
-        parsedTemplate.title());
-    assertEquals("Hello DatasetTemp User,", parsedTemplate.getElementById("userName").text());
-    assertTrue(templateString.contains("DS-101"));
-    assertTrue(templateString.contains("DS-102"));
-    assertTrue(templateString.contains("DS-103"));
   }
 
   @Test
