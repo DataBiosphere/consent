@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -53,8 +52,6 @@ class DaaResourceTest {
   private UserService userService;
   @Mock
   private LibraryCardService libraryCardService;
-  @Mock
-  private EmailService emailService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
 
@@ -78,7 +75,7 @@ class DaaResourceTest {
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_CREATED;
   }
@@ -99,7 +96,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenReturn(new DataAccessAgreement());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_CREATED;
   }
@@ -116,7 +113,7 @@ class DaaResourceTest {
     when(dacService.findById(any())).thenReturn(dac);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
@@ -134,7 +131,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenThrow(new IllegalArgumentException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
@@ -151,7 +148,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.createDaaWithFso(any(), any(), any(), any())).thenThrow(new IllegalArgumentException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createDaaForDac(info, authUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
@@ -160,7 +157,7 @@ class DaaResourceTest {
   public void testFindAllNoDaas() {
     when(daaService.findAll()).thenReturn(Collections.emptyList());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.findAll();
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
@@ -172,7 +169,7 @@ class DaaResourceTest {
     DataAccessAgreement expectedDaa = new DataAccessAgreement();
     when(daaService.findAll()).thenReturn(Collections.singletonList(expectedDaa));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.findAll();
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
@@ -185,7 +182,7 @@ class DaaResourceTest {
     DataAccessAgreement expectedDaa2 = new DataAccessAgreement();
     when(daaService.findAll()).thenReturn(List.of(expectedDaa1, expectedDaa2));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.findAll();
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson()
@@ -200,7 +197,7 @@ class DaaResourceTest {
     expectedDaa.setDaaId(expectedDaaId);
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -211,7 +208,7 @@ class DaaResourceTest {
   void testFindDaaByDaaIdInvalidId() {
     int invalidId = RandomUtils.nextInt(10, 100);
     when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -230,7 +227,7 @@ class DaaResourceTest {
 
     when(daaService.findFileById(expectedDaaId)).thenReturn(new ByteArrayInputStream(fileContent.getBytes()));
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findFileById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -244,7 +241,7 @@ class DaaResourceTest {
   void testFindDaaFileByDaaIdInvalid() {
     int invalidId = RandomUtils.nextInt(10, 100);
     when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findFileById(invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -254,7 +251,7 @@ class DaaResourceTest {
   void testFindDaaFileByDaaIdDatabaseError() {
     int expectedDaaId = RandomUtils.nextInt(10, 100);
     when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.findFileById(expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
@@ -287,7 +284,7 @@ class DaaResourceTest {
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -318,7 +315,7 @@ class DaaResourceTest {
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -344,7 +341,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
@@ -370,7 +367,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
   }
@@ -398,7 +395,7 @@ class DaaResourceTest {
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
@@ -432,7 +429,7 @@ class DaaResourceTest {
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
     when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -463,7 +460,7 @@ class DaaResourceTest {
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of());
     when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -483,7 +480,7 @@ class DaaResourceTest {
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of(libraryCard));
     doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -492,7 +489,7 @@ class DaaResourceTest {
   void testDeleteDaaForInvalidUser() {
     when(userService.findUserByEmail(any())).thenThrow(new RuntimeException("Internal server error"));
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.deleteDaaForUser(authUser, RandomUtils.nextInt(10, 100), RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
@@ -507,7 +504,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doNothing().when(daaService).sendDaaRequestEmails(any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -518,7 +515,7 @@ class DaaResourceTest {
     user.setResearcherRole();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
@@ -533,7 +530,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
@@ -548,7 +545,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
@@ -563,7 +560,7 @@ class DaaResourceTest {
     user.setLibraryCards(List.of(lc));
     when(userService.findUserByEmail(any())).thenReturn(user);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendDaaRequestMessage(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
@@ -580,7 +577,7 @@ class DaaResourceTest {
     when(dacService.findById(any())).thenReturn(dac);
     doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
@@ -592,7 +589,7 @@ class DaaResourceTest {
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
@@ -605,7 +602,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dacService.findById(dacId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
@@ -622,7 +619,7 @@ class DaaResourceTest {
     when(dacService.findById(dacId)).thenReturn(dac);
     doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
@@ -639,7 +636,7 @@ class DaaResourceTest {
     when(dacService.findById(dacId)).thenReturn(dac);
     doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
@@ -672,7 +669,7 @@ class DaaResourceTest {
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
     when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddUsersToDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -696,7 +693,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddUsersToDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -720,7 +717,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddUsersToDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
@@ -745,7 +742,7 @@ class DaaResourceTest {
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddUsersToDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -771,7 +768,7 @@ class DaaResourceTest {
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
     when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -797,7 +794,7 @@ class DaaResourceTest {
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
     when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -821,7 +818,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
@@ -846,7 +843,7 @@ class DaaResourceTest {
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveUsersFromDaa(authUser, daaId, "{users:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -879,7 +876,7 @@ class DaaResourceTest {
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -906,7 +903,7 @@ class DaaResourceTest {
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -926,7 +923,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
@@ -944,7 +941,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkAddDAAsToUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -971,7 +968,7 @@ class DaaResourceTest {
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -998,7 +995,7 @@ class DaaResourceTest {
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -1018,7 +1015,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
@@ -1036,7 +1033,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveDAAsFromUser(authUser, userId, "{daaList:[1,2,3]}");
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -1056,7 +1053,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1076,7 +1073,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1094,7 +1091,7 @@ class DaaResourceTest {
 
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
@@ -1112,7 +1109,7 @@ class DaaResourceTest {
 
     when(userService.findUserByEmail(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
@@ -1131,7 +1128,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.findById(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
@@ -1149,7 +1146,7 @@ class DaaResourceTest {
 
     when(dacService.findById(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
@@ -1169,8 +1166,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService,
-        emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1196,8 +1192,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService,
-        emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.modifyDacDaaRelationship(authUser, daaId, dac3.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1218,7 +1213,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1239,7 +1234,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_OK, response.getStatus());
@@ -1259,7 +1254,7 @@ class DaaResourceTest {
 
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
@@ -1279,7 +1274,7 @@ class DaaResourceTest {
 
     when(userService.findUserByEmail(any())).thenReturn(researcher);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
@@ -1300,7 +1295,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.findById(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
@@ -1320,7 +1315,7 @@ class DaaResourceTest {
 
     when(dacService.findById(any())).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
@@ -1340,8 +1335,7 @@ class DaaResourceTest {
     when(daaService.findById(any())).thenReturn(daa);
     when(userService.findUserByEmail(any())).thenReturn(admin);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService,
-        emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.removeDacDaaRelationship(authUser, daaId, dac.getDacId());
     assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
@@ -1360,7 +1354,7 @@ class DaaResourceTest {
     when(daaService.findById(daaId)).thenReturn(daa);
     doNothing().when(daaService).deleteDaa(any());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_OK;
@@ -1377,7 +1371,7 @@ class DaaResourceTest {
 
     when(daaService.findById(daaId)).thenThrow(new NotFoundException());
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
@@ -1395,7 +1389,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenThrow(new ForbiddenException());
     when(daaService.findById(daaId)).thenReturn(daa);
 
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService, emailService);
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.adminDeleteDaa(authUser, daaId);
     assert response.getStatus() == HttpStatus.SC_FORBIDDEN;
