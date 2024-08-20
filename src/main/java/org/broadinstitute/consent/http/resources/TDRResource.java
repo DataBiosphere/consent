@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -49,6 +50,7 @@ public class TDRResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/{identifier}/approved/users")
+  @Timed
   public Response getApprovedUsers(@Auth AuthUser authUser,
       @PathParam("identifier") String identifier) {
     try {
@@ -68,6 +70,7 @@ public class TDRResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/{identifier}")
+  @Timed
   public Response getDatasetByIdentifier(@Auth AuthUser authUser,
       @PathParam("identifier") String identifier) {
     try {
@@ -87,6 +90,7 @@ public class TDRResource extends Resource {
   @Produces("application/json")
   @Path("/dar/draft")
   @PermitAll
+  @Timed
   public Response createDraftDataAccessRequest(
       @Auth AuthUser authUser,
       @QueryParam("identifiers") String identifiers,
@@ -113,6 +117,7 @@ public class TDRResource extends Resource {
   @Produces("application/json")
   @Path("/v2/dar/draft")
   @PermitAll
+  @Timed
   public Response createDraftDataAccessRequestWithDAARestrictions(
       @Auth AuthUser authUser,
       @QueryParam("identifiers") String identifiers,
