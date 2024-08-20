@@ -73,8 +73,6 @@ public class DAOTestHelper {
   @SuppressWarnings("rawtypes")
   private static PostgreSQLContainer postgresContainer;
 
-  public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
-
   @BeforeAll
   public static void startUp() throws Exception {
     // Start the database

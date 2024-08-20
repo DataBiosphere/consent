@@ -277,22 +277,6 @@ public class EmailService implements ConsentLogger {
     }
   }
 
-  public void sendDisabledDatasetsMessage(User user, List<String> disabledDatasets,
-      String dataAccessRequestId) throws IOException, TemplateException {
-    Writer template = templateHelper.getDisabledDatasetsTemplate(user.getDisplayName(),
-        disabledDatasets, dataAccessRequestId, SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendDisabledDatasetMessage(user.getEmail(),
-        dataAccessRequestId, null, template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        dataAccessRequestId,
-        null,
-        user.getUserId(),
-        EmailType.DISABLED_DATASET,
-        template
-    );
-  }
-
   public void sendResearcherDarApproved(String darCode, Integer researcherId,
       List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
     User user = userDAO.findUserById(researcherId);
