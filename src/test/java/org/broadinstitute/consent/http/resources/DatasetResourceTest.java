@@ -529,7 +529,7 @@ class DatasetResourceTest {
         ]
         """;
     StreamingOutput output = out -> out.write(
-        String.format(esResponseArray, dataset.getDataSetId()).getBytes());
+        esResponseArray.formatted(dataset.getDataSetId()).getBytes());
     when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDataSetId()));
     when(elasticSearchService.indexDatasetIds(List.of(dataset.getDataSetId()))).thenReturn(output);
 

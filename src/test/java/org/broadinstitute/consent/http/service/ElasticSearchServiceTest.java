@@ -575,7 +575,7 @@ class ElasticSearchServiceTest {
     when(statusLine.getStatusCode()).thenReturn(200);
     var httpEntity = mock(HttpEntity.class);
     when(httpEntity.getContent())
-        .thenReturn(new ByteArrayInputStream(String.format(esResponseBody, dataset.getDataSetId()).getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new ByteArrayInputStream(esResponseBody.formatted(dataset.getDataSetId()).getBytes(StandardCharsets.UTF_8)));
     when(esClientResponse.getEntity()).thenReturn(httpEntity);
     when(esClient.performRequest(any())).thenReturn(esClientResponse);
 

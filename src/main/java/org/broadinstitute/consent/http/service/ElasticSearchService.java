@@ -271,8 +271,7 @@ public class ElasticSearchService implements ConsentLogger {
             if (response.getStatus() == 200) {
               output.write(response.getEntity().toString().getBytes());
             } else {
-              String message = String.format(
-                  "Unexpected response status (%d) when indexing dataset id: %s", response.getStatus(), id);
+              String message = "Unexpected response status (%d) when indexing dataset id: %s".formatted(response.getStatus(), id);
               logException(message, new WebApplicationException(message, response.getStatus()));
             }
           }
@@ -281,7 +280,7 @@ public class ElasticSearchService implements ConsentLogger {
           }
           output.write("\n".getBytes());
         } catch (IOException e) {
-          logException("Error indexing dataset term for dataset id: " + dataset.getDataSetId(), e);
+          logException("Error indexing dataset term for dataset id: %d".formatted(dataset.getDataSetId()), e);
         }
       });
       output.write("]".getBytes());
