@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.WebApplicationException;
