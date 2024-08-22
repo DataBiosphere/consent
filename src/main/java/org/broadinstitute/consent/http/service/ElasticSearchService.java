@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -255,8 +254,8 @@ public class ElasticSearchService implements ConsentLogger {
 
   /**
    * Sequentially index datasets to ElasticSearch by ID list. Note that this is intended for large
-   * lists of dataset ids. For smaller sets of datasets (i.e. <~25), it is more efficient to index
-   * them in bulk using the {@link #indexDatasets(List)} method.
+   * lists of dataset ids. For small sets of datasets (i.e. <~25), it is efficient to index them in
+   * bulk using the {@link #indexDatasets(List)} method.
    *
    * @param datasetIds List of Dataset IDs to index
    * @return StreamingOutput of ElasticSearch responses from indexing datasets
@@ -267,21 +266,14 @@ public class ElasticSearchService implements ConsentLogger {
       output.write("[".getBytes());
       datasetIds.forEach(id -> {
         Dataset dataset = datasetDAO.findDatasetById(id);
-        try {
-          try (Response response = indexDataset(dataset)) {
-            if (response.getStatus() == 200) {
-              output.write(response.getEntity().toString().getBytes());
-            } else {
-              String message = "Unexpected response status (%d) when indexing dataset id: %s".formatted(response.getStatus(), id);
-              logException(message, new WebApplicationException(message, response.getStatus()));
-            }
-          }
+        try (Response response = indexDataset(dataset)) {
+          output.write(response.getEntity().toString().getBytes());
           if (!id.equals(lastDatasetId)) {
             output.write(",".getBytes());
           }
           output.write("\n".getBytes());
         } catch (IOException e) {
-          logException("Error indexing dataset term for dataset id: %d".formatted(dataset.getDataSetId()), e);
+          logException("Error indexing dataset term for dataset id: %d ".formatted(dataset.getDataSetId()), e);
         }
       });
       output.write("]".getBytes());

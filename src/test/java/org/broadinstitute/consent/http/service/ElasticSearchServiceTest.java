@@ -569,16 +569,7 @@ class ElasticSearchServiceTest {
     initService();
 
     when(datasetDAO.findDatasetById(dataset.getDataSetId())).thenReturn(dataset);
-    var esClientResponse = mock(org.elasticsearch.client.Response.class);
-    var statusLine = mock(StatusLine.class);
-    when(esClientResponse.getStatusLine()).thenReturn(statusLine);
-    when(statusLine.getStatusCode()).thenReturn(200);
-    var httpEntity = mock(HttpEntity.class);
-    when(httpEntity.getContent())
-        .thenReturn(new ByteArrayInputStream(esResponseBody.formatted(dataset.getDataSetId()).getBytes(StandardCharsets.UTF_8)));
-    when(esClientResponse.getEntity()).thenReturn(httpEntity);
-    when(esClient.performRequest(any())).thenReturn(esClientResponse);
-
+    mockESClientResponse(200, esResponseBody.formatted(dataset.getDataSetId()));
     StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDataSetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
@@ -597,6 +588,38 @@ class ElasticSearchServiceTest {
             .get("_id")
             .getAsInt());
   }
+
+  @Test
+  void testIndexDatasetIdsErrors() throws Exception {
+    Gson gson = GsonUtil.buildGson();
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    when(datasetDAO.findDatasetById(dataset.getDataSetId())).thenReturn(dataset);
+    mockESClientResponse(500, "error condition");
+    initService();
+
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDataSetId()));
+    var baos = new ByteArrayOutputStream();
+    output.write(baos);
+    JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
+    assertEquals(0, jsonArray.size());
+  }
+
+  // Helper method to mock an ElasticSearch Client response
+  private void mockESClientResponse(int status, String body) throws Exception {
+    var esClientResponse = mock(org.elasticsearch.client.Response.class);
+    var statusLine = mock(StatusLine.class);
+    when(esClientResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(status);
+    var httpEntity = mock(HttpEntity.class);
+    if (status == 200) {
+      when(httpEntity.getContent())
+          .thenReturn(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
+      when(esClientResponse.getEntity()).thenReturn(httpEntity);
+    }
+    when(esClient.performRequest(any())).thenReturn(esClientResponse);
+  }
+
 
   @Test
   void testIndexStudyWithDatasets() {
