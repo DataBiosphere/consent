@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.WebApplicationException;
@@ -37,6 +38,7 @@ import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
 import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -348,7 +350,12 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {
-      term.setDataUse(ontologyService.translateDataUseSummary(dataset.getDataUse()));
+      DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());
+      if (summary != null) {
+        term.setDataUse(summary);
+      } else {
+        logWarn("No data use summary for dataset id: %d".formatted(dataset.getDataSetId()));
+      }
     }
 
     findDatasetProperty(
