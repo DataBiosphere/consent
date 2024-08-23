@@ -28,7 +28,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -70,8 +69,6 @@ class UserServiceTest {
   @Mock
   private VoteDAO voteDAO;
 
-  @Mock
-  private DatasetAssociationDAO datasetAssociationDAO;
 
   @Mock
   private InstitutionDAO institutionDAO;
@@ -101,8 +98,7 @@ class UserServiceTest {
   private UserService service;
 
   private void initService() {
-    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, datasetAssociationDAO,
-        institutionDAO, libraryCardDAO,
+    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO,
         acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO, emailService);
   }
 

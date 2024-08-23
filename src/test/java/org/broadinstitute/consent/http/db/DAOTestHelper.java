@@ -62,7 +62,6 @@ public class DAOTestHelper {
   protected static LibraryCardDAO libraryCardDAO;
   protected static DarCollectionDAO darCollectionDAO;
   protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
-  protected static DatasetAssociationDAO datasetAssociationDAO;
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
 
@@ -130,7 +129,6 @@ public class DAOTestHelper {
     libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
-    datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
