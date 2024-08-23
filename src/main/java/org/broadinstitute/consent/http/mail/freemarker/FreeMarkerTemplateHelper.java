@@ -10,8 +10,6 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class FreeMarkerTemplateHelper {
@@ -24,12 +22,6 @@ public class FreeMarkerTemplateHelper {
     freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     freeMarkerConfig.setClassForTemplateLoading(this.getClass(), config.getTemplateDirectory());
     freeMarkerConfig.setDefaultEncoding(config.getDefaultEncoding());
-  }
-
-  public Writer getDisabledDatasetsTemplate(String user, List<String> datasets, String entityId,
-      String serverUrl) throws IOException, TemplateException {
-    Template temp = freeMarkerConfig.getTemplate("disabled-datasets.html");
-    return generateDisabledDatasetsTemplate(user, datasets, entityId, serverUrl, temp);
   }
 
   public Writer getNewCaseTemplate(String userName, String election, String entityId,

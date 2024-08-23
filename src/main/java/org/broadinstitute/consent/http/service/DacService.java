@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -46,7 +45,6 @@ public class DacService implements ConsentLogger {
   private final DatasetDAO dataSetDAO;
   private final ElectionDAO electionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
-  private final DaaDAO daaDAO;
   private final VoteService voteService;
   private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
@@ -54,14 +52,13 @@ public class DacService implements ConsentLogger {
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService, DaaService daaService, DaaDAO daaDAO,
+      VoteService voteService, DaaService daaService,
       DacServiceDAO dacServiceDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.daaDAO = daaDAO;
     this.voteService = voteService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;

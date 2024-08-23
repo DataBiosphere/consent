@@ -33,7 +33,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -47,16 +46,14 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DacService dacService;
   private final UserService userService;
   private final LibraryCardService libraryCardService;
-  private final EmailService emailService;
 
   @Inject
   public DaaResource(DaaService daaService, DacService dacService, UserService userService,
-      LibraryCardService libraryCardService, EmailService emailService) {
+      LibraryCardService libraryCardService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
     this.libraryCardService = libraryCardService;
-    this.emailService = emailService;
   }
 
   @POST
