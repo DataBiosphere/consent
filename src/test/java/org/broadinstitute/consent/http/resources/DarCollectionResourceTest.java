@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +49,6 @@ class DarCollectionResourceTest {
 
   private DarCollectionResource resource;
 
-  @Mock
-  private DataAccessRequestService dataAccessRequestService;
   @Mock
   private DarCollectionService darCollectionService;
   @Mock

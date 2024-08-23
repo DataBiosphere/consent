@@ -164,7 +164,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
-    final DacService dacService = injector.getProvider(DacService.class).get();
     final DataAccessRequestService dataAccessRequestService = injector.getProvider(
         DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
@@ -181,8 +180,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
         .get();
     final SamService samService = injector.getProvider(SamService.class).get();
-    final SupportRequestService supportRequestService = injector.getProvider(
-        SupportRequestService.class).get();
     final TDRService tdrService = injector.getProvider(TDRService.class).get();
     final AcknowledgementService acknowledgementService = injector.getProvider(
         AcknowledgementService.class).get();

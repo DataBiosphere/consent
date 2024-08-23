@@ -335,22 +335,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   @SqlQuery("SELECT election_access_id FROM access_rp arp WHERE arp.election_rp_id = :electionRPId ")
   Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
 
-  @SqlQuery(
-      "SELECT DISTINCT " +
-          "e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, e.reference_id, v.rationale final_rationale, v.createDate final_vote_date, "
-          +
-          "e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, e.archived, e.version "
-          +
-          "FROM election e " +
-          "INNER JOIN vote v " +
-          "ON v.electionId = e.election_id " +
-          "AND LOWER(v.type) = 'chairperson' " +
-          "WHERE LOWER(e.election_type) = LOWER(:type) " +
-          "AND LOWER(e.status) IN (<status>) " +
-          "ORDER BY create_date ASC")
-  List<Election> findElectionsWithFinalVoteByTypeAndStatus(@Bind("type") String type,
-      @BindList("status") List<String> status);
-
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT DISTINCT * FROM election e WHERE e.election_id IN (<electionIds>)")
   List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
