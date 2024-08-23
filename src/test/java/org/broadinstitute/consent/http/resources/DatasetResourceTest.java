@@ -19,6 +19,8 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
@@ -496,16 +498,62 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testIndexAllDatasets() throws IOException {
-    List<Dataset> datasets = List.of(new Dataset());
-
-    Response mockResponse = Response.ok().entity(datasets).build();
-    when(datasetService.findAllDatasets()).thenReturn(datasets);
-    when(elasticSearchService.indexDatasets(datasets)).thenReturn(mockResponse);
+  void testIndexAllDatasets() throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    Gson gson = GsonUtil.buildGson();
+    String esResponseArray = """
+        [
+          {
+            "took": 2,
+            "errors": false,
+            "items": [
+              {
+                "index": {
+                  "_index": "dataset",
+                  "_type": "dataset",
+                  "_id": "%d",
+                  "_version": 3,
+                  "result": "updated",
+                  "_shards": {
+                    "total": 2,
+                    "successful": 1,
+                    "failed": 0
+                  },
+                  "created": false,
+                  "status": 200
+                }
+              }
+            ]
+          }
+        ]
+        """;
+    StreamingOutput output = out -> out.write(
+        esResponseArray.formatted(dataset.getDataSetId()).getBytes());
+    when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDataSetId()));
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDataSetId()))).thenReturn(output);
 
     initResource();
-    Response response = resource.indexDatasets();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (Response response = resource.indexDatasets()) {
+      var entity = (StreamingOutput) response.getEntity();
+      var baos = new ByteArrayOutputStream();
+      entity.write(baos);
+      var entityString = baos.toString();
+      Type listOfEsResponses = new TypeToken<List<JsonObject>>() {
+      }.getType();
+      List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
+      assertEquals(1, responseList.size());
+      JsonArray items = responseList.get(0).getAsJsonArray("items");
+      assertEquals(1, items.size());
+      assertEquals(
+          dataset.getDataSetId(),
+          items.get(0)
+              .getAsJsonObject()
+              .getAsJsonObject("index")
+              .get("_id")
+              .getAsInt());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test

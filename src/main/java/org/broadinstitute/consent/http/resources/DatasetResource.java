@@ -571,8 +571,9 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDatasets() {
     try {
-      var datasets = datasetService.findAllDatasets();
-      return elasticSearchService.indexDatasets(datasets);
+      var datasetIds = datasetService.findAllDatasetIds();
+      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
+      return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

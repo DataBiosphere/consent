@@ -408,6 +408,10 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasets();
   }
 
+  public List<Integer> findAllDatasetIds() {
+    return datasetDAO.findAllDatasetIds();
+  }
+
   public StreamingOutput findAllDatasetsAsStreamingOutput() {
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
     final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
