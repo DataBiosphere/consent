@@ -155,7 +155,6 @@ public class DAOTestHelper {
     testingDAO.deleteAllElections();
     testingDAO.deleteAllDatasetProperties();
     testingDAO.deleteAllDictionaryTerms();
-    testingDAO.deleteAllDatasetAssociations();
     testingDAO.deleteAllDatasetAudits();
     testingDAO.deleteAllDatasets();
     testingDAO.deleteAllStudyProperties();
