@@ -2,6 +2,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
   <changeSet id="changelog-consent-2024-08-24-rm-consents" author="grushton">
+    <dropTable tableName="accesselection_consentelection" cascadeConstraints="true"/>
     <dropTable tableName="consent_associations" cascadeConstraints="true"/>
     <dropTable tableName="consent_audit" cascadeConstraints="true"/>
     <dropTable tableName="consents" cascadeConstraints="true"/>

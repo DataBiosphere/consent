@@ -319,10 +319,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
       @Bind("electionRPId") Integer electionRPId);
 
-  @SqlUpdate("INSERT INTO accesselection_consentelection (access_election_id, consent_election_id ) VALUES (:electionAccessId, :electionConsentId)")
-  void insertAccessAndConsentElection(@Bind("electionAccessId") Integer electionAccessId,
-      @Bind("electionConsentId") Integer electionConsentId);
-
   @SqlUpdate("DELETE FROM access_rp WHERE election_access_id = :electionAccessId")
   void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
 
