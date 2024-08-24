@@ -50,7 +50,6 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
@@ -81,7 +80,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
@@ -95,7 +93,6 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -222,7 +219,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
         datasetRegistrationService, elasticSearchService));
     env.jersey().register(injector.getInstance(DatasetAssociationsResource.class));
-    env.jersey().register(injector.getInstance(ConsentResource.class));
     env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
