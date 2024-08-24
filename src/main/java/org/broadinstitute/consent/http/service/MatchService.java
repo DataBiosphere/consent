@@ -78,10 +78,6 @@ public class MatchService implements ConsentLogger {
     return match;
   }
 
-  public List<Match> findMatchByConsentId(String consentId) {
-    return matchDAO.findMatchesByConsentId(consentId);
-  }
-
   public List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(List<String> purposeIds) {
     return matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIds);
   }
