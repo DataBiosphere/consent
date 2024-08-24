@@ -148,11 +148,8 @@ public class DAOTestHelper {
     testingDAO.deleteAllDARDataset();
     testingDAO.deleteAllApprovalTimes();
     testingDAO.deleteAllVotes();
-    testingDAO.deleteAllConsentAudits();
     testingDAO.deleteAllMatchEntityRationales();
     testingDAO.deleteAllMatchEntities();
-    testingDAO.deleteAllConsentAssociations();
-    testingDAO.deleteAllConsents();
     testingDAO.deleteAllAccessRps();
     testingDAO.deleteAllElections();
     testingDAO.deleteAllDatasetProperties();
