@@ -435,22 +435,10 @@ class ElectionDAOTest extends DAOTestHelper {
   @Test
   void testFindAllDacsForElectionIds() {
     Dac dac = createDac();
-    String accessReferenceId = UUID.randomUUID().toString();
     Dataset dataset = createDataset();
     Integer datasetId = dataset.getDataSetId();
-    User user = createUser();
-    String darCode = "DAR-1234567890";
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
     datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
-    electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        dar.getReferenceId(),
-        datasetId);
-    Election accessElection = createDataAccessElection(accessReferenceId, datasetId);
+    Election accessElection = createDataAccessElection(UUID.randomUUID().toString(), datasetId);
 
     List<Integer> electionIds = Collections.singletonList(accessElection.getElectionId());
     List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
