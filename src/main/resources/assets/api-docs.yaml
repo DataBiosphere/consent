@@ -582,8 +582,6 @@ paths:
     $ref: './paths/datasetByIdV2.yaml'
   /api/dataset/batch:
     $ref: './paths/datasetBatch.yaml'
-  /api/dataset/{id}/approved/users:
-    $ref: './paths/datasetByIdApprovedUsers.yaml'
   /api/dataset/download:
     post:
       summary: Download datasets by id list

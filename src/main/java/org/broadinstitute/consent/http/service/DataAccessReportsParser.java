@@ -4,20 +4,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class DataAccessReportsParser implements ConsentLogger {
@@ -62,26 +58,6 @@ public class DataAccessReportsParser implements ConsentLogger {
             HeaderDAR.APPROVED_DISAPPROVED.getValue() + END_OF_LINE);
   }
 
-  public String getDatasetApprovedUsersHeader(User user) {
-    StringBuilder builder = new StringBuilder();
-    if (user.doesUserHaveAnyRoleInSet(
-        EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
-      builder
-          .append(HeaderDAR.USERNAME.getValue())
-          .append(DEFAULT_SEPARATOR);
-    }
-    builder
-        .append(HeaderDAR.NAME.getValue())
-        .append(DEFAULT_SEPARATOR)
-        .append(HeaderDAR.ORGANIZATION.getValue())
-        .append(DEFAULT_SEPARATOR)
-        .append(HeaderDAR.DAR_ID.getValue())
-        .append(DEFAULT_SEPARATOR)
-        .append(HeaderDAR.DATE_REQUEST_APPROVAL.getValue())
-        .append(END_OF_LINE);
-    return builder.toString();
-  }
-
   public void addApprovedDARLine(FileWriter darWriter, Election election, DataAccessRequest dar,
       String darCode, String profileName, String institution, String consentName,
       String translatedUseRestriction) throws IOException {
@@ -105,27 +81,6 @@ public class DataAccessReportsParser implements ConsentLogger {
         election.getFinalVoteDate().getTime()) : "";
     String customContent2 = electionDate + DEFAULT_SEPARATOR + finalVote;
     addDARLine(darWriter, dar, darCode, "", customContent2, consentName, translatedUseRestriction);
-  }
-
-  public String getDataSetApprovedUsersLine(User user, String email, String name,
-      String institution, String darCode, Date approvalDate) {
-    StringBuilder builder = new StringBuilder();
-    if (user.doesUserHaveAnyRoleInSet(
-        EnumSet.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER))) {
-      builder
-          .append(email)
-          .append(DEFAULT_SEPARATOR);
-    }
-    builder
-        .append(name)
-        .append(DEFAULT_SEPARATOR)
-        .append(institution)
-        .append(DEFAULT_SEPARATOR)
-        .append(darCode)
-        .append(DEFAULT_SEPARATOR)
-        .append(formatTimeToDate(approvalDate.getTime()))
-        .append(END_OF_LINE);
-    return builder.toString();
   }
 
   private String formatTimeToDate(long time) {

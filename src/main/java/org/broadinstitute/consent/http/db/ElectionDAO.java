@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
-import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
 import org.broadinstitute.consent.http.models.Dac;
@@ -371,19 +370,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           "AND LOWER(e.election_type) = 'dataaccess' " +
           "ORDER BY create_date ASC")
   List<Election> findDataAccessClosedElectionsByFinalResult(@Bind("isApproved") Boolean isApproved);
-
-  @SqlQuery(
-      "SELECT MAX(v.createDate) create_date " +
-          "FROM election e " +
-          "INNER JOIN vote v " +
-          "ON v.electionId = e.election_id " +
-          "AND LOWER(v.type) = 'final' " +
-          "WHERE v.vote = true " +
-          "AND LOWER(e.election_type) = 'dataaccess' " +
-          "AND reference_id = :referenceId " +
-          "GROUP BY e.create_date")
-  @UseRowMapper(DateMapper.class)
-  Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
 
   /**
    * Find the Dac for this election. Looks across associations to a dac via dataset and those
