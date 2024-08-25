@@ -1,16 +1,11 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+/* This model works for the Send Reminder Message template */
 public class TemplateModel {
-
-  /* This model works for templates: collect and reminder. The placeholders are all the same. */
-
-  private String userName;
-
-  private String electionType;
-
-  private String entityName;
-
-  private String serverUrl;
+  private final String userName;
+  private final String electionType;
+  private final String entityName;
+  private final String serverUrl;
 
   public TemplateModel(String user, String election, String entityName, String serverUrl) {
     this.userName = user;

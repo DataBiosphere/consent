@@ -3,8 +3,10 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
@@ -29,6 +32,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -36,8 +40,10 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -431,5 +437,52 @@ class EmailServiceTest {
         RandomUtils.nextInt(),
         new Date()
     );
+  }
+
+  @Test
+  void testSendReminderMessage() {
+    Election election = new Election();
+    election.setElectionId(RandomUtils.nextInt());
+    election.setReferenceId(UUID.randomUUID().toString());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
+
+    Vote vote = new Vote();
+    vote.setVoteId(RandomUtils.nextInt());
+    vote.setElectionId(election.getElectionId());
+    when(voteDAO.findVoteById(any())).thenReturn(vote);
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(RandomUtils.nextInt());
+    collection.setDarCode("DAR-12345");
+    when(collectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
+
+    User user = new User();
+    user.setDisplayName(RandomStringUtils.randomAlphanumeric(10));
+    user.setEmail(RandomStringUtils.randomAlphanumeric(10));
+    when(userDAO.findUserById(any())).thenReturn(user);
+    when(userDAO.findUserByEmail(any())).thenReturn(user);
+    doNothing().when(voteDAO).updateVoteReminderFlag(anyInt(), anyBoolean());
+    try {
+      initService();
+      service.sendReminderMessage(vote.getVoteId());
+      verify(sendGridAPI, times(1)).sendReminderMessage(any(), any(), any(), any());
+      verify(templateHelper, times(1)).getReminderTemplate(any(), any(), any(), any());
+      verify(emailDAO, times(1)).insert(
+          eq(String.valueOf(vote.getElectionId())),
+          eq(vote.getVoteId()),
+          eq(user.getUserId()),
+          eq(EmailType.REMINDER.getTypeInt()),
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (IOException e) {
+      fail("Should not fail sending message: " + e);
+    } catch (TemplateException e) {
+      fail("Should not fail generating template: " + e);
+    }
   }
 }
