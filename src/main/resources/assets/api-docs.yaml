@@ -498,36 +498,6 @@ paths:
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
 
-  /api/dataRequest/approved:
-    get:
-      deprecated: true
-      summary: Get a list of approved DARs
-      description: Get a list of approved DARs
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A list of approved DARs
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-  /api/dataRequest/reviewed:
-    get:
-      deprecated: true
-      summary: Get a list of reviewed DARs
-      description: Get a list of reviewed DARs
-      tags:
-        - Data Access Request
-      responses:
-        200:
-          description: A list of reviewed DARs
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
