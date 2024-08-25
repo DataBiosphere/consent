@@ -203,7 +203,6 @@ class ElectionDAOTest extends DAOTestHelper {
   private List<Integer> createElectionsForDarDataset(DataAccessRequest dar, Dataset d) {
     Election accessElection = createDataAccessElection(dar.getReferenceId(), d.getDataSetId());
     Election rpElection = createRPElection(dar.getReferenceId(), d.getDataSetId());
-//    electionDAO.insertAccessRP(accessElection.getElectionId(), rpElection.getElectionId());
     return List.of(accessElection.getElectionId(), rpElection.getElectionId());
   }
 
