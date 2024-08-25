@@ -26,7 +26,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -110,30 +109,6 @@ class DatasetServiceTest {
     assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
     assertNotNull(result.getProperties());
     assertFalse(result.getProperties().isEmpty());
-  }
-
-  @Test
-  void testDescribeDataSetsByReceiveOrder() {
-    when(datasetDAO.findDatasetsByReceiveOrder(Collections.singletonList(1)))
-        .thenReturn(new HashSet<>(getDatasetDTOs()));
-    initService();
-
-    Collection<DatasetDTO> dataSetsByReceiveOrder = datasetService.describeDataSetsByReceiveOrder(
-        Collections.singletonList(1));
-    assertNotNull(dataSetsByReceiveOrder);
-    assertEquals(dataSetsByReceiveOrder.size(), getDatasetDTOs().size());
-  }
-
-  @Test
-  void testDescribeDictionaryByReceiveOrder() {
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder())
-        .thenReturn(new ArrayList<>(getDictionaries()));
-    initService();
-
-    Collection<Dictionary> dictionaries = datasetService.describeDictionaryByReceiveOrder();
-    assertNotNull(dictionaries);
-    assertEquals(dictionaries.stream().findFirst().orElseThrow().getReceiveOrder(),
-        getDictionaries().stream().findFirst().orElseThrow().getReceiveOrder());
   }
 
   @Test
