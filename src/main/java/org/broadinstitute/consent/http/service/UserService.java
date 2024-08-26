@@ -66,12 +66,9 @@ public class UserService {
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO,
-      InstitutionDAO institutionDAO,
-      LibraryCardDAO libraryCardDAO,
+      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO,
-      UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
+      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
