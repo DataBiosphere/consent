@@ -156,4 +156,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-07-01-user-property-dao-fixes.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-25-drop-access-rp.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

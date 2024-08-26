@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -55,34 +54,6 @@ public class EmailService implements ConsentLogger {
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
   private final String SERVER_URL;
-  private static final String LOG_VOTE_DUL_URL = "dul_review";
-  private static final String LOG_VOTE_ACCESS_URL = "access_review";
-
-  public enum ElectionTypeString {
-
-    DATA_ACCESS("Data Access Request"),
-    TRANSLATE_DUL("Data Use Limitations"),
-    RP("Research Purpose");
-
-    private final String value;
-
-    ElectionTypeString(String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return value;
-    }
-
-    public static String getValue(String value) {
-      for (ElectionType e : ElectionType.values()) {
-        if (e.getValue().equalsIgnoreCase(value)) {
-          return e.getValue();
-        }
-      }
-      return null;
-    }
-  }
 
   @Inject
   public EmailService(
@@ -239,19 +210,26 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
-    Map<String, String> data = retrieveForVote(voteId);
-    String voteUrl = generateUserVoteUrl(SERVER_URL, data.get("electionType"), data.get("voteId"),
-        data.get("entityId"), data.get("rpVoteId"));
-    Writer template = templateHelper.getReminderTemplate(data.get("userName"),
-        data.get("electionType"), data.get("entityName"), voteUrl);
-    Optional<Response> response = sendGridAPI.sendReminderMessage(data.get("email"),
-        data.get("entityName"), data.get("electionType"), template);
+    Vote vote = voteDAO.findVoteById(voteId);
+    Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
+    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
+    User user = findUserById(vote.getUserId());
+    String voteUrl = SERVER_URL + "dar_collection/%d".formatted(collection.getDarCollectionId());
+    Writer template = templateHelper.getReminderTemplate(
+        user.getDisplayName(),
+        collection.getDarCode(),
+        voteUrl);
+    Optional<Response> response = sendGridAPI.sendReminderMessage(
+        user.getEmail(),
+        collection.getDarCode(),
+        election.getElectionType(),
+        template);
     voteDAO.updateVoteReminderFlag(voteId, true);
     saveEmailAndResponse(
         response.orElse(null),
-        data.get("electionId"),
+        String.valueOf(vote.getElectionId()),
         voteId,
-        Integer.valueOf(data.get("dacUserId")),
+        user.getUserId(),
         EmailType.REMINDER,
         template
     );
@@ -450,54 +428,6 @@ public class EmailService implements ConsentLogger {
     return user;
   }
 
-  private String generateUserVoteUrl(String serverUrl, String electionType, String voteId,
-      String entityId, String rpVoteId) {
-    if (electionType.equals("Data Use Limitations")) {
-      return serverUrl + LOG_VOTE_DUL_URL + "/" + voteId + "/" + entityId;
-    } else {
-      if (electionType.equals("Data Access Request") || electionType.equals("Research Purpose")) {
-        return serverUrl + LOG_VOTE_ACCESS_URL + "/" + entityId + "/" + voteId + "/" + rpVoteId;
-      }
-    }
-    return serverUrl;
-  }
-
-  private Map<String, String> retrieveForVote(Integer voteId) {
-    Vote vote = voteDAO.findVoteById(voteId);
-    Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-    User user = findUserById(vote.getUserId());
-
-    Map<String, String> dataMap = new HashMap<>();
-    dataMap.put("userName", user.getDisplayName());
-    dataMap.put("electionType", retrieveElectionTypeString(election.getElectionType()));
-    dataMap.put("entityId", election.getReferenceId());
-    dataMap.put("entityName", retrieveReferenceId(election.getReferenceId()));
-    dataMap.put("electionId", election.getElectionId().toString());
-    dataMap.put("dacUserId", user.getUserId().toString());
-    dataMap.put("email", user.getEmail());
-    if (dataMap.get("electionType").equals(ElectionTypeString.DATA_ACCESS.getValue())) {
-      dataMap.put("rpVoteId", findRpVoteId(election.getElectionId(), user.getUserId()));
-    } else if (dataMap.get("electionType").equals(ElectionTypeString.RP.getValue())) {
-      dataMap.put("voteId", findDataAccessVoteId(election.getElectionId(), user.getUserId()));
-      dataMap.put("rpVoteId", voteId.toString());
-    } else {
-      dataMap.put("voteId", voteId.toString());
-    }
-    return dataMap;
-  }
-
-  private String findRpVoteId(Integer electionId, Integer userId) {
-    Integer rpElectionId = electionDAO.findRPElectionByElectionAccessId(electionId);
-    return (rpElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(rpElectionId, userId)
-        .getVoteId()).toString()) : "";
-  }
-
-  private String findDataAccessVoteId(Integer electionId, Integer userId) {
-    Integer dataAccessElectionId = electionDAO.findAccessElectionByElectionRPId(electionId);
-    return (dataAccessElectionId != null) ? ((voteDAO.findVoteByElectionIdAndUserId(
-        dataAccessElectionId, userId).getVoteId()).toString()) : "";
-  }
-
   private Map<String, String> retrieveForNewDAR(String dataAccessRequestId, User user) {
     Map<String, String> dataMap = new HashMap<>();
     dataMap.put("userName", user.getDisplayName());
@@ -506,20 +436,6 @@ public class EmailService implements ConsentLogger {
     dataMap.put("dacUserId", user.getUserId().toString());
     dataMap.put("email", user.getEmail());
     return dataMap;
-  }
-
-  private String retrieveReferenceId(String referenceId) {
-    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(referenceId);
-    return Objects.nonNull(collection) ? collection.getDarCode() : " ";
-  }
-
-  private String retrieveElectionTypeString(String electionType) {
-    if (electionType.equals(ElectionType.TRANSLATE_DUL.getValue())) {
-      return ElectionTypeString.TRANSLATE_DUL.getValue();
-    } else if (electionType.equals(ElectionType.DATA_ACCESS.getValue())) {
-      return ElectionTypeString.DATA_ACCESS.getValue();
-    }
-    return ElectionTypeString.RP.getValue();
   }
 
 }

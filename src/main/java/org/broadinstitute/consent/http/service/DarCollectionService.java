@@ -480,7 +480,6 @@ public class DarCollectionService {
     List<Integer> electionIds = allElections.stream().map(Election::getElectionId)
         .collect(toList());
 
-    electionDAO.deleteElectionsFromAccessRPs(electionIds);
     electionDAO.deleteElectionsByIds(electionIds);
 
   }
