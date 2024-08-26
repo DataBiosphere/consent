@@ -158,4 +158,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-08-23-dataset-associations.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-25-drop-access-rp.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

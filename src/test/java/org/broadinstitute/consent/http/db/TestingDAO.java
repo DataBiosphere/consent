@@ -27,9 +27,6 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM consents")
   void deleteAllConsents();
 
-  @SqlUpdate("DELETE FROM access_rp")
-  void deleteAllAccessRps();
-
   @SqlUpdate("DELETE FROM election")
   void deleteAllElections();
 
