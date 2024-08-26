@@ -56,11 +56,10 @@ class FreeMarkerTemplateHelperTest {
 
   @Test
   void testGetReminderTemplate() throws Exception {
-    Writer template = helper.getReminderTemplate("Reminder User", "DARELECTION-1", "DAR-1",
-        "localhost:1234");
+    Writer template = helper.getReminderTemplate("Reminder User", "DAR-1", "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR",
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
