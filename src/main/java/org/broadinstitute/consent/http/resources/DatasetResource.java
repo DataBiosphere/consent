@@ -9,7 +9,6 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -25,7 +24,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -89,63 +87,6 @@ public class DatasetResource extends Resource {
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
-  }
-
-  @Deprecated
-  @POST
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/v2")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response createDataset(@Auth AuthUser authUser, @Context UriInfo info, String json) {
-    DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
-    if (Objects.isNull(inputDataset)) {
-      throw new BadRequestException("Dataset is required");
-    }
-    if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
-      throw new BadRequestException("Dataset must contain required properties");
-    }
-    List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(
-        inputDataset.getProperties());
-    if (invalidProperties.size() > 0) {
-      List<String> invalidKeys = invalidProperties.stream()
-          .map(DatasetPropertyDTO::getPropertyName)
-          .collect(Collectors.toList());
-      throw new BadRequestException(
-          "Dataset contains invalid properties that could not be recognized or associated with a key: "
-              + invalidKeys.toString());
-    }
-    List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
-        inputDataset.getProperties());
-    if (duplicateProperties.size() > 0) {
-      throw new BadRequestException("Dataset contains multiple values for the same property.");
-    }
-    String name = "";
-    try {
-      name = inputDataset.getPropertyValue("Dataset Name");
-    } catch (IndexOutOfBoundsException e) {
-      throw new BadRequestException("Dataset name is required");
-    }
-    if (Objects.isNull(name) || name.isBlank()) {
-      throw new BadRequestException("Dataset name is required");
-    }
-    Dataset datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
-    if (Objects.nonNull(datasetNameAlreadyUsed)) {
-      throw new ClientErrorException("Dataset name: " + name + " is already in use",
-          Status.CONFLICT);
-    }
-    User dacUser = userService.findUserByEmail(authUser.getEmail());
-    Integer userId = dacUser.getUserId();
-    try {
-      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(
-          inputDataset,
-          name, userId);
-      URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
-          .build(createdDatasetWithConsent.getDataSetId());
-      return Response.created(uri).entity(createdDatasetWithConsent).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
   }
 
   @POST

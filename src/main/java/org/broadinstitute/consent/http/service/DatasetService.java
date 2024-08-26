@@ -119,30 +119,6 @@ public class DatasetService implements ConsentLogger {
     return d;
   }
 
-  public DatasetDTO createDatasetFromDatasetDTO(DatasetDTO dataset, String name, Integer userId) {
-    if (getDatasetByName(name) != null) {
-      throw new IllegalArgumentException("Dataset name: " + name + " is already in use");
-    }
-    Timestamp now = new Timestamp(new Date().getTime());
-    Integer createdDatasetId = datasetDAO.inTransaction(h -> {
-      try {
-        Integer id = h.insertDataset(name, now, userId, dataset.getObjectId(),
-            dataset.getDataUse().toString(), dataset.getDacId());
-        List<DatasetProperty> propertyList = processDatasetProperties(id, dataset.getProperties());
-        h.insertDatasetProperties(propertyList);
-        return id;
-      } catch (Exception e) {
-        if (h != null) {
-          h.rollback();
-        }
-        logger.error("Exception creating dataset with consent: " + e.getMessage());
-        throw e;
-      }
-    });
-    dataset.setDataSetId(createdDatasetId);
-    return getDatasetDTO(createdDatasetId);
-  }
-
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
