@@ -312,25 +312,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   List<Election> findElectionsByReferenceIdAndDatasetId(@Bind("referenceId") String referenceId,
       @Bind("datasetId") Integer datasetId);
 
-  @SqlQuery("SELECT election_rp_id FROM access_rp arp WHERE arp.election_access_id = :electionAccessId ")
-  Integer findRPElectionByElectionAccessId(@Bind("electionAccessId") Integer electionAccessId);
-
-  @SqlUpdate("INSERT INTO access_rp (election_access_id, election_rp_id ) values (:electionAccessId, :electionRPId)")
-  void insertAccessRP(@Bind("electionAccessId") Integer electionAccessId,
-      @Bind("electionRPId") Integer electionRPId);
-
-  @SqlUpdate("DELETE FROM access_rp WHERE election_access_id = :electionAccessId")
-  void deleteAccessRP(@Bind("electionAccessId") Integer electionAccessId);
-
-  @SqlUpdate("DELETE FROM access_rp WHERE election_rp_id = :electionId OR election_access_id = :electionId")
-  void deleteElectionFromAccessRP(@Bind("electionId") Integer electionId);
-
-  @SqlUpdate("DELETE FROM access_rp WHERE election_rp_id IN (<electionIds>) OR election_access_id IN (<electionIds>)")
-  void deleteElectionsFromAccessRPs(@BindList("electionIds") List<Integer> electionIds);
-
-  @SqlQuery("SELECT election_access_id FROM access_rp arp WHERE arp.election_rp_id = :electionRPId ")
-  Integer findAccessElectionByElectionRPId(@Bind("electionRPId") Integer electionRPId);
-
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT DISTINCT * FROM election e WHERE e.election_id IN (<electionIds>)")
   List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
