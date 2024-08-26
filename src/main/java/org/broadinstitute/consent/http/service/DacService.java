@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -280,26 +279,6 @@ public class DacService implements ConsentLogger {
         Objects.nonNull(dar.getData().getRestriction());
   }
 
-  boolean isAuthUserAdmin(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(), UserRoles.ADMIN.getRoleId());
-    return user != null;
-  }
-
-//  boolean isAuthUserChair(AuthUser authUser) {
-//    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(),
-//        UserRoles.CHAIRPERSON.getRoleId());
-//    return user != null;
-//  }
-
-//  public List<Integer> getDacIdsForUser(AuthUser authUser) {
-//    return dacDAO.findDacsForEmail(authUser.getEmail())
-//        .stream()
-//        .filter(Objects::nonNull)
-//        .map(Dac::getDacId)
-//        .distinct()
-//        .collect(Collectors.toList());
-//  }
-
   /**
    * Filter data access requests by the DAC they are associated with.
    */
@@ -327,23 +306,6 @@ public class DacService implements ConsentLogger {
       }
     }
     return Collections.emptyList();
-  }
-
-  /**
-   * Filter elections by the Dataset/DAC they are associated with.
-   */
-  List<Election> filterElectionsByDAC(List<Election> elections, AuthUser authUser) {
-    if (isAuthUserAdmin(authUser)) {
-      return elections;
-    }
-
-    List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
-        stream().
-        map(Dataset::getDataSetId).
-        collect(Collectors.toList());
-    return elections.stream().
-        filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
-        collect(Collectors.toList());
   }
 
 }

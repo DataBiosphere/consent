@@ -280,32 +280,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-//  @GET
-//  @Produces("application/json")
-//  @PermitAll
-//  @Path("/role/{roleName}")
-//  public Response findDatasetsAccordingToRole(
-//      @Auth AuthUser authUser,
-//      @PathParam("roleName") String roleName) {
-//    try {
-//      User user = userService.findUserByEmail(authUser.getEmail());
-//      validateUserHasRoleName(user, roleName);
-//      UserRoles role = UserRoles.getUserRoleFromName(roleName);
-//      if (Objects.isNull(role)) {
-//        throw new BadRequestException("Invalid role selection: " + roleName);
-//      }
-//      List<Dataset> datasets = switch (role) {
-//        case ADMIN -> datasetService.findAllDatasets();
-//        case CHAIRPERSON -> datasetService.findDatasetsForChairperson(user);
-//        case DATASUBMITTER -> datasetService.findDatasetsForDataSubmitter(user);
-//        default -> datasetService.findPublicDatasets();
-//      };
-//      return Response.ok(datasets).build();
-//    } catch (Exception e) {
-//      return createExceptionResponse(e);
-//    }
-//  }
-
   @GET
   @Path("/v2/{datasetId}")
   @Produces("application/json")
