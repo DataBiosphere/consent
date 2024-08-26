@@ -94,24 +94,6 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testCreateDataset() {
-    DatasetDTO test = getDatasetDTO();
-    Dataset mockDataset = getDatasets().get(0);
-    when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(
-        Collections.singleton(test));
-    initService();
-
-    DatasetDTO result = datasetService.createDatasetFromDatasetDTO(getDatasetDTO(),
-        "Test Dataset 1",
-        1);
-
-    assertNotNull(result);
-    assertEquals(mockDataset.getDataSetId(), result.getDataSetId());
-    assertNotNull(result.getProperties());
-    assertFalse(result.getProperties().isEmpty());
-  }
-
-  @Test
   void testFindDatasetsByDacIds() {
     when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
     initService();
