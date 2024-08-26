@@ -180,7 +180,7 @@ public class FreeMarkerTemplateHelper {
 
   private Writer generateTemplate(String user, String entityName, Template temp,
       String serverUrl) throws IOException, TemplateException {
-    TemplateModel model = new TemplateModel(user, entityName, serverUrl);
+    SendReminderModel model = new SendReminderModel(user, entityName, serverUrl);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
