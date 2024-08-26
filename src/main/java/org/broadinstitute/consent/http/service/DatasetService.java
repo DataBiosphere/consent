@@ -414,20 +414,6 @@ public class DatasetService implements ConsentLogger {
     };
   }
 
-  public List<Dataset> findDatasetsForChairperson(User user) {
-    List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
-
-    return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
-  }
-
-  public List<Dataset> findDatasetsForDataSubmitter(User user) {
-    return datasetDAO.findDatasetsForDataSubmitter(user.getUserId(), user.getEmail());
-  }
-
-  public List<Dataset> findPublicDatasets() {
-    return datasetDAO.findPublicDatasets();
-  }
-
   public Study getStudyWithDatasetsById(Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);

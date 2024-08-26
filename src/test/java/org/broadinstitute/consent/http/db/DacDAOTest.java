@@ -53,15 +53,15 @@ class DacDAOTest extends DAOTestHelper {
     assertNotNull(dac);
   }
 
-  @Test
-  void testFindDacsForEmail() {
-    Dac dac = insertDacWithEmail();
-    User chair = createUser();
-    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
-
-    List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
-    assertEquals(1, dacs.size());
-  }
+//  @Test
+//  void testFindDacsForEmail() {
+//    Dac dac = insertDacWithEmail();
+//    User chair = createUser();
+//    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
+//
+//    List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
+//    assertEquals(1, dacs.size());
+//  }
 
   @Test
   void testFindAllDacMemberships() {

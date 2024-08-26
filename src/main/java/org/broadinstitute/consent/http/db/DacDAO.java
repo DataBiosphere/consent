@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DacReducer;
-import org.broadinstitute.consent.http.db.mapper.DateMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
@@ -54,18 +53,18 @@ public interface DacDAO extends Transactional<DacDAO> {
       """)
   List<Dac> findAll();
 
-  /**
-   * Find all DACs by user email
-   *
-   * @param email The user email
-   * @return List<Dac>
-   */
-  @SqlQuery(
-      "SELECT distinct d.* FROM dac d "
-          + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
-          + " INNER JOIN users u ON ur.user_id = u.user_id "
-          + " WHERE u.email = :email ")
-  List<Dac> findDacsForEmail(@Bind("email") String email);
+//  /**
+//   * Find all DACs by user email
+//   *
+//   * @param email The user email
+//   * @return List<Dac>
+//   */
+//  @SqlQuery(
+//      "SELECT distinct d.* FROM dac d "
+//          + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
+//          + " INNER JOIN users u ON ur.user_id = u.user_id "
+//          + " WHERE u.email = :email ")
+//  List<Dac> findDacsForEmail(@Bind("email") String email);
 
   /**
    * Find all Users associated with a DAC
@@ -254,7 +253,7 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @RegisterRowMapper(DacMapper.class)
   @SqlQuery("""
-      SELECT dac.* 
+      SELECT dac.*
       FROM dac
       INNER JOIN dataset d ON d.dac_id = dac.dac_id
       INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id

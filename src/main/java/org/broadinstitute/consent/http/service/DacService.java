@@ -34,12 +34,9 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DacService implements ConsentLogger {
 
-  private static final Logger log = LoggerFactory.getLogger(DacService.class);
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final DatasetDAO dataSetDAO;
@@ -288,20 +285,20 @@ public class DacService implements ConsentLogger {
     return user != null;
   }
 
-  boolean isAuthUserChair(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(),
-        UserRoles.CHAIRPERSON.getRoleId());
-    return user != null;
-  }
+//  boolean isAuthUserChair(AuthUser authUser) {
+//    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(),
+//        UserRoles.CHAIRPERSON.getRoleId());
+//    return user != null;
+//  }
 
-  public List<Integer> getDacIdsForUser(AuthUser authUser) {
-    return dacDAO.findDacsForEmail(authUser.getEmail())
-        .stream()
-        .filter(Objects::nonNull)
-        .map(Dac::getDacId)
-        .distinct()
-        .collect(Collectors.toList());
-  }
+//  public List<Integer> getDacIdsForUser(AuthUser authUser) {
+//    return dacDAO.findDacsForEmail(authUser.getEmail())
+//        .stream()
+//        .filter(Objects::nonNull)
+//        .map(Dac::getDacId)
+//        .distinct()
+//        .collect(Collectors.toList());
+//  }
 
   /**
    * Filter data access requests by the DAC they are associated with.

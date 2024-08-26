@@ -246,42 +246,42 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         """)
   List<Integer> findAllDatasetIds();
 
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                AND d.dac_approval = TRUE
-          """)
-  List<Dataset> findPublicDatasets();
+//  @UseRowReducer(DatasetReducer.class)
+//  @SqlQuery(
+//      Dataset.BASE_QUERY + """
+//              WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+//                AND d.dac_approval = TRUE
+//          """)
+//  List<Dataset> findPublicDatasets();
 
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE
-                (
-                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.dac_approval = TRUE
-                )
-                OR d.dac_id IN (<dacIds>)
-          """)
-  List<Dataset> findDatasetsForChairperson(@BindList("dacIds") List<Integer> dacIds);
+//  @UseRowReducer(DatasetReducer.class)
+//  @SqlQuery(
+//      Dataset.BASE_QUERY + """
+//              WHERE
+//                (
+//                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+//                  AND d.dac_approval = TRUE
+//                )
+//                OR d.dac_id IN (<dacIds>)
+//          """)
+//  List<Dataset> findDatasetsForChairperson(@BindList("dacIds") List<Integer> dacIds);
 
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE
-                (
-                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.dac_approval = TRUE
-                )
-                OR
-                (
-                  s.create_user_id = :userId
-                  OR (sp.key = 'dataCustodianEmail' AND sp.value LIKE concat('%"', :email, '"%'))
-                )
-          """)
-  List<Dataset> findDatasetsForDataSubmitter(@Bind("userId") Integer userId,
-      @Bind("email") String email);
+//  @UseRowReducer(DatasetReducer.class)
+//  @SqlQuery(
+//      Dataset.BASE_QUERY + """
+//              WHERE
+//                (
+//                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
+//                  AND d.dac_approval = TRUE
+//                )
+//                OR
+//                (
+//                  s.create_user_id = :userId
+//                  OR (sp.key = 'dataCustodianEmail' AND sp.value LIKE concat('%"', :email, '"%'))
+//                )
+//          """)
+//  List<Dataset> findDatasetsForDataSubmitter(@Bind("userId") Integer userId,
+//      @Bind("email") String email);
 
 
   /**
