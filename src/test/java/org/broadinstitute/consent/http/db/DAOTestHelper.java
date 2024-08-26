@@ -150,7 +150,6 @@ public class DAOTestHelper {
     testingDAO.deleteAllVotes();
     testingDAO.deleteAllMatchEntityRationales();
     testingDAO.deleteAllMatchEntities();
-    testingDAO.deleteAllAccessRps();
     testingDAO.deleteAllElections();
     testingDAO.deleteAllDatasetProperties();
     testingDAO.deleteAllDictionaryTerms();
