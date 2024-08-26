@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -338,7 +337,6 @@ class DarCollectionServiceTest {
     verify(matchDAO, times(1)).deleteMatchesByPurposeIds(any());
     // verify overarching collection was deleted
     verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
-    verify(electionDAO, times(0)).deleteElectionsFromAccessRPs(any());
     verify(electionDAO, times(0)).deleteElectionsByIds(any());
     verify(voteDAO, times(0)).deleteVotesByReferenceIds(any());
 
@@ -392,7 +390,6 @@ class DarCollectionServiceTest {
     verify(dataAccessRequestDAO, times(1)).deleteDARDatasetRelationByReferenceIds(any());
     verify(matchDAO, times(1)).deleteMatchesByPurposeIds(any());
     verify(darCollectionDAO, times(1)).deleteByCollectionId(collectionId);
-    verify(electionDAO, times(1)).deleteElectionsFromAccessRPs(any());
     verify(electionDAO, times(1)).deleteElectionsByIds(any());
     verify(voteDAO, times(1)).deleteVotesByReferenceIds(any());
   }

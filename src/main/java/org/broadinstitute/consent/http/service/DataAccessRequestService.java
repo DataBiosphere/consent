@@ -88,7 +88,6 @@ public class DataAccessRequestService implements ConsentLogger {
       if (user.hasUserRole(UserRoles.ADMIN)) {
         voteDAO.deleteVotesByReferenceId(referenceId);
         List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
-        electionDAO.deleteElectionsFromAccessRPs(electionIds);
         electionDAO.deleteElectionsByIds(electionIds);
       } else {
         String message = String.format(
