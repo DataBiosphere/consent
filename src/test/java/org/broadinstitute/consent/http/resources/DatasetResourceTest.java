@@ -22,8 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -32,7 +30,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,131 +125,6 @@ class DatasetResourceTest {
     mockDTO.addProperty(new DatasetPropertyDTO("Property", "test"));
 
     return mockDTO;
-  }
-
-  @Test
-  void testCreateDatasetSuccess() throws Exception {
-    DatasetDTO result = createMockDatasetDTO();
-    String json = createPropertiesJson("Dataset Name", "test");
-
-    when(datasetService.getDatasetByName("test")).thenReturn(null);
-    when(datasetService.createDatasetFromDatasetDTO(any(), any(), anyInt())).thenReturn(result);
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(user.getUserId()).thenReturn(1);
-    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-    when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
-    when(uriBuilder.build(any())).thenReturn(new URI("/api/dataset/1"));
-    initResource();
-    Response response = resource.createDataset(authUser, uriInfo, json);
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-    assertEquals(result, response.getEntity());
-  }
-
-  @Test
-  void testCreateDatasetNoJson() {
-    initResource();
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, "");
-    });
-  }
-
-  @Test
-  void testCreateDatasetNoProperties() {
-    initResource();
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, "{\"properties\":[]}");
-    });
-  }
-
-  @Test
-  void testCreateDatasetNullName() {
-    String json = createPropertiesJson("Dataset Name", null);
-
-    initResource();
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetEmptyName() {
-    String json = createPropertiesJson("Dataset Name", "");
-
-    initResource();
-
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetMissingName() {
-    String json = createPropertiesJson("Property", "test");
-
-    initResource();
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetInvalidProperty() {
-    List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
-    invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
-    when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
-
-    String json = createPropertiesJson(invalidProperties);
-
-    initResource();
-
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetDuplicateProperties() {
-    List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
-    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
-    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
-    when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
-
-    String json = createPropertiesJson(duplicateProperties);
-
-    initResource();
-    assertThrows(BadRequestException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetNameInUse() {
-    Dataset inUse = new Dataset();
-    when(datasetService.getDatasetByName("test")).thenReturn(inUse);
-
-    String json = createPropertiesJson("Dataset Name", "test");
-
-    initResource();
-
-    assertThrows(ClientErrorException.class, () -> {
-      resource.createDataset(authUser, uriInfo, json);
-    });
-  }
-
-  @Test
-  void testCreateDatasetError() {
-    String json = createPropertiesJson("Dataset Name", "test");
-
-    when(datasetService.getDatasetByName("test")).thenReturn(null);
-    doThrow(new RuntimeException()).when(datasetService)
-        .createDatasetFromDatasetDTO(any(), any(), anyInt());
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(user.getUserId()).thenReturn(1);
-    initResource();
-    Response response = resource.createDataset(authUser, uriInfo, json);
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test
