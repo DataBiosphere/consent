@@ -36,7 +36,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class DAOTestHelper {
 
-  public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
+  public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
