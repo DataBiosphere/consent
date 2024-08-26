@@ -467,7 +467,7 @@ class EmailServiceTest {
       initService();
       service.sendReminderMessage(vote.getVoteId());
       verify(sendGridAPI, times(1)).sendReminderMessage(any(), any(), any(), any());
-      verify(templateHelper, times(1)).getReminderTemplate(any(), any(), any(), any());
+      verify(templateHelper, times(1)).getReminderTemplate(any(), any(), any());
       verify(emailDAO, times(1)).insert(
           eq(String.valueOf(vote.getElectionId())),
           eq(vote.getVoteId()),

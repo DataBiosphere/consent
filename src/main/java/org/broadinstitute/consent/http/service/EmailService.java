@@ -217,7 +217,6 @@ public class EmailService implements ConsentLogger {
     String voteUrl = SERVER_URL + "dar_collection/%d".formatted(collection.getDarCollectionId());
     Writer template = templateHelper.getReminderTemplate(
         user.getDisplayName(),
-        election.getElectionType(),
         collection.getDarCode(),
         voteUrl);
     Optional<Response> response = sendGridAPI.sendReminderMessage(
