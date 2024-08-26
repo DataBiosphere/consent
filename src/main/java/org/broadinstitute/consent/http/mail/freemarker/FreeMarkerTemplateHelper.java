@@ -30,10 +30,10 @@ public class FreeMarkerTemplateHelper {
     return generateNewCaseTemplate(userName, election, entityId, temp, serverUrl);
   }
 
-  public Writer getReminderTemplate(String user, String election, String entityId, String serverUrl)
+  public Writer getReminderTemplate(String user, String entityName, String serverUrl)
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("reminder.html");
-    return generateTemplate(user, election, entityId, temp, serverUrl);
+    return generateTemplate(user, entityName, temp, serverUrl);
   }
 
   public Writer getNewDARRequestTemplate(
@@ -178,9 +178,9 @@ public class FreeMarkerTemplateHelper {
     return out;
   }
 
-  private Writer generateTemplate(String user, String election, String entityId, Template temp,
+  private Writer generateTemplate(String user, String entityName, Template temp,
       String serverUrl) throws IOException, TemplateException {
-    TemplateModel model = new TemplateModel(user, election, entityId, serverUrl);
+    SendReminderModel model = new SendReminderModel(user, entityName, serverUrl);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
