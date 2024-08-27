@@ -18,7 +18,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -55,7 +54,6 @@ public class UserService {
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
   private final VoteDAO voteDAO;
-  private final DatasetAssociationDAO datasetAssociationDAO;
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final AcknowledgementDAO acknowledgementDAO;
@@ -68,17 +66,13 @@ public class UserService {
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO,
-      DatasetAssociationDAO datasetAssociationDAO, InstitutionDAO institutionDAO,
-      LibraryCardDAO libraryCardDAO,
+      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO,
-      UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
+      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
     this.voteDAO = voteDAO;
-    this.datasetAssociationDAO = datasetAssociationDAO;
     this.institutionDAO = institutionDAO;
     this.libraryCardDAO = libraryCardDAO;
     this.acknowledgementDAO = acknowledgementDAO;
@@ -323,7 +317,6 @@ public class UserService {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);

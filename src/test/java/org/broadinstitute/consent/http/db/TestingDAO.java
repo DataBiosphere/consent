@@ -43,9 +43,6 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM dictionary WHERE key_id > 11")
   void deleteAllDictionaryTerms();
 
-  @SqlUpdate("DELETE FROM dataset_user_association")
-  void deleteAllDatasetAssociations();
-
   @SqlUpdate("DELETE FROM dataset")
   void deleteAllDatasets();
 

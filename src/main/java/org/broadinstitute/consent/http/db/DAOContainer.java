@@ -12,7 +12,6 @@ public class DAOContainer {
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
   private DarCollectionSummaryDAO darCollectionSummaryDAO;
-  private DatasetAssociationDAO datasetAssociationDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
   private MailMessageDAO mailMessageDAO;
@@ -68,15 +67,6 @@ public class DAOContainer {
       DarCollectionSummaryDAO darCollectionSummaryDAO
   ) {
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
-  }
-
-  public DatasetAssociationDAO getDatasetAssociationDAO() {
-    return datasetAssociationDAO;
-  }
-
-  public void setDatasetAssociationDAO(
-      DatasetAssociationDAO datasetAssociationDAO) {
-    this.datasetAssociationDAO = datasetAssociationDAO;
   }
 
   public DatasetDAO getDatasetDAO() {
