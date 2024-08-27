@@ -245,42 +245,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testDownloadDatasetsSuccess() {
-    List<DatasetDTO> dtoList = new ArrayList<>();
-    DatasetDTO testDTO = createMockDatasetDTO();
-    dtoList.add(testDTO);
-
-    when(datasetService.describeDataSetsByReceiveOrder(any())).thenReturn(dtoList);
-    initResource();
-
-    Response response = resource.downloadDataSets(List.of(1));
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  void testDownloadDatasetsHeaderError() {
-    doThrow(new RuntimeException()).when(datasetService).describeDictionaryByReceiveOrder();
-    initResource();
-    Response response = resource.downloadDataSets(List.of(1));
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
-  void testDownloadDatasetsEmptyList() {
-    initResource();
-    Response response = resource.downloadDataSets(List.of());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  void testDownloadDatasetsServiceError() {
-    doThrow(new RuntimeException()).when(datasetService).describeDataSetsByReceiveOrder(any());
-    initResource();
-    Response response = resource.downloadDataSets(List.of(1));
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
   void testDeleteSuccessAdmin() {
     Dataset dataSet = new Dataset();
 
