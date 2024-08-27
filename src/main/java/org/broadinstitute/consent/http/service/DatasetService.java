@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -79,15 +78,6 @@ public class DatasetService implements ConsentLogger {
     this.studyDAO = studyDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.userDAO = userDAO;
-  }
-
-  public Collection<DatasetDTO> describeDataSetsByReceiveOrder(List<Integer> dataSetId) {
-    return datasetDAO.findDatasetsByReceiveOrder(dataSetId);
-  }
-
-  @Deprecated
-  public Collection<Dictionary> describeDictionaryByReceiveOrder() {
-    return datasetDAO.getMappedFieldsOrderByReceiveOrder();
   }
 
   public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
