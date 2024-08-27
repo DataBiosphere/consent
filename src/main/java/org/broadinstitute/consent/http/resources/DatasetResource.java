@@ -11,7 +11,6 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -51,7 +50,6 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
@@ -538,24 +536,6 @@ public class DatasetResource extends Resource {
   public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
     try {
       return elasticSearchService.deleteIndex(datasetId);
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Path("/search")
-  @Produces("application/json")
-  @PermitAll
-  public Response searchDatasets(
-      @Auth AuthUser authUser,
-      @QueryParam("query") String query,
-      @QueryParam("access") @DefaultValue("controlled") String accessString) {
-    try {
-      AccessManagement accessManagement = AccessManagement.fromValue(accessString.toLowerCase());
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, accessManagement, user);
-      return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

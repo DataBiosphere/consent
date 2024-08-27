@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -45,7 +44,6 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -295,11 +293,6 @@ public class DatasetService implements ConsentLogger {
     datasetServiceDAO.deleteStudy(study, user);
   }
 
-  public List<Dataset> searchDatasets(String query, AccessManagement accessManagement, User user) {
-    List<Dataset> datasets = findAllDatasetsByUser(user);
-    return datasets.stream().filter(ds -> ds.isDatasetMatch(query, accessManagement)).toList();
-  }
-
   public List<DatasetSummary> searchDatasetSummaries(String query) {
     return datasetDAO.findDatasetSummariesByQuery(query);
   }
@@ -357,22 +350,6 @@ public class DatasetService implements ConsentLogger {
       }
     }
 
-  }
-
-  public List<Dataset> findAllDatasetsByUser(User user) {
-    if (user.hasUserRole(UserRoles.ADMIN)) {
-      return datasetDAO.findAllDatasets();
-    } else {
-      List<Dataset> datasets = datasetDAO.getDatasets();
-      if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        List<Dataset> chairDatasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
-        return Stream
-            .concat(chairDatasets.stream(), datasets.stream())
-            .distinct()
-            .collect(Collectors.toList());
-      }
-      return datasets;
-    }
   }
 
   public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
