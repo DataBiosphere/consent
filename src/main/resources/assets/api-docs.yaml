@@ -584,32 +584,6 @@ paths:
     $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
-  /api/datasetAssociation/{datasetId}:
-    get:
-      deprecated: true
-      summary: Get Dataset Associations
-      description: Get all dataset associations
-      tags:
-        - Dataset
-      responses:
-        204:
-          description: Deprecated Endpoint
-    post:
-      summary: Create Dataset Associations
-      operationId: Create dataset associations for the provided dataset and users
-      tags:
-        - Dataset
-      responses:
-        204:
-          description: Deprecated Endpoint
-    put:
-      summary: Update Dataset Associations
-      operationId: Update dataset associations for the provided dataset and users
-      tags:
-        - Dataset
-      responses:
-        204:
-          description: Deprecated Endpoint
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
