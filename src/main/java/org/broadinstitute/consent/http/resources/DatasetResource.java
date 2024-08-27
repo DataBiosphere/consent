@@ -30,7 +30,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -47,7 +45,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
-import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -415,61 +412,6 @@ public class DatasetResource extends Resource {
     try {
       List<String> datasetNames = datasetService.findAllDatasetNames();
       return Response.ok(datasetNames).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @POST
-  @Path("/download")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  @PermitAll
-  public Response downloadDataSets(List<Integer> idList) {
-    try {
-      String msg = "GETing DataSets to download";
-      logDebug(msg);
-
-      Gson gson = new Gson();
-      HashMap<String, String> datasets = new HashMap<>();
-
-      Collection<Dictionary> headers = datasetService.describeDictionaryByReceiveOrder();
-
-      StringBuilder sb = new StringBuilder();
-      String TSV_DELIMITER = "\t";
-      for (Dictionary header : headers) {
-        if (sb.length() > 0) {
-          sb.append(TSV_DELIMITER);
-        }
-        sb.append(header.getKey());
-      }
-      sb.append(END_OF_LINE);
-
-      if (CollectionUtils.isEmpty(idList)) {
-        datasets.put("datasets", sb.toString());
-        return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
-      }
-
-      Collection<DatasetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
-
-      for (DatasetDTO row : rows) {
-        StringBuilder sbr = new StringBuilder();
-        DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID", row.getConsentId());
-        List<DatasetPropertyDTO> props = row.getProperties();
-        props.add(property);
-        for (DatasetPropertyDTO prop : props) {
-          if (sbr.length() > 0) {
-            sbr.append(TSV_DELIMITER);
-          }
-          sbr.append(prop.getPropertyValue());
-        }
-        sbr.append(END_OF_LINE);
-        sb.append(sbr);
-      }
-      String tsv = sb.toString();
-
-      datasets.put("datasets", tsv);
-      return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
