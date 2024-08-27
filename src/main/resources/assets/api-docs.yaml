@@ -582,26 +582,6 @@ paths:
     $ref: './paths/datasetBatch.yaml'
   /api/dataset/{id}/approved/users:
     $ref: './paths/datasetByIdApprovedUsers.yaml'
-  /api/dataset/download:
-    post:
-      summary: Download datasets by id list
-      description: Returns the dataset Properties of the datasets whose Ids are in the idList
-      requestBody:
-        description: List of Dataset Ids
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: string
-      tags:
-        - Dataset
-      responses:
-        200:
-          description: The specified datasets were downloaded.
-        500:
-          description: Server error.
   /api/dataset/index:
     $ref: './paths/datasetIndex.yaml'
   /api/dataset/index/{datasetId}:
