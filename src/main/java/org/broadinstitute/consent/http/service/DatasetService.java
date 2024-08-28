@@ -211,19 +211,6 @@ public class DatasetService implements ConsentLogger {
     datasetDAO.insertDatasetProperties(addProperties);
   }
 
-  public DatasetDTO getDatasetDTO(Integer datasetId) {
-    Set<DatasetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-    DatasetDTO result = new DatasetDTO();
-    if (dataset != null && !dataset.isEmpty()) {
-      result = dataset.iterator().next();
-    }
-    if (result.getDataSetId() == null) {
-      throw new NotFoundException("Unable to find dataset with id: " + datasetId);
-    }
-    return result;
-  }
-
-
   @Deprecated // Use synchronizeDatasetProperties() instead
   public List<DatasetProperty> processDatasetProperties(Integer datasetId,
       List<DatasetPropertyDTO> properties) {
