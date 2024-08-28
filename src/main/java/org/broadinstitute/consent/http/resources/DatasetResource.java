@@ -66,7 +66,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Path("api/dataset")
 public class DatasetResource extends Resource {
 
-  private final String END_OF_LINE = System.lineSeparator();
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
@@ -570,22 +569,6 @@ public class DatasetResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
-//  @GET
-//  @Produces(MediaType.APPLICATION_OCTET_STREAM)
-//  @PermitAll
-//  @Path("/{datasetId}/approved/users")
-//  public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser,
-//      @PathParam("datasetId") Integer datasetId) {
-//    try {
-//      String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
-//      return Response.ok(content)
-//          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
-//          .build();
-//    } catch (Exception e) {
-//      return createExceptionResponse(e);
-//    }
-//  }
 
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
