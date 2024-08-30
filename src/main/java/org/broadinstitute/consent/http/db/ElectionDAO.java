@@ -188,19 +188,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   void archiveElectionByIds(@BindList("electionIds") List<Integer> electionIds,
       @Bind("lastUpdate") Date lastUpdate);
 
-  @SqlQuery(
-      "SELECT MAX(v.createDate) create_date " +
-          "FROM election e " +
-          "INNER JOIN vote v " +
-          "ON v.electionId = e.election_id " +
-          "AND LOWER(v.type) = 'final' " +
-          "WHERE v.vote = true " +
-          "AND LOWER(e.election_type) = 'dataaccess' " +
-          "AND reference_id = :referenceId " +
-          "GROUP BY e.create_date")
-  @UseRowMapper(DateMapper.class)
-  Date findApprovalAccessElectionDate(@Bind("referenceId") String referenceId);
-
   /**
    * Find the Dac for this election. Looks across associations to a dac via dataset and those
    * associated via the consent.

@@ -676,53 +676,6 @@ class ElectionDAOTest extends DAOTestHelper {
     archivedElections.forEach(e -> assertTrue(e.getArchived()));
   }
 
-
-  @Test
-  void testFindApprovalAccessElectionDate() {
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDataSetId();
-
-    Election e = createDataAccessElection(referenceId, datasetId);
-    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
-    voteDAO.updateVote(true,
-        "",
-        new Date(),
-        v.getVoteId(),
-        false,
-        e.getElectionId(),
-        new Date(),
-        null);
-    electionDAO.updateElectionById(
-        e.getElectionId(),
-        ElectionStatus.FINAL.getValue(),
-        new Date(),
-        true);
-
-    assertEquals(e.getCreateDate(),
-        electionDAO.findApprovalAccessElectionDate(referenceId));
-  }
-
-  @Test
-  void testFindApprovalAccessElectionDate_NotApproved() {
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-    User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDataSetId();
-
-    Election e = createDataAccessElection(referenceId, datasetId);
-    Vote v = createFinalVote(user.getUserId(), e.getElectionId());
-
-    assertNull(electionDAO.findApprovalAccessElectionDate(referenceId));
-  }
-
   @Test
   void testFindDacForElection() {
     Dac dac = createDac();
