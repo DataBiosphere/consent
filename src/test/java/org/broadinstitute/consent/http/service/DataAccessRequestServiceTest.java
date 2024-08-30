@@ -16,14 +16,10 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -38,18 +34,15 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -227,66 +220,6 @@ class DataAccessRequestServiceTest {
   }
 
   @Test
-  void testCreateApprovedDARDocument() {
-    Election election = generateElection(1);
-    when(electionDAO.findDataAccessClosedElectionsByFinalResult(any()))
-        .thenReturn(Collections.singletonList(election));
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    DarCollection collection = new DarCollection();
-    Map<String, DataAccessRequest> dars = new HashMap<>();
-    dars.put(election.getReferenceId(), dar);
-    collection.setDars(dars);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
-    initService();
-    try {
-      File file = service.createApprovedDARDocument();
-      assertNotNull(file);
-    } catch (IOException ioe) {
-      assert false;
-    }
-  }
-
-  @Test
-  void testCreateReviewedDARDocument() {
-    Election election = generateElection(1);
-    election.setFinalVote(true);
-    election.setFinalVoteDate(new Date());
-    when(electionDAO.findDataAccessClosedElectionsByFinalResult(true))
-        .thenReturn(Collections.singletonList(election));
-    when(electionDAO.findDataAccessClosedElectionsByFinalResult(false))
-        .thenReturn(Collections.emptyList());
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    DarCollection collection = new DarCollection();
-    Map<String, DataAccessRequest> dars = new HashMap<>();
-    dars.put(election.getReferenceId(), dar);
-    collection.setDars(dars);
-    Dataset d = new Dataset();
-    d.setDataSetId(1);
-    d.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
-    dar.setDatasetIds(List.of(1));
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
-    when(dataSetDAO.findDatasetById(any())).thenReturn(d);
-    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
-    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn("Use is limited to research");
-
-    initService();
-
-    try {
-      File file = service.createReviewedDARDocument();
-
-      assertNotNull(file);
-    } catch (Exception e) {
-      assert false;
-    }
-  }
-
-  @Test
   void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(1);
@@ -370,15 +303,6 @@ class DataAccessRequestServiceTest {
     data.setOther(false);
     dar.setData(data);
     return dar;
-  }
-
-  private Election generateElection(Integer datasetId) {
-    String refId = UUID.randomUUID().toString();
-    Election election = new Election();
-    election.setDataSetId(datasetId);
-    election.setReferenceId(refId);
-
-    return election;
   }
 
   @Test
