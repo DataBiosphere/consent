@@ -47,65 +47,6 @@ paths:
     $ref: './paths/mailByType.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
-  /api/consent:
-    $ref: './paths/consent.yaml'
-  /api/consent/{id}:
-    get:
-      deprecated: true
-      summary: Deprecated endpoint.
-      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
-      parameters:
-        - name: id
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-      tags:
-        - Consent
-      responses:
-        404:
-          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
-    put:
-      deprecated: true
-      summary: Deprecated endpoint.
-      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
-      parameters:
-        - name: id
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-        - name: updated
-          in: body
-          description: Object that represents the consent to be updated
-          required: true
-          schema:
-            $ref: './schemas/Consent.yaml'
-      tags:
-        - Consent
-      responses:
-        404:
-          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
-  /api/consent/{id}/matches:
-    get:
-      deprecated: true
-      summary: Deprecated endpoint.
-      description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
-      parameters:
-        - name: id
-          in: path
-          description: Consent ID
-          required: true
-          schema:
-            type: string
-      tags:
-        - Match
-        - Consent
-      responses:
-        404:
-          description: Deprecated endpoint. Use  `GET /api/tdr/{identifier}` instead.
   /api/daa:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:
@@ -1209,10 +1150,6 @@ components:
         $ref: '#/components/schemas/Acknowledgement'
     Collaborator:
       $ref: './schemas/Collaborator.yaml'
-    Consent:
-      $ref: './schemas/Consent.yaml'
-    ConsentAssociation:
-      $ref: './schemas/ConsentAssociation.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
     Data Access Agreement:

@@ -312,10 +312,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   List<Election> findElectionsByReferenceIdAndDatasetId(@Bind("referenceId") String referenceId,
       @Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate("INSERT INTO accesselection_consentelection (access_election_id, consent_election_id ) VALUES (:electionAccessId, :electionConsentId)")
-  void insertAccessAndConsentElection(@Bind("electionAccessId") Integer electionAccessId,
-      @Bind("electionConsentId") Integer electionConsentId);
-
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT DISTINCT * FROM election e WHERE e.election_id IN (<electionIds>)")
   List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);

@@ -32,20 +32,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MatchDAOTest extends DAOTestHelper {
 
   @Test
-  void testFindMatchesByConsentId() {
-    Match m = createMatch();
-
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertFalse(matches.isEmpty());
-    Match found = matches.get(0);
-    assertEquals(found.getId(), m.getId());
-    assertEquals(found.getPurpose(), m.getPurpose());
-    assertEquals(found.getConsent(), m.getConsent());
-    assertEquals(found.getFailed(), m.getFailed());
-    assertEquals(found.getMatch(), m.getMatch());
-  }
-
-  @Test
   void testFindMatchesByPurposeId() {
     Match m = createMatch();
 
@@ -69,15 +55,6 @@ class MatchDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
     return match;
-  }
-
-  @Test
-  void testDeleteMatchesByConsentId() {
-    Match m = createMatch();
-
-    matchDAO.deleteMatchesByConsentId(m.getConsent());
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertTrue(matches.isEmpty());
   }
 
   @Test
@@ -163,22 +140,6 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindMatchByPurposeIdAndConsentId() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    matchDAO.insertMatch(
-      match.getConsent(),
-      match.getPurpose(),
-      match.getMatch(),
-      match.getFailed(),
-      new Date(),
-      match.getAlgorithmVersion(),
-      match.getAbstain());
-    Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(),
-        match.getConsent());
-    assertNotNull(foundMatch);
-  }
-
-  @Test
   void testFindMatchById() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     Integer matchId = matchDAO.insertMatch(
@@ -213,28 +174,6 @@ class MatchDAOTest extends DAOTestHelper {
     assertNotNull(foundMatch);
     assertEquals(match.getRationales().size(),
         foundMatch.getRationales().size());
-  }
-
-  @Test
-  void testDeleteFailureReasonsByConsentIds() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
-    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
-    matchDAO.deleteRationalesByConsentIds(List.of(match.getConsent()));
-    Match foundMatch = matchDAO.findMatchById(matchId);
-    assertNotNull(foundMatch);
-    assertEquals(0, foundMatch.getRationales().size());
   }
 
   @Test
