@@ -715,9 +715,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("datasetId") Integer datasetId
   );
 
-  @SqlUpdate("DELETE FROM consent_associations WHERE dataset_id = :datasetId")
-  void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
-
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery("""
