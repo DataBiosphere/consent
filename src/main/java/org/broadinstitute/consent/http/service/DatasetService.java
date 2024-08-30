@@ -209,19 +209,6 @@ public class DatasetService implements ConsentLogger {
     datasetDAO.insertDatasetProperties(addProperties);
   }
 
-  public DatasetDTO getDatasetDTO(Integer datasetId) {
-    Set<DatasetDTO> dataset = datasetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-    DatasetDTO result = new DatasetDTO();
-    if (dataset != null && !dataset.isEmpty()) {
-      result = dataset.iterator().next();
-    }
-    if (result.getDataSetId() == null) {
-      throw new NotFoundException("Unable to find dataset with id: " + datasetId);
-    }
-    return result;
-  }
-
-
   @Deprecated // Use synchronizeDatasetProperties() instead
   public List<DatasetProperty> processDatasetProperties(Integer datasetId,
       List<DatasetPropertyDTO> properties) {
@@ -379,20 +366,6 @@ public class DatasetService implements ConsentLogger {
       });
       output.write("]".getBytes());
     };
-  }
-
-  public List<Dataset> findDatasetsForChairperson(User user) {
-    List<Dac> dacs = dacDAO.findDacsForEmail(user.getEmail());
-
-    return datasetDAO.findDatasetsForChairperson(dacs.stream().map(Dac::getDacId).toList());
-  }
-
-  public List<Dataset> findDatasetsForDataSubmitter(User user) {
-    return datasetDAO.findDatasetsForDataSubmitter(user.getUserId(), user.getEmail());
-  }
-
-  public List<Dataset> findPublicDatasets() {
-    return datasetDAO.findPublicDatasets();
   }
 
   public Study getStudyWithDatasetsById(Integer studyId) {

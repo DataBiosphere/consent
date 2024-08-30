@@ -24,7 +24,6 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -48,7 +47,6 @@ abstract public class Resource implements ConsentLogger {
   public final static String ADMIN = "Admin";
   public final static String ALUMNI = "Alumni";
   public final static String CHAIRPERSON = "Chairperson";
-  public final static String DATAOWNER = "DataOwner";
   public final static String MEMBER = "Member";
   public final static String RESEARCHER = "Researcher";
   public final static String SIGNINGOFFICIAL = "SigningOfficial";
@@ -154,10 +152,6 @@ abstract public class Resource implements ConsentLogger {
     dispatch.put(UnknownIdentifierException.class, e ->
         Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
-    dispatch.put(UpdateConsentException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
     dispatch.put(UnableToExecuteStatementException.class,
         Resource::unableToExecuteExceptionHandler);
     dispatch.put(PSQLException.class,

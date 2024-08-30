@@ -56,7 +56,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -72,9 +71,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetResourceTest {
-
-  @Mock
-  private DataAccessRequestService darService;
 
   @Mock
   private DatasetService datasetService;
@@ -102,7 +98,7 @@ class DatasetResourceTest {
   private DatasetResource resource;
 
   private void initResource() {
-    resource = new DatasetResource(datasetService, userService, darService,
+    resource = new DatasetResource(datasetService, userService,
         datasetRegistrationService, elasticSearchService);
   }
 
@@ -420,7 +416,8 @@ class DatasetResourceTest {
   void testAutocompleteDatasets() {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(datasetService.searchDatasetSummaries(any())).thenReturn(List.of(new DatasetSummary(1, "ID", "Name")));
+    when(datasetService.searchDatasetSummaries(any())).thenReturn(
+        List.of(new DatasetSummary(1, "ID", "Name")));
 
     initResource();
     try (Response response = resource.autocompleteDatasets(authUser, "test")) {
@@ -628,23 +625,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testDownloadDatasetApprovedUsersSuccess() {
-    List<String> header = List.of("attachment; filename=DatasetApprovedUsers.tsv");
-    initResource();
-    Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(header, response.getHeaders().get("Content-Disposition"));
-  }
-
-  @Test
-  void testDownloadDatasetApprovedUsersError() {
-    doThrow(new RuntimeException()).when(darService).getDatasetApprovedUsersContent(any(), any());
-    initResource();
-    Response response = resource.downloadDatasetApprovedUsers(new AuthUser(), 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
   void testFindAllDatasetsStreaming() throws Exception {
     var dataset = new Dataset();
     dataset.setDataSetId(RandomUtils.nextInt(100, 1000));
@@ -660,7 +640,8 @@ class DatasetResourceTest {
     var baos = new ByteArrayOutputStream();
     entity.write(baos);
     var entityString = baos.toString();
-    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {
+    }.getType();
     List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
     assertThat(returnedDatasets, hasSize(1));
     assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());

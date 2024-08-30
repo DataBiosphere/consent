@@ -107,29 +107,6 @@ class MatchServiceTest {
   }
 
   @Test
-  void testFindMatchByConsentId() {
-    Match m = createMatchObject();
-    when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of(m));
-    initService();
-
-    List<Match> matches = service.findMatchByConsentId(m.getConsent());
-    assertNotNull(matches);
-    assertEquals(1, matches.size());
-    verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
-  }
-
-  @Test
-  void testFindMatchByConsentIdNotFound() {
-    Match m = createMatchObject();
-    when(matchDAO.findMatchesByConsentId(any())).thenReturn(List.of());
-    initService();
-
-    List<Match> matches = service.findMatchByConsentId(m.getConsent());
-    assertTrue(matches.isEmpty());
-    verify(matchDAO, atLeastOnce()).findMatchesByConsentId(any());
-  }
-
-  @Test
   void testFindMatchForDataAccessRequest() {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
