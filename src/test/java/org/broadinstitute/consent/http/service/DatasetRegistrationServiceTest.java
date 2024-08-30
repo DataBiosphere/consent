@@ -538,7 +538,8 @@ class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
     when(dacDAO.findById(any())).thenReturn(new Dac());
-    when(elasticSearchService.indexDatasets(any())).thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
+    when(elasticSearchService.indexDatasets(any())).thenThrow(
+        new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
     initService();
     assertDoesNotThrow(() -> {
       datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());

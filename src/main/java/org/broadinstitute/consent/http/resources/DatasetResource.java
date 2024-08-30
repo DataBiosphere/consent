@@ -21,7 +21,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -53,7 +52,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -68,22 +66,19 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Path("api/dataset")
 public class DatasetResource extends Resource {
 
-  private final String END_OF_LINE = System.lineSeparator();
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
-  private final DataAccessRequestService darService;
   private final ElasticSearchService elasticSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
-      DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
+      DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
-    this.darService = darService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
@@ -359,10 +354,10 @@ public class DatasetResource extends Resource {
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
         List<Integer> differences = new ArrayList<>(datasetIds)
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(Predicate.not(foundIds::contains))
-          .toList();
+            .stream()
+            .filter(Objects::nonNull)
+            .filter(Predicate.not(foundIds::contains))
+            .toList();
         throw new NotFoundException(
             "Could not find datasets with ids: "
                 + String.join(",",
@@ -570,22 +565,6 @@ public class DatasetResource extends Resource {
     try {
       Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
       return Response.ok(ds).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
-  @PermitAll
-  @Path("/{datasetId}/approved/users")
-  public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser,
-      @PathParam("datasetId") Integer datasetId) {
-    try {
-      String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
-      return Response.ok(content)
-          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
-          .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

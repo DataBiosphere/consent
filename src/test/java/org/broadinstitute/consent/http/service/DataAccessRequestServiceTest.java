@@ -1,10 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -33,14 +31,11 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.enumeration.HeaderDAR;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
@@ -219,54 +214,6 @@ class DataAccessRequestServiceTest {
     });
   }
 
-  @Test
-  void testCreateDatasetApprovedUsersContentAsNonPrivilegedUser() {
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    User user = new User();
-    user.setUserId(1);
-    user.setDisplayName("displayName");
-    user.setInstitutionId(1);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-
-    initService();
-
-    try {
-      String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
-      System.out.println(approvedUsers);
-      assertNotNull(approvedUsers);
-      assertFalse(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
-    } catch (Exception ioe) {
-      assert false;
-    }
-  }
-
-  @Test
-  void testCreateDatasetApprovedUsersContentAsPrivilegedUser() {
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.setUserId(1);
-    User user = new User();
-    user.setAdminRole();
-    user.setUserId(1);
-    user.setDisplayName("displayName");
-    user.setInstitutionId(1);
-    Institution institution = new Institution();
-    institution.setName("Institution");
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-
-    initService();
-
-    try {
-      String approvedUsers = service.getDatasetApprovedUsersContent(new AuthUser(), 1);
-      System.out.println(approvedUsers);
-      assertNotNull(approvedUsers);
-      assertTrue(approvedUsers.contains(HeaderDAR.USERNAME.getValue()));
-    } catch (Exception ioe) {
-      assert false;
-    }
-  }
 
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();

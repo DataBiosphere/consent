@@ -7,7 +7,6 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -358,13 +357,6 @@ public class User {
         .stream()
         .map(UserRole::getRoleId)
         .collect(Collectors.toList());
-  }
-
-  @Transient
-  public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
-    List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId)
-        .collect(Collectors.toList());
-    return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
   }
 
   @Transient

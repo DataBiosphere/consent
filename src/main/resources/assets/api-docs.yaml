@@ -493,8 +493,6 @@ paths:
     $ref: './paths/datasetByIdV2.yaml'
   /api/dataset/batch:
     $ref: './paths/datasetBatch.yaml'
-  /api/dataset/{id}/approved/users:
-    $ref: './paths/datasetByIdApprovedUsers.yaml'
   /api/dataset/index:
     $ref: './paths/datasetIndex.yaml'
   /api/dataset/index/{datasetId}:
