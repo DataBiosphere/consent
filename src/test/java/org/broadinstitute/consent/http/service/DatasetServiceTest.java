@@ -209,27 +209,6 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testGetDatasetDTO() {
-    Set<DatasetDTO> set = new HashSet<>();
-    set.add(getDatasetDTO());
-    when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(set);
-    initService();
-
-    DatasetDTO datasetDTO = datasetService.getDatasetDTO(1);
-
-    assertNotNull(datasetDTO);
-    assertFalse(datasetDTO.getProperties().isEmpty());
-  }
-
-  @Test
-  void testGetDatasetDTONotFound() {
-    when(datasetDAO.findDatasetDTOWithPropertiesByDatasetId(anyInt())).thenReturn(
-        Collections.emptySet());
-    initService();
-    assertThrows(NotFoundException.class, () -> datasetService.getDatasetDTO(1));
-  }
-
-  @Test
   void testFindDatasetByIdentifier() {
     Dataset d = new Dataset();
     d.setAlias(3);

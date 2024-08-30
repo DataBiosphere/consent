@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -34,12 +33,9 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DacService implements ConsentLogger {
 
-  private static final Logger log = LoggerFactory.getLogger(DacService.class);
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final DatasetDAO dataSetDAO;
@@ -283,26 +279,6 @@ public class DacService implements ConsentLogger {
         Objects.nonNull(dar.getData().getRestriction());
   }
 
-  boolean isAuthUserAdmin(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(), UserRoles.ADMIN.getRoleId());
-    return user != null;
-  }
-
-  boolean isAuthUserChair(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(),
-        UserRoles.CHAIRPERSON.getRoleId());
-    return user != null;
-  }
-
-  public List<Integer> getDacIdsForUser(AuthUser authUser) {
-    return dacDAO.findDacsForEmail(authUser.getEmail())
-        .stream()
-        .filter(Objects::nonNull)
-        .map(Dac::getDacId)
-        .distinct()
-        .collect(Collectors.toList());
-  }
-
   /**
    * Filter data access requests by the DAC they are associated with.
    */
@@ -330,23 +306,6 @@ public class DacService implements ConsentLogger {
       }
     }
     return Collections.emptyList();
-  }
-
-  /**
-   * Filter elections by the Dataset/DAC they are associated with.
-   */
-  List<Election> filterElectionsByDAC(List<Election> elections, AuthUser authUser) {
-    if (isAuthUserAdmin(authUser)) {
-      return elections;
-    }
-
-    List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
-        stream().
-        map(Dataset::getDataSetId).
-        collect(Collectors.toList());
-    return elections.stream().
-        filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
-        collect(Collectors.toList());
   }
 
 }

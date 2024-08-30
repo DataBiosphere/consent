@@ -54,7 +54,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       try {
         datasetDAO.insertDatasetAudit(dsAudit);
         datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDataSetId());
-        datasetDAO.deleteConsentAssociationsByDatasetId(dataset.getDataSetId());
         datasetDAO.deleteDatasetById(dataset.getDataSetId());
       } catch (Exception e) {
         handle.rollback();

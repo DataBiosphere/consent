@@ -159,31 +159,4 @@
         </sql>
     </changeSet>
 
-    <!--insert consent-->
-    <changeSet author="rfricke" id="test-consent">
-        <sql>
-            INSERT INTO consents(consent_id, requires_manual_review, use_restriction, active, name, data_use, dac_id)
-            SELECT
-                concat('9e5a4135-e635-41a4-8663-042667ef4a7f', dataset.datasetid),
-                'f',
-                '{ "type": "everything" }',
-                't',
-                concat('Test consent ', dataset.datasetid),
-                '{"hmbResearch":true,"populationOriginsAncestry":true,"genomicPhenotypicData":"Yes"}',
-                dataset.datasetid
-            FROM dataset
-        </sql>
-    </changeSet>
-
-    <!--insert consent_associations-->
-    <changeSet author="rfricke" id="test-consentassociations">
-        <sql>
-            INSERT INTO consent_associations (consent_id, association_type, dataset_id)
-            SELECT
-                consent_id,
-                'Sample',
-                dac_id
-            FROM consents
-        </sql>
-    </changeSet>
 </databaseChangeLog>

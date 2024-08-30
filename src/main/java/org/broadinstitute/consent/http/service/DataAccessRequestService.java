@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,7 +11,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -26,7 +22,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -78,10 +73,6 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public List<DataAccessRequest> findAllDraftDataAccessRequestsByUser(Integer userId) {
     return dataAccessRequestDAO.findAllDraftsByUserId(userId);
-  }
-
-  public List<DataAccessRequest> getDataAccessRequestsByReferenceIds(List<String> referenceIds) {
-    return dataAccessRequestDAO.findByReferenceIds(referenceIds);
   }
 
   public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
@@ -321,109 +312,6 @@ public class DataAccessRequestService implements ConsentLogger {
       //on the Resource class, just like it would with a SQLException
       throw new UnableToExecuteStatementException(e.getMessage());
     }
-  }
-
-  public File createApprovedDARDocument() throws IOException {
-    List<Election> elections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
-    File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
-    FileWriter darWriter = new FileWriter(file);
-    dataAccessReportsParser.setApprovedDARHeader(darWriter);
-    if (CollectionUtils.isNotEmpty(elections)) {
-      for (Election election : elections) {
-        try {
-          DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
-              election.getReferenceId());
-          DataAccessRequest dataAccessRequest = findByReferenceId(election.getReferenceId());
-          User user = userDAO.findUserById(dataAccessRequest.getUserId());
-          Dataset dataset = Objects.nonNull(election.getDataSetId()) ? datasetDAO.findDatasetById(
-              election.getDataSetId()) : null;
-          String datasetName = Objects.nonNull(dataset) ? dataset.getName() : "";
-          if (Objects.nonNull(collection) && Objects.nonNull(user) && Objects.nonNull(dataset)) {
-            String profileName = user.getDisplayName();
-            if (Objects.isNull(user.getInstitutionId())) {
-              logWarn(
-                  "No institution found for creator (user: %s, %d) of this Data Access Request (DAR: %s)".formatted(
-                      user.getDisplayName(), user.getUserId(), dataAccessRequest.getReferenceId()));
-            }
-            String institution = Objects.isNull(user.getInstitutionId()) ? ""
-                : institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
-            String translatedDatasetDataUse = dataset.getTranslatedDataUse();
-            dataAccessReportsParser.addApprovedDARLine(darWriter, election, dataAccessRequest,
-                collection.getDarCode(), profileName, institution, datasetName,
-                translatedDatasetDataUse);
-          }
-        } catch (Exception e) {
-          logWarn("Exception generating Approved DAR Document: %s".formatted(e.getMessage()));
-        }
-      }
-    }
-    darWriter.flush();
-    return file;
-  }
-
-  public File createReviewedDARDocument() throws IOException {
-    List<Election> approvedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(true);
-    List<Election> disaprovedElections = electionDAO.findDataAccessClosedElectionsByFinalResult(
-        false);
-    List<Election> elections = new ArrayList<>();
-    elections.addAll(approvedElections);
-    elections.addAll(disaprovedElections);
-    File file = File.createTempFile("ReviewedDataAccessRequests", ".tsv");
-    FileWriter darWriter = new FileWriter(file);
-    dataAccessReportsParser.setReviewedDARHeader(darWriter);
-    if (CollectionUtils.isNotEmpty(elections)) {
-      for (Election election : elections) {
-        Dataset dataset = datasetDAO.findDatasetById(election.getDataSetId());
-        String translatedDataUse =
-            (Objects.nonNull(dataset) && Objects.nonNull(dataset.getTranslatedDataUse()))
-                ? dataset.getTranslatedDataUse() : "";
-        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
-            election.getReferenceId());
-        DataAccessRequest dar = findByReferenceId(election.getReferenceId());
-        if (Objects.nonNull(dar) && Objects.nonNull(collection)) {
-          Integer datasetId =
-              !CollectionUtils.isEmpty(dar.getDatasetIds()) ? dar.getDatasetIds().get(0) : null;
-          String datasetName =
-              (Objects.nonNull(dataset) && Objects.nonNull(dataset.getName())) ? dataset.getName()
-                  : "";
-          dataAccessReportsParser.addReviewedDARLine(darWriter, election, dar,
-              collection.getDarCode(), datasetName, translatedDataUse);
-        }
-      }
-    }
-    darWriter.flush();
-    return file;
-  }
-
-  public String getDatasetApprovedUsersContent(AuthUser authUser, Integer datasetId) {
-    User requestingUser = userDAO.findUserByEmail(authUser.getEmail());
-    if (Objects.isNull(requestingUser)) {
-      throw new NotFoundException("User not found: " + authUser.getEmail());
-    }
-    StringBuilder builder = new StringBuilder();
-    builder.append(dataAccessReportsParser.getDatasetApprovedUsersHeader(requestingUser));
-    List<DataAccessRequest> darList = dataAccessRequestDAO.findApprovedDARsByDatasetId(
-        datasetId);
-    if (CollectionUtils.isNotEmpty(darList)) {
-      for (DataAccessRequest dar : darList) {
-        String referenceId = dar.getReferenceId();
-        DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
-        User researcher = userDAO.findUserById(dar.getUserId());
-        Date approvalDate = electionDAO.findApprovalAccessElectionDate(referenceId);
-        if (Objects.nonNull(approvalDate) && Objects.nonNull(researcher) && Objects.nonNull(
-            collection)) {
-          String email = researcher.getEmail();
-          String name = researcher.getDisplayName();
-          String institution = (Objects.isNull(researcher.getInstitutionId())) ? ""
-              : institutionDAO.findInstitutionById(researcher.getInstitutionId()).getName();
-          String darCode = collection.getDarCode();
-          builder.append(
-              dataAccessReportsParser.getDataSetApprovedUsersLine(requestingUser, email, name,
-                  institution, darCode, approvalDate));
-        }
-      }
-    }
-    return builder.toString();
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {

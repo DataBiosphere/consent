@@ -373,38 +373,6 @@ class DacServiceTest {
   }
 
   @Test
-  void testIsAuthUserAdmin_case1() {
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
-    initService();
-
-    assertTrue(service.isAuthUserAdmin(getUser()));
-  }
-
-  @Test
-  void testIsAuthUserAdmin_case2() {
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
-    initService();
-
-    assertFalse(service.isAuthUserAdmin(getUser()));
-  }
-
-  @Test
-  void testIsAuthUserChair_case1() {
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
-    initService();
-
-    assertTrue(service.isAuthUserAdmin(getUser()));
-  }
-
-  @Test
-  void testIsAuthUserChair_case2() {
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
-    initService();
-
-    assertFalse(service.isAuthUserAdmin(getUser()));
-  }
-
-  @Test
   void testFilterDataAccessRequestsByDAC_adminCase() {
     User user = new User();
     user.setRoles(new ArrayList<>());
@@ -466,90 +434,6 @@ class DacServiceTest {
 
     // Filtered documents should contain the ones the user has direct access to
     assertEquals(memberDataSets.size(), filtered.size());
-  }
-
-  @Test
-  void testFilterElectionsByDAC_adminCase() {
-    // User is an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(getDacUsers().get(0));
-    initService();
-
-    List<Election> elections = getElections();
-
-    Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
-    // As an admin, all elections should be returned.
-    assertEquals(elections.size(), filtered.size());
-  }
-
-  @Test
-  void testFilterElectionsByDAC_memberCase1() {
-    // User is not an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
-
-    // Member is a member of one DAC that has a single consented dataset
-    List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-    List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
-    initService();
-
-    List<Election> elections = getElections();
-
-    Collection<Election> filtered = service.filterElectionsByDAC(elections, getUser());
-    // As a member, only direct-associated datasets should be returned.
-    assertEquals(memberDatasets.size(), filtered.size());
-  }
-
-  @Test
-  void testFilterElectionsByDAC_memberCase2() {
-    // User is not an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
-
-    // Member is a member of one DAC that has a single consented dataset
-    List<Dac> memberDacs = Collections.singletonList(getDacs().get(0));
-    List<Dataset> memberDatasets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(memberDatasets);
-    initService();
-
-    // There are unassociated elections:
-    List<Election> unassociatedElections = getElections().stream().
-        peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
-
-    List<Election> elections = getElections();
-
-    List<Election> allElections = Stream.
-        concat(unassociatedElections.stream(), elections.stream()).
-        collect(Collectors.toList());
-
-    Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
-    // As a member, both direct-associated and unassociated elections should be returned.
-    assertEquals(memberDatasets.size() + unassociatedElections.size(),
-        filtered.size());
-  }
-
-  @Test
-  void testFilterElectionsByDAC_memberCase3() {
-    // User is not an admin user
-    when(userDAO.findUserByEmailAndRoleId(anyString(), anyInt())).thenReturn(null);
-
-    // Member has no direct access to elections via DAC or DataSet
-    when(dataSetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(Collections.emptyList());
-    initService();
-
-    // There are unassociated elections:
-    List<Election> unassociatedElections = getElections().stream().
-        peek(e -> e.setDataSetId(null)).
-        collect(Collectors.toList());
-
-    List<Election> elections = getElections();
-
-    List<Election> allElections = Stream.
-        concat(unassociatedElections.stream(), elections.stream()).
-        collect(Collectors.toList());
-
-    Collection<Election> filtered = service.filterElectionsByDAC(allElections, getUser());
-    // As a member, both direct-associated and unassociated elections should be returned.
-    assertEquals(unassociatedElections.size(), filtered.size());
   }
 
   @Test

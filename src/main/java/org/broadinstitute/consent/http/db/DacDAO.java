@@ -90,19 +90,6 @@ public interface DacDAO extends Transactional<DacDAO> {
   List<Dac> findAll();
 
   /**
-   * Find all DACs by user email
-   *
-   * @param email The user email
-   * @return List<Dac>
-   */
-  @SqlQuery(
-      "SELECT distinct d.* FROM dac d "
-          + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
-          + " INNER JOIN users u ON ur.user_id = u.user_id "
-          + " WHERE u.email = :email ")
-  List<Dac> findDacsForEmail(@Bind("email") String email);
-
-  /**
    * Find all Users associated with a DAC
    *
    * @return List<User>
