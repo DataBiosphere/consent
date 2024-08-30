@@ -2,10 +2,10 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -140,35 +141,42 @@ class DaaServiceTest {
   @Test
   void testFindAllWithBroadDaa() {
     Dac broadDac = new Dac();
-    int broadDacId = RandomUtils.nextInt(3,50);
-    broadDac.setName("broadDac");
-    broadDac.setDacId(broadDacId);
+    broadDac.setName("Broad DAC");
+    broadDac.setDacId(RandomUtils.nextInt(1, 10));
 
-    Dac dac2 = new Dac();
-    int dac2Id = RandomUtils.nextInt(3,50);
-    dac2.setName("dac2");
-    dac2.setDacId(dac2Id);
+    Dac otherDac = new Dac();
+    otherDac.setName("Other DAC");
+    otherDac.setDacId(RandomUtils.nextInt(11, 20));
 
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa1.setInitialDacId(dac2Id);
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa2.setDaaId(2);
-    daa2.setInitialDacId(broadDacId);
-    DataAccessAgreement daa3 = new DataAccessAgreement();
-    daa3.setDaaId(3);
-    daa3.setInitialDacId(dac2Id);
+    DataAccessAgreement broadDAA = new DataAccessAgreement();
+    broadDAA.setDaaId(RandomUtils.nextInt(1, 10));
+    broadDAA.setInitialDacId(broadDac.getDacId());
 
-    when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2, daa3));
-    when(dacDAO.findAll()).thenReturn(List.of(broadDac, dac2));
+    DataAccessAgreement nonBroadDAA1 = new DataAccessAgreement();
+    nonBroadDAA1.setDaaId(RandomUtils.nextInt(11, 20));
+    nonBroadDAA1.setInitialDacId(otherDac.getDacId());
+
+    DataAccessAgreement nonBroadDAA2 = new DataAccessAgreement();
+    nonBroadDAA2.setDaaId(RandomUtils.nextInt(21, 30));
+    nonBroadDAA2.setInitialDacId(otherDac.getDacId());
+
+    when(daaDAO.findAll()).thenReturn(List.of(broadDAA, nonBroadDAA1, nonBroadDAA2));
+    when(dacDAO.findAll()).thenReturn(List.of(broadDac, otherDac));
 
     initService();
     List<DataAccessAgreement> foundDaas = service.findAll();
-    assertEquals(List.of(daa1, daa2, daa3), foundDaas);
-    assertFalse(foundDaas.get(0).getBroadDaa());
-    assertTrue(foundDaas.get(1).getBroadDaa());
-    assertFalse(foundDaas.get(2).getBroadDaa());
 
+    Optional<DataAccessAgreement> foundBroadDAA = foundDaas.stream()
+        .filter(d -> d.getDaaId().equals(broadDAA.getDaaId())).findFirst();
+    assertTrue(foundBroadDAA.isPresent() && foundBroadDAA.get().getBroadDaa());
+
+    Optional<DataAccessAgreement> foundNonBroadDAA1 = foundDaas.stream()
+        .filter(d -> d.getDaaId().equals(nonBroadDAA1.getDaaId())).findFirst();
+    assertTrue(foundNonBroadDAA1.isPresent() && !foundNonBroadDAA1.get().getBroadDaa());
+
+    Optional<DataAccessAgreement> foundNonBroadDAA2 = foundDaas.stream()
+        .filter(d -> d.getDaaId().equals(nonBroadDAA2.getDaaId())).findFirst();
+    assertTrue(foundNonBroadDAA2.isPresent() && !foundNonBroadDAA2.get().getBroadDaa());
   }
 
   @Test
