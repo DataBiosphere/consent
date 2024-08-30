@@ -25,7 +25,8 @@ public class DataAccessReportsParser implements ConsentLogger {
 
   private static final String END_OF_LINE = System.lineSeparator();
 
-  public DataAccessReportsParser(DatasetDAO datasetDAO, UseRestrictionConverter useRestrictionConverter) {
+  public DataAccessReportsParser(DatasetDAO datasetDAO,
+      UseRestrictionConverter useRestrictionConverter) {
     this.datasetDAO = datasetDAO;
     this.useRestrictionConverter = useRestrictionConverter;
   }
@@ -109,7 +110,8 @@ public class DataAccessReportsParser implements ConsentLogger {
           StringUtils.isNotEmpty(translatedUseRestriction) ? translatedUseRestriction.replace("\n",
               " ") : "";
       DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-      String sDAR = useRestrictionConverter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
+      String sDAR = useRestrictionConverter.translateDataUse(dataUse,
+          DataUseTranslationType.PURPOSE);
       String formattedSDAR = sDAR.replace("\n", " ");
       darWriter.write(
           darCode + DEFAULT_SEPARATOR +

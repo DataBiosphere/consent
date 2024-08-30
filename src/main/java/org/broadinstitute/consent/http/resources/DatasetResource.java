@@ -354,10 +354,10 @@ public class DatasetResource extends Resource {
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
         List<Integer> differences = new ArrayList<>(datasetIds)
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(Predicate.not(foundIds::contains))
-          .toList();
+            .stream()
+            .filter(Objects::nonNull)
+            .filter(Predicate.not(foundIds::contains))
+            .toList();
         throw new NotFoundException(
             "Could not find datasets with ids: "
                 + String.join(",",

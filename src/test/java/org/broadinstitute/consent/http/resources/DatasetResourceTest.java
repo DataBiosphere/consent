@@ -452,7 +452,8 @@ class DatasetResourceTest {
   void testAutocompleteDatasets() {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(datasetService.searchDatasetSummaries(any())).thenReturn(List.of(new DatasetSummary(1, "ID", "Name")));
+    when(datasetService.searchDatasetSummaries(any())).thenReturn(
+        List.of(new DatasetSummary(1, "ID", "Name")));
 
     initResource();
     try (Response response = resource.autocompleteDatasets(authUser, "test")) {
@@ -675,7 +676,8 @@ class DatasetResourceTest {
     var baos = new ByteArrayOutputStream();
     entity.write(baos);
     var entityString = baos.toString();
-    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {
+    }.getType();
     List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
     assertThat(returnedDatasets, hasSize(1));
     assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());
