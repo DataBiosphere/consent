@@ -413,42 +413,6 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testSearchDatasetsControlledAccess() {
-    Dataset ds = new Dataset();
-    ds.setDataSetId(1);
-    AccessManagement accessManagement = AccessManagement.CONTROLLED;
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
-        List.of(ds));
-
-    initResource();
-    Response response = resource.searchDatasets(authUser, "search query",
-        accessManagement.toString());
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
-  }
-
-  @Test
-  void testSearchDatasetsOpenAccess() {
-    Dataset ds = new Dataset();
-    ds.setDataSetId(1);
-    AccessManagement accessManagement = AccessManagement.OPEN;
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
-    when(datasetService.searchDatasets("search query", accessManagement, user)).thenReturn(
-        List.of(ds));
-
-    initResource();
-    Response response = resource.searchDatasets(authUser, "search query",
-        accessManagement.toString());
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(GsonUtil.buildGson().toJson(List.of(ds)), response.getEntity());
-  }
-
-  @Test
   void testAutocompleteDatasets() {
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
