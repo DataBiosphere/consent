@@ -16,15 +16,15 @@
     <liquibase.version>4.29.1</liquibase.version>
     <dropwizard.version>4.0.7</dropwizard.version>
     <logback.version>1.5.7</logback.version>
-    <pact.version>4.6.13</pact.version>
+    <pact.version>4.6.14</pact.version>
     <postgres.version>42.7.4</postgres.version>
-    <surefire.version>3.4.0</surefire.version>
+    <surefire.version>3.5.0</surefire.version>
     <swagger.ui.version>5.17.14</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.3</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.12.0</mockito.version>
+    <mockito.version>5.13.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -138,7 +138,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>10.0.3</version>
+        <version>10.0.4</version>
         <executions>
           <execution>
             <goals>
@@ -695,7 +695,7 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>2.6.0</version>
+      <version>2.7.0</version>
     </dependency>
 
     <dependency>
