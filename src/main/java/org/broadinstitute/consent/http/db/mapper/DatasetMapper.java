@@ -15,7 +15,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     Dataset dataset = new Dataset();
     dataset.setDataSetId(r.getInt("dataset_id"));
 
-    if (hasColumn(r, "dac_id")) {
+    if (hasNonZeroColumn(r, "dac_id")) {
       dataset.setDacId(r.getInt("dac_id"));
     }
 
@@ -24,11 +24,8 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "create_date")) {
       dataset.setCreateDate(r.getDate("create_date"));
     }
-    if (hasColumn(r, "create_user_id")) {
-      int userId = r.getInt("create_user_id");
-      if (userId > 0) {
-        dataset.setCreateUserId(userId);
-      }
+    if (hasNonZeroColumn(r, "create_user_id")) {
+      dataset.setCreateUserId(r.getInt("create_user_id"));
     }
     if (hasColumn(r, "update_date")) {
       dataset.setUpdateDate(r.getTimestamp("update_date"));
@@ -38,11 +35,8 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
       Boolean value = Objects.isNull(boolString) ? null : r.getBoolean("dac_approval");
       dataset.setDacApproval(value);
     }
-    if (hasColumn(r, "update_user_id")) {
-      int userId = r.getInt("update_user_id");
-      if (userId > 0) {
-        dataset.setUpdateUserId(userId);
-      }
+    if (hasNonZeroColumn(r, "update_user_id")) {
+      dataset.setUpdateUserId(r.getInt("update_user_id"));
     }
     if (hasColumn(r, "data_use")) {
       dataset.setDataUse(dataUseParser.parseDataUse(r.getString("data_use")));
@@ -50,7 +44,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "translated_data_use")) {
       dataset.setTranslatedDataUse(r.getString("translated_data_use"));
     }
-    dataset.setAlias(r.getInt("alias"));
+    if (hasColumn(r, "alias")) {
+      dataset.setAlias(r.getInt("alias"));
+    }
 
     return dataset;
   }

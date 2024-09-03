@@ -3,13 +3,14 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
@@ -30,6 +32,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -37,12 +40,16 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test. To enable
@@ -50,6 +57,7 @@ import org.mockito.Mock;
  * Functional test emails will be directed to the private google group:
  * https://groups.google.com/a/broadinstitute.org/g/duos-dev
  */
+@ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
 
   private EmailService service;
@@ -86,7 +94,6 @@ class EmailServiceTest {
   private void initService() {
     boolean serviceActive = false;
 
-    openMocks(this);
     MailConfiguration mConfig = new MailConfiguration();
     mConfig.setActivateEmailNotifications(serviceActive);
     mConfig.setGoogleAccount("");
@@ -271,6 +278,129 @@ class EmailServiceTest {
   }
 
   @Test
+  void testSendDaaRequestMessage() throws Exception {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Jane Evans");
+    signingOfficial.setEmail("signingofficial@example.com");
+
+    User user = new User();
+    user.setDisplayName("John Doe");
+    user.setUserId(123);
+
+    String daaName = "DAA-123";
+    int daaId = 456;
+
+    initService();
+
+    try {
+      service.sendDaaRequestMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+          user.getDisplayName(), daaName, daaId, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendDaaRequestMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getDaaRequestTemplate(signingOfficial.getDisplayName(),
+        user.getDisplayName(),
+        daaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("456"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
+  void testSendNewDAAUploadResearcherMessage() throws Exception {
+    User researcher = new User();
+    researcher.setDisplayName("Jane Evans");
+    researcher.setEmail("signingofficial@example.com");
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    User user = new User();
+    user.setUserId(123);
+
+    String previousDaaName = "DAA-123";
+
+    String newDaaName = "DAA-456";
+
+    initService();
+
+    try {
+      service.sendNewDAAUploadResearcherMessage(researcher.getDisplayName(), researcher.getEmail(),
+          dac.getName(), previousDaaName, newDaaName, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getNewDaaUploadResearcherTemplate(researcher.getDisplayName(),
+        dac.getName(), newDaaName, previousDaaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("DAC-01"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
+  void testSendNewDAAUploadSOMessage() throws Exception {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Jane Evans");
+    signingOfficial.setEmail("signingofficial@example.com");
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-01");
+
+    User user = new User();
+    user.setUserId(123);
+
+    String previousDaaName = "DAA-123";
+
+    String newDaaName = "DAA-456";
+
+    initService();
+
+    try {
+      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+          dac.getName(), previousDaaName, newDaaName, user.getUserId());
+    } catch (Exception e) {
+      fail("Should not fail sending message: " + e);
+    }
+
+    verify(sendGridAPI, times(1)).sendNewDAAUploadSOMessage(any(), any(), any());
+    verify(templateHelper, times(1)).getNewDaaUploadSOTemplate(signingOfficial.getDisplayName(),
+        dac.getName(), newDaaName, previousDaaName, serverUrl);
+    verify(emailDAO, times(1)).insert(
+        eq("DAC-01"),
+        eq(null),
+        eq(user.getUserId()),
+        eq(EmailType.NEW_DAA_UPLOAD_SO.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     initService();
@@ -307,5 +437,52 @@ class EmailServiceTest {
         RandomUtils.nextInt(),
         new Date()
     );
+  }
+
+  @Test
+  void testSendReminderMessage() {
+    Election election = new Election();
+    election.setElectionId(RandomUtils.nextInt());
+    election.setReferenceId(UUID.randomUUID().toString());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
+
+    Vote vote = new Vote();
+    vote.setVoteId(RandomUtils.nextInt());
+    vote.setElectionId(election.getElectionId());
+    when(voteDAO.findVoteById(any())).thenReturn(vote);
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(RandomUtils.nextInt());
+    collection.setDarCode("DAR-12345");
+    when(collectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
+
+    User user = new User();
+    user.setDisplayName(RandomStringUtils.randomAlphanumeric(10));
+    user.setEmail(RandomStringUtils.randomAlphanumeric(10));
+    when(userDAO.findUserById(any())).thenReturn(user);
+    when(userDAO.findUserByEmail(any())).thenReturn(user);
+    doNothing().when(voteDAO).updateVoteReminderFlag(anyInt(), anyBoolean());
+    try {
+      initService();
+      service.sendReminderMessage(vote.getVoteId());
+      verify(sendGridAPI, times(1)).sendReminderMessage(any(), any(), any(), any());
+      verify(templateHelper, times(1)).getReminderTemplate(any(), any(), any());
+      verify(emailDAO, times(1)).insert(
+          eq(String.valueOf(vote.getElectionId())),
+          eq(vote.getVoteId()),
+          eq(user.getUserId()),
+          eq(EmailType.REMINDER.getTypeInt()),
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (IOException e) {
+      fail("Should not fail sending message: " + e);
+    } catch (TemplateException e) {
+      fail("Should not fail generating template: " + e);
+    }
   }
 }

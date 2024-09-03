@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class LibraryCard {
@@ -29,8 +31,13 @@ public class LibraryCard {
 
   private Institution institution;
 
+  private List<Integer> daaIds;
+
+  private List<DataAccessAgreement> daas;
+
   public LibraryCard() {
     this.createDate = new Date();
+    this.daaIds = new ArrayList<>();
   }
 
   public Integer getId() {
@@ -117,9 +124,15 @@ public class LibraryCard {
     return institution;
   }
 
-  public void setInstitution(Institution institution) {
-    this.institution = institution;
-  }
+  public void setInstitution(Institution institution) {this.institution = institution;}
+
+  public List<Integer> getDaaIds() {return daaIds;}
+
+  public void setDaaIds(List<Integer> daaIds) {this.daaIds = daaIds;}
+
+  public List<DataAccessAgreement> getDaas() {return daas;}
+
+  public void setDaas(List<DataAccessAgreement> daas) {this.daas = daas;}
 
   @Override
   public boolean equals(Object libraryCard) {
@@ -131,5 +144,38 @@ public class LibraryCard {
     }
     LibraryCard other = (LibraryCard) libraryCard;
     return new EqualsBuilder().append(id, other.getId()).isEquals();
+  }
+
+  public void addDaa(Integer daaId) {
+    if (this.daaIds == null) {
+      this.daaIds = new ArrayList<>();
+    }
+    if (this.daaIds
+        .stream()
+        .noneMatch(d -> d.equals(daaId))) {
+      this.daaIds.add(daaId);
+    }
+  }
+
+  public void removeDaa(Integer daaId) {
+    if (this.daaIds == null) {
+      return;
+    }
+    if (this.daaIds
+        .stream()
+        .anyMatch(d -> d.equals(daaId))) {
+      this.daaIds.remove(daaId);
+    }
+  }
+
+  public void addDaaObject(DataAccessAgreement daa) {
+    if (this.daas == null) {
+      this.daas = new ArrayList<>();
+    }
+    if (this.daas
+        .stream()
+        .noneMatch(d -> d.equals(daa))) {
+      this.daas.add(daa);
+    }
   }
 }

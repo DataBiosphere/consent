@@ -7,7 +7,6 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -16,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class User {
 
@@ -95,7 +95,7 @@ public class User {
    * @param json A json string that may or may not be correctly structured as a DACUser
    */
   public User(String json) {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
     // There are no cases where we want to pull the create date/update date from user-provided data.
     // Nor do we need to retrieve the full institution object from user-provided data.
@@ -186,6 +186,42 @@ public class User {
 
   public void setRoles(List<UserRole> roles) {
     this.roles = roles;
+  }
+
+  public void setAdminRole() {
+    this.roles = List.of(UserRoles.Admin());
+  }
+
+  public void setChairpersonRole() {
+    this.roles = List.of(UserRoles.Chairperson());
+  }
+
+  public void setChairpersonRoleWithDAC(int dacId) {
+    UserRole chairpersonRole = UserRoles.Chairperson();
+    chairpersonRole.setDacId(dacId);
+    this.roles = List.of(chairpersonRole);
+  }
+
+  public void setITDirectorRole() {
+    this.roles = List.of(UserRoles.ITDirector());
+  }
+
+  public void setMemberRole() {
+    this.roles = List.of(UserRoles.Member());
+  }
+
+  public void setMemberRoleWithDAC(int dacId) {
+    UserRole memberRole = UserRoles.Member();
+    memberRole.setDacId(dacId);
+    this.roles = List.of(memberRole);
+  }
+
+  public void setResearcherRole() {
+    this.roles = List.of(UserRoles.Researcher());
+  }
+
+  public void setSigningOfficialRole() {
+    this.roles = List.of(UserRoles.SigningOfficial());
   }
 
   public List<UserProperty> getProperties() {
@@ -301,7 +337,7 @@ public class User {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public boolean hasUserRole(UserRoles role) {
@@ -321,13 +357,6 @@ public class User {
         .stream()
         .map(UserRole::getRoleId)
         .collect(Collectors.toList());
-  }
-
-  @Transient
-  public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
-    List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId)
-        .collect(Collectors.toList());
-    return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
   }
 
   @Transient

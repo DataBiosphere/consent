@@ -870,13 +870,4 @@ public class ConsentGroup {
         Objects.nonNull(this.otherSecondary);
   }
 
-  public boolean hasPrimaryDataUse() {
-    return Objects.nonNull(this.accessManagement) ||
-        Objects.nonNull(this.generalResearchUse) ||
-        Objects.nonNull(this.hmb) ||
-        (Objects.nonNull(this.diseaseSpecificUse) && !this.diseaseSpecificUse.isEmpty()) ||
-        Objects.nonNull(this.poa) ||
-        Objects.nonNull(this.otherPrimary);
-  }
-
 }

@@ -1,3 +1,9 @@
+# Note that the token used for this action is manually maintained via Google Secrets Manager
+# To update the value, regenerate a new token in Coveralls: https://coveralls.io/github/DataBiosphere/consent
+# and save it in a data file: coveralls.txt
+# Update the value in GSM:
+# gcloud secrets versions add consent-coveralls-token --data-file="coveralls.txt" --project broad-dsde-dev
+# That value will be automatically synced to `secrets.COVERALLS_TOKEN`
 name: Coverage
 on:
   push:
@@ -12,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}

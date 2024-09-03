@@ -20,7 +20,7 @@ class OAuth2ResourceTest {
   @Mock private UriInfo mockUriInfo;
 
   @Test
-  public void testGetOAuth2Redirect() throws URISyntaxException {
+  void testGetOAuth2Redirect() throws URISyntaxException {
     var queryParameters = new MultivaluedHashMap<String, String>();
     when(mockUriInfo.getQueryParameters()).thenReturn(queryParameters);
     when(mockOidcService.getAuthorizationURI(queryParameters)).thenReturn(new URI("http://example.com"));
@@ -31,7 +31,7 @@ class OAuth2ResourceTest {
   }
 
   @Test
-  public void testGetToken() {
+  void testGetToken() {
     var queryParameters = new MultivaluedHashMap<String, String>();
     var bodyParams = new MultivaluedHashMap<String, String>();
     when(mockUriInfo.getQueryParameters()).thenReturn(queryParameters);
@@ -44,7 +44,7 @@ class OAuth2ResourceTest {
   }
 
   @Test
-  public void testGetOAuth2Configuration() {
+  void testGetOAuth2Configuration() {
     var expectedConfig = new OAuth2Configuration("http://example.com", "test-client-id");
     when(mockOidcService.getOAuth2Configuration()).thenReturn(expectedConfig);
     OAuth2Resource resource = new OAuth2Resource(mockOidcService);

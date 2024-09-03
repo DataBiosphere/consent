@@ -5,12 +5,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
-import org.broadinstitute.consent.http.db.mapper.DacWithDatasetsReducer;
+import org.broadinstitute.consent.http.db.mapper.DacReducer;
+import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.db.mapper.RoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
@@ -27,6 +29,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(DacMapper.class)
+@RegisterRowMapper(FileStorageObjectMapper.class)
 public interface DacDAO extends Transactional<DacDAO> {
 
   String QUERY_FIELD_SEPARATOR = ", ";
@@ -38,7 +41,7 @@ public interface DacDAO extends Transactional<DacDAO> {
    */
   @RegisterBeanMapper(value = Dac.class)
   @RegisterBeanMapper(value = Dataset.class)
-  @UseRowReducer(DacWithDatasetsReducer.class)
+  @UseRowReducer(DacReducer.class)
   @SqlQuery("""
       SELECT dac.dac_id, dac.email, dac.name, dac.description, d.dataset_id, d.name AS dataset_name,
         DATE(d.create_date) AS dataset_create_date, d.object_id, d.active, d.needs_approval,
@@ -49,19 +52,6 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id
       """)
   List<Dac> findAll();
-
-  /**
-   * Find all DACs by user email
-   *
-   * @param email The user email
-   * @return List<Dac>
-   */
-  @SqlQuery(
-      "SELECT distinct d.* FROM dac d "
-          + " INNER JOIN user_role ur ON ur.dac_id = d.dac_id "
-          + " INNER JOIN users u ON ur.user_id = u.user_id "
-          + " WHERE u.email = :email ")
-  List<Dac> findDacsForEmail(@Bind("email") String email);
 
   /**
    * Find all Users associated with a DAC
@@ -101,7 +91,35 @@ public interface DacDAO extends Transactional<DacDAO> {
    * @param dacId The dac_id to lookup
    * @return Dac
    */
-  @SqlQuery("SELECT * FROM dac WHERE dac_id = :dacId")
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
+  @UseRowReducer(DacReducer.class)
+  @SqlQuery("""
+      SELECT dac.*,
+      daa.daa_id as daa_daa_id,
+      daa.create_user_id as daa_create_user_id,
+      daa.create_date as daa_create_date,
+      daa.update_user_id as daa_update_user_id,
+      daa.update_date as daa_update_date,
+      daa.initial_dac_id as daa_initial_dac_id,
+      fso.file_storage_object_id AS file_storage_object_id,
+      fso.entity_id AS entity_id,
+      fso.file_name AS file_name,
+      fso.category AS category,
+      fso.gcs_file_uri AS gcs_file_uri,
+      fso.media_type AS media_type,
+      fso.create_date AS create_date,
+      fso.create_user_id AS create_user_id,
+      fso.update_date AS update_date,
+      fso.update_user_id AS update_user_id,
+      fso.deleted AS deleted,
+      fso.delete_user_id AS delete_user_id
+      FROM dac
+      LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
+      LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
+      LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      WHERE dac.dac_id = :dacId
+      """)
   Dac findById(@Bind("dacId") Integer dacId);
 
   /**
@@ -222,7 +240,7 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @RegisterRowMapper(DacMapper.class)
   @SqlQuery("""
-      SELECT dac.* 
+      SELECT dac.*
       FROM dac
       INNER JOIN dataset d ON d.dac_id = dac.dac_id
       INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id

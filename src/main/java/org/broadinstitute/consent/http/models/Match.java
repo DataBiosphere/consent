@@ -144,12 +144,12 @@ public class Match {
 
   public static Match matchFailure(String consentId, String purposeId,
       List<String> rationales) {
-    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V3, rationales);
+    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V4, rationales);
   }
 
   public static Match matchSuccess(String consentId, String purposeId, DataUseMatchResultType match,
       List<String> rationales) {
-    return new Match(consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V3,
+    return new Match(consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V4,
         rationales);
   }
 }

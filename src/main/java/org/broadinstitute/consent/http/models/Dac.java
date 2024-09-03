@@ -32,6 +32,8 @@ public class Dac {
 
   private String email;
 
+  private DataAccessAgreement associatedDaa;
+
   public Dac() {
   }
 
@@ -114,6 +116,14 @@ public class Dac {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  public DataAccessAgreement getAssociatedDaa() {
+    return associatedDaa;
+  }
+
+  public void setAssociatedDaa(DataAccessAgreement associatedDaa) {
+    this.associatedDaa = associatedDaa;
   }
 
   public void addDataset(Dataset dataset) {

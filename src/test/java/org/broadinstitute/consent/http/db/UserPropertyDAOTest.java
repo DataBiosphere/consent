@@ -12,11 +12,14 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class UserPropertyDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindResearcherProperties() {
+  public void testFindUserProperties() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
     UserProperty suggestedInstitution = new UserProperty();

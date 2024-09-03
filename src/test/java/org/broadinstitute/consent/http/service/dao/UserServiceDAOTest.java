@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.util.Date;
 import java.util.Optional;
@@ -19,26 +18,27 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 // This is a utility test to verify a pattern for Database Transactions continues to be supported and works as expected.
 // It should be updated to include new patterns that are developed.
-public class UserServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class UserServiceDAOTest extends DAOTestHelper {
 
   private UserServiceDAO serviceDAO;
 
   @BeforeEach
-  public void setup() {
-    openMocks(this);
+  void setup() {
     serviceDAO = new UserServiceDAO(jdbi, userDAO, userRoleDAO);
   }
 
   @Test
-  public void testTransactionPatternHappyPathInActualService() {
+  void testTransactionPatternHappyPathInActualService() {
     User testUser = createUser();
     Institution institution = createInstitution();
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
-    UserRole userRole = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName());
+    UserRole userRole = UserRoles.Researcher();
     serviceDAO.insertRoleAndInstitutionTxn(userRole, institution.getId(), testUser.getUserId());
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
@@ -46,13 +46,12 @@ public class UserServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testTransactionRollbackAfterMultipleInserts() {
+  void testTransactionRollbackAfterMultipleInserts() {
     boolean exceptionCaught = false;
     User testUser = createUser();
     Institution institution = createInstitution();
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
-    UserRole userRole = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    UserRole userRole = UserRoles.SigningOfficial();
     try {
       //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
       //does indeed roll back from postgres.  mocking won't confirm that behavior.

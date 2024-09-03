@@ -49,6 +49,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.submittingToAnvil;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -75,7 +76,10 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetRegistrationSchemaV1BuilderTest {
 
   @Test
@@ -169,6 +173,20 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(consentGroup.getNumberOfParticipants());
     assertNotNull(consentGroup.getFileTypes());
     assertFalse(consentGroup.getFileTypes().isEmpty());
+  }
+
+  @Test
+  void testBuildSchemaWithDatasetPropWithNullSchema() {
+    DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
+    Study study = createMockStudy();
+    Dataset dataset = createMockDataset();
+    DatasetProperty prop = new DatasetProperty();
+    prop.setDataSetId(dataset.getDataSetId());
+    prop.setSchemaProperty(null);
+    prop.setPropertyName(generalResearchUse);
+    prop.setPropertyType(PropertyType.Boolean);
+    dataset.addProperty(prop);
+    assertDoesNotThrow(() -> builder.build(study, List.of(dataset)));
   }
 
   private Study createMockStudy() {

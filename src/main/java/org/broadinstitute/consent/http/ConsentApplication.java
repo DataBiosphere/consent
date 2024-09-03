@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jersey3.InstrumentedResourceMethodApplicationListener;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -48,15 +50,11 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.resources.ConsentResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
-import org.broadinstitute.consent.http.resources.DataAccessRequestResourceVersion2;
-import org.broadinstitute.consent.http.resources.DataRequestCasesResource;
-import org.broadinstitute.consent.http.resources.DataRequestReportsResource;
-import org.broadinstitute.consent.http.resources.DatasetAssociationsResource;
+import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
@@ -80,7 +78,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
@@ -94,7 +91,6 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
@@ -163,7 +159,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
-    final DacService dacService = injector.getProvider(DacService.class).get();
     final DataAccessRequestService dataAccessRequestService = injector.getProvider(
         DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
@@ -180,8 +175,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
         .get();
     final SamService samService = injector.getProvider(SamService.class).get();
-    final SupportRequestService supportRequestService = injector.getProvider(
-        SupportRequestService.class).get();
     final TDRService tdrService = injector.getProvider(TDRService.class).get();
     final AcknowledgementService acknowledgementService = injector.getProvider(
         AcknowledgementService.class).get();
@@ -194,6 +187,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 
     env.jersey().register(JerseyGsonProvider.class);
+
+    // Metric Registry
+    MetricRegistry metricRegistry = new MetricRegistry();
+    env.jersey().register(new InstrumentedResourceMethodApplicationListener(metricRegistry));
 
     // Health Checks
     env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
@@ -216,19 +213,13 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));
-    env.jersey().register(
-        new DataAccessRequestResourceVersion2(dataAccessRequestService, emailService, gcsService,
-            userService, datasetService, matchService));
-    env.jersey().register(new DatasetResource(datasetService, userService, dataAccessRequestService,
+    env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
+    env.jersey().register(new DatasetResource(datasetService, userService,
         datasetRegistrationService, elasticSearchService));
-    env.jersey().register(injector.getInstance(DatasetAssociationsResource.class));
-    env.jersey().register(injector.getInstance(ConsentResource.class));
-    env.jersey().register(new DacResource(dacService, userService, datasetService));
+    env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
         new DarCollectionResource(darCollectionService, userService));
-    env.jersey().register(injector.getInstance(DataRequestCasesResource.class));
-    env.jersey().register(new DataRequestReportsResource(dataAccessRequestService));
     env.jersey().register(new EmailNotifierResource(emailService));
     env.jersey().register(new InstitutionResource(userService, institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
@@ -241,8 +232,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
     env.jersey().register(new StatusResource(env.healthChecks()));
     env.jersey().register(
-        new UserResource(samService, userService, datasetService, supportRequestService,
-            acknowledgementService));
+        new UserResource(samService, userService, datasetService, acknowledgementService));
     env.jersey().register(new TosResource(samService));
     env.jersey().register(injector.getInstance(VersionResource.class));
     env.jersey().register(new VoteResource(userService, voteService, electionService));

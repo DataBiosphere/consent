@@ -1,13 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
+import jakarta.ws.rs.NotFoundException;
 import java.util.Arrays;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -21,10 +24,12 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class TDRServiceTest {
 
   @Mock
@@ -40,11 +45,6 @@ class TDRServiceTest {
 
   @Mock AuthUser authUser;
   private TDRService service;
-
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
 
   private void initService() {
     service = new TDRService(darService, datasetDAO, samDAO, userDAO);
@@ -146,4 +146,38 @@ class TDRServiceTest {
     assertEquals(datasetIds.size(), identifierList.size());
     assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
   }
+
+  @Test
+  void testPopulateDraftDarStubFromDatasetIdentifiers() {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    String title = "New Project";
+    Dataset dataset1 = new Dataset();
+    dataset1.setDataSetId(1);
+    dataset1.setAlias(00001);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDataSetId(2);
+    dataset2.setAlias(00002);
+
+    when(datasetDAO.findDatasetsByAlias(any())).thenReturn(List.of(dataset1, dataset2));
+
+    initService();
+    assertDoesNotThrow(() -> {
+      DataAccessRequest dar = service.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project");
+      assertNotNull(dar);
+      assertTrue(dar.getDatasetIds().contains(dataset1.getDataSetId()));
+      assertTrue(dar.getDatasetIds().contains(dataset2.getDataSetId()));
+      assertEquals(title, dar.getData().getProjectTitle());
+      assertNotNull(dar.getReferenceId());
+      assertNotNull(dar.getCreateDate());
+    });
+  }
+
+  @Test
+  void testPopulateDraftDarStubFromDatasetIdentifiersNotFound() {
+    String identifiers = "DUOS-00001, DUOS-00002";
+    initService();
+    assertThrows(NotFoundException.class, () -> service.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project"));
+  }
+
 }

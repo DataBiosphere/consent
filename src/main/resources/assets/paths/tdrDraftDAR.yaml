@@ -1,6 +1,9 @@
 post:
-  summary: createDraftDataAccessRequest
-  description: Create Draft Data Access Request
+  deprecated: true
+  summary: Create Draft Data Access Request
+  description: |
+    Create Draft Data Access Request.
+    Deprecated in favor of /api/tdr/v2/dar/draft
   parameters:
     - name: identifiers
       in: query

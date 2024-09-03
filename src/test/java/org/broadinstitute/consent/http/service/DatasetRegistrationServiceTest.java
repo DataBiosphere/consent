@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -30,13 +32,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -44,7 +46,6 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -57,14 +58,15 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DatasetRegistrationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class DatasetRegistrationServiceTest {
 
   private DatasetRegistrationService datasetRegistrationService;
 
@@ -89,11 +91,6 @@ public class DatasetRegistrationServiceTest {
   @Mock
   private EmailService emailService;
 
-  @BeforeEach
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   private void initService() {
     datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
         datasetServiceDAO, gcsService, elasticSearchService, studyDAO, emailService);
@@ -108,15 +105,26 @@ public class DatasetRegistrationServiceTest {
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
-  public void testInsertCompleteDatasetRegistration() throws Exception {
+  void testInsertCompleteDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("sharing_plan.txt")
+        .build();
+
+    InputStream is = new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
+    FormDataBodyPart bodyPart = mock();
+    when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
+    when(bodyPart.getContentDisposition()).thenReturn(content);
+    when(bodyPart.getValueAs(any())).thenReturn(is);
 
     initService();
 
     Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile",
-        createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
+        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
+        bodyPart, "otherUnused", bodyPart);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
         BlobId.of("qwer", "tyuio"));
     when(dacDAO.findById(any())).thenReturn(new Dac());
@@ -167,7 +175,6 @@ public class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
     assertContainsStudyProperty(studyProps, "dataCustodianEmail",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getDataCustodianEmail())));
     assertContainsStudyProperty(studyProps, "nihAnvilUse", schema.getNihAnvilUse().value());
@@ -229,8 +236,6 @@ public class DatasetRegistrationServiceTest {
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
     assertContainsDatasetProperty(datasetProps, "url",
         schema.getConsentGroups().get(0).getUrl().toString());
-    assertContainsDatasetProperty(datasetProps, "dataAccessCommitteeId",
-        schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(datasetProps, "accessManagement",
         schema.getConsentGroups().get(0).getAccessManagement().value());
 
@@ -239,7 +244,7 @@ public class DatasetRegistrationServiceTest {
 
   // inserts only required fields to ensure that null fields are ok
   @Test
-  public void testInsertMinimumDatasetRegistration() throws Exception {
+  void testInsertMinimumDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
@@ -282,7 +287,6 @@ public class DatasetRegistrationServiceTest {
     List<StudyProperty> studyProps = capturedStudyInsert.props();
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
     assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
         schema.getConsentGroups().get(0).getNumberOfParticipants());
     assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
@@ -290,7 +294,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testDatasetCreateRegistrationEmails() throws Exception {
+  void testDatasetCreateRegistrationEmails() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
 
@@ -303,7 +307,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testStudyUpdateNewDatasetEmails() throws Exception {
+  void testStudyUpdateNewDatasetEmails() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
     Study study = mock();
@@ -320,9 +324,9 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testSendDatasetSubmittedEmailsExistingChairs() throws Exception {
+  void testSendDatasetSubmittedEmailsExistingChairs() throws Exception {
     User user = new User();
-    user.setRoles(List.of(new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName())));
+    user.setChairpersonRole();
     Dac dac = mock();
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
@@ -336,7 +340,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testSendDatasetSubmittedEmailsNoChairs() throws Exception {
+  void testSendDatasetSubmittedEmailsNoChairs() throws Exception {
     Dac dac = mock();
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
@@ -350,7 +354,17 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testCreatedDatasetsFromUpdatedStudy() {
+  void testSendDatasetSubmittedEmailsNoDAC() throws Exception {
+    Dataset dataset = new Dataset();
+    initService();
+    when(dacDAO.findById(any())).thenReturn(null);
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+  }
+
+  @Test
+  void testCreatedDatasetsFromUpdatedStudy() {
     Study study = mock();
     Set<Dataset> allDatasets = Stream.of(1, 2, 3, 4, 5).map((i) -> {
       Dataset dataset = new Dataset();
@@ -375,7 +389,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
+  void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
     Study study = mock();
     List<DatasetUpdate> updatedDatasets = null;
     initService();
@@ -386,7 +400,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testInsertAccessManagement() throws Exception {
+  void testInsertAccessManagement() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
 
@@ -408,16 +422,27 @@ public class DatasetRegistrationServiceTest {
 
   // test inset multiple consent groups
   @Test
-  public void testInsertMultipleDatasetRegistration() throws Exception {
+  void testInsertMultipleDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
+
+    FormDataContentDisposition content = FormDataContentDisposition
+        .name("file")
+        .fileName("sharing_plan.txt")
+        .build();
+
+    InputStream is = new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
+    FormDataBodyPart bodyPart = mock();
+    when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
+    when(bodyPart.getContentDisposition()).thenReturn(content);
+    when(bodyPart.getValueAs(any())).thenReturn(is);
 
     initService();
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        createFormDataBodyPart(), "consentGroups[0].nihInstitutionalCertificationFile",
-        createFormDataBodyPart(), "otherUnused", createFormDataBodyPart());
+        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
+        bodyPart, "otherUnused", bodyPart);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
         BlobId.of("qwer", "tyuio"));
 
@@ -460,13 +485,10 @@ public class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataSubmitterUserId", schema.getDataSubmitterUserId());
 
     List<DatasetProperty> props = inserts.get(0).props();
     assertContainsDatasetProperty(props, "fileTypes", PropertyType.coerceToJson(
         GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
-    assertContainsDatasetProperty(props, "dataAccessCommitteeId",
-        schema.getConsentGroups().get(0).getDataAccessCommitteeId());
     assertContainsDatasetProperty(props, "accessManagement",
         schema.getConsentGroups().get(0).getAccessManagement().value());
     assertContainsDatasetProperty(props, "numberOfParticipants",
@@ -498,7 +520,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testRegistrationErrorsOnInvalidDacId() throws Exception {
+  void testRegistrationErrorsOnInvalidDacId() throws Exception {
 
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
@@ -512,7 +534,41 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testExtractStudyProperty() {
+  void testRegistrationSucceedsWithESError() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(elasticSearchService.indexDatasets(any())).thenThrow(
+        new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
+    initService();
+    assertDoesNotThrow(() -> {
+      datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+    }, "Registration Error");
+  }
+
+  @Test
+  void testUpdateDatasetSucceedsWithESError() {
+    User user = mock();
+    Dac dac = new Dac();
+    dac.setDacId(RandomUtils.nextInt(1, 100));
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDacId(dac.getDacId());
+    String name = RandomStringUtils.randomAlphabetic(10);
+    org.broadinstitute.consent.http.models.DatasetUpdate update = new org.broadinstitute.consent.http.models.DatasetUpdate(
+        name,
+        dac.getDacId(),
+        List.of());
+    when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
+
+    initService();
+    assertDoesNotThrow(() -> {
+      datasetRegistrationService.updateDataset(dataset.getDataSetId(), user, update, Map.of());
+    }, "Update Error");
+  }
+
+  @Test
+  void testExtractStudyProperty() {
     DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         PropertyType.String,
@@ -537,7 +593,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testExtractDatasetProperty() {
+  void testExtractDatasetProperty() {
     DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         RandomStringUtils.randomAlphabetic(10),
@@ -565,7 +621,7 @@ public class DatasetRegistrationServiceTest {
 
 
   @Test
-  public void testExtractStudyPropertyTyped() {
+  void testExtractStudyPropertyTyped() {
     DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         PropertyType.Json,
@@ -587,7 +643,7 @@ public class DatasetRegistrationServiceTest {
   }
 
   @Test
-  public void testExtractDatasetPropertyTyped() {
+  void testExtractDatasetPropertyTyped() {
     DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
         RandomStringUtils.randomAlphabetic(10),
         RandomStringUtils.randomAlphabetic(10),
@@ -625,7 +681,7 @@ public class DatasetRegistrationServiceTest {
     } else {
       assertFalse(dataUse.getMethodsResearch());
     }
-    assertEquals(consentGroup.getNpu(), !dataUse.getCommercialUse());
+    assertEquals(consentGroup.getNpu(), dataUse.getNonProfitUse());
     assertEquals(consentGroup.getOtherPrimary(), dataUse.getOther());
     assertEquals(consentGroup.getOtherSecondary(), dataUse.getSecondaryOther());
     assertEquals(consentGroup.getPoa(), dataUse.getPopulationOriginsAncestry());
@@ -645,21 +701,6 @@ public class DatasetRegistrationServiceTest {
     Optional<StudyProperty> prop = props.stream().filter((p) -> p.getKey().equals(key)).findFirst();
     assertTrue(prop.isPresent());
     assertEquals(value, prop.get().getValue());
-  }
-
-
-  private FormDataBodyPart createFormDataBodyPart() {
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("sharing_plan.txt")
-        .build();
-
-    InputStream is = new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
-    FormDataBodyPart bodyPart = mock();
-    when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
-    when(bodyPart.getContentDisposition()).thenReturn(content);
-    when(bodyPart.getValueAs(any())).thenReturn(is);
-    return bodyPart;
   }
 
   private DatasetRegistrationSchemaV1 createRandomMinimumDatasetRegistration(User user) {

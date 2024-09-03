@@ -1,3 +1,17 @@
+get:
+  summary:
+  description:
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: List of Dataset Study Summary objects
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DatasetStudySummary.yaml'
 post:
   summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
   description: Creates a set of Datasets from a valid dataset registration JsonSchema object

@@ -1,0 +1,28 @@
+get:
+  summary: Get all Data Access Agreements for Data Access Request by DAR Reference Id
+  description: Returns the Data Access Agreements for Data Access Request by DAR Reference.
+  parameters:
+    - name: referenceId
+      in: path
+      description: The referenceId of the Data Access Request
+      required: true
+      schema:
+        type: string
+  tags:
+    - DAA
+    - Data Access Request
+  responses:
+    200:
+      description: Returns a list of Data Access Agreements
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DataAccessAgreement.yaml'
+    400:
+      description: The provided Reference Id is not a valid DAR identifier
+    404:
+      description: No DAR can be found with the provided identifier
+    500:
+      description: Server Error

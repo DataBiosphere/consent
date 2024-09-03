@@ -6,18 +6,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SamHealthCheckTest {
+@ExtendWith(MockitoExtension.class)
+class SamHealthCheckTest {
 
   @Mock
   private HttpClientUtil clientUtil;
@@ -30,13 +31,7 @@ public class SamHealthCheckTest {
 
   private SamHealthCheck healthCheck;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
-  private void initHealthCheck(boolean configOk) {
-    String okResponse = """
+  private static final String okResponse = """
         {
           "ok": true,
           "systems": {
@@ -48,49 +43,61 @@ public class SamHealthCheckTest {
           }
         }
         """;
+
+  @Test
+  void testCheckSuccess() throws Exception {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     try {
       when(response.entity())
           .thenReturn(okResponse);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      if (configOk) {
-        when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
-      }
+      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
     }
-  }
-
-  @Test
-  public void testCheckSuccess() throws Exception {
-    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    initHealthCheck(true);
 
     HealthCheck.Result result = healthCheck.check();
     assertTrue(result.isHealthy());
   }
 
   @Test
-  public void testCheckFailure() throws Exception {
+  void testCheckFailure() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-    initHealthCheck(true);
+    try {
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
   }
 
   @Test
-  public void testCheckException() throws Exception {
-    initHealthCheck(true);
+  void testCheckException() throws Exception {
+    try {
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
   }
 
   @Test
-  public void testConfigException() throws Exception {
+  void testConfigException() throws Exception {
     doThrow(new RuntimeException()).when(servicesConfiguration).getSamUrl();
-    initHealthCheck(false);
+    try {
+      healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());

@@ -24,10 +24,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.testcontainers.containers.MockServerContainer;
 
+@ExtendWith(MockitoExtension.class)
 class UseRestrictionConverterTest implements WithMockServer {
 
   private MockServerClient client;
@@ -135,7 +138,6 @@ class UseRestrictionConverterTest implements WithMockServer {
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
-    assertNull(dataUse.getCommercialUse());
     assertNull(dataUse.getNonProfitUse());
     assertNull(dataUse.getOther());
     assertNull(dataUse.getSecondaryOther());
@@ -185,8 +187,6 @@ class UseRestrictionConverterTest implements WithMockServer {
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
-    // These cases are slightly different as forProfit false means commercialUse is false and nonProfitUse is true
-    assertNotNull(dataUse.getCommercialUse());
     assertNotNull(dataUse.getNonProfitUse());
     assertNull(dataUse.getOther());
     assertNull(dataUse.getSecondaryOther());
@@ -244,13 +244,13 @@ class UseRestrictionConverterTest implements WithMockServer {
   }
 
   @Test
-  void testParseDataUsePurposeCommercial() {
+  void testParseDataUsePurposeNonProfit() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setForProfit(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getCommercialUse());
+    assertFalse(dataUse.getNonProfitUse());
   }
 
   @Test
@@ -292,7 +292,7 @@ class UseRestrictionConverterTest implements WithMockServer {
     dar.getData().setOther(true);
     dar.getData().setOtherText("Other Text");
     DataUse dataUse = converter.parseDataUsePurpose(dar);
-    assertTrue(dataUse.getOtherRestrictions());
+    assertFalse(dataUse.getOther().isEmpty());
   }
 
   @Test

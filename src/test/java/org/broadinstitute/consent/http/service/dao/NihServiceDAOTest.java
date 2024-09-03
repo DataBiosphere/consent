@@ -20,18 +20,21 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class NihServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class NihServiceDAOTest extends DAOTestHelper {
 
   private NihServiceDAO serviceDAO;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     serviceDAO = new NihServiceDAO(jdbi);
   }
 
   @Test
-  public void testUpdateUserNihStatus_existing() {
+  void testUpdateUserNihStatus_existing() {
     // create a user
     User user = createUser();
     // Create ERA Account Props
@@ -94,7 +97,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateUserNihStatus_new() {
+  void testUpdateUserNihStatus_new() {
     // create a user
     User user = createUser();
 
@@ -138,7 +141,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateUserNihStatus_nullAccount() {
+  void testUpdateUserNihStatus_nullAccount() {
     User user = createUser();
     assertThrows(IllegalArgumentException.class, () -> {
       serviceDAO.updateUserNihStatus(user, null);
@@ -146,7 +149,7 @@ public class NihServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateUserNihStatus_jdbiError() {
+  void testUpdateUserNihStatus_jdbiError() {
     // superclass jdbi is not a mock, we need to mock it locally to simulate an exception
     Jdbi jdbi = mock(Jdbi.class);
     serviceDAO = new NihServiceDAO(jdbi);

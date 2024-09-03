@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -8,10 +9,8 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -21,16 +20,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,23 +36,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
-import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -70,82 +64,22 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Path("api/dataset")
 public class DatasetResource extends Resource {
 
-  private final String END_OF_LINE = System.lineSeparator();
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
-  private final DataAccessRequestService darService;
   private final ElasticSearchService elasticSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
 
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
-      DataAccessRequestService darService, DatasetRegistrationService datasetRegistrationService,
+      DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
-    this.darService = darService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
-  }
-
-  @Deprecated
-  @POST
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/v2")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response createDataset(@Auth AuthUser authUser, @Context UriInfo info, String json) {
-    DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
-    if (Objects.isNull(inputDataset)) {
-      throw new BadRequestException("Dataset is required");
-    }
-    if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
-      throw new BadRequestException("Dataset must contain required properties");
-    }
-    List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(
-        inputDataset.getProperties());
-    if (invalidProperties.size() > 0) {
-      List<String> invalidKeys = invalidProperties.stream()
-          .map(DatasetPropertyDTO::getPropertyName)
-          .collect(Collectors.toList());
-      throw new BadRequestException(
-          "Dataset contains invalid properties that could not be recognized or associated with a key: "
-              + invalidKeys.toString());
-    }
-    List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
-        inputDataset.getProperties());
-    if (duplicateProperties.size() > 0) {
-      throw new BadRequestException("Dataset contains multiple values for the same property.");
-    }
-    String name = "";
-    try {
-      name = inputDataset.getPropertyValue("Dataset Name");
-    } catch (IndexOutOfBoundsException e) {
-      throw new BadRequestException("Dataset name is required");
-    }
-    if (Objects.isNull(name) || name.isBlank()) {
-      throw new BadRequestException("Dataset name is required");
-    }
-    Dataset datasetNameAlreadyUsed = datasetService.getDatasetByName(name);
-    if (Objects.nonNull(datasetNameAlreadyUsed)) {
-      throw new ClientErrorException("Dataset name: " + name + " is already in use",
-          Status.CONFLICT);
-    }
-    User dacUser = userService.findUserByEmail(authUser.getEmail());
-    Integer userId = dacUser.getUserId();
-    try {
-      DatasetDTO createdDatasetWithConsent = datasetService.createDatasetFromDatasetDTO(
-          inputDataset,
-          name, userId);
-      URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
-          .build(createdDatasetWithConsent.getDataSetId());
-      return Response.created(uri).entity(createdDatasetWithConsent).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
   }
 
   @POST
@@ -233,12 +167,10 @@ public class DatasetResource extends Resource {
       @FormDataParam("dataset") String json) {
 
     try {
-
-      DatasetUpdate update = new Gson().fromJson(json, DatasetUpdate.class);
-
-      if (Objects.isNull(update)) {
+      if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset is required");
       }
+      DatasetUpdate update = new DatasetUpdate(json);
 
       Dataset datasetExists = datasetService.findDatasetById(datasetId);
       if (Objects.isNull(datasetExists)) {
@@ -314,14 +246,11 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  public Response findAllDatasetsAvailableToUser(@Auth AuthUser authUser,
-      @QueryParam("asCustodian") Boolean asCustodian) {
+  public Response findAllDatasetsStreaming(@Auth AuthUser authUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = (Objects.nonNull(asCustodian) && asCustodian) ?
-          datasetService.findDatasetsByCustodian(user) :
-          datasetService.findAllDatasetsByUser(user);
-      return Response.ok(datasets).build();
+      userService.findUserByEmail(authUser.getEmail());
+      StreamingOutput streamedDatasets = datasetService.findAllDatasetsAsStreamingOutput();
+      return Response.ok().entity(streamedDatasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -330,24 +259,12 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
-  @Path("/role/{roleName}")
-  public Response findDatasetsAccordingToRole(
-      @Auth AuthUser authUser,
-      @PathParam("roleName") String roleName) {
+  @Path("/v3")
+  public Response findAllDatasetStudySummaries(@Auth AuthUser authUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      UserRoles role = UserRoles.getUserRoleFromName(roleName);
-      if (Objects.isNull(role)) {
-        throw new BadRequestException("Invalid role selection: " + roleName);
-      }
-      List<Dataset> datasets = switch (role) {
-        case ADMIN -> datasetService.findAllDatasets();
-        case CHAIRPERSON -> datasetService.findDatasetsForChairperson(user);
-        case DATASUBMITTER -> datasetService.findDatasetsForDataSubmitter(user);
-        default -> datasetService.findPublicDatasets();
-      };
-      return Response.ok(datasets).build();
+      userService.findUserByEmail(authUser.getEmail());
+      List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries();
+      return Response.ok(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -372,7 +289,7 @@ public class DatasetResource extends Resource {
   @GET
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @PermitAll
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
@@ -382,7 +299,7 @@ public class DatasetResource extends Resource {
             "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
       Study study;
-      if (Objects.nonNull(dataset.getStudy())) {
+      if (dataset.getStudy() != null && dataset.getStudy().getStudyId() != null) {
         study = datasetService.findStudyById(dataset.getStudy().getStudyId());
       } else {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
@@ -409,10 +326,10 @@ public class DatasetResource extends Resource {
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
         List<Integer> differences = new ArrayList<>(datasetIds)
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(Predicate.not(foundIds::contains))
-          .toList();
+            .stream()
+            .filter(Objects::nonNull)
+            .filter(Predicate.not(foundIds::contains))
+            .toList();
         throw new NotFoundException(
             "Could not find datasets with ids: "
                 + String.join(",",
@@ -467,61 +384,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @POST
-  @Path("/download")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  @PermitAll
-  public Response downloadDataSets(List<Integer> idList) {
-    try {
-      String msg = "GETing DataSets to download";
-      logDebug(msg);
-
-      Gson gson = new Gson();
-      HashMap<String, String> datasets = new HashMap<>();
-
-      Collection<Dictionary> headers = datasetService.describeDictionaryByReceiveOrder();
-
-      StringBuilder sb = new StringBuilder();
-      String TSV_DELIMITER = "\t";
-      for (Dictionary header : headers) {
-        if (sb.length() > 0) {
-          sb.append(TSV_DELIMITER);
-        }
-        sb.append(header.getKey());
-      }
-      sb.append(END_OF_LINE);
-
-      if (CollectionUtils.isEmpty(idList)) {
-        datasets.put("datasets", sb.toString());
-        return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
-      }
-
-      Collection<DatasetDTO> rows = datasetService.describeDataSetsByReceiveOrder(idList);
-
-      for (DatasetDTO row : rows) {
-        StringBuilder sbr = new StringBuilder();
-        DatasetPropertyDTO property = new DatasetPropertyDTO("Consent ID", row.getConsentId());
-        List<DatasetPropertyDTO> props = row.getProperties();
-        props.add(property);
-        for (DatasetPropertyDTO prop : props) {
-          if (sbr.length() > 0) {
-            sbr.append(TSV_DELIMITER);
-          }
-          sbr.append(prop.getPropertyValue());
-        }
-        sbr.append(END_OF_LINE);
-        sb.append(sbr);
-      }
-      String tsv = sb.toString();
-
-      datasets.put("datasets", tsv);
-      return Response.ok(gson.toJson(datasets), MediaType.APPLICATION_JSON).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{datasetId}")
@@ -559,8 +421,9 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDatasets() {
     try {
-      var datasets = datasetService.findAllDatasets();
-      return elasticSearchService.indexDatasets(datasets);
+      var datasetIds = datasetService.findAllDatasetIds();
+      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
+      return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -590,27 +453,10 @@ public class DatasetResource extends Resource {
   }
 
   @GET
-  @Path("/search")
-  @Produces("application/json")
-  @PermitAll
-  public Response searchDatasets(
-      @Auth AuthUser authUser,
-      @QueryParam("query") String query,
-      @QueryParam("access") @DefaultValue("controlled") String accessString) {
-    try {
-      AccessManagement accessManagement = AccessManagement.fromValue(accessString.toLowerCase());
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Dataset> datasets = datasetService.searchDatasets(query, accessManagement, user);
-      return Response.ok().entity(unmarshal(datasets)).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
   @Produces("application/json")
   @Path("/autocomplete")
   @PermitAll
+  @Timed
   public Response autocompleteDatasets(
       @Auth AuthUser authUser,
       @QueryParam("query") String query) {
@@ -628,9 +474,10 @@ public class DatasetResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
+  @Timed
   public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -672,22 +519,6 @@ public class DatasetResource extends Resource {
     try {
       Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
       return Response.ok(ds).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
-  @PermitAll
-  @Path("/{datasetId}/approved/users")
-  public Response downloadDatasetApprovedUsers(@Auth AuthUser authUser,
-      @PathParam("datasetId") Integer datasetId) {
-    try {
-      String content = darService.getDatasetApprovedUsersContent(authUser, datasetId);
-      return Response.ok(content)
-          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=DatasetApprovedUsers.tsv")
-          .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

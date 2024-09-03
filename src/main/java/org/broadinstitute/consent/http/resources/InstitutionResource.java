@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/institutions")
 public class InstitutionResource extends Resource {
@@ -80,7 +81,7 @@ public class InstitutionResource extends Resource {
   public Response createInstitution(@Auth AuthUser authUser, String institution) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Institution payload = new Gson().fromJson(institution, Institution.class);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
       if (!conflicts.isEmpty()) {
         throw new ConsentConflictException(
@@ -102,7 +103,7 @@ public class InstitutionResource extends Resource {
       String institution) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Institution payload = new Gson().fromJson(institution, Institution.class);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id,
           user.getUserId());
       return Response.ok().entity(updatedInstitution).build();

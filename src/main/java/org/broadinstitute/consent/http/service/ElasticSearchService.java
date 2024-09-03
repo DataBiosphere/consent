@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.service;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,7 +18,9 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -32,6 +36,7 @@ import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
 import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -46,6 +51,8 @@ public class ElasticSearchService implements ConsentLogger {
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
+  private final DatasetDAO datasetDAO;
+  private final StudyDAO studyDAO;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -54,7 +61,9 @@ public class ElasticSearchService implements ConsentLogger {
       DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
       OntologyService ontologyService,
-      InstitutionDAO institutionDAO) {
+      InstitutionDAO institutionDAO,
+      DatasetDAO datasetDAO,
+      StudyDAO studyDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -62,6 +71,8 @@ public class ElasticSearchService implements ConsentLogger {
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
     this.institutionDAO = institutionDAO;
+    this.datasetDAO = datasetDAO;
+    this.studyDAO = studyDAO;
   }
 
 
@@ -165,6 +176,12 @@ public class ElasticSearchService implements ConsentLogger {
     term.setPublicVisibility(study.getPublicVisibility());
 
     findStudyProperty(
+        study.getProperties(), "dbGaPPhsID"
+    ).ifPresent(
+        prop -> term.setPhsId(prop.getValue().toString())
+    );
+
+    findStudyProperty(
         study.getProperties(), "phenotypeIndication"
     ).ifPresent(
         prop -> term.setPhenotype(prop.getValue().toString())
@@ -235,6 +252,49 @@ public class ElasticSearchService implements ConsentLogger {
     return indexDatasetTerms(datasetTerms);
   }
 
+  /**
+   * Sequentially index datasets to ElasticSearch by ID list. Note that this is intended for large
+   * lists of dataset ids. For small sets of datasets (i.e. <~25), it is efficient to index them in
+   * bulk using the {@link #indexDatasets(List)} method.
+   *
+   * @param datasetIds List of Dataset IDs to index
+   * @return StreamingOutput of ElasticSearch responses from indexing datasets
+   */
+  public StreamingOutput indexDatasetIds(List<Integer> datasetIds) {
+    Integer lastDatasetId = datasetIds.get(datasetIds.size() - 1);
+    return output -> {
+      output.write("[".getBytes());
+      datasetIds.forEach(id -> {
+        Dataset dataset = datasetDAO.findDatasetById(id);
+        try (Response response = indexDataset(dataset)) {
+          output.write(response.getEntity().toString().getBytes());
+          if (!id.equals(lastDatasetId)) {
+            output.write(",".getBytes());
+          }
+          output.write("\n".getBytes());
+        } catch (IOException e) {
+          logException("Error indexing dataset term for dataset id: %d ".formatted(dataset.getDataSetId()), e);
+        }
+      });
+      output.write("]".getBytes());
+    };
+  }
+
+  public Response indexStudy(Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    // The dao call above does not populate its datasets so we need to check for datasetIds
+    if (study != null && study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
+      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+      try (Response response = indexDatasets(datasets)) {
+        return response;
+      } catch (Exception e) {
+        logException(String.format("Failed to index datasets for study id: %d", studyId), e);
+        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+      }
+    }
+    return Response.status(Status.NOT_FOUND).build();
+  }
+
   public DatasetTerm toDatasetTerm(Dataset dataset) {
     if (Objects.isNull(dataset)) {
       return null;
@@ -281,7 +341,12 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {
-      term.setDataUse(ontologyService.translateDataUseSummary(dataset.getDataUse()));
+      DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());
+      if (summary != null) {
+        term.setDataUse(summary);
+      } else {
+        logWarn("No data use summary for dataset id: %d".formatted(dataset.getDataSetId()));
+      }
     }
 
     findDatasetProperty(

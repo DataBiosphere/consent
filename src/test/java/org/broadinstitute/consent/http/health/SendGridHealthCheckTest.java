@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
@@ -16,9 +15,12 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SendGridHealthCheckTest {
+@ExtendWith(MockitoExtension.class)
+class SendGridHealthCheckTest {
 
   @Mock
   private HttpClientUtil clientUtil;
@@ -33,9 +35,7 @@ public class SendGridHealthCheckTest {
   private SendGridStatus goodStatus, badStatus;
 
   @BeforeEach
-  public void setUp() {
-    openMocks(this);
-
+  void setUp() {
     goodStatus = new SendGridStatus();
     goodStatus.setPage("test");
     goodStatus.setStatus(new SendGridStatus.StatusObject(SendGridStatus.Indicator.none, "test"));
@@ -45,60 +45,78 @@ public class SendGridHealthCheckTest {
     badStatus.setStatus(new SendGridStatus.StatusObject(SendGridStatus.Indicator.major, "test"));
   }
 
-  private void initHealthCheck(SendGridStatus status, boolean configOk) {
+  @Test
+  void testCheckSuccess() throws Exception {
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     try {
-      String statusJson = new Gson().toJson(status);
+      String statusJson = new Gson().toJson(goodStatus);
       when(response.entity()).thenReturn(statusJson);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      if (configOk) {
-        when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
-      }
+      when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
       healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
     }
-  }
-
-  @Test
-  public void testCheckSuccess() throws Exception {
-    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    initHealthCheck(goodStatus, true);
 
     HealthCheck.Result result = healthCheck.check();
     assertTrue(result.isHealthy());
   }
 
   @Test
-  public void testCheckFailure() throws Exception {
+  void testCheckFailure() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-    initHealthCheck(goodStatus, true);
+    try {
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+      healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
   }
 
   @Test
-  public void testCheckExternalFailure() throws Exception {
+  void testCheckExternalFailure() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    initHealthCheck(badStatus, true);
+    try {
+      String statusJson = new Gson().toJson(badStatus);
+      when(response.entity()).thenReturn(statusJson);
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+      healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
   }
 
   @Test
-  public void testCheckException() throws Exception {
+  void testCheckException() throws Exception {
     doThrow(new RuntimeException()).when(response).code();
-    initHealthCheck(goodStatus, true);
+    try {
+      when(clientUtil.getCachedResponse(any())).thenReturn(response);
+      when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+      healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
   }
 
   @Test
-  public void testConfigException() throws Exception {
+  void testConfigException() throws Exception {
     doThrow(new RuntimeException()).when(mailConfiguration).getSendGridStatusUrl();
-    initHealthCheck(goodStatus, false);
+    try {
+      healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());

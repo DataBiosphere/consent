@@ -1,0 +1,82 @@
+post:
+  summary: Bulk add DAAs to a user
+  operationId: bulkAddDAAsToUser
+  description: Bulk add Data Access Agreements to a user
+  parameters:
+    - name: userId
+      in: path
+      description: The user ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            daaList:
+              type: array
+              items:
+                type: integer
+        examples:
+          example1:
+            summary: Bulk add DAAs to a user
+            value:
+              daaList:
+                - 1
+                - 2
+                - 3
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully added DAAs to a user
+    403:
+      description: User not authorized to add DAAs to a user
+    404:
+      description: User Not Found
+    500:
+      description: Internal Server Error
+delete:
+  summary: Bulk remove DAAs from a user
+  operationId: bulkRemoveDAAsFromUser
+  description: Bulk remove Data Access Agreements from a user
+  parameters:
+    - name: userId
+      in: path
+      description: The user ID
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            daaList:
+              type: array
+              items:
+                type: integer
+        examples:
+          example1:
+            summary: Bulk remove DAAs from a user
+            value:
+              daaList:
+                - 1
+                - 2
+                - 3
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Successfully removed DAAs from a user
+    403:
+      description: User not authorized to remove DAAs from a user
+    404:
+      description: User Not Found
+    500:
+      description: Internal Server Error

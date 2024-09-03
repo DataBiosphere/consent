@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +17,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.EmailValidator;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -36,6 +39,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -354,15 +358,23 @@ public class VoteService implements ConsentLogger {
 
         // Data Custodian (study)
         if (Objects.nonNull(study.getProperties())) {
+          Type listOfStringType = new TypeToken<ArrayList<String>>() {}.getType();
+          Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
           Set<StudyProperty> props = study.getProperties();
-          List<User> submitters = props.stream()
-              .filter(p -> p.getKey().equals("dataCustodianEmail"))
-              .map(p -> {
-                List<String> emailList = List.of(GsonUtil.getInstance().fromJson((String)p.getValue(), String[].class));
-                return userDAO.findUsersByEmailList(emailList);
-              }).flatMap(List::stream).toList();
-          if (!submitters.isEmpty()) {
-            submitters.forEach(s -> {
+          List<String> custodianEmails = new ArrayList<>();
+          props.stream()
+              .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
+              .forEach(p -> {
+                String propValue = p.getValue().toString();
+                try {
+                  custodianEmails.addAll(gson.fromJson(propValue, listOfStringType));
+                } catch (Exception e) {
+                  logException("Error finding data custodians for study: " + study.getStudyId(), e);
+                }
+              });
+          if (!custodianEmails.isEmpty()) {
+            List<User> custodianUsers = userDAO.findUsersByEmailList(custodianEmails);
+            custodianUsers.forEach(s -> {
               custodianMap.putIfAbsent(s, new HashSet<>());
               custodianMap.get(s).add(d);
             });

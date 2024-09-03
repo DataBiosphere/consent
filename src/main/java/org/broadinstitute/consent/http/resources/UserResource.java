@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -47,7 +48,6 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -59,17 +59,14 @@ public class UserResource extends Resource {
   private final Gson gson = new Gson();
   private final SamService samService;
   private final DatasetService datasetService;
-  private final SupportRequestService supportRequestService;
   private final AcknowledgementService acknowledgementService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, SupportRequestService supportRequestService,
-      AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
-    this.supportRequestService = supportRequestService;
     this.acknowledgementService = acknowledgementService;
   }
 
@@ -105,6 +102,7 @@ public class UserResource extends Resource {
   @Path("/me")
   @Produces("application/json")
   @PermitAll
+  @Timed
   public Response getUser(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -164,7 +162,7 @@ public class UserResource extends Resource {
   @GET
   @Path("/{userId}")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER})
   public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
     try {
       JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
@@ -241,7 +239,6 @@ public class UserResource extends Resource {
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      supportRequestService.handleInstitutionSOSupportRequest(userUpdateFields, user);
       Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
           user.getUserId());
@@ -406,9 +403,7 @@ public class UserResource extends Resource {
     User user = new User();
     user.setEmail(authUser.getEmail());
     user.setDisplayName(authUser.getName());
-    UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-        UserRoles.RESEARCHER.getRoleName());
-    user.setRoles(Collections.singletonList(researcher));
+    user.setResearcherRole();
     try {
       URI uri;
       user = userService.createUser(user);

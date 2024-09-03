@@ -16,21 +16,27 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(UserPropertyMapper.class)
 public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
 
-  @SqlQuery("SELECT * FROM user_property WHERE userid = :userId AND propertykey IN (<keys>)")
+  @SqlQuery("""
+    SELECT * FROM user_property WHERE user_id = :userId AND property_key IN (<keys>)
+    """)
   List<UserProperty> findUserPropertiesByUserIdAndPropertyKeys(@Bind("userId") Integer userId,
       @BindList("keys") List<String> keys);
 
   @SqlBatch("""
-          INSERT INTO user_property (userid, propertykey, propertyvalue)
+          INSERT INTO user_property (user_id, property_key, property_value)
           VALUES (:userId, :propertyKey, :propertyValue)
-          ON CONFLICT (userid, propertykey)
-          DO UPDATE SET propertyvalue = :propertyValue
+          ON CONFLICT (user_id, property_key)
+          DO UPDATE SET property_value = :propertyValue
       """)
   void insertAll(@BindBean Collection<UserProperty> researcherProperties);
 
-  @SqlUpdate("DELETE FROM user_property WHERE userid = :userId")
+  @SqlUpdate("""
+    DELETE FROM user_property WHERE user_id = :userId
+    """)
   void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
-  @SqlBatch("DELETE FROM user_property WHERE userid = :userId AND propertykey = :propertyKey")
+  @SqlBatch("""
+    DELETE FROM user_property WHERE user_id = :userId AND property_key = :propertyKey
+    """)
   void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
 }

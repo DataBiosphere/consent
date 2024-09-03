@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.google.cloud.storage.BlobId;
 import java.io.ByteArrayInputStream;
@@ -21,11 +20,13 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class FileStorageObjectServiceTest {
+@ExtendWith(MockitoExtension.class)
+class FileStorageObjectServiceTest {
 
   @Mock
   private FileStorageObjectDAO fileStorageObjectDAO;
@@ -35,17 +36,12 @@ public class FileStorageObjectServiceTest {
 
   private FileStorageObjectService service;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initService() {
     service = new FileStorageObjectService(fileStorageObjectDAO, gcsService);
   }
 
   @Test
-  public void testUploadAndStoreFile() throws IOException {
+  void testUploadAndStoreFile() throws IOException {
     InputStream content = new ByteArrayInputStream(RandomStringUtils.random(20).getBytes());
     String fileName = RandomStringUtils.randomAlphabetic(10);
     String mediaType = RandomStringUtils.randomAlphabetic(10);
@@ -99,7 +95,7 @@ public class FileStorageObjectServiceTest {
   }
 
   @Test
-  public void testFetchById() throws IOException {
+  void testFetchById() throws IOException {
     String bucket = RandomStringUtils.randomAlphabetic(10);
     String blob = RandomStringUtils.randomAlphabetic(10);
 
@@ -126,7 +122,7 @@ public class FileStorageObjectServiceTest {
   }
 
   @Test
-  public void testFetchAllByEntityId() throws IOException {
+  void testFetchAllByEntityId() throws IOException {
     String bucket1Name = RandomStringUtils.randomAlphabetic(10);
     String blob1Name = RandomStringUtils.randomAlphabetic(10);
     String bucket2Name = RandomStringUtils.randomAlphabetic(10);
@@ -180,7 +176,7 @@ public class FileStorageObjectServiceTest {
   }
 
   @Test
-  public void testFetchAllByEntityIdAndCategory() throws IOException {
+  void testFetchAllByEntityIdAndCategory() throws IOException {
     String bucket1Name = RandomStringUtils.randomAlphabetic(10);
     String blob1Name = RandomStringUtils.randomAlphabetic(10);
     String bucket2Name = RandomStringUtils.randomAlphabetic(10);

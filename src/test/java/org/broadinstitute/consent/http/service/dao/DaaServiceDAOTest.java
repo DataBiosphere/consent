@@ -15,8 +15,11 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class DaaServiceDAOTest extends DAOTestHelper {
+@ExtendWith(MockitoExtension.class)
+class DaaServiceDAOTest extends DAOTestHelper {
 
   private static DaaServiceDAO serviceDAO;
 

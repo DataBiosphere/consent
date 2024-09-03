@@ -1,0 +1,40 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-03-12-daa-lc.xml" author="aarohinadkarni">
+    <createTable tableName="lc_daa">
+      <column name="lc_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addPrimaryKey
+      columnNames="lc_id, daa_id"
+      constraintName="lc_daa_join_table_key"
+      tableName="lc_daa"/>
+    <addForeignKeyConstraint
+      baseColumnNames="lc_id"
+      baseTableName="lc_daa"
+      constraintName="fk_lc_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedColumnNames="id"
+      referencedTableName="library_card"
+      referencesUniqueColumn="true"/>
+    <addForeignKeyConstraint
+      baseColumnNames="daa_id"
+      baseTableName="lc_daa"
+      constraintName="fk_daa_id"
+      deferrable="false"
+      initiallyDeferred="false"
+      onDelete="NO ACTION"
+      onUpdate="NO ACTION"
+      referencedColumnNames="daa_id"
+      referencedTableName="data_access_agreement"
+      referencesUniqueColumn="true"/>
+  </changeSet>
+</databaseChangeLog>

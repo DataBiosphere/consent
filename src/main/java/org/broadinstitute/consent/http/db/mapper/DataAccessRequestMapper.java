@@ -16,7 +16,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     DataAccessRequest dar = new DataAccessRequest();
     dar.setId(resultSet.getInt("id"));
     dar.setReferenceId(resultSet.getString("reference_id"));
-    if (hasColumn(resultSet, "collection_id")) {
+    if (hasNonZeroColumn(resultSet, "collection_id")) {
       int collectionId = resultSet.getInt("collection_id");
       if (!resultSet.wasNull()) {
         dar.setCollectionId(collectionId);
@@ -31,7 +31,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     dar.setUpdateDate(resultSet.getTimestamp("update_date"));
     String darDataString = resultSet.getObject("data", PGobject.class).getValue();
     DataAccessRequestData data = translate(darDataString);
-    if (hasColumn(resultSet, "dataset_id")) {
+    if (hasNonZeroColumn(resultSet, "dataset_id")) {
       dar.addDatasetId(resultSet.getInt("dataset_id"));
     }
     dar.setData(data);

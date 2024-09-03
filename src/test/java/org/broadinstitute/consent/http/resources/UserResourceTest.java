@@ -9,24 +9,18 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -46,35 +40,29 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
-import org.junit.jupiter.api.BeforeEach;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class UserResourceTest {
+@ExtendWith(MockitoExtension.class)
+class UserResourceTest {
 
   @Mock
   private UserService userService;
-
-  @Mock
-  private LibraryCardService libraryCardService;
 
   @Mock
   private SamService samService;
 
   @Mock
   private DatasetService datasetService;
-
-  @Mock
-  private SupportRequestService supportRequestService;
 
   private UserResource userResource;
 
@@ -92,33 +80,23 @@ public class UserResourceTest {
 
   private final String TEST_EMAIL = "test@gmail.com";
 
-  private AuthUser authUser;
+  private final Gson gson = GsonUtil.getInstance();
 
-  @BeforeEach
-  public void setUp() throws URISyntaxException {
-    authUser = new AuthUser()
-        .setAuthToken("auth-token")
-        .setName("Test User")
-        .setEmail(TEST_EMAIL)
-        .setUserStatusInfo(userStatusInfo);
-    openMocks(this);
-    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-    when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-    when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
-  }
+  private final AuthUser authUser = new AuthUser()
+      .setAuthToken("auth-token")
+      .setName("Test User")
+      .setEmail(TEST_EMAIL)
+      .setUserStatusInfo(userStatusInfo);
 
   private void initResource() {
-    userResource = new UserResource(samService, userService, datasetService, supportRequestService,
+    userResource = new UserResource(samService, userService, datasetService,
         acknowledgementService);
   }
 
   @Test
-  public void testGetMe() {
+  void testGetMe() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
 
     Response response = userResource.getUser(authUser);
@@ -126,12 +104,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUserById() {
-    User user = createUserWithRole();
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
+  void testGetUserById() {
     initResource();
 
     Response response = userResource.getUserById(authUser, 1);
@@ -139,7 +112,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUserByIdNotFound() {
+  void testGetUserByIdNotFound() {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenThrow(
         new NotFoundException());
     initResource();
@@ -149,10 +122,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_SO() {
+  void testGetUsers_SO() {
     User user = createUserWithRole();
-    user.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName())));
+    user.setSigningOfficialRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.getUsersAsRole(user, "SigningOfficial")).thenReturn(
         Arrays.asList(new User(), new User()));
@@ -163,7 +135,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_SO_NoRole() {
+  void testGetUsers_SO_NoRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -173,10 +145,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_Admin() {
+  void testGetUsers_Admin() {
     User user = createUserWithRole();
-    user.setRoles(
-        List.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName())));
+    user.setAdminRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.getUsersAsRole(user, "Admin")).thenReturn(
         Arrays.asList(new User(), new User()));
@@ -187,7 +158,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_Admin_NoRole() {
+  void testGetUsers_Admin_NoRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -197,7 +168,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_UnsupportedRole() {
+  void testGetUsers_UnsupportedRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -207,7 +178,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_InvalidRole() {
+  void testGetUsers_InvalidRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
@@ -217,7 +188,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsers_UserNotFound() {
+  void testGetUsers_UserNotFound() {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();
 
@@ -226,17 +197,11 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testCreateExistingUser() {
+  void testCreateExistingUser() {
     User user = new User();
     user.setEmail(TEST_EMAIL);
-    List<UserRole> roles = new ArrayList<>();
-    UserRole admin = new UserRole();
-    admin.setName(UserRoles.ADMIN.getRoleName());
-    UserRole researcher = new UserRole();
-    researcher.setName(UserRoles.RESEARCHER.getRoleName());
-    roles.add(researcher);
-    roles.add(admin);
-    user.setRoles(roles);
+    user.addRole(UserRoles.Admin());
+    user.addRole(UserRoles.Researcher());
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     initResource();
 
@@ -245,7 +210,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testCreateFailingGoogleIdentity() {
+  void testCreateFailingGoogleIdentity() {
     initResource();
 
     Response response = userResource.createResearcher(uriInfo, new AuthUser(TEST_EMAIL));
@@ -253,15 +218,14 @@ public class UserResourceTest {
   }
 
   @Test
-  public void createUserSuccess() {
+  void createUserSuccess() throws Exception {
     User user = new User();
     user.setDisplayName("Test");
     user.setEmail(TEST_EMAIL);
-    UserRole researcher = new UserRole();
-    List<UserRole> roles = new ArrayList<>();
-    researcher.setName(UserRoles.RESEARCHER.getRoleName());
-    roles.add(researcher);
-    user.setRoles(roles);
+    user.setResearcherRole();
+    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+    when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
+    when(uriBuilder.build(anyString())).thenReturn(new URI("http://localhost:8180/dacuser/api"));
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     when(userService.createUser(user)).thenReturn(user);
     initResource();
@@ -271,7 +235,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteUser() {
+  void testDeleteUser() {
     doNothing().when(userService).deleteUserByEmail(any());
     initResource();
     Response response = userResource.delete(RandomStringUtils.randomAlphabetic(10), uriInfo);
@@ -279,26 +243,21 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUser() {
+  void testAddRoleToUser() {
     User user = createUserWithRole();
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void testAddRoleToUserNotFound() {
+  void testAddRoleToUserNotFound() {
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
     doThrow(new NotFoundException()).when(userService).findUserById(any());
     initResource();
@@ -307,49 +266,33 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUserNotModified() {
+  void testAddRoleToUserNotModified() {
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.RESEARCHER.getRoleId());
     assertEquals(304, response.getStatus());
   }
 
   @Test
-  public void testAddRoleToUserBadRequest() {
+  void testAddRoleToUserBadRequest() {
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
-    User user = createUserWithRole();
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
+    activeUser.setAdminRole();
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, 1000);
     assertEquals(400, response.getStatus());
   }
 
   @Test
-  public void testAddRoleToUserBySoWithoutUserAndSoInstitution() {
+  void testAddRoleToUserBySoWithoutUserAndSoInstitution() {
     User activeUser = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1,
         UserRoles.DATASUBMITTER.getRoleId());
@@ -357,18 +300,13 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUserBySoInstitutionWithoutUserInstitution() {
+  void testAddRoleToUserBySoInstitutionWithoutUserInstitution() {
     User activeUser = createUserWithRole();
     activeUser.setInstitutionId(10);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1,
         UserRoles.DATASUBMITTER.getRoleId());
@@ -376,18 +314,13 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUserBySoWithoutSoInstitution() {
+  void testAddRoleToUserBySoWithoutSoInstitution() {
     User activeUser = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1,
         UserRoles.DATASUBMITTER.getRoleId());
@@ -395,19 +328,14 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUserBySoWithDeniedRoles() {
+  void testAddRoleToUserBySoWithDeniedRoles() {
     User activeUser = createUserWithRole();
     activeUser.setInstitutionId(10);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId());
     assertEquals(400, response.getStatus());
@@ -422,19 +350,14 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testAddRoleToUserBySoWithPermittedRoles() {
+  void testAddRoleToUserBySoWithPermittedRoles() {
     User activeUser = createUserWithRole();
     activeUser.setInstitutionId(10);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    when(userService.findAllUserProperties(any())).thenReturn(createResearcherProperties());
-    when(libraryCardService.findLibraryCardsByUserId(any()))
-        .thenReturn(createLibraryCards());
     initResource();
     Response response = userResource.addRoleToUser(authUser, 1,
         UserRoles.DATASUBMITTER.getRoleId());
@@ -447,7 +370,7 @@ public class UserResourceTest {
 
   @SuppressWarnings({"unchecked"})
   @Test
-  public void testGetSOsForInstitution() {
+  void testGetSOsForInstitution() {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -463,10 +386,9 @@ public class UserResourceTest {
 
   @SuppressWarnings("rawtypes")
   @Test
-  public void testGetSOsForInstitution_NoInstitution() {
+  void testGetSOsForInstitution_NoInstitution() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(Collections.emptyList());
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -475,7 +397,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetSOsForInstitution_UserNotFound() {
+  void testGetSOsForInstitution_UserNotFound() {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();
     Response response = userResource.getSOsForInstitution(authUser);
@@ -483,7 +405,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUnassignedUsers() {
+  void testGetUnassignedUsers() {
     List<User> users = Collections.singletonList(createUserWithRole());
     when(userService.findUsersWithNoInstitution()).thenReturn(users);
     initResource();
@@ -492,7 +414,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsersByInstitutionNoInstitution() {
+  void testGetUsersByInstitutionNoInstitution() {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
     initResource();
@@ -502,7 +424,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsersByInstitutionNullInstitution() {
+  void testGetUsersByInstitutionNullInstitution() {
     Integer institutionId = null;
     doThrow(new IllegalArgumentException()).when(userService)
         .findUsersByInstitutionId(institutionId);
@@ -513,7 +435,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUsersByInstitutionSuccess() {
+  void testGetUsersByInstitutionSuccess() {
     when(userService.findUsersByInstitutionId(any())).thenReturn(Collections.emptyList());
     initResource();
 
@@ -522,11 +444,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateSelf() {
+  void testUpdateSelf() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -534,37 +454,25 @@ public class UserResourceTest {
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    verify(supportRequestService, times(1)).handleInstitutionSOSupportRequest(any(), any());
   }
 
   @Test
-  public void testUpdateSelfRolesNotAdmin() {
+  void testUpdateSelfRolesNotAdmin() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setUserRoleIds(List.of(1)); // any roles
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
-        gson.toJsonTree(user).getAsJsonObject());
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    //no support request sent if update to user fails
-    verify(supportRequestService, times(0)).handleInstitutionSOSupportRequest(any(), any());
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdAsSO() {
+  void testUpdateSelfInstitutionIdAsSO() {
     User user = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(so);
+    user.setSigningOfficialRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -575,36 +483,25 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdAsSO_ExistingInstitution() {
+  void testUpdateSelfInstitutionIdAsSO_ExistingInstitution() {
     User user = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(so);
+    user.setSigningOfficialRole();
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(20);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
-        gson.toJsonTree(user).getAsJsonObject());
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdAsSO_SameInstitution() {
+  void testUpdateSelfInstitutionIdAsSO_SameInstitution() {
     User user = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(so);
+    user.setSigningOfficialRole();
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -615,15 +512,11 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdAsITDirector() {
+  void testUpdateSelfInstitutionIdAsITDirector() {
     User user = createUserWithRole();
-    UserRole itd = new UserRole(UserRoles.ITDIRECTOR.getRoleId(),
-        UserRoles.ITDIRECTOR.getRoleName());
-    user.addRole(itd);
+    user.setITDirectorRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(10);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -634,36 +527,25 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdAsITDirector_ExistingInstitution() {
+  void testUpdateSelfInstitutionIdAsITDirector_ExistingInstitution() {
     User user = createUserWithRole();
-    UserRole itd = new UserRole(UserRoles.ITDIRECTOR.getRoleId(),
-        UserRoles.ITDIRECTOR.getRoleName());
-    user.addRole(itd);
+    user.setITDirectorRole();
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(20);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
-        gson.toJsonTree(user).getAsJsonObject());
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testUpdateSelfInstitutionIdNullAsSO_ExistingInstitution() {
+  void testUpdateSelfInstitutionIdNullAsSO_ExistingInstitution() {
     User user = createUserWithRole();
-    UserRole itd = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(itd);
+    user.setSigningOfficialRole();
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(null);
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -679,24 +561,7 @@ public class UserResourceTest {
 
 
   @Test
-  public void testUpdateSelfSupportRequestError() {
-    User user = createUserWithRole();
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
-        gson.toJsonTree(user).getAsJsonObject());
-    doThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR))
-        .when(supportRequestService).handleInstitutionSOSupportRequest(any(), any());
-    initResource();
-    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
-  public void testCanUpdateInstitution() {
+  void testCanUpdateInstitution() {
     initResource();
 
     // User with no roles and no institution can update their institution
@@ -706,64 +571,61 @@ public class UserResourceTest {
 
     // Researcher user with no institution can update their institution
     User u2 = new User();
-    u2.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    u2.setResearcherRole();
     canUpdate = userResource.canUpdateInstitution(u2, 1);
     assertTrue(canUpdate);
 
     // Researcher user with an institution can update their institution
     User u3 = new User();
     u3.setInstitutionId(10);
-    u3.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    u3.setResearcherRole();
     canUpdate = userResource.canUpdateInstitution(u3, 1);
     assertTrue(canUpdate);
 
     // SO user with no institution can update their institution
     User u4 = new User();
-    u4.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    u4.setSigningOfficialRole();
     canUpdate = userResource.canUpdateInstitution(u4, 1);
     assertTrue(canUpdate);
 
     // SO user with an institution CANNOT update their institution
     User u4a = new User();
     u4a.setInstitutionId(10);
-    u4a.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName()));
+    u4a.setSigningOfficialRole();
     canUpdate = userResource.canUpdateInstitution(u4a, 1);
     assertFalse(canUpdate);
 
     // IT user with no institution can update their institution
     User u5 = new User();
-    u5.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    u5.setITDirectorRole();
     canUpdate = userResource.canUpdateInstitution(u5, 1);
     assertTrue(canUpdate);
 
     // IT user with an institution CANNOT update their institution
     User u5a = new User();
     u5a.setInstitutionId(10);
-    u5a.addRole(new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    u5a.setITDirectorRole();
     canUpdate = userResource.canUpdateInstitution(u5a, 1);
     assertFalse(canUpdate);
 
     // Admin user with no institution can update their institution
     User u6 = new User();
-    u6.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u6.setAdminRole();
     canUpdate = userResource.canUpdateInstitution(u6, 1);
     assertTrue(canUpdate);
 
     // Admin user with an institution can update their institution
     User u7 = new User();
     u7.setInstitutionId(10);
-    u7.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    u7.setAdminRole();
     canUpdate = userResource.canUpdateInstitution(u7, 1);
     assertTrue(canUpdate);
   }
 
   @Test
-  public void testUpdate() {
+  void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
-    Gson gson = new Gson();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
@@ -775,7 +637,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateUserNotFound() {
+  void testUpdateUserNotFound() {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
     initResource();
@@ -784,25 +646,22 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testUpdateUserInvalidJson() {
+  void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
-    when(userService.findUserById(any())).thenThrow(new NotFoundException());
     initResource();
     Response response = userResource.update(authUser, uriInfo, user.getUserId(), "}{][");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testDeleteRoleFromUser() {
+  void testDeleteRoleFromUser() {
     User user = createUserWithRole();
     user.setUserId(1);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());
@@ -815,33 +674,27 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteRoleFromUser_InvalidRole() {
+  void testDeleteRoleFromUser_InvalidRole() {
     User user = createUserWithRole();
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
-    when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    activeUser.setAdminRole();
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 20);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testDeleteDeniedRoleBySoShouldFail() {
+  void testDeleteDeniedRoleBySoShouldFail() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    user.addRole(
-        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    user.addRole(new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName()));
-    user.addRole(new UserRole(UserRoles.ALUMNI.getRoleId(), UserRoles.ALUMNI.getRoleName()));
+    user.addRole(UserRoles.Admin());
+    user.addRole(UserRoles.Chairperson());
+    user.addRole(UserRoles.Member());
+    user.addRole(UserRoles.Alumni());
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -865,21 +718,16 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeletePermittedRolesBySoShouldSucceedForUserWithSameInstitution() {
+  void testDeletePermittedRolesBySoShouldSucceedForUserWithSameInstitution() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    user.addRole(
-        new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
-    user.addRole(
-        new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    user.addRole(UserRoles.SigningOfficial());
+    user.addRole(UserRoles.DataSubmitter());
+    user.addRole(UserRoles.ITDirector());
     user.setInstitutionId(10);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -896,20 +744,15 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeletePermittedRolesBySoShouldFailForUserWitNullInstitution() {
+  void testDeletePermittedRolesBySoShouldFailForUserWitNullInstitution() {
     User user = createUserWithRole();
     user.setUserId(1);
-    user.addRole(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName()));
-    user.addRole(
-        new UserRole(UserRoles.DATASUBMITTER.getRoleId(), UserRoles.DATASUBMITTER.getRoleName()));
-    user.addRole(
-        new UserRole(UserRoles.ITDIRECTOR.getRoleId(), UserRoles.ITDIRECTOR.getRoleName()));
+    user.addRole(UserRoles.SigningOfficial());
+    user.addRole(UserRoles.DataSubmitter());
+    user.addRole(UserRoles.ITDirector());
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    activeUser.addRole(so);
+    activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
@@ -926,16 +769,14 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteSORoleFromSOInOtherOrgSOShouldFail() {
+  void testDeleteSORoleFromSOInOtherOrgSOShouldFail() {
     User user = createUserWithRole();
     user.setUserId(1);
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(so);
+    user.setSigningOfficialRole();
     user.setInstitutionId(1);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    activeUser.addRole(so);
+    activeUser.setSigningOfficialRole();
     activeUser.setInstitutionId(2);
     assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
     when(userService.findUserById(any())).thenReturn(user);
@@ -947,11 +788,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteSORoleFromSelfShouldFail() {
+  void testDeleteSORoleFromSelfShouldFail() {
     User user = createUserWithRole();
-    UserRole so = new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(),
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
-    user.addRole(so);
+    user.setSigningOfficialRole();
     user.setInstitutionId(1);
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -962,16 +801,14 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteRoleFromUser_UserWithoutRole() {
+  void testDeleteRoleFromUser_UserWithoutRole() {
     User user = createUserWithRole();
     user.setUserId(1);
     User activeUser = createUserWithRole();
     activeUser.setUserId(2);
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
-    Gson gson = new Gson();
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());
@@ -984,10 +821,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteRoleFromUser_UserNotFound() {
+  void testDeleteRoleFromUser_UserNotFound() {
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
+    activeUser.setAdminRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
     when(userService.findUserByEmail(any())).thenReturn(activeUser);
     initResource();
@@ -996,24 +832,18 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteRoleFromUserInvalidRoleId() {
+  void testDeleteRoleFromUserInvalidRoleId() {
     User activeUser = createUserWithRole();
-    UserRole admin = new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    activeUser.addRole(admin);
-    when(userService.findUserById(any())).thenThrow(new NotFoundException());
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    activeUser.setAdminRole();
     initResource();
     Response response = userResource.deleteRoleFromUser(authUser, 1, 1000);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
-  public void testGetDatasetsFromUserDacsV2() {
+  void testGetDatasetsFromUserDacsV2() {
     User user = createUserWithRole();
-    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chair.setDacId(1);
-    user.addRole(chair);
+    user.setChairpersonRoleWithDAC(1);
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of(new Dataset()));
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     initResource();
@@ -1023,12 +853,9 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetDatasetsFromUserDacsV2DatasetsNotFound() {
+  void testGetDatasetsFromUserDacsV2DatasetsNotFound() {
     User user = createUserWithRole();
-    UserRole chair = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
-    chair.setDacId(1);
-    user.addRole(chair);
+    user.setChairpersonRoleWithDAC(1);
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     initResource();
@@ -1038,7 +865,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetDatasetsFromUserDacsV2UserNotFound() {
+  void testGetDatasetsFromUserDacsV2UserNotFound() {
     when(userService.findUserByEmail(anyString())).thenThrow(
         new NotFoundException("User not found"));
     initResource();
@@ -1048,7 +875,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgement() {
+  void testPostAcknowledgement() {
     User user = createUserWithRole();
     String acknowledgementKey = "key1";
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
@@ -1063,7 +890,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgementException() {
+  void testPostAcknowledgementException() {
     String acknowledgementKey = "key1";
     doThrow(new RuntimeException("exception during post")).when(acknowledgementService)
         .makeAcknowledgements(anyList(), any());
@@ -1075,9 +902,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgementBadJson() {
-    doThrow(new RuntimeException("exception during post")).when(acknowledgementService)
-        .makeAcknowledgements(anyList(), any());
+  void testPostAcknowledgementBadJson() {
     initResource();
     String jsonString = "The quick brown fox jumped over the lazy dog.";
 
@@ -1086,7 +911,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgementEmptyJson() {
+  void testPostAcknowledgementEmptyJson() {
     initResource();
 
     Response response = userResource.postAcknowledgements(authUser, "");
@@ -1094,7 +919,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testPostAcknowledgementEmptyJsonList() {
+  void testPostAcknowledgementEmptyJsonList() {
     initResource();
 
     Response response = userResource.postAcknowledgements(authUser, "[]");
@@ -1102,7 +927,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testMissingAcknowledgement() {
+  void testMissingAcknowledgement() {
     String acknowledgementKey = "key1";
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
@@ -1112,7 +937,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetAcknowledgementException() {
+  void testGetAcknowledgementException() {
     String acknowledgementKey = "key1";
     doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService)
         .findAcknowledgementForUserByKey(any(), any());
@@ -1123,7 +948,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetAcknowledgementNull() {
+  void testGetAcknowledgementNull() {
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
 
@@ -1132,7 +957,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetUnsetAcknowledgementsForUser() {
+  void testGetUnsetAcknowledgementsForUser() {
     when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(null);
     initResource();
 
@@ -1141,7 +966,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetAcknowledgementsForUserException() {
+  void testGetAcknowledgementsForUserException() {
     doThrow(new RuntimeException("some get exception")).when(acknowledgementService)
         .findAcknowledgementsForUser(any());
     initResource();
@@ -1151,7 +976,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetSetAcknowledgementForUser() {
+  void testGetSetAcknowledgementForUser() {
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
@@ -1165,7 +990,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteAcknowledgementForUser() {
+  void testDeleteAcknowledgementForUser() {
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
@@ -1179,7 +1004,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testDeleteMissingAcknowledgementForUser() {
+  void testDeleteMissingAcknowledgementForUser() {
     User user = createUserWithRole();
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
     initResource();
@@ -1189,13 +1014,11 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetAllAcknowledgements() {
+  void testGetAllAcknowledgements() {
     String acknowledgementKey = "key1";
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
         acknowledgementKey);
-    when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(
-        acknowledgementMap.get(acknowledgementKey));
     initResource();
 
     Response response = userResource.getUserAcknowledgements(authUser);
@@ -1203,7 +1026,7 @@ public class UserResourceTest {
   }
 
   @Test
-  public void testGetApprovedDatasets() {
+  void testGetApprovedDatasets() {
     ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
         new Date());
     when(datasetService.getApprovedDatasets(any())).thenReturn(List.of(example));
@@ -1231,12 +1054,7 @@ public class UserResourceTest {
     user.setUserId(RandomUtils.nextInt(1, 100));
     user.setDisplayName("Test");
     user.setEmail("Test");
-    UserRole researcher = new UserRole();
-    List<UserRole> roles = new ArrayList<>();
-    researcher.setName(UserRoles.RESEARCHER.getRoleName());
-    researcher.setRoleId(UserRoles.RESEARCHER.getRoleId());
-    roles.add(researcher);
-    user.setRoles(roles);
+    user.addRole(UserRoles.Researcher());
     return user;
   }
 

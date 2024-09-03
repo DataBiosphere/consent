@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -194,7 +195,13 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
     sendDatasetSubmittedEmails(datasets);
-    elasticSearchService.indexDatasets(datasets);
+    try (Response response = elasticSearchService.indexDatasets(datasets)) {
+      if (response.getStatus() >= 400) {
+        logWarn(String.format("Error indexing datasets from registration: %s", registration.getStudyName()));
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     return datasets;
   }
 
@@ -266,7 +273,13 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
-    elasticSearchService.indexDataset(updatedDataset);
+    try (Response response = elasticSearchService.indexDataset(dataset)) {
+      if (response.getStatus() >= 400) {
+        logWarn(String.format("Error indexing dataset update: %s", dataset.getName()));
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     return updatedDataset;
   }
 
@@ -337,7 +350,7 @@ public class DatasetRegistrationService implements ConsentLogger {
         Objects.nonNull(group.getMor()) && group.getMor() ? group.getMorDate() : null);
 
     dataUse.setMethodsResearch(Objects.nonNull(group.getMor()) && group.getNmds() ? false : null);
-    dataUse.setCommercialUse(Objects.nonNull(group.getNpu()) ? !group.getNpu() : null);
+    dataUse.setNonProfitUse(Objects.nonNull(group.getNpu()) ? group.getNpu() : null);
     dataUse.setOther(group.getOtherPrimary());
     dataUse.setSecondaryOther(group.getOtherSecondary());
     dataUse.setPopulationOriginsAncestry(group.getPoa());
@@ -541,9 +554,6 @@ public class DatasetRegistrationService implements ConsentLogger {
           "species", PropertyType.String,
           DatasetRegistrationSchemaV1::getSpecies),
       new StudyPropertyExtractor(
-          "dataSubmitterUserId", PropertyType.Number,
-          DatasetRegistrationSchemaV1::getDataSubmitterUserId),
-      new StudyPropertyExtractor(
           "dataCustodianEmail", PropertyType.Json,
           (registration) -> {
             if (Objects.nonNull(registration.getDataCustodianEmail())) {
@@ -700,10 +710,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               return consentGroup.getAccessManagement().value();
             }
             return null;
-          }),
-      new DatasetPropertyExtractor(
-          "DAC ID", "dataAccessCommitteeId", PropertyType.Number,
-          ConsentGroup::getDataAccessCommitteeId)
+          })
   );
 
   private List<StudyProperty> convertRegistrationToStudyProperties(
@@ -756,13 +763,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       for (Dataset dataset : datasets) {
         Dac dac = dacDAO.findById(dataset.getDacId());
-        List<User> chairPersons = dacDAO
-            .findMembersByDacId(dac.getDacId())
-            .stream()
-            .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
-            .toList();
+        if (dac == null) {
+          logWarn("Could not find DAC for dataset with identifier: " + dataset.getDatasetIdentifier());
+        }
+        List<User> chairPersons = (dac == null) ? List.of() :
+            dacDAO
+                .findMembersByDacId(dac.getDacId())
+                .stream()
+                .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
+                .toList();
         if (chairPersons.isEmpty()) {
-          logWarn("No chairpersons found for DAC " + dac.getName());
+          logWarn("No chairpersons found for Dataset " + dataset.getDatasetIdentifier());
         } else {
           for (User dacChair : chairPersons) {
             emailService.sendDatasetSubmittedMessage(dacChair,

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -14,20 +13,21 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class FreeMarkerTemplateHelperTest {
 
   private FreeMarkerTemplateHelper helper;
@@ -37,26 +37,10 @@ class FreeMarkerTemplateHelperTest {
 
   @BeforeEach
   public void setUp() throws IOException {
-    openMocks(this);
     when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
     when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
     helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
 
-  }
-
-  @Test
-  void testGetDisabledDatasetsTemplate() throws Exception {
-    Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User",
-        sampleDatasets().stream().map(Dataset::getObjectId).collect(Collectors.toList()),
-        "entityId", "serverUrl");
-    String templateString = template.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Disabled Datasets Notification",
-        parsedTemplate.title());
-    assertEquals("Hello DatasetTemp User,", parsedTemplate.getElementById("userName").text());
-    assertTrue(templateString.contains("DS-101"));
-    assertTrue(templateString.contains("DS-102"));
-    assertTrue(templateString.contains("DS-103"));
   }
 
   @Test
@@ -72,11 +56,10 @@ class FreeMarkerTemplateHelperTest {
 
   @Test
   void testGetReminderTemplate() throws Exception {
-    Writer template = helper.getReminderTemplate("Reminder User", "DARELECTION-1", "DAR-1",
-        "localhost:1234");
+    Writer template = helper.getReminderTemplate("Reminder User", "DAR-1", "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR",
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
@@ -175,34 +158,117 @@ class FreeMarkerTemplateHelperTest {
     assertFalse(templateString.contains("${"));
   }
 
+  @Test
+  void testGetDaaRequestTemplate() throws Exception {
+    String signingOfficialUserName = RandomStringUtils.randomAlphabetic(10);
+    String userName = RandomStringUtils.randomAlphabetic(10);
+    String daaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getDaaRequestTemplate(signingOfficialUserName, userName,
+        daaName,
+        serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Hello " + signingOfficialUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            userName + " has registered with your institution and is requesting you approve them under the " + daaName + " data access agreement, so that they can request access to data."));
+    assertTrue(parsedTemplate
+        .getElementById("link")
+        .text()
+        .contains(
+            "Please login to review " + userName + "'s Data Access Agreements."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetNewDaaUploadSOTemplate() throws Exception {
+    String signingOfficialUserName = RandomStringUtils.randomAlphabetic(10);
+    String dacName = RandomStringUtils.randomAlphabetic(10);
+    String newDaaName = RandomStringUtils.randomAlphabetic(10);
+    String previousDaaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getNewDaaUploadSOTemplate(signingOfficialUserName, dacName,
+        newDaaName, previousDaaName, serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement Upload",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Dear " + signingOfficialUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "You previously pre-authorized researchers under the " + previousDaaName + " which was in use by the " + dacName + "."));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetNewDaaUploadResearcherTemplate() throws Exception {
+    String researcherUserName = RandomStringUtils.randomAlphabetic(10);
+    String dacName = RandomStringUtils.randomAlphabetic(10);
+    String newDaaName = RandomStringUtils.randomAlphabetic(10);
+    String previousDaaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
+        newDaaName, previousDaaName, serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement Upload",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Dear " + researcherUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "You were previously pre-authorized to request data from the " + dacName + " under the " + previousDaaName + "."));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
   /* Helper methods */
 
   private Document getAsHtmlDoc(String parsedHtml) {
     return Jsoup.parse(parsedHtml);
   }
 
-  private Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date());
-  private Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date());
-  private Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date());
-  private User testUser = new User(1, "testuser@email.com", "Test User", new Date(), null);
-  private Election e1 = new Election(1, "DataSet", "Closed", new Date(), "DAR-1", null, true, 1);
-  private Election e2 = new Election(2, "DataSet", "Closed", new Date(), "DAR-1", null, false, 2);
-  private Election e3 = new Election(3, "DataSet", "Closed", new Date(), "DAR-2", null, true, 1);
+  private final Dataset ds1 = new Dataset(1, "DS-101", "Dataset 1", new Date());
+  private final Dataset ds2 = new Dataset(2, "DS-102", "Dataset 2", new Date());
+  private final Dataset ds3 = new Dataset(3, "DS-103", "Dataset 3", new Date());
 
   private List<Dataset> sampleDatasets() {
     return Arrays.asList(ds1, ds2, ds3);
   }
 
-  private Map<User, List<Dataset>> getApprovedDarMap() {
-    Map<User, List<Dataset>> approvedDarMap = new HashMap<>();
-    approvedDarMap.put(testUser, sampleDatasets());
-    return approvedDarMap;
-  }
-
-  private Map<String, List<Election>> getClosedDsElections() {
-    Map<String, List<Election>> closedDatasetElections = new HashMap<>();
-    closedDatasetElections.put("DAR-1", List.of(e1, e2));
-    closedDatasetElections.put("DAR-2", List.of(e3));
-    return closedDatasetElections;
-  }
 }

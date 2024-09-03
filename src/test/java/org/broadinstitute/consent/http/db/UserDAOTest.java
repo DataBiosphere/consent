@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +31,10 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class UserDAOTest extends DAOTestHelper {
 
   @Test
@@ -202,12 +206,17 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
-    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
+    int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
+    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(lcId1, daaId);
 
     User user2 = createUserWithInstitution();
-    libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf",
+    int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(), user.getInstitutionId(), "asdf",
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
     assertNotNull(users);
@@ -219,7 +228,6 @@ class UserDAOTest extends DAOTestHelper {
     assertNotNull(users.get(1).getInstitution());
     assertNotNull(users.get(1).getLibraryCards());
     assertEquals(1, users.get(1).getLibraryCards().size());
-
   }
 
   @Test
@@ -333,7 +341,11 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     Integer institutionId = card.getInstitutionId();
     Integer userId = card.getUserId();
     List<User> users = userDAO.getUsersFromInstitutionWithCards(institutionId);
@@ -344,6 +356,31 @@ class UserDAOTest extends DAOTestHelper {
     LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
     assertEquals(card.getId(), returnedCard.getId());
     assertEquals(userId, returnedCard.getUserId());
+  }
+
+  @Test
+  void testGetUsersWithCardsByDaaId() {
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Instant now = Instant.now();
+    LibraryCard card = createLibraryCard();
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    LibraryCard card2 = createLibraryCard();
+    int daaId2 = daaDAO.createDaa(card2.getUserId(), now, card2.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId2);
+    Integer institutionId = card.getInstitutionId();
+    Integer userId = card.getUserId();
+    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
+    List<User> users2 = userDAO.getUsersWithCardsByDaaId(daaId2);
+    assertEquals(1, users.size());
+    assertEquals(1, users2.size());
+    User returnedUser = users.get(0);
+
+    LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
+    assertEquals(card.getId(), returnedCard.getId());
+    assertEquals(returnedCard.getDaaIds(), List.of(daaId));
+    assertEquals(userId, returnedCard.getUserId());
+    assertNotEquals(users, users2);
   }
 
   @Test
@@ -393,12 +430,10 @@ class UserDAOTest extends DAOTestHelper {
     User u = createUser();
     Dac dac1 = createDac();
     Dac dac2 = createDac();
-    UserRole chairperson1 = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole chairperson1 = UserRoles.Chairperson();
     chairperson1.setDacId(dac1.getDacId());
     chairperson1.setUserId(u.getUserId());
-    UserRole chairperson2 = new UserRole(UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName());
+    UserRole chairperson2 = UserRoles.Chairperson();
     chairperson2.setDacId(dac2.getDacId());
     chairperson2.setUserId(u.getUserId());
     assertNotEquals(chairperson1, chairperson2);

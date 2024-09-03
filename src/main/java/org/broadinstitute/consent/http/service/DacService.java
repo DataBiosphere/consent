@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.groupingBy;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -22,16 +23,18 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class DacService {
+public class DacService implements ConsentLogger {
 
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
@@ -39,21 +42,32 @@ public class DacService {
   private final ElectionDAO electionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final VoteService voteService;
+  private final DaaService daaService;
+  private final DacServiceDAO dacServiceDAO;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService) {
+      VoteService voteService, DaaService daaService,
+      DacServiceDAO dacServiceDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.voteService = voteService;
+    this.daaService = daaService;
+    this.dacServiceDAO = dacServiceDAO;
   }
 
   public List<Dac> findAll() {
-    return dacDAO.findAll();
+    List<Dac> dacs = dacDAO.findAll();
+    for (Dac dac : dacs) {
+      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+      associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+      dac.setAssociatedDaa(associatedDaa);
+    }
+    return dacs;
   }
 
   public List<User> findAllDACUsersBySearchString(String term) {
@@ -137,6 +151,11 @@ public class DacService {
     if (Objects.nonNull(dac)) {
       dac.setChairpersons(chairs);
       dac.setMembers(members);
+      if (dac.getAssociatedDaa() != null) {
+        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+        associatedDaa.setBroadDaa(daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+        dac.setAssociatedDaa(associatedDaa);
+      }
       return dac;
     }
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
@@ -162,9 +181,19 @@ public class DacService {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(Integer dacId) {
-    dacDAO.deleteDacMembers(dacId);
-    dacDAO.deleteDac(dacId);
+  public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
+    Dac fullDac = dacDAO.findById(dacId);
+    // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
+    if (fullDac.getName().toLowerCase().contains("broad")) {
+      throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
+    }
+    try {
+      dacServiceDAO.deleteDacAndDaas(fullDac);
+    } catch (IllegalArgumentException e) {
+      String logMessage = "Could not find DAC with the provided id: " + dacId;
+      logException(logMessage, e);
+      throw new IllegalArgumentException(logMessage);
+    }
   }
 
   public User findUserById(Integer id) throws IllegalArgumentException {
@@ -250,26 +279,6 @@ public class DacService {
         Objects.nonNull(dar.getData().getRestriction());
   }
 
-  boolean isAuthUserAdmin(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(), UserRoles.ADMIN.getRoleId());
-    return user != null;
-  }
-
-  boolean isAuthUserChair(AuthUser authUser) {
-    User user = userDAO.findUserByEmailAndRoleId(authUser.getEmail(),
-        UserRoles.CHAIRPERSON.getRoleId());
-    return user != null;
-  }
-
-  public List<Integer> getDacIdsForUser(AuthUser authUser) {
-    return dacDAO.findDacsForEmail(authUser.getEmail())
-        .stream()
-        .filter(Objects::nonNull)
-        .map(Dac::getDacId)
-        .distinct()
-        .collect(Collectors.toList());
-  }
-
   /**
    * Filter data access requests by the DAC they are associated with.
    */
@@ -297,23 +306,6 @@ public class DacService {
       }
     }
     return Collections.emptyList();
-  }
-
-  /**
-   * Filter elections by the Dataset/DAC they are associated with.
-   */
-  List<Election> filterElectionsByDAC(List<Election> elections, AuthUser authUser) {
-    if (isAuthUserAdmin(authUser)) {
-      return elections;
-    }
-
-    List<Integer> userDataSetIds = dataSetDAO.findDatasetsByAuthUserEmail(authUser.getEmail()).
-        stream().
-        map(Dataset::getDataSetId).
-        collect(Collectors.toList());
-    return elections.stream().
-        filter(e -> Objects.isNull(e.getDataSetId()) || userDataSetIds.contains(e.getDataSetId())).
-        collect(Collectors.toList());
   }
 
 }

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -13,11 +12,13 @@ import java.util.Collections;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class MetricsResourceTest {
+@ExtendWith(MockitoExtension.class)
+class MetricsResourceTest {
 
   private final String darHeader = "DAR ID";
 
@@ -28,17 +29,12 @@ public class MetricsResourceTest {
 
   private MetricsResource resource;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initResource() {
     resource = new MetricsResource(service);
   }
 
   @Test
-  public void testGetDarMetricsData() {
+  void testGetDarMetricsData() {
     when(service.generateDecisionMetrics(Type.DAR)).thenReturn(Collections.emptyList());
     when(service.getHeaderRow(Type.DAR)).thenReturn(darHeader);
     initResource();
@@ -50,7 +46,7 @@ public class MetricsResourceTest {
   }
 
   @Test
-  public void testGetDacMetricsData() {
+  void testGetDacMetricsData() {
     when(service.generateDecisionMetrics(Type.DAC)).thenReturn(Collections.emptyList());
     when(service.getHeaderRow(Type.DAC)).thenReturn(dacHeader);
     initResource();
@@ -62,7 +58,7 @@ public class MetricsResourceTest {
   }
 
   @Test
-  public void testGetDatasetMetricsData() {
+  void testGetDatasetMetricsData() {
     DatasetMetrics metrics = new DatasetMetrics();
     when(service.generateDatasetMetrics(any())).thenReturn(metrics);
     initResource();
@@ -72,7 +68,7 @@ public class MetricsResourceTest {
   }
 
   @Test
-  public void testGetDatasetMetricsDataNotFound() {
+  void testGetDatasetMetricsDataNotFound() {
     when(service.generateDatasetMetrics(any())).thenThrow(new NotFoundException());
     initResource();
     Response response = resource.getDatasetMetricsData(1);

@@ -34,6 +34,10 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       if (headers != null) {
         AuthUser user = buildAuthUserFromHeaders(headers);
         AuthUser userWithStatus = getUserWithStatusInfo(user);
+        if (userWithStatus == null) {
+          logWarn("User with status is null, authentication incomplete");
+          return Optional.of(user);
+        }
         return Optional.of(userWithStatus);
       }
       logException(new ServerErrorException("Error reading request headers", 500));
@@ -53,6 +57,9 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
     if (name == null) {
       name = email;
     }
+    if (email == null) {
+      logWarn(String.format("Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s", aud, name));
+    }
     return new AuthUser()
         .setAud(aud)
         .setAuthToken(token)
@@ -67,6 +74,10 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
    * @return A cloned AuthUser with Sam registration status
    */
   private AuthUser getUserWithStatusInfo(AuthUser authUser) {
+    if (authUser == null || authUser.getEmail() == null) {
+      logWarn("AuthUser/email is null, cannot get user status info");
+      return null;
+    }
     try {
       UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
       if (Objects.nonNull(userStatusInfo)) {
@@ -95,8 +106,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         logException("AuthUser not able to be registered: '" + gson.toJson(authUser), exc);
       }
     } catch (Throwable e) {
-      logException("Exception retrieving Sam user info for '" + authUser.getEmail() + "'",
-          new Exception(e.getMessage()));
+      logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
     return authUser;
   }

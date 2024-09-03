@@ -11,7 +11,8 @@ public class DatasetSummaryMapper implements RowMapper<DatasetSummary>, RowMappe
 
   @Override
   public DatasetSummary map(ResultSet rs, StatementContext ctx) throws SQLException {
-    if (hasColumn(rs, "dataset_id") && hasColumn(rs, "name") && hasColumn(rs, "alias")) {
+    if (hasNonZeroColumn(rs, "dataset_id") && hasColumn(rs, "name") && hasNonZeroColumn(rs,
+        "alias")) {
       String identifier = Dataset.parseAliasToIdentifier(rs.getInt("alias"));
       return new DatasetSummary(rs.getInt("dataset_id"), identifier, rs.getString("name"));
     }

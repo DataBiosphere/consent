@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class UserUpdateFieldsTest {
 
   private static final List<Integer> ALL_ROLE_IDS = Stream.of(UserRoles.values())

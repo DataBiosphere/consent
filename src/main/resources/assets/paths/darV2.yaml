@@ -1,6 +1,9 @@
 post:
-  summary: Create Data Access Request, version 2
-  description: Creates a Data Access Request
+  deprecated: true
+  summary: Create Data Access Request
+  description: |
+    Create Data Access Request, version 2.
+    Deprecated in favor of /api/dar/v3
   requestBody:
     description: The fields that represent a DAR in json format.
     required: true

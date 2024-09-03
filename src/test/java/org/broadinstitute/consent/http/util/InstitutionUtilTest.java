@@ -12,15 +12,16 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.junit.jupiter.api.BeforeEach;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
 
-  private final List<UserRole> adminRoles = Collections.singletonList(
-      new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-  private final List<UserRole> researcherRoles = Collections.singletonList(
-      new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
   private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles);
   private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(),
       researcherRoles);
@@ -38,25 +39,25 @@ class InstitutionUtilTest {
     return mockInstitution;
   }
 
-  @BeforeEach
-  void setUp() {
+  private void initUtil() {
     util = new InstitutionUtil();
   }
 
   @Test
-  void testCheckIfAdmin() {
-    Boolean adminResult = util.checkIfAdmin(adminUser);
-    Boolean researcherResult = util.checkIfAdmin(researcherUser);
-    assertTrue(adminResult);
-    assertFalse(researcherResult);
+  void testCheckIfAdminAdmin() {
+    initUtil();
+    assertTrue(util.checkIfAdmin(adminUser));
+    assertFalse(util.checkIfAdmin(researcherUser));
+    assertFalse(util.checkIfAdmin(new User()));
   }
 
   @Test
   void testGsonBuilderAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(true);
     String json = builder.toJson(mockInstitution);
-    Institution deserialized = new Gson().fromJson(json, Institution.class);
+    Institution deserialized = GsonUtil.getInstance().fromJson(json, Institution.class);
     assertEquals(mockInstitution.getName(), deserialized.getName());
     assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
     assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
@@ -69,6 +70,7 @@ class InstitutionUtilTest {
 
   @Test
   void testGsonBuilderNonAdmin() {
+    initUtil();
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);

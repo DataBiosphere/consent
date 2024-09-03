@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -34,7 +35,10 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DacDAOTest extends DAOTestHelper {
 
   @Test
@@ -47,16 +51,6 @@ class DacDAOTest extends DAOTestHelper {
   void testInsertWithEmail() {
     Dac dac = insertDacWithEmail();
     assertNotNull(dac);
-  }
-
-  @Test
-  void testFindDacsForEmail() {
-    Dac dac = insertDacWithEmail();
-    User chair = createUser();
-    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
-
-    List<Dac> dacs = dacDAO.findDacsForEmail(chair.getEmail());
-    assertEquals(1, dacs.size());
   }
 
   @Test
@@ -94,13 +88,102 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindById() {
+  void testFindAllNoDatasets() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
         "Test_" + RandomStringUtils.random(20, true, true),
         new Date());
+    Integer id2 = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    List<Dac> dacs = dacDAO.findAll();
+
+    Dac dac1 = dacs.get(0);
+    assertEquals(id, dac1.getDacId());
+    assertEquals(0, dac1.getDatasetIds().size());
+    assertNull(dac1.getAssociatedDaa());
+
+    Dac dac2 = dacs.get(1);
+    assertEquals(id2, dac2.getDacId());
+    assertEquals(0, dac2.getDatasetIds().size());
+    assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindAllWithDataset() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    Integer id2 = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), id);
+    List<DatasetProperty> list = new ArrayList<>();
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDataSetId(datasetId);
+    dsp.setPropertyKey(1);
+    dsp.setPropertyValue("Test_PropertyValue");
+    dsp.setCreateDate(new Date());
+    list.add(dsp);
+    datasetDAO.insertDatasetProperties(list);
+    Integer datasetId2 = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), id2);
+    Dataset dataset1 = datasetDAO.findDatasetById(datasetId);
+    Dataset dataset2 = datasetDAO.findDatasetById(datasetId2);
+    List<Dac> dacs = dacDAO.findAll();
+
+    Dac dac1 = dacs.get(0);
+    List<Integer> datasetIds = dac1.getDatasetIds();
+    assertEquals(id, dac1.getDacId());
+    assertEquals(1, datasetIds.size());
+    assertEquals(datasetId, datasetIds.get(0));
+    assertNull(dac1.getAssociatedDaa());
+
+    Dac dac2 = dacs.get(1);
+    List<Integer> datasetIds2 = dac2.getDatasetIds();
+    assertEquals(id2, dac2.getDacId());
+    assertEquals(1, datasetIds2.size());
+    assertEquals(datasetId2, datasetIds2.get(0));
+    assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindByIdNoDaa() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), id);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
     Dac dac = dacDAO.findById(id);
     assertEquals(id, dac.getDacId());
+    assertNull(dac.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindByIdWithDaa() {
+    Integer id = dacDAO.createDac(
+        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + RandomStringUtils.random(20, true, true),
+        new Date());
+    User user = createUser();
+    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), id);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    daaDAO.createDacDaaRelation(id, daaId);
+    Dac dac = dacDAO.findById(id);
+    DataAccessAgreement dacDaa = dac.getAssociatedDaa();
+    assertEquals(id, dac.getDacId());
+    assertEquals(daa.getDaaId(), dacDaa.getDaaId());
+    assertEquals(daa.getCreateUserId(), dacDaa.getCreateUserId());
+    assertEquals(daa.getCreateDate(), dacDaa.getCreateDate());
+    assertEquals(daa.getUpdateUserId(), dacDaa.getUpdateUserId());
+    assertEquals(daa.getUpdateDate(), dacDaa.getUpdateDate());
+    assertEquals(daa.getInitialDacId(), dacDaa.getInitialDacId());
   }
 
   @Test

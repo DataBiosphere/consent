@@ -25,22 +25,11 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class MatchDAOTest extends DAOTestHelper {
-
-  @Test
-  void testFindMatchesByConsentId() {
-    Match m = createMatch();
-
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertFalse(matches.isEmpty());
-    Match found = matches.get(0);
-    assertEquals(found.getId(), m.getId());
-    assertEquals(found.getPurpose(), m.getPurpose());
-    assertEquals(found.getConsent(), m.getConsent());
-    assertEquals(found.getFailed(), m.getFailed());
-    assertEquals(found.getMatch(), m.getMatch());
-  }
 
   @Test
   void testFindMatchesByPurposeId() {
@@ -66,15 +55,6 @@ class MatchDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
     return match;
-  }
-
-  @Test
-  void testDeleteMatchesByConsentId() {
-    Match m = createMatch();
-
-    matchDAO.deleteMatchesByConsentId(m.getConsent());
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertTrue(matches.isEmpty());
   }
 
   @Test
@@ -115,15 +95,15 @@ class MatchDAOTest extends DAOTestHelper {
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     //This match represents the match record generated for the target election
-    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match represents the match record generated for the ignored access election
     matchDAO.insertMatch(datasetIdentifier, ignoredAccessElection.getReferenceId(), false, false,
-        new Date(), MatchAlgorithm.V3.getVersion(), false);
+        new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), true);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), true);
 
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of(darReferenceId));
@@ -146,33 +126,17 @@ class MatchDAOTest extends DAOTestHelper {
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
-    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V3.getVersion(), false);
+    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
 
     //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
     //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
-  }
-
-  @Test
-  void testFindMatchByPurposeIdAndConsentId() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    matchDAO.insertMatch(
-      match.getConsent(),
-      match.getPurpose(),
-      match.getMatch(),
-      match.getFailed(),
-      new Date(),
-      match.getAlgorithmVersion(),
-      match.getAbstain());
-    Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(),
-        match.getConsent());
-    assertNotNull(foundMatch);
   }
 
   @Test
@@ -194,7 +158,7 @@ class MatchDAOTest extends DAOTestHelper {
   void testInsertFailureReason() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -213,32 +177,10 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteFailureReasonsByConsentIds() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
-    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
-    matchDAO.deleteRationalesByConsentIds(List.of(match.getConsent()));
-    Match foundMatch = matchDAO.findMatchById(matchId);
-    assertNotNull(foundMatch);
-    assertEquals(0, foundMatch.getRationales().size());
-  }
-
-  @Test
   void testDeleteFailureReasonsByPurposeIds() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V3.getVersion());
+    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     Integer matchId = matchDAO.insertMatch(
@@ -267,7 +209,7 @@ class MatchDAOTest extends DAOTestHelper {
             RandomUtils.nextBoolean(),
             false,
             new Date(),
-            MatchAlgorithm.V3.getVersion(),
+            MatchAlgorithm.V4.getVersion(),
             false);
     return matchDAO.findMatchById(matchId);
   }

@@ -36,7 +36,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class DAOTestHelper {
 
-  public static final String POSTGRES_IMAGE = "postgres:11.6-alpine";
+  public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
@@ -62,7 +62,6 @@ public class DAOTestHelper {
   protected static LibraryCardDAO libraryCardDAO;
   protected static DarCollectionDAO darCollectionDAO;
   protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
-  protected static DatasetAssociationDAO datasetAssociationDAO;
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
 
@@ -72,8 +71,6 @@ public class DAOTestHelper {
 
   @SuppressWarnings("rawtypes")
   private static PostgreSQLContainer postgresContainer;
-
-  public String ASSOCIATION_TYPE_TEST = RandomStringUtils.random(10, true, false);
 
   @BeforeAll
   public static void startUp() throws Exception {
@@ -132,7 +129,6 @@ public class DAOTestHelper {
     libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
-    datasetAssociationDAO = jdbi.onDemand(DatasetAssociationDAO.class);
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
@@ -150,21 +146,17 @@ public class DAOTestHelper {
     testingDAO.deleteAllDARDataset();
     testingDAO.deleteAllApprovalTimes();
     testingDAO.deleteAllVotes();
-    testingDAO.deleteAllConsentAudits();
     testingDAO.deleteAllMatchEntityRationales();
     testingDAO.deleteAllMatchEntities();
-    testingDAO.deleteAllConsentAssociations();
-    testingDAO.deleteAllConsents();
-    testingDAO.deleteAllAccessRps();
     testingDAO.deleteAllElections();
     testingDAO.deleteAllDatasetProperties();
     testingDAO.deleteAllDictionaryTerms();
-    testingDAO.deleteAllDatasetAssociations();
     testingDAO.deleteAllDatasetAudits();
     testingDAO.deleteAllDatasets();
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();
+    testingDAO.deleteAllLibraryCardDAAs();
     testingDAO.deleteAllDACDAAs();
     testingDAO.deleteAllDataAccessAgreements();
     testingDAO.deleteAllDacs();

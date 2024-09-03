@@ -38,10 +38,10 @@ put:
       Dataset registration schema instance and optional files for an alternative data sharing plan 
       and institutional certification files. The registration schema is always required. If a file 
       is also provided, then alternative data sharing information is required in the registration 
-      schema.
+      schema. Study Names can be updated, but they must be unique in the system. 
+      See [/api/dataset/studyNames](#/Study/findAllStudyNames) for a list of existing study names.
       
       The following fields are not modifiable:
-      * Study Name
       * Data Submitter Name/Email
       * Primary Data Use
       * Secondary Data Use

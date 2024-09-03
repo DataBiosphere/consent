@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
+import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -46,6 +48,15 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   String CHAIRPERSON = Resource.CHAIRPERSON;
+
+  @UseRowMapper(DatasetStudySummaryMapper.class)
+  @SqlQuery("""
+      SELECT d.dataset_id, d.name AS dataset_name, d.alias, s.study_id, s.name AS study_name
+        FROM dataset d
+        LEFT JOIN study s ON s.study_id = d.study_id
+        ORDER BY dataset_id
+      """)
+  List<DatasetStudySummary> findAllDatasetStudySummaries();
 
   @SqlUpdate(
       """
@@ -176,9 +187,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
           LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
           WHERE d.dataset_id in (<datasetIds>)
+          ORDER BY d.dataset_id
       """)
   List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
 
+  @Deprecated
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -228,43 +241,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<Dataset> findAllDatasets();
 
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                AND d.dac_approval = TRUE
-          """)
-  List<Dataset> findPublicDatasets();
-
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE
-                (
-                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.dac_approval = TRUE
-                )
-                OR d.dac_id IN (<dacIds>)
-          """)
-  List<Dataset> findDatasetsForChairperson(@BindList("dacIds") List<Integer> dacIds);
-
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-              WHERE
-                (
-                  (s.public_visibility IS NULL OR s.public_visibility = TRUE)
-                  AND d.dac_approval = TRUE
-                )
-                OR
-                (
-                  s.create_user_id = :userId
-                  OR (sp.key = 'dataCustodianEmail' AND sp.value LIKE concat('%"', :email, '"%'))
-                )
-          """)
-  List<Dataset> findDatasetsForDataSubmitter(@Bind("userId") Integer userId,
-      @Bind("email") String email);
-
+  @SqlQuery("""
+        SELECT dataset_id FROM dataset ORDER BY dataset_id
+        """)
+  List<Integer> findAllDatasetIds();
 
   /**
    * Original implementation of dacs -> datasets is via an association through consent. Subsequent
@@ -545,9 +525,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           " VALUES (:dataSetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
 
-  @SqlBatch("DELETE FROM dataset_property WHERE dataset_id = :dataSetId")
-  void deleteDatasetsProperties(@Bind("dataSetId") Collection<Integer> dataSetsIds);
-
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
   void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
@@ -559,9 +536,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
-
-  @SqlUpdate("DELETE FROM dataset_user_association WHERE datasetid = :datasetId")
-  void deleteUserAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   @SqlUpdate(
       "UPDATE dataset_property "
@@ -671,18 +645,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           " WHERE p.dataset_id = :datasetId ")
   Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
-  @Deprecated
-  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-  @SqlQuery("""
-      SELECT d.*, k.key, dp.property_value, d.dac_id
-      FROM dataset d
-      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
-      WHERE d.dataset_id IN (<dataSetIdList>) ORDER BY d.dataset_id, k.receive_order
-      """)
-  Set<DatasetDTO> findDatasetsByReceiveOrder(
-      @BindList("dataSetIdList") List<Integer> dataSetIdList);
-
   @Deprecated // Use getDictionaryTerms()
   @RegisterRowMapper(DictionaryMapper.class)
   @SqlQuery("SELECT * FROM dictionary d ORDER BY receive_order")
@@ -753,9 +715,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("datasetId") Integer datasetId
   );
 
-  @SqlUpdate("DELETE FROM consent_associations WHERE dataset_id = :datasetId")
-  void deleteConsentAssociationsByDatasetId(@Bind("datasetId") Integer datasetId);
-
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery("""
@@ -774,14 +733,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         WHERE d.dac_approval = TRUE AND dar.user_id = :userId
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
-
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      Dataset.BASE_QUERY + """
-      WHERE d.create_user_id = :userId
-      OR (dp.schema_property = 'dataCustodianEmail' AND LOWER(dp.property_value) = LOWER(:email))
-      """)
-  List<Dataset> findDatasetsByCustodian(@Bind("userId") Integer userId, @Bind("email") String email);
 
   @RegisterRowMapper(DatasetSummaryMapper.class)
   @SqlQuery("""

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -29,6 +30,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -38,6 +40,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,35 +54,32 @@ public class UserService {
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
   private final VoteDAO voteDAO;
-  private final DatasetAssociationDAO datasetAssociationDAO;
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final SamDAO samDAO;
   private final UserServiceDAO userServiceDAO;
+  private final DaaDAO daaDAO;
   private final EmailService emailService;
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO,
-      DatasetAssociationDAO datasetAssociationDAO, InstitutionDAO institutionDAO,
-      LibraryCardDAO libraryCardDAO,
+      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO,
-      UserServiceDAO userServiceDAO, EmailService emailService) {
+      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
     this.voteDAO = voteDAO;
-    this.datasetAssociationDAO = datasetAssociationDAO;
     this.institutionDAO = institutionDAO;
     this.libraryCardDAO = libraryCardDAO;
     this.acknowledgementDAO = acknowledgementDAO;
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.samDAO = samDAO;
     this.userServiceDAO = userServiceDAO;
+    this.daaDAO = daaDAO;
     this.emailService = emailService;
   }
 
@@ -171,11 +171,13 @@ public class UserService {
     public Integer userId;
     public String displayName;
     public String email;
+    public Integer institutionId;
 
     public SimplifiedUser(User user) {
       this.userId = user.getUserId();
       this.displayName = user.getDisplayName();
       this.email = user.getEmail();
+      this.institutionId = user.getInstitutionId();
     }
 
     public SimplifiedUser() {
@@ -191,6 +193,10 @@ public class UserService {
 
     public void setEmail(String email) {
       this.email = email;
+    }
+
+    public void setInstitutionId(Integer institutionId) {
+      this.institutionId = institutionId;
     }
 
     @Override
@@ -214,9 +220,7 @@ public class UserService {
   public User createUser(User user) {
     // Default role is researcher.
     if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
-      UserRole researcher = new UserRole(UserRoles.RESEARCHER.getRoleId(),
-          UserRoles.RESEARCHER.getRoleName());
-      user.setRoles(Collections.singletonList(researcher));
+      user.setResearcherRole();
     }
     validateRequiredFields(user);
     User existingUser = userDAO.findUserByEmail(user.getEmail());
@@ -276,8 +280,22 @@ public class UserService {
         }
       case Resource.ADMIN:
         return userDAO.findUsersWithLCsAndInstitution();
+      default:
+        // do nothing
     }
     return Collections.emptyList();
+  }
+
+  public List<SimplifiedUser> getUsersByDaaId(Integer daaId) {
+    if (Objects.isNull(daaId)) {
+      throw new IllegalArgumentException();
+    }
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (Objects.isNull(daa)) {
+      throw new NotFoundException();
+    }
+    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
+    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
   }
 
   public void deleteUserByEmail(String email) {
@@ -299,7 +317,6 @@ public class UserService {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
@@ -356,7 +373,7 @@ public class UserService {
    * @return JsonObject.
    */
   public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     List<LibraryCard> entries =
@@ -476,4 +493,14 @@ public class UserService {
     return user;
   }
 
+  public List<User> findUsersInJsonArray(String json, String arrayKey) {
+    List<JsonElement> jsonElementList;
+    try {
+      JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+      jsonElementList = jsonObject.getAsJsonArray(arrayKey).asList();
+    } catch (Exception e) {
+      throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
+    }
+    return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
+  }
 }

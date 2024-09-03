@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.service.mail;
 
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import com.sendgrid.SendGrid;
 import java.io.Writer;
@@ -12,9 +9,12 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class SendGridAPITest {
+@ExtendWith(MockitoExtension.class)
+class SendGridAPITest {
 
   private static final String TO = "to@broadinstitute.org";
   private static final String ID = "DUL-123";
@@ -31,11 +31,9 @@ public class SendGridAPITest {
   private UserDAO userDAO;
 
   @BeforeEach
-  public void setUp() throws Exception {
-    openMocks(this);
+  void setUp() throws Exception {
     // For most tests, we don't want to actually make an external call to SendGrid.
     configureApi(false);
-    doNothing().when(template).write(anyString());
   }
 
   private void configureApi(boolean active) {
@@ -48,7 +46,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testNewCaseMessage() {
+  void testNewCaseMessage() {
     try {
       sendGridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
     } catch (Exception e) {
@@ -57,7 +55,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testReminderMessage() {
+  void testReminderMessage() {
     try {
       sendGridAPI.sendReminderMessage(TO, ID, TYPE, template);
     } catch (Exception e) {
@@ -66,7 +64,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testDisabledDatasetMessage() {
+  void testDisabledDatasetMessage() {
     try {
       sendGridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
     } catch (Exception e) {
@@ -75,7 +73,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testNewDARRequests() {
+  void testNewDARRequests() {
     try {
       sendGridAPI.sendNewDARRequests(TO, ID, TYPE, template);
     } catch (Exception e) {
@@ -84,7 +82,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testNewResearcherApprovedMessage() {
+  void testNewResearcherApprovedMessage() {
     try {
       sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
     } catch (Exception e) {
@@ -93,7 +91,7 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testSendDataCustodianApprovalMessage() {
+  void testSendDataCustodianApprovalMessage() {
     try {
       sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
     } catch (Exception e) {
@@ -102,10 +100,37 @@ public class SendGridAPITest {
   }
 
   @Test
-  public void testSendDatasetSubmittedMessage() {
+  void testSendDatasetSubmittedMessage() {
     try {
       sendGridAPI.sendDatasetSubmittedMessage(TO, template);
     } catch (Exception e) {
+      fail("Should not throw exception");
+    }
+  }
+
+  @Test
+  void testSendDaaRequestMessage() {
+    try {
+      sendGridAPI.sendDaaRequestMessage(TO, template, "1");
+    } catch (Exception  e) {
+      fail("Should not throw exception");
+    }
+  }
+
+  @Test
+  void testSendNewDAAUploadSOMessage() {
+    try {
+      sendGridAPI.sendNewDAAUploadSOMessage(TO, template, "Test DAC");
+    } catch (Exception  e) {
+      fail("Should not throw exception");
+    }
+  }
+
+  @Test
+  void testSendNewDAAUploadResearcherMessage() {
+    try {
+      sendGridAPI.sendNewDAAUploadResearcherMessage(TO, template, "Test DAC");
+    } catch (Exception  e) {
       fail("Should not throw exception");
     }
   }

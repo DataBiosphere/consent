@@ -1,0 +1,17 @@
+type: object
+properties:
+  dataset_id:
+    type: integer
+    description: The id for a dataset
+  dataset_name:
+    type: string
+    description: The dataset name
+  identifier:
+    type: string
+    description: The dataset identifier
+  study_id:
+    type: integer
+    description: The id for the dataset's study
+  study_name:
+    type: string
+    description: The study name

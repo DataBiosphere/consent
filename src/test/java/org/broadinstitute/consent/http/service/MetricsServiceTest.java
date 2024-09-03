@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -38,11 +37,13 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class MetricsServiceTest {
+@ExtendWith(MockitoExtension.class)
+class MetricsServiceTest {
 
   @Mock
   private DacService dacService;
@@ -64,18 +65,13 @@ public class MetricsServiceTest {
 
   private MetricsService service;
 
-  @BeforeEach
-  public void setUp() {
-    openMocks(this);
-  }
-
   private void initService() {
     service = new MetricsService(dacService, dataSetDAO, darDAO, darCollectionDAO, matchDAO,
         electionDAO);
   }
 
   @Test
-  public void testGenerateDarDecisionMetricsNCase() {
+  void testGenerateDarDecisionMetricsNCase() {
     int darCount = RandomUtils.nextInt(1, 100);
     int datasetCount = RandomUtils.nextInt(1, 100);
     initializeMetricsDAOCalls(darCount, datasetCount);
@@ -86,18 +82,22 @@ public class MetricsServiceTest {
   }
 
   @Test
-  public void testGenerateDacDecisionMetricsNCase() {
+  void testGenerateDacDecisionMetricsNCase() {
     int darCount = RandomUtils.nextInt(1, 100);
     int datasetCount = RandomUtils.nextInt(1, 100);
     initializeMetricsDAOCalls(darCount, datasetCount);
-
+    Dac dac = generateDac();
+    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
+    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
+    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
     initService();
+
     List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
     assertFalse(metrics.isEmpty());
   }
 
   @Test
-  public void testGenerateDatasetMetrics() {
+  void testGenerateDatasetMetrics() {
     List<DataAccessRequest> dars = generateDars(1);
     List<Election> election = generateElection(dars.get(0).getReferenceId());
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
@@ -121,7 +121,7 @@ public class MetricsServiceTest {
   }
 
   @Test
-  public void testGenerateDatasetMetricsNotFound() {
+  void testGenerateDatasetMetricsNotFound() {
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
 
     initService();
@@ -136,10 +136,6 @@ public class MetricsServiceTest {
     when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
     when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
     when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
-    Dac dac = generateDac();
-    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
-    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
-    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
   }
 
   private Dac generateDac() {
@@ -151,16 +147,12 @@ public class MetricsServiceTest {
     chairUser.setUserId(1);
     chairUser.setEmail("chair@test.org");
     chairUser.setDisplayName("Chair");
-    UserRole chairRole =
-        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-    chairUser.setRoles(Collections.singletonList(chairRole));
+    chairUser.setChairpersonRole();
     User memberUser = new User();
     memberUser.setUserId(2);
     memberUser.setEmail("member@test.org");
     memberUser.setDisplayName("Member");
-    UserRole memberRole =
-        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
-    memberUser.setRoles(Collections.singletonList(memberRole));
+    memberUser.setMemberRole();
     dac.setChairpersons(Collections.singletonList(chairUser));
     dac.setMembers(Collections.singletonList(memberUser));
     return dac;

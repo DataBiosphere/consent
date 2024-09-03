@@ -33,7 +33,10 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetServiceDAOTest extends DAOTestHelper {
 
   private DatasetServiceDAO serviceDAO;
@@ -82,7 +85,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     DatasetServiceDAO.DatasetInsert insert = new DatasetServiceDAO.DatasetInsert(
         RandomStringUtils.randomAlphabetic(20),
         dac.getDacId(),
-        new DataUseBuilder().setAddiction(true).setGeneralUse(true).build(),
+        new DataUseBuilder().setStigmatizeDiseases(true).setGeneralUse(true).build(),
         user.getUserId(),
         List.of(prop1, prop2),
         List.of(file1));

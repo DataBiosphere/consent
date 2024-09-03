@@ -7,13 +7,16 @@ import static org.mockito.Mockito.when;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.owasp.fileio.FileValidator;
 
-public class ResourceTest {
+@ExtendWith(MockitoExtension.class)
+class ResourceTest {
 
   @Test
-  public void testValidateFileDetails() {
+  void testValidateFileDetails() {
     Long maxSize = new FileValidator().getMaxFileUploadSize();
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -27,7 +30,7 @@ public class ResourceTest {
   }
 
   @Test
-  public void testValidateFileDetailsFileName() {
+  void testValidateFileDetailsFileName() {
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
@@ -37,7 +40,7 @@ public class ResourceTest {
   }
 
   @Test
-  public void testValidateFileDetailsFileSize() {
+  void testValidateFileDetailsFileSize() {
     Long maxSize = new FileValidator().getMaxFileUploadSize();
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);

@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -38,6 +41,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Election;
@@ -45,11 +49,36 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.statement.Update;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DatasetDAOTest extends DAOTestHelper {
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetAndStudy() {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDataSetId(), study.getStudyId());
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertThat(summaries, hasSize(1));
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertEquals(study.getStudyId(), summaries.get(0).study_id());
+  }
+
+  @Test
+  void testFindAllDatasetStudySummariesDatasetOnly() {
+    Dataset dataset = insertDataset();
+
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    assertThat(summaries, hasSize(1));
+    assertEquals(dataset.getDataSetId(), summaries.get(0).dataset_id());
+    assertNull(summaries.get(0).study_id());
+  }
 
   @Test
   void testFindDatasetByIdWithDacAndConsent() {
@@ -63,298 +92,6 @@ class DatasetDAOTest extends DAOTestHelper {
     assertFalse(foundDataset.getProperties().isEmpty());
     assertTrue(foundDataset.getDeletable());
     assertNotNull(foundDataset.getCreateUser());
-  }
-
-  @Test
-  void testFindPublicDatasets_positive() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    Study s2 = insertStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findPublicDatasets();
-
-    assertEquals(2, datasets.size());
-
-    assertTrue(
-        datasets
-            .stream()
-            .map(Dataset::getDataSetId)
-            .toList()
-            .containsAll(
-                List.of(
-                    ds1.getDataSetId(),
-                    ds2.getDataSetId()
-                )));
-
-
-  }
-
-  @Test
-  void testFindPublicDatasets_negative() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    Study s2 = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findPublicDatasets();
-
-    assertEquals(0, datasets.size());
-
-  }
-
-  @Test
-  void testFindPublicDatasets_no_study() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findPublicDatasets();
-
-    assertEquals(2, datasets.size());
-
-    assertTrue(
-        datasets
-            .stream()
-            .map(Dataset::getDataSetId)
-            .toList()
-            .containsAll(
-                List.of(
-                    ds1.getDataSetId(),
-                    ds2.getDataSetId()
-                )));
-  }
-
-  @Test
-  void testFindPublicDatasets_not_approved() {
-    insertDataset();
-    insertDataset();
-
-    List<Dataset> datasets = datasetDAO.findPublicDatasets();
-
-    assertEquals(0, datasets.size());
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_email() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertPrivateStudyWithProperties();
-
-    studyDAO.insertStudyProperty(s1.getStudyId(),
-        "dataCustodianEmail",
-        PropertyType.Json.toString(),
-        GsonUtil.getInstance().toJson(List.of("user@example.com", user.getEmail()))
-    );
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(1, datasets.size());
-
-    assertEquals(ds1.getDataSetId(), datasets.get(0).getDataSetId());
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_create_user() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertPrivateStudyWithProperties(user);
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(1, datasets.size());
-
-    assertEquals(ds1.getDataSetId(), datasets.get(0).getDataSetId());
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_public() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    Study s2 = insertStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(2, datasets.size());
-
-    assertTrue(
-        datasets
-            .stream()
-            .map(Dataset::getDataSetId)
-            .toList()
-            .containsAll(
-                List.of(
-                    ds1.getDataSetId(),
-                    ds2.getDataSetId()
-                )));
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_negative() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    Study s1 = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    Study s2 = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds2.getDataSetId(), s2.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(0, datasets.size());
-
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_no_study() {
-    User user = createUser();
-
-    Dataset ds1 = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds1.getDataSetId());
-
-    Dataset ds2 = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        ds2.getDataSetId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(2, datasets.size());
-
-    assertTrue(
-        datasets
-            .stream()
-            .map(Dataset::getDataSetId)
-            .toList()
-            .containsAll(
-                List.of(
-                    ds1.getDataSetId(),
-                    ds2.getDataSetId()
-                )));
-  }
-
-  @Test
-  void testFindDatasetsForDataSubmitter_not_approved() {
-    User user = createUser();
-
-    insertDataset();
-    insertDataset();
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForDataSubmitter(user.getUserId(),
-        user.getEmail());
-
-    assertEquals(0, datasets.size());
-  }
-
-  @Test
-  void testFindDatasetsForChairperson_positive() {
-    Dac dac = insertDac();
-
-    User chairperson = createUser();
-    createUserRole(UserRoles.CHAIRPERSON.getRoleId(), chairperson.getUserId(), dac.getDacId());
-
-    // public dataset with study (visible)
-    Dataset ds1 = insertDataset();
-    Study s1 = insertStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds1.getDataSetId(), s1.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson.getUserId(),
-        ds1.getDataSetId());
-
-    // public dataset no study (visible)
-    Dataset ds2 = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson.getUserId(),
-        ds2.getDataSetId());
-
-    // private dataset with study (should not be visible)
-    Dataset privateDataset = insertDataset();
-    Study privateStudy = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(privateDataset.getDataSetId(), privateStudy.getStudyId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson.getUserId(),
-        privateDataset.getDataSetId());
-
-    // not approved (not visible)
-    insertDataset();
-
-    // private dataset with the same dac as chairperson (visible)
-    Dataset ds3 = insertDataset();
-    Study s3 = insertPrivateStudyWithProperties();
-
-    datasetDAO.updateStudyId(ds3.getDataSetId(), s3.getStudyId());
-    datasetDAO.updateDatasetDacId(ds3.getDataSetId(), dac.getDacId());
-
-    List<Dataset> datasets = datasetDAO.findDatasetsForChairperson(List.of(dac.getDacId()));
-
-    assertEquals(3, datasets.size());
-    assertTrue(
-        datasets
-            .stream()
-            .map(Dataset::getDataSetId).toList()
-            .containsAll(
-                List.of(
-                    ds1.getDataSetId(),
-                    ds2.getDataSetId(),
-                    ds3.getDataSetId())));
   }
 
   @Test
@@ -455,7 +192,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestUpdated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -507,7 +244,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetNIHInstitutionalFile_AlwaysLatestCreated() throws InterruptedException {
+  void testGetNIHInstitutionalFile_AlwaysLatestCreated() {
     Dataset dataset = insertDataset();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
@@ -860,6 +597,31 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllDatasetIds() {
+    List<Integer> insertedDatasetIds = IntStream.range(1, 5).mapToObj(i -> {
+      Dataset dataset = insertDataset();
+      return dataset.getDataSetId();
+    }).toList();
+    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
+    assertThat(datasetIds, contains(insertedDatasetIds.toArray()));
+  }
+
+  @Test
+  void testZeroAliasValuesValid() {
+    Dataset dataset = insertDataset();
+    jdbi.useHandle(handle -> {
+      Update update = handle.createUpdate(" UPDATE dataset SET alias = 0 WHERE dataset_id = :dataset_id ");
+      update.bind("dataset_id", dataset.getDataSetId());
+      update.execute();
+      handle.commit();
+    });
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    assertEquals(0, updatedDataset.getAlias());
+    updatedDataset.setDatasetIdentifier();
+    assertNotNull(updatedDataset.getDatasetIdentifier());
+  }
+
+  @Test
   void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
     String ds1Name = RandomStringUtils.randomAlphabetic(20);
@@ -932,7 +694,7 @@ class DatasetDAOTest extends DAOTestHelper {
     DataUse oldDataUse = dataset.getDataUse();
     DataUse newDataUse = new DataUseBuilder()
         .setGeneralUse(false)
-        .setCommercialUse(true)
+        .setNonProfitUse(true)
         .setHmbResearch(true)
         .setDiseaseRestrictions(List.of("DOID_1"))
         .build();
@@ -1043,7 +805,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasets() throws Exception {
+  void testGetApprovedDatasets() {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
@@ -1117,7 +879,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenNone() throws Exception {
+  void testGetApprovedDatasetsWhenNone() {
 
     // user with only unapproved datasets
     User user = createUser();
@@ -1147,31 +909,13 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetApprovedDatasetsWhenEmpty() throws Exception {
+  void testGetApprovedDatasetsWhenEmpty() {
 
     // user with no datasets
     User user = createUser();
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
 
-  }
-
-  @Test
-  void testFindDatasetsByCustodian() {
-    Dataset dataset = createDataset();
-    User user = dataset.getCreateUser();
-    createDatasetProperty(dataset.getDataSetId(), "studyName", "Study Name", PropertyType.String);
-    createDatasetProperty(dataset.getDataSetId(), "dataCustodianEmail", user.getEmail(),
-        PropertyType.String);
-    Dataset dataset2 = createDataset();
-
-    List<Dataset> datasets = datasetDAO.findDatasetsByCustodian(user.getUserId(), user.getEmail());
-    assertNotNull(datasets);
-    assertFalse(datasets.isEmpty());
-    assertEquals(dataset.getDataSetId(),
-        datasets.stream().map(Dataset::getDataSetId).toList().get(0));
-    assertNotEquals(dataset2.getDataSetId(),
-        datasets.stream().map(Dataset::getDataSetId).toList().get(0));
   }
 
   @Test

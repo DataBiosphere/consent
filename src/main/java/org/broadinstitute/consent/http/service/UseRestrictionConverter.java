@@ -64,7 +64,6 @@ public class UseRestrictionConverter implements ConsentLogger {
       // commercial status
       if (Objects.nonNull(dar.getData().getForProfit())) {
         Boolean isForProfit = Boolean.TRUE.equals(dar.getData().getForProfit());
-        dataUse.setCommercialUse(isForProfit);
         dataUse.setNonProfitUse(!isForProfit);
       }
 
@@ -92,7 +91,6 @@ public class UseRestrictionConverter implements ConsentLogger {
       if (Objects.nonNull(dar.getData().getOther())
         && Boolean.TRUE.equals(dar.getData().getOther())
         && Objects.nonNull(dar.getData().getOtherText())) {
-        dataUse.setOtherRestrictions(true);
         dataUse.setOther(dar.getData().getOtherText());
       }
 

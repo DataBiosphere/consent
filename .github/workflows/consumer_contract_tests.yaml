@@ -29,8 +29,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
@@ -75,10 +75,9 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Dispatch to terra-github-workflows
-        uses: aurelien-baudet/workflow-dispatch@93e95b157d791ae7f42aef8f8a0d3d723eba1c31 #commit sha for v2.1.1
+        uses: aurelien-baudet/workflow-dispatch@3133c5d135c7dbe4be4f9793872b6ef331b53bc7 #commit sha for v4.0.0
         with:
           workflow: publish-pacts.yaml
           repo: broadinstitute/terra-github-workflows

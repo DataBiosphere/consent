@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.MockitoAnnotations.openMocks;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -20,11 +19,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.verify.VerificationTimes;
 import org.testcontainers.containers.MockServerContainer;
 
+@ExtendWith(MockitoExtension.class)
 class HttpClientUtilTest implements WithMockServer {
 
   private HttpClientUtil clientUtil;
@@ -48,7 +50,6 @@ class HttpClientUtilTest implements WithMockServer {
 
   @BeforeEach
   void init() {
-    openMocks(this);
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
     mockServerClient.reset();
     ServicesConfiguration configuration = new ServicesConfiguration();

@@ -1,13 +1,15 @@
 name: consent-smoke-tests
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
-    types:
-      - closed
+    branches:
+      - develop
 
 jobs:
   smoke-tests:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
@@ -18,14 +20,14 @@ jobs:
         run:
           echo "bee-name=${{ github.event.repository.name }}-${{ github.run_id }}-dev" >> $GITHUB_OUTPUT
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: 'maven'
       - name: Bee Create
-        uses: broadinstitute/workflow-dispatch@v3
+        uses: broadinstitute/workflow-dispatch@v4
         with:
           workflow: bee-create
           repo: broadinstitute/terra-github-workflows
@@ -36,28 +38,20 @@ jobs:
         run: |
           mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ steps.setup.outputs.bee-name }}.bee.envs-terra.bio/
       - name: Store Test Result Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-reports
           path: 'target/surefire-reports'
       - name: Bee Destroy
-        uses: broadinstitute/workflow-dispatch@v3
+        uses: broadinstitute/workflow-dispatch@v4
+        if: always()
         with:
           workflow: bee-destroy
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN}}
           inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}" }'
-      - name: Notify Slack
-        uses: broadinstitute/action-slack@v3.8.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          status: ${{ job.status }}
-          channel: "#duos-notifications"
-          fields: repo,commit,author,action,eventName,ref,workflow,job,took
 
   upload-test-reports:
     needs: [smoke-tests]
@@ -73,3 +67,13 @@ jobs:
       artifact: 'test-reports'
       big-query-table: 'broad-dsde-qa.automated_testing.test_results'
       subuuid: ${{ github.run_id }}
+
+  report-workflow:
+    if: github.ref == 'refs/heads/develop'
+    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
+    with:
+      relates-to-chart-releases: 'consent-dev'
+      notify-slack-channels-upon-workflow-failure: ${{ vars.SLACK_NOTIFICATION_CHANNELS }}
+      notify-slack-channels-upon-workflow-retry: ${{ vars.SLACK_NOTIFICATION_CHANNELS }}
+    permissions:
+      id-token: write

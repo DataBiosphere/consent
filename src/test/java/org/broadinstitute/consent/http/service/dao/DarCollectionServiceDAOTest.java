@@ -33,7 +33,10 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private DarCollectionServiceDAO serviceDAO;
@@ -50,7 +53,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateElectionsForDarCollectionAdmin() throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
@@ -110,7 +113,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
@@ -276,7 +279,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin()
       throws Exception {
     User user = new User();
-    user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
+    user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);

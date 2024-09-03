@@ -138,5 +138,28 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-02-15-participants.xml"
     relativeToChangelogFile="true"/>
-  <include file="changesets/changelog-consent-2024-02-06-daa.xml" relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-02-06-daa.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-12-daa-lc.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-03-28-dataset-dac-id-props.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-01-rm-piname.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-02-rm-old-dbgap-url.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-04-23-standardize-dataset-association.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-05-03-rm-submitter-prop.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-06-04-unique-dac-id-daa.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-07-01-user-property-dao-fixes.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-23-dataset-associations.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-25-drop-access-rp.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-28-rm-consents.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
