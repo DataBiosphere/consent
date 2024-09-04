@@ -54,8 +54,6 @@ public interface DacDAO extends Transactional<DacDAO> {
         d.name AS dataset_name,
         DATE(d.create_date) AS dataset_create_date,
         d.object_id,
-        d.active,
-        d.needs_approval,
         d.alias AS dataset_alias,
         d.create_user_id,
         d.update_date AS dataset_update_date,
