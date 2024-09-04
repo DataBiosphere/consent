@@ -33,7 +33,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
           daa = rowView.getRow(DataAccessAgreement.class);
         }
 
-        if (rowView.getColumn("file_storage_object_id", String.class) != null) {
+        if (hasNonZeroColumn(rowView, "fso_file_storage_object_id")) {
           FileStorageObject fso = rowView.getRow(FileStorageObject.class);
           daa.setFile(fso);
         }
