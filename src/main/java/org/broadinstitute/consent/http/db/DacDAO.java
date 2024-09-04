@@ -44,7 +44,7 @@ public interface DacDAO extends Transactional<DacDAO> {
   @UseRowReducer(DacReducer.class)
   @SqlQuery("""
       SELECT dac.dac_id, dac.email, dac.name, dac.description, d.dataset_id, d.name AS dataset_name,
-        DATE(d.create_date) AS dataset_create_date, d.object_id, d.active, d.needs_approval,
+        DATE(d.create_date) AS dataset_create_date, d.object_id,
         d.alias AS dataset_alias, d.create_user_id, d.update_date AS dataset_update_date,
         d.update_user_id, d.data_use AS dataset_data_use, d.sharing_plan_document,
         d.sharing_plan_document_name
