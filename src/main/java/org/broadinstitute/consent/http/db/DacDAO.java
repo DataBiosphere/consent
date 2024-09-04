@@ -82,7 +82,7 @@ public interface DacDAO extends Transactional<DacDAO> {
         fso.update_date AS fso_update_date,
         fso.update_user_id AS fso_update_user_id
       FROM dac
-      LEFT OUTER JOIN dataset d ON dac.dac_id = d.dac_id
+      LEFT JOIN dataset d ON dac.dac_id = d.dac_id
       LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
