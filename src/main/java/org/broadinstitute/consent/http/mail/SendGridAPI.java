@@ -10,6 +10,7 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -33,12 +34,10 @@ import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestM
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.broadinstitute.consent.http.models.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class SendGridAPI {
+public class SendGridAPI implements ConsentLogger {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private String fromAccount;
   private SendGrid sendGrid;
   private Boolean activateEmailNotifications;
@@ -94,7 +93,7 @@ public class SendGridAPI {
       if (!tos.isEmpty()) {
         User user = userDAO.findUserByEmail(tos.get(0).getEmail());
         if (Objects.isNull(user)) {
-          logger.error("Unknown user: " + tos.get(0).getEmail());
+          logWarn("Unknown user: " + tos.get(0).getEmail());
           return false;
         }
         if (Objects.isNull(user.getEmailPreference())) {
@@ -110,7 +109,7 @@ public class SendGridAPI {
     boolean userEmailPreference = findUserEmailPreference(message);
     if (!userEmailPreference) {
       Gson gson = new Gson();
-      logger.info("User Email Preference has evaluated to 'false', not sending to: " + gson.toJson(
+      logInfo("User Email Preference has evaluated to 'false', not sending to: " + gson.toJson(
           message.getPersonalization()));
     }
     if (activateEmailNotifications && userEmailPreference) {
@@ -131,13 +130,13 @@ public class SendGridAPI {
         if (response.getStatusCode() > 202) {
           // Indicates some form of error:
           // https://docs.sendgrid.com/api-reference/mail-send/mail-send#responses
-          logger.error(
+          logException(
               String.format("Error sending email via SendGrid: '%s': %s", response.getStatusCode(),
-                  response.getBody()));
+                  response.getBody()), new WebApplicationException(response.getStatusCode()));
         }
         return Optional.of(response);
       } catch (IOException ex) {
-        logger.error("Exception sending email via SendGrid: " + ex.getMessage());
+        logException("Exception sending email via SendGrid: " + ex.getMessage(), ex);
         // Create a response that we can use to capture this failure.
         Response response = new Response(
             HttpStatusCodes.STATUS_CODE_SERVER_ERROR,

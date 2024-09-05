@@ -48,13 +48,10 @@ import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class DatasetService implements ConsentLogger {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   public static final String DATASET_NAME_KEY = "Dataset Name";
   private final DatasetDAO datasetDAO;
   private final DaaDAO daaDAO;
@@ -299,8 +296,7 @@ public class DatasetService implements ConsentLogger {
         sendDatasetApprovalNotificationEmail(dataset, user, approval);
       }
     } catch (Exception e) {
-      logger.error("Unable to notifier Data Submitter of dataset approval status: "
-          + dataset.getDatasetIdentifier());
+      logException("Unable to notifier Data Submitter of dataset approval status: %s".formatted(dataset.getDatasetIdentifier()), e);
     }
     return datasetReturn;
   }
@@ -380,7 +376,7 @@ public class DatasetService implements ConsentLogger {
       }
       return study;
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logException(e);
       throw e;
     }
 
@@ -391,7 +387,7 @@ public class DatasetService implements ConsentLogger {
       List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
       return approvedDatasets;
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logException(e);
       throw e;
     }
   }
