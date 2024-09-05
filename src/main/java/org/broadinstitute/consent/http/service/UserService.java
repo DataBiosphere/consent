@@ -124,7 +124,7 @@ public class UserService implements ConsentLogger {
               soAfterUpdate.get()
           );
         } catch (Exception e) {
-          logWarn("Could not send new researcher notification to SO: " + e.getMessage());
+          logWarn("Could not send new researcher notification to SO: %s".formatted(e.getMessage()));
         }
 
       }

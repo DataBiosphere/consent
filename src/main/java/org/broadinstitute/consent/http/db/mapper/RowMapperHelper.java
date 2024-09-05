@@ -26,7 +26,7 @@ public interface RowMapperHelper extends ConsentLogger {
     try {
       return rowView.getColumn(columnName, clazz) != null;
     } catch (Exception e) {
-      logDebug("RowView does not contain column " + columnName);
+      logDebug("RowView does not contain column %s".formatted(columnName));
       return false;
     }
   }
@@ -42,7 +42,7 @@ public interface RowMapperHelper extends ConsentLogger {
     try {
       return rowView.getColumn(columnName, Integer.class) != null && rowView.getColumn(columnName, Integer.class) > 0;
     } catch (Exception e) {
-      logDebug("RowView does not contain column " + columnName);
+      logDebug("RowView does not contain column %s".formatted(columnName));
       return false;
     }
   }
@@ -59,7 +59,7 @@ public interface RowMapperHelper extends ConsentLogger {
     try {
       return Optional.of(rowView.getColumn(columnName, clazz));
     } catch (Exception e) {
-      logDebug(String.format("RowView does not contain column %s", columnName));
+      logDebug("RowView does not contain column %s".formatted(columnName));
       return Optional.empty();
     }
   }
@@ -118,8 +118,7 @@ public interface RowMapperHelper extends ConsentLogger {
       try {
         data = DataAccessRequestData.fromString(escapedDataString);
       } catch (JsonSyntaxException | NullPointerException e) {
-        String message = "Unable to parse Data Access Request; error: " + e.getMessage();
-        logDebug(message);
+        logDebug("Unable to parse Data Access Request; error: %s".formatted(e.getMessage()));
         throw e;
       }
     }
