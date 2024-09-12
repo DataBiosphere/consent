@@ -30,20 +30,6 @@ public class Dataset {
 
   private Integer updateUserId;
 
-  /**
-   * Active is a deprecated property. The visibility of a dataset is calculated from DAC approval
-   * and the public visibility dataset property
-   */
-  @Deprecated(forRemoval = true)
-  private Boolean active;
-
-  /**
-   * Needs Approval is a deprecated property. The visibility of a dataset is calculated from DAC
-   * approval and the public visibility dataset property
-   */
-  @Deprecated(forRemoval = true)
-  private Boolean needsApproval;
-
   private Integer alias;
 
   private String datasetIdentifier;
@@ -186,22 +172,6 @@ public class Dataset {
       this.properties = new HashSet<>();
     }
     this.properties.add(property);
-  }
-
-  public Boolean getActive() {
-    return active;
-  }
-
-  public void setActive(Boolean active) {
-    this.active = active;
-  }
-
-  public Boolean getNeedsApproval() {
-    return needsApproval;
-  }
-
-  public void setNeedsApproval(Boolean needsApproval) {
-    this.needsApproval = needsApproval;
   }
 
   public Boolean getDacApproval() {

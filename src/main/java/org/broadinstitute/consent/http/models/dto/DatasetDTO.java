@@ -31,12 +31,6 @@ public class DatasetDTO {
   private List<DatasetPropertyDTO> properties;
 
   @JsonProperty
-  private Boolean active;
-
-  @JsonProperty
-  private Boolean needsApproval;
-
-  @JsonProperty
   private Boolean isAssociatedToDataOwners;
 
   @JsonProperty
@@ -113,22 +107,6 @@ public class DatasetDTO {
 
   public void setProperties(List<DatasetPropertyDTO> properties) {
     this.properties = properties;
-  }
-
-  public Boolean getActive() {
-    return active;
-  }
-
-  public void setActive(Boolean active) {
-    this.active = active;
-  }
-
-  public Boolean getNeedsApproval() {
-    return needsApproval;
-  }
-
-  public void setNeedsApproval(Boolean needsApproval) {
-    this.needsApproval = needsApproval;
   }
 
   public Boolean getIsAssociatedToDataOwners() {

@@ -136,11 +136,9 @@
     <!--insert researcher user-->
     <changeSet author="rfricke" id="test-dataset">
         <sql>
-            INSERT INTO dataset (name, active, needs_approval)
+            INSERT INTO dataset (name)
             SELECT
-                dac.name,
-                't',
-                'f'
+                dac.name
             FROM dac
         </sql>
     </changeSet>
