@@ -129,9 +129,10 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response;
+    String body;
     try {
       response = executeRequest(request);
-      String body = response.parseAsString();
+      body = response.parseAsString();
       if (!response.isSuccessStatusCode()) {
         if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
           throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
@@ -145,7 +146,6 @@ public class SamDAO implements ConsentLogger {
           throw e;
         }
       }
-      return new Gson().fromJson(body, UserStatus.class);
     } catch (ServerErrorException e) {
       logException(
           "Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
@@ -161,6 +161,7 @@ public class SamDAO implements ConsentLogger {
       userStatus.setUserInfo(userInfo);
       return userStatus;
     }
+    return new Gson().fromJson(body, UserStatus.class);
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
