@@ -63,7 +63,8 @@ public class SamDAO implements ConsentLogger {
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock List<ResourceType> for user %s".formatted(authUser.getEmail()), e);
+      logException("Sam is down, returning mock List<ResourceType> for user %s".formatted(
+          authUser.getEmail()), e);
       return List.of();
     }
     String body = response.parseAsString();
@@ -84,7 +85,9 @@ public class SamDAO implements ConsentLogger {
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()), e);
+      logException(
+          "Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()),
+          e);
       UserStatusInfo userStatusInfo = new UserStatusInfo();
       userStatusInfo.setAdminEnabled(false);
       userStatusInfo.setEnabled(true);
@@ -108,7 +111,8 @@ public class SamDAO implements ConsentLogger {
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(authUser.getEmail()), e);
+      logException("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(
+          authUser.getEmail()), e);
       UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
       userStatusDiagnostics.setAdminEnabled(false);
       userStatusDiagnostics.setEnabled(true);
@@ -132,7 +136,7 @@ public class SamDAO implements ConsentLogger {
         if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
           throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
         } else {
-          String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
+          String errorMsg = "Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ".formatted(
               authUser.getEmail(),
               response.getStatusCode(),
               response.getStatusMessage());
@@ -143,7 +147,8 @@ public class SamDAO implements ConsentLogger {
       }
       return new Gson().fromJson(body, UserStatus.class);
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
+      logException(
+          "Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
       UserStatus userStatus = new UserStatus();
       UserStatus.Enabled enabled = new UserStatus.Enabled();
       enabled.setLdap(true);
@@ -173,7 +178,9 @@ public class SamDAO implements ConsentLogger {
 
           @Override
           public void onFailure(@NonNull Throwable throwable) {
-            logException("Async Post Registration Failure for user: %s".formatted(authUser.getEmail()), new Exception(throwable));
+            logException(
+                "Async Post Registration Failure for user: %s".formatted(authUser.getEmail()),
+                new Exception(throwable));
           }
         },
         listeningExecutorService);
@@ -204,7 +211,7 @@ public class SamDAO implements ConsentLogger {
     try {
       response = executeRequest(request);
       if (!response.isSuccessStatusCode()) {
-        logException(String.format("Error getting Terms of Service: %s for user %s",
+        logException("Error getting Terms of Service: %s for user %s".formatted(
                 response.getStatusMessage(), authUser.getEmail()),
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
@@ -228,11 +235,13 @@ public class SamDAO implements ConsentLogger {
     try {
       response = executeRequest(request);
       if (!response.isSuccessStatusCode()) {
-        logException(String.format("Error accepting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
+        logException("Error accepting Terms of Service: %s for user %s".formatted(
+                response.getStatusMessage(), authUser.getEmail()),
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(authUser.getEmail()), e);
+      logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(
+          authUser.getEmail()), e);
       return 204;
     }
     return response.getStatusCode();
@@ -246,11 +255,13 @@ public class SamDAO implements ConsentLogger {
       response = executeRequest(request);
       if (!response.isSuccessStatusCode()) {
         logException(
-            String.format("Error removing Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
+            "Error removing Terms of Service: %s for user %s".formatted(response.getStatusMessage(),
+                authUser.getEmail()),
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(authUser.getEmail()), e);
+      logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(
+          authUser.getEmail()), e);
       return 204;
     }
     return response.getStatusCode();
@@ -268,7 +279,9 @@ public class SamDAO implements ConsentLogger {
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()), e);
+      logException(
+          "Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()),
+          e);
       return new EmailResponse(
           "Mock google subject id",
           authUser.getEmail(),
@@ -280,9 +293,9 @@ public class SamDAO implements ConsentLogger {
   }
 
   /**
-   * Private method to handle the general case of sending requests to Sam.
-   * We inject timeouts here to prevent Sam from impacting API performance.
-   * The default is 10 seconds which should be more than enough for Sam calls.
+   * Private method to handle the general case of sending requests to Sam. We inject timeouts here
+   * to prevent Sam from impacting API performance. The default is 10 seconds which should be more
+   * than enough for Sam calls.
    *
    * @param request The HttpRequest
    * @return The HttpResponse
