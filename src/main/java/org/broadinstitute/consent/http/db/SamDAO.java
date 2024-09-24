@@ -16,6 +16,7 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,6 +59,8 @@ public class SamDAO implements ConsentLogger {
     if (!response.isSuccessStatusCode()) {
       logException("Error getting resource types from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock List<ResourceType> for user %s".formatted(authUser.getEmail()));
+      return List.of();
     }
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {
@@ -73,6 +76,13 @@ public class SamDAO implements ConsentLogger {
       logException(
           "Error getting user registration information from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()));
+      UserStatusInfo userStatusInfo = new UserStatusInfo();
+      userStatusInfo.setAdminEnabled(false);
+      userStatusInfo.setEnabled(true);
+      userStatusInfo.setUserEmail(authUser.getEmail());
+      userStatusInfo.setUserSubjectId("Mock subject id for user %s".formatted(authUser.getEmail()));
+      return userStatusInfo;
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusInfo.class);
@@ -86,6 +96,14 @@ public class SamDAO implements ConsentLogger {
       logException(
           "Error getting enabled statuses of user from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(authUser.getEmail()));
+      UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
+      userStatusDiagnostics.setAdminEnabled(false);
+      userStatusDiagnostics.setEnabled(true);
+      userStatusDiagnostics.setTosAccepted(true);
+      userStatusDiagnostics.setInAllUsersGroup(true);
+      userStatusDiagnostics.setInGoogleProxyGroup(true);
+      return userStatusDiagnostics;
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
@@ -141,6 +159,8 @@ public class SamDAO implements ConsentLogger {
     if (!response.isSuccessStatusCode()) {
       logException("Error getting Terms of Service text from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock Terms of Service Text");
+      return "Terms of Service Text";
     }
     return response.parseAsString();
   }
@@ -152,6 +172,13 @@ public class SamDAO implements ConsentLogger {
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error getting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock TosResponse for user: %s".formatted(authUser.getEmail()));
+      return new TosResponse(
+          new Date().toString(),
+          true,
+          "2023-11-15",
+          true
+      );
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
@@ -164,6 +191,8 @@ public class SamDAO implements ConsentLogger {
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error accepting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(authUser.getEmail()));
+      return 204;
     }
     return response.getStatusCode();
   }
@@ -176,6 +205,8 @@ public class SamDAO implements ConsentLogger {
       logException(
           String.format("Error removing Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(authUser.getEmail()));
+      return 204;
     }
     return response.getStatusCode();
   }
@@ -188,6 +219,12 @@ public class SamDAO implements ConsentLogger {
       logException(
           "Error getting user by email from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+      logWarn("Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()));
+      return new EmailResponse(
+          "Mock google subject id",
+          authUser.getEmail(),
+          "Mock user subject id"
+      );
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, EmailResponse.class);
