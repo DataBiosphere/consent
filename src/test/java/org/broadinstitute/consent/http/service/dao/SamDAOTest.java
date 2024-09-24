@@ -121,9 +121,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-    assertThrows(BadRequestException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(BadRequestException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -132,9 +130,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-    assertThrows(NotAuthorizedException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(NotAuthorizedException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -143,9 +139,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    assertThrows(ForbiddenException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(ForbiddenException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -155,9 +149,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    assertThrows(NotFoundException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(NotFoundException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -166,9 +158,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-    assertThrows(ConsentConflictException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(ConsentConflictException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -224,9 +214,7 @@ class SamDAOTest implements WithMockServer {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT)
             .withBody(status.toString()));
 
-    assertThrows(ConsentConflictException.class, () -> {
-      samDAO.postRegistrationInfo(authUser);
-    });
+    assertThrows(ConsentConflictException.class, () -> samDAO.postRegistrationInfo(authUser));
   }
 
   @Test
@@ -242,9 +230,7 @@ class SamDAOTest implements WithMockServer {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
             .withBody(status.toString()));
 
-    assertThrows(Exception.class, () -> {
-      samDAO.postRegistrationInfo(authUser);
-    });
+    assertThrows(Exception.class, () -> samDAO.postRegistrationInfo(authUser));
   }
 
   /**
@@ -353,7 +339,8 @@ class SamDAOTest implements WithMockServer {
   void testConnectTimeout() {
     mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
     try {
-      EmailResponse response = samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10));
+      EmailResponse response = samDAO.getV1UserByEmail(authUser,
+          RandomStringUtils.randomAlphabetic(10));
       assertNotNull(response);
       // When Sam is down, we return a mocked EmailResponse
       assertTrue(response.toString().contains("Mock"));
@@ -372,7 +359,8 @@ class SamDAOTest implements WithMockServer {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     try {
-      EmailResponse response = samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10));
+      EmailResponse response = samDAO.getV1UserByEmail(authUser,
+          RandomStringUtils.randomAlphabetic(10));
       assertNotNull(response);
       // When Sam is down, we return a mocked EmailResponse
       assertTrue(response.toString().contains("Mock"));
