@@ -81,6 +81,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.DraftSubmissionService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -182,6 +183,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final ElasticSearchService elasticSearchService = injector.getProvider(
         ElasticSearchService.class).get();
     final OidcService oidcService = injector.getProvider(OidcService.class).get();
+    final DraftSubmissionService draftSubmissionService = injector.getProvider(
+        DraftSubmissionService.class).get();
 
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 

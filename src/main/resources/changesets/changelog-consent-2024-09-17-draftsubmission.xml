@@ -1,0 +1,41 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-09-17-draftsubmission.xml" author="otchet-broad">
+    <createTable tableName="draftsubmission">
+      <column name="id" autoIncrement="true" type="bigint">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="text" >
+      </column>
+        <column name="json" type="jsonb" >
+      </column>
+      <column name="uuid" type="uuid" >
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="create_user_id" type="bigint">
+        <constraints foreignKeyName="fk_create_user_id" nullable="false"/>
+      </column>
+      <column name="create_date" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="update_user_id" type="bigint">
+        <constraints foreignKeyName="fk_update_user_id"/>
+      </column>
+      <column name="update_date" type="timestamp"/>
+      <column name="schema_class" type="text">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="draftsubmission" constraintName="fk_create_user_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="user_id" referencedTableName="users"
+                             referencesUniqueColumn="true"/>
+
+
+    <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="draftsubmission" constraintName="fk_update_user_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencedColumnNames="user_id" referencedTableName="users"
+                             referencesUniqueColumn="true"/>
+  </changeSet>
+</databaseChangeLog>

@@ -64,6 +64,7 @@ public class DAOTestHelper {
   protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
+  protected static DraftSubmissionDAO draftSubmissionDAO;
 
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -132,6 +133,7 @@ public class DAOTestHelper {
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
+    draftSubmissionDAO = jdbi.onDemand(DraftSubmissionDAO.class);
   }
 
   @AfterAll
@@ -153,6 +155,7 @@ public class DAOTestHelper {
     testingDAO.deleteAllDictionaryTerms();
     testingDAO.deleteAllDatasetAudits();
     testingDAO.deleteAllDatasets();
+    testingDAO.deleteAllDraftSubmissions();
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();

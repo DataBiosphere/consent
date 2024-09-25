@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.DraftSubmissionDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -64,6 +65,7 @@ import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.DraftSubmissionService;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
@@ -105,6 +107,7 @@ public class ConsentModule extends AbstractModule {
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final AcknowledgementDAO acknowledgementDAO;
+  private final DraftSubmissionDAO draftSubmissionDAO;
 
   public static final String DB_ENV = "postgresql";
 
@@ -140,6 +143,7 @@ public class ConsentModule extends AbstractModule {
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
+    this.draftSubmissionDAO = this.jdbi.onDemand(DraftSubmissionDAO.class);
   }
 
   @Override
@@ -168,6 +172,7 @@ public class ConsentModule extends AbstractModule {
     container.setInstitutionDAO(providesInstitutionDAO());
     container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
     container.setAcknowledgementDAO(providesAcknowledgementDAO());
+    container.setDraftSubmissionDAO(providesDraftSubmissionDAO());
     return container;
   }
 
@@ -617,5 +622,16 @@ public class ConsentModule extends AbstractModule {
   SupportRequestService providesSupportRequestService() {
     return new SupportRequestService(config.getServicesConfiguration(), providesInstitutionDAO(),
         providesUserDAO());
+  }
+
+  @Provides
+  DraftSubmissionDAO providesDraftSubmissionDAO() {
+    return this.draftSubmissionDAO;
+  }
+
+  @Provides
+  DraftSubmissionService providesDraftSubmissionService() {
+    return new DraftSubmissionService(jdbi, providesDraftSubmissionDAO(),
+        providesFileStorageObjectService());
   }
 }
