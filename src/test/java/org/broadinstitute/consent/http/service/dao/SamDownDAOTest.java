@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.HttpError.error;
 import static org.mockserver.model.HttpRequest.request;
 
-import com.google.api.client.http.HttpStatusCodes;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -114,13 +113,13 @@ public class SamDownDAOTest {
   @Test
   void testAcceptTosStatus() throws Exception {
     int acceptStatus = samDAO.acceptTosStatus(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, acceptStatus);
+    assertEquals(samDAO.getDefaultTosStatusCode(), acceptStatus);
   }
 
   @Test
   void testRejectTosStatus() throws Exception {
     int rejectStatus = samDAO.rejectTosStatus(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, rejectStatus);
+    assertEquals(samDAO.getDefaultTosStatusCode(), rejectStatus);
   }
 
   @Test

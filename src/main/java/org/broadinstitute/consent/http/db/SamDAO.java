@@ -14,15 +14,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
-import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -37,7 +33,7 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class SamDAO implements ConsentLogger {
+public class SamDAO implements ConsentLogger, SamDefaults {
 
   private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
@@ -97,15 +93,6 @@ public class SamDAO implements ConsentLogger {
     return new Gson().fromJson(body, UserStatusInfo.class);
   }
 
-  public UserStatusInfo getDefaultUserStatusInfo(AuthUser authUser) {
-    UserStatusInfo userStatusInfo = new UserStatusInfo();
-    userStatusInfo.setAdminEnabled(false);
-    userStatusInfo.setEnabled(true);
-    userStatusInfo.setUserEmail(authUser.getEmail());
-    userStatusInfo.setUserSubjectId("Mock subject id for user %s".formatted(authUser.getEmail()));
-    return userStatusInfo;
-  }
-
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
@@ -124,16 +111,6 @@ public class SamDAO implements ConsentLogger {
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
-  }
-
-  public UserStatusDiagnostics getDefaultUserStatusDiagnostics() {
-    UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
-    userStatusDiagnostics.setAdminEnabled(false);
-    userStatusDiagnostics.setEnabled(true);
-    userStatusDiagnostics.setTosAccepted(true);
-    userStatusDiagnostics.setInAllUsersGroup(true);
-    userStatusDiagnostics.setInGoogleProxyGroup(true);
-    return userStatusDiagnostics;
   }
 
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
@@ -163,20 +140,6 @@ public class SamDAO implements ConsentLogger {
       return getDefaultUserStatus(authUser);
     }
     return new Gson().fromJson(body, UserStatus.class);
-  }
-
-  public UserStatus getDefaultUserStatus(AuthUser authUser) {
-    UserStatus userStatus = new UserStatus();
-    UserStatus.Enabled enabled = new UserStatus.Enabled();
-    enabled.setLdap(true);
-    enabled.setAllUsersGroup(true);
-    enabled.setGoogle(true);
-    UserStatus.UserInfo userInfo = new UserStatus.UserInfo();
-    userInfo.setUserEmail(authUser.getEmail());
-    userInfo.setUserSubjectId("Mock user subject id");
-    userStatus.setEnabled(enabled);
-    userStatus.setUserInfo(userInfo);
-    return userStatus;
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
@@ -221,16 +184,6 @@ public class SamDAO implements ConsentLogger {
     return response.parseAsString();
   }
 
-  // Helper method to get the latest ToS from resources.
-  public String getDefaultToSText() throws Exception {
-    try (InputStream is = this.getClass().getResourceAsStream("/tos.txt")) {
-      if (is != null) {
-        return IOUtils.toString(is, Charset.defaultCharset());
-      }
-      return "Terms of Service";
-    }
-  }
-
   public TosResponse getTosResponse(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getSelfTosUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
@@ -251,14 +204,6 @@ public class SamDAO implements ConsentLogger {
     return new Gson().fromJson(body, TosResponse.class);
   }
 
-  public TosResponse getDefaultTosResponse() {
-    return new TosResponse(
-        new Date().toString(),
-        true,
-        "2023-11-15",
-        true);
-  }
-
   public int acceptTosStatus(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.acceptTosUrl());
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
@@ -273,7 +218,7 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return HttpStatusCodes.STATUS_CODE_NO_CONTENT;
+      return getDefaultTosStatusCode();
     }
     return response.getStatusCode();
   }
@@ -293,7 +238,7 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return HttpStatusCodes.STATUS_CODE_NO_CONTENT;
+      return getDefaultTosStatusCode();
     }
     return response.getStatusCode();
   }
@@ -317,13 +262,6 @@ public class SamDAO implements ConsentLogger {
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, EmailResponse.class);
-  }
-
-  public EmailResponse getDefaultEmailResponse(AuthUser authUser) {
-    return new EmailResponse(
-        "Mock google subject id",
-        authUser.getEmail(),
-        "Mock user subject id");
   }
 
   /**

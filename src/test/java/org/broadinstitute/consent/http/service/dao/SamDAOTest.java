@@ -1,10 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -42,7 +43,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.model.Header;
-import org.mockserver.model.HttpError;
 import org.mockserver.model.MediaType;
 import org.testcontainers.containers.MockServerContainer;
 
@@ -335,20 +335,6 @@ class SamDAOTest implements WithMockServer {
   }
 
   @Test
-  void testConnectTimeout() {
-    mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
-    try {
-      EmailResponse response = samDAO.getV1UserByEmail(authUser,
-          RandomStringUtils.randomAlphabetic(10));
-      assertNotNull(response);
-      // When Sam is down, we return a mocked EmailResponse
-      assertTrue(response.toString().contains("Mock"));
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
   void testReadTimeout() {
     // Increase the delay to push the response beyond the read timeout value
     int delayMilliseconds = samDAO.readTimeoutMilliseconds + 10;
@@ -361,8 +347,8 @@ class SamDAOTest implements WithMockServer {
       EmailResponse response = samDAO.getV1UserByEmail(authUser,
           RandomStringUtils.randomAlphabetic(10));
       assertNotNull(response);
-      // When Sam is down, we return a mocked EmailResponse
-      assertTrue(response.toString().contains("Mock"));
+      // When Sam is down, we return a default EmailResponse
+      assertThat(samDAO.getDefaultEmailResponse(authUser), samePropertyValuesAs(response));
     } catch (Exception e) {
       fail(e.getMessage());
     }
