@@ -144,7 +144,6 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testNotFound() {
-    setDebugLogging();
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))

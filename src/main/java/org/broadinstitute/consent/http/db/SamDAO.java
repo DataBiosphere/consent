@@ -14,12 +14,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -88,15 +91,19 @@ public class SamDAO implements ConsentLogger {
       logException(
           "Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()),
           e);
-      UserStatusInfo userStatusInfo = new UserStatusInfo();
-      userStatusInfo.setAdminEnabled(false);
-      userStatusInfo.setEnabled(true);
-      userStatusInfo.setUserEmail(authUser.getEmail());
-      userStatusInfo.setUserSubjectId("Mock subject id for user %s".formatted(authUser.getEmail()));
-      return userStatusInfo;
+      return getDefaultUserStatusInfo(authUser);
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusInfo.class);
+  }
+
+  public UserStatusInfo getDefaultUserStatusInfo(AuthUser authUser) {
+    UserStatusInfo userStatusInfo = new UserStatusInfo();
+    userStatusInfo.setAdminEnabled(false);
+    userStatusInfo.setEnabled(true);
+    userStatusInfo.setUserEmail(authUser.getEmail());
+    userStatusInfo.setUserSubjectId("Mock subject id for user %s".formatted(authUser.getEmail()));
+    return userStatusInfo;
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
@@ -113,16 +120,20 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(
           authUser.getEmail()), e);
-      UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
-      userStatusDiagnostics.setAdminEnabled(false);
-      userStatusDiagnostics.setEnabled(true);
-      userStatusDiagnostics.setTosAccepted(true);
-      userStatusDiagnostics.setInAllUsersGroup(true);
-      userStatusDiagnostics.setInGoogleProxyGroup(true);
-      return userStatusDiagnostics;
+      return getDefaultUserStatusDiagnostics();
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
+  }
+
+  public UserStatusDiagnostics getDefaultUserStatusDiagnostics() {
+    UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
+    userStatusDiagnostics.setAdminEnabled(false);
+    userStatusDiagnostics.setEnabled(true);
+    userStatusDiagnostics.setTosAccepted(true);
+    userStatusDiagnostics.setInAllUsersGroup(true);
+    userStatusDiagnostics.setInGoogleProxyGroup(true);
+    return userStatusDiagnostics;
   }
 
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
@@ -137,7 +148,7 @@ public class SamDAO implements ConsentLogger {
         if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
           throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
         } else {
-          String errorMsg = "Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ".formatted(
+          String errorMsg = "Error posting user registration information to Sam. Email [%s]. Status Code [%s]. Status Message [%s]".formatted(
               authUser.getEmail(),
               response.getStatusCode(),
               response.getStatusMessage());
@@ -149,19 +160,23 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException(
           "Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
-      UserStatus userStatus = new UserStatus();
-      UserStatus.Enabled enabled = new UserStatus.Enabled();
-      enabled.setLdap(true);
-      enabled.setAllUsersGroup(true);
-      enabled.setGoogle(true);
-      UserStatus.UserInfo userInfo = new UserStatus.UserInfo();
-      userInfo.setUserEmail(authUser.getEmail());
-      userInfo.setUserSubjectId("Mock user subject id");
-      userStatus.setEnabled(enabled);
-      userStatus.setUserInfo(userInfo);
-      return userStatus;
+      return getDefaultUserStatus(authUser);
     }
     return new Gson().fromJson(body, UserStatus.class);
+  }
+
+  public UserStatus getDefaultUserStatus(AuthUser authUser) {
+    UserStatus userStatus = new UserStatus();
+    UserStatus.Enabled enabled = new UserStatus.Enabled();
+    enabled.setLdap(true);
+    enabled.setAllUsersGroup(true);
+    enabled.setGoogle(true);
+    UserStatus.UserInfo userInfo = new UserStatus.UserInfo();
+    userInfo.setUserEmail(authUser.getEmail());
+    userInfo.setUserSubjectId("Mock user subject id");
+    userStatus.setEnabled(enabled);
+    userStatus.setUserInfo(userInfo);
+    return userStatus;
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
@@ -174,7 +189,7 @@ public class SamDAO implements ConsentLogger {
         new FutureCallback<>() {
           @Override
           public void onSuccess(@Nullable UserStatus userStatus) {
-            logInfo("Successfully registered user in Sam: " + authUser.getEmail());
+            logInfo("Successfully registered user in Sam: %s".formatted(authUser.getEmail()));
           }
 
           @Override
@@ -195,14 +210,25 @@ public class SamDAO implements ConsentLogger {
     try {
       response = executeRequest(request);
       if (!response.isSuccessStatusCode()) {
-        logException("Error getting Terms of Service text from Sam: " + response.getStatusMessage(),
+        logException("Error getting Terms of Service text from Sam: %s".formatted(response.getStatusMessage()),
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
+        return getDefaultToSText();
       }
     } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock Terms of Service Text", e);
-      return "Terms of Service Text";
+      logException("Sam is down, returning most recent Terms of Service Text: ", e);
+      return getDefaultToSText();
     }
     return response.parseAsString();
+  }
+
+  // Helper method to get the latest ToS from resources.
+  public String getDefaultToSText() throws Exception {
+    try (InputStream is = this.getClass().getResourceAsStream("/tos.txt")) {
+      if (is != null) {
+        return IOUtils.toString(is, Charset.defaultCharset());
+      }
+      return "Terms of Service";
+    }
   }
 
   public TosResponse getTosResponse(AuthUser authUser) throws Exception {
@@ -219,14 +245,18 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException(
           "Sam is down, returning mock TosResponse for user: %s".formatted(authUser.getEmail()), e);
-      return new TosResponse(
-          new Date().toString(),
-          true,
-          "2023-11-15",
-          true);
+      return getDefaultTosResponse();
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
+  }
+
+  public TosResponse getDefaultTosResponse() {
+    return new TosResponse(
+        new Date().toString(),
+        true,
+        "2023-11-15",
+        true);
   }
 
   public int acceptTosStatus(AuthUser authUser) throws Exception {
@@ -243,7 +273,7 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return 204;
+      return HttpStatusCodes.STATUS_CODE_NO_CONTENT;
     }
     return response.getStatusCode();
   }
@@ -263,7 +293,7 @@ public class SamDAO implements ConsentLogger {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return 204;
+      return HttpStatusCodes.STATUS_CODE_NO_CONTENT;
     }
     return response.getStatusCode();
   }
@@ -283,14 +313,17 @@ public class SamDAO implements ConsentLogger {
       logException(
           "Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()),
           e);
-      return new EmailResponse(
-          "Mock google subject id",
-          authUser.getEmail(),
-          "Mock user subject id"
-      );
+      return getDefaultEmailResponse(authUser);
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, EmailResponse.class);
+  }
+
+  public EmailResponse getDefaultEmailResponse(AuthUser authUser) {
+    return new EmailResponse(
+        "Mock google subject id",
+        authUser.getEmail(),
+        "Mock user subject id");
   }
 
   /**
