@@ -18,13 +18,13 @@
     <logback.version>1.5.7</logback.version>
     <pact.version>4.6.14</pact.version>
     <postgres.version>42.7.4</postgres.version>
-    <surefire.version>3.5.0</surefire.version>
+    <surefire.version>3.5.1</surefire.version>
     <swagger.ui.version>5.17.14</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.3</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.14.0</mockito.version>
+    <mockito.version>5.14.1</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -670,7 +670,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.20.1</version>
+      <version>1.20.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -678,7 +678,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.20.1</version>
+      <version>1.20.2</version>
       <scope>test</scope>
     </dependency>
 
