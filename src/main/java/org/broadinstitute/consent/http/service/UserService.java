@@ -40,11 +40,10 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class UserService {
+public class UserService implements ConsentLogger {
 
   public final static String LIBRARY_CARDS_FIELD = "libraryCards";
   public final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
@@ -62,7 +61,6 @@ public class UserService {
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final EmailService emailService;
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
@@ -126,7 +124,7 @@ public class UserService {
               soAfterUpdate.get()
           );
         } catch (Exception e) {
-          logger.warn("Could not send new researcher notification to SO: " + e.getMessage());
+          logWarn("Could not send new researcher notification to SO: %s".formatted(e.getMessage()));
         }
 
       }
@@ -160,8 +158,9 @@ public class UserService {
     try {
       userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
     } catch (Exception e) {
-      logger.error("Error when updating user: %s, institution: %s, role: %s",
-          userId.toString(), institutionId.toString(), role.toString());
+      logException(
+          "Error when updating user: %s, institution: %s, role: %s".formatted(userId.toString(),
+              institutionId.toString(), role.toString()), e);
       throw e;
     }
   }
@@ -356,9 +355,9 @@ public class UserService {
 
   public void deleteUserRole(User authUser, Integer userId, Integer roleId) {
     userRoleDAO.removeSingleUserRole(userId, roleId);
-    logger.info(
-        "User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: "
-            + userId);
+    logInfo(
+        "User %s deleted roleId: %s from User ID: %s".formatted(authUser.getDisplayName(), roleId,
+            userId));
   }
 
   public List<User> findUsersWithNoInstitution() {
