@@ -1,0 +1,17 @@
+type: object
+description: A wrapper object containing a Visa and Visa metadata
+properties:
+  iss:
+    type: string
+    description: The Issuer, part of the [Visa Identity](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#visa-identity)
+  sub:
+    type: string
+    description: The Subject, part of the [Visa Identity](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#visa-identity)
+  iat:
+    type: number
+    description: The Issued-At timestamp
+  exp:
+    type: number
+    description: The Expiration timestamp
+  ga4gh_visa_v1:
+    $ref: './VisaClaim.yaml'

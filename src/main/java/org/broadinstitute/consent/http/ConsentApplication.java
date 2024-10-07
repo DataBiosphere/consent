@@ -66,6 +66,7 @@ import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.OAuth2Resource;
+import org.broadinstitute.consent.http.resources.PassportResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
@@ -225,6 +226,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
     env.jersey().register(new NihAccountResource(nihService, userService));
+    env.jersey().register(injector.getInstance(PassportResource.class));
     env.jersey().register(new SamResource(samService, userService));
     env.jersey().register(new SchemaResource());
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));

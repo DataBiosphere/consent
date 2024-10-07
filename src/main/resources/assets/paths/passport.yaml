@@ -1,0 +1,15 @@
+get:
+  summary: Get Passport
+  description: |
+    Get a DUOS Passport that adheres to the [GA4GH Passport spec](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md)
+  tags:
+    - Passport
+  responses:
+    200:
+      description: A Passport Object representing the authenticated user's known DUOS visas
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/PassportClaim.yaml'
+    400:
+      description: Bad Request.  Make sure limit and offset are not negative numbers.

@@ -716,6 +716,8 @@ paths:
           description: Server error.
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
+  /api/passport:
+    $ref: './paths/passport.yaml'
   /api/user:
     $ref: './paths/user.yaml'
   /api/user/me:
