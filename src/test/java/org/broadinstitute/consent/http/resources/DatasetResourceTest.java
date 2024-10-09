@@ -11,7 +11,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,6 +43,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Error;
@@ -114,13 +114,42 @@ class DatasetResourceTest {
     return createPropertiesJson(jsonProperties);
   }
 
-  private DatasetDTO createMockDatasetDTO() {
-    DatasetDTO mockDTO = new DatasetDTO();
-    mockDTO.setDataSetId(RandomUtils.nextInt(100, 1000));
-    mockDTO.setDatasetName("test");
-    mockDTO.addProperty(new DatasetPropertyDTO("Property", "test"));
+  // TODO: Add cases for patchable: name, multiple props, some patchable, some aren't
+  //       Maybe a case for parameterized tests
+  // TODO: Add non-patchable case
+  @Test
+  void testPatchByDatasetUpdate_patchable() {
+    Gson gson = GsonUtil.buildGson();
 
-    return mockDTO;
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetProperty dataLocationProp = new DatasetProperty();
+    dataLocationProp.setSchemaProperty("dataLocation");
+    dataLocationProp.setPropertyType(PropertyType.String);
+    dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
+    dataset.setProperties(Set.of(dataLocationProp));
+
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+
+    DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setSchemaProperty("dataLocation");
+    patchProp.setPropertyType(PropertyType.String);
+    patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
+
+    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+
+    // TODO: Update the response to match what we patched
+    when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
+        gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+      // TODO: Add more object validation
+      System.out.println(response.getEntity());
+    }
   }
 
   @Test

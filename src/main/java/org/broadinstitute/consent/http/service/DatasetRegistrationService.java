@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -66,6 +67,11 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
     this.emailService = emailService;
+  }
+
+  public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
+    // TODO: Flesh out stub
+    return datasetDAO.findDatasetById(datasetId);
   }
 
   public Study findStudyById(Integer studyId) {

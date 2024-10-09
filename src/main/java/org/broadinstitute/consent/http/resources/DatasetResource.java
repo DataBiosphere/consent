@@ -13,6 +13,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -40,6 +41,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
@@ -190,6 +192,46 @@ public class DatasetResource extends Resource {
     }
   }
 
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PATCH
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response patchByDatasetUpdate(
+      @Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId,
+      @FormDataParam("dataset") String json) {
+    try {
+      // TODO: Check permissions for chair, data submitter
+      if (json == null || json.isEmpty()) {
+        throw new BadRequestException("Dataset Patch is required");
+      }
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+      DatasetPatch patch;
+      try {
+        patch = gson.fromJson(json, DatasetPatch.class);
+      } catch (Exception e) {
+        throw new BadRequestException("Unable to parse dataset patch: " + json);
+      }
+      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      if (existingDataset == null) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+      if (!patch.isPatchable(existingDataset)) {
+        return Response.notModified().entity(existingDataset).build();
+      }
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
+      return Response.noContent().entity(patched).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @Deprecated
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
