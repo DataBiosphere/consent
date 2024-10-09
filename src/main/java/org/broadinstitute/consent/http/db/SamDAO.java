@@ -33,12 +33,13 @@ import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class SamDAO implements ConsentLogger, SamDefaults {
+public class SamDAO implements ConsentLogger {
 
   private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
+  private final SamDefaults samDefaults = new SamDefaults();
   public final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
@@ -87,7 +88,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
       logException(
           "Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()),
           e);
-      return getDefaultUserStatusInfo(authUser);
+      return samDefaults.getDefaultUserStatusInfo(authUser);
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusInfo.class);
@@ -107,7 +108,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(
           authUser.getEmail()), e);
-      return getDefaultUserStatusDiagnostics();
+      return samDefaults.getDefaultUserStatusDiagnostics();
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
@@ -137,7 +138,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
     } catch (ServerErrorException e) {
       logException(
           "Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
-      return getDefaultUserStatus(authUser);
+      return samDefaults.getDefaultUserStatus(authUser);
     }
     return new Gson().fromJson(body, UserStatus.class);
   }
@@ -175,11 +176,11 @@ public class SamDAO implements ConsentLogger, SamDefaults {
       if (!response.isSuccessStatusCode()) {
         logException("Error getting Terms of Service text from Sam: %s".formatted(response.getStatusMessage()),
             new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-        return getDefaultToSText();
+        return samDefaults.getDefaultToSText();
       }
     } catch (ServerErrorException e) {
       logException("Sam is down, returning most recent Terms of Service Text: ", e);
-      return getDefaultToSText();
+      return samDefaults.getDefaultToSText();
     }
     return response.parseAsString();
   }
@@ -198,7 +199,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
     } catch (ServerErrorException e) {
       logException(
           "Sam is down, returning mock TosResponse for user: %s".formatted(authUser.getEmail()), e);
-      return getDefaultTosResponse();
+      return samDefaults.getDefaultTosResponse();
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
@@ -218,7 +219,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return getDefaultTosStatusCode();
+      return samDefaults.getDefaultTosStatusCode();
     }
     return response.getStatusCode();
   }
@@ -238,7 +239,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
     } catch (ServerErrorException e) {
       logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(
           authUser.getEmail()), e);
-      return getDefaultTosStatusCode();
+      return samDefaults.getDefaultTosStatusCode();
     }
     return response.getStatusCode();
   }
@@ -258,7 +259,7 @@ public class SamDAO implements ConsentLogger, SamDefaults {
       logException(
           "Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()),
           e);
-      return getDefaultEmailResponse(authUser);
+      return samDefaults.getDefaultEmailResponse(authUser);
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, EmailResponse.class);

@@ -15,18 +15,18 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 /**
  * This class represents default/mock objects from Sam that can be used when Sam is unavailable
  */
-public interface SamDefaults {
+public class SamDefaults {
 
-  default UserStatusInfo getDefaultUserStatusInfo(AuthUser authUser) {
+  public UserStatusInfo getDefaultUserStatusInfo(AuthUser authUser) {
     UserStatusInfo userStatusInfo = new UserStatusInfo();
     userStatusInfo.setAdminEnabled(false);
     userStatusInfo.setEnabled(true);
     userStatusInfo.setUserEmail(authUser.getEmail());
-    userStatusInfo.setUserSubjectId("Default subject id for user %s".formatted(authUser.getEmail()));
+    userStatusInfo.setUserSubjectId(authUser.getEmail());
     return userStatusInfo;
   }
 
-  default UserStatusDiagnostics getDefaultUserStatusDiagnostics() {
+  public UserStatusDiagnostics getDefaultUserStatusDiagnostics() {
     UserStatusDiagnostics userStatusDiagnostics = new UserStatusDiagnostics();
     userStatusDiagnostics.setAdminEnabled(false);
     userStatusDiagnostics.setEnabled(true);
@@ -36,7 +36,7 @@ public interface SamDefaults {
     return userStatusDiagnostics;
   }
 
-  default UserStatus getDefaultUserStatus(AuthUser authUser) {
+  public UserStatus getDefaultUserStatus(AuthUser authUser) {
     UserStatus userStatus = new UserStatus();
     UserStatus.Enabled enabled = new UserStatus.Enabled();
     enabled.setLdap(true);
@@ -44,13 +44,13 @@ public interface SamDefaults {
     enabled.setGoogle(true);
     UserStatus.UserInfo userInfo = new UserStatus.UserInfo();
     userInfo.setUserEmail(authUser.getEmail());
-    userInfo.setUserSubjectId("Default user subject id");
+    userInfo.setUserSubjectId(authUser.getEmail());
     userStatus.setEnabled(enabled);
     userStatus.setUserInfo(userInfo);
     return userStatus;
   }
 
-  default String getDefaultToSText() throws Exception {
+  public String getDefaultToSText() throws Exception {
     try (InputStream is = this.getClass().getResourceAsStream("/tos.txt")) {
       if (is != null) {
         return IOUtils.toString(is, Charset.defaultCharset());
@@ -59,7 +59,7 @@ public interface SamDefaults {
     }
   }
 
-  default TosResponse getDefaultTosResponse() {
+  public TosResponse getDefaultTosResponse() {
     return new TosResponse(
         new Date().toString(),
         true,
@@ -67,15 +67,15 @@ public interface SamDefaults {
         true);
   }
 
-  default int getDefaultTosStatusCode() {
+  public int getDefaultTosStatusCode() {
     return HttpStatusCodes.STATUS_CODE_NO_CONTENT;
   }
 
-  default EmailResponse getDefaultEmailResponse(AuthUser authUser) {
+  public EmailResponse getDefaultEmailResponse(AuthUser authUser) {
     return new EmailResponse(
-        "Default google subject id",
         authUser.getEmail(),
-        "Default user subject id");
+        authUser.getEmail(),
+        authUser.getEmail());
   }
 
 }

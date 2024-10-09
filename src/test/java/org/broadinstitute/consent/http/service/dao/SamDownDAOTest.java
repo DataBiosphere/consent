@@ -13,6 +13,7 @@ import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
+import org.broadinstitute.consent.http.db.SamDefaults;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -34,6 +35,7 @@ import org.testcontainers.containers.MockServerContainer;
 public class SamDownDAOTest {
 
   private SamDAO samDAO;
+  private final SamDefaults samDefaults = new SamDefaults();
 
   private final AuthUser authUser = new AuthUser()
       .setEmail(RandomStringUtils.randomAlphabetic(10));
@@ -74,7 +76,7 @@ public class SamDownDAOTest {
   @Test
   void testGetRegistrationInfo() throws Exception {
     UserStatusInfo info = samDAO.getRegistrationInfo(authUser);
-    UserStatusInfo def = samDAO.getDefaultUserStatusInfo(authUser);
+    UserStatusInfo def = samDefaults.getDefaultUserStatusInfo(authUser);
     assertNotNull(info);
     assertThat(info, samePropertyValuesAs(def));
   }
@@ -82,7 +84,7 @@ public class SamDownDAOTest {
   @Test
   void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics userStatus = samDAO.getSelfDiagnostics(authUser);
-    UserStatusDiagnostics def = samDAO.getDefaultUserStatusDiagnostics();
+    UserStatusDiagnostics def = samDefaults.getDefaultUserStatusDiagnostics();
     assertNotNull(userStatus);
     assertThat(userStatus, samePropertyValuesAs(def));
   }
@@ -90,7 +92,7 @@ public class SamDownDAOTest {
   @Test
   void testPostRegistrationInfo() throws Exception {
     UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
-    UserStatus def = samDAO.getDefaultUserStatus(authUser);
+    UserStatus def = samDefaults.getDefaultUserStatus(authUser);
     assertNotNull(userStatus);
     assertThat(userStatus.getEnabled(), samePropertyValuesAs(def.getEnabled()));
     assertThat(userStatus.getUserInfo(), samePropertyValuesAs(def.getUserInfo()));
@@ -99,7 +101,7 @@ public class SamDownDAOTest {
   @Test
   void testGetTosResponse() throws Exception {
     TosResponse tos = samDAO.getTosResponse(authUser);
-    TosResponse def = samDAO.getDefaultTosResponse();
+    TosResponse def = samDefaults.getDefaultTosResponse();
     assertNotNull(tos);
     assertThat(tos, samePropertyValuesAs(def));
   }
@@ -107,25 +109,25 @@ public class SamDownDAOTest {
   @Test
   void testGetToSText() throws Exception {
     String text = samDAO.getToSText();
-    assertEquals(samDAO.getDefaultToSText(), text);
+    assertEquals(samDefaults.getDefaultToSText(), text);
   }
 
   @Test
   void testAcceptTosStatus() throws Exception {
     int acceptStatus = samDAO.acceptTosStatus(authUser);
-    assertEquals(samDAO.getDefaultTosStatusCode(), acceptStatus);
+    assertEquals(samDefaults.getDefaultTosStatusCode(), acceptStatus);
   }
 
   @Test
   void testRejectTosStatus() throws Exception {
     int rejectStatus = samDAO.rejectTosStatus(authUser);
-    assertEquals(samDAO.getDefaultTosStatusCode(), rejectStatus);
+    assertEquals(samDefaults.getDefaultTosStatusCode(), rejectStatus);
   }
 
   @Test
   void testGetV1UserByEmail() throws Exception {
     EmailResponse userByEmail = samDAO.getV1UserByEmail(authUser, authUser.getEmail());
-    EmailResponse def = samDAO.getDefaultEmailResponse(authUser);
+    EmailResponse def = samDefaults.getDefaultEmailResponse(authUser);
     assertNotNull(userByEmail);
     assertThat(userByEmail, samePropertyValuesAs(def));
   }

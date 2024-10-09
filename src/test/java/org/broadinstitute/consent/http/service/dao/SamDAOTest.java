@@ -24,6 +24,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.WithMockServer;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
+import org.broadinstitute.consent.http.db.SamDefaults;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
@@ -50,6 +51,7 @@ import org.testcontainers.containers.MockServerContainer;
 class SamDAOTest implements WithMockServer {
 
   private SamDAO samDAO;
+  private final SamDefaults samDefaults = new SamDefaults();
 
   private MockServerClient mockServerClient;
 
@@ -348,7 +350,7 @@ class SamDAOTest implements WithMockServer {
           RandomStringUtils.randomAlphabetic(10));
       assertNotNull(response);
       // When Sam is down, we return a default EmailResponse
-      assertThat(samDAO.getDefaultEmailResponse(authUser), samePropertyValuesAs(response));
+      assertThat(samDefaults.getDefaultEmailResponse(authUser), samePropertyValuesAs(response));
     } catch (Exception e) {
       fail(e.getMessage());
     }
