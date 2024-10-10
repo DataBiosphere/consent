@@ -9,25 +9,16 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanReasons;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.col;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.collaboratingSites;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSR;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataAccessCommitteeId;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPPhsID;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPStudyRegistrationName;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.diseaseSpecificUse;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.embargoReleaseDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.generalResearchUse;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.gs;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.gso;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.hmb;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.irb;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.mor;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.morDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.multiCenterStudy;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihAnvilUse;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihGenomicProgramAdministratorName;
@@ -35,21 +26,16 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihICsSupportingStudy;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihInstitutionCenterSubmission;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihProgramOfficerName;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nmds;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.npu;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherPrimary;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.otherSecondary;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.phenotypeIndication;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.piInstitution;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.poa;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.pub;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.sequencingCenter;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.submittingToAnvil;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -149,30 +135,53 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(consentGroup);
     assertNotNull(consentGroup.getDatasetId());
     assertNotNull(consentGroup.getDatasetIdentifier());
-    assertNotNull(consentGroup.getConsentGroupName());
-    assertNotNull(consentGroup.getAccessManagement());
-    assertNotNull(consentGroup.getGeneralResearchUse());
-    assertNotNull(consentGroup.getHmb());
-    assertNotNull(consentGroup.getDiseaseSpecificUse());
-    assertFalse(consentGroup.getDiseaseSpecificUse().isEmpty());
-    assertNotNull(consentGroup.getPoa());
-    assertNotNull(consentGroup.getOtherPrimary());
-    assertNotNull(consentGroup.getNmds());
-    assertNotNull(consentGroup.getGso());
-    assertNotNull(consentGroup.getPub());
-    assertNotNull(consentGroup.getCol());
-    assertNotNull(consentGroup.getIrb());
-    assertNotNull(consentGroup.getGs());
-    assertNotNull(consentGroup.getMor());
-    assertNotNull(consentGroup.getMorDate());
-    assertNotNull(consentGroup.getNpu());
-    assertNotNull(consentGroup.getOtherSecondary());
-    assertNotNull(consentGroup.getDataAccessCommitteeId());
     assertNotNull(consentGroup.getDataLocation());
     assertNotNull(consentGroup.getUrl());
     assertNotNull(consentGroup.getNumberOfParticipants());
     assertNotNull(consentGroup.getFileTypes());
     assertFalse(consentGroup.getFileTypes().isEmpty());
+  }
+
+  @Test
+  void testBuildSchemaWithDataUse() {
+    DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
+    Study study = createMockStudy();
+    Dataset dataset = createMockDataset();
+    DataUse dataUse = new DataUseBuilder()
+        .setGeneralUse(RandomUtils.nextBoolean())
+        .setHmbResearch(RandomUtils.nextBoolean())
+        .setDiseaseRestrictions(List.of(RandomStringUtils.randomAlphabetic(10)))
+        .setPopulationOriginsAncestry(RandomUtils.nextBoolean())
+        .setOther(RandomStringUtils.randomAlphabetic(10))
+        .setMethodsResearch(RandomUtils.nextBoolean())
+        .setGeneticStudiesOnly(RandomUtils.nextBoolean())
+        .setPublicationResults(RandomUtils.nextBoolean())
+        .setCollaboratorRequired(RandomUtils.nextBoolean())
+        .setEthicsApprovalRequired(RandomUtils.nextBoolean())
+        .setGeographicalRestrictions(RandomStringUtils.randomAlphabetic(10))
+        .setPublicationMoratorium(new Date().toString())
+        .setNonProfitUse(RandomUtils.nextBoolean())
+        .setSecondaryOther(RandomStringUtils.randomAlphabetic(10))
+        .build();
+    dataset.setDataUse(dataUse);
+    DatasetRegistrationSchemaV1 schemaV1 = builder.build(study, List.of(dataset));
+    ConsentGroup consentGroup = schemaV1.getConsentGroups().get(0);
+    assertEquals(dataUse.getGeneralUse(), consentGroup.getGeneralResearchUse());
+    assertEquals(dataUse.getHmbResearch(), consentGroup.getHmb());
+    assertEquals(dataUse.getDiseaseRestrictions(), consentGroup.getDiseaseSpecificUse());
+    assertEquals(dataUse.getPopulationOriginsAncestry(), consentGroup.getPoa());
+    assertEquals(dataUse.getOther(), consentGroup.getOtherPrimary());
+    assertEquals(dataUse.getMethodsResearch(), consentGroup.getNmds());
+    assertEquals(dataUse.getGeneticStudiesOnly(), consentGroup.getGso());
+    assertEquals(dataUse.getPublicationResults(), consentGroup.getPub());
+    assertEquals(dataUse.getCollaboratorRequired(), consentGroup.getCol());
+    assertEquals(dataUse.getEthicsApprovalRequired(), consentGroup.getIrb());
+    assertEquals(dataUse.getGeographicalRestrictions(), consentGroup.getGs());
+    // ConsentGroup.morDate is a string value that is meant to represent a date
+    assertEquals(true, consentGroup.getMor());
+    assertEquals(dataUse.getPublicationMoratorium(), consentGroup.getMorDate());
+    assertEquals(dataUse.getNonProfitUse(), consentGroup.getNpu());
+    assertEquals(dataUse.getSecondaryOther(), consentGroup.getOtherSecondary());
   }
 
   @Test
@@ -329,25 +338,8 @@ class DatasetRegistrationSchemaV1BuilderTest {
     dataset.addProperty(
         createDatasetProperty(dataset, accessManagement, PropertyType.String,
             AccessManagement.CONTROLLED.value()));
-    dataset.addProperty(
-        createDatasetProperty(dataset, generalResearchUse, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, hmb, PropertyType.Boolean, null));
-    dataset.addProperty(
-        createDatasetProperty(dataset, diseaseSpecificUse, PropertyType.Json, null));
-    dataset.addProperty(createDatasetProperty(dataset, poa, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, otherPrimary, PropertyType.String, null));
-    dataset.addProperty(createDatasetProperty(dataset, nmds, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, gso, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, pub, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, col, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, irb, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, gs, PropertyType.String, null));
-    dataset.addProperty(createDatasetProperty(dataset, mor, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, morDate, PropertyType.String, null));
-    dataset.addProperty(createDatasetProperty(dataset, npu, PropertyType.Boolean, null));
-    dataset.addProperty(createDatasetProperty(dataset, otherSecondary, PropertyType.String, null));
-    dataset.addProperty(
-        createDatasetProperty(dataset, dataAccessCommitteeId, PropertyType.Number, null));
+    // Controlled access datasets require a DAC ID
+    dataset.setDacId(RandomUtils.nextInt(10, 100));
     dataset.addProperty(createDatasetProperty(dataset, dataLocation, PropertyType.String,
         DataLocation.NOT_DETERMINED.value()));
     dataset.addProperty(
