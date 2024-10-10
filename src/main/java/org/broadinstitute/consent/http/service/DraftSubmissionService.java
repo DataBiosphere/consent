@@ -39,7 +39,8 @@ public class DraftSubmissionService {
     this.draftFileStorageService = draftFileStorageService;
   }
 
-  public void insertDraftSubmission(DraftSubmissionInterface draft) throws SQLException, BadRequestException {
+  public void insertDraftSubmission(DraftSubmissionInterface draft)
+      throws SQLException, BadRequestException {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
@@ -48,7 +49,8 @@ public class DraftSubmissionService {
             draft.getClass().getName());
       } catch (Exception e) {
         handle.rollback();
-        throw new BadRequestException("Error submitting draft.  Drafts require valid json to be submitted.");
+        throw new BadRequestException(
+            "Error submitting draft.  Drafts require valid json to be submitted.");
       }
       handle.commit();
     });

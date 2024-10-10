@@ -3,12 +3,10 @@ package org.broadinstitute.consent.http.models;
 import com.google.gson.Gson;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
 /**
  * DraftSubmission represents a Data Submitter's partial submission of 0 or more elements. This is
@@ -18,16 +16,12 @@ public class DraftSubmission implements DraftSubmissionInterface {
 
   private Date createDate;
   private Date updateDate;
-  private Map<String, FormDataBodyPart> files;
   private Set<FileStorageObject> storedFiles;
   private transient String json;
   private String name;
   private User createUser;
   private User updateUser;
   private UUID uuid;
-
-  public DraftSubmission() {
-  }
 
   public DraftSubmission(String json, User user) {
     this.json = json;

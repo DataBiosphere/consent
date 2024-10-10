@@ -37,6 +37,6 @@ public interface DraftSubmissionInterface {
 
   void addStoredFile(FileStorageObject file);
 
-  Set<FileStorageObject>getStoredFiles();
+  Set<FileStorageObject> getStoredFiles();
 
-} 
+}
