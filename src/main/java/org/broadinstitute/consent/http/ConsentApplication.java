@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
+import org.broadinstitute.consent.http.resources.DraftSubmissionResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
@@ -110,13 +111,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
-
   public static final String GCS_CHECK = "google-cloud-storage";
   public static final String ES_CHECK = "elastic-search";
   public static final String ONTOLOGY_CHECK = "ontology";
   public static final String SAM_CHECK = "sam";
   public static final String SG_CHECK = "sendgrid";
+  private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
   public static void main(String[] args) throws Exception {
     LOGGER.info("Starting Consent Application");
@@ -243,6 +243,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
     env.jersey().register(new OAuth2Resource(oidcService));
+    env.jersey().register(new DraftSubmissionResource(userService, draftSubmissionService));
 
     // Authentication filters
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

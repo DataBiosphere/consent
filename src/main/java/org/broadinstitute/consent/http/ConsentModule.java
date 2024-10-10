@@ -44,6 +44,8 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.DraftFileStorageService;
+import org.broadinstitute.consent.http.service.DraftSubmissionService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -65,7 +67,6 @@ import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.broadinstitute.consent.http.service.DraftSubmissionService;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
@@ -81,11 +82,11 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 public class ConsentModule extends AbstractModule {
 
+  public static final String DB_ENV = "postgresql";
   @Inject
   private final ConsentConfiguration config;
   @Inject
   private final Environment environment;
-
   private final Client client;
   private final Jdbi jdbi;
   private final CounterDAO counterDAO;
@@ -108,8 +109,6 @@ public class ConsentModule extends AbstractModule {
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final DraftSubmissionDAO draftSubmissionDAO;
-
-  public static final String DB_ENV = "postgresql";
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -574,7 +573,8 @@ public class ConsentModule extends AbstractModule {
         providesSamDAO(),
         providesUserServiceDAO(),
         providesDaaDAO(),
-        providesEmailService());
+        providesEmailService(),
+        providesDraftSubmissionService());
   }
 
   @Provides
@@ -626,12 +626,18 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   DraftSubmissionDAO providesDraftSubmissionDAO() {
-    return this.draftSubmissionDAO;
+    return draftSubmissionDAO;
+  }
+
+  @Provides
+  DraftFileStorageService providesDraftFileStorageService() {
+    return new DraftFileStorageService(providesJdbi(), providesGCSService(),
+        providesFileStorageObjectDAO());
   }
 
   @Provides
   DraftSubmissionService providesDraftSubmissionService() {
-    return new DraftSubmissionService(jdbi, providesDraftSubmissionDAO(),
-        providesFileStorageObjectService());
+    return new DraftSubmissionService(providesJdbi(), providesDraftSubmissionDAO(),
+        providesDraftFileStorageService());
   }
 }

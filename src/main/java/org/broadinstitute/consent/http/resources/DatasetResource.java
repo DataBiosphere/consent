@@ -28,7 +28,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -192,7 +191,7 @@ public class DatasetResource extends Resource {
             .collect(Collectors.toList());
         throw new BadRequestException(
             "Dataset contains invalid properties that could not be recognized or associated with a key: "
-                + invalidKeys.toString());
+                + invalidKeys);
       }
       List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
           inputDataset.getProperties());

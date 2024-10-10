@@ -1,0 +1,76 @@
+get:
+  summary: Get a draft submission
+  description: Provides the draft submission contents and metadata.
+  tags:
+  - DraftSubmission
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft
+      required: true
+      schema:
+        type: string
+        format: UUID v4.
+  responses:
+    200:
+     description: A dataset draft submission with metadata.
+     content:
+       application/json:
+         schema:
+          $ref: '../schemas/DraftSubmissionDetails.yaml'
+    401:
+      description: Unauthorized.  Did you remember to authenticate?
+    404:
+      description: The draft cannot be found.
+put:
+  summary: Updates a draft submission
+  description: Updates the contents of the draft submission.
+  tags:
+    - DraftSubmission
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft
+      required: true
+      schema:
+        type: string
+        format: UUID v4.
+  requestBody:
+    description: |
+      Schema validation is not performed and attachments associated with the draft may be uploaded after the draft is created.
+    content:
+      application/json:
+        schema:
+          type: object
+  responses:
+      200:
+        description: A dataset draft submission with metadata.
+        content:
+          application/json:
+           schema:
+            $ref: '../schemas/DraftSubmissionDetails.yaml'
+      401:
+        description: Unauthorized.  Did you remember to authenticate?
+      404:
+        description: The draft cannot be found.
+
+delete:
+  summary: Deletes a draft submission
+  description: Deletes the contents and attachments of a draft submission.
+  tags:
+    - DraftSubmission
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft
+      required: true
+      schema:
+        type: string
+        format: UUID v4.
+  responses:
+    200:
+      description: The delete succeeded.
+    401:
+      description: Unauthorized.  Did you remember to authenticate?
+    404:
+      description: The draft cannot be found.

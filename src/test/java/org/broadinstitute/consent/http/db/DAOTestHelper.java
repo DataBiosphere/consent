@@ -1,16 +1,24 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import jakarta.ws.rs.core.MediaType;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -24,6 +32,7 @@ import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -40,11 +49,8 @@ public class DAOTestHelper {
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
-
-  private static DropwizardTestSupport<ConsentConfiguration> testApp;
-
+  public static final String EMPTY_JSON_DOCUMENT = "{}";
   protected static Jdbi jdbi;
-
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
   protected static DaaDAO daaDAO;
@@ -65,7 +71,7 @@ public class DAOTestHelper {
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
   protected static DraftSubmissionDAO draftSubmissionDAO;
-
+  private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
   private static TestingDAO testingDAO;
@@ -132,8 +138,8 @@ public class DAOTestHelper {
     darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
-    testingDAO = jdbi.onDemand(TestingDAO.class);
     draftSubmissionDAO = jdbi.onDemand(DraftSubmissionDAO.class);
+    testingDAO = jdbi.onDemand(TestingDAO.class);
   }
 
   @AfterAll
@@ -266,6 +272,25 @@ public class DAOTestHelper {
         now, now, now, now,
         data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  protected Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
+    Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
+    IntStream.range(0, count)
+        .forEach(index -> {
+          String name = String.format("file%d", index);
+          mapOfFiles.put(name, getFormDataBodyPartMock(name));
+        });
+    return mapOfFiles;
+  }
+
+  private FormDataBodyPart getFormDataBodyPartMock(String name) {
+    FormDataBodyPart part = mock(FormDataBodyPart.class);
+    lenient().when(part.getName()).thenReturn(name);
+    lenient().when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    lenient().when(part.getValueAs(InputStream.class))
+        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
+    return part;
   }
 
 }

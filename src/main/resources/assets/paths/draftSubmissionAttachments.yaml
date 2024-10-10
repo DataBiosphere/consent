@@ -1,0 +1,61 @@
+get:
+  summary: Get a specific file attachment associated with a draft
+  description: Provides the an individual file attachment connected to a draft.
+  tags:
+    - DraftSubmission
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft
+      required: true
+      schema:
+        type: string
+        format: UUID v4.
+    - name: fileId
+      in: path
+      description: The integer identifying the attachment.
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: File contents.
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    401:
+      description: Unauthorized.  Did you remember to authenticate?
+    404:
+      description: The draft and/or the attachment cannot be found.
+    500:
+       description: An unrecoverable error occurred when attempting to return this attachment.
+delete:
+  summary: Get the list of attachments associated with a draft
+  description: Provides the list of attachments that are part of a draft.
+  tags:
+    - DraftSubmission
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft
+      required: true
+      schema:
+        type: string
+        format: UUID v4.
+    - name: fileId
+      in: path
+      description: The integer identifying the attachment.
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Successful delete.
+    401:
+      description: Unauthorized.  Did you remember to authenticate?
+    404:
+      description: The draft and/or the attachment cannot be found.
+    500:
+      description: An unrecoverable error occurred when deleting this attachment.

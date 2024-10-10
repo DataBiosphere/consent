@@ -20,7 +20,7 @@ public class DraftSubmission implements DraftSubmissionInterface {
   private Date updateDate;
   private Map<String, FormDataBodyPart> files;
   private Set<FileStorageObject> storedFiles;
-  private String json;
+  private transient String json;
   private String name;
   private User createUser;
   private User updateUser;
@@ -29,9 +29,8 @@ public class DraftSubmission implements DraftSubmissionInterface {
   public DraftSubmission() {
   }
 
-  public DraftSubmission(String json, Map<String, FormDataBodyPart> fileMap, User user) {
+  public DraftSubmission(String json, User user) {
     this.json = json;
-    this.files = fileMap;
     this.createUser = user;
     this.updateUser = user;
     this.createDate = new Date();
@@ -48,11 +47,6 @@ public class DraftSubmission implements DraftSubmissionInterface {
   @Override
   public void setJson(String json) {
     this.json = json;
-  }
-
-  @Override
-  public Optional<Map<String, FormDataBodyPart>> getFiles() {
-    return Optional.ofNullable(this.files);
   }
 
   @Override
@@ -120,13 +114,12 @@ public class DraftSubmission implements DraftSubmissionInterface {
     if (this.storedFiles == null) {
       this.storedFiles = new HashSet<>();
     }
-
     this.storedFiles.add(file);
   }
 
   @Override
   public Set<FileStorageObject> getStoredFiles() {
-    return this.storedFiles;
+    return (this.storedFiles == null ? new HashSet<>() : this.storedFiles);
   }
 
   /* Uses the provided study name or the current time to create a draft name.  */

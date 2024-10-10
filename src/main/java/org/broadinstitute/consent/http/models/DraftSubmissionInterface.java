@@ -1,48 +1,42 @@
 package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
 
 public interface DraftSubmissionInterface {
 
-  public String getJson();
+  String getJson();
 
-  public void setJson(String json);
+  void setJson(String json);
 
-  public Optional<Map<String, FormDataBodyPart>> getFiles();
+  User getCreateUser();
 
-  public void setCreateUser(User user);
+  void setCreateUser(User user);
 
-  public User getCreateUser();
+  User getUpdateUser();
 
-  public void setUpdateUser(User user);
+  void setUpdateUser(User user);
 
-  public User getUpdateUser();
+  UUID getUUID();
 
-  public UUID getUUID();
+  void setUUID(UUID uuid);
 
-  public void setUUID(UUID uuid);
+  String getName();
 
-  public void setName(String name);
+  void setName(String name);
 
-  public String getName();
+  Date getCreateDate();
 
-  public Date getCreateDate();
+  void setCreateDate(Date createDate);
 
-  public void setCreateDate(Date createDate);
+  Date getUpdateDate();
 
-  public Date getUpdateDate();
+  void setUpdateDate(Date updateDate);
 
-  public void setUpdateDate(Date updateDate);
+  void addStoredFile(FileStorageObject file);
 
-  public void addStoredFile(FileStorageObject file);
-
-  public Set<FileStorageObject> getStoredFiles();
+  Set<FileStorageObject>getStoredFiles();
 
 } 

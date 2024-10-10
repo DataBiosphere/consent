@@ -1,6 +1,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
   <changeSet id="changelog-consent-2024-09-17-draftsubmission.xml" author="otchet-broad">
     <createTable tableName="draftsubmission">
       <column name="id" autoIncrement="true" type="bigint">
@@ -37,5 +37,12 @@
                              deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                              referencedColumnNames="user_id" referencedTableName="users"
                              referencesUniqueColumn="true"/>
+    <createIndex tableName="draftsubmission" indexName="idx_uuid">
+      <column name="uuid"/>
+    </createIndex>
+    <createIndex tableName="draftsubmission" indexName="idx_create_user_id">
+      <column name="create_user_id"/>
+      <column name="update_date" descending="true"/>
+    </createIndex>
   </changeSet>
 </databaseChangeLog>

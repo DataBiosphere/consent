@@ -61,12 +61,14 @@ public class UserService implements ConsentLogger {
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final EmailService emailService;
+  private final DraftSubmissionService draftSubmissionService;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService) {
+      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
+      DraftSubmissionService draftSubmissionService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -79,6 +81,7 @@ public class UserService implements ConsentLogger {
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.emailService = emailService;
+    this.draftSubmissionService = draftSubmissionService;
   }
 
   /**
@@ -162,57 +165,6 @@ public class UserService implements ConsentLogger {
           "Error when updating user: %s, institution: %s, role: %s".formatted(userId.toString(),
               institutionId.toString(), role.toString()), e);
       throw e;
-    }
-  }
-
-  public static class SimplifiedUser {
-
-    public Integer userId;
-    public String displayName;
-    public String email;
-    public Integer institutionId;
-
-    public SimplifiedUser(User user) {
-      this.userId = user.getUserId();
-      this.displayName = user.getDisplayName();
-      this.email = user.getEmail();
-      this.institutionId = user.getInstitutionId();
-    }
-
-    public SimplifiedUser() {
-    }
-
-    public void setUserId(Integer userId) {
-      this.userId = userId;
-    }
-
-    public void setDisplayName(String name) {
-      this.displayName = name;
-    }
-
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    public void setInstitutionId(Integer institutionId) {
-      this.institutionId = institutionId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      SimplifiedUser that = (SimplifiedUser) o;
-      return Objects.equals(userId, that.userId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(userId);
     }
   }
 
@@ -316,6 +268,7 @@ public class UserService implements ConsentLogger {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
+    draftSubmissionService.deleteDraftsByUser(user);
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
@@ -501,5 +454,56 @@ public class UserService implements ConsentLogger {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
+  }
+
+  public static class SimplifiedUser {
+
+    public Integer userId;
+    public String displayName;
+    public String email;
+    public Integer institutionId;
+
+    public SimplifiedUser(User user) {
+      this.userId = user.getUserId();
+      this.displayName = user.getDisplayName();
+      this.email = user.getEmail();
+      this.institutionId = user.getInstitutionId();
+    }
+
+    public SimplifiedUser() {
+    }
+
+    public void setUserId(Integer userId) {
+      this.userId = userId;
+    }
+
+    public void setDisplayName(String name) {
+      this.displayName = name;
+    }
+
+    public void setEmail(String email) {
+      this.email = email;
+    }
+
+    public void setInstitutionId(Integer institutionId) {
+      this.institutionId = institutionId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SimplifiedUser that = (SimplifiedUser) o;
+      return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(userId);
+    }
   }
 }
