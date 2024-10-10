@@ -23,6 +23,8 @@ public class DraftSubmission implements DraftSubmissionInterface {
   private User updateUser;
   private UUID uuid;
 
+  public DraftSubmission() {}
+
   public DraftSubmission(String json, User user) {
     this.json = json;
     this.createUser = user;
