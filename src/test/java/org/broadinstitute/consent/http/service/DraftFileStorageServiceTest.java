@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,8 +43,9 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
     GCSService gcsService = mock(GCSService.class);
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    when(gcsService.getDocument((BlobId) any())).thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
-    });
+    lenient().when(gcsService.getDocument((BlobId) any()))
+        .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
+        });
     draftFileStorageService = new DraftFileStorageService(jdbi, gcsService, fileStorageObjectDAO);
   }
 
@@ -85,12 +87,14 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);
-    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(associatedUUID, user, testFiles);
+    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(associatedUUID,
+        user, testFiles);
     assertThat(testFiles.values(), hasSize(2));
     assertThat(storedFiles, hasSize(2));
     for (FileStorageObject fileStorageObject : storedFiles) {
-      InputStream fileContents =  draftFileStorageService.get(fileStorageObject);
-      assertEquals(EMPTY_JSON_DOCUMENT, new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
+      InputStream fileContents = draftFileStorageService.get(fileStorageObject);
+      assertEquals(EMPTY_JSON_DOCUMENT,
+          new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
     }
   }
 }
