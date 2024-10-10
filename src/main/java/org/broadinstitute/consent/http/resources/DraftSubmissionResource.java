@@ -111,7 +111,7 @@ public class DraftSubmissionResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
-        validateUUID(draftUUID), user);
+          validateUUID(draftUUID), user);
       draft.setJson(json);
       draftSubmissionService.updateDraftSubmission(draft, user);
       return Response.ok().entity(draftSubmissionService.draftAsJson(draft)).build();
