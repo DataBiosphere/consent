@@ -591,6 +591,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   void updateDatasetCreateUserId(@Bind("datasetId") Integer datasetId, @Bind("createUserId") Integer createUserId);
 
+  @SqlUpdate("""
+      UPDATE dataset
+      SET name = :datasetName,
+          update_date = :updateDate,
+          update_user_id = :updateUserId
+      WHERE dataset_id = :datasetId
+      """)
+  void updateDatasetNameWithUpdateUser(@Bind("datasetId") Integer datasetId,
+      @Bind("datasetName") String datasetName,
+      @Bind("updateDate") Timestamp updateDate,
+      @Bind("updateUserId") Integer updateUserId);
+
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       """

@@ -24,7 +24,10 @@ patch:
           schema:
             $ref: '../schemas/Dataset.yaml'
     400:
-      description: Dataset Patch is not formatted correctly
+      description: |
+        Dataset Patch is not formatted correctly OR the new dataset name is not unique in the
+        system. See [/api/dataset/datasetNames](#/Dataset/findAllDatasetNames) for a list of
+        existing dataset names.
     404:
       description: Not Found
     500:

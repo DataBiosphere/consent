@@ -118,7 +118,7 @@ class DatasetResourceTest {
   //       Maybe a case for parameterized tests
   // TODO: Add non-patchable case
   @Test
-  void testPatchByDatasetUpdate_patchable() {
+  void testPatchByDatasetUpdate_patchable() throws Exception {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();

@@ -1,5 +1,6 @@
 get:
   summary: Find All Dataset Names
+  operationId: findAllDatasetNames
   description: Returns a list of all the actively used dataset names.
   tags:
     - Dataset

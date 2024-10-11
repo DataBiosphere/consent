@@ -69,8 +69,8 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.emailService = emailService;
   }
 
-  public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
-    // TODO: Flesh out stub
+  public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) throws Exception {
+    datasetServiceDAO.patchDataset(datasetId, user, patch);
     return datasetDAO.findDatasetById(datasetId);
   }
 

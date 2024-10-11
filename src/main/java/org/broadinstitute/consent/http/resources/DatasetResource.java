@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -222,6 +223,13 @@ public class DatasetResource extends Resource {
       }
       if (!patch.isPatchable(existingDataset)) {
         return Response.notModified().entity(existingDataset).build();
+      }
+      // Is new name unique?
+      List<String> existingNames = datasetService.findAllDatasetNames();
+      if (!patch.name().equals(existingDataset.getName()) && existingNames.contains(patch.name())) {
+        return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .entity("The new name for this dataset already exists: " + patch.name())
+            .build();
       }
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
