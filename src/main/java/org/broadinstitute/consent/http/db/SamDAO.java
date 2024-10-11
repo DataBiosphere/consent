@@ -14,11 +14,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -30,8 +34,6 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SamDAO implements ConsentLogger {
 
@@ -55,92 +57,39 @@ public class SamDAO implements ConsentLogger {
   public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1ResourceTypesUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException("Error getting resource types from Sam: " + response.getStatusMessage(),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock List<ResourceType> for user %s".formatted(
-          authUser.getEmail()), e);
-      return List.of();
-    }
-    String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {
     }.getType();
-    return new Gson().fromJson(body, resourceTypesListType);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), resourceTypesListType) :
+        List.of();
   }
 
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getRegisterUserV2SelfInfoUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException(
-            "Error getting user registration information from Sam: " + response.getStatusMessage(),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException(
-          "Sam is down, returning mock UserStatusInfo for user %s".formatted(authUser.getEmail()),
-          e);
-      return samDefaults.getDefaultUserStatusInfo(authUser);
-    }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusInfo.class);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), UserStatusInfo.class) :
+        samDefaults.getDefaultUserStatusInfo(authUser);
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException(
-            "Error getting enabled statuses of user from Sam: " + response.getStatusMessage(),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock UserStatusDiagnostics for user %s".formatted(
-          authUser.getEmail()), e);
-      return samDefaults.getDefaultUserStatusDiagnostics();
-    }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusDiagnostics.class);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), UserStatusDiagnostics.class) :
+        samDefaults.getDefaultUserStatusDiagnostics();
   }
 
   public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response;
-    String body;
-    try {
-      response = executeRequest(request);
-      body = response.parseAsString();
-      if (!response.isSuccessStatusCode()) {
-        if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
-          throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
-        } else {
-          String errorMsg = "Error posting user registration information to Sam. Email [%s]. Status Code [%s]. Status Message [%s]".formatted(
-              authUser.getEmail(),
-              response.getStatusCode(),
-              response.getStatusMessage());
-          Exception e = new Exception(body);
-          logException(errorMsg, new Exception(body));
-          throw e;
-        }
-      }
-    } catch (ServerErrorException e) {
-      logException(
-          "Sam is down, returning mock UserStatus for user %s".formatted(authUser.getEmail()), e);
-      return samDefaults.getDefaultUserStatus(authUser);
-    }
-    return new Gson().fromJson(body, UserStatus.class);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), UserStatus.class) :
+        samDefaults.getDefaultUserStatus(authUser);
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
@@ -157,7 +106,7 @@ public class SamDAO implements ConsentLogger {
           }
 
           @Override
-          public void onFailure(@NonNull Throwable throwable) {
+          public void onFailure(@Nonnull Throwable throwable) {
             logException(
                 "Async Post Registration Failure for user: %s".formatted(authUser.getEmail()),
                 new Exception(throwable));
@@ -170,99 +119,42 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.getToSTextUrl());
     HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
     request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException("Error getting Terms of Service text from Sam: %s".formatted(response.getStatusMessage()),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-        return samDefaults.getDefaultToSText();
-      }
-    } catch (ServerErrorException e) {
-      logException("Sam is down, returning most recent Terms of Service Text: ", e);
-      return samDefaults.getDefaultToSText();
-    }
-    return response.parseAsString();
+    Optional<String> body = getResponseBody(null, request);
+    return body.isPresent() ?
+        body.get() :
+        samDefaults.getDefaultToSText();
   }
 
   public TosResponse getTosResponse(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getSelfTosUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException("Error getting Terms of Service: %s for user %s".formatted(
-                response.getStatusMessage(), authUser.getEmail()),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException(
-          "Sam is down, returning mock TosResponse for user: %s".formatted(authUser.getEmail()), e);
-      return samDefaults.getDefaultTosResponse();
-    }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), TosResponse.class) :
+        samDefaults.getDefaultTosResponse();
   }
 
   public int acceptTosStatus(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.acceptTosUrl());
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException("Error accepting Terms of Service: %s for user %s".formatted(
-                response.getStatusMessage(), authUser.getEmail()),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock ToS Acceptance Status for user: %s".formatted(
-          authUser.getEmail()), e);
-      return samDefaults.getDefaultTosStatusCode();
-    }
-    return response.getStatusCode();
+    Optional<Integer> statusCode = getResponseStatusCode(request);
+    return statusCode.orElseGet(samDefaults::getDefaultTosStatusCode);
   }
 
   public int rejectTosStatus(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.rejectTosUrl());
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException(
-            "Error removing Terms of Service: %s for user %s".formatted(response.getStatusMessage(),
-                authUser.getEmail()),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException("Sam is down, returning mock ToS Rejection Status for user: %s".formatted(
-          authUser.getEmail()), e);
-      return samDefaults.getDefaultTosStatusCode();
-    }
-    return response.getStatusCode();
+    Optional<Integer> statusCode = getResponseStatusCode(request);
+    return statusCode.orElseGet(samDefaults::getDefaultTosStatusCode);
   }
 
   public EmailResponse getV1UserByEmail(AuthUser authUser, String email) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1UserUrl(email));
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response;
-    try {
-      response = executeRequest(request);
-      if (!response.isSuccessStatusCode()) {
-        logException(
-            "Error getting user by email from Sam: " + response.getStatusMessage(),
-            new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
-      }
-    } catch (ServerErrorException e) {
-      logException(
-          "Sam is down, returning mock EmailResponse for user: %s".formatted(authUser.getEmail()),
-          e);
-      return samDefaults.getDefaultEmailResponse(authUser);
-    }
-    String body = response.parseAsString();
-    return new Gson().fromJson(body, EmailResponse.class);
+    Optional<String> body = getResponseBody(authUser, request);
+    return body.isPresent() ?
+        new Gson().fromJson(body.get(), EmailResponse.class) :
+        samDefaults.getDefaultEmailResponse(authUser);
   }
 
   /**
@@ -271,12 +163,57 @@ public class SamDAO implements ConsentLogger {
    * than enough for Sam calls.
    *
    * @param request The HttpRequest
-   * @return The HttpResponse
+   * @return The Optional response body
    */
-  private HttpResponse executeRequest(HttpRequest request) {
+  private Optional<String> getResponseBody(@Nullable AuthUser authUser, HttpRequest request) {
     request.setConnectTimeout(connectTimeoutMilliseconds);
     request.setReadTimeout(readTimeoutMilliseconds);
-    return clientUtil.handleHttpRequest(request);
+    HttpResponse response;
+    try {
+      response = clientUtil.handleHttpRequest(request);
+      String userEmail = authUser == null ? "unknown" : authUser.getEmail();
+      if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
+        ConsentConflictException e = new ConsentConflictException(
+            "Conflict error, user already exists in Sam: [%s]".formatted(userEmail));
+        // Conflict errors do not need to go to Sentry
+        logInfo(e.getMessage());
+        throw e;
+      }
+      if (!response.isSuccessStatusCode()) {
+        String errorMsg = "Error calling Sam. Email [%s]. Status Code [%s]. Status Message [%s]".formatted(
+            userEmail,
+            response.getStatusCode(),
+            response.getStatusMessage());
+        RuntimeException e = new RuntimeException(errorMsg);
+        logException(e);
+        throw e;
+      }
+      return Optional.of(response.parseAsString());
+    } catch (ServerErrorException e) {
+      logException("Sam is unavailable: ", e);
+    } catch (IOException e) {
+      logException("Error reading response content: ", e);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Simpler version of the above method for the response status code.
+   *
+   * @param request The HttpRequest
+   * @return The Optional response status code
+   */
+  private Optional<Integer> getResponseStatusCode(HttpRequest request) {
+    request.setConnectTimeout(connectTimeoutMilliseconds);
+    request.setReadTimeout(readTimeoutMilliseconds);
+    HttpResponse response;
+    try {
+      response = clientUtil.handleHttpRequest(request);
+      return Optional.of(response.getStatusCode());
+    } catch (ServerErrorException e) {
+      logException("Sam is unavailable: ", e);
+    }
+    return Optional.empty();
   }
 
 }

@@ -13,7 +13,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
 /**
- * This class represents default/mock objects from Sam that can be used when Sam is unavailable
+ * This class represents default Sam objects that can be used when Sam is unavailable
  */
 public class SamDefaults {
 
