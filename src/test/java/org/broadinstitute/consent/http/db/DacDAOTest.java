@@ -115,7 +115,7 @@ class DacDAOTest extends DAOTestHelper {
     Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), dacId1);
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());
@@ -387,7 +387,7 @@ class DacDAOTest extends DAOTestHelper {
     Dataset datasetSuggestedDac = createDataset();
     datasetDAO.insertDatasetProperties(List.of(new DatasetProperty(
         1,
-        datasetSuggestedDac.getDataSetId(),
+        datasetSuggestedDac.getDatasetId(),
         1,
         "dataAccessCommitteeId",
         dac.getDacId().toString(),
@@ -454,7 +454,7 @@ class DacDAOTest extends DAOTestHelper {
         new Date());
     Dataset dataset = createDataset();
     DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id);
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     createDataAccessRequest(user.getUserId(), collection_id);
     return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
   }
@@ -496,7 +496,7 @@ class DacDAOTest extends DAOTestHelper {
         new Date(),
         new DataAccessRequestData()
     );
-    dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDatasetId());
   }
 
   private Dataset createDataset() {
@@ -513,7 +513,7 @@ class DacDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());

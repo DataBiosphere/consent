@@ -19,7 +19,7 @@ public class DatasetDTO {
   private Integer dacId;
 
   @JsonProperty
-  private Integer dataSetId;
+  private Integer datasetId;
 
   @JsonProperty
   private String consentId;
@@ -125,12 +125,12 @@ public class DatasetDTO {
     this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
   public void setAlias(Integer alias) {
@@ -205,11 +205,11 @@ public class DatasetDTO {
       return false;
     }
     DatasetDTO that = (DatasetDTO) o;
-    return dataSetId.equals(that.dataSetId);
+    return datasetId.equals(that.datasetId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(dataSetId);
+    return Objects.hash(datasetId);
   }
 }

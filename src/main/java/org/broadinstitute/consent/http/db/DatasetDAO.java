@@ -477,7 +477,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlBatch(
       "INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )"
           +
-          " VALUES (:dataSetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
+          " VALUES (:datasetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
 
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
@@ -487,7 +487,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       INSERT INTO dataset_audit
         (dataset_id, change_action, modified_by_user, modification_date, object_id, name)
       VALUES
-        (:dataSetId, :action, :user, :date, :objectId, :name)
+        (:datasetId, :action, :user, :date, :objectId, :name)
       """)
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
