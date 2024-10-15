@@ -474,10 +474,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   void updateDatasetName(@Bind("datasetId") Integer datasetId, @Bind("name") String name);
 
 
-  @SqlBatch(
-      "INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )"
-          +
-          " VALUES (:datasetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)")
+  @SqlBatch("""
+      INSERT INTO dataset_property
+        (dataset_id, property_key, schema_property, property_value, property_type, create_date )
+      VALUES
+        (:datasetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)
+      """)
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
 
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
