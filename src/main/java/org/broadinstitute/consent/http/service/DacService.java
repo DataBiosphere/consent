@@ -290,7 +290,7 @@ public class DacService implements ConsentLogger {
       }
       // Chair and Member users can see data access requests that they have DAC access to
       if (user.hasUserRole(UserRoles.MEMBER) || user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
+        List<Integer> accessibleDatasetIds = dataSetDAO.findDatasetIdsByDACUserId(user.getUserId());
         return documents.
             stream().
             filter(d -> {

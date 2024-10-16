@@ -249,16 +249,16 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   /**
    * Find all dataset IDs that the user email has access to via their DAC association.
    *
-   * @param email User email
+   * @param userId User ID
    * @return List of Dataset IDs that are visible to the user via DACs.
    */
   @SqlQuery("""
           SELECT distinct d.dataset_id
           FROM dataset d
           INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
-          INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.email = :email
+          INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.user_id = :userId
       """)
-  List<Integer> findDatasetIdsByDACUserEmail(@Bind("email") String email);
+  List<Integer> findDatasetIdsByDACUserId(@Bind("userId") Integer userId);
 
   /**
    * Finds all minimal dataset/study  information for datasets assigned to this DAC and which have

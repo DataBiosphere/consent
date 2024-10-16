@@ -420,7 +420,7 @@ public class DarCollectionService implements ConsentLogger {
    * @return List of Dataset IDs
    */
   public List<Integer> findDatasetIdsByDACUser(User user) {
-    return datasetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
+    return datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
   }
 
   public void deleteByCollectionId(User user, Integer collectionId)
@@ -624,7 +624,7 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
-    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
+    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()

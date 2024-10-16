@@ -390,7 +390,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
 
     initService();
 
@@ -406,7 +406,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
 
     initService();
 
@@ -422,7 +422,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_3() {
     // Member no direct access to datasets
     List<Dataset> memberDataSets = Collections.emptyList();
-    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of());
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of());
 
     initService();
 

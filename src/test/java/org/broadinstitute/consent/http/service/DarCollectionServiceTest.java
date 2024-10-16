@@ -252,11 +252,11 @@ class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDatasetIdsByDACUserEmail(anyString())).thenReturn(List.of(dataset.getDataSetId()));
+    when(datasetDAO.findDatasetIdsByDACUserId(anyInt())).thenReturn(List.of(dataset.getDataSetId()));
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDatasetIdsByDACUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO, times(1)).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
@@ -280,10 +280,10 @@ class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDatasetIdsByDACUserEmail(anyString())).thenReturn(List.of());
+    when(datasetDAO.findDatasetIdsByDACUserId(anyInt())).thenReturn(List.of());
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDatasetIdsByDACUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO, times(0)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());

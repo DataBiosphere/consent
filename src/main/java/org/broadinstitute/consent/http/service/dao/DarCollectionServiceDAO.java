@@ -55,7 +55,7 @@ public class DarCollectionServiceDAO {
     // If the user is not an admin, we need to know what datasets they have access to.
     List<Integer> dacUserDatasetIds = isAdmin ?
         List.of() :
-        datasetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
+        datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
