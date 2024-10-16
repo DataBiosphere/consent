@@ -8,8 +8,8 @@ import org.broadinstitute.consent.http.db.mapper.DraftSubmissionInterfaceMapper;
 import org.broadinstitute.consent.http.db.mapper.DraftSubmissionReducer;
 import org.broadinstitute.consent.http.db.mapper.DraftSubmissionSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
-import org.broadinstitute.consent.http.models.DraftSubmissionInterface;
-import org.broadinstitute.consent.http.models.DraftSubmissionSummary;
+import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -103,13 +103,13 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           """
                WHERE ds.create_user_id = :createdUserId
               """)
-  Set<DraftSubmissionInterface> findDraftSubmissionsByUserId(
+  Set<DraftInterface> findDraftSubmissionsByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowMapper(DraftSubmissionSummaryMapper.class)
   @SqlQuery(
       DRAFT_SUMMARY)
-  Set<DraftSubmissionSummary> findDraftSubmissionSummariesByUserId(
+  Set<DraftSummary> findDraftSubmissionSummariesByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowReducer(DraftSubmissionReducer.class)
@@ -118,7 +118,7 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           """
                WHERE uuid = :uuid
               """)
-  DraftSubmissionInterface findDraftSubmissionsById(@Bind("uuid") UUID uuid);
+  DraftInterface findDraftSubmissionsById(@Bind("uuid") UUID uuid);
 
   @SqlUpdate(
       """

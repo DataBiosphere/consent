@@ -45,7 +45,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.DraftFileStorageService;
-import org.broadinstitute.consent.http.service.DraftSubmissionService;
+import org.broadinstitute.consent.http.service.DraftService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -636,8 +636,8 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DraftSubmissionService providesDraftSubmissionService() {
-    return new DraftSubmissionService(providesJdbi(), providesDraftSubmissionDAO(),
+  DraftService providesDraftSubmissionService() {
+    return new DraftService(providesJdbi(), providesDraftSubmissionDAO(),
         providesDraftFileStorageService());
   }
 }

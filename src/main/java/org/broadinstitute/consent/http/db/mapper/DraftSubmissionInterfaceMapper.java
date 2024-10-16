@@ -6,24 +6,24 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.UUID;
 import org.broadinstitute.consent.http.exceptions.NoMatchingClassException;
-import org.broadinstitute.consent.http.models.DraftSubmissionInterface;
+import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DraftSubmissionInterfaceMapper implements RowMapper<DraftSubmissionInterface>, RowMapperHelper {
+public class DraftSubmissionInterfaceMapper implements RowMapper<DraftInterface>, RowMapperHelper {
 
   @Override
-  public DraftSubmissionInterface map(ResultSet rs, StatementContext ctx) throws SQLException, NoMatchingClassException {
+  public DraftInterface map(ResultSet rs, StatementContext ctx) throws SQLException, NoMatchingClassException {
     if (!hasColumn(rs, "schema_class")) {
       throw new NoMatchingClassException("Missing class name.");
     }
 
-    DraftSubmissionInterface dsi;
+    DraftInterface dsi;
     String className = rs.getString("schema_class");
 
     try {
-      dsi = (DraftSubmissionInterface) Class.forName(className).getDeclaredConstructor().newInstance();
+      dsi = (DraftInterface) Class.forName(className).getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
              InstantiationException | IllegalAccessException classNotFoundException) {
       throw new NoMatchingClassException(className);

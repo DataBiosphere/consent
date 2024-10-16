@@ -95,7 +95,7 @@ class UserServiceTest {
   private EmailService emailService;
 
   @Mock
-  private DraftSubmissionService draftSubmissionService;
+  private DraftService draftService;
 
 
   private UserService service;
@@ -103,7 +103,7 @@ class UserServiceTest {
   private void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftSubmissionService);
+        emailService, draftService);
   }
 
   @Test

@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 
-public interface DraftSubmissionInterface {
+public interface DraftInterface {
 
   String getJson();
 

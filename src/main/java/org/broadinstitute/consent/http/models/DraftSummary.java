@@ -3,14 +3,14 @@ package org.broadinstitute.consent.http.models;
 import java.util.Date;
 import java.util.UUID;
 
-public class DraftSubmissionSummary {
+public class DraftSummary {
 
   private UUID id;
   private String name;
   private Date createDate;
   private Date updateDate;
 
-  public DraftSubmissionSummary(UUID id, String name, Date createDate, Date updateDate) {
+  public DraftSummary(UUID id, String name, Date createDate, Date updateDate) {
     this.setId(id);
     this.setName(name);
     this.setCreateDate(createDate);

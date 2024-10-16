@@ -17,29 +17,29 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DraftSubmissionDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.DraftSubmissionInterface;
-import org.broadinstitute.consent.http.models.DraftSubmissionSummary;
+import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
-public class DraftSubmissionService {
+public class DraftService {
 
   private final Jdbi jdbi;
   private final DraftSubmissionDAO draftSubmissionDAO;
   private final DraftFileStorageService draftFileStorageService;
 
   @Inject
-  public DraftSubmissionService(Jdbi jdbi, DraftSubmissionDAO draftSubmissionDAO,
+  public DraftService(Jdbi jdbi, DraftSubmissionDAO draftSubmissionDAO,
       DraftFileStorageService draftFileStorageService) {
     this.jdbi = jdbi;
     this.draftSubmissionDAO = draftSubmissionDAO;
     this.draftFileStorageService = draftFileStorageService;
   }
 
-  public void insertDraftSubmission(DraftSubmissionInterface draft)
+  public void insertDraftSubmission(DraftInterface draft)
       throws SQLException, BadRequestException {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
@@ -56,7 +56,7 @@ public class DraftSubmissionService {
     });
   }
 
-  public void updateDraftSubmission(DraftSubmissionInterface draft, User user) throws SQLException {
+  public void updateDraftSubmission(DraftInterface draft, User user) throws SQLException {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     jdbi.useHandle(handle -> {
@@ -72,8 +72,8 @@ public class DraftSubmissionService {
     });
   }
 
-  public DraftSubmissionInterface getAuthorizedDraft(UUID draftUUID, User user) {
-    DraftSubmissionInterface draft;
+  public DraftInterface getAuthorizedDraft(UUID draftUUID, User user) {
+    DraftInterface draft;
     try {
       draft = findDraftSubmissionByDraftSubmissionUUID(draftUUID);
     } catch (SQLException e) {
@@ -92,26 +92,26 @@ public class DraftSubmissionService {
   }
 
   public void deleteDraftsByUser(User user) {
-    Set<DraftSubmissionInterface> userDrafts = findDraftSubmissionsForUser(user);
-    for (DraftSubmissionInterface draft : userDrafts) {
+    Set<DraftInterface> userDrafts = findDraftSubmissionsForUser(user);
+    for (DraftInterface draft : userDrafts) {
       deleteDraftSubmission(draft, user);
     }
   }
 
-  public Set<DraftSubmissionSummary> findDraftSummeriesForUser(User user) {
+  public Set<DraftSummary> findDraftSummeriesForUser(User user) {
     return draftSubmissionDAO.findDraftSubmissionSummariesByUserId(user.getUserId());
   }
 
-  public Set<DraftSubmissionInterface> findDraftSubmissionsForUser(User user) {
+  public Set<DraftInterface> findDraftSubmissionsForUser(User user) {
     return draftSubmissionDAO.findDraftSubmissionsByUserId(user.getUserId());
   }
 
-  private DraftSubmissionInterface findDraftSubmissionByDraftSubmissionUUID(
+  private DraftInterface findDraftSubmissionByDraftSubmissionUUID(
       UUID draftSubmissionUUID) throws SQLException {
     return draftSubmissionDAO.findDraftSubmissionsById(draftSubmissionUUID);
   }
 
-  public DraftSubmissionInterface addAttachments(DraftSubmissionInterface draft, User user,
+  public DraftInterface addAttachments(DraftInterface draft, User user,
       Map<String, FormDataBodyPart> files) throws SQLException {
     draftFileStorageService.storeDraftFiles(draft.getUUID(), user, files);
     draftSubmissionDAO.updateDraftSubmissionByDraftSubmissionByUUID(draft.getUUID(),
@@ -119,7 +119,7 @@ public class DraftSubmissionService {
     return findDraftSubmissionByDraftSubmissionUUID(draft.getUUID());
   }
 
-  public void deleteDraftAttachment(DraftSubmissionInterface draft, User user, Integer fileId)
+  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
       throws SQLException {
     Optional<FileStorageObject> fileStorageObjectToDelete = draft.getStoredFiles().stream()
         .filter(fileStorageObject -> fileStorageObject.getFileStorageObjectId().equals(fileId))
@@ -135,7 +135,7 @@ public class DraftSubmissionService {
     }
   }
 
-  public void deleteDraftSubmission(DraftSubmissionInterface draft, User user)
+  public void deleteDraftSubmission(DraftInterface draft, User user)
       throws RuntimeException {
     jdbi.useHandle(handle -> {
       try {
@@ -156,7 +156,7 @@ public class DraftSubmissionService {
     });
   }
 
-  public StreamingOutput draftAsJson(DraftSubmissionInterface draft) {
+  public StreamingOutput draftAsJson(DraftInterface draft) {
     Gson gson = GsonUtil.buildGson();
     return output -> {
       output.write("{ \"document\":".getBytes());

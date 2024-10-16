@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
  * DraftSubmission represents a Data Submitter's partial submission of 0 or more elements. This is
  * an internal structure, not intended to be serialized back to the client in the entirety.
  */
-public class DraftSubmission implements DraftSubmissionInterface {
+public class Draft implements DraftInterface {
 
   private Date createDate;
   private Date updateDate;
@@ -23,9 +23,9 @@ public class DraftSubmission implements DraftSubmissionInterface {
   private User updateUser;
   private UUID uuid;
 
-  public DraftSubmission() {}
+  public Draft() {}
 
-  public DraftSubmission(String json, User user) {
+  public Draft(String json, User user) {
     this.json = json;
     this.createUser = user;
     this.updateUser = user;

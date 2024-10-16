@@ -56,7 +56,7 @@ import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
-import org.broadinstitute.consent.http.resources.DraftSubmissionResource;
+import org.broadinstitute.consent.http.resources.DraftResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
@@ -82,7 +82,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.DraftSubmissionService;
+import org.broadinstitute.consent.http.service.DraftService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -183,8 +183,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final ElasticSearchService elasticSearchService = injector.getProvider(
         ElasticSearchService.class).get();
     final OidcService oidcService = injector.getProvider(OidcService.class).get();
-    final DraftSubmissionService draftSubmissionService = injector.getProvider(
-        DraftSubmissionService.class).get();
+    final DraftService draftService = injector.getProvider(
+        DraftService.class).get();
 
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
 
@@ -243,7 +243,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
     env.jersey().register(new OAuth2Resource(oidcService));
-    env.jersey().register(new DraftSubmissionResource(userService, draftSubmissionService));
+    env.jersey().register(new DraftResource(userService, draftService));
 
     // Authentication filters
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();

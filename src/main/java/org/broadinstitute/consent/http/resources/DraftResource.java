@@ -26,27 +26,27 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DraftSubmission;
-import org.broadinstitute.consent.http.models.DraftSubmissionInterface;
-import org.broadinstitute.consent.http.models.DraftSubmissionSummary;
+import org.broadinstitute.consent.http.models.Draft;
+import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DraftSubmissionService;
+import org.broadinstitute.consent.http.service.DraftService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 @Path("api/draft")
-public class DraftSubmissionResource extends Resource {
+public class DraftResource extends Resource {
 
   private final UserService userService;
-  private final DraftSubmissionService draftSubmissionService;
+  private final DraftService draftService;
 
   @Inject
-  public DraftSubmissionResource(UserService userService,
-      DraftSubmissionService draftSubmissionService) {
+  public DraftResource(UserService userService,
+      DraftService draftService) {
     this.userService = userService;
-    this.draftSubmissionService = draftSubmissionService;
+    this.draftService = draftService;
   }
 
   @GET
@@ -56,7 +56,7 @@ public class DraftSubmissionResource extends Resource {
   public Response getDraftSubmissions(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Set<DraftSubmissionSummary> draftSummariesSet = draftSubmissionService.findDraftSummeriesForUser(
+      Set<DraftSummary> draftSummariesSet = draftService.findDraftSummeriesForUser(
           user);
       return Response.ok().entity(draftSummariesSet).build();
     } catch (Exception e) {
@@ -73,8 +73,8 @@ public class DraftSubmissionResource extends Resource {
   public Response createDraftRegistration(@Auth AuthUser authUser, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = new DraftSubmission(json, user);
-      draftSubmissionService.insertDraftSubmission(draft);
+      DraftInterface draft = new Draft(json, user);
+      draftService.insertDraftSubmission(draft);
       URI uri = UriBuilder.fromPath(String.format("/api/draft/v1/%s", draft.getUUID().toString()))
           .build();
       return Response.created(uri).entity(json).build();
@@ -91,9 +91,9 @@ public class DraftSubmissionResource extends Resource {
       @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
-      StreamingOutput output = draftSubmissionService.draftAsJson(draft);
+      StreamingOutput output = draftService.draftAsJson(draft);
       return Response.ok().entity(output).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -110,11 +110,11 @@ public class DraftSubmissionResource extends Resource {
       String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       draft.setJson(json);
-      draftSubmissionService.updateDraftSubmission(draft, user);
-      return Response.ok().entity(draftSubmissionService.draftAsJson(draft)).build();
+      draftService.updateDraftSubmission(draft, user);
+      return Response.ok().entity(draftService.draftAsJson(draft)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -127,9 +127,9 @@ public class DraftSubmissionResource extends Resource {
   public Response deleteDraft(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
-      draftSubmissionService.deleteDraftSubmission(draft, user);
+      draftService.deleteDraftSubmission(draft, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -144,7 +144,7 @@ public class DraftSubmissionResource extends Resource {
       @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       return Response.ok().entity(draft.getStoredFiles()).build();
     } catch (Exception e) {
@@ -162,10 +162,10 @@ public class DraftSubmissionResource extends Resource {
       FormDataMultiPart multipart) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-      DraftSubmissionInterface updatedDraft = draftSubmissionService.addAttachments(draft, user,
+      DraftInterface updatedDraft = draftService.addAttachments(draft, user,
           files);
       return Response.ok().entity(updatedDraft.getStoredFiles()).build();
     } catch (Exception e) {
@@ -181,7 +181,7 @@ public class DraftSubmissionResource extends Resource {
       @PathParam("fileId") Integer fileId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       Set<FileStorageObject> filteredAttachments = draft.getStoredFiles().stream()
           .filter((fileStorageObject) -> fileStorageObject.getFileStorageObjectId().equals(fileId))
@@ -191,7 +191,7 @@ public class DraftSubmissionResource extends Resource {
         return Response.status(Response.Status.NOT_FOUND).build();
       } else if (filteredAttachments.size() == 1) {
         FileStorageObject targetAttachment = filteredAttachments.iterator().next();
-        InputStream fileStream = draftSubmissionService.getDraftAttachmentStream(targetAttachment);
+        InputStream fileStream = draftService.getDraftAttachmentStream(targetAttachment);
         StreamingOutput streamOutput = createStreamingOutput(fileStream);
         return Response.ok(streamOutput).header(HttpHeaders.CONTENT_DISPOSITION,
             String.format("attachment; filename=\"%s\"", targetAttachment.getFileName())).build();
@@ -214,16 +214,16 @@ public class DraftSubmissionResource extends Resource {
       @PathParam("draftUUID") String draftUUID, @PathParam("fileId") Integer fileId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftSubmissionInterface draft = draftSubmissionService.getAuthorizedDraft(
+      DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
-      draftSubmissionService.deleteDraftAttachment(draft, user, fileId);
+      draftService.deleteDraftAttachment(draft, user, fileId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }
 
-  private URI getDraftURI(DraftSubmissionInterface draft) {
+  private URI getDraftURI(DraftInterface draft) {
     if (draft.getUUID() != null) {
       return UriBuilder.fromPath(String.format("/api/draft/v1/%s", draft.getUUID().toString()))
           .build();

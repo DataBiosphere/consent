@@ -61,14 +61,14 @@ public class UserService implements ConsentLogger {
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final EmailService emailService;
-  private final DraftSubmissionService draftSubmissionService;
+  private final DraftService draftService;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
-      DraftSubmissionService draftSubmissionService) {
+      DraftService draftService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -81,7 +81,7 @@ public class UserService implements ConsentLogger {
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.emailService = emailService;
-    this.draftSubmissionService = draftSubmissionService;
+    this.draftService = draftService;
   }
 
   /**
@@ -268,7 +268,7 @@ public class UserService implements ConsentLogger {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    draftSubmissionService.deleteDraftsByUser(user);
+    draftService.deleteDraftsByUser(user);
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
