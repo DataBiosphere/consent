@@ -14,7 +14,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
@@ -56,11 +55,7 @@ public class DarCollectionServiceDAO {
     // If the user is not an admin, we need to know what datasets they have access to.
     List<Integer> dacUserDatasetIds = isAdmin ?
         List.of() :
-        datasetDAO
-            .findDatasetsByAuthUserEmail(user.getEmail())
-            .stream()
-            .map(Dataset::getDataSetId)
-            .toList();
+        datasetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.

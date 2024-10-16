@@ -343,9 +343,8 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
 
-    List<Dataset> datasets = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail());
-    assertFalse(datasets.isEmpty());
-    List<Integer> datasetIds = datasets.stream().map(Dataset::getDataSetId).toList();
+    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserEmail(user.getEmail());
+    assertFalse(datasetIds.isEmpty());
     assertTrue(datasetIds.contains(dataset.getDataSetId()));
   }
 

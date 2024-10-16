@@ -192,7 +192,7 @@ class DarCollectionResourceTest {
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -213,7 +213,7 @@ class DarCollectionResourceTest {
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -234,7 +234,7 @@ class DarCollectionResourceTest {
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -257,7 +257,7 @@ class DarCollectionResourceTest {
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -612,7 +612,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -633,7 +633,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -654,7 +654,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -675,7 +675,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);

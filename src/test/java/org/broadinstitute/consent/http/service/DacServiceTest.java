@@ -23,13 +23,11 @@ import jakarta.ws.rs.BadRequestException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -392,7 +390,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
 
     initService();
 
@@ -408,7 +406,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
 
     initService();
 
@@ -424,7 +422,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_3() {
     // Member no direct access to datasets
     List<Dataset> memberDataSets = Collections.emptyList();
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserEmail(getMember().getEmail())).thenReturn(List.of());
 
     initService();
 
