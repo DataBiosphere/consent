@@ -20,7 +20,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.DraftSubmissionDAO;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -108,7 +108,7 @@ public class ConsentModule extends AbstractModule {
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final AcknowledgementDAO acknowledgementDAO;
-  private final DraftSubmissionDAO draftSubmissionDAO;
+  private final DraftDAO draftDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -142,7 +142,7 @@ public class ConsentModule extends AbstractModule {
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
-    this.draftSubmissionDAO = this.jdbi.onDemand(DraftSubmissionDAO.class);
+    this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
   }
 
   @Override
@@ -625,8 +625,8 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DraftSubmissionDAO providesDraftSubmissionDAO() {
-    return draftSubmissionDAO;
+  DraftDAO providesDraftSubmissionDAO() {
+    return draftDAO;
   }
 
   @Provides

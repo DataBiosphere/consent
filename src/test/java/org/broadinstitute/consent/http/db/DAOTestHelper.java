@@ -70,7 +70,7 @@ public class DAOTestHelper {
   protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
-  protected static DraftSubmissionDAO draftSubmissionDAO;
+  protected static DraftDAO draftDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -138,7 +138,7 @@ public class DAOTestHelper {
     darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
-    draftSubmissionDAO = jdbi.onDemand(DraftSubmissionDAO.class);
+    draftDAO = jdbi.onDemand(DraftDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
   }
 

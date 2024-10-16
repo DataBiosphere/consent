@@ -72,7 +72,7 @@ public class DraftResourceTest {
   @Test
   public void testGetDraftSubmissionsWhenNoneExistForUser() {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(draftService.findDraftSummeriesForUser(any())).thenReturn(
+    when(draftService.findDraftSummariesForUser(any())).thenReturn(
         Collections.emptySet());
     initResource();
     Response response = resource.getDraftSubmissions(authUser);
@@ -86,7 +86,7 @@ public class DraftResourceTest {
     draftSummaries.add(
         new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date()));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(draftService.findDraftSummeriesForUser(any())).thenReturn(draftSummaries);
+    when(draftService.findDraftSummariesForUser(any())).thenReturn(draftSummaries);
     initResource();
     Response response = resource.getDraftSubmissions(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -105,7 +105,7 @@ public class DraftResourceTest {
   @Test
   public void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
     doThrow(new BadRequestException("Error submitting draft")).when(draftService)
-        .insertDraftSubmission(any());
+        .insertDraft(any());
     String draft = "";
     initResource();
     Response response = resource.createDraftRegistration(authUser, draft);

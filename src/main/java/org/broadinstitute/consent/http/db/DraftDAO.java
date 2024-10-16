@@ -24,7 +24,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(DraftSubmissionInterfaceMapper.class)
 @RegisterRowMapper(DraftSubmissionSummaryMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
-public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
+public interface DraftDAO extends Transactional<DraftDAO> {
 
   String DRAFT_SUMMARY = """
       SELECT ds.name, ds.create_date, ds.uuid, ds.update_date
@@ -77,7 +77,7 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           schema_class = :schema_class
       WHERE uuid = :uuid
       """)
-  void updateDraftSubmissionByDraftSubmissionByUUID(
+  void updateDraftByDraftUUID(
       @Bind("name") String name,
       @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId,
@@ -92,7 +92,7 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           update_user_id = :updateUserId
       WHERE uuid = :uuid
       """)
-  void updateDraftSubmissionByDraftSubmissionByUUID(
+  void updateDraftByDraftUUID(
       @Bind("uuid") UUID uuid,
       @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId);
@@ -103,13 +103,13 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           """
                WHERE ds.create_user_id = :createdUserId
               """)
-  Set<DraftInterface> findDraftSubmissionsByUserId(
+  Set<DraftInterface> findDraftsByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowMapper(DraftSubmissionSummaryMapper.class)
   @SqlQuery(
       DRAFT_SUMMARY)
-  Set<DraftSummary> findDraftSubmissionSummariesByUserId(
+  Set<DraftSummary> findDraftSummariesByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowReducer(DraftSubmissionReducer.class)
@@ -118,7 +118,7 @@ public interface DraftSubmissionDAO extends Transactional<DraftSubmissionDAO> {
           """
                WHERE uuid = :uuid
               """)
-  DraftInterface findDraftSubmissionsById(@Bind("uuid") UUID uuid);
+  DraftInterface findDraftById(@Bind("uuid") UUID uuid);
 
   @SqlUpdate(
       """

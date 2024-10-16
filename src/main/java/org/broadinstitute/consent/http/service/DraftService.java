@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.broadinstitute.consent.http.db.DraftSubmissionDAO;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftSummary;
@@ -28,23 +28,23 @@ import org.jdbi.v3.core.Jdbi;
 public class DraftService {
 
   private final Jdbi jdbi;
-  private final DraftSubmissionDAO draftSubmissionDAO;
+  private final DraftDAO draftDAO;
   private final DraftFileStorageService draftFileStorageService;
 
   @Inject
-  public DraftService(Jdbi jdbi, DraftSubmissionDAO draftSubmissionDAO,
+  public DraftService(Jdbi jdbi, DraftDAO draftDAO,
       DraftFileStorageService draftFileStorageService) {
     this.jdbi = jdbi;
-    this.draftSubmissionDAO = draftSubmissionDAO;
+    this.draftDAO = draftDAO;
     this.draftFileStorageService = draftFileStorageService;
   }
 
-  public void insertDraftSubmission(DraftInterface draft)
+  public void insertDraft(DraftInterface draft)
       throws SQLException, BadRequestException {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
-        draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
+        draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
             draft.getCreateUser().getUserId(), draft.getJson(), draft.getUUID(),
             draft.getClass().getName());
       } catch (Exception e) {
@@ -56,13 +56,13 @@ public class DraftService {
     });
   }
 
-  public void updateDraftSubmission(DraftInterface draft, User user) throws SQLException {
+  public void updateDraft(DraftInterface draft, User user) throws SQLException {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
-        draftSubmissionDAO.updateDraftSubmissionByDraftSubmissionByUUID(draft.getName(),
+        draftDAO.updateDraftByDraftUUID(draft.getName(),
             draft.getUpdateDate().toInstant(), draft.getUpdateUser().getUserId(), draft.getJson(),
             draft.getUUID(), draft.getClass().getName());
       } catch (Exception e) {
@@ -75,7 +75,7 @@ public class DraftService {
   public DraftInterface getAuthorizedDraft(UUID draftUUID, User user) {
     DraftInterface draft;
     try {
-      draft = findDraftSubmissionByDraftSubmissionUUID(draftUUID);
+      draft = findDraftByDraftUUID(draftUUID);
     } catch (SQLException e) {
       throw new NotFoundException(
           String.format("Draft with UUID %s not found.", draftUUID.toString()));
@@ -92,31 +92,31 @@ public class DraftService {
   }
 
   public void deleteDraftsByUser(User user) {
-    Set<DraftInterface> userDrafts = findDraftSubmissionsForUser(user);
+    Set<DraftInterface> userDrafts = findDraftsForUser(user);
     for (DraftInterface draft : userDrafts) {
-      deleteDraftSubmission(draft, user);
+      deleteDraft(draft, user);
     }
   }
 
-  public Set<DraftSummary> findDraftSummeriesForUser(User user) {
-    return draftSubmissionDAO.findDraftSubmissionSummariesByUserId(user.getUserId());
+  public Set<DraftSummary> findDraftSummariesForUser(User user) {
+    return draftDAO.findDraftSummariesByUserId(user.getUserId());
   }
 
-  public Set<DraftInterface> findDraftSubmissionsForUser(User user) {
-    return draftSubmissionDAO.findDraftSubmissionsByUserId(user.getUserId());
+  public Set<DraftInterface> findDraftsForUser(User user) {
+    return draftDAO.findDraftsByUserId(user.getUserId());
   }
 
-  private DraftInterface findDraftSubmissionByDraftSubmissionUUID(
+  private DraftInterface findDraftByDraftUUID(
       UUID draftSubmissionUUID) throws SQLException {
-    return draftSubmissionDAO.findDraftSubmissionsById(draftSubmissionUUID);
+    return draftDAO.findDraftById(draftSubmissionUUID);
   }
 
   public DraftInterface addAttachments(DraftInterface draft, User user,
       Map<String, FormDataBodyPart> files) throws SQLException {
     draftFileStorageService.storeDraftFiles(draft.getUUID(), user, files);
-    draftSubmissionDAO.updateDraftSubmissionByDraftSubmissionByUUID(draft.getUUID(),
+    draftDAO.updateDraftByDraftUUID(draft.getUUID(),
         new Date().toInstant(), user.getUserId());
-    return findDraftSubmissionByDraftSubmissionUUID(draft.getUUID());
+    return findDraftByDraftUUID(draft.getUUID());
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
@@ -126,7 +126,7 @@ public class DraftService {
         .findFirst();
     if (fileStorageObjectToDelete.isPresent()) {
       draftFileStorageService.deleteStoredFile(fileStorageObjectToDelete.get(), user);
-      draftSubmissionDAO.updateDraftSubmissionByDraftSubmissionByUUID(draft.getUUID(),
+      draftDAO.updateDraftByDraftUUID(draft.getUUID(),
           new Date().toInstant(), user.getUserId());
     } else {
       throw new NotFoundException(
@@ -135,12 +135,12 @@ public class DraftService {
     }
   }
 
-  public void deleteDraftSubmission(DraftInterface draft, User user)
+  public void deleteDraft(DraftInterface draft, User user)
       throws RuntimeException {
     jdbi.useHandle(handle -> {
       try {
         handle.useTransaction(handler -> {
-          draftSubmissionDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
+          draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
           draft.getStoredFiles().forEach(fileStorageObject -> {
             try {
               draftFileStorageService.deleteStoredFile(fileStorageObject, user);

@@ -24,7 +24,7 @@ public class DAOContainer {
   private InstitutionDAO institutionDAO;
   private FileStorageObjectDAO fileStorageObjectDAO;
   private AcknowledgementDAO acknowledgementDAO;
-  private DraftSubmissionDAO draftSubmissionDAO;
+  private DraftDAO draftDAO;
 
   public CounterDAO getCounterDAO() {
     return counterDAO;
@@ -167,7 +167,7 @@ public class DAOContainer {
     this.acknowledgementDAO = acknowledgementDAO;
   }
 
-  public void setDraftSubmissionDAO(DraftSubmissionDAO draftSubmissionDAO) {
-    this.draftSubmissionDAO = draftSubmissionDAO;
+  public void setDraftSubmissionDAO(DraftDAO draftDAO) {
+    this.draftDAO = draftDAO;
   }
 }

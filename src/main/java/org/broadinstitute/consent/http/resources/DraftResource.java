@@ -56,7 +56,7 @@ public class DraftResource extends Resource {
   public Response getDraftSubmissions(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Set<DraftSummary> draftSummariesSet = draftService.findDraftSummeriesForUser(
+      Set<DraftSummary> draftSummariesSet = draftService.findDraftSummariesForUser(
           user);
       return Response.ok().entity(draftSummariesSet).build();
     } catch (Exception e) {
@@ -74,7 +74,7 @@ public class DraftResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftInterface draft = new Draft(json, user);
-      draftService.insertDraftSubmission(draft);
+      draftService.insertDraft(draft);
       URI uri = UriBuilder.fromPath(String.format("/api/draft/v1/%s", draft.getUUID().toString()))
           .build();
       return Response.created(uri).entity(json).build();
@@ -113,7 +113,7 @@ public class DraftResource extends Resource {
       DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       draft.setJson(json);
-      draftService.updateDraftSubmission(draft, user);
+      draftService.updateDraft(draft, user);
       return Response.ok().entity(draftService.draftAsJson(draft)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -129,7 +129,7 @@ public class DraftResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
-      draftService.deleteDraftSubmission(draft, user);
+      draftService.deleteDraft(draft, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

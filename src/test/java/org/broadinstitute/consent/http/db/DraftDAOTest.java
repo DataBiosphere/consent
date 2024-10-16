@@ -37,9 +37,9 @@ class DraftDAOTest extends DAOTestHelper {
     Date createDate = draft.getCreateDate();
     Date updateDate = draft.getUpdateDate();
     String name = draft.getName();
-    draftSubmissionDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
+    draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getClass().getCanonicalName());
-    Set<DraftInterface> user1submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     DraftInterface returnedDraft = user1submissions.iterator().next();
@@ -56,7 +56,7 @@ class DraftDAOTest extends DAOTestHelper {
     assertEquals(returnedDraft.getUpdateUser().getEmail(), user1.getEmail());
     assertEquals(returnedDraft.getUpdateUser().getInstitutionId(), user1.getInstitutionId());
     assertEquals(returnedDraft.getUpdateUser().getEraCommonsId(), user1.getEraCommonsId());
-    Set<DraftInterface> user2submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
         user2.getUserId());
     assertThat(user2submissions, hasSize(0));
   }
@@ -66,10 +66,10 @@ class DraftDAOTest extends DAOTestHelper {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     Draft draft = new Draft(jsonText, user1);
-    draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
+    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getClass().getCanonicalName());
     assertThrows(UnableToExecuteStatementException.class,
-        () -> draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
+        () -> draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
             user1.getUserId(), draft.getJson(), draft.getUUID(),
             draft.getClass().getCanonicalName()));
   }
@@ -81,19 +81,19 @@ class DraftDAOTest extends DAOTestHelper {
     Draft draft = new Draft(jsonText, user1);
     UUID uuid = draft.getUUID();
     Date createDate = draft.getCreateDate();
-    draftSubmissionDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
+    draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getClass().getCanonicalName());
-    DraftInterface returnedDraft = draftSubmissionDAO.findDraftSubmissionsById(uuid);
+    DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(jsonText, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
     String revisedJson = "{\"Name\": \"Bob\"}";
     returnedDraft.setJson(revisedJson);
     returnedDraft.setUpdateDate(new Date());
-    draftSubmissionDAO.updateDraftSubmissionByDraftSubmissionByUUID(returnedDraft.getName(),
+    draftDAO.updateDraftByDraftUUID(returnedDraft.getName(),
         returnedDraft.getUpdateDate().toInstant(), user1.getUserId(), returnedDraft.getJson(),
         returnedDraft.getUUID(), returnedDraft.getClass().getCanonicalName());
-    returnedDraft = draftSubmissionDAO.findDraftSubmissionsById(uuid);
+    returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(revisedJson, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
@@ -105,23 +105,23 @@ class DraftDAOTest extends DAOTestHelper {
     User user2 = createUser();
     Draft draft = new Draft("{\"Name\": \"User1\"}", user1);
     Draft draft2 = new Draft("{\"Name\": \"User2\"}", user2);
-    draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
+    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getClass().getCanonicalName());
-    draftSubmissionDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
+    draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
         user2.getUserId(),
         draft2.getJson(), draft2.getUUID(), draft2.getClass().getCanonicalName());
-    Set<DraftInterface> user1submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
-    Set<DraftSummary> user1summaries = draftSubmissionDAO.findDraftSubmissionSummariesByUserId(
+    Set<DraftSummary> user1summaries = draftDAO.findDraftSummariesByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     assertThat(user1summaries, hasSize(1));
     DraftSummary user1DraftSummary = user1summaries.iterator().next();
     DraftInterface user1DraftSubmission = user1submissions.iterator().next();
     summaryMatchesDetails(user1DraftSummary, user1DraftSubmission);
-    Set<DraftInterface> user2submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
         user2.getUserId());
-    Set<DraftSummary> user2summaries = draftSubmissionDAO.findDraftSubmissionSummariesByUserId(
+    Set<DraftSummary> user2summaries = draftDAO.findDraftSummariesByUserId(
         user2.getUserId());
     DraftSummary user2DraftSummary = user2summaries.iterator().next();
     DraftInterface user2DraftSubmission = user2submissions.iterator().next();
@@ -142,13 +142,13 @@ class DraftDAOTest extends DAOTestHelper {
     fso.setUpdateDate(draft.getUpdateDate().toInstant());
     fso.setCreateUserId(user1.getUserId());
     fso.setEntityId(draft.getUUID().toString());
-    draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
+    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
         draft.getCreateUser().getUserId(), draft.getJson(), draft.getUUID(),
         draft.getClass().getCanonicalName());
     fileStorageObjectDAO.insertNewFile(fso.getFileName(), fso.getCategory().getValue(),
         fso.getBlobId().toGsUtilUri(), fso.getMediaType(), draft.getUUID().toString(),
         user1.getUserId(), fso.getCreateDate());
-    Set<DraftInterface> draftSubmissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> draftSubmissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(draftSubmissions, hasSize(1));
     Set<FileStorageObject> storedFiles = draftSubmissions.iterator().next().getStoredFiles();
@@ -165,16 +165,16 @@ class DraftDAOTest extends DAOTestHelper {
     User user1 = createUser();
     Draft draft = new Draft("{\"Name\": \"First\"}", user1);
     Draft draft2 = new Draft("{\"Name\": \"Second\"}", user1);
-    draftSubmissionDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
+    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getClass().getCanonicalName());
-    draftSubmissionDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
+    draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
         user1.getUserId(),
         draft2.getJson(), draft2.getUUID(), draft2.getClass().getCanonicalName());
-    Set<DraftInterface> user1submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(2));
-    draftSubmissionDAO.deleteDraftByUUIDList(List.of(draft2.getUUID()));
-    user1submissions = draftSubmissionDAO.findDraftSubmissionsByUserId(user1.getUserId());
+    draftDAO.deleteDraftByUUIDList(List.of(draft2.getUUID()));
+    user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(user1submissions, hasSize(1));
 
   }

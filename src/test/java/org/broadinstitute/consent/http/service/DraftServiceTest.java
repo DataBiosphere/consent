@@ -50,7 +50,7 @@ public class DraftServiceTest extends DAOTestHelper {
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     DraftFileStorageService draftFileStorageService = new DraftFileStorageService(jdbi, gcsService,
         fileStorageObjectDAO);
-    this.draftService = new DraftService(jdbi, draftSubmissionDAO,
+    this.draftService = new DraftService(jdbi, draftDAO,
         draftFileStorageService);
   }
 
@@ -58,8 +58,8 @@ public class DraftServiceTest extends DAOTestHelper {
   public void testCreateDraftSubmission() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraftSubmission(user, 3);
-    assertThat(draftSubmissionDAO.findDraftSubmissionsByUserId(user.getUserId()), hasSize(1));
-    Set<DraftInterface> storedDrafts = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
+    Set<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
     assertThat(storedDrafts, hasSize(1));
     DraftInterface storedDraft = storedDrafts.iterator().next();
@@ -71,7 +71,7 @@ public class DraftServiceTest extends DAOTestHelper {
   public void testCreateDraftSubmissionWithInvalidJson() {
     User user = createUser();
     Draft draftSubmission = new Draft("Hello world!",user);
-    assertThrows(BadRequestException.class, ()-> draftService.insertDraftSubmission(draftSubmission));
+    assertThrows(BadRequestException.class, ()-> draftService.insertDraft(draftSubmission));
   }
 
   @Test
@@ -81,12 +81,12 @@ public class DraftServiceTest extends DAOTestHelper {
     User adminUser = createUser();
     adminUser.addRole(UserRoles.Admin());
     DraftInterface draft = createDraftSubmission(goodUser, 4);
-    assertThat(draftSubmissionDAO.findDraftSubmissionsByUserId(goodUser.getUserId()), hasSize(1));
+    assertThat(draftDAO.findDraftsByUserId(goodUser.getUserId()), hasSize(1));
     assertThrows(NotFoundException.class,
         () -> draftService.getAuthorizedDraft(UUID.randomUUID(), goodUser));
     assertThrows(NotAuthorizedException.class,
         () -> draftService.getAuthorizedDraft(draft.getUUID(), badUser));
-    assertThat(draftSubmissionDAO.findDraftSubmissionsByUserId(adminUser.getUserId()), hasSize(0));
+    assertThat(draftDAO.findDraftsByUserId(adminUser.getUserId()), hasSize(0));
     DraftInterface adminVisibleDraft = draftService.getAuthorizedDraft(
         draft.getUUID(), adminUser);
     assertEquals(adminVisibleDraft.getUUID(), draft.getUUID());
@@ -95,14 +95,14 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteDraftSubmission() throws Exception {
+  public void testDeleteDraft() throws Exception {
     User user = createUser();
     createDraftSubmission(user, 3);
-    Set<DraftInterface> loadedDrafts = draftSubmissionDAO.findDraftSubmissionsByUserId(
+    Set<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
     assertThat(loadedDrafts, hasSize(1));
-    draftService.deleteDraftSubmission(loadedDrafts.iterator().next(), user);
-    assertThat(draftSubmissionDAO.findDraftSubmissionsByUserId(user.getUserId()), hasSize(0));
+    draftService.deleteDraft(loadedDrafts.iterator().next(), user);
+    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
   }
 
   @Test
@@ -112,11 +112,11 @@ public class DraftServiceTest extends DAOTestHelper {
     createDraftSubmission(user, 3);
     createDraftSubmission(user2, 1);
     createDraftSubmission(user2, 4);
-    assertThat(draftService.findDraftSubmissionsForUser(user2), hasSize(2));
-    assertThat(draftService.findDraftSubmissionsForUser(user), hasSize(1));
+    assertThat(draftService.findDraftsForUser(user2), hasSize(2));
+    assertThat(draftService.findDraftsForUser(user), hasSize(1));
     draftService.deleteDraftsByUser(user2);
-    assertThat(draftService.findDraftSubmissionsForUser(user), hasSize(1));
-    assertThat(draftService.findDraftSubmissionsForUser(user2), hasSize(0));
+    assertThat(draftService.findDraftsForUser(user), hasSize(1));
+    assertThat(draftService.findDraftsForUser(user2), hasSize(0));
     draftService.deleteDraftsByUser(user2);
   }
 
@@ -149,7 +149,7 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDraftSubmission() throws SQLException {
+  public void testUpdateDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraftSubmission(user, 1);
     String updatedJson = "{\"study\": \"My example study\"}";
@@ -161,7 +161,7 @@ public class DraftServiceTest extends DAOTestHelper {
     assertNotEquals(draft.getName(), newDraftName);
     draft.setName(newDraftName);
     draft.setJson(updatedJson);
-    draftService.updateDraftSubmission(draft, user);
+    draftService.updateDraft(draft, user);
     DraftInterface updatedDraft = draftService.getAuthorizedDraft(
         draft.getUUID(), user);
     assertEquals(draft.getUUID(), updatedDraft.getUUID());
@@ -173,7 +173,7 @@ public class DraftServiceTest extends DAOTestHelper {
   private DraftInterface createDraftSubmission(User user, Integer numberOfFiles)
       throws SQLException {
     Draft draft = new Draft("{}", user);
-    draftService.insertDraftSubmission(draft);
+    draftService.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);
     return draftService.addAttachments(draft, user, mapOfFiles);
   }
