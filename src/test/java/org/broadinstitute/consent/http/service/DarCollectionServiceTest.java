@@ -238,7 +238,7 @@ class DarCollectionServiceTest {
   @Test
   void testCancelDarCollectionAsChair_ChairHasDatasets() {
     User user = new User();
-    user.setEmail("email");
+    user.setUserId(RandomUtils.nextInt(1, 10));
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
@@ -266,7 +266,7 @@ class DarCollectionServiceTest {
   @Test
   void testCancelDarCollectionAsChair_ChairHasNoDatasets() {
     User user = new User();
-    user.setEmail("email");
+    user.setUserId(RandomUtils.nextInt(1, 10));
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
