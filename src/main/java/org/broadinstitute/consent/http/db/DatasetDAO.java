@@ -255,8 +255,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT distinct d.dataset_id
           FROM dataset d
-          LEFT JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
-          LEFT JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.email = :email
+          INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
+          INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.email = :email
       """)
   List<Integer> findDatasetIdsByDACUserEmail(@Bind("email") String email);
 
