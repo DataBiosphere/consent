@@ -2,7 +2,7 @@ type: object
 properties:
   storedFiles:
     type: array
-    description: Uploaded files associated with the document.
+    description: Uploaded files associated with the draft.
     items:
       $ref: './FileStorageObject.yaml'
   createUser:

@@ -2,7 +2,7 @@ get:
   summary: Get the list of attachments associated with a draft
   description: Provides the list of attachments that are part of a draft.
   tags:
-    - DraftSubmission
+    - Draft
   parameters:
     - name: draftUUID
       in: path
@@ -28,7 +28,7 @@ post:
   summary: Upload attachments to the draft.
   description: Upload attachments associated with this draft.
   tags:
-    - DraftSubmission
+    - Draft
   parameters:
     - name: draftUUID
       in: path

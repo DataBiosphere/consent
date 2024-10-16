@@ -2,7 +2,7 @@ get:
   summary: Get a list of Dataset Draft Submissions
   description: Provides a list of Dataset Draft Submissions stored by the authenticated user.
   tags:
-    - DraftSubmission
+    - Draft
   responses:
     201:
       description: List of Draft Dataset Submission requests in summary format.
@@ -11,7 +11,7 @@ get:
           schema:
             type: array
             items:
-              $ref: '../schemas/DraftSubmissionSummary.yaml'
+              $ref: '../schemas/DraftSummary.yaml'
     401:
       description: Not authorized.  Did you remember to authenticate?  You must be a data submitter to use this endpoint.
     500:
@@ -27,7 +27,7 @@ post:
         schema:
           type: object
   tags:
-    - DraftSubmission
+    - Draft
   responses:
     201:
       description: Successfully created draft instance

@@ -2,7 +2,7 @@ get:
   summary: Get a specific file attachment associated with a draft
   description: Provides the an individual file attachment connected to a draft.
   tags:
-    - DraftSubmission
+    - Draft
   parameters:
     - name: draftUUID
       in: path
@@ -35,7 +35,7 @@ delete:
   summary: Get the list of attachments associated with a draft
   description: Provides the list of attachments that are part of a draft.
   tags:
-    - DraftSubmission
+    - Draft
   parameters:
     - name: draftUUID
       in: path

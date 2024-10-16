@@ -502,11 +502,11 @@ paths:
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
-    $ref: './paths/draftSubmissionIndex.yaml'
+    $ref: './paths/draftDocumentIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments:
-    $ref: './paths/draftSubmissionAttachmentsIndex.yaml'
+    $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachements/{fileId}:
-    $ref: './paths/draftSubmissionAttachments.yaml'
+    $ref: './paths/draftAttachments.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
