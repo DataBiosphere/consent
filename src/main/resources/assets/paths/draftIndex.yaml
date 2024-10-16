@@ -1,0 +1,43 @@
+get:
+  summary: Get a list of Dataset Draft Submissions
+  description: Provides a list of Dataset Draft Submissions stored by the authenticated user.
+  tags:
+    - Draft
+  responses:
+    201:
+      description: List of Draft Dataset Submission requests in summary format.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DraftSummary.yaml'
+    401:
+      description: Not authorized.  Did you remember to authenticate?  You must be a data submitter to use this endpoint.
+    500:
+      description: Internal server error.  Something went wrong with the valid input provided.
+post:
+  summary: Creates a new draft submission by posting a JSON file.
+  description: Creates an incomplete or work-in-progress study/dataset submission form to be resumed at a later date.
+  requestBody:
+    description: |
+      Schema validation is not performed and attachments associated with the draft may be uploaded after the draft is created.
+    content:
+      application/json:
+        schema:
+          type: object
+  tags:
+    - Draft
+  responses:
+    201:
+      description: Successfully created draft instance
+      content:
+        application/json:
+          schema:
+            type: object
+    400:
+      description: Bad Request (invalid input)
+    401:
+      description: Not authorized.  Did you remember to authenticate?  You must be a data submitter to use this endpoint.
+    500:
+      description: Internal Error (something went wrong processing valid input)

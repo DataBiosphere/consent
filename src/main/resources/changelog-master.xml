@@ -164,4 +164,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-09-04-drop-deprecated-dataset-columns-.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-09-17-draftsubmission.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

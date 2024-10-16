@@ -29,6 +29,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
@@ -255,4 +257,28 @@ abstract public class Resource implements ConsentLogger {
     return GsonUtil.buildGson().toJson(o);
   }
 
+  /**
+   * Finds and validates all the files uploaded to the multipart.
+   *
+   * @param multipart Form data
+   * @return Map of file body parts, where the key is the name of the field and the value is the
+   * body part including the file(s).
+   */
+  protected Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
+    if (Objects.isNull(multipart)) {
+      return Map.of();
+    }
+
+    Map<String, FormDataBodyPart> files = new HashMap<>();
+    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
+      for (FormDataBodyPart part : parts) {
+        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+          validateFileDetails(part.getContentDisposition());
+          files.put(part.getName(), part);
+        }
+      }
+    }
+
+    return files;
+  }
 }
