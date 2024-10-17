@@ -138,7 +138,7 @@ public class MetricsService {
 
               Dataset dataset =
                   datasets.stream()
-                      .filter(d -> d.getDataSetId().equals(datasetId))
+                      .filter(d -> d.getDatasetId().equals(datasetId))
                       .findFirst()
                       .orElse(null);
 

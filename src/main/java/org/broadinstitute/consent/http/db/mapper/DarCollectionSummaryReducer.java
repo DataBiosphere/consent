@@ -56,7 +56,7 @@ public class DarCollectionSummaryReducer implements
         election = rowView.getRow(Election.class);
         if (Objects.nonNull(election.getElectionId())) {
           summary.addElection(election);
-          summary.addDatasetId(election.getDataSetId());
+          summary.addDatasetId(election.getDatasetId());
         }
       } catch (MappingException e) {
         // Indicates that we do not have an election for this summary

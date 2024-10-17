@@ -73,7 +73,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .filter(cg -> {
           Optional<Dataset> dataset = SetUtils.emptyIfNull(existingStudy.getDatasets())
               .stream()
-              .filter(d -> d.getDataSetId().equals(cg.getDatasetId()))
+              .filter(d -> d.getDatasetId().equals(cg.getDatasetId()))
               .findFirst();
           return dataset.isPresent() && !dataset.get().getName().isBlank();
         })

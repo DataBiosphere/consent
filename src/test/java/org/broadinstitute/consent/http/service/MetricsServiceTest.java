@@ -166,7 +166,7 @@ class MetricsServiceTest {
               DatasetDTO dto = new DatasetDTO();
               dto.setDacId(dac.getDacId());
               dto.setAlias(ds.getAlias());
-              dto.setDataSetId(ds.getDataSetId());
+              dto.setDatasetId(ds.getDatasetId());
               DatasetPropertyDTO name = new DatasetPropertyDTO("Dataset Name", ds.getName());
               DatasetPropertyDTO consent = new DatasetPropertyDTO("Consent ID", ds.getName());
               dto.setProperties(Arrays.asList(name, consent));
@@ -180,12 +180,12 @@ class MetricsServiceTest {
         .mapToObj(
             i -> {
               String referenceId = UUID.randomUUID().toString();
-              List<Integer> dataSetIds = Collections.singletonList(i);
+              List<Integer> datasetIds = Collections.singletonList(i);
               DataAccessRequest dar = new DataAccessRequest();
               dar.setId(count);
               dar.setReferenceId(referenceId);
               DataAccessRequestData data = new DataAccessRequestData();
-              dar.setDatasetIds(dataSetIds);
+              dar.setDatasetIds(datasetIds);
               data.setReferenceId(referenceId);
               data.setProjectTitle(UUID.randomUUID().toString());
               dar.setData(data);
@@ -200,7 +200,7 @@ class MetricsServiceTest {
             i -> {
               Dataset d = new Dataset();
               d.setAlias(count);
-              d.setDataSetId(count);
+              d.setDatasetId(count);
               d.setName(UUID.randomUUID().toString());
               return d;
             })

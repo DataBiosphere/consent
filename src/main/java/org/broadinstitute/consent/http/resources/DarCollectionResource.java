@@ -150,7 +150,7 @@ public class DarCollectionResource extends Resource {
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
 
     return collection.getDatasets().stream()
-        .map(Dataset::getDataSetId)
+        .map(Dataset::getDatasetId)
         .anyMatch(userDatasetIds::contains);
   }
 

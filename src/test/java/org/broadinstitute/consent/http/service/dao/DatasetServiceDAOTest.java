@@ -52,7 +52,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
     // Assert that the dataset is deleted:
-    Dataset deleted = datasetDAO.findDatasetById(dataset.getDataSetId());
+    Dataset deleted = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNull(deleted);
 
   }
@@ -106,11 +106,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     DatasetProperty createdProp2 = created.getProperties().stream()
         .filter((p) -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst().get();
 
-    assertEquals(created.getDataSetId(), createdProp1.getDataSetId());
+    assertEquals(created.getDatasetId(), createdProp1.getDatasetId());
     assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
     assertEquals(prop1.getPropertyType(), createdProp1.getPropertyType());
 
-    assertEquals(created.getDataSetId(), createdProp2.getDataSetId());
+    assertEquals(created.getDatasetId(), createdProp2.getDatasetId());
     assertEquals(prop2.getPropertyValue(), createdProp2.getPropertyValue());
     assertEquals(prop2.getPropertyType(), createdProp2.getPropertyType());
 
@@ -381,7 +381,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop1.setPropertyType(PropertyType.Number);
     prop1.setPropertyKey(1);
     prop1.setPropertyValue(new Random().nextInt());
-    prop1.setDataSetId(dataset.getDataSetId());
+    prop1.setDatasetId(dataset.getDatasetId());
     prop1.setCreateDate(new Date());
 
     DatasetProperty prop2 = new DatasetProperty();
@@ -390,7 +390,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop2.setPropertyType(PropertyType.Date);
     prop2.setPropertyKey(2);
     prop2.setPropertyValue("2000-10-20");
-    prop2.setDataSetId(dataset.getDataSetId());
+    prop2.setDatasetId(dataset.getDatasetId());
     prop2.setCreateDate(new Date());
 
     // Prop for deletion
@@ -400,7 +400,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop3.setPropertyType(PropertyType.String);
     prop3.setPropertyKey(3);
     prop3.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-    prop3.setDataSetId(dataset.getDataSetId());
+    prop3.setDatasetId(dataset.getDatasetId());
     prop3.setCreateDate(new Date());
 
     datasetDAO.insertDatasetProperties(List.of(prop1, prop2, prop3));
@@ -421,12 +421,12 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop4.setPropertyType(PropertyType.String);
     prop4.setPropertyKey(4);
     prop4.setPropertyValue("new prop4 value");
-    prop4.setDataSetId(dataset.getDataSetId());
+    prop4.setDatasetId(dataset.getDatasetId());
     prop4.setCreateDate(new Date());
 
     String newName = "New Name";
     DatasetUpdate updates = new DatasetUpdate(
-        dataset.getDataSetId(),
+        dataset.getDatasetId(),
         newName,
         dataset.getCreateUserId(),
         dataset.getDacId(),
@@ -436,7 +436,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     serviceDAO.updateDataset(updates);
 
     // Validate that the dataset props have been updated, deleted, or added:
-    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDataSetId());
+    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDatasetId());
     Optional<DatasetProperty> updated1 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst();
     Optional<DatasetProperty> updated2 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst();
     Optional<DatasetProperty> deleted3 = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop3.getPropertyName())).findFirst();
@@ -449,7 +449,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertTrue(added4.isPresent());
     assertEquals(prop4.getPropertyValueAsString(), added4.get().getPropertyValueAsString());
 
-    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(newName, updatedDataset.getDatasetName());
   }
 
@@ -536,7 +536,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     String newDatasetName = "New Dataset Name";
     DatasetUpdate datasetUpdate = new DatasetUpdate(
-        dataset.getDataSetId(),
+        dataset.getDatasetId(),
         newDatasetName,
         study.getCreateUserId(),
         dataset.getDacId(),

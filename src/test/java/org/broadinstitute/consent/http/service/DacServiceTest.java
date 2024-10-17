@@ -390,7 +390,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -406,7 +406,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDataSetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -469,7 +469,7 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Election election = new Election();
-          election.setDataSetId(i);
+          election.setDatasetId(i);
           return election;
         }).collect(Collectors.toList());
   }
@@ -481,11 +481,11 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           String referenceId = UUID.randomUUID().toString();
-          List<Integer> dataSetIds = Collections.singletonList(i);
+          List<Integer> datasetIds = Collections.singletonList(i);
           DataAccessRequest dar = new DataAccessRequest();
           dar.setReferenceId(referenceId);
           DataAccessRequestData data = new DataAccessRequestData();
-          dar.setDatasetIds(dataSetIds);
+          dar.setDatasetIds(datasetIds);
           data.setReferenceId(referenceId);
           dar.setData(data);
           return dar;
@@ -499,7 +499,7 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dataset dataSet = new Dataset();
-          dataSet.setDataSetId(i);
+          dataSet.setDatasetId(i);
           return dataSet;
         }).collect(Collectors.toList());
   }

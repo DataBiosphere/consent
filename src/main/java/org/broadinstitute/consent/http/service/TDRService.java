@@ -70,7 +70,7 @@ public class TDRService implements ConsentLogger {
     }
     List<Integer> datasetIds = datasets
         .stream()
-        .map(Dataset::getDataSetId)
+        .map(Dataset::getDatasetId)
         .toList();
     DataAccessRequest newDar = new DataAccessRequest();
     newDar.setCreateDate(new Timestamp(new Date().getTime()));

@@ -295,8 +295,8 @@ class StudyDAOTest extends DAOTestHelper {
     s = studyDAO.findStudyById(s.getStudyId());
 
     assertEquals(2, s.getDatasetIds().size());
-    assertTrue(s.getDatasetIds().contains(ds1.getDataSetId()));
-    assertTrue(s.getDatasetIds().contains(ds2.getDataSetId()));
+    assertTrue(s.getDatasetIds().contains(ds1.getDatasetId()));
+    assertTrue(s.getDatasetIds().contains(ds2.getDatasetId()));
   }
 
   @Test

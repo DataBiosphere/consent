@@ -139,7 +139,7 @@ class MatchServiceTest {
   @Test
   void testSingleEntitiesMatchV3Failure() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     dataset.setAlias(2);
     dataset.setDatasetIdentifier();
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
@@ -161,7 +161,7 @@ class MatchServiceTest {
   @Test
   void testSingleEntitiesMatchV3Approve() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"APPROVE\", \"matchPair\": {}, \"failureReasons\": []}";
@@ -182,7 +182,7 @@ class MatchServiceTest {
   @Test
   void testSingleEntitiesMatchV3Deny() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"DENY\", \"matchPair\": {}, \"failureReasons\": []}";
@@ -203,7 +203,7 @@ class MatchServiceTest {
   @Test
   void testSingleEntitiesMatchV3Abstain() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
     String stringEntity = "{\"result\": \"ABSTAIN\", \"matchPair\": {}, \"failureReasons\": []}";

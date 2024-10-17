@@ -273,7 +273,7 @@ public class ElasticSearchService implements ConsentLogger {
           }
           output.write("\n".getBytes());
         } catch (IOException e) {
-          logException("Error indexing dataset term for dataset id: %d ".formatted(dataset.getDataSetId()), e);
+          logException("Error indexing dataset term for dataset id: %d ".formatted(dataset.getDatasetId()), e);
         }
       });
       output.write("]".getBytes());
@@ -302,7 +302,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     DatasetTerm term = new DatasetTerm();
 
-    term.setDatasetId(dataset.getDataSetId());
+    term.setDatasetId(dataset.getDatasetId());
     Optional.ofNullable(dataset.getCreateUserId()).ifPresent(userId -> {
       User user = userDAO.findUserById(dataset.getCreateUserId());
       term.setCreateUserId(dataset.getCreateUserId());
@@ -331,7 +331,7 @@ public class ElasticSearchService implements ConsentLogger {
     });
 
     List<Integer> approvedUserIds = dataAccessRequestDAO
-        .findApprovedDARsByDatasetId(dataset.getDataSetId())
+        .findApprovedDARsByDatasetId(dataset.getDatasetId())
         .stream()
         .map(DataAccessRequest::getUserId)
         .toList();
@@ -345,7 +345,7 @@ public class ElasticSearchService implements ConsentLogger {
       if (summary != null) {
         term.setDataUse(summary);
       } else {
-        logWarn("No data use summary for dataset id: %d".formatted(dataset.getDataSetId()));
+        logWarn("No data use summary for dataset id: %d".formatted(dataset.getDatasetId()));
       }
     }
 

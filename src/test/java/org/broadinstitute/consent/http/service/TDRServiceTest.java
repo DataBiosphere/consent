@@ -131,11 +131,11 @@ class TDRServiceTest {
         .toList();
 
     Dataset dataset1 = new Dataset();
-    dataset1.setDataSetId(1);
+    dataset1.setDatasetId(1);
     dataset1.setAlias(00001);
 
     Dataset dataset2 = new Dataset();
-    dataset2.setDataSetId(2);
+    dataset2.setDatasetId(2);
     dataset2.setAlias(00002);
 
     when(datasetDAO.findDatasetsByAlias(identifierList)).thenReturn(List.of(dataset1, dataset2));
@@ -152,11 +152,11 @@ class TDRServiceTest {
     String identifiers = "DUOS-00001, DUOS-00002";
     String title = "New Project";
     Dataset dataset1 = new Dataset();
-    dataset1.setDataSetId(1);
+    dataset1.setDatasetId(1);
     dataset1.setAlias(00001);
 
     Dataset dataset2 = new Dataset();
-    dataset2.setDataSetId(2);
+    dataset2.setDatasetId(2);
     dataset2.setAlias(00002);
 
     when(datasetDAO.findDatasetsByAlias(any())).thenReturn(List.of(dataset1, dataset2));
@@ -165,8 +165,8 @@ class TDRServiceTest {
     assertDoesNotThrow(() -> {
       DataAccessRequest dar = service.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project");
       assertNotNull(dar);
-      assertTrue(dar.getDatasetIds().contains(dataset1.getDataSetId()));
-      assertTrue(dar.getDatasetIds().contains(dataset2.getDataSetId()));
+      assertTrue(dar.getDatasetIds().contains(dataset1.getDatasetId()));
+      assertTrue(dar.getDatasetIds().contains(dataset2.getDatasetId()));
       assertEquals(title, dar.getData().getProjectTitle());
       assertNotNull(dar.getReferenceId());
       assertNotNull(dar.getCreateDate());

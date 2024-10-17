@@ -46,8 +46,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
     Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
@@ -65,8 +65,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
     Vote vote2 = createDacVote(user2.getUserId(), election.getElectionId());
     Vote vote3 = createDacVote(user3.getUserId(), election.getElectionId());
@@ -89,8 +89,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     createDacVote(user.getUserId(), election.getElectionId());
 
     Dataset dataset2 = createDataset();
@@ -98,8 +98,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id2 = darCollectionDAO.insertDarCollection(darCode2, user.getUserId(),
         new Date());
     DataAccessRequest dar2 = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id2,
-        dataset.getDataSetId(), user.getUserId());
-    Election election2 = createDataAccessElection(dar2.getReferenceId(), dataset2.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election2 = createDataAccessElection(dar2.getReferenceId(), dataset2.getDatasetId());
     createDacVote(user.getUserId(), election2.getElectionId());
     List<Integer> electionIds = Arrays.asList(election.getElectionId(), election2.getElectionId());
 
@@ -117,8 +117,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
     List<Vote> foundVotes = voteDAO.findVotesByElectionIdAndType(election.getElectionId(),
@@ -148,8 +148,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
     Vote foundVote = voteDAO.findVoteByElectionIdAndUserId(election.getElectionId(),
@@ -166,8 +166,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
     Integer voteId = voteDAO.checkVoteById(election.getReferenceId(), vote.getVoteId());
@@ -185,13 +185,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUser();
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote v = createDacVote(user.getUserId(), election.getElectionId());
 
     Vote vote = voteDAO.findVoteById(v.getVoteId());
@@ -204,13 +204,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUser();
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote v = createDacVote(user.getUserId(), election.getElectionId());
 
     String rationale = "rationale";
@@ -237,13 +237,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUser();
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote v = createDacVote(user.getUserId(), election.getElectionId());
 
     voteDAO.updateVoteReminderFlag(v.getVoteId(), true);
@@ -264,8 +264,8 @@ class VoteDAOTest extends DAOTestHelper {
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     electionDAO.updateElectionById(
         election.getElectionId(),
         ElectionStatus.CLOSED.getValue(),
@@ -301,13 +301,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUser();
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     electionDAO.updateElectionById(
         election.getElectionId(),
         ElectionStatus.CLOSED.getValue(),
@@ -337,14 +337,14 @@ class VoteDAOTest extends DAOTestHelper {
     User user3 = createUserWithRole(UserRoles.MEMBER.getRoleId());
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     User user4 = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user4.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user4.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user4.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     List<Integer> userIds = Arrays.asList(user1.getUserId(), user2.getUserId(), user3.getUserId());
 
     voteDAO.insertVotes(userIds, election.getElectionId(), VoteType.DAC.getValue());
@@ -360,13 +360,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
 
     voteDAO.removeVotesByIds(Collections.singletonList(vote.getVoteId()));
@@ -379,13 +379,13 @@ class VoteDAOTest extends DAOTestHelper {
     User user = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     Dataset dataset = createDataset();
     Dac dac = createDac();
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collection_id,
-        dataset.getDataSetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+        dataset.getDatasetId(), user.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     createChairpersonVote(user.getUserId(), election.getElectionId());
 
     List<Vote> userVotes = voteDAO.findVotesByUserId(user.getUserId());
@@ -399,7 +399,7 @@ class VoteDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     User user = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
     DataAccessRequest dar = createDataAccessRequestV3();
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote dacVote = createDacVote(user.getUserId(), election.getElectionId());
     assertNull(dacVote.getRationale());
 
@@ -455,10 +455,10 @@ class VoteDAOTest extends DAOTestHelper {
     datasets
         .forEach(dataset -> {
           DataAccessRequest dar = createDataAccessRequestWithDatasetAndCollectionInfo(collectionId,
-              dataset.getDataSetId(), user.getUserId());
+              dataset.getDatasetId(), user.getUserId());
           Election cancelled = createCanceledAccessElection(dar.getReferenceId(),
-              dataset.getDataSetId());
-          Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDataSetId());
+              dataset.getDatasetId());
+          Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
           createFinalVote(user.getUserId(), cancelled.getElectionId());
           createFinalVote(user.getUserId(), access.getElectionId());
         });
@@ -510,7 +510,7 @@ class VoteDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());

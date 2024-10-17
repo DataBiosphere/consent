@@ -315,7 +315,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
-    return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDataSetId());
+    return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId());
   }
 
 }

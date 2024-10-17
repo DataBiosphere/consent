@@ -129,7 +129,7 @@ public class EmailService implements ConsentLogger {
     }
     String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
-    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDataSetId).toList();
+    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId).toList();
     List<Dataset> datasetsInDAR = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
     Map<String, List<String>>  sendList = new HashMap<>();

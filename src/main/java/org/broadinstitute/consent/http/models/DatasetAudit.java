@@ -9,7 +9,7 @@ public class DatasetAudit {
   private Integer dataSetAuditId;
 
   @JsonProperty
-  private Integer dataSetId;
+  private Integer datasetId;
 
   @JsonProperty
   private String objectId;
@@ -34,13 +34,13 @@ public class DatasetAudit {
   }
 
   public DatasetAudit(
-      Integer dataSetId,
+      Integer datasetId,
       String objectId,
       String name,
       Date date,
       Integer user,
       String action) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.date = date;
@@ -56,12 +56,12 @@ public class DatasetAudit {
     this.dataSetAuditId = dataSetAuditId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public String getObjectId() {

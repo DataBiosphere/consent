@@ -368,7 +368,7 @@ class DatasetRegistrationServiceTest {
     Study study = mock();
     Set<Dataset> allDatasets = Stream.of(1, 2, 3, 4, 5).map((i) -> {
       Dataset dataset = new Dataset();
-      dataset.setDataSetId(i);
+      dataset.setDatasetId(i);
       return dataset;
     }).collect(Collectors.toSet());
     List<DatasetUpdate> updatedDatasets = Stream.of(3, 4)
@@ -383,7 +383,7 @@ class DatasetRegistrationServiceTest {
     assertEquals(3, datasets.size());
 
     List<Integer> expectedIds = List.of(1, 2, 5);
-    List<Integer> actualIds = datasets.stream().map(Dataset::getDataSetId).toList();
+    List<Integer> actualIds = datasets.stream().map(Dataset::getDatasetId).toList();
 
     assertEquals(expectedIds, actualIds);
   }
@@ -552,7 +552,7 @@ class DatasetRegistrationServiceTest {
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(1, 100));
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setDacId(dac.getDacId());
     String name = RandomStringUtils.randomAlphabetic(10);
     org.broadinstitute.consent.http.models.DatasetUpdate update = new org.broadinstitute.consent.http.models.DatasetUpdate(
@@ -563,7 +563,7 @@ class DatasetRegistrationServiceTest {
 
     initService();
     assertDoesNotThrow(() -> {
-      datasetRegistrationService.updateDataset(dataset.getDataSetId(), user, update, Map.of());
+      datasetRegistrationService.updateDataset(dataset.getDatasetId(), user, update, Map.of());
     }, "Update Error");
   }
 
