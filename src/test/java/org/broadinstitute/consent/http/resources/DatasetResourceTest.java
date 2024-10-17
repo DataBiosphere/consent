@@ -142,6 +142,10 @@ class DatasetResourceTest {
 
     // TODO: Update the response to match what we patched
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
