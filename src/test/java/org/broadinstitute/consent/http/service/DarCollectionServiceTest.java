@@ -238,7 +238,7 @@ class DarCollectionServiceTest {
   @Test
   void testCancelDarCollectionAsChair_ChairHasDatasets() {
     User user = new User();
-    user.setEmail("email");
+    user.setUserId(RandomUtils.nextInt(1, 10));
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
@@ -252,11 +252,11 @@ class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of(dataset));
+    when(datasetDAO.findDatasetIdsByDACUserId(anyInt())).thenReturn(List.of(dataset.getDataSetId()));
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO, times(1)).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO, times(1)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
@@ -266,7 +266,7 @@ class DarCollectionServiceTest {
   @Test
   void testCancelDarCollectionAsChair_ChairHasNoDatasets() {
     User user = new User();
-    user.setEmail("email");
+    user.setUserId(RandomUtils.nextInt(1, 10));
     Dataset dataset = new Dataset();
     dataset.setDataSetId(1);
     DataAccessRequest dar = new DataAccessRequest();
@@ -280,10 +280,10 @@ class DarCollectionServiceTest {
     election.setReferenceId(dar.getReferenceId());
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
-    when(datasetDAO.findDatasetsByAuthUserEmail(anyString())).thenReturn(List.of());
+    when(datasetDAO.findDatasetIdsByDACUserId(anyInt())).thenReturn(List.of());
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
-    verify(datasetDAO, times(1)).findDatasetsByAuthUserEmail(anyString());
+    verify(datasetDAO, times(1)).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO, times(0)).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
