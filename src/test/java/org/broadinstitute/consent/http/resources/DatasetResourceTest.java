@@ -496,7 +496,7 @@ class DatasetResourceTest {
   @Test
   void testDeleteSuccessChairperson() {
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
+    dataSet.setDatasetId(1);
     dataSet.setDacId(1);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -549,7 +549,7 @@ class DatasetResourceTest {
   @Test
   void testDeleteErrorMismatch() {
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
+    dataSet.setDatasetId(1);
     dataSet.setDacId(2);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
@@ -568,7 +568,7 @@ class DatasetResourceTest {
   @Test
   void testIndexAllDatasets() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
     Gson gson = GsonUtil.buildGson();
     String esResponseArray = """
         [
@@ -597,9 +597,9 @@ class DatasetResourceTest {
         ]
         """;
     StreamingOutput output = out -> out.write(
-        esResponseArray.formatted(dataset.getDataSetId()).getBytes());
-    when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDataSetId()));
-    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDataSetId()))).thenReturn(output);
+        esResponseArray.formatted(dataset.getDatasetId()).getBytes());
+    when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
 
     initResource();
     try (Response response = resource.indexDatasets()) {
@@ -614,7 +614,7 @@ class DatasetResourceTest {
       JsonArray items = responseList.get(0).getAsJsonArray("items");
       assertEquals(1, items.size());
       assertEquals(
-          dataset.getDataSetId(),
+          dataset.getDatasetId(),
           items.get(0)
               .getAsJsonObject()
               .getAsJsonObject("index")
@@ -680,7 +680,7 @@ class DatasetResourceTest {
   @Test
   void testGetDataset() {
     Dataset ds = new Dataset();
-    ds.setDataSetId(1);
+    ds.setDatasetId(1);
     ds.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.findDatasetById(1)).thenReturn(ds);
     initResource();
@@ -701,11 +701,11 @@ class DatasetResourceTest {
   @Test
   void testGetDatasets() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds2 = new Dataset();
-    ds2.setDataSetId(2);
+    ds2.setDatasetId(2);
     Dataset ds3 = new Dataset();
-    ds3.setDataSetId(3);
+    ds3.setDatasetId(3);
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
     when(datasetService.findDatasetsByIds(List.of(1, 2, 3))).thenReturn(datasets);
@@ -719,11 +719,11 @@ class DatasetResourceTest {
   @Test
   void testGetDatasetsDuplicates() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds2 = new Dataset();
-    ds2.setDataSetId(2);
+    ds2.setDatasetId(2);
     Dataset ds3 = new Dataset();
-    ds3.setDataSetId(3);
+    ds3.setDatasetId(3);
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
     when(datasetService.findDatasetsByIds(List.of(1, 1, 2, 2, 3, 3))).thenReturn(datasets);
@@ -737,9 +737,9 @@ class DatasetResourceTest {
   @Test
   void testGetDatasetsDuplicatesNotFound() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds2 = new Dataset();
-    ds2.setDataSetId(2);
+    ds2.setDatasetId(2);
 
     when(datasetService.findDatasetsByIds(List.of(1, 1, 2, 2, 3, 3))).thenReturn(List.of(
         ds1,
@@ -758,9 +758,9 @@ class DatasetResourceTest {
   @Test
   void testGetDatasetsNotFound() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds3 = new Dataset();
-    ds3.setDataSetId(3);
+    ds3.setDatasetId(3);
 
     when(datasetService.findDatasetsByIds(List.of(1, 2, 3, 4))).thenReturn(List.of(
         ds1,
@@ -779,9 +779,9 @@ class DatasetResourceTest {
   @Test
   void testGetDatasetsNotFoundNullValues() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds3 = new Dataset();
-    ds3.setDataSetId(3);
+    ds3.setDatasetId(3);
 
     when(datasetService.findDatasetsByIds(any())).thenReturn(List.of(
         ds1,
@@ -863,7 +863,7 @@ class DatasetResourceTest {
   @Test
   void testFindAllDatasetsStreaming() throws Exception {
     var dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(100, 1000));
+    dataset.setDatasetId(RandomUtils.nextInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
     final Gson gson = GsonUtil.buildGson();
     StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
@@ -880,7 +880,7 @@ class DatasetResourceTest {
     }.getType();
     List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
     assertThat(returnedDatasets, hasSize(1));
-    assertEquals(dataset.getDataSetId(), returnedDatasets.get(0).getDataSetId());
+    assertEquals(dataset.getDatasetId(), returnedDatasets.get(0).getDatasetId());
   }
 
   @Test
@@ -1249,7 +1249,7 @@ class DatasetResourceTest {
   private String createDataset(User user) {
     String format = """
         {
-          "dataSetId": 2,
+          "datasetId": 2,
           "objectId": "SC-10985",
           "name": "Herman Taylor (U. Miss Med Center) - Jackson Heart Study",
           "createDate": "Mar 21, 2019",
@@ -1272,7 +1272,7 @@ class DatasetResourceTest {
           "deletable": false,
           "properties": [
             {
-              "dataSetId": 2,
+              "datasetId": 2,
               "propertyName": "test",
               "propertyValue": "John Doe",
               "propertyType": "String"
@@ -1300,7 +1300,7 @@ class DatasetResourceTest {
   private String createInvalidDataset(User user) {
     String format = """
         {
-          "dataSetId": 2,
+          "datasetId": 2,
         }
         """;
 
@@ -1312,7 +1312,7 @@ class DatasetResourceTest {
    */
   private Study createMockStudy() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(100);
+    dataset.setDatasetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setDacId(1);
@@ -1327,7 +1327,7 @@ class DatasetResourceTest {
     study.setCreateUserId(9);
     study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDataSetId()));
+    study.setDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");

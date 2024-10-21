@@ -51,7 +51,7 @@ class DataAccessReportsParserTest {
   @BeforeEach
   public void setUp() {
     Dataset d = new Dataset();
-    d.setDataSetId(1); // This translates to an identifier of "DUOS-000001"
+    d.setDatasetId(1); // This translates to an identifier of "DUOS-000001"
     d.setAlias(1);
     d.setName(NAME);
     List<Dataset> datasets = List.of(d);

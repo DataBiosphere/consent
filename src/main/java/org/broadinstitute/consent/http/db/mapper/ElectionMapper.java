@@ -60,7 +60,7 @@ public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
     }
     if (hasColumn(r, ElectionFields.DATASET_ID.getValue())
         && r.getObject(ElectionFields.DATASET_ID.getValue()) != null) {
-      election.setDataSetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
+      election.setDatasetId(r.getInt(ElectionFields.DATASET_ID.getValue()));
     }
     if (hasColumn(r, ElectionFields.DATA_USE_LETTER.getValue())
         && r.getString(ElectionFields.DATA_USE_LETTER.getValue()) != null) {

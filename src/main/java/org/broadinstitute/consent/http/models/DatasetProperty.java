@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 public class DatasetProperty {
 
   private Integer propertyId;
-  private Integer dataSetId;
+  private Integer datasetId;
   private Integer propertyKey;
   private String propertyName;
   private Object propertyValue;
@@ -20,22 +20,22 @@ public class DatasetProperty {
 
   @Deprecated
   public DatasetProperty(Integer propertyId,
-      Integer dataSetId,
+      Integer datasetId,
       Integer propertyKey,
       String propertyValue,
       PropertyType type,
       Date createDate) {
-    this(dataSetId, propertyKey, propertyValue, type, createDate);
+    this(datasetId, propertyKey, propertyValue, type, createDate);
     this.propertyId = propertyId;
   }
 
   @Deprecated
-  public DatasetProperty(Integer dataSetId,
+  public DatasetProperty(Integer datasetId,
       Integer propertyKey,
       String propertyValue,
       PropertyType type,
       Date createDate) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.propertyKey = propertyKey;
     this.propertyValue = type.coerce(propertyValue);
     this.propertyType = type;
@@ -43,23 +43,23 @@ public class DatasetProperty {
   }
 
   public DatasetProperty(Integer propertyId,
-      Integer dataSetId,
+      Integer datasetId,
       Integer propertyKey,
       String schemaProperty,
       String propertyValue,
       PropertyType type,
       Date createDate) {
-    this(dataSetId, propertyKey, schemaProperty, propertyValue, type, createDate);
+    this(datasetId, propertyKey, schemaProperty, propertyValue, type, createDate);
     this.propertyId = propertyId;
   }
 
-  public DatasetProperty(Integer dataSetId,
+  public DatasetProperty(Integer datasetId,
       Integer propertyKey,
       String schemaProperty,
       String propertyValue,
       PropertyType type,
       Date createDate) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.propertyKey = propertyKey;
     this.propertyValue = type.coerce(propertyValue);
     this.propertyType = type;
@@ -75,12 +75,12 @@ public class DatasetProperty {
     this.propertyId = propertyId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public Integer getPropertyKey() {
@@ -156,12 +156,12 @@ public class DatasetProperty {
       return false;
     }
     DatasetProperty that = (DatasetProperty) o;
-    return Objects.equal(dataSetId, that.dataSetId) && Objects.equal(propertyName,
+    return Objects.equal(datasetId, that.datasetId) && Objects.equal(propertyName,
         that.propertyName) && Objects.equal(propertyValue, that.propertyValue);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(dataSetId, propertyName, propertyValue);
+    return Objects.hashCode(datasetId, propertyName, propertyValue);
   }
 }

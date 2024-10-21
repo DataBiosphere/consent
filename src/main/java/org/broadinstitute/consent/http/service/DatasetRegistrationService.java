@@ -763,7 +763,7 @@ public class DatasetRegistrationService implements ConsentLogger {
       return List.of();
     }
     return updatedStudy.getDatasets().stream().filter(
-        dataset -> !datasetUpdateIds.contains(dataset.getDataSetId())).toList();
+        dataset -> !datasetUpdateIds.contains(dataset.getDatasetId())).toList();
   }
 
   /**

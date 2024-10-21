@@ -138,8 +138,8 @@ class ElasticSearchServiceTest {
 
   private Dataset createDataset(User user, User updateUser, DataUse dataUse, Dac dac) {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
-    dataset.setAlias(dataset.getDataSetId());
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDeletable(true);
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
@@ -333,7 +333,7 @@ class ElasticSearchServiceTest {
     initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
-    assertEquals(datasetRecord.dataset.getDataSetId(), term.getDatasetId());
+    assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
     assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
     assertEquals(datasetRecord.dataset.getDeletable(), term.getDeletable());
     assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
@@ -406,7 +406,7 @@ class ElasticSearchServiceTest {
   @Test
   void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(100);
+    dataset.setDatasetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
@@ -417,7 +417,7 @@ class ElasticSearchServiceTest {
     initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
-    assertEquals(dataset.getDataSetId(), term.getDatasetId());
+    assertEquals(dataset.getDatasetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
   }
 
@@ -540,7 +540,7 @@ class ElasticSearchServiceTest {
   void testIndexDatasetIds() throws Exception {
     Gson gson = GsonUtil.buildGson();
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
     String esResponseBody = """
           {
             "took": 2,
@@ -568,9 +568,9 @@ class ElasticSearchServiceTest {
 
     initService();
 
-    when(datasetDAO.findDatasetById(dataset.getDataSetId())).thenReturn(dataset);
-    mockESClientResponse(200, esResponseBody.formatted(dataset.getDataSetId()));
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDataSetId()));
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
     var entityString = baos.toString();
@@ -581,7 +581,7 @@ class ElasticSearchServiceTest {
     JsonArray items = responseList.get(0).getAsJsonArray("items");
     assertEquals(1, items.size());
     assertEquals(
-        dataset.getDataSetId(),
+        dataset.getDatasetId(),
         items.get(0)
             .getAsJsonObject()
             .getAsJsonObject("index")
@@ -593,12 +593,12 @@ class ElasticSearchServiceTest {
   void testIndexDatasetIdsErrors() throws Exception {
     Gson gson = GsonUtil.buildGson();
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
-    when(datasetDAO.findDatasetById(dataset.getDataSetId())).thenReturn(dataset);
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     mockESClientResponse(500, "error condition");
     initService();
 
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDataSetId()));
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
     JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
@@ -626,8 +626,8 @@ class ElasticSearchServiceTest {
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
-    d.setDataSetId(1);
-    study.addDatasetId(d.getDataSetId());
+    d.setDatasetId(1);
+    study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 

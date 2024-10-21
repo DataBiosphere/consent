@@ -24,7 +24,7 @@
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.10.3</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.14.1</mockito.version>
+    <mockito.version>5.14.2</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -358,7 +358,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.45.4</version>
+        <version>3.46.0</version>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -737,7 +737,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.15.2</version>
+      <version>8.15.3</version>
     </dependency>
 
     <dependency>

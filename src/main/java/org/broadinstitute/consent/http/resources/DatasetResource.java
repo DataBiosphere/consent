@@ -291,7 +291,7 @@ public class DatasetResource extends Resource {
           userId);
       if (updatedDataset.isPresent()) {
         URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
-            .build(updatedDataset.get().getDataSetId());
+            .build(updatedDataset.get().getDatasetId());
         return Response.ok(uri).entity(updatedDataset.get()).build();
       } else {
         return Response.noContent().build();
@@ -380,7 +380,7 @@ public class DatasetResource extends Resource {
     try {
       List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
 
-      Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId)
+      Set<Integer> foundIds = datasets.stream().map(Dataset::getDatasetId)
           .collect(Collectors.toSet());
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
@@ -409,7 +409,7 @@ public class DatasetResource extends Resource {
   public Response validateDatasetName(@QueryParam("name") String name) {
     try {
       Dataset datasetWithName = datasetService.getDatasetByName(name);
-      return Response.ok().entity(datasetWithName.getDataSetId()).build();
+      return Response.ok().entity(datasetWithName.getDatasetId()).build();
     } catch (Exception e) {
       throw new NotFoundException("Could not find the dataset with name: " + name);
     }
@@ -608,7 +608,7 @@ public class DatasetResource extends Resource {
       throw new NotFoundException();
     } else {
       if (Objects.isNull(dataset) || Objects.isNull(dataset.getDacId())) {
-        logWarn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
+        logWarn("Cannot find a valid dac id for dataset: " + dataset.getDatasetId());
         throw new NotFoundException();
       } else {
         if (!dacIds.contains(dataset.getDacId())) {

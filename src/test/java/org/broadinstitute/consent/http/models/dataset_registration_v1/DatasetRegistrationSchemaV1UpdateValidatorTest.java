@@ -156,11 +156,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     Dataset dataset = new Dataset();
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
     // mock data is limited to 10->100
-    dataset.setDataSetId(10000);
+    dataset.setDatasetId(10000);
     dataset.setDacId(RandomUtils.nextInt(10, 100));
     study.getDatasets().add(dataset);
     ArrayList<Integer> datasetIds = new ArrayList<>(study.getDatasetIds().stream().toList());
-    datasetIds.add(dataset.getDataSetId());
+    datasetIds.add(dataset.getDatasetId());
     study.setDatasetIds(new HashSet<>(datasetIds));
 
     assertThrows(BadRequestException.class, () -> {
@@ -316,10 +316,10 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     study.setName(RandomStringUtils.randomAlphabetic(10));
     Dataset dataset = new Dataset();
     dataset.setName("");
-    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
     dataset.setDacId(RandomUtils.nextInt(10, 100));
     study.addDatasets(List.of(dataset));
-    study.setDatasetIds(Set.of(dataset.getDataSetId()));
+    study.setDatasetIds(Set.of(dataset.getDatasetId()));
     return study;
   }
 
@@ -341,7 +341,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
       cg.setDataLocation(DataLocation.NOT_DETERMINED);
       cg.setNumberOfParticipants(RandomUtils.nextInt(10, 100));
       cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-      cg.setDatasetId(d.getDataSetId());
+      cg.setDatasetId(d.getDatasetId());
       cg.setDataAccessCommitteeId(d.getDacId());
       return cg;
     }).toList();

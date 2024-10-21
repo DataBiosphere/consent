@@ -187,7 +187,7 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(2);
+    dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
@@ -208,7 +208,7 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(2);
+    dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
@@ -229,7 +229,7 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(3);
+    dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
@@ -252,7 +252,7 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(user.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(3);
+    dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);

@@ -50,12 +50,12 @@ public class DatasetServiceDAO implements ConsentLogger {
       // Some legacy dataset names can be null
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(dataset.getDataSetId(), dataset.getObjectId(), dsAuditName,
+      DatasetAudit dsAudit = new DatasetAudit(dataset.getDatasetId(), dataset.getObjectId(), dsAuditName,
         new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.insertDatasetAudit(dsAudit);
-        datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDataSetId());
-        datasetDAO.deleteDatasetById(dataset.getDataSetId());
+        datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+        datasetDAO.deleteDatasetById(dataset.getDatasetId());
       } catch (Exception e) {
         handle.rollback();
         logException(e);
@@ -465,7 +465,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     // Generate new inserts for props we don't know about yet
     properties.forEach(prop -> {
       if (!existingPropNames.contains(prop.getPropertyName())) {
-        prop.setDataSetId(datasetId);
+        prop.setDatasetId(datasetId);
         prop.setCreateDate(now);
         updates.add(createPropertyInsert(handle, prop, now));
       }
@@ -481,7 +481,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                     :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
         """;
     Update insert = handle.createUpdate(sql);
-    insert.bind("datasetId", property.getDataSetId());
+    insert.bind("datasetId", property.getDatasetId());
     insert.bind("propertyKey", property.getPropertyKey());
     insert.bind("propertyName", property.getPropertyName());
     insert.bind("schemaProperty", property.getSchemaProperty());
@@ -559,7 +559,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             AND property_id = :propertyId
         """;
     Update insert = handle.createUpdate(sql);
-    insert.bind("datasetId", property.getDataSetId());
+    insert.bind("datasetId", property.getDatasetId());
     insert.bind("propertyKey", property.getPropertyKey());
     insert.bind("propertyId", property.getPropertyId());
     return insert;

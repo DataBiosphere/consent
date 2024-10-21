@@ -84,14 +84,14 @@ class MatchDAOTest extends DAOTestHelper {
     //creating two access elections with the same reference id and datasetid to test that condition
     String darReferenceId = UUID.randomUUID().toString();
     Election targetElection = createDataAccessElection(
-        darReferenceId, dataset.getDataSetId()
+        darReferenceId, dataset.getDatasetId()
     );
     Election ignoredAccessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDataSetId()
+        UUID.randomUUID().toString(), dataset.getDatasetId()
     );
 
     //Generate RP election to test that the query only references DataAccess elections
-    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
+    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     //This match represents the match record generated for the target election
@@ -119,10 +119,10 @@ class MatchDAOTest extends DAOTestHelper {
 
     //Generate access election for test
     Election accessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDataSetId());
+        UUID.randomUUID().toString(), dataset.getDatasetId());
 
     //Generate RP election for test
-    Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
+    Election rpElection = createRPElection(darReferenceId, dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
@@ -237,7 +237,7 @@ class MatchDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());
