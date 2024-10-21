@@ -718,11 +718,11 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     String newName = RandomStringUtils.randomAlphabetic(dataset.getName().length() + 5);
     datasetDAO.updateDatasetNameWithUpdateUser(
-        dataset.getDataSetId(),
+        dataset.getDatasetId(),
         newName,
         new Timestamp(new Date().getTime()),
         dataset.getCreateUserId());
-    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDataSetId());
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(newName, foundDataset.getName());
 
