@@ -20,15 +20,15 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
   public DatasetDTO map(ResultSet r, StatementContext ctx) throws SQLException {
 
     DatasetDTO datasetDTO;
-    Integer dataSetId = r.getInt("dataset_id");
+    Integer datasetId = r.getInt("dataset_id");
     Integer alias = r.getInt("alias");
-    if (!datasetDTOs.containsKey(dataSetId)) {
+    if (!datasetDTOs.containsKey(datasetId)) {
       datasetDTO = new DatasetDTO(new ArrayList<>());
       if (hasNonZeroColumn(r, "dac_id")) {
         datasetDTO.setDacId(r.getInt("dac_id"));
       }
       datasetDTO.setAlias(alias);
-      datasetDTO.setDataSetId(dataSetId);
+      datasetDTO.setDatasetId(datasetId);
       if (hasColumn(r, "data_use")) {
         datasetDTO.setDataUse(dataUseParser.parseDataUse(r.getString("data_use")));
       }
@@ -52,9 +52,9 @@ public class DatasetDTOWithPropertiesMapper implements RowMapper<DatasetDTO>, Ro
         datasetDTO.addProperty(property);
       }
       datasetDTO.setObjectId(r.getString("object_id"));
-      datasetDTOs.put(dataSetId, datasetDTO);
+      datasetDTOs.put(datasetId, datasetDTO);
     } else {
-      datasetDTO = datasetDTOs.get(dataSetId);
+      datasetDTO = datasetDTOs.get(datasetId);
       DatasetPropertyDTO property =
           new DatasetPropertyDTO(r.getString(PROPERTY_KEY), r.getString(PROPERTY_PROPERTYVALUE));
       if (property.getPropertyName() != null) {

@@ -17,18 +17,18 @@ public class DataRequest {
   private String researcher;
 
   @JsonProperty
-  private Integer dataSetId;
+  private Integer datasetId;
 
   public DataRequest() {
   }
 
   public DataRequest(Integer requestId, Integer purposeId, String description, String researcher,
-      Integer dataSetId) {
+      Integer datasetId) {
     this.requestId = requestId;
     this.purposeId = purposeId;
     this.description = description;
     this.researcher = researcher;
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
   }
 
   public Integer getRequestId() {
@@ -63,12 +63,12 @@ public class DataRequest {
     this.researcher = researcher;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
 

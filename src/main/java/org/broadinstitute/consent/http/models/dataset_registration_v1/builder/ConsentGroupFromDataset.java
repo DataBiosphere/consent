@@ -27,7 +27,7 @@ public class ConsentGroupFromDataset {
   public ConsentGroup build(Dataset dataset) {
     if (dataset != null) {
       ConsentGroup consentGroup = new ConsentGroup();
-      consentGroup.setDatasetId(dataset.getDataSetId());
+      consentGroup.setDatasetId(dataset.getDatasetId());
       consentGroup.setDatasetIdentifier(dataset.getDatasetIdentifier());
       consentGroup.setConsentGroupName(dataset.getName());
       String accessManagementVal = findStringDSPropValue(dataset.getProperties(), accessManagement);

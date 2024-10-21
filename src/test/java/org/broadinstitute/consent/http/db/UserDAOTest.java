@@ -285,10 +285,10 @@ class UserDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDataSetId()),
+        Collections.singletonList(dataset.getDatasetId()),
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     Optional<User> foundUser = users.stream().findFirst();
     assertNotNull(users);
@@ -302,10 +302,10 @@ class UserDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDataSetId()),
+        Collections.singletonList(dataset.getDatasetId()),
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     assertNotNull(users);
     assertTrue(users.isEmpty());
@@ -478,7 +478,7 @@ class UserDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());
