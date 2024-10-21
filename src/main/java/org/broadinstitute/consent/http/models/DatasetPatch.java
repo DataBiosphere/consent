@@ -48,6 +48,7 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     });
   }
 
+  // The following properties are Patch-able:
   public static List<String> validPropertyNames = List.of(
       "# of participants",
       "url",
@@ -55,7 +56,6 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
       "data location"
       );
 
-  // The following properties are Patch-able:
   public boolean validateProperties() {
     List<Boolean> validPropValues = properties.stream().map(p -> {
       if (!validPropertyNames.contains(p.getPropertyName().toLowerCase())) {
