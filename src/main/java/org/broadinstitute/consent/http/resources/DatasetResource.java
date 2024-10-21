@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -205,10 +206,8 @@ public class DatasetResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response patchByDatasetUpdate(
-      @Auth AuthUser authUser,
-      @PathParam("datasetId") Integer datasetId,
-      @FormDataParam("dataset") String json) {
+  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId, String json) {
     try {
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset Patch is required");
@@ -236,9 +235,11 @@ public class DatasetResource extends Resource {
       }
       // Is new name unique?
       List<String> existingNames = datasetService.findAllDatasetNames();
-      if (!patch.name().equals(existingDataset.getName()) && existingNames.contains(patch.name())) {
+      if (patch.name() != null && !patch.name().equals(existingDataset.getName()) && existingNames.contains(patch.name())) {
         return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
-            .entity("The new name for this dataset already exists: " + patch.name())
+            .entity(new Error(
+                "The new name for this dataset already exists: " + patch.name(),
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
             .build();
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
@@ -621,15 +622,16 @@ public class DatasetResource extends Resource {
   /**
    * Determine if the user is a dataset/study creator, or if they are listed as a data custodian.
    *
-   * @param user User
+   * @param user    User
    * @param dataset Dataset
    * @return User is a creator or custodian of the dataset.
    */
-  public boolean isCreatorOrCustodian(User user, Dataset dataset) {
+  protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
     if (Objects.equals(user.getUserId(), dataset.getCreateUserId())) {
       return true;
     }
-    if (dataset.getStudy() != null && Objects.equals(user.getUserId(), dataset.getStudy().getCreateUserId())) {
+    if (dataset.getStudy() != null && Objects.equals(user.getUserId(),
+        dataset.getStudy().getCreateUserId())) {
       return true;
     }
     if (dataset.getStudy() != null && dataset.getStudy().getProperties() != null) {
@@ -643,10 +645,12 @@ public class DatasetResource extends Resource {
         JsonArray jsonArray = (JsonArray) dataCustodians.get().getValue();
         return jsonArray.contains(new JsonPrimitive(user.getEmail()));
       } else {
-        logWarn("No data custodians found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
+        logWarn(
+            "No data custodians found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
       }
     } else {
-      logWarn("No study properties found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
+      logWarn(
+          "No study properties found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
     }
     return false;
   }

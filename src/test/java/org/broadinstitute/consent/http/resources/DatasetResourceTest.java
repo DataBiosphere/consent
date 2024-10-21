@@ -273,6 +273,45 @@ class DatasetResourceTest {
   }
 
   @Test
+  void testPatchByDatasetUpdate_patchableNoName() {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetProperty dataLocationProp = new DatasetProperty();
+    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyType(PropertyType.String);
+    dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
+    dataset.setProperties(Set.of(dataLocationProp));
+
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+
+    DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
+    patchProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    patchProp.setPropertyType(PropertyType.String);
+    patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
+
+    // Name is nullable and will not be updated if not provided
+    DatasetPatch patch = new DatasetPatch(null, List.of(patchProp));
+
+    when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
+        gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+    }
+  }
+
+  @Test
   void testIsCreatorOrCustodian_datasetCreator() {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 100));
