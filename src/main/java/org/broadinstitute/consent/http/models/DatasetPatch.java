@@ -24,7 +24,17 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     return properties().stream().anyMatch(p -> {
       Optional<DatasetProperty> existingProp = dataset.getProperties()
           .stream()
-          .filter(eProp -> eProp.getPropertyName().equals(p.getPropertyName()))
+          .filter(eProp -> {
+            // Favor the property name as the primary comparator
+            if (eProp.getPropertyName() != null) {
+              return eProp.getPropertyName().equals(p.getPropertyName());
+            } else if (eProp.getPropertyKey() != null) {
+              return eProp.getPropertyKey().equals(p.getPropertyKey());
+            } else if (eProp.getSchemaProperty() != null) {
+              return eProp.getSchemaProperty().equals(p.getSchemaProperty());
+            }
+            return false;
+          })
           .findFirst();
       return (existingProp.isPresent() && !existingProp.get().getPropertyValueAsString().equals(p.getPropertyValueAsString()));
     });

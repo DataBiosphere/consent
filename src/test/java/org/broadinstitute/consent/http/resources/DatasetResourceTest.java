@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
@@ -114,9 +115,70 @@ class DatasetResourceTest {
     return createPropertiesJson(jsonProperties);
   }
 
-  // TODO: Add cases for patchable: name, multiple props, some patchable, some aren't
-  //       Maybe a case for parameterized tests
-  // TODO: Add non-patchable case
+  @Test
+  void testPatchByDatasetUpdate_emptyInput() {
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, 1, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchByDatasetUpdate_malformedInput() {
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, 1, "}{")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchByDatasetUpdate_datasetNotFound() {
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, 1, "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchByDatasetUpdate_userNotFound() {
+    when(datasetService.findDatasetById(any())).thenReturn(new Dataset());
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, 1, "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchByDatasetUpdate_notModified() {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetProperty dataLocationProp = new DatasetProperty();
+    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyType(PropertyType.String);
+    dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
+    dataset.setProperties(Set.of(dataLocationProp));
+
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    DatasetPatch patch = new DatasetPatch(dataset.getDatasetName(), dataset.getProperties().stream().toList());
+
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
+        gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
+  }
+
   @Test
   void testPatchByDatasetUpdate_patchable() throws Exception {
     Gson gson = GsonUtil.buildGson();
@@ -126,7 +188,8 @@ class DatasetResourceTest {
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setSchemaProperty("dataLocation");
+    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
     dataset.setProperties(Set.of(dataLocationProp));
@@ -134,13 +197,12 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
-    patchProp.setSchemaProperty("dataLocation");
+    patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
     DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
 
-    // TODO: Update the response to match what we patched
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
@@ -151,8 +213,6 @@ class DatasetResourceTest {
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
-      // TODO: Add more object validation
-      System.out.println(response.getEntity());
     }
   }
 
