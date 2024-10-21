@@ -152,7 +152,7 @@ class DatasetResourceTest {
   @Test
   void testPatchByDatasetUpdate_userForbiddenException() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 10));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 10));
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     when(authUser.getEmail()).thenReturn("test@test.com");
@@ -172,7 +172,7 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
@@ -191,7 +191,7 @@ class DatasetResourceTest {
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
-    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
@@ -202,7 +202,7 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
@@ -229,7 +229,7 @@ class DatasetResourceTest {
     when(datasetService.findAllDatasetNames()).thenReturn(List.of(dataset.getName(), patch.name()));
 
     initResource();
-    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -240,7 +240,7 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
@@ -266,7 +266,7 @@ class DatasetResourceTest {
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
-    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDataSetId(),
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
     }
@@ -277,7 +277,7 @@ class DatasetResourceTest {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 100));
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -289,7 +289,7 @@ class DatasetResourceTest {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 100));
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     Study study = new Study();
     study.setCreateUserId(user.getUserId());
     dataset.setStudy(study);
@@ -304,7 +304,7 @@ class DatasetResourceTest {
     user.setUserId(RandomUtils.nextInt(1, 100));
     user.setEmail("test@test.com");
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     Study study = new Study();
     dataset.setStudy(study);
     StudyProperty p = new StudyProperty();
@@ -325,7 +325,7 @@ class DatasetResourceTest {
     user.setUserId(RandomUtils.nextInt(1, 100));
     user.setEmail("test@test.com");
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     Study study = new Study();
     dataset.setStudy(study);
     StudyProperty p = new StudyProperty();
@@ -346,7 +346,7 @@ class DatasetResourceTest {
     user.setUserId(RandomUtils.nextInt(1, 100));
     user.setEmail("test@test.com");
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     Study study = new Study();
     dataset.setStudy(study);
     StudyProperty p = new StudyProperty();
@@ -531,7 +531,7 @@ class DatasetResourceTest {
   @Test
   void testDeleteErrorNullConsent() {
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(1);
+    dataSet.setDatasetId(1);
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(false);
     UserRole role = UserRoles.Chairperson();

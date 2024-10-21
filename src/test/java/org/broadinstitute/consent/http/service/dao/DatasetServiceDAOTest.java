@@ -23,7 +23,9 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -640,6 +642,88 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertNull(deletedStudy);
   }
 
+  @Test
+  void testPatchDataset() throws Exception {
+    List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
+    Dictionary one = dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst().orElse(null);
+    Dictionary two = dictionaries.stream().filter(d -> d.getKeyId().equals(2)).findFirst().orElse(null);
+    Dictionary three = dictionaries.stream().filter(d -> d.getKeyId().equals(3)).findFirst().orElse(null);
+    assertNotNull(one);
+    assertNotNull(two);
+    assertNotNull(three);
+
+    // Dataset with user and an existing props
+    Dataset dataset = createDataset();
+    User user = userDAO.findUserById(dataset.getCreateUserId());
+
+    // This prop will NOT change
+    DatasetProperty prop1 = new DatasetProperty();
+    prop1.setSchemaProperty(one.getKey());
+    prop1.setPropertyName(one.getKey());
+    prop1.setPropertyType(PropertyType.String);
+    prop1.setPropertyKey(one.getKeyId());
+    prop1.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    prop1.setDatasetId(dataset.getDatasetId());
+    prop1.setCreateDate(new Date());
+
+    // This prop WILL change
+    DatasetProperty prop2 = new DatasetProperty();
+    prop2.setSchemaProperty(two.getKey());
+    prop2.setPropertyName(two.getKey());
+    prop2.setPropertyType(PropertyType.String);
+    prop2.setPropertyKey(two.getKeyId());
+    prop2.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    prop2.setDatasetId(dataset.getDatasetId());
+    prop2.setCreateDate(new Date());
+
+    datasetDAO.insertDatasetProperties(List.of(prop1, prop2));
+
+    // Patch to prop2
+    DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setSchemaProperty(prop2.getSchemaProperty());
+    patchProp.setPropertyName(prop2.getPropertyName());
+    prop2.setPropertyType(prop2.getPropertyType());
+    prop2.setPropertyKey(prop2.getPropertyKey());
+    patchProp.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+
+    // New, added prop
+    DatasetProperty prop3 = new DatasetProperty();
+    prop3.setSchemaProperty(three.getKey());
+    prop3.setPropertyName(three.getKey());
+    prop3.setPropertyType(PropertyType.String);
+    prop3.setPropertyKey(three.getKeyId());
+    prop3.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    prop3.setCreateDate(new Date());
+
+    String newName = RandomStringUtils.randomAlphabetic(10);
+    DatasetPatch patch = new DatasetPatch(newName, List.of(patchProp, prop3));
+
+    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the name is updated
+    assertEquals(newName, patched.getDatasetName());
+
+    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDatasetId());
+
+    // Validate that the first prop was not changed
+    Optional<DatasetProperty> original = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst();
+    assertTrue(original.isPresent());
+    assertEquals(prop1.getPropertyValue(), original.get().getPropertyValue());
+
+    // Validate that the new value was updated
+    Optional<DatasetProperty> updated = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst();
+    assertTrue(updated.isPresent());
+    assertEquals(patchProp.getPropertyValue(), updated.get().getPropertyValue());
+
+    // Validate that the new prop was added
+    Optional<DatasetProperty> added = updatedProps.stream().filter(p -> p.getPropertyName().equals(prop3.getPropertyName())).findFirst();
+    assertTrue(added.isPresent());
+    assertEquals(prop3.getPropertyValue(), added.get().getPropertyValue());
+
+    // Validate that no props were deleted
+    assertEquals(3, patched.getProperties().size());
+  }
 
   /**
    * Helper method to create a study with two props and one dataset
