@@ -682,8 +682,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     DatasetProperty patchProp = new DatasetProperty();
     patchProp.setSchemaProperty(prop2.getSchemaProperty());
     patchProp.setPropertyName(prop2.getPropertyName());
-    prop2.setPropertyType(prop2.getPropertyType());
-    prop2.setPropertyKey(prop2.getPropertyKey());
+    patchProp.setPropertyType(prop2.getPropertyType());
+    patchProp.setPropertyKey(prop2.getPropertyKey());
     patchProp.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
 
     // New, added prop
