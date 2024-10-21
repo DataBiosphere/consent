@@ -8,17 +8,11 @@ properties:
     items:
       $ref: './DatasetProperty.yaml'
     example:
-      - propertyName: Data Type
-        propertyValue: Whole Genome
-      - propertyName: Species
-        propertyValue: Human
-      - propertyName: Phenotype/Indication
-        propertyValue: Cardiovascular System Disease
       - propertyName: "# of participants"
         propertyValue: 20
       - propertyName: URL
         propertyValue: http://...
       - propertyName: File Types
-        propertyValue: [{"fileType":"ARRAYS"}]
+        propertyValue: [{"fileType":"ARRAYS", "functionalEquivalence": "Free Text"}]
       - propertyName: Data Location
         propertyValue: Terra Workspace

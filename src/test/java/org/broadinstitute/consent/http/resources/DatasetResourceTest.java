@@ -176,7 +176,7 @@ class DatasetResourceTest {
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyName("data location");
     dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
@@ -206,7 +206,7 @@ class DatasetResourceTest {
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyName("data location");
     dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
@@ -215,6 +215,7 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setPropertyName("data location");
     patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
@@ -244,7 +245,7 @@ class DatasetResourceTest {
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyName("data location");
     dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
@@ -253,6 +254,7 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setPropertyName("data location");
     patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
@@ -281,7 +283,7 @@ class DatasetResourceTest {
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
-    dataLocationProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
+    dataLocationProp.setPropertyName("data location");
     dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.String);
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
@@ -290,8 +292,8 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setPropertyName("data location");
     patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
-    patchProp.setPropertyName(DatasetRegistrationSchemaV1Builder.dataLocation);
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
@@ -310,6 +312,44 @@ class DatasetResourceTest {
       assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
     }
   }
+
+  @Test
+  void testPatchByDatasetUpdate_invalidPatchProperties() {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+
+    DatasetProperty invalidProp = new DatasetProperty();
+    invalidProp.setPropertyName("invalid");
+    invalidProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.accessManagement);
+    invalidProp.setPropertyType(PropertyType.String);
+    invalidProp.setPropertyValue(AccessManagement.OPEN.value());
+    dataset.setProperties(Set.of(invalidProp));
+
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+
+    DatasetProperty patchProp = new DatasetProperty();
+    patchProp.setPropertyName("invalid");
+    patchProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.accessManagement);
+    patchProp.setPropertyType(PropertyType.String);
+    patchProp.setPropertyValue(AccessManagement.CONTROLLED.value());
+
+    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
+        gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
 
   @Test
   void testIsCreatorOrCustodian_datasetCreator() {

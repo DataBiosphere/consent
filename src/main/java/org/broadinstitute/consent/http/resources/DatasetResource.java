@@ -233,12 +233,20 @@ public class DatasetResource extends Resource {
       if (!patch.isPatchable(existingDataset)) {
         return Response.notModified().entity(existingDataset).build();
       }
-      // Is new name unique?
+      // Validate DatasetPatch values
       List<String> existingNames = datasetService.findAllDatasetNames();
-      if (patch.name() != null && !patch.name().equals(existingDataset.getName()) && existingNames.contains(patch.name())) {
+      if (patch.name() != null && !patch.name().equals(existingDataset.getName())
+          && existingNames.contains(patch.name())) {
         return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
             .entity(new Error(
                 "The new name for this dataset already exists: " + patch.name(),
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
+            .build();
+      }
+      if (!patch.validateProperties()) {
+        return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .entity(new Error(
+                "Properties are invalid",
                 HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
             .build();
       }
