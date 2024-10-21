@@ -625,11 +625,11 @@ public class DatasetResource extends Resource {
    * @param dataset Dataset
    * @return User is a creator or custodian of the dataset.
    */
-  private boolean isCreatorOrCustodian(User user, Dataset dataset) {
+  public boolean isCreatorOrCustodian(User user, Dataset dataset) {
     if (Objects.equals(user.getUserId(), dataset.getCreateUserId())) {
       return true;
     }
-    if (Objects.equals(user.getUserId(), dataset.getStudy().getCreateUserId())) {
+    if (dataset.getStudy() != null && Objects.equals(user.getUserId(), dataset.getStudy().getCreateUserId())) {
       return true;
     }
     if (dataset.getStudy() != null && dataset.getStudy().getProperties() != null) {
