@@ -10,6 +10,18 @@ patch:
         type: integer
   tags:
     - Dataset
+  requestBody:
+    description: DatasetPatch object
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            dataset:
+      application/json:
+        schema:
+          $ref: '../schemas/DatasetPatch.yaml'
   responses:
     204:
       description: Dataset Patch applied successfully

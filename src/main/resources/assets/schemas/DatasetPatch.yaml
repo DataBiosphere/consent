@@ -1,0 +1,24 @@
+type: object
+properties:
+  name:
+    type: string
+    description: The dataset name. This is an optional field
+  properties:
+    type: array
+    items:
+      $ref: './DatasetProperty.yaml'
+    example:
+      - propertyName: Data Type
+        propertyValue: Whole Genome
+      - propertyName: Species
+        propertyValue: Human
+      - propertyName: Phenotype/Indication
+        propertyValue: Cardiovascular System Disease
+      - propertyName: "# of participants"
+        propertyValue: 20
+      - propertyName: URL
+        propertyValue: http://...
+      - propertyName: File Types
+        propertyValue: [{"fileType":"ARRAYS"}]
+      - propertyName: Data Location
+        propertyValue: Terra Workspace
