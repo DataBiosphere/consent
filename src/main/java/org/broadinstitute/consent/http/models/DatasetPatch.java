@@ -1,12 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
-import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /**
@@ -48,26 +49,21 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     });
   }
 
-  // The following properties are Patch-able:
-  public static List<String> validPropertyNames = List.of(
-      "# of participants",
-      "url",
-      "file types",
-      "data location"
-      );
-
   public boolean validateProperties() {
+    // The following properties are patch-able:
+    Map<String, Function<String, Boolean>> validators = Map.of(
+        "# of participants", this::isNumeric,
+        "url", this::isUrl,
+        "file types", this::isFileTypes,
+        "data location", this::isDataLocation
+    );
     List<Boolean> validPropValues = properties.stream().map(p -> {
-      if (!validPropertyNames.contains(p.getPropertyName().toLowerCase())) {
+      if (!validators.containsKey(p.getPropertyName().toLowerCase())) {
         return false;
       }
-      return switch (p.getPropertyName().toLowerCase()) {
-        case "# of participants" -> isNumeric(p.getPropertyTypeAsString());
-        case "url" -> isUrl(p.getPropertyTypeAsString());
-        case "file types" -> isFileTypes(p.getPropertyValueAsString());
-        case "data location" -> isDataLocation(p.getPropertyValueAsString());
-        default -> false;
-      };
+      return validators
+          .get(p.getPropertyName().toLowerCase())
+          .apply(p.getPropertyValueAsString());
     }).distinct().toList();
     return validPropValues.stream().allMatch(p -> p);
   }
@@ -83,8 +79,7 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
 
   private boolean isUrl(String str) {
     try {
-      URI.create(str);
-      return true;
+      return UrlValidator.getInstance().isValid(str);
     } catch (Exception e) {
       return false;
     }
