@@ -35,17 +35,21 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
           .filter(eProp -> {
             // Favor the property name as the primary comparator
             if (eProp.getPropertyName() != null) {
-              return eProp.getPropertyName().equals(p.getPropertyName());
+              return eProp.getPropertyName().equalsIgnoreCase(p.getPropertyName());
             } else if (eProp.getPropertyKey() != null) {
               return eProp.getPropertyKey().equals(p.getPropertyKey());
             } else if (eProp.getSchemaProperty() != null) {
-              return eProp.getSchemaProperty().equals(p.getSchemaProperty());
+              return eProp.getSchemaProperty().equalsIgnoreCase(p.getSchemaProperty());
             }
             return false;
           })
           .findFirst();
-      return (existingProp.isPresent() && !existingProp.get().getPropertyValueAsString()
-          .equals(p.getPropertyValueAsString()));
+      return existingProp.map(
+          eProp ->
+              // If the existing prop value is different from the new one, this is patchable
+              (!eProp.getPropertyValueAsString().equals(p.getPropertyValueAsString())))
+              // If no existing prop, we're adding a new prop, and therefore patchable.
+              .orElse(true);
     });
   }
 
