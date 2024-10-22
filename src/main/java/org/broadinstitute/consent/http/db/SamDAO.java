@@ -15,10 +15,12 @@ import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -95,10 +97,13 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = executeRequest(request);
+    String content =  IOUtils.toString(response.getContent(), StandardCharsets.UTF_8);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
       if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
         throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
+      } else if (HttpStatusCodes.STATUS_CODE_SERVER_ERROR == response.getStatusCode()) {
+        throw new ServerErrorException(content, response.getStatusCode());
       } else {
         String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
           authUser.getEmail(),
