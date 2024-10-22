@@ -25,6 +25,7 @@
     <junit.version>5.12.2</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.17.0</mockito.version>
+    <spotless.version>2.43.0</spotless.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -114,6 +115,26 @@
     </testResources>
 
     <plugins>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${spotless.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <!-- limit format enforcement to just the files changed by this feature branch -->
+          <ratchetFrom>origin/develop</ratchetFrom>
+          <java>
+            <googleJavaFormat/>
+          </java>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.owasp</groupId>
