@@ -57,15 +57,17 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
         "file types", this::isFileTypes,
         "data location", this::isDataLocation
     );
-    List<Boolean> validPropValues = properties.stream().map(p -> {
-      if (!validators.containsKey(p.getPropertyName().toLowerCase())) {
-        return false;
-      }
-      return validators
-          .get(p.getPropertyName().toLowerCase())
-          .apply(p.getPropertyValueAsString());
-    }).distinct().toList();
-    return validPropValues.stream().allMatch(p -> p);
+    return properties.stream()
+        .map(p -> {
+          if (!validators.containsKey(p.getPropertyName().toLowerCase())) {
+            return false;
+          }
+          return validators
+              .get(p.getPropertyName().toLowerCase())
+              .apply(p.getPropertyValueAsString());
+        })
+        .distinct()
+        .allMatch(valid -> valid);
   }
 
   private boolean isNumeric(String str) {
