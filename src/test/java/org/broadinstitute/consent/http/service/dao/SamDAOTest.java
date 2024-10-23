@@ -215,7 +215,7 @@ class SamDAOTest implements WithMockServer {
   }
 
   @Test
-  void testPostRegistrationInfo_Conflict() {
+  void testPostRegistrationInfo_ServerError() {
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -228,7 +228,7 @@ class SamDAOTest implements WithMockServer {
   }
 
   @Test
-  void testPostRegistrationInfo_ServerError() {
+  void testPostRegistrationInfo_Conflict() {
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
