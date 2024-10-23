@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -8,7 +9,7 @@ import java.util.function.Function;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
 
 /**
  * This model represents the values of a dataset that are modifiable via the PATCH operation
@@ -45,17 +46,17 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
           })
           .findFirst();
       return existingProp.map(
-          eProp ->
-              // If the existing prop value is different from the new one, this is patchable
-              (!eProp.getPropertyValueAsString().equals(p.getPropertyValueAsString())))
-              // If no existing prop, we're adding a new prop, and therefore patchable.
-              .orElse(true);
+              eProp ->
+                  // If the existing prop value is different from the new one, this is patchable
+                  (!eProp.getPropertyValueAsString().equals(p.getPropertyValueAsString())))
+          // If no existing prop, we're adding a new prop, and therefore patchable.
+          .orElse(true);
     });
   }
 
   public boolean validateProperties() {
     // The following properties are patch-able:
-    Map<String, Function<String, Boolean>> validators = Map.of(
+    Map<String, Function<Object, Boolean>> validators = Map.of(
         "# of participants", this::isNumeric,
         "url", this::isUrl,
         "file types", this::isFileTypes,
@@ -68,47 +69,66 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
           }
           return validators
               .get(p.getPropertyName().toLowerCase())
-              .apply(p.getPropertyValueAsString());
+              .apply(p.getPropertyValue());
         })
         .distinct()
         .allMatch(valid -> valid);
   }
 
-  private boolean isNumeric(String str) {
+  private boolean isNumeric(Object obj) {
     try {
-      Integer.valueOf(str);
+      return Integer.parseInt(obj.toString()) > 0;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private boolean isUrl(Object obj) {
+    return UrlValidator.getInstance().isValid(obj.toString());
+  }
+
+  @SuppressWarnings("unchecked")
+  private boolean isFileTypes(Object obj) {
+    // Gson parsing of this value doesn't recognize that it should be a list of FileTypeObjects.
+    // Instead, it comes in as an array of LinkedTreeMaps, so we have to manually deserialize it.
+    try {
+      List<FileTypeObject> fileTypeObjects = ((ArrayList<Object>) obj).stream()
+          .map(t -> (LinkedTreeMap<String, String>) t)
+          .map(this::parseLinkedTreeMap)
+          .toList();
+      return !fileTypeObjects.isEmpty();
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private boolean isDataLocation(Object obj) {
+    try {
+      DataLocation.fromValue(obj.toString());
       return true;
     } catch (Exception e) {
       return false;
     }
   }
 
-  private boolean isUrl(String str) {
-    try {
-      return UrlValidator.getInstance().isValid(str);
-    } catch (Exception e) {
-      return false;
+  private FileTypeObject parseLinkedTreeMap(LinkedTreeMap<String, String> treeMap) {
+    FileTypeObject fileTypeObject = new FileTypeObject();
+    if (treeMap.containsKey("fileType")) {
+      // Try parsing the value as either the value or the enum
+      FileType type;
+      try {
+        type = FileType.fromValue(treeMap.get("fileType"));
+      } catch (IllegalArgumentException e) {
+        type = FileType.valueOf(treeMap.get("fileType"));
+      }
+      fileTypeObject.setFileType(type);
+    } else {
+      throw new IllegalArgumentException("File Type is required");
     }
-  }
-
-  private boolean isFileTypes(String str) {
-    try {
-      Gson gson = GsonUtil.buildGson();
-      gson.fromJson(str, FileTypeObject.class);
-      return true;
-    } catch (Exception e) {
-      return false;
+    if (treeMap.containsKey("functionalEquivalence")) {
+      fileTypeObject.setFunctionalEquivalence(treeMap.get("functionalEquivalence"));
     }
-  }
-
-  private boolean isDataLocation(String str) {
-    try {
-      Gson gson = GsonUtil.buildGson();
-      gson.fromJson(str, DataLocation.class);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
+    return fileTypeObject;
   }
 
 }
