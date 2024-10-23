@@ -58,6 +58,8 @@ class SamDAOTest implements WithMockServer {
 
   private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
+  private UserStatus status;
+
   @BeforeAll
   public static void setUp() {
     container.start();
@@ -76,6 +78,12 @@ class SamDAOTest implements WithMockServer {
     config.setTimeoutSeconds(1);
     config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
     samDAO = new SamDAO(new HttpClientUtil(config), config);
+
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
+        .setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
+        .setLdap(true);
+    status = new UserStatus().setUserInfo(info).setEnabled(enabled);
   }
 
   @Test
@@ -196,11 +204,6 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testPostRegistrationInfo() throws Exception {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -213,11 +216,6 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testPostRegistrationInfo_Conflict() {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -231,11 +229,6 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testPostRegistrationInfo_ServerError() {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -249,11 +242,6 @@ class SamDAOTest implements WithMockServer {
 
   @Test
   void testPostRegistrationInfo_Error() {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -273,11 +261,6 @@ class SamDAOTest implements WithMockServer {
    */
   @Test
   void testAsyncPostRegistrationInfo() {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))

@@ -97,13 +97,12 @@ public class SamDAO implements ConsentLogger {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
     HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = executeRequest(request);
-    String content =  IOUtils.toString(response.getContent(), StandardCharsets.UTF_8);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
       if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
         throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
       } else if (HttpStatusCodes.STATUS_CODE_SERVER_ERROR == response.getStatusCode()) {
-        throw new ServerErrorException(content, response.getStatusCode());
+        throw new ServerErrorException(body, response.getStatusCode());
       } else {
         String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
           authUser.getEmail(),
