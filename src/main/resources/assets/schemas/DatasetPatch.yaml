@@ -11,8 +11,8 @@ properties:
       - propertyName: "# of participants"
         propertyValue: 20
       - propertyName: URL
-        propertyValue: http://...
+        propertyValue: https://duos.org
       - propertyName: File Types
-        propertyValue: [{"fileType":"ARRAYS", "functionalEquivalence": "Free Text"}]
+        propertyValue: [{"fileType":"Arrays", "functionalEquivalence": "Free Text"}]
       - propertyName: Data Location
         propertyValue: Terra Workspace

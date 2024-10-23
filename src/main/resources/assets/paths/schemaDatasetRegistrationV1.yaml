@@ -1,6 +1,7 @@
 get:
   summary: Dataset Registration Schema V1
   description: Dataset Registration Schema V1
+  operationId: getDatasetRegistrationSchemaV1
   tags:
     - Schema
   responses:

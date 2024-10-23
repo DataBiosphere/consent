@@ -1,6 +1,24 @@
 patch:
   summary: Patch Dataset
-  description: Patch the dataset with provided values. Anything not provided is ignored
+  description: |
+    This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of dataset
+    properties. File Types and Data Location must conform to the schema defined in
+    [/schemas/dataset-registration/v1](#/Schema/getDatasetRegistrationSchemaV1)
+      * The dataset name. This is an optional field
+      * List of optional properties to update
+        * \# of participants must be an integer value greater than zero
+        * URL must be a valid url
+        * File Types must be a list of valid file types
+          * Arrays
+          * Genome
+          * Exome
+          * Survey
+          * Phenotype
+        * Data Location must be a valid data location:
+          * AnVIL Workspace
+          * Terra Workspace
+          * TDR Location
+          * Not Determined
   parameters:
     - name: id
       in: path
@@ -14,11 +32,6 @@ patch:
     description: DatasetPatch object
     required: true
     content:
-      multipart/form-data:
-        schema:
-          type: object
-          properties:
-            dataset:
       application/json:
         schema:
           $ref: '../schemas/DatasetPatch.yaml'
