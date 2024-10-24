@@ -116,4 +116,22 @@ class OAuthAuthenticatorTest {
     verify(samService, never()).getRegistrationInfo(any());
   }
 
+  /**
+   * Test that if the name is "unknown" in the header, we use the email as the name
+   */
+  @Test
+  void testUnknownNameDefaultsToEmail() {
+    String bearerToken = RandomStringUtils.randomAlphabetic(100);
+    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("unknown"));
+    headerCache.loadCache(bearerToken, headerMap);
+    oAuthAuthenticator = new OAuthAuthenticator(samService);
+
+    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
+    assertTrue(authUser.isPresent());
+    assertEquals(authUser.get().getName(), authUser.get().getEmail());
+  }
+
 }
