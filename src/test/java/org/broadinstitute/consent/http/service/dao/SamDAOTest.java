@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -15,6 +16,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -129,9 +131,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-    assertThrows(BadRequestException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(BadRequestException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -140,9 +140,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-    assertThrows(NotAuthorizedException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(NotAuthorizedException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -151,9 +149,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    assertThrows(ForbiddenException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(ForbiddenException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -163,9 +159,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    assertThrows(NotFoundException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(NotFoundException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -174,9 +168,7 @@ class SamDAOTest implements WithMockServer {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-    assertThrows(ConsentConflictException.class, () -> {
-      samDAO.getRegistrationInfo(authUser);
-    });
+    assertThrows(ConsentConflictException.class, () -> samDAO.getRegistrationInfo(authUser));
   }
 
   @Test
@@ -215,42 +207,16 @@ class SamDAOTest implements WithMockServer {
   }
 
   @Test
-  void testPostRegistrationInfo_ServerError() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
-            .withBody(status.toString()));
-
-    assertThrows(ServerErrorException.class, () -> {
-      samDAO.postRegistrationInfo(authUser);
-    });
-  }
-
-  @Test
-  void testPostRegistrationInfo_Conflict() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT)
-            .withBody(status.toString()));
-
-    assertThrows(ConsentConflictException.class, () -> {
-      samDAO.postRegistrationInfo(authUser);
-    });
-  }
-
-  @Test
   void testPostRegistrationInfo_Error() {
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
-            .withBody(status.toString()));
+            .withBody(("{\"message\":\"errorMessage\"}")));
+    when(authUser.getEmail()).thenReturn("email@email.com");
 
-    assertThrows(Exception.class, () -> {
-      samDAO.postRegistrationInfo(authUser);
-    });
+    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> samDAO.postRegistrationInfo(authUser));
+    assertEquals("Error posting user registration information. Email: email@email.com. Error message: errorMessage.", ex.getMessage());
   }
 
   /**

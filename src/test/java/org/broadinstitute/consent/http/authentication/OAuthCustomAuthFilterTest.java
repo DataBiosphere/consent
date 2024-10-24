@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
 
+import io.dropwizard.auth.AuthenticationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -43,7 +44,7 @@ class OAuthCustomAuthFilterTest {
   private final String token = "0cx2G9gKm4XZdK8BFxoWy7AE025tvq";
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws AuthenticationException {
     when(requestContext.getHeaders()).thenReturn(headers);
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
     when(headers.getFirst("Authorization")).thenReturn("Bearer %s".formatted(token));
@@ -53,21 +54,17 @@ class OAuthCustomAuthFilterTest {
   }
 
   @Test
-  void testFilterSuccessful() {
+  void testFilterSuccessful() throws AuthenticationException {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenReturn(Optional.of(user));
-    assertDoesNotThrow(() -> {
-      filter.filter(requestContext);
-    });
+    assertDoesNotThrow(() -> filter.filter(requestContext));
   }
 
 
   @Test
-  void testFilterExceptionBadCredentials() {
+  void testFilterExceptionBadCredentials() throws AuthenticationException {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenReturn(Optional.empty());
-    assertThrows(WebApplicationException.class, () -> {
-      filter.filter(requestContext);
-    });
+    assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
   }
 }

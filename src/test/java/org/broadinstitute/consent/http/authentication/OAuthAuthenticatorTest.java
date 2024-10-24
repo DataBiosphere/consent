@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.dropwizard.auth.AuthenticationException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -38,7 +39,7 @@ class OAuthAuthenticatorTest {
   }
 
   @Test
-  void testAuthenticateWithToken() {
+  void testAuthenticateWithToken() throws AuthenticationException {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
@@ -49,7 +50,7 @@ class OAuthAuthenticatorTest {
   }
 
   @Test
-  void testAuthenticateGetUserInfoSuccess() {
+  void testAuthenticateGetUserInfoSuccess() throws AuthenticationException {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
@@ -67,7 +68,7 @@ class OAuthAuthenticatorTest {
    * Test that in the case of a header lookup failure, we don't fail the overall request.
    */
   @Test
-  void testAuthenticateGetUserInfoFailure() {
+  void testAuthenticateGetUserInfoFailure() throws AuthenticationException {
     String bearerToken = RandomStringUtils.randomAlphabetic(100);
     MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
