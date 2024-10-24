@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import io.dropwizard.auth.AuthenticationException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
@@ -100,6 +102,22 @@ class OAuthAuthenticatorTest {
     verify(samService, times(1)).postRegistrationInfo(any());
   }
 
+  /**
+   * Test that in the case of a Sam user lookup failure, we then try to register the user
+   */
+  @Test
+  void testAuthenticateGetUserWithStatusInfoFailurePostUserFailure() throws Exception {
+    String bearerToken = RandomStringUtils.randomAlphabetic(100);
+    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerCache.loadCache(bearerToken, headerMap);
+    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    when(samService.postRegistrationInfo(any())).thenThrow(new WebApplicationException("errorMessage"));
+    oAuthAuthenticator = new OAuthAuthenticator(samService);
+
+    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
+    assertEquals("errorMessage", ex.getMessage());
+  }
   /**
    * Test that in the case of a missing claim headers, we don't fail on Sam user lookup
    */
