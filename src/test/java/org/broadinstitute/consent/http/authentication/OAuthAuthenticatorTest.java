@@ -34,16 +34,17 @@ class OAuthAuthenticatorTest {
   private SamService samService;
   private OAuthAuthenticator oAuthAuthenticator;
   private final ClaimsCache headerCache = ClaimsCache.getInstance();
+  private final String bearerToken = RandomStringUtils.randomAlphabetic(100);
+  private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
 
   @BeforeEach
   void setUp() {
     headerCache.cache.invalidateAll();
+    headerMap.clear();
   }
 
   @Test
   void testAuthenticateWithToken() throws AuthenticationException {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
@@ -53,8 +54,6 @@ class OAuthAuthenticatorTest {
 
   @Test
   void testAuthenticateGetUserInfoSuccess() throws AuthenticationException {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
@@ -71,8 +70,6 @@ class OAuthAuthenticatorTest {
    */
   @Test
   void testAuthenticateGetUserInfoFailure() throws AuthenticationException {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
@@ -87,8 +84,6 @@ class OAuthAuthenticatorTest {
    */
   @Test
   void testAuthenticateGetUserWithStatusInfoFailurePostUserSuccess() throws Exception {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
@@ -103,12 +98,11 @@ class OAuthAuthenticatorTest {
   }
 
   /**
-   * Test that in the case of a Sam user lookup failure, we then try to register the user
+   * Test that in the case of a Sam user lookup failure, we then try to register the user.
+   * if that fails, we throw an exception.
    */
   @Test
-  void testAuthenticateGetUserWithStatusInfoFailurePostUserFailure() throws Exception {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
+  void testAuthenticateGetUserWithStatusInfoFailurePostUserFailureWebAppEx() throws Exception {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
@@ -118,13 +112,29 @@ class OAuthAuthenticatorTest {
     WebApplicationException ex = assertThrows(WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
     assertEquals("errorMessage", ex.getMessage());
   }
+
+  /**
+   * Test that in the case of a Sam user lookup failure, we then try to register the user.
+   * if that fails, we throw an exception.
+   */
+  @Test
+  void testAuthenticateGetUserWithStatusInfoFailurePostUserFailureAuthEx() throws Exception {
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
+    headerCache.loadCache(bearerToken, headerMap);
+    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    when(samService.postRegistrationInfo(any())).thenThrow(new AuthenticationException("errorMessage"));
+    oAuthAuthenticator = new OAuthAuthenticator(samService);
+
+    AuthenticationException ex = assertThrows(AuthenticationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
+    assertEquals("AuthUser not able to be registered: '{\"email\":\"email\",\"name\":\"name\"}", ex.getMessage());
+  }
+
   /**
    * Test that in the case of a missing claim headers, we don't fail on Sam user lookup
    */
   @Test
   void testAuthenticateGetUserWithStatusInfoIncompleteClaims() throws Exception {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
