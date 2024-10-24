@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
@@ -66,5 +67,21 @@ class OAuthCustomAuthFilterTest {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenReturn(Optional.empty());
     assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+  }
+
+  @Test
+  void testFilterAuthWebApplicationException() throws AuthenticationException {
+    when(uriInfo.getPath()).thenReturn("api/something");
+    when(authenticator.authenticate(token)).thenThrow(new WebApplicationException("errorMessage"));
+    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+    assertEquals("errorMessage", ex.getMessage());
+  }
+
+  @Test
+  void testFilterAuthAuthenticationException() throws AuthenticationException {
+    when(uriInfo.getPath()).thenReturn("api/something");
+    when(authenticator.authenticate(token)).thenThrow(new AuthenticationException("errorMessage"));
+    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+    assertEquals("HTTP 500 Internal Server Error", ex.getMessage());
   }
 }
