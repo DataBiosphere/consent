@@ -4,15 +4,16 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
@@ -97,17 +97,13 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = executeRequest(request);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
-      if (HttpStatusCodes.STATUS_CODE_CONFLICT == response.getStatusCode()) {
-        throw new ConsentConflictException("User exists in Sam: " + authUser.getEmail());
-      } else {
-        String errorMsg = String.format("Error posting user registration information to Sam. Email [%s]. Status Code [%s]; Status Message [%s];  ",
+      String message = JsonParser.parseString(body).getAsJsonObject().get("message").getAsString();
+      String errorMsg = String.format("Error posting user registration information. Email: %s. Error message: %s.",
           authUser.getEmail(),
-          response.getStatusCode(),
-          response.getStatusMessage());
-        Exception e = new Exception(body);
-        logException(errorMsg, new Exception(body));
-        throw e;
-      }
+          message);
+      Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
+      logException(errorMsg, new Exception(body));
+      throw e;
     }
     return new Gson().fromJson(body, UserStatus.class);
   }

@@ -2,9 +2,11 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,8 +30,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   }
 
   @Override
-  public Optional<AuthUser> authenticate(String bearer) {
-    try {
+  public Optional<AuthUser> authenticate(String bearer) throws AuthenticationException {
       var headers = claimsCache.cache.getIfPresent(bearer);
       if (headers != null) {
         AuthUser user = buildAuthUserFromHeaders(headers);
@@ -42,10 +43,6 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       }
       logException(new ServerErrorException("Error reading request headers", 500));
       return Optional.empty();
-    } catch (Exception e) {
-      logException("Error authenticating credentials", e);
-      return Optional.empty();
-    }
   }
 
   private AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
@@ -73,7 +70,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
    * @param authUser The AuthUser
    * @return A cloned AuthUser with Sam registration status
    */
-  private AuthUser getUserWithStatusInfo(AuthUser authUser) {
+  private AuthUser getUserWithStatusInfo(AuthUser authUser) throws AuthenticationException {
     if (authUser == null || authUser.getEmail() == null) {
       logWarn("AuthUser/email is null, cannot get user status info");
       return null;
@@ -102,9 +99,15 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         } else {
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
-      } catch (Exception exc) {
-        logException("AuthUser not able to be registered: '" + gson.toJson(authUser), exc);
+        // if post response is not successful this will be thrown, propagate the error to the user
+      } catch (WebApplicationException ex) {
+        throw ex;
+        // if building the request or parsing the response fails, this will be thrown
+        // authenticationExceptions are caught and rethrown as a 500 error in AuthFilter
+      } catch (Exception ex2) {
+        throw new AuthenticationException("AuthUser not able to be registered: '" + gson.toJson(authUser), ex2);
       }
+    // if there is some other error getting the user, log it and return the user without status info
     } catch (Throwable e) {
       logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
