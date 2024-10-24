@@ -250,8 +250,8 @@ public class DatasetResource extends Resource {
                 HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
             .build();
       }
-      Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
-      return Response.noContent().entity(patched).build();
+      datasetRegistrationService.patchDataset(datasetId, user, patch);
+      return Response.noContent().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
