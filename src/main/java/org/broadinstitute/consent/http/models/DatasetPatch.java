@@ -1,16 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.JsonArray;
-import com.google.gson.internal.LinkedTreeMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
 
 /**
  * This model represents the values of a dataset that are modifiable via the PATCH operation
@@ -60,7 +55,6 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     Map<String, Function<Object, Boolean>> validators = Map.of(
         "# of participants", this::isNumeric,
         "url", this::isUrl,
-        "file types", this::isFileTypes,
         "data location", this::isDataLocation
     );
     return properties.stream()
@@ -88,22 +82,6 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     return UrlValidator.getInstance().isValid(obj.toString());
   }
 
-  @SuppressWarnings("unchecked")
-  private boolean isFileTypes(Object obj) {
-    // Gson parsing of a DatasetPatch object can't recognize that a property should be a list of
-    // FileTypeObjects in the case that the property name is "File Types".
-    // Instead, it comes in as an ArrayList of LinkedTreeMaps, so we have to manually deserialize it.
-    try {
-      List<FileTypeObject> fileTypeObjects = ((ArrayList<Object>) obj).stream()
-          .map(t -> (LinkedTreeMap<String, String>) t)
-          .map(this::parseLinkedTreeMap)
-          .toList();
-      return !fileTypeObjects.isEmpty();
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
   private boolean isDataLocation(Object obj) {
     try {
       // Try parsing as either the value or the enum
@@ -116,26 +94,6 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     } catch (Exception e) {
       return false;
     }
-  }
-
-  private FileTypeObject parseLinkedTreeMap(LinkedTreeMap<String, String> treeMap) {
-    FileTypeObject fileTypeObject = new FileTypeObject();
-    if (treeMap.containsKey("fileType")) {
-      // Try parsing as either the value or the enum
-      FileType type;
-      try {
-        type = FileType.fromValue(treeMap.get("fileType"));
-      } catch (IllegalArgumentException e) {
-        type = FileType.valueOf(treeMap.get("fileType"));
-      }
-      fileTypeObject.setFileType(type);
-    } else {
-      throw new IllegalArgumentException("File Type is required");
-    }
-    if (treeMap.containsKey("functionalEquivalence")) {
-      fileTypeObject.setFunctionalEquivalence(treeMap.get("functionalEquivalence"));
-    }
-    return fileTypeObject;
   }
 
 }

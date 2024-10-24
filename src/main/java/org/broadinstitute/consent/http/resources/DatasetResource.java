@@ -212,7 +212,7 @@ public class DatasetResource extends Resource {
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset Patch is required");
       }
-      Gson gson = GsonUtil.buildGson();
+      Gson gson = GsonUtil.getInstance();
       DatasetPatch patch;
       try {
         patch = gson.fromJson(json, DatasetPatch.class);

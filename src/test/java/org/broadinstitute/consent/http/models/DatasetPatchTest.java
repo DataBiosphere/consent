@@ -3,15 +3,12 @@ package org.broadinstitute.consent.http.models;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.google.gson.Gson;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -65,55 +62,6 @@ public class DatasetPatchTest {
     urlProp.setPropertyValue("");
     urlProp.setPropertyType(PropertyType.String);
     DatasetPatch patch = new DatasetPatch(null, List.of(urlProp));
-    assertFalse(patch.validateProperties());
-  }
-
-  private final String fileTypeInput = """
-      {
-        "name": "name",
-        "properties": [
-          {
-            "propertyName": "File Types",
-            "propertyValue": [
-              {
-                "fileType": "%s",
-                "functionalEquivalence": "%s"
-              }
-            ]
-          }
-        ]
-      }
-      """;
-
-  @ParameterizedTest
-  @EnumSource(FileType.class)
-  void testValidateFileType(FileType fileType) {
-    String json = fileTypeInput.formatted(fileType.value(), RandomStringUtils.randomAlphanumeric(5));
-    Gson gson = GsonUtil.buildGson();
-    DatasetPatch patch = gson.fromJson(json, DatasetPatch.class);
-    assertTrue(patch.validateProperties());
-  }
-
-  @Test
-  void testValidateFileTypeFailure() {
-    String json = fileTypeInput.formatted(RandomStringUtils.randomAlphanumeric(5),
-        RandomStringUtils.randomAlphanumeric(5));
-    Gson gson = GsonUtil.buildGson();
-    DatasetPatch patch = gson.fromJson(json, DatasetPatch.class);
-    assertFalse(patch.validateProperties());
-  }
-
-  @Test
-  void testValidateFileTypeMissingFileTypeFailure() {
-    String invalidFileType = """
-        [{"invalidFileType": "invalid", "functionalEquivalence": "random"}]
-        """;
-    DatasetProperty fileTypeProp = new DatasetProperty();
-    fileTypeProp.setPropertyName("file types");
-    fileTypeProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.fileTypes);
-    fileTypeProp.setPropertyType(PropertyType.Json);
-    fileTypeProp.setPropertyValue(invalidFileType);
-    DatasetPatch patch = new DatasetPatch(null, List.of(fileTypeProp));
     assertFalse(patch.validateProperties());
   }
 

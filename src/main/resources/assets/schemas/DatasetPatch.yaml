@@ -10,9 +10,17 @@ properties:
     example:
       - propertyName: "# of participants"
         propertyValue: 20
+        schemaProperty: numberOfParticipants
+        propertyType: Number
       - propertyName: URL
         propertyValue: https://duos.org
+        schemaProperty: url
+        propertyType: String
       - propertyName: File Types
-        propertyValue: [{"fileType":"Arrays", "functionalEquivalence": "Free Text"}]
+        propertyValue: [{"fileType":"ARRAYS", "functionalEquivalence": "Free Text"}]
+        schemaProperty: fileTypes
+        propertyType: Json
       - propertyName: Data Location
         propertyValue: Terra Workspace
+        schemaProperty: dataLocation
+        propertyType: String
