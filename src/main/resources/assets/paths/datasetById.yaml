@@ -1,3 +1,56 @@
+patch:
+  summary: Patch Dataset
+  description: |
+    This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of dataset
+    properties. Data Location must conform to the schema defined in
+    [/schemas/dataset-registration/v1](#/Schema/getDatasetRegistrationSchemaV1)
+      * The dataset name. This is an optional field
+      * List of optional properties to update
+        * \# of participants must be an integer value greater than zero
+        * URL must be a valid url
+        * Data Location must be a valid data location:
+          * AnVIL Workspace
+          * Terra Workspace
+          * TDR Location
+          * Not Determined
+  parameters:
+    - name: id
+      in: path
+      description: ID of the Dataset
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Dataset
+  requestBody:
+    description: DatasetPatch object
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DatasetPatch.yaml'
+  responses:
+    204:
+      description: Dataset Patch applied successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    304:
+      description: Dataset not modified
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Dataset.yaml'
+    400:
+      description: |
+        Dataset Patch is not formatted correctly OR the new dataset name is not unique in the
+        system. See [/api/dataset/datasetNames](#/Dataset/findAllDatasetNames) for a list of
+        existing dataset names.
+    404:
+      description: Not Found
+    500:
+      description: Server error.
 delete:
   summary: Delete Dataset
   description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
@@ -20,6 +73,7 @@ delete:
     500:
       description: Server error.
 put:
+  deprecated: true
   summary: Updates the Dataset from JSON
   description: Updates the Dataset from JSON
   parameters:

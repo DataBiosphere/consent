@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -66,6 +68,16 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
     this.emailService = emailService;
+  }
+
+  public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
+    try {
+      datasetServiceDAO.patchDataset(datasetId, user, patch);
+      return datasetDAO.findDatasetById(datasetId);
+    } catch (SQLException ex) {
+      logException(ex);
+      throw new InternalServerErrorException("An error occurred while patching the dataset.");
+    }
   }
 
   public Study findStudyById(Integer studyId) {

@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.networknt.schema.ValidationMessage;
@@ -11,8 +14,10 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -40,10 +45,13 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -190,6 +198,66 @@ public class DatasetResource extends Resource {
     }
   }
 
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PATCH
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId, String json) {
+    try {
+      if (json == null || json.isEmpty()) {
+        throw new BadRequestException("Dataset Patch is required");
+      }
+      Gson gson = GsonUtil.getInstance();
+      DatasetPatch patch;
+      try {
+        patch = gson.fromJson(json, DatasetPatch.class);
+      } catch (Exception e) {
+        throw new BadRequestException("Unable to parse dataset patch: " + json);
+      }
+      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      if (existingDataset == null) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+      // Check permissions for non-admin roles.
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        if (!isCreatorOrCustodian(user, existingDataset)) {
+          throw new ForbiddenException("User does not have permission to update this dataset");
+        }
+      }
+      if (!patch.isPatchable(existingDataset)) {
+        return Response.notModified().entity(existingDataset).build();
+      }
+      // Validate DatasetPatch values
+      List<String> existingNames = datasetService.findAllDatasetNames();
+      if (patch.name() != null && !patch.name().equals(existingDataset.getName())
+          && existingNames.contains(patch.name())) {
+        return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .entity(new Error(
+                "The new name for this dataset already exists: " + patch.name(),
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
+            .build();
+      }
+      if (!patch.validateProperties()) {
+        return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .entity(new Error(
+                "Properties are invalid",
+                HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
+            .build();
+      }
+      datasetRegistrationService.patchDataset(datasetId, user, patch);
+      return Response.noContent().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @Deprecated
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
@@ -558,4 +626,41 @@ public class DatasetResource extends Resource {
       }
     }
   }
+
+  /**
+   * Determine if the user is a dataset/study creator, or if they are listed as a data custodian.
+   *
+   * @param user    User
+   * @param dataset Dataset
+   * @return User is a creator or custodian of the dataset.
+   */
+  protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
+    if (Objects.equals(user.getUserId(), dataset.getCreateUserId())) {
+      return true;
+    }
+    if (dataset.getStudy() != null && Objects.equals(user.getUserId(),
+        dataset.getStudy().getCreateUserId())) {
+      return true;
+    }
+    if (dataset.getStudy() != null && dataset.getStudy().getProperties() != null) {
+      Optional<StudyProperty> dataCustodians = dataset
+          .getStudy()
+          .getProperties()
+          .stream()
+          .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
+          .findFirst();
+      if (dataCustodians.isPresent()) {
+        JsonArray jsonArray = (JsonArray) dataCustodians.get().getValue();
+        return jsonArray.contains(new JsonPrimitive(user.getEmail()));
+      } else {
+        logWarn(
+            "No data custodians found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
+      }
+    } else {
+      logWarn(
+          "No study properties found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
+    }
+    return false;
+  }
+
 }
