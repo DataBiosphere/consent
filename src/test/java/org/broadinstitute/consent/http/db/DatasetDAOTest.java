@@ -725,7 +725,6 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(newName, foundDataset.getName());
-
   }
 
   @Test
