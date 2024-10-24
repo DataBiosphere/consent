@@ -54,7 +54,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
     String email = headers.get(ClaimsCache.OAUTH2_CLAIM_email);
     String name = headers.get(ClaimsCache.OAUTH2_CLAIM_name);
     // Name is not a guaranteed header
-    if (name == null) {
+    if (name == null || name.equals("unknown")) {
       name = email;
     }
     if (email == null) {
