@@ -28,7 +28,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -128,31 +127,6 @@ public class DatasetResource extends Resource {
   }
 
   /**
-   * Finds and validates all the files uploaded to the multipart.
-   *
-   * @param multipart Form data
-   * @return Map of file body parts, where the key is the name of the field and the value is the
-   * body part including the file(s).
-   */
-  private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
-    if (Objects.isNull(multipart)) {
-      return Map.of();
-    }
-
-    Map<String, FormDataBodyPart> files = new HashMap<>();
-    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
-      for (FormDataBodyPart part : parts) {
-        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
-          validateFileDetails(part.getContentDisposition());
-          files.put(part.getName(), part);
-        }
-      }
-    }
-
-    return files;
-  }
-
-  /**
    * This endpoint updates the dataset.
    */
   @PUT
@@ -217,7 +191,7 @@ public class DatasetResource extends Resource {
             .collect(Collectors.toList());
         throw new BadRequestException(
             "Dataset contains invalid properties that could not be recognized or associated with a key: "
-                + invalidKeys.toString());
+                + invalidKeys);
       }
       List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
           inputDataset.getProperties());

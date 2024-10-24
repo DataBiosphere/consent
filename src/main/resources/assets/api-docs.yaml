@@ -499,6 +499,14 @@ paths:
     $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/draft/v1:
+    $ref: './paths/draftIndex.yaml'
+  /api/draft/v1/{draftUUID}:
+    $ref: './paths/draftDocumentIndex.yaml'
+  /api/draft/v1/{draftUUID}/attachments:
+    $ref: './paths/draftAttachmentsIndex.yaml'
+  /api/draft/v1/{draftUUID}/attachements/{fileId}:
+    $ref: './paths/draftAttachments.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:

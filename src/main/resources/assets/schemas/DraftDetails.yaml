@@ -1,0 +1,7 @@
+type: object
+properties:
+  document:
+    type: object
+    description: The JSON object composed by the form.
+  meta:
+    $ref: './Draft.yaml'

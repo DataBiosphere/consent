@@ -16,7 +16,9 @@ public enum FileCategory {
   @SerializedName("nihInstitutionalCertification")
   NIH_INSTITUTIONAL_CERTIFICATION("nihInstitutionalCertification"),
   @SerializedName("dataAccessAgreement")
-  DATA_ACCESS_AGREEMENT("dataAccessAgreement");
+  DATA_ACCESS_AGREEMENT("dataAccessAgreement"),
+  @SerializedName("draftUploadedFile")
+  DRAFT_UPLOADED_FILE("draftUploadedFile");
 
   private final String value;
 
