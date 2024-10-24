@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.gson.JsonArray;
 import com.google.gson.internal.LinkedTreeMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,8 +90,9 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
 
   @SuppressWarnings("unchecked")
   private boolean isFileTypes(Object obj) {
-    // Gson parsing of this value doesn't recognize that it should be a list of FileTypeObjects.
-    // Instead, it comes in as an array of LinkedTreeMaps, so we have to manually deserialize it.
+    // Gson parsing of a DatasetPatch object can't recognize that a property should be a list of
+    // FileTypeObjects in the case that the property name is "File Types".
+    // Instead, it comes in as an ArrayList of LinkedTreeMaps, so we have to manually deserialize it.
     try {
       List<FileTypeObject> fileTypeObjects = ((ArrayList<Object>) obj).stream()
           .map(t -> (LinkedTreeMap<String, String>) t)
@@ -104,7 +106,12 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
 
   private boolean isDataLocation(Object obj) {
     try {
-      DataLocation.fromValue(obj.toString());
+      // Try parsing as either the value or the enum
+      try {
+        DataLocation.fromValue(obj.toString());
+      } catch (IllegalArgumentException e) {
+        DataLocation.valueOf(obj.toString());
+      }
       return true;
     } catch (Exception e) {
       return false;
@@ -114,7 +121,7 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
   private FileTypeObject parseLinkedTreeMap(LinkedTreeMap<String, String> treeMap) {
     FileTypeObject fileTypeObject = new FileTypeObject();
     if (treeMap.containsKey("fileType")) {
-      // Try parsing the value as either the value or the enum
+      // Try parsing as either the value or the enum
       FileType type;
       try {
         type = FileType.fromValue(treeMap.get("fileType"));

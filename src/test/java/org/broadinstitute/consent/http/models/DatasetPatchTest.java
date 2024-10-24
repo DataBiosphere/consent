@@ -4,13 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -23,7 +21,7 @@ public class DatasetPatchTest {
   @Test
   void testInvalidPropertyKeys() {
     DatasetProperty invalidProp = new DatasetProperty();
-    invalidProp.setPropertyName(RandomStringUtils.randomAlphabetic(25));
+    invalidProp.setPropertyName(RandomStringUtils.randomAlphanumeric(25));
     invalidProp.setPropertyValue(RandomUtils.nextInt(1, 10));
     invalidProp.setPropertyType(PropertyType.Number);
     DatasetPatch patch = new DatasetPatch(null, List.of(invalidProp));
@@ -44,7 +42,7 @@ public class DatasetPatchTest {
   void testValidateNumberOfParticipantsFailure() {
     DatasetProperty participantsProp = new DatasetProperty();
     participantsProp.setPropertyName("# of participants");
-    participantsProp.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    participantsProp.setPropertyValue(RandomStringUtils.randomAlphanumeric(10));
     participantsProp.setPropertyType(PropertyType.Number);
     DatasetPatch patch = new DatasetPatch(null, List.of(participantsProp));
     assertFalse(patch.validateProperties());
@@ -70,50 +68,38 @@ public class DatasetPatchTest {
     assertFalse(patch.validateProperties());
   }
 
+  private final String fileTypeInput = """
+      {
+        "name": "name",
+        "properties": [
+          {
+            "propertyName": "File Types",
+            "propertyValue": [
+              {
+                "fileType": "%s",
+                "functionalEquivalence": "%s"
+              }
+            ]
+          }
+        ]
+      }
+      """;
+
   @ParameterizedTest
   @EnumSource(FileType.class)
   void testValidateFileType(FileType fileType) {
+    String json = fileTypeInput.formatted(fileType.value(), RandomStringUtils.randomAlphanumeric(5));
     Gson gson = GsonUtil.buildGson();
-    DatasetProperty fileTypeProp = new DatasetProperty();
-    fileTypeProp.setPropertyName("file types");
-    fileTypeProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.fileTypes);
-    fileTypeProp.setPropertyType(PropertyType.Json);
-    FileTypeObject fileTypeObj = new FileTypeObject();
-    fileTypeObj.setFileType(fileType);
-    fileTypeObj.setFunctionalEquivalence(
-        RandomStringUtils.randomAlphabetic(5) + " " + RandomStringUtils.randomAlphabetic(5));
-    fileTypeProp.setPropertyValue(gson.toJson(List.of(fileTypeObj)));
-    DatasetPatch patch = new DatasetPatch(null, List.of(fileTypeProp));
-    assertTrue(patch.validateProperties());
-  }
-
-  // We need this version of the FileType test due to Gson serialization. When a correctly formed
-  // List of FileTypeObject is passed in as a property in a DatasetPatch at the resource level,
-  // Gson cannot infer the nested types based on the property name. Therefore, it comes through as
-  // an ArrayList of LinkedTreeMap objects. The validateProperties method handles both cases.
-  @ParameterizedTest
-  @EnumSource(FileType.class)
-  void testValidateFileTypeAsLinkedTreeMaps(FileType fileType) {
-    DatasetProperty fileTypeProp = new DatasetProperty();
-    fileTypeProp.setPropertyName("file types");
-    fileTypeProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.fileTypes);
-    fileTypeProp.setPropertyType(PropertyType.Json);
-    LinkedTreeMap<String, String> treeMap = new LinkedTreeMap<>();
-    treeMap.put("fileType", fileType.value());
-    treeMap.put("functionalEquivalence", RandomStringUtils.randomAlphabetic(5));
-    fileTypeProp.setPropertyValue(List.of(treeMap));
-    DatasetPatch patch = new DatasetPatch(null, List.of(fileTypeProp));
+    DatasetPatch patch = gson.fromJson(json, DatasetPatch.class);
     assertTrue(patch.validateProperties());
   }
 
   @Test
   void testValidateFileTypeFailure() {
-    DatasetProperty fileTypeProp = new DatasetProperty();
-    fileTypeProp.setPropertyName("file types");
-    fileTypeProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.fileTypes);
-    fileTypeProp.setPropertyType(PropertyType.Json);
-    fileTypeProp.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-    DatasetPatch patch = new DatasetPatch(null, List.of(fileTypeProp));
+    String json = fileTypeInput.formatted(RandomStringUtils.randomAlphanumeric(5),
+        RandomStringUtils.randomAlphanumeric(5));
+    Gson gson = GsonUtil.buildGson();
+    DatasetPatch patch = gson.fromJson(json, DatasetPatch.class);
     assertFalse(patch.validateProperties());
   }
 
@@ -149,7 +135,7 @@ public class DatasetPatchTest {
     dataLocationProp.setPropertyName("data location");
     dataLocationProp.setSchemaProperty(DatasetRegistrationSchemaV1Builder.dataLocation);
     dataLocationProp.setPropertyType(PropertyType.Json);
-    dataLocationProp.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    dataLocationProp.setPropertyValue(RandomStringUtils.randomAlphanumeric(10));
     DatasetPatch patch = new DatasetPatch(null, List.of(dataLocationProp));
     assertFalse(patch.validateProperties());
   }
