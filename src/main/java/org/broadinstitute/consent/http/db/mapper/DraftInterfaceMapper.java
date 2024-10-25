@@ -25,7 +25,7 @@ public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMappe
     try {
       dsi = (DraftInterface) Class.forName(className).getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-             InstantiationException | IllegalAccessException classNotFoundException) {
+             InstantiationException | IllegalAccessException e) {
       throw new NoMatchingClassException(className);
     }
 
