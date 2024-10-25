@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DraftSubmissionInterfaceMapper implements RowMapper<DraftInterface>, RowMapperHelper {
+public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMapperHelper {
 
   @Override
   public DraftInterface map(ResultSet rs, StatementContext ctx) throws SQLException, NoMatchingClassException {
@@ -54,9 +54,7 @@ public class DraftSubmissionInterfaceMapper implements RowMapper<DraftInterface>
           rs.getString("uu_email"),
           rs.getString("uu_display_name"),
           rs.getTimestamp("uu_create_date"),
-          rs.getBoolean("uu_email_preference"),
-          rs.getInt("uu_institution_id"),
-          rs.getString("uu_era_commons_id"));
+          rs.getBoolean("uu_email_preference"));
       dsi.setUpdateUser(updateUser);
     }
 
@@ -65,9 +63,7 @@ public class DraftSubmissionInterfaceMapper implements RowMapper<DraftInterface>
           rs.getString("cu_email"),
           rs.getString("cu_display_name"),
           new Date(rs.getTimestamp("cu_create_date").getTime()),
-          rs.getBoolean("cu_email_preference"),
-          rs.getInt("cu_institution_id"),
-          rs.getString("cu_era_commons_id"));
+          rs.getBoolean("cu_email_preference"));
       dsi.setCreateUser(createUser);
     }
 
@@ -75,7 +71,7 @@ public class DraftSubmissionInterfaceMapper implements RowMapper<DraftInterface>
   }
 
   private User buildUserFromResult(Integer userId, String email, String displayName,
-      Date createDate, boolean emailPreference, Integer institutionId, String eraCommonsId) {
+      Date createDate, boolean emailPreference) {
     User user = new User();
     user.setUserId(userId);
     user.setEmail(email);

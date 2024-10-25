@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.broadinstitute.consent.http.db.mapper.DraftSubmissionInterfaceMapper;
-import org.broadinstitute.consent.http.db.mapper.DraftSubmissionReducer;
-import org.broadinstitute.consent.http.db.mapper.DraftSubmissionSummaryMapper;
+import org.broadinstitute.consent.http.db.mapper.DraftInterfaceMapper;
+import org.broadinstitute.consent.http.db.mapper.DraftReducer;
+import org.broadinstitute.consent.http.db.mapper.DraftSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftSummary;
@@ -21,14 +21,14 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-@RegisterRowMapper(DraftSubmissionInterfaceMapper.class)
-@RegisterRowMapper(DraftSubmissionSummaryMapper.class)
+@RegisterRowMapper(DraftInterfaceMapper.class)
+@RegisterRowMapper(DraftSummaryMapper.class)
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface DraftDAO extends Transactional<DraftDAO> {
 
   String DRAFT_SUMMARY = """
       SELECT ds.name, ds.create_date, ds.uuid, ds.update_date
-      FROM draftsubmission ds
+      FROM draft ds
       WHERE ds.create_user_id = :createdUserId
       ORDER BY ds.update_date DESC
       """;
@@ -38,14 +38,12 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       ds.uuid, ds.update_date, ds.update_user_id, ds.schema_class,
       uu.user_id AS uu_user_id, uu.email AS uu_email, uu.display_name AS uu_display_name,
       uu.create_date AS uu_create_date, uu.email_preference AS uu_email_preference,
-      uu.institution_id AS uu_institution_id, uu.era_commons_id AS uu_era_commons_id,
       cu.user_id AS cu_user_id, cu.email AS cu_email, cu.display_name AS cu_display_name,
       cu.create_date AS cu_create_date, cu.email_preference AS cu_email_preference,
-      cu.institution_id AS cu_institution_id, cu.era_commons_id AS cu_era_commons_id,
       """
       + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
       """
-          FROM draftsubmission ds
+          FROM draft ds
           LEFT JOIN users uu on ds.update_user_id = uu.user_id
           LEFT JOIN users cu on ds.create_user_id = cu.user_id
           LEFT JOIN file_storage_object fso ON fso.entity_id = ds.uuid::text AND fso.deleted = false
@@ -53,7 +51,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
 
   @SqlUpdate(
       """
-          INSERT into draftsubmission
+          INSERT into draft
               (name, create_date, create_user_id, update_date,
               update_user_id, json, uuid, schema_class)
           (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId, :json::jsonb, :uuid, :schema_class)
@@ -69,7 +67,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("schema_class") String schemaClass);
 
   @SqlUpdate("""
-      UPDATE draftsubmission
+      UPDATE draft
       SET name = :name,
           update_date = :updateDate,
           update_user_id = :updateUserId,
@@ -86,7 +84,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("schema_class") String schemaClass);
 
   @SqlUpdate("""
-      UPDATE draftsubmission
+      UPDATE draft
       SET
           update_date = :updateDate,
           update_user_id = :updateUserId
@@ -97,7 +95,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId);
 
-  @UseRowReducer(DraftSubmissionReducer.class)
+  @UseRowReducer(DraftReducer.class)
   @SqlQuery(
       DRAFT_DETAILS +
           """
@@ -106,13 +104,13 @@ public interface DraftDAO extends Transactional<DraftDAO> {
   Set<DraftInterface> findDraftsByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
-  @UseRowMapper(DraftSubmissionSummaryMapper.class)
+  @UseRowMapper(DraftSummaryMapper.class)
   @SqlQuery(
       DRAFT_SUMMARY)
   Set<DraftSummary> findDraftSummariesByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
-  @UseRowReducer(DraftSubmissionReducer.class)
+  @UseRowReducer(DraftReducer.class)
   @SqlQuery(
       DRAFT_DETAILS +
           """
@@ -122,7 +120,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
 
   @SqlUpdate(
       """
-          DELETE from draftsubmission
+          DELETE from draft
           WHERE uuid IN (<uuid_list>)
           """
   )

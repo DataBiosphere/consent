@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 
 /**
- * DraftSubmission represents a Data Submitter's partial submission of 0 or more elements. This is
+ * Draft represents a partial submission of 0 or more elements. This is
  * an internal structure, not intended to be serialized back to the client in the entirety.
  */
 public class Draft implements DraftInterface {

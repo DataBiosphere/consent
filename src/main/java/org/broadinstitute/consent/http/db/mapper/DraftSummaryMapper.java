@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.DraftSummary;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DraftSubmissionSummaryMapper implements RowMapper<DraftSummary>,
+public class DraftSummaryMapper implements RowMapper<DraftSummary>,
     RowMapperHelper {
 
   @Override

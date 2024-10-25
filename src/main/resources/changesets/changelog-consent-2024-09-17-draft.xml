@@ -2,7 +2,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
   <changeSet id="changelog-consent-2024-09-17-draftsubmission.xml" author="otchet-broad">
-    <createTable tableName="draftsubmission">
+    <createTable tableName="draft">
       <column name="id" autoIncrement="true" type="bigint">
         <constraints primaryKey="true" nullable="false"/>
       </column>
@@ -27,20 +27,20 @@
         <constraints nullable="false"/>
       </column>
     </createTable>
-    <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="draftsubmission" constraintName="fk_create_user_id"
+    <addForeignKeyConstraint baseColumnNames="create_user_id" baseTableName="draft" constraintName="fk_create_user_id"
                              deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                              referencedColumnNames="user_id" referencedTableName="users"
                              referencesUniqueColumn="true"/>
 
 
-    <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="draftsubmission" constraintName="fk_update_user_id"
+    <addForeignKeyConstraint baseColumnNames="update_user_id" baseTableName="draft" constraintName="fk_update_user_id"
                              deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
                              referencedColumnNames="user_id" referencedTableName="users"
                              referencesUniqueColumn="true"/>
-    <createIndex tableName="draftsubmission" indexName="idx_uuid">
+    <createIndex tableName="draft" indexName="idx_uuid">
       <column name="uuid"/>
     </createIndex>
-    <createIndex tableName="draftsubmission" indexName="idx_create_user_id">
+    <createIndex tableName="draft" indexName="idx_create_user_id">
       <column name="create_user_id"/>
       <column name="update_date" descending="true"/>
     </createIndex>

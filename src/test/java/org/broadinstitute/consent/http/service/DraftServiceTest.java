@@ -1,10 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
@@ -55,9 +59,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCreateDraftSubmission() throws SQLException {
+  public void testCreateDraft() throws SQLException {
     User user = createUser();
-    DraftInterface draft = createDraftSubmission(user, 3);
+    DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
     Set<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
@@ -68,10 +72,19 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCreateDraftSubmissionWithInvalidJson() {
+  public void testCreateDraftWithInvalidJson() {
     User user = createUser();
-    Draft draftSubmission = new Draft("Hello world!",user);
-    assertThrows(BadRequestException.class, ()-> draftService.insertDraft(draftSubmission));
+    Draft draft = new Draft("Hello world!",user);
+    assertThrows(BadRequestException.class, ()-> draftService.insertDraft(draft));
+  }
+
+  @Test
+  public void testThinUserIsReturnedFromDraft() throws SQLException {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 3);
+    assertThat(user.getRoles(), hasSize(greaterThan(0)));
+    assertThinUser(draft.getCreateUser());
+    assertThinUser(draft.getUpdateUser());
   }
 
   @Test
@@ -80,7 +93,7 @@ public class DraftServiceTest extends DAOTestHelper {
     User badUser = createUser();
     User adminUser = createUser();
     adminUser.addRole(UserRoles.Admin());
-    DraftInterface draft = createDraftSubmission(goodUser, 4);
+    DraftInterface draft = createDraft(goodUser, 4);
     assertThat(draftDAO.findDraftsByUserId(goodUser.getUserId()), hasSize(1));
     assertThrows(NotFoundException.class,
         () -> draftService.getAuthorizedDraft(UUID.randomUUID(), goodUser));
@@ -97,7 +110,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @Test
   public void testDeleteDraft() throws Exception {
     User user = createUser();
-    createDraftSubmission(user, 3);
+    createDraft(user, 3);
     Set<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
     assertThat(loadedDrafts, hasSize(1));
@@ -109,9 +122,9 @@ public class DraftServiceTest extends DAOTestHelper {
   public void testDeleteDraftsForUser() throws SQLException {
     User user = createUser();
     User user2 = createUser();
-    createDraftSubmission(user, 3);
-    createDraftSubmission(user2, 1);
-    createDraftSubmission(user2, 4);
+    createDraft(user, 3);
+    createDraft(user2, 1);
+    createDraft(user2, 4);
     assertThat(draftService.findDraftsForUser(user2), hasSize(2));
     assertThat(draftService.findDraftsForUser(user), hasSize(1));
     draftService.deleteDraftsByUser(user2);
@@ -123,7 +136,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @Test
   public void testDeleteAttachmentFromDraft() throws SQLException {
     User user = createUser();
-    DraftInterface draft = createDraftSubmission(user, 3);
+    DraftInterface draft = createDraft(user, 3);
     Set<FileStorageObject> storedFiles = draft.getStoredFiles();
     assertThat(storedFiles, hasSize(3));
     for (FileStorageObject file : storedFiles) {
@@ -136,7 +149,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @Test
   public void testStreamingOutput() throws SQLException, IOException {
     User user = createUser();
-    DraftInterface draft = createDraftSubmission(user, 1);
+    DraftInterface draft = createDraft(user, 1);
     StreamingOutput output = draftService.draftAsJson(draft);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     output.write(byteArrayOutputStream);
@@ -151,7 +164,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @Test
   public void testUpdateDraft() throws SQLException {
     User user = createUser();
-    DraftInterface draft = createDraftSubmission(user, 1);
+    DraftInterface draft = createDraft(user, 1);
     String updatedJson = "{\"study\": \"My example study\"}";
     String newDraftName = "My favorite draft";
     String originalDocumentJson = draft.getJson();
@@ -161,16 +174,16 @@ public class DraftServiceTest extends DAOTestHelper {
     assertNotEquals(draft.getName(), newDraftName);
     draft.setName(newDraftName);
     draft.setJson(updatedJson);
-    draftService.updateDraft(draft, user);
-    DraftInterface updatedDraft = draftService.getAuthorizedDraft(
-        draft.getUUID(), user);
+    DraftInterface updatedDraft = draftService.updateDraft(draft, user);
     assertEquals(draft.getUUID(), updatedDraft.getUUID());
     assertEquals(newDraftName, updatedDraft.getName());
     assertEquals(updatedJson, updatedDraft.getJson());
+    assertThinUser(updatedDraft.getCreateUser());
+    assertThinUser(updatedDraft.getUpdateUser());
   }
 
   @NotNull
-  private DraftInterface createDraftSubmission(User user, Integer numberOfFiles)
+  private DraftInterface createDraft(User user, Integer numberOfFiles)
       throws SQLException {
     Draft draft = new Draft("{}", user);
     draftService.insertDraft(draft);
@@ -187,6 +200,13 @@ public class DraftServiceTest extends DAOTestHelper {
       this.document = document;
       this.meta = meta;
     }
+  }
+
+  private void assertThinUser(User user) {
+    assertThat(user.getRoles(), is(nullValue()));
+    assertThat(user.getUserId(), is(notNullValue()));
+    assertThat(user.getInstitutionId(), is(nullValue()));
+    assertThat(user.getEraCommonsId(), is(nullValue()));
   }
 
 }

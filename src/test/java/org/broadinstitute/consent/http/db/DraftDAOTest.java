@@ -117,16 +117,16 @@ class DraftDAOTest extends DAOTestHelper {
     assertThat(user1submissions, hasSize(1));
     assertThat(user1summaries, hasSize(1));
     DraftSummary user1DraftSummary = user1summaries.iterator().next();
-    DraftInterface user1DraftSubmission = user1submissions.iterator().next();
-    summaryMatchesDetails(user1DraftSummary, user1DraftSubmission);
-    Set<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
+    DraftInterface user1Draft = user1submissions.iterator().next();
+    summaryMatchesDetails(user1DraftSummary, user1Draft);
+    Set<DraftInterface> user2Drafts = draftDAO.findDraftsByUserId(
         user2.getUserId());
     Set<DraftSummary> user2summaries = draftDAO.findDraftSummariesByUserId(
         user2.getUserId());
     DraftSummary user2DraftSummary = user2summaries.iterator().next();
-    DraftInterface user2DraftSubmission = user2submissions.iterator().next();
-    assertThat(user2submissions, hasSize(1));
-    summaryMatchesDetails(user2DraftSummary, user2DraftSubmission);
+    DraftInterface user2Draft = user2Drafts.iterator().next();
+    assertThat(user2Drafts, hasSize(1));
+    summaryMatchesDetails(user2DraftSummary, user2Draft);
   }
 
   @Test
@@ -148,10 +148,10 @@ class DraftDAOTest extends DAOTestHelper {
     fileStorageObjectDAO.insertNewFile(fso.getFileName(), fso.getCategory().getValue(),
         fso.getBlobId().toGsUtilUri(), fso.getMediaType(), draft.getUUID().toString(),
         user1.getUserId(), fso.getCreateDate());
-    Set<DraftInterface> draftSubmissions = draftDAO.findDraftsByUserId(
+    Set<DraftInterface> drafts = draftDAO.findDraftsByUserId(
         user1.getUserId());
-    assertThat(draftSubmissions, hasSize(1));
-    Set<FileStorageObject> storedFiles = draftSubmissions.iterator().next().getStoredFiles();
+    assertThat(drafts, hasSize(1));
+    Set<FileStorageObject> storedFiles = drafts.iterator().next().getStoredFiles();
     assertThat(storedFiles, hasSize(1));
     FileStorageObject storedFile = storedFiles.iterator().next();
     assertEquals(storedFile.getBlobId(), fso.getBlobId());

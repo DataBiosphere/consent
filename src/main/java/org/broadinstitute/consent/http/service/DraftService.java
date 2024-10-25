@@ -56,7 +56,7 @@ public class DraftService {
     });
   }
 
-  public void updateDraft(DraftInterface draft, User user) throws SQLException {
+  public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     jdbi.useHandle(handle -> {
@@ -70,6 +70,7 @@ public class DraftService {
       }
       handle.commit();
     });
+    return getAuthorizedDraft(draft.getUUID(), user);
   }
 
   public DraftInterface getAuthorizedDraft(UUID draftUUID, User user) {
@@ -107,8 +108,8 @@ public class DraftService {
   }
 
   private DraftInterface findDraftByDraftUUID(
-      UUID draftSubmissionUUID) throws SQLException {
-    return draftDAO.findDraftById(draftSubmissionUUID);
+      UUID draftUUID) throws SQLException {
+    return draftDAO.findDraftById(draftUUID);
   }
 
   public DraftInterface addAttachments(DraftInterface draft, User user,

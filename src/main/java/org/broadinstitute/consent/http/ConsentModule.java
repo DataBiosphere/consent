@@ -171,7 +171,6 @@ public class ConsentModule extends AbstractModule {
     container.setInstitutionDAO(providesInstitutionDAO());
     container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
     container.setAcknowledgementDAO(providesAcknowledgementDAO());
-    container.setDraftSubmissionDAO(providesDraftSubmissionDAO());
     return container;
   }
 
@@ -574,7 +573,7 @@ public class ConsentModule extends AbstractModule {
         providesUserServiceDAO(),
         providesDaaDAO(),
         providesEmailService(),
-        providesDraftSubmissionService());
+        providesDraftService());
   }
 
   @Provides
@@ -625,7 +624,7 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DraftDAO providesDraftSubmissionDAO() {
+  DraftDAO providesDraftDAO() {
     return draftDAO;
   }
 
@@ -636,8 +635,8 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DraftService providesDraftSubmissionService() {
-    return new DraftService(providesJdbi(), providesDraftSubmissionDAO(),
+  DraftService providesDraftService() {
+    return new DraftService(providesJdbi(), providesDraftDAO(),
         providesDraftFileStorageService());
   }
 }

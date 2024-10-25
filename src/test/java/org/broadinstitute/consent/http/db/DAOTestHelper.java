@@ -161,7 +161,7 @@ public class DAOTestHelper {
     testingDAO.deleteAllDictionaryTerms();
     testingDAO.deleteAllDatasetAudits();
     testingDAO.deleteAllDatasets();
-    testingDAO.deleteAllDraftSubmissions();
+    testingDAO.deleteAllDrafts();
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();

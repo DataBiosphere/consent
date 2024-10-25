@@ -70,25 +70,25 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftSubmissionsWhenNoneExistForUser() {
+  public void testGetDraftWhenNoneExistForUser() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(
         Collections.emptySet());
     initResource();
-    Response response = resource.getDraftSubmissions(authUser);
+    Response response = resource.getDrafts(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals("[]", response.getEntity().toString());
   }
 
   @Test
-  public void testGetDraftSubmissionsWhenOneExistForUser() {
+  public void testGetDraftsWhenOneExistForUser() {
     Set<DraftSummary> draftSummaries = new HashSet<>();
     draftSummaries.add(
         new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date()));
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(draftSummaries);
     initResource();
-    Response response = resource.getDraftSubmissions(authUser);
+    Response response = resource.getDrafts(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(draftSummaries, response.getEntity());
   }

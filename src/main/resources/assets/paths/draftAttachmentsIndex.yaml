@@ -21,7 +21,7 @@ get:
             items:
               $ref: '../schemas/FileStorageObject.yaml'
     401:
-      description: Unauthorized.  Did you remember to authenticate?
+      description: User not authorized to get list of file attachments
     404:
       description: The draft cannot be found.
 post:
@@ -61,6 +61,6 @@ post:
             items:
               $ref: '../schemas/FileStorageObject.yaml'
     401:
-      description: Unauthorized.  Did you remember to authenticate?
+      description: User not authorized to upload file attachments
     404:
       description: The draft cannot be found.

@@ -53,7 +53,7 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response getDraftSubmissions(@Auth AuthUser authUser) {
+  public Response getDrafts(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Set<DraftSummary> draftSummariesSet = draftService.findDraftSummariesForUser(
@@ -75,8 +75,7 @@ public class DraftResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftInterface draft = new Draft(json, user);
       draftService.insertDraft(draft);
-      URI uri = UriBuilder.fromPath(String.format("/api/draft/v1/%s", draft.getUUID().toString()))
-          .build();
+      URI uri = getDraftURI(draft);
       return Response.created(uri).entity(json).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -113,8 +112,8 @@ public class DraftResource extends Resource {
       DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       draft.setJson(json);
-      draftService.updateDraft(draft, user);
-      return Response.ok().entity(draftService.draftAsJson(draft)).build();
+      DraftInterface responseDraft = draftService.updateDraft(draft, user);
+      return Response.ok().entity(draftService.draftAsJson(responseDraft)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
