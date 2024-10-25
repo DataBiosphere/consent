@@ -11,8 +11,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
@@ -40,18 +40,17 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class DraftServiceTest extends DAOTestHelper {
-
+  @Mock
+  GCSService gcsService;
   private DraftService draftService;
 
   @BeforeEach
   public void setup() throws IOException {
-    GCSService gcsService = mock(GCSService.class);
-    lenient().when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     DraftFileStorageService draftFileStorageService = new DraftFileStorageService(jdbi, gcsService,
         fileStorageObjectDAO);
     this.draftService = new DraftService(jdbi, draftDAO,
@@ -59,7 +58,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testCreateDraft() throws SQLException {
+  public void testCreateDraft() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
@@ -79,7 +80,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testThinUserIsReturnedFromDraft() throws SQLException {
+  public void testThinUserIsReturnedFromDraft() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(user.getRoles(), hasSize(greaterThan(0)));
@@ -88,7 +91,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetAuthorizedDraft() throws SQLException {
+  public void testGetAuthorizedDraft() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User goodUser = createUser();
     User badUser = createUser();
     User adminUser = createUser();
@@ -109,6 +114,8 @@ public class DraftServiceTest extends DAOTestHelper {
 
   @Test
   public void testDeleteDraft() throws Exception {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     createDraft(user, 3);
     Set<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
@@ -119,7 +126,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteDraftsForUser() throws SQLException {
+  public void testDeleteDraftsForUser() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     User user2 = createUser();
     createDraft(user, 3);
@@ -134,7 +143,9 @@ public class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteAttachmentFromDraft() throws SQLException {
+  public void testDeleteAttachmentFromDraft() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Set<FileStorageObject> storedFiles = draft.getStoredFiles();

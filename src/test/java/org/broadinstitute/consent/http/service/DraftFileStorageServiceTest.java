@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -31,21 +29,20 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class DraftFileStorageServiceTest extends DAOTestHelper {
+  @Mock
+  private GCSService gcsService;
 
   private DraftFileStorageService draftFileStorageService;
 
   @BeforeEach
   public void setUp() throws IOException {
-    GCSService gcsService = mock(GCSService.class);
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    lenient().when(gcsService.getDocument((BlobId) any()))
-        .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
-        });
     draftFileStorageService = new DraftFileStorageService(jdbi, gcsService, fileStorageObjectDAO);
   }
 
@@ -84,6 +81,9 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
 
   @Test
   public void testGetDraftFile() throws IOException, SQLException {
+    when(gcsService.getDocument((BlobId) any()))
+        .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
+        });
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);

@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
@@ -286,9 +286,9 @@ public class DAOTestHelper {
 
   private FormDataBodyPart getFormDataBodyPartMock(String name) {
     FormDataBodyPart part = mock(FormDataBodyPart.class);
-    lenient().when(part.getName()).thenReturn(name);
-    lenient().when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
-    lenient().when(part.getValueAs(InputStream.class))
+    when(part.getName()).thenReturn(name);
+    when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    when(part.getValueAs(InputStream.class))
         .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
     return part;
   }
