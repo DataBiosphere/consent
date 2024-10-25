@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.dropwizard.auth.AuthenticationException;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -30,7 +29,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   }
 
   @Override
-  public Optional<AuthUser> authenticate(String bearer) throws AuthenticationException {
+  public Optional<AuthUser> authenticate(String bearer) {
     var headers = claimsCache.cache.getIfPresent(bearer);
     if (headers != null) {
       AuthUser user = buildAuthUserFromHeaders(headers);
@@ -70,7 +69,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
    * @param authUser The AuthUser
    * @return A cloned AuthUser with Sam registration status
    */
-  private AuthUser getUserWithStatusInfo(AuthUser authUser) throws AuthenticationException {
+  private AuthUser getUserWithStatusInfo(AuthUser authUser) {
     if (authUser == null || authUser.getEmail() == null) {
       logWarn("AuthUser/email is null, cannot get user status info");
       return null;
@@ -99,16 +98,12 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         } else {
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
-      } catch (WebApplicationException ex) {
-        // if post response is not successful this will be thrown, propagate the error to the user
-        throw ex;
       } catch (Exception ex) {
-        // if building the request or parsing the response fails, this will be thrown
-        // authenticationExceptions are caught and rethrown as a 500 error in AuthFilter
-        throw new AuthenticationException("AuthUser not able to be registered: '" + gson.toJson(authUser), ex);
+        // if post response is not successful, propagate the error to the user
+        throw new WebApplicationException(ex.getMessage());
       }
-    // if there is some other error getting the user, log it and return the user without status info
     } catch (Throwable e) {
+      // if there is some other error getting the user, log it and return the user without status info
       logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
     return authUser;

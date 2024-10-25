@@ -10,7 +10,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.dropwizard.auth.AuthenticationException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
@@ -43,7 +42,7 @@ class OAuthAuthenticatorTest {
   }
 
   @Test
-  void testAuthenticateWithToken() throws AuthenticationException {
+  void testAuthenticateWithToken() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
@@ -52,7 +51,7 @@ class OAuthAuthenticatorTest {
   }
 
   @Test
-  void testAuthenticateGetUserInfoSuccess() throws AuthenticationException {
+  void testAuthenticateGetUserInfoSuccess() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
@@ -68,7 +67,7 @@ class OAuthAuthenticatorTest {
    * Test that in the case of a header lookup failure, we don't fail the overall request.
    */
   @Test
-  void testAuthenticateGetUserInfoFailure() throws AuthenticationException {
+  void testAuthenticateGetUserInfoFailure() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
     oAuthAuthenticator = new OAuthAuthenticator(samService);
@@ -105,29 +104,11 @@ class OAuthAuthenticatorTest {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
-    when(samService.postRegistrationInfo(any())).thenThrow(new WebApplicationException("errorMessage"));
+    when(samService.postRegistrationInfo(any())).thenThrow(new Exception("errorMessage"));
     oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     WebApplicationException ex = assertThrows(WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
     assertEquals("errorMessage", ex.getMessage());
-  }
-
-  /**
-   * Test that in the case of a Sam user lookup failure, we then try to register the user.
-   * if that fails, we throw an exception.
-   */
-  @Test
-  void testAuthenticateGetUserWithStatusInfoFailurePostUserFailureAuthEx() throws Exception {
-    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
-    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
-    headerCache.loadCache(bearerToken, headerMap);
-    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
-    when(samService.postRegistrationInfo(any())).thenThrow(new AuthenticationException("errorMessage"));
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
-
-    AuthenticationException ex = assertThrows(AuthenticationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
-    assertEquals("""
-        AuthUser not able to be registered: '{"email":"email","name":"name"}""", ex.getMessage());
   }
 
   /**
