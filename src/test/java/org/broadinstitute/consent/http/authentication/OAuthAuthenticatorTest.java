@@ -40,7 +40,6 @@ class OAuthAuthenticatorTest {
   @BeforeEach
   void setUp() {
     headerCache.cache.invalidateAll();
-    headerMap.clear();
   }
 
   @Test
@@ -127,7 +126,8 @@ class OAuthAuthenticatorTest {
     oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     AuthenticationException ex = assertThrows(AuthenticationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
-    assertEquals("AuthUser not able to be registered: '{\"email\":\"email\",\"name\":\"name\"}", ex.getMessage());
+    assertEquals("""
+        AuthUser not able to be registered: '{"email":"email","name":"name"}""", ex.getMessage());
   }
 
   /**

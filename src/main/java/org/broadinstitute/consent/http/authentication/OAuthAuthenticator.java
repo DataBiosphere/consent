@@ -31,18 +31,18 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
 
   @Override
   public Optional<AuthUser> authenticate(String bearer) throws AuthenticationException {
-      var headers = claimsCache.cache.getIfPresent(bearer);
-      if (headers != null) {
-        AuthUser user = buildAuthUserFromHeaders(headers);
-        AuthUser userWithStatus = getUserWithStatusInfo(user);
-        if (userWithStatus == null) {
-          logWarn("User with status is null, authentication incomplete");
-          return Optional.of(user);
-        }
-        return Optional.of(userWithStatus);
+    var headers = claimsCache.cache.getIfPresent(bearer);
+    if (headers != null) {
+      AuthUser user = buildAuthUserFromHeaders(headers);
+      AuthUser userWithStatus = getUserWithStatusInfo(user);
+      if (userWithStatus == null) {
+        logWarn("User with status is null, authentication incomplete");
+        return Optional.of(user);
       }
-      logException(new ServerErrorException("Error reading request headers", 500));
-      return Optional.empty();
+      return Optional.of(userWithStatus);
+    }
+    logException(new ServerErrorException("Error reading request headers", 500));
+    return Optional.empty();
   }
 
   private AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
@@ -91,21 +91,21 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
     } catch (NotFoundException e) {
       Gson gson = new Gson();
-      // Try to post the user to Sam if they have not registered previously
       try {
+        // Try to post the user to Sam if they have not registered previously
         UserStatus userStatus = samService.postRegistrationInfo(authUser);
         if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
           authUser.setEmail(userStatus.getUserInfo().getUserEmail());
         } else {
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
-        // if post response is not successful this will be thrown, propagate the error to the user
       } catch (WebApplicationException ex) {
+        // if post response is not successful this will be thrown, propagate the error to the user
         throw ex;
+      } catch (Exception ex) {
         // if building the request or parsing the response fails, this will be thrown
         // authenticationExceptions are caught and rethrown as a 500 error in AuthFilter
-      } catch (Exception ex2) {
-        throw new AuthenticationException("AuthUser not able to be registered: '" + gson.toJson(authUser), ex2);
+        throw new AuthenticationException("AuthUser not able to be registered: '" + gson.toJson(authUser), ex);
       }
     // if there is some other error getting the user, log it and return the user without status info
     } catch (Throwable e) {
