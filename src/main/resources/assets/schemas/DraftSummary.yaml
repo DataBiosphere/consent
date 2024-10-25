@@ -3,7 +3,7 @@ properties:
   id:
    type: string
    format: uuid
-   description: The UUID of the draft.  See https://en.wikipedia.org/wiki/Universally_unique_identifier#:~:text=%5B2%5D-,Version%204%20(random),-%5Bedit%5D
+   description: The UUID of the draft.  See https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
   name:
     type: string
     description: A friendly name to describe the saved draft.

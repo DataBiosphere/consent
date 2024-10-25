@@ -6,11 +6,11 @@ get:
   parameters:
     - name: draftUUID
       in: path
-      description: The UUID identifying the draft
+      description: The UUID identifying the draft. See https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
       required: true
       schema:
         type: string
-        format: UUID v4.
+        format: uuid
     - name: fileId
       in: path
       description: The integer identifying the attachment.
@@ -39,11 +39,11 @@ delete:
   parameters:
     - name: draftUUID
       in: path
-      description: The UUID identifying the draft
+      description: The UUID identifying the draft.  See https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
       required: true
       schema:
         type: string
-        format: UUID v4.
+        format: uuid
     - name: fileId
       in: path
       description: The integer identifying the attachment.
