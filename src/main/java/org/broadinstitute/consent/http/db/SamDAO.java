@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.ServerErrorException;
@@ -97,7 +98,8 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = executeRequest(request);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
-      String message = JsonParser.parseString(body).getAsJsonObject().get("message").getAsString();
+      JsonElement messageElement = JsonParser.parseString(body).getAsJsonObject().get("message");
+      String message = messageElement != null ? messageElement.getAsString() : body;
       String errorMsg = String.format("Error posting user registration information. Email: %s. Error message: %s.",
           authUser.getEmail(),
           message);
