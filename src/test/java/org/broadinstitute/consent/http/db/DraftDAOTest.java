@@ -5,19 +5,29 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.broadinstitute.consent.http.db.mapper.DraftInterfaceMapper;
+import org.broadinstitute.consent.http.db.mapper.RowMapperHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.exceptions.NoMatchingClassException;
 import org.broadinstitute.consent.http.models.Draft;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -176,7 +186,17 @@ class DraftDAOTest extends DAOTestHelper {
     draftDAO.deleteDraftByUUIDList(List.of(draft2.getUUID()));
     user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(user1submissions, hasSize(1));
+  }
 
+  @Test
+  public void testNoSchemaColumnValue() throws SQLException {
+    ResultSet resultSet = mock(ResultSet.class);
+    StatementContext ctx = mock(StatementContext.class);
+    ResultSetMetaData metaData= mock(ResultSetMetaData.class);
+    when(metaData.getColumnCount()).thenReturn(0);
+    when(resultSet.getMetaData()).thenReturn(metaData);
+
+    assertThrows(NoMatchingClassException.class,()->new DraftInterfaceMapper().map(resultSet, ctx));
   }
 
   private void summaryMatchesDetails(DraftSummary draftSummary,
