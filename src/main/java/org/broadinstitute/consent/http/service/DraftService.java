@@ -46,7 +46,7 @@ public class DraftService {
       try {
         draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
             draft.getCreateUser().getUserId(), draft.getJson(), draft.getUUID(),
-            draft.getClass().getName());
+            draft.getType().getValue());
       } catch (Exception e) {
         handle.rollback();
         throw new BadRequestException(
@@ -64,7 +64,7 @@ public class DraftService {
       try {
         draftDAO.updateDraftByDraftUUID(draft.getName(),
             draft.getUpdateDate().toInstant(), draft.getUpdateUser().getUserId(), draft.getJson(),
-            draft.getUUID(), draft.getClass().getName());
+            draft.getUUID(), draft.getType().getValue());
       } catch (Exception e) {
         handle.rollback();
       }

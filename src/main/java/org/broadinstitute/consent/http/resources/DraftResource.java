@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Draft;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -73,7 +73,7 @@ public class DraftResource extends Resource {
   public Response createDraftRegistration(@Auth AuthUser authUser, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = new Draft(json, user);
+      DraftInterface draft = new DraftStudyDataset(json, user);
       draftService.insertDraft(draft);
       URI uri = getDraftURI(draft);
       return Response.created(uri).entity(json).build();

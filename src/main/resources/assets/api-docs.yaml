@@ -505,7 +505,7 @@ paths:
     $ref: './paths/draftDocumentIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments:
     $ref: './paths/draftAttachmentsIndex.yaml'
-  /api/draft/v1/{draftUUID}/attachements/{fileId}:
+  /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'

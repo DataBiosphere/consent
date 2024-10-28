@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.DraftType;
 
 
 public interface DraftInterface {
@@ -38,5 +39,7 @@ public interface DraftInterface {
   void addStoredFile(FileStorageObject file);
 
   Set<FileStorageObject> getStoredFiles();
+
+  DraftType getType();
 
 }

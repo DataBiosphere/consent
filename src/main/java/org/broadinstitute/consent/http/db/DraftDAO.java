@@ -35,7 +35,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
 
   String DRAFT_DETAILS = """
       SELECT ds.name, ds.create_date, ds.create_user_id, ds.json,
-      ds.uuid, ds.update_date, ds.update_user_id, ds.schema_class,
+      ds.uuid, ds.update_date, ds.update_user_id, ds.draft_type,
       uu.user_id AS uu_user_id, uu.email AS uu_email, uu.display_name AS uu_display_name,
       uu.create_date AS uu_create_date, uu.email_preference AS uu_email_preference,
       cu.user_id AS cu_user_id, cu.email AS cu_email, cu.display_name AS cu_display_name,
@@ -53,8 +53,8 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       """
           INSERT into draft
               (name, create_date, create_user_id, update_date,
-              update_user_id, json, uuid, schema_class)
-          (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId, :json::jsonb, :uuid, :schema_class)
+              update_user_id, json, uuid, draft_type)
+          (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId, :json::jsonb, :uuid, :draftType)
           """
   )
   @GetGeneratedKeys
@@ -64,7 +64,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("createdUserId") Integer createdUserId,
       @Bind("json") String json,
       @Bind("uuid") UUID uuid,
-      @Bind("schema_class") String schemaClass);
+      @Bind("draftType") String draftType);
 
   @SqlUpdate("""
       UPDATE draft
@@ -72,7 +72,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           update_date = :updateDate,
           update_user_id = :updateUserId,
           json = :json::jsonb,
-          schema_class = :schema_class
+          draft_type = :draftType
       WHERE uuid = :uuid
       """)
   void updateDraftByDraftUUID(
@@ -81,7 +81,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("updateUserId") Integer updateUserId,
       @Bind("json") String json,
       @Bind("uuid") UUID uuid,
-      @Bind("schema_class") String schemaClass);
+      @Bind("draftType") String draftType);
 
   @SqlUpdate("""
       UPDATE draft

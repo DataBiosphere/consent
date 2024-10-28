@@ -3,15 +3,14 @@ package org.broadinstitute.consent.http.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -30,8 +29,8 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Draft;
 import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -75,7 +74,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @Test
   public void testCreateDraftWithInvalidJson() {
     User user = createUser();
-    Draft draft = new Draft("Hello world!",user);
+    DraftStudyDataset draft = new DraftStudyDataset("Hello world!",user);
     assertThrows(BadRequestException.class, ()-> draftService.insertDraft(draft));
   }
 
@@ -196,7 +195,7 @@ public class DraftServiceTest extends DAOTestHelper {
   @NotNull
   private DraftInterface createDraft(User user, Integer numberOfFiles)
       throws SQLException {
-    Draft draft = new Draft("{}", user);
+    DraftStudyDataset draft = new DraftStudyDataset("{}", user);
     draftService.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);
     return draftService.addAttachments(draft, user, mapOfFiles);
@@ -205,9 +204,9 @@ public class DraftServiceTest extends DAOTestHelper {
   private static class StreamingDeserializer {
 
     private final Object document;
-    private final Draft meta;
+    private final DraftStudyDataset meta;
 
-    public StreamingDeserializer(String document, Draft meta) {
+    public StreamingDeserializer(String document, DraftStudyDataset meta) {
       this.document = document;
       this.meta = meta;
     }

@@ -23,7 +23,7 @@
         <constraints foreignKeyName="fk_update_user_id"/>
       </column>
       <column name="update_date" type="timestamp"/>
-      <column name="schema_class" type="text">
+      <column name="draft_type" type="text">
         <constraints nullable="false"/>
       </column>
     </createTable>

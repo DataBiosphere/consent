@@ -1,33 +1,23 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.UUID;
-import org.broadinstitute.consent.http.exceptions.NoMatchingClassException;
+import org.broadinstitute.consent.http.enumeration.DraftType;
+import org.broadinstitute.consent.http.exceptions.UnknownDraftTypeException;
+import org.broadinstitute.consent.http.models.DraftBuilder;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+
 public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMapperHelper {
 
   @Override
-  public DraftInterface map(ResultSet rs, StatementContext ctx) throws SQLException, NoMatchingClassException {
-    if (!hasColumn(rs, "schema_class")) {
-      throw new NoMatchingClassException("Missing class name.");
-    }
-
-    DraftInterface dsi;
-    String className = rs.getString("schema_class");
-
-    try {
-      dsi = (DraftInterface) Class.forName(className).getDeclaredConstructor().newInstance();
-    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-             InstantiationException | IllegalAccessException e) {
-      throw new NoMatchingClassException(className);
-    }
+  public DraftInterface map(ResultSet rs, StatementContext ctx) throws SQLException, UnknownDraftTypeException {
+    DraftInterface dsi = getDraftImplByType(rs);
 
     if (hasColumn(rs, "name")) {
       dsi.setName(rs.getString("name"));
@@ -79,5 +69,16 @@ public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMappe
     user.setCreateDate(createDate);
     user.setEmailPreference(emailPreference);
     return user;
+  }
+
+  private DraftInterface getDraftImplByType(ResultSet rs) throws SQLException, UnknownDraftTypeException {
+    try {
+      String type = rs.getString("draft_type");
+      DraftType draftType = DraftType.fromValue(
+          type);
+      return DraftBuilder.from(draftType);
+    } catch (NullPointerException ex) {
+      throw new UnknownDraftTypeException("Draft type was not found.");
+    }
   }
 }

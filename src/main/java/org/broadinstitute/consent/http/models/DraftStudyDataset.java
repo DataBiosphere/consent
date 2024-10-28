@@ -6,13 +6,14 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 
 /**
  * Draft represents a partial submission of 0 or more elements. This is
  * an internal structure, not intended to be serialized back to the client in the entirety.
  */
-public class Draft implements DraftInterface {
+public class DraftStudyDataset implements DraftInterface {
 
   private Date createDate;
   private Date updateDate;
@@ -22,10 +23,11 @@ public class Draft implements DraftInterface {
   private User createUser;
   private User updateUser;
   private UUID uuid;
+  private static final DraftType draftType = DraftType.STUDY_DATASET_SUBMISSION_V1;
 
-  public Draft() {}
+  public DraftStudyDataset() {}
 
-  public Draft(String json, User user) {
+  public DraftStudyDataset(String json, User user) {
     this.json = json;
     this.createUser = user;
     this.updateUser = user;
@@ -116,6 +118,11 @@ public class Draft implements DraftInterface {
   @Override
   public Set<FileStorageObject> getStoredFiles() {
     return (this.storedFiles == null ? new HashSet<>() : this.storedFiles);
+  }
+
+  @Override
+  public DraftType getType() {
+    return draftType;
   }
 
   /* Uses the provided study name or the current time to create a draft name.  */

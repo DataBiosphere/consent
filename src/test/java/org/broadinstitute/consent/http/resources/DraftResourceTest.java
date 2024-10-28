@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Draft;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -123,7 +123,7 @@ public class DraftResourceTest {
 
   @Test
   public void testGetDraftDocumentSuccess() throws IOException {
-    DraftInterface draft = new Draft("{}", user);
+    DraftInterface draft = new DraftStudyDataset("{}", user);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     StreamingOutput stream = out -> out.write("{}".getBytes());
     when(draftService.draftAsJson(any())).thenReturn(stream);
@@ -166,7 +166,7 @@ public class DraftResourceTest {
   @Test
   public void testPutDraftDocumentSuccess() throws IOException {
     String updatedJson = "{\"hello\":\"world!\"}";
-    DraftInterface draft = new Draft("{}", user);
+    DraftInterface draft = new DraftStudyDataset("{}", user);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     StreamingOutput stream = out -> out.write(updatedJson.getBytes());
     when(draftService.draftAsJson(any())).thenReturn(stream);
@@ -200,7 +200,7 @@ public class DraftResourceTest {
   @Test
   public void testDeleteDraftDocumentSuccess() {
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
-        new Draft("{}", user));
+        new DraftStudyDataset("{}", user));
     initResource();
     Response response = resource.deleteDraft(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -224,7 +224,7 @@ public class DraftResourceTest {
 
   @Test
   public void testGetDraftAttachmentsSuccessNoAttachments() {
-    DraftInterface draft = mock(Draft.class);
+    DraftInterface draft = mock(DraftStudyDataset.class);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     when(draft.getStoredFiles()).thenReturn(new HashSet<>());
     initResource();
@@ -235,7 +235,7 @@ public class DraftResourceTest {
 
   @Test
   public void testGetDraftAttachmentsSuccessWithAttachments() {
-    DraftInterface draft = mock(Draft.class);
+    DraftInterface draft = mock(DraftStudyDataset.class);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
     FileStorageObject fileStorageObject2 = mock(FileStorageObject.class);
@@ -267,8 +267,8 @@ public class DraftResourceTest {
 
   @Test
   public void testUploadAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new Draft("{}", user));
-    DraftInterface draftWithAttachment = new Draft("{}", user);
+    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
+    DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     draftWithAttachment.addStoredFile(mock(FileStorageObject.class));
     when(draftService.addAttachments(any(), any(), any())).thenReturn(draftWithAttachment);
     initResource();
@@ -296,7 +296,7 @@ public class DraftResourceTest {
 
   @Test
   public void testGetAttachmentSuccess() throws SQLException {
-    DraftInterface draftWithAttachment = new Draft("{}", user);
+    DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
     when(fileStorageObject1.getFileName()).thenReturn("fileName1.txt");
     when(fileStorageObject1.getFileStorageObjectId()).thenReturn(1);
@@ -312,7 +312,7 @@ public class DraftResourceTest {
 
   @Test
   public void testGetAttachmentMissingFile() throws SQLException {
-    DraftInterface draftWithAttachment = new Draft("{}", user);
+    DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
     when(fileStorageObject1.getFileStorageObjectId()).thenReturn(1);
     draftWithAttachment.addStoredFile(fileStorageObject1);
@@ -343,7 +343,7 @@ public class DraftResourceTest {
 
   @Test
   public void testDeleteFileAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new Draft("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
     doNothing().when(draftService).deleteDraftAttachment(any(), any(), any());
     initResource();
     Response response = resource.deleteDraftAttachment(authUser, UUID.randomUUID().toString(), 1);
