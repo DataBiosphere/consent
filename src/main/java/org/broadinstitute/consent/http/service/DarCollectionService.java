@@ -332,7 +332,7 @@ public class DarCollectionService implements ConsentLogger {
         .filter(Predicate.not(List::isEmpty))
         .map(datasetDAO::findDatasetListByDacIds)
         .flatMap(List::stream)
-        .map(Dataset::getDataSetId)
+        .map(Dataset::getDatasetId)
         .toList();
   }
 
@@ -414,11 +414,13 @@ public class DarCollectionService implements ConsentLogger {
     return this.processDraftAsSummary(new ArrayList<>(sourceCollection.getDars().values()).get(0));
   }
 
-  public List<Integer> findDatasetIdsByUser(User user) {
-    return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
-        .stream()
-        .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+  /**
+   * Find all dataset ids by the DAC User. Will return ids for Chairpersons or Members
+   * @param user The DAC User
+   * @return List of Dataset IDs
+   */
+  public List<Integer> findDatasetIdsByDACUser(User user) {
+    return datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
   }
 
   public void deleteByCollectionId(User user, Integer collectionId)
@@ -529,7 +531,7 @@ public class DarCollectionService implements ConsentLogger {
       }
       Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
-          .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
+          .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
@@ -622,10 +624,7 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
-    List<Integer> datasetIds = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
-        .stream()
-        .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()

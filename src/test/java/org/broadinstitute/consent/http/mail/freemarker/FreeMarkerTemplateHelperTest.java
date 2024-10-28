@@ -73,7 +73,7 @@ class FreeMarkerTemplateHelperTest {
     Dataset d1 = new Dataset();
     d1.setDacId(1);
     d1.setDatasetName("Dataset-01");
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setAlias(1);
     d1.setDatasetIdentifier();
 

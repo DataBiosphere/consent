@@ -190,7 +190,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     Study study = createMockStudy();
     Dataset dataset = createMockDataset();
     DatasetProperty prop = new DatasetProperty();
-    prop.setDataSetId(dataset.getDataSetId());
+    prop.setDatasetId(dataset.getDatasetId());
     prop.setSchemaProperty(null);
     prop.setPropertyName(generalResearchUse);
     prop.setPropertyType(PropertyType.Boolean);
@@ -318,7 +318,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     Date now = new Date();
     Dataset dataset = new Dataset();
     dataset.setName(randomString());
-    dataset.setDataSetId(randomInt());
+    dataset.setDatasetId(randomInt());
     dataset.setAlias(randomInt());
     // datasetIdentifier is derived from `alias`
     dataset.setDatasetIdentifier();
@@ -353,7 +353,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
   private DatasetProperty createDatasetProperty(Dataset dataset, String schemaProp,
       PropertyType type, Object propValue) {
     DatasetProperty prop = new DatasetProperty();
-    prop.setDataSetId(dataset.getDataSetId());
+    prop.setDatasetId(dataset.getDatasetId());
     prop.setSchemaProperty(schemaProp);
     prop.setPropertyName(schemaProp);
     prop.setPropertyType(type);

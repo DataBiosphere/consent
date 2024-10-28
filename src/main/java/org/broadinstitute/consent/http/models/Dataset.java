@@ -13,7 +13,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Dataset {
 
-  private Integer dataSetId;
+  private Integer datasetId;
 
   private String objectId;
 
@@ -54,9 +54,9 @@ public class Dataset {
   public Dataset() {
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate,
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate,
       Integer createUserId, Date updateDate, Integer updateUserId, Integer alias) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -67,8 +67,8 @@ public class Dataset {
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Integer alias) {
-    this.dataSetId = dataSetId;
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate, Integer alias) {
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -76,8 +76,8 @@ public class Dataset {
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate) {
-    this.dataSetId = dataSetId;
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate) {
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -90,12 +90,12 @@ public class Dataset {
     this.objectId = objectId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public String getObjectId() {
@@ -344,12 +344,12 @@ public class Dataset {
       return false;
     }
     Dataset dataset = (Dataset) o;
-    return com.google.common.base.Objects.equal(dataSetId, dataset.dataSetId);
+    return com.google.common.base.Objects.equal(datasetId, dataset.datasetId);
   }
 
   @Override
   public int hashCode() {
-    return com.google.common.base.Objects.hashCode(dataSetId);
+    return com.google.common.base.Objects.hashCode(datasetId);
   }
 
   public FileStorageObject getNihInstitutionalCertificationFile() {

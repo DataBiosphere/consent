@@ -141,7 +141,7 @@ class DatasetServiceTest {
     Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
     assertNotNull(dataset);
-    assertEquals(dataset.getDataSetId(), getDatasets().get(0).getDataSetId());
+    assertEquals(dataset.getDatasetId(), getDatasets().get(0).getDatasetId());
   }
 
   @Test
@@ -158,7 +158,7 @@ class DatasetServiceTest {
 
   @Test
   void testFindDatasetById() {
-    when(datasetDAO.findDatasetById(getDatasets().get(0).getDataSetId()))
+    when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
         .thenReturn(getDatasets().get(0));
     initService();
 
@@ -397,8 +397,8 @@ class DatasetServiceTest {
   @Test
   void testFindAllDatasetsAsStreamingOutput() throws Exception {
     var datasets = getDatasets(RandomUtils.nextInt(10, 20));
-    when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDataSetId).toList());
-    datasets.forEach(d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDataSetId()))).thenReturn(List.of(d)));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDatasetId).toList());
+    datasets.forEach(d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(List.of(d)));
     initService();
     // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
     // the number of datasets generated in the test.
@@ -425,7 +425,7 @@ class DatasetServiceTest {
     user.setEmail("asdf@gmail.com");
     user.setDisplayName("John Doe");
     dataset.setDacApproval(true);
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     dataset.setUpdateDate(new Date());
     dataset.setUpdateUserId(4);
     dataset.setAlias(1);
@@ -436,7 +436,7 @@ class DatasetServiceTest {
 
     Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
     assertNotNull(datasetResult);
-    assertEquals(dataset.getDataSetId(), datasetResult.getDataSetId());
+    assertEquals(dataset.getDatasetId(), datasetResult.getDatasetId());
     assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
     assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
     assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
@@ -470,14 +470,14 @@ class DatasetServiceTest {
   @Test
   void testApproveDataset() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     User user = new User();
     user.setUserId(1);
     user.setEmail("asdf@gmail.com");
     user.setDisplayName("John Doe");
     Boolean payloadBool = true;
     Dataset updatedDataset = new Dataset();
-    updatedDataset.setDataSetId(1);
+    updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
     when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
@@ -489,7 +489,7 @@ class DatasetServiceTest {
     when(dacDAO.findById(3)).thenReturn(dac);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
-    assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+    assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
     assertTrue(returnedDataset.getDacApproval());
 
     // send approved email
@@ -503,14 +503,14 @@ class DatasetServiceTest {
   @Test
   void testApproveDataset_DenyDataset() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     User user = new User();
     user.setUserId(1);
     user.setEmail("asdf@gmail.com");
     user.setDisplayName("John Doe");
     Boolean payloadBool = false;
     Dataset updatedDataset = new Dataset();
-    updatedDataset.setDataSetId(1);
+    updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
     when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
@@ -523,7 +523,7 @@ class DatasetServiceTest {
     when(dacDAO.findById(3)).thenReturn(dac);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
-    assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+    assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
     assertFalse(returnedDataset.getDacApproval());
 
     // send denied email
@@ -538,14 +538,14 @@ class DatasetServiceTest {
   @Test
   void testApproveDataset_DenyDataset_WithNoDACEmail() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(1);
+    dataset.setDatasetId(1);
     User user = new User();
     user.setUserId(1);
     user.setEmail("asdf@gmail.com");
     user.setDisplayName("John Doe");
     Boolean payloadBool = false;
     Dataset updatedDataset = new Dataset();
-    updatedDataset.setDataSetId(1);
+    updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
     when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
@@ -557,7 +557,7 @@ class DatasetServiceTest {
     when(dacDAO.findById(3)).thenReturn(dac);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
-    assertEquals(dataset.getDataSetId(), returnedDataset.getDataSetId());
+    assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
     assertFalse(returnedDataset.getDacApproval());
 
     // do not send denied email
@@ -667,7 +667,7 @@ class DatasetServiceTest {
     return IntStream.range(1, 3)
         .mapToObj(i -> {
           Dataset dataset = new Dataset();
-          dataset.setDataSetId(i);
+          dataset.setDatasetId(i);
           dataset.setName("Test Dataset " + i);
           dataset.setProperties(Collections.emptySet());
           return dataset;
@@ -684,7 +684,7 @@ class DatasetServiceTest {
     return IntStream.range(1, count + 1)
         .mapToObj(i -> {
           Dataset dataset = new Dataset();
-          dataset.setDataSetId(i);
+          dataset.setDatasetId(i);
           dataset.setName("Test Dataset " + i);
           dataset.setProperties(Collections.emptySet());
           return dataset;
@@ -695,7 +695,7 @@ class DatasetServiceTest {
     return IntStream.range(1, 3)
         .mapToObj(i -> {
           DatasetDTO dataset = new DatasetDTO();
-          dataset.setDataSetId(i);
+          dataset.setDatasetId(i);
           DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name",
               "Test Dataset " + i);
           dataset.setProperties(Collections.singletonList(nameProperty));
@@ -728,7 +728,7 @@ class DatasetServiceTest {
 
   private DatasetDTO getDatasetDTO() {
     DatasetDTO datasetDTO = new DatasetDTO();
-    datasetDTO.setDataSetId(1);
+    datasetDTO.setDatasetId(1);
     datasetDTO.setObjectId("Test ObjectId");
     datasetDTO.setProperties(getDatasetPropertiesDTO());
     DataUse dataUse = new DataUse();

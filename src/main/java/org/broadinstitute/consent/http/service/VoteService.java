@@ -272,7 +272,7 @@ public class VoteService implements ConsentLogger {
         darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
     List<Integer> datasetIds = finalElections.stream()
-        .map(Election::getDataSetId)
+        .map(Election::getDatasetId)
         .collect(Collectors.toList());
     List<Dataset> datasets =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
@@ -292,7 +292,7 @@ public class VoteService implements ConsentLogger {
           .distinct()
           .toList();
       List<Dataset> approvedDatasetsInCollection = datasets.stream()
-          .filter(d -> collectionDatasetIds.contains(d.getDataSetId()))
+          .filter(d -> collectionDatasetIds.contains(d.getDatasetId()))
           .toList();
 
       if (!approvedDatasetsInCollection.isEmpty()) {

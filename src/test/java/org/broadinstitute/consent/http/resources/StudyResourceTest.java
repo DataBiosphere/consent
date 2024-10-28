@@ -100,11 +100,11 @@ class StudyResourceTest {
   @Test
   void testGetStudyByIdWithDatasets() {
     Dataset ds1 = new Dataset();
-    ds1.setDataSetId(1);
+    ds1.setDatasetId(1);
     Dataset ds2 = new Dataset();
-    ds2.setDataSetId(2);
+    ds2.setDatasetId(2);
     Dataset ds3 = new Dataset();
-    ds3.setDataSetId(3);
+    ds3.setDatasetId(3);
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
     Study study = new Study();
@@ -214,7 +214,7 @@ class StudyResourceTest {
    */
   private Study createMockStudy() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(100);
+    dataset.setDatasetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setDacId(1);
@@ -229,7 +229,7 @@ class StudyResourceTest {
     study.setCreateUserId(9);
     study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDataSetId()));
+    study.setDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");

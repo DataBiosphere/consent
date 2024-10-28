@@ -248,9 +248,9 @@ class DaaDAOTest extends DAOTestHelper {
     List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(user.getUserId());
     assertFalse(datasetIds.isEmpty());
     assertEquals(2, datasetIds.size());
-    assertTrue(datasetIds.contains(dataset1.getDataSetId()));
-    assertTrue(datasetIds.contains(dataset2.getDataSetId()));
-    assertFalse(datasetIds.contains(dataset3.getDataSetId()));
+    assertTrue(datasetIds.contains(dataset1.getDatasetId()));
+    assertTrue(datasetIds.contains(dataset2.getDatasetId()));
+    assertFalse(datasetIds.contains(dataset3.getDatasetId()));
   }
 
   @Test
@@ -313,8 +313,8 @@ class DaaDAOTest extends DAOTestHelper {
 
     // DAR and associated datasets
     DataAccessRequest dar = createDataAccessRequestV3();
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDataSetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDataSetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d1.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), d2.getDatasetId());
 
     List<DataAccessAgreement> daas = daaDAO.findByDarReferenceId(dar.getReferenceId());
     assertFalse(daas.isEmpty());

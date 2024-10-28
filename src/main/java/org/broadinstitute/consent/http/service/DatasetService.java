@@ -199,10 +199,10 @@ public class DatasetService implements ConsentLogger {
   private void updateDatasetProperties(List<DatasetProperty> updateProperties,
       List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
     updateProperties.forEach(p -> datasetDAO
-        .updateDatasetProperty(p.getDataSetId(), p.getPropertyKey(),
+        .updateDatasetProperty(p.getDatasetId(), p.getPropertyKey(),
             p.getPropertyValue().toString()));
     deleteProperties.forEach(
-        p -> datasetDAO.deleteDatasetPropertyByKey(p.getDataSetId(), p.getPropertyKey()));
+        p -> datasetDAO.deleteDatasetPropertyByKey(p.getDatasetId(), p.getPropertyKey()));
     datasetDAO.insertDatasetProperties(addProperties);
   }
 
@@ -277,7 +277,7 @@ public class DatasetService implements ConsentLogger {
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
     Boolean currentApprovalState = dataset.getDacApproval();
-    Integer datasetId = dataset.getDataSetId();
+    Integer datasetId = dataset.getDatasetId();
     Dataset datasetReturn = dataset;
     //Only update and fetch the dataset if it hasn't already been approved
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
@@ -351,12 +351,12 @@ public class DatasetService implements ConsentLogger {
         datasets.forEach(d -> {
           try {
             output.write(gson.toJson(d).getBytes());
-            if (!Objects.equals(d.getDataSetId(), lastIndex)) {
+            if (!Objects.equals(d.getDatasetId(), lastIndex)) {
               output.write(",".getBytes());
             }
             output.write("\n".getBytes());
           } catch (IOException e) {
-            logException("Error writing dataset to streaming output, dataset id: " + d.getDataSetId(), e);
+            logException("Error writing dataset to streaming output, dataset id: " + d.getDatasetId(), e);
           }
         });
       });
@@ -409,19 +409,19 @@ public class DatasetService implements ConsentLogger {
 
     // Dataset updates
     if (studyConversion.getDacId() != null) {
-      datasetDAO.updateDatasetDacId(dataset.getDataSetId(), studyConversion.getDacId());
+      datasetDAO.updateDatasetDacId(dataset.getDatasetId(), studyConversion.getDacId());
     }
     if (studyConversion.getDataUse() != null) {
-      datasetDAO.updateDatasetDataUse(dataset.getDataSetId(),
+      datasetDAO.updateDatasetDataUse(dataset.getDatasetId(),
           studyConversion.getDataUse().toString());
     }
     if (studyConversion.getDataUse() != null) {
       String translation = ontologyService.translateDataUse(studyConversion.getDataUse(),
           DataUseTranslationType.DATASET);
-      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDataSetId(), translation);
+      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDatasetId(), translation);
     }
     if (studyConversion.getDatasetName() != null) {
-      datasetDAO.updateDatasetName(dataset.getDataSetId(), studyConversion.getDatasetName());
+      datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
 
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
@@ -459,7 +459,7 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDataSubmitterEmail() != null) {
       User submitter = userDAO.findUserByEmail(studyConversion.getDataSubmitterEmail());
       if (submitter != null) {
-        datasetDAO.updateDatasetCreateUserId(dataset.getDataSetId(), user.getUserId());
+        datasetDAO.updateDatasetCreateUserId(dataset.getDatasetId(), user.getUserId());
       }
     }
 
@@ -518,7 +518,7 @@ public class DatasetService implements ConsentLogger {
         .filter(p -> p.getSchemaProperty().equals(schemaProperty))
         .findFirst();
     if (maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), maybeProp.get().getPropertyKey(),
+      datasetDAO.updateDatasetProperty(dataset.getDatasetId(), maybeProp.get().getPropertyKey(),
           propValue);
     } else {
       dictionaries.stream()
@@ -526,7 +526,7 @@ public class DatasetService implements ConsentLogger {
           .findFirst()
           .ifPresent(dictionary -> {
             DatasetProperty prop = new DatasetProperty();
-            prop.setDataSetId(dataset.getDataSetId());
+            prop.setDatasetId(dataset.getDatasetId());
             prop.setPropertyKey(dictionary.getKeyId());
             prop.setSchemaProperty(schemaProperty);
             prop.setPropertyValue(propValue);
@@ -558,13 +558,13 @@ public class DatasetService implements ConsentLogger {
         .findFirst();
     // Legacy property exists, update it.
     if (dictionary.isPresent() && maybeProp.isPresent()) {
-      datasetDAO.updateDatasetProperty(dataset.getDataSetId(), dictionary.get().getKeyId(),
+      datasetDAO.updateDatasetProperty(dataset.getDatasetId(), dictionary.get().getKeyId(),
           propValue);
     }
     // Legacy property does not exist, but we have a valid dictionary term, so create it.
     else if (dictionary.isPresent()) {
       DatasetProperty prop = new DatasetProperty();
-      prop.setDataSetId(dataset.getDataSetId());
+      prop.setDatasetId(dataset.getDatasetId());
       prop.setPropertyKey(dictionary.get().getKeyId());
       prop.setSchemaProperty(schemaProperty);
       prop.setPropertyValue(propValue);
@@ -599,7 +599,7 @@ public class DatasetService implements ConsentLogger {
           studyConversion.getDataTypes(), studyConversion.getPublicVisibility(), userId,
           Instant.now());
     }
-    datasetDAO.updateStudyId(dataset.getDataSetId(), studyId);
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
 
     // Create or update study properties:
     Set<StudyProperty> existingProps = studyDAO.findStudyById(studyId).getProperties();

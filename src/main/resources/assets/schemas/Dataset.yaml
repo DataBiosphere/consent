@@ -7,7 +7,7 @@ properties:
     type: string
     deprecated: true
     description: Legacy value for backwards compatibility, same as the dataset name
-  dataSetId:
+  datasetId:
     type: integer
     format: int32
     description: The dataset id, integer format
