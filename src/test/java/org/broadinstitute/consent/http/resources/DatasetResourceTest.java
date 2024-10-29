@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -24,8 +23,6 @@ import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -89,12 +86,6 @@ class DatasetResourceTest {
 
   @Mock
   private User user;
-
-  @Mock
-  private UriInfo uriInfo;
-
-  @Mock
-  private UriBuilder uriBuilder;
 
   private DatasetResource resource;
 
@@ -368,93 +359,6 @@ class DatasetResourceTest {
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-  }
-
-  @Test
-  void testUpdateDatasetSuccess() {
-    Dataset preexistingDataset = new Dataset();
-    String json = createPropertiesJson("Dataset Name", "test");
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    when(datasetService.updateDataset(any(), any(), any())).thenReturn(
-        Optional.of(preexistingDataset));
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(user.getUserId()).thenReturn(1);
-    when(user.hasUserRole(any())).thenReturn(true);
-    when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
-    when(uriBuilder.replacePath(anyString())).thenReturn(uriBuilder);
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
-  }
-
-  @Test
-  void testUpdateDatasetNoJson() {
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, "");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateDatasetNoProperties() {
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, "{\"properties\":[]}");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateDatasetIdNotFound() {
-    String json = createPropertiesJson("Dataset Name", "test");
-    when(datasetService.findDatasetById(anyInt())).thenReturn(null);
-
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testUpdateDatasetInvalidProperty() {
-    List<DatasetPropertyDTO> invalidProperties = new ArrayList<>();
-    invalidProperties.add(new DatasetPropertyDTO("Invalid Property", "test"));
-    when(datasetService.findInvalidProperties(any())).thenReturn(invalidProperties);
-
-    Dataset preexistingDataset = new Dataset();
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    String json = createPropertiesJson(invalidProperties);
-
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateDatasetDuplicateProperties() {
-    List<DatasetPropertyDTO> duplicateProperties = new ArrayList<>();
-    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
-    duplicateProperties.add(new DatasetPropertyDTO("Dataset Name", "test"));
-    when(datasetService.findDuplicateProperties(any())).thenReturn(duplicateProperties);
-
-    Dataset preexistingDataset = new Dataset();
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    String json = createPropertiesJson(duplicateProperties);
-
-    initResource();
-    Response response = resource.updateDataset(authUser, uriInfo, 1, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateDatasetNoContent() {
-    Dataset preexistingDataset = new Dataset();
-    String json = createPropertiesJson("Dataset Name", "test");
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    when(datasetService.updateDataset(any(), any(), any())).thenReturn(Optional.empty());
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(user.getUserId()).thenReturn(1);
-    when(user.hasUserRole(any())).thenReturn(true);
-    initResource();
-    Response responseNoContent = resource.updateDataset(authUser, uriInfo, 1, json);
-    assertEquals(204, responseNoContent.getStatus());
   }
 
   @Test

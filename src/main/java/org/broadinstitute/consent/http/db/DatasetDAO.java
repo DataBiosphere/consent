@@ -614,11 +614,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           " WHERE p.dataset_id = :datasetId ")
   Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
-  @Deprecated // Use getDictionaryTerms()
-  @RegisterRowMapper(DictionaryMapper.class)
-  @SqlQuery("SELECT * FROM dictionary d ORDER BY receive_order")
-  List<Dictionary> getMappedFieldsOrderByReceiveOrder();
-
   @RegisterRowMapper(DictionaryMapper.class)
   @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
   List<Dictionary> getDictionaryTerms();
