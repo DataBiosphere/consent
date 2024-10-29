@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -47,7 +46,6 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
-import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
