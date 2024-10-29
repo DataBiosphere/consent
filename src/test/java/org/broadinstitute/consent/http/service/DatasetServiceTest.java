@@ -189,27 +189,6 @@ class DatasetServiceTest {
     assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
   }
 
-//  @Test
-//  void testUpdateDatasetNotModified() {
-//    int datasetId = 1;
-//    DatasetDTO dataSetDTO = getDatasetDTO();
-//    Dataset dataset = getDatasets().get(0);
-//    dataSetDTO.setDatasetName(dataset.getName());
-//    Set<DatasetProperty> datasetProps = getDatasetProperties();
-//    List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-//        new DatasetPropertyDTO(p.getPropertyName(), p.getPropertyValue().toString())
-//    ).collect(Collectors.toList());
-//    dataSetDTO.setProperties(dtoProps);
-//    dataset.setProperties(datasetProps);
-//    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-//    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-//    initService();
-//
-//    Optional<Dataset> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-//    assertEquals(Optional.empty(), notModified);
-//  }
-
-
   @Test
   void testUpdateDatasetDataUseAdmin() {
     doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
