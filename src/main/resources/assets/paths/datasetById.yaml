@@ -1,8 +1,8 @@
 patch:
   summary: Patch Dataset
   description: |
-    This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of dataset
-    properties. Data Location must conform to the schema defined in
+    This API allows Admins, Chairpersons, and Data Submitters to patch the dataset name and a 
+    limited set of dataset properties. Data Location must conform to the schema defined in
     [/schemas/dataset-registration/v1](#/Schema/getDatasetRegistrationSchemaV1)
       * The dataset name. This is an optional field
       * List of optional properties to update
