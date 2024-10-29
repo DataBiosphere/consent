@@ -11,8 +11,10 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -40,6 +42,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
@@ -190,6 +193,58 @@ public class DatasetResource extends Resource {
     }
   }
 
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PATCH
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON})
+  @Path("/{datasetId}")
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId, String json) {
+    try {
+      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      if (existingDataset == null) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+      // Check permissions for non-admin roles.
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        if (!existingDataset.isCreator(user) && !existingDataset.isCustodian(user)) {
+          throw new ForbiddenException("User does not have permission to update this dataset");
+        }
+      }
+      if (json == null || json.isEmpty()) {
+        throw new BadRequestException("Dataset Patch is required");
+      }
+      Gson gson = GsonUtil.getInstance();
+      DatasetPatch patch;
+      try {
+        patch = gson.fromJson(json, DatasetPatch.class);
+      } catch (Exception e) {
+        throw new BadRequestException("Unable to parse dataset patch: " + json);
+      }
+      if (!patch.isPatchable(existingDataset)) {
+        return Response.notModified().entity(existingDataset).build();
+      }
+      // Validate DatasetPatch values
+      List<String> existingNames = datasetService.findAllDatasetNames();
+      if (patch.name() != null && !patch.name().equals(existingDataset.getName())
+          && existingNames.contains(patch.name())) {
+        throw new BadRequestException("The new name for this dataset already exists: " + patch.name());
+      }
+      if (!patch.validateProperties()) {
+        throw new BadRequestException("Properties are invalid");
+      }
+      Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
+      return Response.ok(patched).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @Deprecated
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
@@ -558,4 +613,5 @@ public class DatasetResource extends Resource {
       }
     }
   }
+
 }

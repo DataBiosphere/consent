@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -374,6 +375,37 @@ public class DatasetServiceDAO implements ConsentLogger {
 
     // files
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
+  }
+
+  public void patchDataset(Integer datasetId, User user, DatasetPatch patch) throws SQLException {
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          executePatchDataset(
+              handle,
+              datasetId,
+              patch.name(),
+              user.getUserId(),
+              patch.properties());
+          handle.commit();
+        }
+    );
+  }
+
+  public void executePatchDataset(Handle handle,
+      Integer datasetId,
+      String datasetName,
+      Integer userId,
+      List<DatasetProperty> properties) {
+    // update dataset
+    datasetDAO.updateDatasetNameWithUpdateUser(
+        datasetId,
+        datasetName,
+        new Timestamp(new Date().getTime()),
+        userId);
+    // insert properties
+    executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
+
   }
 
   // Helper methods to generate Dictionary inserts

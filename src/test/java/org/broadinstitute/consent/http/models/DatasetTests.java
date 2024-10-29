@@ -6,17 +6,84 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.JsonArray;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetTests {
+
+  @Test
+  void testIsCreatorOrCustodian_datasetCreator() {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100));
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+
+    assertTrue(dataset.isCreator(user));
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_studyCreator() {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100));
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    Study study = new Study();
+    study.setCreateUserId(user.getUserId());
+    dataset.setStudy(study);
+
+    assertTrue(dataset.isCreator(user));
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_dataCustodian() {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100));
+    user.setEmail("test@test.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    Study study = new Study();
+    dataset.setStudy(study);
+    StudyProperty p = new StudyProperty();
+    p.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    p.setType(PropertyType.Json);
+    JsonArray a = new JsonArray();
+    a.add(user.getEmail());
+    p.setValue(a);
+    study.setProperties(Set.of(p));
+
+    assertTrue(dataset.isCustodian(user));
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_notCustodian() {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100));
+    user.setEmail("test@test.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    Study study = new Study();
+    dataset.setStudy(study);
+    StudyProperty p = new StudyProperty();
+    p.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    p.setType(PropertyType.Json);
+    JsonArray a = new JsonArray();
+    a.add("different_user@test.com");
+    p.setValue(a);
+    study.setProperties(Set.of(p));
+
+    assertFalse(dataset.isCustodian(user));
+  }
 
   @Test
   void testParseIdentifierToAlias() {
