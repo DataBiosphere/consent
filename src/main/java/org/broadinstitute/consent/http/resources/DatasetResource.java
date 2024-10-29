@@ -3,8 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.networknt.schema.ValidationMessage;
@@ -51,7 +49,6 @@ import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
-import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -209,6 +206,17 @@ public class DatasetResource extends Resource {
   public Response patchByDatasetUpdate(@Auth AuthUser authUser,
       @PathParam("datasetId") Integer datasetId, String json) {
     try {
+      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      if (existingDataset == null) {
+        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
+      }
+      // Check permissions for non-admin roles.
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        if (!existingDataset.isCreator(user) && !existingDataset.isCustodian(user)) {
+          throw new ForbiddenException("User does not have permission to update this dataset");
+        }
+      }
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset Patch is required");
       }
@@ -218,17 +226,6 @@ public class DatasetResource extends Resource {
         patch = gson.fromJson(json, DatasetPatch.class);
       } catch (Exception e) {
         throw new BadRequestException("Unable to parse dataset patch: " + json);
-      }
-      Dataset existingDataset = datasetService.findDatasetById(datasetId);
-      if (existingDataset == null) {
-        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
-      }
-      // Check permissions for non-admin roles.
-      User user = userService.findUserByEmail(authUser.getEmail());
-      if (!user.hasUserRole(UserRoles.ADMIN)) {
-        if (!isCreatorOrCustodian(user, existingDataset)) {
-          throw new ForbiddenException("User does not have permission to update this dataset");
-        }
       }
       if (!patch.isPatchable(existingDataset)) {
         return Response.notModified().entity(existingDataset).build();
@@ -625,42 +622,6 @@ public class DatasetResource extends Resource {
         }
       }
     }
-  }
-
-  /**
-   * Determine if the user is a dataset/study creator, or if they are listed as a data custodian.
-   *
-   * @param user    User
-   * @param dataset Dataset
-   * @return User is a creator or custodian of the dataset.
-   */
-  protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
-    if (Objects.equals(user.getUserId(), dataset.getCreateUserId())) {
-      return true;
-    }
-    if (dataset.getStudy() != null && Objects.equals(user.getUserId(),
-        dataset.getStudy().getCreateUserId())) {
-      return true;
-    }
-    if (dataset.getStudy() != null && dataset.getStudy().getProperties() != null) {
-      Optional<StudyProperty> dataCustodians = dataset
-          .getStudy()
-          .getProperties()
-          .stream()
-          .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
-          .findFirst();
-      if (dataCustodians.isPresent()) {
-        JsonArray jsonArray = (JsonArray) dataCustodians.get().getValue();
-        return jsonArray.contains(new JsonPrimitive(user.getEmail()));
-      } else {
-        logWarn(
-            "No data custodians found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
-      }
-    } else {
-      logWarn(
-          "No study properties found for dataset: %s".formatted(dataset.getDatasetIdentifier()));
-    }
-    return false;
   }
 
 }

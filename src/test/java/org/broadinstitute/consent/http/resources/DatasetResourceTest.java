@@ -117,6 +117,16 @@ class DatasetResourceTest {
 
   @Test
   void testPatchByDatasetUpdate_emptyInput() {
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setCreateUserId(user.getUserId());
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -125,6 +135,16 @@ class DatasetResourceTest {
 
   @Test
   void testPatchByDatasetUpdate_malformedInput() {
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setCreateUserId(user.getUserId());
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "}{")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -348,94 +368,6 @@ class DatasetResourceTest {
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-  }
-
-
-  @Test
-  void testIsCreatorOrCustodian_datasetCreator() {
-    User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setCreateUserId(user.getUserId());
-
-    initResource();
-    assertTrue(resource.isCreatorOrCustodian(user, dataset));
-  }
-
-  @Test
-  void testIsCreatorOrCustodian_studyCreator() {
-    User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    Study study = new Study();
-    study.setCreateUserId(user.getUserId());
-    dataset.setStudy(study);
-
-    initResource();
-    assertTrue(resource.isCreatorOrCustodian(user, dataset));
-  }
-
-  @Test
-  void testIsCreatorOrCustodian_dataCustodian() {
-    User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
-    user.setEmail("test@test.com");
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    Study study = new Study();
-    dataset.setStudy(study);
-    StudyProperty p = new StudyProperty();
-    p.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
-    p.setType(PropertyType.Json);
-    JsonArray a = new JsonArray();
-    a.add(user.getEmail());
-    p.setValue(a);
-    study.setProperties(Set.of(p));
-
-    initResource();
-    assertTrue(resource.isCreatorOrCustodian(user, dataset));
-  }
-
-  @Test
-  void testIsCreatorOrCustodian_notCustodian() {
-    User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
-    user.setEmail("test@test.com");
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    Study study = new Study();
-    dataset.setStudy(study);
-    StudyProperty p = new StudyProperty();
-    p.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
-    p.setType(PropertyType.Json);
-    JsonArray a = new JsonArray();
-    a.add("different_user@test.com");
-    p.setValue(a);
-    study.setProperties(Set.of(p));
-
-    initResource();
-    assertFalse(resource.isCreatorOrCustodian(user, dataset));
-  }
-
-  @Test
-  void testIsCreatorOrCustodian_notCreatorOrCustodian() {
-    User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
-    user.setEmail("test@test.com");
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    Study study = new Study();
-    dataset.setStudy(study);
-    StudyProperty p = new StudyProperty();
-    p.setKey(DatasetRegistrationSchemaV1Builder.dataLocation);
-    p.setType(PropertyType.String);
-    p.setValue(DataLocation.NOT_DETERMINED.value());
-    study.setProperties(Set.of(p));
-
-    initResource();
-    assertFalse(resource.isCreatorOrCustodian(user, dataset));
   }
 
   @Test
