@@ -98,16 +98,24 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = executeRequest(request);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
-      JsonElement messageElement = JsonParser.parseString(body).getAsJsonObject().get("message");
-      String message = messageElement != null ? messageElement.getAsString() : body;
-      String errorMsg = String.format("Error posting user registration information. Email: %s. Error message: %s.",
-          authUser.getEmail(),
-          message);
+      var errorMsg = getErrorMessage(authUser, body);
       Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
       logException(errorMsg, new Exception(body));
       throw e;
     }
     return new Gson().fromJson(body, UserStatus.class);
+  }
+
+  public static String getErrorMessage(AuthUser authUser, String body) {
+    JsonElement messageElement = JsonParser.parseString(body).getAsJsonObject().get("message");
+    String message = messageElement != null ? messageElement.getAsString() : body;
+    var errorMsg = String.format("Error posting user registration information. Email: %s. %s.",
+        authUser.getEmail(),
+        message);
+    if (message.contains("Cannot update azureB2cId")) {
+      errorMsg = String.format("Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user", authUser.getEmail());
+    }
+    return errorMsg;
   }
 
   public void asyncPostRegistrationInfo(AuthUser authUser) {
