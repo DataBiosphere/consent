@@ -290,7 +290,7 @@ class DatasetResourceTest {
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
@@ -329,7 +329,7 @@ class DatasetResourceTest {
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 

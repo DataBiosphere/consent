@@ -30,7 +30,7 @@ patch:
         schema:
           $ref: '../schemas/DatasetPatch.yaml'
   responses:
-    204:
+    200:
       description: Dataset Patch applied successfully
       content:
         application/json:
