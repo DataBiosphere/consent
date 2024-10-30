@@ -101,15 +101,15 @@ public class DacResource extends Resource {
       if (dac == null) {
         throw new BadRequestException("DAC is required");
       }
+      if (dac.getDacId() == null) {
+        throw new BadRequestException("DAC ID is required");
+      }
       // Ensure that the user can only update a DAC they're a chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
         if (!user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dac.getDacId())) {
           throw new NotAuthorizedException(
               "You do not have the required permissions to update DAC");
         }
-      }
-      if (dac.getDacId() == null) {
-        throw new BadRequestException("DAC ID is required");
       }
       if (dac.getName() == null) {
         throw new BadRequestException("DAC Name is required");
