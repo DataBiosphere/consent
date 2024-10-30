@@ -231,9 +231,11 @@ class DacResourceTest {
     });
   }
 
-
   @Test
   void testUpdateDac_success() {
+    User user = new User();
+    user.setAdminRole();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -243,12 +245,16 @@ class DacResourceTest {
         .updateDac(isA(String.class), isA(String.class), isA(Integer.class));
     when(dacService.findById(1)).thenReturn(dac);
 
-    Response response = dacResource.updateDac(authUser, gson.toJson(dac));
-    assertEquals(200, response.getStatus());
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDacWithEmail_success() {
+    User user = new User();
+    user.setAdminRole();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
@@ -259,51 +265,77 @@ class DacResourceTest {
         .updateDac(isA(String.class), isA(String.class), isA(String.class), isA(Integer.class));
     when(dacService.findById(1)).thenReturn(dac);
 
-    Response response = dacResource.updateDac(authUser, gson.toJson(dac));
-    assertEquals(200, response.getStatus());
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDac_badRequest_1() {
-    assertThrows(BadRequestException.class, () -> {
-      dacResource.updateDac(authUser, null);
-    });
+    try (Response response = dacResource.updateDac(authUser, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDac_badRequest_2() {
+    User user = new User();
+    user.setAdminRole();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
     Dac dac = new DacBuilder()
         .setDacId(null)
         .setName("name")
         .setDescription("description")
         .build();
-    assertThrows(BadRequestException.class, () -> {
-      dacResource.updateDac(authUser, gson.toJson(dac));
-    });
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDac_badRequest_3() {
+    User user = new User();
+    user.setAdminRole();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName(null)
         .setDescription("description")
         .build();
-    assertThrows(BadRequestException.class, () -> {
-      dacResource.updateDac(authUser, gson.toJson(dac));
-    });
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDac_badRequest_4() {
+    User user = new User();
+    user.setAdminRole();
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
     Dac dac = new DacBuilder()
         .setDacId(1)
         .setName("name")
         .setDescription(null)
         .build();
-    assertThrows(BadRequestException.class, () -> {
-      dacResource.updateDac(authUser, gson.toJson(dac));
-    });
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDac_notAuthorized() {
+    Dac dac = new DacBuilder()
+        .setDacId(1)
+        .setName("name")
+        .setDescription("description")
+        .build();
+    User user = new User();
+    user.setChairpersonRoleWithDAC(dac.getDacId() + 1);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+
+    try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
   }
 
   @Test

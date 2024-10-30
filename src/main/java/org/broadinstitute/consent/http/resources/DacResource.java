@@ -93,28 +93,40 @@ public class DacResource extends Resource {
 
   @PUT
   @Produces("application/json")
-  @RolesAllowed({ADMIN})
+  @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response updateDac(@Auth AuthUser authUser, String json) {
-    Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
-    if (dac == null) {
-      throw new BadRequestException("DAC is required");
+    User user = userService.findUserByEmail(authUser.getEmail());
+    try {
+      Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
+      if (dac == null) {
+        throw new BadRequestException("DAC is required");
+      }
+      // Ensure that the user can only update a DAC they're a chairperson for.
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        if (!user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dac.getDacId())) {
+          throw new NotAuthorizedException(
+              "You do not have the required permissions to update DAC");
+        }
+      }
+      if (dac.getDacId() == null) {
+        throw new BadRequestException("DAC ID is required");
+      }
+      if (dac.getName() == null) {
+        throw new BadRequestException("DAC Name is required");
+      }
+      if (dac.getDescription() == null) {
+        throw new BadRequestException("DAC Description is required");
+      }
+      if (Objects.isNull(dac.getEmail())) {
+        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
+      } else {
+        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getEmail(), dac.getDacId());
+      }
+      Dac savedDac = dacService.findById(dac.getDacId());
+      return Response.ok().entity(unmarshal(savedDac)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
-    if (dac.getDacId() == null) {
-      throw new BadRequestException("DAC ID is required");
-    }
-    if (dac.getName() == null) {
-      throw new BadRequestException("DAC Name is required");
-    }
-    if (dac.getDescription() == null) {
-      throw new BadRequestException("DAC Description is required");
-    }
-    if (Objects.isNull(dac.getEmail())) {
-      dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
-    } else {
-      dacService.updateDac(dac.getName(), dac.getDescription(), dac.getEmail(), dac.getDacId());
-    }
-    Dac savedDac = dacService.findById(dac.getDacId());
-    return Response.ok().entity(unmarshal(savedDac)).build();
   }
 
   @GET
