@@ -10,10 +10,8 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +19,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -44,7 +41,6 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -52,7 +48,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class DatasetService implements ConsentLogger {
 
-  public static final String DATASET_NAME_KEY = "Dataset Name";
   private final DatasetDAO datasetDAO;
   private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
@@ -135,42 +130,6 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(id);
   }
 
-  public Optional<Dataset> updateDataset(DatasetDTO dataset, Integer datasetId, Integer userId) {
-    Timestamp now = new Timestamp(new Date().getTime());
-
-    if (dataset.getDatasetName() == null) {
-      throw new IllegalArgumentException("Dataset 'Name' cannot be null");
-    }
-
-    Dataset old = findDatasetById(datasetId);
-    Set<DatasetProperty> oldProperties = old.getProperties();
-
-    List<DatasetPropertyDTO> updateDatasetPropertyDTOs = dataset.getProperties();
-    List<DatasetProperty> updateDatasetProperties = processDatasetProperties(datasetId,
-        updateDatasetPropertyDTOs);
-
-    List<DatasetProperty> propertiesToAdd = updateDatasetProperties.stream()
-        .filter(p -> oldProperties.stream()
-            .noneMatch(op -> op.getPropertyName().equals(p.getPropertyName())))
-        .toList();
-
-    List<DatasetProperty> propertiesToUpdate = updateDatasetProperties.stream()
-        .filter(p -> oldProperties.stream()
-            .noneMatch(p::equals))
-        .toList();
-
-    if (propertiesToAdd.isEmpty() && propertiesToUpdate.isEmpty() &&
-        dataset.getDatasetName().equals(old.getName())) {
-      return Optional.empty();
-    }
-
-    updateDatasetProperties(propertiesToUpdate, List.of(), propertiesToAdd);
-    datasetDAO.updateDataset(datasetId, dataset.getDatasetName(), now, userId,
-        dataset.getDacId());
-    Dataset updatedDataset = findDatasetById(datasetId);
-    return Optional.of(updatedDataset);
-  }
-
   public Dataset updateDatasetDataUse(User user, Integer datasetId, DataUse dataUse) {
     Dataset d = datasetDAO.findDatasetById(datasetId);
     if (d == null) {
@@ -194,66 +153,6 @@ public class DatasetService implements ConsentLogger {
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
 
     return datasetDAO.findDatasetById(datasetId);
-  }
-
-  private void updateDatasetProperties(List<DatasetProperty> updateProperties,
-      List<DatasetProperty> deleteProperties, List<DatasetProperty> addProperties) {
-    updateProperties.forEach(p -> datasetDAO
-        .updateDatasetProperty(p.getDatasetId(), p.getPropertyKey(),
-            p.getPropertyValue().toString()));
-    deleteProperties.forEach(
-        p -> datasetDAO.deleteDatasetPropertyByKey(p.getDatasetId(), p.getPropertyKey()));
-    datasetDAO.insertDatasetProperties(addProperties);
-  }
-
-  @Deprecated // Use synchronizeDatasetProperties() instead
-  public List<DatasetProperty> processDatasetProperties(Integer datasetId,
-      List<DatasetPropertyDTO> properties) {
-    Date now = new Date();
-    List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
-    List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-        .collect(Collectors.toList());
-
-    return properties.stream()
-        .filter(p -> keys.contains(p.getPropertyName()) && !p.getPropertyName()
-            .equals(DATASET_NAME_KEY))
-        .map(p ->
-            new DatasetProperty(datasetId,
-                dictionaries.get(keys.indexOf(p.getPropertyName())).getKeyId(),
-                p.getPropertyValue(),
-                PropertyType.String,
-                now)
-        )
-        .collect(Collectors.toList());
-  }
-
-  public List<DatasetPropertyDTO> findInvalidProperties(List<DatasetPropertyDTO> properties) {
-    List<Dictionary> dictionaries = datasetDAO.getMappedFieldsOrderByReceiveOrder();
-    List<String> keys = dictionaries.stream().map(Dictionary::getKey)
-        .collect(Collectors.toList());
-
-    return properties.stream()
-        .filter(p -> !keys.contains(p.getPropertyName()))
-        .collect(Collectors.toList());
-  }
-
-  public List<DatasetPropertyDTO> findDuplicateProperties(List<DatasetPropertyDTO> properties) {
-    Set<String> uniqueKeys = properties.stream()
-        .map(DatasetPropertyDTO::getPropertyName)
-        .collect(Collectors.toSet());
-    if (uniqueKeys.size() != properties.size()) {
-      List<DatasetPropertyDTO> allDuplicateProperties = new ArrayList<>();
-      uniqueKeys.forEach(key -> {
-        List<DatasetPropertyDTO> propertiesPerKey = properties.stream()
-            .filter(property -> property.getPropertyName().equals(key))
-            .collect(Collectors.toList());
-        if (propertiesPerKey.size() > 1) {
-          allDuplicateProperties.addAll(propertiesPerKey);
-        }
-      });
-      return allDuplicateProperties;
-    }
-    return Collections.emptyList();
   }
 
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {

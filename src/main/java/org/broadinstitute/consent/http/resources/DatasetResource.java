@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -51,8 +50,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -239,59 +236,6 @@ public class DatasetResource extends Resource {
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
       return Response.ok(patched).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @Deprecated
-  @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/{datasetId}")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response updateDataset(@Auth AuthUser authUser, @Context UriInfo info,
-      @PathParam("datasetId") Integer datasetId, String json) {
-    try {
-      DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
-      if (Objects.isNull(inputDataset)) {
-        throw new BadRequestException("Dataset is required");
-      }
-      if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
-        throw new BadRequestException("Dataset must contain required properties");
-      }
-      Dataset datasetExists = datasetService.findDatasetById(datasetId);
-      if (Objects.isNull(datasetExists)) {
-        throw new NotFoundException("Could not find the dataset with id: " + datasetId);
-      }
-      List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(
-          inputDataset.getProperties());
-      if (invalidProperties.size() > 0) {
-        List<String> invalidKeys = invalidProperties.stream()
-            .map(DatasetPropertyDTO::getPropertyName)
-            .collect(Collectors.toList());
-        throw new BadRequestException(
-            "Dataset contains invalid properties that could not be recognized or associated with a key: "
-                + invalidKeys.toString());
-      }
-      List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
-          inputDataset.getProperties());
-      if (duplicateProperties.size() > 0) {
-        throw new BadRequestException("Dataset contains multiple values for the same property.");
-      }
-      User user = userService.findUserByEmail(authUser.getEmail());
-      // Validate that the admin/chairperson has edit access to this dataset
-      validateDatasetDacAccess(user, datasetExists);
-      Integer userId = user.getUserId();
-      Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId,
-          userId);
-      if (updatedDataset.isPresent()) {
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
-            .build(updatedDataset.get().getDatasetId());
-        return Response.ok(uri).entity(updatedDataset.get()).build();
-      } else {
-        return Response.noContent().build();
-      }
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

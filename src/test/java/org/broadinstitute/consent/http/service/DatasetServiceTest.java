@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -25,17 +24,13 @@ import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -50,14 +45,10 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -169,45 +160,6 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testProcessDatasetProperties() {
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    List<DatasetProperty> properties = datasetService
-        .processDatasetProperties(1, getDatasetPropertiesDTO());
-
-    assertEquals(properties.size(), getDatasetPropertiesDTO().size());
-  }
-
-  @Test
-  void testFindInvalidProperties() {
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    List<DatasetPropertyDTO> input = getDatasetPropertiesDTO().stream()
-        .peek(p -> p.setPropertyKey("Invalid Key"))
-        .collect(Collectors.toList());
-
-    List<DatasetPropertyDTO> properties = datasetService.findInvalidProperties(input);
-
-    assertFalse(properties.isEmpty());
-  }
-
-  @Test
-  void testFindDuplicateProperties() {
-    initService();
-
-    List<DatasetPropertyDTO> input = getDatasetPropertiesDTO();
-    DatasetPropertyDTO duplicateProperty = input.get(0);
-    input.add(duplicateProperty);
-
-    List<DatasetPropertyDTO> properties = datasetService.findDuplicateProperties(input);
-
-    assertFalse(properties.isEmpty());
-    assertEquals(properties.get(0), duplicateProperty);
-  }
-
-  @Test
   void testFindDatasetByIdentifier() {
     Dataset d = new Dataset();
     d.setAlias(3);
@@ -236,27 +188,6 @@ class DatasetServiceTest {
     initService();
     assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
   }
-
-  @Test
-  void testUpdateDatasetNotModified() {
-    int datasetId = 1;
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    Dataset dataset = getDatasets().get(0);
-    dataSetDTO.setDatasetName(dataset.getName());
-    Set<DatasetProperty> datasetProps = getDatasetProperties();
-    List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-        new DatasetPropertyDTO(p.getPropertyName(), p.getPropertyValue().toString())
-    ).collect(Collectors.toList());
-    dataSetDTO.setProperties(dtoProps);
-    dataset.setProperties(datasetProps);
-    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    Optional<Dataset> notModified = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-    assertEquals(Optional.empty(), notModified);
-  }
-
 
   @Test
   void testUpdateDatasetDataUseAdmin() {
@@ -295,103 +226,6 @@ class DatasetServiceTest {
     } catch (IllegalArgumentException e) {
       assertTrue(true);
     }
-  }
-
-  @Test
-  void testUpdateDatasetMultiFieldUpdateOnly() {
-    int datasetId = 1;
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    Dataset dataset = getDatasets().get(0);
-    dataset.setProperties(getDatasetProperties());
-    dataSetDTO.setDatasetName(dataset.getName());
-
-    List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
-    updatedProperties.get(2).setPropertyValue("updated value");
-    updatedProperties.get(3).setPropertyValue("updated value");
-    dataSetDTO.setProperties(updatedProperties);
-
-    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-    assertNotNull(updated);
-    assertTrue(updated.isPresent());
-  }
-
-  @Test
-  void testUpdateDatasetMultiFieldAddOnly() {
-    int datasetId = 1;
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    Dataset dataset = getDatasets().get(0);
-    dataSetDTO.setDatasetName(dataset.getName());
-    List<DatasetProperty> properties = new ArrayList<>(getDatasetProperties());
-    properties.remove(2);
-    properties.remove(2);
-    dataset.setProperties(new HashSet<>(properties));
-
-    List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
-    updatedProperties.get(2).setPropertyValue("added value");
-    updatedProperties.get(3).setPropertyValue("added value");
-    dataSetDTO.setProperties(updatedProperties);
-
-    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-    assertNotNull(updated);
-    assertTrue(updated.isPresent());
-  }
-
-  @Test
-  void testUpdateDatasetMultiFieldDeleteOnly() {
-    int datasetId = 1;
-    DatasetDTO dataSetDTO = getDatasetDTO();
-    Dataset dataset = getDatasets().get(0);
-    dataset.setProperties(getDatasetProperties());
-    dataSetDTO.setDatasetName(dataset.getName());
-
-    List<DatasetPropertyDTO> updatedProperties = getDatasetPropertiesDTO();
-    updatedProperties.remove(2);
-    updatedProperties.remove(2);
-    dataSetDTO.setProperties(updatedProperties);
-
-    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    Optional<Dataset> updated = datasetService.updateDataset(dataSetDTO, datasetId, 1);
-    assertNotNull(updated);
-    assertTrue(updated.isPresent());
-  }
-
-  @Test
-  void testUpdateDatasetNameModified() {
-    int datasetId = 1;
-    DatasetDTO datasetDTO = getDatasetDTO();
-    Dataset dataset = getDatasets().get(0);
-
-    //dataset properties are the same between the existing dataset and the update datasetDTO - no modification
-    Set<DatasetProperty> datasetProps = getDatasetProperties();
-    List<DatasetPropertyDTO> dtoProps = datasetProps.stream().map(p ->
-        new DatasetPropertyDTO(p.getPropertyKey().toString(), p.getPropertyValue().toString())
-    ).collect(Collectors.toList());
-    datasetDTO.setProperties(dtoProps);
-    dataset.setProperties(datasetProps);
-
-    //datasetDTO given the updated name - existing dataset requires name to be modified
-    String name = RandomStringUtils.randomAlphabetic(10);
-    datasetDTO.setDatasetName(name);
-
-    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
-    when(datasetDAO.getMappedFieldsOrderByReceiveOrder()).thenReturn(getDictionaries());
-    initService();
-
-    Optional<Dataset> updated = datasetService.updateDataset(datasetDTO, datasetId, 1);
-    assertNotNull(updated);
-    assertTrue(updated.isPresent());
-    verify(datasetDAO, times(1)).updateDataset(eq(datasetId), eq(name), any(), any(), any());
   }
 
   @Test
@@ -690,58 +524,4 @@ class DatasetServiceTest {
           return dataset;
         }).collect(Collectors.toList());
   }
-
-  private List<DatasetDTO> getDatasetDTOs() {
-    return IntStream.range(1, 3)
-        .mapToObj(i -> {
-          DatasetDTO dataset = new DatasetDTO();
-          dataset.setDatasetId(i);
-          DatasetPropertyDTO nameProperty = new DatasetPropertyDTO("Dataset Name",
-              "Test Dataset " + i);
-          dataset.setProperties(Collections.singletonList(nameProperty));
-          return dataset;
-        }).collect(Collectors.toList());
-  }
-
-  private Set<DatasetProperty> getDatasetProperties() {
-    return IntStream.range(1, 11)
-        .mapToObj(i -> {
-              DatasetProperty prop = new DatasetProperty(1,
-                  i,
-                  "Test Value" + RandomStringUtils.randomAlphanumeric(25),
-                  PropertyType.String,
-                  new Date());
-              prop.setPropertyName(RandomStringUtils.randomAlphanumeric(15));
-              prop.setPropertyId(i);
-              return prop;
-            }
-        ).collect(Collectors.toSet());
-  }
-
-  private List<DatasetPropertyDTO> getDatasetPropertiesDTO() {
-    List<Dictionary> dictionaries = getDictionaries();
-    return dictionaries.stream()
-        .map(d ->
-            new DatasetPropertyDTO(d.getKey(), "Test Value")
-        ).collect(Collectors.toList());
-  }
-
-  private DatasetDTO getDatasetDTO() {
-    DatasetDTO datasetDTO = new DatasetDTO();
-    datasetDTO.setDatasetId(1);
-    datasetDTO.setObjectId("Test ObjectId");
-    datasetDTO.setProperties(getDatasetPropertiesDTO());
-    DataUse dataUse = new DataUse();
-    dataUse.setGeneralUse(true);
-    datasetDTO.setDataUse(dataUse);
-    return datasetDTO;
-  }
-
-  private List<Dictionary> getDictionaries() {
-    return IntStream.range(1, 11)
-        .mapToObj(i ->
-            new Dictionary(i, String.valueOf(i), true, i, i)
-        ).collect(Collectors.toList());
-  }
-
 }
