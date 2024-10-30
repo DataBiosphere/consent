@@ -95,8 +95,8 @@ public class DacResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response updateDac(@Auth AuthUser authUser, String json) {
-    User user = userService.findUserByEmail(authUser.getEmail());
     try {
+      User user = userService.findUserByEmail(authUser.getEmail());
       Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
       if (dac == null) {
         throw new BadRequestException("DAC is required");
