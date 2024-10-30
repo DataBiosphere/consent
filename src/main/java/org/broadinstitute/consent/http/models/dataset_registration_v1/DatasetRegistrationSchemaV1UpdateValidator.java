@@ -93,18 +93,20 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .addDeserializationExclusionStrategy(consentGroupExclusionStrategy).create();
     JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
     JsonArray jsonArray = jsonObject.getAsJsonArray("consentGroups");
-    jsonArray.asList().forEach(jsonElement -> {
-      JsonObject cgJson = jsonElement.getAsJsonObject();
-      if (cgJson.has("datasetId")) {
-        // If we have a dataset id, we're updating. Filter out non-updatable fields
-        ConsentGroup cg = filteredCGGson.fromJson(cgJson, ConsentGroup.class);
-        registration.getConsentGroups().add(cg);
-      } else {
-        // If we have don't have a dataset id, we're trying to add a new one to the study.
-        ConsentGroup cg = gson.fromJson(cgJson, ConsentGroup.class);
-        registration.getConsentGroups().add(cg);
-      }
-    });
+    if (jsonArray != null) {
+      jsonArray.asList().forEach(jsonElement -> {
+        JsonObject cgJson = jsonElement.getAsJsonObject();
+        if (cgJson.has("datasetId")) {
+          // If we have a dataset id, we're updating. Filter out non-updatable fields
+          ConsentGroup cg = filteredCGGson.fromJson(cgJson, ConsentGroup.class);
+          registration.getConsentGroups().add(cg);
+        } else {
+          // If we have don't have a dataset id, we're trying to add a new one to the study.
+          ConsentGroup cg = gson.fromJson(cgJson, ConsentGroup.class);
+          registration.getConsentGroups().add(cg);
+        }
+      });
+    }
     return registration;
   }
 
