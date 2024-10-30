@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,6 +110,35 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
                   "functionalEquivalence": null
                 }
               ]
+            },
+            {
+              "consentGroupName": "All of Us (Controlled+ Tier) - Set 2",
+              "accessManagement": "OPEN",
+              "generalResearchUse": true,
+              "hmb": false,
+              "diseaseSpecificUse": ["https://disease-ontology.org/term/DOID:162/"],
+              "poa": true,
+              "otherPrimary": "String",
+              "nmds": true,
+              "gso": false,
+              "pub": false,
+              "col": false,
+              "irb": false,
+              "gs": "GS",
+              "mor": true,
+              "morDate": "More Date",
+              "npu": false,
+              "otherSecondary": "String",
+              "dataAccessCommitteeId": 99,
+              "dataLocation": "TDR_LOCATION",
+              "url": "https://abcnews.com",
+              "numberOfParticipants": 2,
+              "fileTypes": [
+                {
+                  "fileType": null,
+                  "functionalEquivalence": null
+                }
+              ]
             }
           ]
         }
@@ -137,6 +167,27 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     assertNotNull(registration.getStudyName());
     assertNotNull(registration.getPublicVisibility());
     assertNotNull(registration.getConsentGroups().get(0).getDatasetId());
+    // Assert that the second consent group is populated with data use values
+    assertNotNull(registration.getConsentGroups().get(1).getAccessManagement());
+    assertNotNull(registration.getConsentGroups().get(1).getCol());
+    assertNotNull(registration.getConsentGroups().get(1).getDataAccessCommitteeId());
+    assertFalse(registration.getConsentGroups().get(1).getDiseaseSpecificUse().isEmpty());
+    assertNotNull(registration.getConsentGroups().get(1).getGeneralResearchUse());
+    assertNotNull(registration.getConsentGroups().get(1).getGso());
+    assertNotNull(registration.getConsentGroups().get(1).getGs());
+    assertNotNull(registration.getConsentGroups().get(1).getHmb());
+    assertNotNull(registration.getConsentGroups().get(1).getIrb());
+    assertNotNull(registration.getConsentGroups().get(1).getMor());
+    assertNotNull(registration.getConsentGroups().get(1).getMorDate());
+    assertNotNull(registration.getConsentGroups().get(1).getNmds());
+    assertNotNull(registration.getConsentGroups().get(1).getNpu());
+    assertNotNull(registration.getConsentGroups().get(1).getOtherPrimary());
+    assertNotNull(registration.getConsentGroups().get(1).getOtherSecondary());
+    assertNotNull(registration.getConsentGroups().get(1).getPoa());
+    assertNotNull(registration.getConsentGroups().get(1).getPub());
+    assertNotNull(registration.getConsentGroups().get(1).getDataLocation());
+    assertNotNull(registration.getConsentGroups().get(1).getUrl());
+    assertFalse(registration.getConsentGroups().get(1).getFileTypes().isEmpty());
   }
 
   @Test

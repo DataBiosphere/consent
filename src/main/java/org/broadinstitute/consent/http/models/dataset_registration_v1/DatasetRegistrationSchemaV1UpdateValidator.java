@@ -3,7 +3,10 @@ package org.broadinstitute.consent.http.models.dataset_registration_v1;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -24,16 +27,22 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     this.datasetService = datasetService;
   }
 
-  /**
-   * Create a registration object suitable for the Update operation
-   *
-   * @param json DatasetRegistrationSchemaV1 in JSON format
-   * @return DatasetRegistrationSchemaV1
-   */
-  public DatasetRegistrationSchemaV1 deserializeRegistration(String json) {
-    ExclusionStrategy exclusionStrategy = new ExclusionStrategy() {
+  private final ExclusionStrategy studyExclusionStrategy = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+      return fieldAttributes.getName().equalsIgnoreCase("dataSubmitterUserId");
+    }
+
+    @Override
+    public boolean shouldSkipClass(Class<?> aClass) {
+      return aClass.getSimpleName().equalsIgnoreCase("ConsentGroup");
+    }
+  };
+
+  private final ExclusionStrategy consentGroupExclusionStrategy = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(FieldAttributes fieldAttributes) {
       final HashSet<String> exclusions = new HashSet<>(List.of(
-          "dataSubmitterUserId",
           "accessManagement",
           "col",
           "dataAccessCommitteeId",
@@ -53,21 +62,50 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
           "poa",
           "pub"
       ));
+      return exclusions.contains(fieldAttributes.getName());
+    }
 
-      @Override
-      public boolean shouldSkipField(FieldAttributes fieldAttributes) {
-        return exclusions.contains(fieldAttributes.getName());
-      }
+    @Override
+    public boolean shouldSkipClass(Class<?> aClass) {
+      return false;
+    }
+  };
 
-      @Override
-      public boolean shouldSkipClass(Class<?> aClass) {
-        return false;
-      }
-    };
-    Gson gson = GsonUtil.gsonBuilderWithAdapters()
-        .addDeserializationExclusionStrategy(exclusionStrategy)
+  /**
+   * Create a registration object suitable for the Update operation.
+   *
+   * @param json DatasetRegistrationSchemaV1 in JSON format
+   * @return DatasetRegistrationSchemaV1
+   */
+  public DatasetRegistrationSchemaV1 deserializeRegistration(String json) {
+    Gson studyGson = GsonUtil.gsonBuilderWithAdapters()
+        .addDeserializationExclusionStrategy(studyExclusionStrategy)
         .create();
-    return gson.fromJson(json, DatasetRegistrationSchemaV1.class);
+    // Create the registration without any ConsentGroups
+    DatasetRegistrationSchemaV1 registration = studyGson.fromJson(json,
+        DatasetRegistrationSchemaV1.class);
+    // Ensure that we have no null entries before parsing them.
+    registration.setConsentGroups(new ArrayList<>());
+
+    // Conditionally parse the consent groups
+    Gson gson = GsonUtil.getInstance();
+    Gson filteredCGGson = GsonUtil.gsonBuilderWithAdapters()
+        .addDeserializationExclusionStrategy(consentGroupExclusionStrategy).create();
+    JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+    JsonArray jsonArray = jsonObject.getAsJsonArray("consentGroups");
+    jsonArray.asList().forEach(jsonElement -> {
+      JsonObject cgJson = jsonElement.getAsJsonObject();
+      if (cgJson.has("datasetId")) {
+        // If we have a dataset id, we're updating. Filter out non-updatable fields
+        ConsentGroup cg = filteredCGGson.fromJson(cgJson, ConsentGroup.class);
+        registration.getConsentGroups().add(cg);
+      } else {
+        // If we have don't have a dataset id, we're trying to add a new one to the study.
+        ConsentGroup cg = gson.fromJson(cgJson, ConsentGroup.class);
+        registration.getConsentGroups().add(cg);
+      }
+    });
+    return registration;
   }
 
   public boolean validate(Study existingStudy, DatasetRegistrationSchemaV1 registration) {
