@@ -367,4 +367,21 @@ class SamDAOTest implements WithMockServer {
         getErrorMessage(authUser, body));
   }
 
+  @Test
+  void testGetErrorMessageNoBody() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = null;
+    assertEquals("""
+        Error posting user registration information. Email: email@email.com.""",
+        getErrorMessage(authUser, body));
+  }
+
+  @Test
+  void testGetErrorMessageNotJson() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = "random non-JSON string";
+    assertEquals("""
+        Error posting user registration information. Email: email@email.com. random non-JSON string.""",
+        getErrorMessage(authUser, body));
+  }
 }
