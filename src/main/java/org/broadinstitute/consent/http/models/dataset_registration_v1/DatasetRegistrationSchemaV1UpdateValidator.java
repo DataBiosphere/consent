@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +14,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class DatasetRegistrationSchemaV1UpdateValidator {
 
@@ -18,6 +22,51 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
 
   public DatasetRegistrationSchemaV1UpdateValidator(DatasetService datasetService) {
     this.datasetService = datasetService;
+  }
+
+  /**
+   * Create a registration object suitable for the Update operation
+   *
+   * @param json DatasetRegistrationSchemaV1 in JSON format
+   * @return DatasetRegistrationSchemaV1
+   */
+  public DatasetRegistrationSchemaV1 deserializeRegistration(String json) {
+    ExclusionStrategy excludes = new ExclusionStrategy() {
+      final HashSet<String> exclusions = new HashSet<>(List.of(
+          "dataSubmitterUserId",
+          "accessManagement",
+          "col",
+          "dataAccessCommitteeId",
+          "datasetIdentifier",
+          "diseaseSpecificUse",
+          "generalResearchUse",
+          "gs",
+          "gso",
+          "hmb",
+          "irb",
+          "nmds",
+          "mor",
+          "morDate",
+          "npu",
+          "otherPrimary",
+          "otherSecondary",
+          "poa",
+          "pub"
+      ));
+
+      @Override
+      public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+        return exclusions.contains(fieldAttributes.getName());
+      }
+
+      @Override
+      public boolean shouldSkipClass(Class<?> aClass) {
+        return false;
+      }
+    };
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().addDeserializationExclusionStrategy(excludes)
+        .create();
+    return gson.fromJson(json, DatasetRegistrationSchemaV1.class);
   }
 
   public boolean validate(Study existingStudy, DatasetRegistrationSchemaV1 registration) {
@@ -29,8 +78,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
       throw new BadRequestException("Invalid change to Study Name");
     }
 
-    // Not modifiable: Data Submitter Name/Email, Primary Data Use,
-    // Secondary Data Use
+    // Not modifiable: Data Submitter Name/Email
     if (registration.getDataSubmitterUserId() != null
         && !registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
       throw new BadRequestException("Invalid change to Data Submitter");
@@ -39,16 +87,6 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     // Minimum number of consent groups is 1
     if (registration.getConsentGroups().isEmpty()) {
       throw new BadRequestException("Invalid number of Consent Groups");
-    }
-
-    // Data use changes are not allowed for existing datasets
-    List<ConsentGroup> invalidConsentGroups = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> Objects.nonNull(cg.getDatasetId()))
-        .filter(ConsentGroup::isInvalidForUpdate)
-        .toList();
-    if (!invalidConsentGroups.isEmpty()) {
-      throw new BadRequestException("Invalid Data Use changes to existing Consent Groups");
     }
 
     // Ensure that all consent group changes are for datasets in the current study
@@ -141,15 +179,8 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         throw new BadRequestException("NIH Grant of Contract Number is required");
       }
     }
-    if (Objects.isNull(registration.getPhenotypeIndication())) {
-      throw new BadRequestException("Phenotype Indication is required");
-    }
     if (Objects.isNull(registration.getPiName())) {
       throw new BadRequestException("Principal Investigator is required");
-    }
-    if (Objects.isNull(registration.getDataCustodianEmail()) || registration.getDataCustodianEmail()
-        .isEmpty()) {
-      throw new BadRequestException("Data Custodian Email is required");
     }
 
     return true;

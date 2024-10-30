@@ -210,9 +210,7 @@ public class StudyResource extends Resource {
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
       DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
-      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 registration = gson.fromJson(json,
-          DatasetRegistrationSchemaV1.class);
+      DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
 
       if (updateValidator.validate(existingStudy, registration)) {
         // Update study from registration
