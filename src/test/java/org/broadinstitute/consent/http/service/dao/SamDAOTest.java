@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.broadinstitute.consent.http.db.SamDAO.getErrorMessage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -216,7 +217,7 @@ class SamDAOTest implements WithMockServer {
     when(authUser.getEmail()).thenReturn("email@email.com");
 
     WebApplicationException ex = assertThrows(WebApplicationException.class, () -> samDAO.postRegistrationInfo(authUser));
-    assertEquals("Error posting user registration information. Email: email@email.com. Error message: errorMessage.", ex.getMessage());
+    assertEquals("Error posting user registration information. Email: email@email.com. errorMessage.", ex.getMessage());
   }
 
   /**
@@ -338,4 +339,49 @@ class SamDAOTest implements WithMockServer {
         () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
   }
 
+  @Test
+  void testGetErrorMessageAzureB2cId() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = """
+        {"code":500, "message": "Cannot update azureB2cId"}""";
+    assertEquals("Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
+        getErrorMessage(authUser, body));
+  }
+
+  @Test
+  void testGetErrorMessageOther() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = """
+        {"code":500, "message": "some other error"}""";
+    assertEquals("Error posting user registration information. Email: email@email.com. some other error.",
+        getErrorMessage(authUser, body));
+  }
+
+  @Test
+  void testGetErrorMessageNoMessage() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = """
+        {"code":500}""";
+    assertEquals("""
+        Error posting user registration information. Email: email@email.com. {"code":500}.""",
+        getErrorMessage(authUser, body));
+  }
+
+  @Test
+  void testGetErrorMessageNoBody() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = null;
+    assertEquals("""
+        Error posting user registration information. Email: email@email.com.""",
+        getErrorMessage(authUser, body));
+  }
+
+  @Test
+  void testGetErrorMessageNotJson() {
+    when(authUser.getEmail()).thenReturn("email@email.com");
+    String body = "random non-JSON string";
+    assertEquals("""
+        Error posting user registration information. Email: email@email.com. random non-JSON string.""",
+        getErrorMessage(authUser, body));
+  }
 }
