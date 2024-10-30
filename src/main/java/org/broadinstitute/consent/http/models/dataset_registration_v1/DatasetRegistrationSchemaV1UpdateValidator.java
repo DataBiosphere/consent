@@ -31,7 +31,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
    * @return DatasetRegistrationSchemaV1
    */
   public DatasetRegistrationSchemaV1 deserializeRegistration(String json) {
-    ExclusionStrategy excludes = new ExclusionStrategy() {
+    ExclusionStrategy exclusionStrategy = new ExclusionStrategy() {
       final HashSet<String> exclusions = new HashSet<>(List.of(
           "dataSubmitterUserId",
           "accessManagement",
@@ -64,7 +64,8 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         return false;
       }
     };
-    Gson gson = GsonUtil.gsonBuilderWithAdapters().addDeserializationExclusionStrategy(excludes)
+    Gson gson = GsonUtil.gsonBuilderWithAdapters()
+        .addDeserializationExclusionStrategy(exclusionStrategy)
         .create();
     return gson.fromJson(json, DatasetRegistrationSchemaV1.class);
   }
