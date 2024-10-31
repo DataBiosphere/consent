@@ -1,0 +1,22 @@
+type: object
+properties:
+  name:
+    type: string
+    description: The dataset name. This is an optional field
+  properties:
+    type: array
+    items:
+      $ref: './DatasetProperty.yaml'
+    example:
+      - propertyName: "# of participants"
+        propertyValue: 20
+        schemaProperty: numberOfParticipants
+        propertyType: Number
+      - propertyName: URL
+        propertyValue: https://duos.org
+        schemaProperty: url
+        propertyType: String
+      - propertyName: Data Location
+        propertyValue: Terra Workspace
+        schemaProperty: dataLocation
+        propertyType: String

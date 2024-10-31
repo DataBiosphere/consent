@@ -548,6 +548,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   void updateDatasetCreateUserId(@Bind("datasetId") Integer datasetId, @Bind("createUserId") Integer createUserId);
 
+  @SqlUpdate("""
+      UPDATE dataset
+      SET name = :datasetName,
+          update_date = :updateDate,
+          update_user_id = :updateUserId
+      WHERE dataset_id = :datasetId
+      """)
+  void updateDatasetNameWithUpdateUser(@Bind("datasetId") Integer datasetId,
+      @Bind("datasetName") String datasetName,
+      @Bind("updateDate") Timestamp updateDate,
+      @Bind("updateUserId") Integer updateUserId);
+
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery(
       """
@@ -601,11 +613,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           " INNER JOIN dictionary d ON p.property_key = d.key_id " +
           " WHERE p.dataset_id = :datasetId ")
   Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
-
-  @Deprecated // Use getDictionaryTerms()
-  @RegisterRowMapper(DictionaryMapper.class)
-  @SqlQuery("SELECT * FROM dictionary d ORDER BY receive_order")
-  List<Dictionary> getMappedFieldsOrderByReceiveOrder();
 
   @RegisterRowMapper(DictionaryMapper.class)
   @SqlQuery("SELECT * FROM dictionary ORDER BY key_id")
