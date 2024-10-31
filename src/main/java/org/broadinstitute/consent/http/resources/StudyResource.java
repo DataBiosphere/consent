@@ -148,7 +148,7 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
 
-      boolean deletable = study.getDatasets()
+      boolean deletable = (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
           .stream()
           .allMatch(Dataset::getDeletable);
       if (!deletable) {
