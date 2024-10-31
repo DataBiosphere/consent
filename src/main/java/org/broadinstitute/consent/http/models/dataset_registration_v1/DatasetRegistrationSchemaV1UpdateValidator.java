@@ -16,6 +16,7 @@ import org.apache.commons.collections4.SetUtils;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -43,24 +44,24 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     @Override
     public boolean shouldSkipField(FieldAttributes fieldAttributes) {
       final HashSet<String> exclusions = new HashSet<>(List.of(
-          "accessManagement",
-          "col",
-          "dataAccessCommitteeId",
-          "datasetIdentifier",
-          "diseaseSpecificUse",
-          "generalResearchUse",
-          "gs",
-          "gso",
-          "hmb",
-          "irb",
-          "nmds",
-          "mor",
-          "morDate",
-          "npu",
-          "otherPrimary",
-          "otherSecondary",
-          "poa",
-          "pub"
+          DatasetRegistrationSchemaV1Builder.accessManagement,
+          DatasetRegistrationSchemaV1Builder.col,
+          DatasetRegistrationSchemaV1Builder.dataAccessCommitteeId,
+          DatasetRegistrationSchemaV1Builder.datasetIdentifier,
+          DatasetRegistrationSchemaV1Builder.diseaseSpecificUse,
+          DatasetRegistrationSchemaV1Builder.generalResearchUse,
+          DatasetRegistrationSchemaV1Builder.gs,
+          DatasetRegistrationSchemaV1Builder.gso,
+          DatasetRegistrationSchemaV1Builder.hmb,
+          DatasetRegistrationSchemaV1Builder.irb,
+          DatasetRegistrationSchemaV1Builder.nmds,
+          DatasetRegistrationSchemaV1Builder.mor,
+          DatasetRegistrationSchemaV1Builder.morDate,
+          DatasetRegistrationSchemaV1Builder.npu,
+          DatasetRegistrationSchemaV1Builder.otherPrimary,
+          DatasetRegistrationSchemaV1Builder.otherSecondary,
+          DatasetRegistrationSchemaV1Builder.pub,
+          DatasetRegistrationSchemaV1Builder.poa
       ));
       return exclusions.contains(fieldAttributes.getName());
     }
