@@ -277,6 +277,24 @@ class StudyResourceTest {
   }
 
   @Test
+  void testDeleteStudyByIdNullDatasets() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+
+  @Test
   void testDeleteStudyByIdNoDatasets() throws Exception {
     Study study = createMockStudy();
     study.setDatasetIds(Set.of());
