@@ -2,12 +2,16 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -208,6 +212,123 @@ class StudyResourceTest {
     Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
+
+  @Test
+  void testDeleteStudyById() throws Exception {
+    Study study = createMockStudy();
+    study.getDatasets().forEach(d -> d.setDeletable(true));
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+    }
+  }
+
+  @Test
+  void testDeleteStudyByIdNotFound() throws Exception {
+    Study study = createMockStudy();
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+  @Test
+  void testDeleteStudyByIdNonCreatorNonAdmin() throws Exception {
+    Study study = createMockStudy();
+    study.getDatasets().forEach(d -> d.setDeletable(true));
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User chair = new User();
+    chair.setChairpersonRole();
+    chair.setUserId(study.getCreateUserId() + 1);
+    when(userService.findUserByEmail(any())).thenReturn(chair);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+  @Test
+  void testDeleteStudyByIdNotDeletable() throws Exception {
+    Study study = createMockStudy();
+    study.getDatasets().forEach(d -> d.setDeletable(false));
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+  @Test
+  void testDeleteStudyByIdNullDatasets() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+
+  @Test
+  void testDeleteStudyByIdNoDatasets() throws Exception {
+    Study study = createMockStudy();
+    study.setDatasetIds(Set.of());
+    study.getDatasets().clear();
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, never()).deleteIndex(any());
+    }
+  }
+
+  @Test
+  void testDeleteStudyByIdElasticSearchFailure() throws Exception {
+    Study study = createMockStudy();
+    study.getDatasets().forEach(d -> d.setDeletable(true));
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(elasticSearchService.deleteIndex(any())).thenThrow(new IOException());
+    initResource();
+
+    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+    }
+  }
+
 
   /*
    * Study mock

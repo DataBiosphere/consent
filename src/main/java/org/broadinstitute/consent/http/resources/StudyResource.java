@@ -148,7 +148,7 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
 
-      boolean deletable = study.getDatasets()
+      boolean deletable = (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
           .stream()
           .allMatch(Dataset::getDeletable);
       if (!deletable) {
@@ -157,13 +157,15 @@ public class StudyResource extends Resource {
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      studyDatasetIds.forEach(id -> {
-        try {
-          elasticSearchService.deleteIndex(id);
-        } catch (IOException e) {
-          logException(e);
-        }
-      });
+      if (studyDatasetIds != null) {
+        studyDatasetIds.forEach(id -> {
+          try {
+            elasticSearchService.deleteIndex(id);
+          } catch (IOException e) {
+            logException(e);
+          }
+        });
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
