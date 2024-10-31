@@ -274,23 +274,4 @@ public class DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  protected Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
-    Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
-    IntStream.range(0, count)
-        .forEach(index -> {
-          String name = String.format("file%d", index);
-          mapOfFiles.put(name, getFormDataBodyPartMock(name));
-        });
-    return mapOfFiles;
-  }
-
-  private FormDataBodyPart getFormDataBodyPartMock(String name) {
-    FormDataBodyPart part = mock(FormDataBodyPart.class);
-    when(part.getName()).thenReturn(name);
-    when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
-    when(part.getValueAs(InputStream.class))
-        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
-    return part;
-  }
-
 }

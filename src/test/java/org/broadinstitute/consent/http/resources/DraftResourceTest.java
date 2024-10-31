@@ -40,7 +40,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class DraftResourceTest {
+class DraftResourceTest {
 
   @Mock
   private DraftService draftService;
@@ -70,7 +70,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftWhenNoneExistForUser() {
+  void testGetDraftWhenNoneExistForUser() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(
         Collections.emptySet());
@@ -81,7 +81,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftsWhenOneExistForUser() {
+  void testGetDraftsWhenOneExistForUser() {
     Set<DraftSummary> draftSummaries = new HashSet<>();
     draftSummaries.add(
         new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date()));
@@ -94,7 +94,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void tesCreateDraftRegistration() {
+  void tesCreateDraftRegistration() {
     String draft = "{}";
     initResource();
     Response response = resource.createDraftRegistration(authUser, draft);
@@ -103,7 +103,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
+  void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
     doThrow(new BadRequestException("Error submitting draft")).when(draftService)
         .insertDraft(any());
     String draft = "";
@@ -113,7 +113,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftDocumentNotFound() {
+  void testGetDraftDocumentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         new NotFoundException("Not found exception."));
     initResource();
@@ -122,7 +122,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftDocumentSuccess() throws IOException {
+  void testGetDraftDocumentSuccess() throws IOException {
     DraftInterface draft = new DraftStudyDataset("{}", user);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     StreamingOutput stream = out -> out.write("{}".getBytes());
@@ -137,7 +137,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftDocumentNotAuthorized() {
+  void testGetDraftDocumentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         new NotAuthorizedException("Not authorized."));
     initResource();
@@ -146,7 +146,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testPutDraftDocumentUnauthorized() {
+  void testPutDraftDocumentUnauthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         new NotAuthorizedException("Not authorized."));
     initResource();
@@ -155,7 +155,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testPutDraftDocumentNotFound() {
+  void testPutDraftDocumentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         new NotFoundException("Not found exception."));
     initResource();
@@ -164,7 +164,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testPutDraftDocumentSuccess() throws IOException {
+  void testPutDraftDocumentSuccess() throws IOException {
     String updatedJson = "{\"hello\":\"world!\"}";
     DraftInterface draft = new DraftStudyDataset("{}", user);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
@@ -180,7 +180,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteDraftDocumentNotFound() {
+  void testDeleteDraftDocumentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         NotFoundException.class);
     initResource();
@@ -189,7 +189,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteDraftDocumentNotAuthorized() {
+  void testDeleteDraftDocumentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
         NotAuthorizedException.class);
     initResource();
@@ -198,7 +198,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteDraftDocumentSuccess() {
+  void testDeleteDraftDocumentSuccess() {
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
         new DraftStudyDataset("{}", user));
     initResource();
@@ -207,7 +207,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftAttachmentsNotFound() {
+  void testGetDraftAttachmentsNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
     Response response = resource.getAttachments(authUser, UUID.randomUUID().toString());
@@ -215,7 +215,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftAttachmentsNotAuthorized() {
+  void testGetDraftAttachmentsNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
     Response response = resource.getAttachments(authUser, UUID.randomUUID().toString());
@@ -223,7 +223,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftAttachmentsSuccessNoAttachments() {
+  void testGetDraftAttachmentsSuccessNoAttachments() {
     DraftInterface draft = mock(DraftStudyDataset.class);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     when(draft.getStoredFiles()).thenReturn(new HashSet<>());
@@ -234,7 +234,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetDraftAttachmentsSuccessWithAttachments() {
+  void testGetDraftAttachmentsSuccessWithAttachments() {
     DraftInterface draft = mock(DraftStudyDataset.class);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draft);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
@@ -247,7 +247,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testUploadAttachmentNotFound() {
+  void testUploadAttachmentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
     Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
@@ -256,7 +256,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testUploadAttachmentNotAuthorized() {
+  void testUploadAttachmentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
     Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
@@ -266,7 +266,7 @@ public class DraftResourceTest {
 
 
   @Test
-  public void testUploadAttachmentSuccess() throws SQLException {
+  void testUploadAttachmentSuccess() throws SQLException {
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     draftWithAttachment.addStoredFile(mock(FileStorageObject.class));
@@ -279,7 +279,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetAttachmentNotFound() {
+  void testGetAttachmentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
     Response response = resource.getAttachment(authUser, UUID.randomUUID().toString(), 1);
@@ -287,7 +287,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetAttachmentNotAuthorized() {
+  void testGetAttachmentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
     Response response = resource.getAttachment(authUser, UUID.randomUUID().toString(), 1);
@@ -295,7 +295,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetAttachmentSuccess() throws SQLException {
+  void testGetAttachmentSuccess() throws SQLException {
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
     when(fileStorageObject1.getFileName()).thenReturn("fileName1.txt");
@@ -311,7 +311,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testGetAttachmentMissingFile() throws SQLException {
+  void testGetAttachmentMissingFile() throws SQLException {
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     FileStorageObject fileStorageObject1 = mock(FileStorageObject.class);
     when(fileStorageObject1.getFileStorageObjectId()).thenReturn(1);
@@ -326,7 +326,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteFileAttachmentNotFound() {
+  void testDeleteFileAttachmentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
     Response response = resource.deleteDraftAttachment(authUser, UUID.randomUUID().toString(), 1);
@@ -334,7 +334,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteFileAttachmentNotAuthorized() {
+  void testDeleteFileAttachmentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
     Response response = resource.deleteDraftAttachment(authUser, UUID.randomUUID().toString(), 1);
@@ -342,7 +342,7 @@ public class DraftResourceTest {
   }
 
   @Test
-  public void testDeleteFileAttachmentSuccess() throws SQLException {
+  void testDeleteFileAttachmentSuccess() throws SQLException {
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
     doNothing().when(draftService).deleteDraftAttachment(any(), any(), any());
     initResource();

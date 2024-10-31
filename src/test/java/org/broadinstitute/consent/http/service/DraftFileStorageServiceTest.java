@@ -8,18 +8,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -33,21 +37,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class DraftFileStorageServiceTest extends DAOTestHelper {
+class DraftFileStorageServiceTest extends DAOTestHelper {
   @Mock
   private GCSService gcsService;
 
   private DraftFileStorageService draftFileStorageService;
 
   @BeforeEach
-  public void setUp() throws IOException {
+  void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     draftFileStorageService = new DraftFileStorageService(jdbi, gcsService, fileStorageObjectDAO);
   }
 
   @Test
-  public void testCreateDraftFile() throws SQLException {
+  void testCreateDraftFile() throws SQLException {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
@@ -64,7 +68,7 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteDraftFiles() throws SQLException {
+  void testDeleteDraftFiles() throws SQLException {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);
@@ -80,7 +84,7 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
   }
 
   @Test
-  public void testGetDraftFile() throws IOException, SQLException {
+  void testGetDraftFile() throws IOException, SQLException {
     when(gcsService.getDocument((BlobId) any()))
         .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
         });
@@ -97,4 +101,24 @@ public class DraftFileStorageServiceTest extends DAOTestHelper {
           new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
     }
   }
+
+  private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
+    Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
+    IntStream.range(0, count)
+        .forEach(index -> {
+          String name = String.format("file%d", index);
+          mapOfFiles.put(name, getFormDataBodyPartMock(name));
+        });
+    return mapOfFiles;
+  }
+
+  private FormDataBodyPart getFormDataBodyPartMock(String name) {
+    FormDataBodyPart part = mock(FormDataBodyPart.class);
+    when(part.getName()).thenReturn(name);
+    when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    when(part.getValueAs(InputStream.class))
+        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
+    return part;
+  }
+
 }

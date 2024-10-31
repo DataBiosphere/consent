@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DraftDAOTest extends DAOTestHelper {
 
   @Test
-  public void testInsertOperation() {
+  void testInsertOperation() {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     User user2 = createUser();
@@ -68,7 +68,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUniqueUUIDConstraint() {
+  void testUniqueUUIDConstraint() {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
@@ -81,7 +81,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateOperation() {
+  void testUpdateOperation() {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
@@ -106,7 +106,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUpdateDraftByUUID() {
+  void testUpdateDraftByUUID() {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     User user2 = createUser();
@@ -128,7 +128,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testFindByUserOperations() {
+  void testFindByUserOperations() {
     User user1 = createUser();
     User user2 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"Name\": \"User1\"}", user1);
@@ -158,7 +158,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDraftsWithFiles() {
+  void testDraftsWithFiles() {
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"Name\": \"User1\"}", user1);
     FileStorageObject fso = new FileStorageObject();
@@ -189,7 +189,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testDeleteOperation() {
+  void testDeleteOperation() {
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"Name\": \"First\"}", user1);
     DraftStudyDataset draft2 = new DraftStudyDataset("{\"Name\": \"Second\"}", user1);
@@ -207,7 +207,7 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
-  public void testUnknownDraftValue() throws SQLException {
+  void testUnknownDraftValue() throws SQLException {
     try (ResultSet resultSet = mock(ResultSet.class)) {
       try (StatementContext ctx = mock(StatementContext.class)) {
         assertThrows(UnknownDraftTypeException.class,
