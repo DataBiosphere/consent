@@ -54,6 +54,7 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String npu = "npu";
   public static final String otherSecondary = "otherSecondary";
   public static final String dataAccessCommitteeId = "dataAccessCommitteeId";
+  public static final String datasetIdentifier = "datasetIdentifier";
   public static final String dataLocation = "dataLocation";
   public static final String url = "url";
   public static final String numberOfParticipants = "numberOfParticipants";
