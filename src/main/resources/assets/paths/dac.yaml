@@ -27,7 +27,9 @@ post:
 put:
   summary: Update a DAC
   operationId: updateDac
-  description: Update a Data Access Committee
+  description: |
+    Update a Data Access Committee. Admins can update any Data Access Committee
+    Chairpersons can only update Data Access Committees for which they are a Chairperson for.
   requestBody:
     description: Updated Data Access Committee
     required: true
