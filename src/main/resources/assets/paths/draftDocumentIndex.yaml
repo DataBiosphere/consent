@@ -96,8 +96,8 @@ patch:
           type: string
   responses:
     200:
-      description: The delete succeeded.
+      description: The rename succeeded.
     401:
-      description: User not authorized to delete draft
+      description: User not authorized to rename draft
     404:
       description: The draft cannot be found.
