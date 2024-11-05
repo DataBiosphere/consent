@@ -222,5 +222,6 @@ class DraftDAOTest extends DAOTestHelper {
     assertEquals(draftSummary.getName(), draftInterface.getName());
     assertEquals(draftSummary.getCreateDate(), draftInterface.getCreateDate());
     assertEquals(draftSummary.getUpdateDate(), draftInterface.getUpdateDate());
+    assertEquals(draftSummary.getDraftType(), draftInterface.getType());
   }
 }

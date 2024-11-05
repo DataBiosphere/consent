@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.Date;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.DraftType;
 
 public class DraftSummary {
 
@@ -9,12 +10,14 @@ public class DraftSummary {
   private String name;
   private Date createDate;
   private Date updateDate;
+  private DraftType draftType;
 
-  public DraftSummary(UUID id, String name, Date createDate, Date updateDate) {
+  public DraftSummary(UUID id, String name, Date createDate, Date updateDate, DraftType draftType) {
     this.setId(id);
     this.setName(name);
     this.setCreateDate(createDate);
     this.setUpdateDate(updateDate);
+    this.setDraftType(draftType);
   }
 
   public UUID getId() {
@@ -48,4 +51,8 @@ public class DraftSummary {
   public void setUpdateDate(Date updateDate) {
     this.updateDate = updateDate;
   }
+
+  public DraftType getDraftType() { return draftType; }
+
+  public void setDraftType(DraftType draftType) { this.draftType = draftType; }
 }

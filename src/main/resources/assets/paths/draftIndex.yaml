@@ -13,7 +13,7 @@ get:
             items:
               $ref: '../schemas/DraftSummary.yaml'
     401:
-      description: Not authorized.  Did you remember to authenticate?  You must be a data submitter to use this endpoint.
+      description: User not authorized to get draft summaries.
     500:
       description: Internal server error.  Something went wrong with the valid input provided.
 post:
@@ -38,6 +38,6 @@ post:
     400:
       description: Bad Request (invalid input)
     401:
-      description: Not authorized.  Did you remember to authenticate?  You must be a data submitter to use this endpoint.
+      description: User not authorized to create draft
     500:
       description: Internal Error (something went wrong processing valid input)

@@ -27,7 +27,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface DraftDAO extends Transactional<DraftDAO> {
 
   String DRAFT_SUMMARY = """
-      SELECT ds.name, ds.create_date, ds.uuid, ds.update_date
+      SELECT ds.name, ds.create_date, ds.uuid, ds.update_date, ds.draft_type
       FROM draft ds
       WHERE ds.create_user_id = :createdUserId
       ORDER BY ds.update_date DESC

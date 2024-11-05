@@ -74,3 +74,30 @@ delete:
       description: User not authorized to delete draft
     404:
       description: The draft cannot be found.
+patch:
+  summary: Renames a draft
+  description: Updates the name of a draft to the supplied value.
+  tags:
+    - Draft
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft.
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    description: |
+      The name of the draft.
+    content:
+      text/plain:
+        schema:
+          type: string
+  responses:
+    200:
+      description: The delete succeeded.
+    401:
+      description: User not authorized to delete draft
+    404:
+      description: The draft cannot be found.
