@@ -749,6 +749,18 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(dataset.getName(), patched.getDatasetName());
   }
 
+  @Test
+  void testPatchDatasetWithBlankName() throws Exception {
+    Dataset dataset = createDataset();
+    User user = userDAO.findUserById(dataset.getCreateUserId());
+    DatasetPatch patch = new DatasetPatch("   ", List.of());
+    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the name is NOT updated with an empty value
+    assertEquals(dataset.getName(), patched.getDatasetName());
+  }
+
   /**
    * Helper method to create a study with two props and one dataset
    * @param fso Optional FSO to use as part of the study insert
