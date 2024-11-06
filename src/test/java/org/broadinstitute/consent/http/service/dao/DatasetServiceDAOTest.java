@@ -725,6 +725,42 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(3, patched.getProperties().size());
   }
 
+  @Test
+  void testPatchDatasetWithNullName() throws Exception {
+    Dataset dataset = createDataset();
+    User user = userDAO.findUserById(dataset.getCreateUserId());
+    DatasetPatch patch = new DatasetPatch(null, List.of());
+    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the name is NOT updated to a null value
+    assertEquals(dataset.getName(), patched.getDatasetName());
+  }
+
+  @Test
+  void testPatchDatasetWithEmptyName() throws Exception {
+    Dataset dataset = createDataset();
+    User user = userDAO.findUserById(dataset.getCreateUserId());
+    DatasetPatch patch = new DatasetPatch("", List.of());
+    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the name is NOT updated with an empty value
+    assertEquals(dataset.getName(), patched.getDatasetName());
+  }
+
+  @Test
+  void testPatchDatasetWithBlankName() throws Exception {
+    Dataset dataset = createDataset();
+    User user = userDAO.findUserById(dataset.getCreateUserId());
+    DatasetPatch patch = new DatasetPatch("   ", List.of());
+    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the name is NOT updated with an empty value
+    assertEquals(dataset.getName(), patched.getDatasetName());
+  }
+
   /**
    * Helper method to create a study with two props and one dataset
    * @param fso Optional FSO to use as part of the study insert

@@ -22,7 +22,7 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
    * @return True if any patch values are different, false otherwise.
    */
   public boolean isPatchable(Dataset dataset) {
-    if (name() != null && !name().equals(dataset.getName())) {
+    if (name() != null && !name().equals(dataset.getName()) && !name().isBlank()) {
       return true;
     }
     // Find any cases where the new property value is different from the existing one

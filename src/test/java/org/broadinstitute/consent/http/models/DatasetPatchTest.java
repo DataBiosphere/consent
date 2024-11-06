@@ -16,6 +16,38 @@ import org.junit.jupiter.params.provider.EnumSource;
 public class DatasetPatchTest {
 
   @Test
+  void testIsPatchableName() {
+    Dataset dataset = new Dataset();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    DatasetPatch patch = new DatasetPatch("Name", List.of());
+    assertTrue(patch.isPatchable(dataset));
+  }
+
+  @Test
+  void testIsPatchableNullNameEmptyProps() {
+    Dataset dataset = new Dataset();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    DatasetPatch patch = new DatasetPatch(null, List.of());
+    assertFalse(patch.isPatchable(dataset));
+  }
+
+  @Test
+  void testIsPatchableEmptyNameEmptyProps() {
+    Dataset dataset = new Dataset();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    DatasetPatch patch = new DatasetPatch("", List.of());
+    assertFalse(patch.isPatchable(dataset));
+  }
+
+  @Test
+  void testIsPatchableBlankNameEmptyProps() {
+    Dataset dataset = new Dataset();
+    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    DatasetPatch patch = new DatasetPatch("   ", List.of());
+    assertFalse(patch.isPatchable(dataset));
+  }
+
+  @Test
   void testInvalidPropertyKeys() {
     DatasetProperty invalidProp = new DatasetProperty();
     invalidProp.setPropertyName(RandomStringUtils.randomAlphanumeric(25));

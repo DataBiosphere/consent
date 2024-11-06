@@ -398,11 +398,18 @@ public class DatasetServiceDAO implements ConsentLogger {
       Integer userId,
       List<DatasetProperty> properties) {
     // update dataset
-    datasetDAO.updateDatasetNameWithUpdateUser(
-        datasetId,
-        datasetName,
-        new Timestamp(new Date().getTime()),
-        userId);
+    if (datasetName == null || datasetName.isBlank()) {
+      datasetDAO.updateDatasetUpdateUser(
+          datasetId,
+          new Timestamp(new Date().getTime()),
+          userId);
+    } else {
+      datasetDAO.updateDatasetNameWithUpdateUser(
+          datasetId,
+          datasetName,
+          new Timestamp(new Date().getTime()),
+          userId);
+    }
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
 

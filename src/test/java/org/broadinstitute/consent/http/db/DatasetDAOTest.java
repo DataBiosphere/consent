@@ -728,6 +728,20 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDatasetUpdateUser() {
+    Dataset dataset = insertDataset();
+    User user = createUser();
+    datasetDAO.updateDatasetUpdateUser(
+        dataset.getDatasetId(),
+        new Timestamp(new Date().getTime()),
+        user.getUserId());
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(foundDataset);
+    assertEquals(user.getUserId(), foundDataset.getUpdateUserId());
+    assertTrue(foundDataset.getUpdateDate().after(dataset.getUpdateDate()));
+  }
+
+  @Test
   void testFindDatasetWithDataUseByIdList() {
     Dataset dataset = insertDataset();
     Dac dac = insertDac();
