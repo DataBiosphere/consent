@@ -124,6 +124,7 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Consumes({MediaType.TEXT_PLAIN})
   @Path("/v1/{draftUUID}")
+  @RolesAllowed({ADMIN, DATASUBMITTER})
   public Response patchDraftName(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID, String name) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
