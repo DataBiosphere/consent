@@ -397,6 +397,10 @@ public class DatasetServiceDAO implements ConsentLogger {
       String datasetName,
       Integer userId,
       List<DatasetProperty> properties) {
+    if (datasetName == null || datasetName.isBlank()) {
+      Dataset d = datasetDAO.findDatasetById(datasetId);
+      datasetName = d.getDatasetName();
+    }
     // update dataset
     datasetDAO.updateDatasetNameWithUpdateUser(
         datasetId,
