@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -725,6 +726,20 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(newName, foundDataset.getName());
+  }
+
+  @Test
+  void testUpdateDatasetUpdateUser() {
+    Dataset dataset = insertDataset();
+    User user = createUser();
+    datasetDAO.updateDatasetUpdateUser(
+        dataset.getDatasetId(),
+        new Timestamp(new Date().getTime()),
+        user.getUserId());
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(foundDataset);
+    assertEquals(user.getUserId(), foundDataset.getUpdateUserId());
+    assertTrue(foundDataset.getUpdateDate().after(dataset.getUpdateDate()));
   }
 
   @Test
