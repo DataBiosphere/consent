@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
@@ -84,7 +85,8 @@ class DraftResourceTest {
   void testGetDraftsWhenOneExistForUser() {
     Set<DraftSummary> draftSummaries = new HashSet<>();
     draftSummaries.add(
-        new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date()));
+        new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date(),
+            DraftType.STUDY_DATASET_SUBMISSION_V1));
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(draftSummaries);
     initResource();

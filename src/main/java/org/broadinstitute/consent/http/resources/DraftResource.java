@@ -9,6 +9,7 @@ import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -112,6 +113,23 @@ public class DraftResource extends Resource {
       DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       draft.setJson(json);
+      DraftInterface responseDraft = draftService.updateDraft(draft, user);
+      return Response.ok().entity(draftService.draftAsJson(responseDraft)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PATCH
+  @Produces({MediaType.APPLICATION_JSON})
+  @Consumes({MediaType.TEXT_PLAIN})
+  @Path("/v1/{draftUUID}")
+  @RolesAllowed({ADMIN, DATASUBMITTER})
+  public Response patchDraftName(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID, String name) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
+      draft.setName(name);
       DraftInterface responseDraft = draftService.updateDraft(draft, user);
       return Response.ok().entity(draftService.draftAsJson(responseDraft)).build();
     } catch (Exception e) {
