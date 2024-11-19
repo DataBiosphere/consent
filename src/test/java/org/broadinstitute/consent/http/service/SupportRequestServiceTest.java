@@ -77,9 +77,9 @@ class SupportRequestServiceTest {
     SupportTicket.SupportRequest supportRequest = ticket.getRequest();
 
     //simplifying comment body and custom fields for testing request body
-    supportRequest.setComment(new SupportRequestComment(RandomStringUtils.randomAlphabetic(10)));
-    CustomRequestField customField = new CustomRequestField(RandomUtils.nextLong(),
-        RandomStringUtils.randomAlphabetic(10));
+    supportRequest.setComment(new SupportRequestComment(RandomStringUtils.secure().nextAlphabetic(10)));
+    CustomRequestField customField = new CustomRequestField(RandomUtils.secure().randomLong(),
+        RandomStringUtils.secure().nextAlphabetic(10));
     supportRequest.setCustomFields(List.of(customField));
 
     String expectedBody = String.format("""
@@ -150,13 +150,13 @@ class SupportRequestServiceTest {
 
   @Test
   void testHandleInstitutionSOSupportRequest() {
-    String displayName = RandomStringUtils.randomAlphabetic(10);
-    String email = RandomStringUtils.randomAlphabetic(10);
+    String displayName = RandomStringUtils.secure().nextAlphabetic(10);
+    String email = RandomStringUtils.secure().nextAlphabetic(10);
     User user = new User();
     user.setDisplayName(displayName);
     user.setEmail(email);
     UserUpdateFields updateFields = new UserUpdateFields();
-    updateFields.setSuggestedInstitution(RandomStringUtils.randomAlphabetic(10));
+    updateFields.setSuggestedInstitution(RandomStringUtils.secure().nextAlphabetic(10));
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
@@ -181,11 +181,11 @@ class SupportRequestServiceTest {
 
   //creates support ticket with random values for testing postTicketToSupport
   private SupportTicket generateTicket() {
-    String requesterName = RandomStringUtils.randomAlphabetic(10);
-    String requesterEmail = RandomStringUtils.randomAlphabetic(10);
-    String subject = RandomStringUtils.randomAlphabetic(10);
-    String description = RandomStringUtils.randomAlphabetic(10);
-    String url = RandomStringUtils.randomAlphabetic(10);
+    String requesterName = RandomStringUtils.secure().nextAlphabetic(10);
+    String requesterEmail = RandomStringUtils.secure().nextAlphabetic(10);
+    String subject = RandomStringUtils.secure().nextAlphabetic(10);
+    String description = RandomStringUtils.secure().nextAlphabetic(10);
+    String url = RandomStringUtils.secure().nextAlphabetic(10);
 
     return new SupportTicket(requesterName, SupportRequestType.TASK, requesterEmail, subject,
         description, url);
