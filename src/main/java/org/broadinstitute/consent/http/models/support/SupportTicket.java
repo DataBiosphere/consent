@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 
 /**
  * Represents ticket to request support required by the Zendesk API
- * https://broadinstitute.zendesk.com/api/v2/requests.json
+ * <a href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests API Reference</a>
  */
 public class SupportTicket {
 
