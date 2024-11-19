@@ -619,7 +619,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   SupportRequestService providesSupportRequestService() {
-    return new SupportRequestService(config.getServicesConfiguration(), providesInstitutionDAO(),
+    return new SupportRequestService(config.getServicesConfiguration(),
         providesUserDAO());
   }
 
