@@ -190,7 +190,6 @@ public class DatasetServiceDAO implements ConsentLogger {
         dacId
     );
 
-    // add entry to audit table
     addAuditRecord(datasetId, name, userId, AuditActions.CREATE);
 
     if (Objects.nonNull(studyId)) {
@@ -366,7 +365,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
-    // add entry to audit table
     addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
@@ -416,14 +414,12 @@ public class DatasetServiceDAO implements ConsentLogger {
           "Attempt to update dataset name with null or blank value: dataset id: %s; user id: %s".formatted(
               datasetId, userId));
       Dataset dataset = datasetDAO.findDatasetById(datasetId);
-      // add entry to audit table
       addAuditRecord(datasetId, dataset.getDatasetName(), userId, AuditActions.UPDATE);
       datasetDAO.updateDatasetUpdateUser(
           datasetId,
           new Timestamp(new Date().getTime()),
           userId);
     } else {
-      // add entry to audit table
       addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
       datasetDAO.updateDatasetNameWithUpdateUser(
           datasetId,
