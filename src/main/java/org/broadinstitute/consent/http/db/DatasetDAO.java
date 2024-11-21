@@ -498,8 +498,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowMapper(DatasetAuditMapper.class)
   @SqlQuery("""
           SELECT *
-          FROM dataset_audit a
-          WHERE a.dataset_id = :datasetId
+          FROM dataset_audit
+          WHERE dataset_id = :datasetId
       """)
   List<DatasetAudit> findAuditsByDatasetId(@Bind("datasetId") Integer datasetId);
 
