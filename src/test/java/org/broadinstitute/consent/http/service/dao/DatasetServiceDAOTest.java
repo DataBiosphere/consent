@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
@@ -36,7 +35,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -513,7 +511,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
       assertFalse(audits.isEmpty());
       assertFalse(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
     });
   }
 
@@ -560,7 +559,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
       assertFalse(audits.isEmpty());
       assertFalse(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
     });
   }
 
@@ -615,7 +615,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
       assertFalse(audits.isEmpty());
       assertTrue(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
     });
   }
 
@@ -682,7 +683,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
       assertFalse(audits.isEmpty());
       assertFalse(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
     });
   }
 
@@ -719,9 +721,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
       assertFalse(audits.isEmpty());
       assertTrue(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
       assertTrue(
-          audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DELETE.name())));
+          audits.stream()
+              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DELETE.name())));
     });
 
   }

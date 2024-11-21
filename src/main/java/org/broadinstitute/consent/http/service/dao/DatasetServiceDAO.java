@@ -50,11 +50,8 @@ public class DatasetServiceDAO implements ConsentLogger {
       // Some legacy dataset names can be null
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(dataset.getDatasetId(), dataset.getObjectId(),
-          dsAuditName,
-          new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
-        datasetDAO.insertDatasetAudit(dsAudit);
+        addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
         datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
         datasetDAO.deleteDatasetById(dataset.getDatasetId());
       } catch (Exception e) {
@@ -194,15 +191,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     );
 
     // add entry to audit table
-    DatasetAudit audit = new DatasetAudit(
-        datasetId,
-        null,
-        name,
-        new Date(),
-        userId,
-        AuditActions.CREATE.getValue().toUpperCase()
-    );
-    datasetDAO.insertDatasetAudit(audit);
+    addAuditRecord(datasetId, name, userId, AuditActions.CREATE);
 
     if (Objects.nonNull(studyId)) {
       datasetDAO.updateStudyId(datasetId, studyId);
@@ -378,15 +367,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
     // add entry to audit table
-    DatasetAudit audit = new DatasetAudit(
-        datasetId,
-        null,
-        datasetName,
-        new Date(),
-        userId,
-        AuditActions.UPDATE.getValue().toUpperCase()
-    );
-    datasetDAO.insertDatasetAudit(audit);
+    addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
@@ -436,30 +417,14 @@ public class DatasetServiceDAO implements ConsentLogger {
               datasetId, userId));
       Dataset dataset = datasetDAO.findDatasetById(datasetId);
       // add entry to audit table
-      DatasetAudit audit = new DatasetAudit(
-          datasetId,
-          null,
-          dataset.getDatasetName(),
-          new Date(),
-          userId,
-          AuditActions.UPDATE.getValue().toUpperCase()
-      );
-      datasetDAO.insertDatasetAudit(audit);
+      addAuditRecord(datasetId, dataset.getDatasetName(), userId, AuditActions.UPDATE);
       datasetDAO.updateDatasetUpdateUser(
           datasetId,
           new Timestamp(new Date().getTime()),
           userId);
     } else {
       // add entry to audit table
-      DatasetAudit audit = new DatasetAudit(
-          datasetId,
-          null,
-          datasetName,
-          new Date(),
-          userId,
-          AuditActions.UPDATE.getValue().toUpperCase()
-      );
-      datasetDAO.insertDatasetAudit(audit);
+      addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
       datasetDAO.updateDatasetNameWithUpdateUser(
           datasetId,
           datasetName,
@@ -469,6 +434,18 @@ public class DatasetServiceDAO implements ConsentLogger {
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
 
+  }
+
+  private void addAuditRecord(Integer datasetId, String name, Integer userId, AuditActions action) {
+    DatasetAudit audit = new DatasetAudit(
+        datasetId,
+        null,
+        name,
+        new Date(),
+        userId,
+        action.getValue().toUpperCase()
+    );
+    datasetDAO.insertDatasetAudit(audit);
   }
 
   // Helper methods to generate Dictionary inserts
