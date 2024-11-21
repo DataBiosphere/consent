@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.StudyResource;
+import org.broadinstitute.consent.http.resources.SupportResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.TDRResource;
 import org.broadinstitute.consent.http.resources.TosResource;
@@ -242,6 +243,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
+    env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(new OAuth2Resource(oidcService));
     env.jersey().register(new DraftResource(userService, draftService));
 

@@ -1055,6 +1055,8 @@ paths:
           description: All systems are OK
         500:
           description: Some number of subsystems are not OK.
+  /support/request:
+    $ref: './paths/supportRequest.yaml'
   /tos/text:
     $ref: './paths/tosText.yaml'
   /tos/text/duos:

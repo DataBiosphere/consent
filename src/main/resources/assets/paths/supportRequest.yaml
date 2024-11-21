@@ -1,0 +1,18 @@
+post:
+  summary: Create a Support Request
+  description: Create a Support Request
+  tags:
+    - Support
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/SupportTicket.yaml'
+  responses:
+    200:
+      description: Returns the support request response
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SupportTicketResponse.yaml'

@@ -1,0 +1,19 @@
+type: object
+properties:
+  name:
+    type: string
+  type:
+    type: string
+    enum:
+      - question
+      - incident
+      - problem
+      - task
+  email:
+    type: string
+  subject:
+    type: string
+  description:
+    type: string
+  url:
+    type: string
