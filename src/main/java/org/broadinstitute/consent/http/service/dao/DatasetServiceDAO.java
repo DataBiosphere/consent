@@ -50,8 +50,9 @@ public class DatasetServiceDAO implements ConsentLogger {
       // Some legacy dataset names can be null
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(dataset.getDatasetId(), dataset.getObjectId(), dsAuditName,
-        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
+      DatasetAudit dsAudit = new DatasetAudit(dataset.getDatasetId(), dataset.getObjectId(),
+          dsAuditName,
+          new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
         datasetDAO.insertDatasetAudit(dsAudit);
         datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
@@ -191,6 +192,17 @@ public class DatasetServiceDAO implements ConsentLogger {
         dataUse.toString(),
         dacId
     );
+
+    // add entry to audit table
+    DatasetAudit audit = new DatasetAudit(
+        datasetId,
+        null,
+        name,
+        new Date(),
+        userId,
+        AuditActions.CREATE.getValue().toUpperCase()
+    );
+    datasetDAO.insertDatasetAudit(audit);
 
     if (Objects.nonNull(studyId)) {
       datasetDAO.updateStudyId(datasetId, studyId);
@@ -337,17 +349,21 @@ public class DatasetServiceDAO implements ConsentLogger {
           // Turn that off for this connection. This will not affect existing or new connections and
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
-
-          executeUpdateDatasetWithFiles(
-              handle,
-              updates.datasetId(),
-              updates.name(),
-              updates.userId(),
-              updates.dacId(),
-              updates.props(),
-              updates.files(),
-              true);
-
+          try {
+            executeUpdateDatasetWithFiles(
+                handle,
+                updates.datasetId(),
+                updates.name(),
+                updates.userId(),
+                updates.dacId(),
+                updates.props(),
+                updates.files(),
+                true);
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
           handle.commit();
         }
     );
@@ -361,6 +377,16 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
+    // add entry to audit table
+    DatasetAudit audit = new DatasetAudit(
+        datasetId,
+        null,
+        datasetName,
+        new Date(),
+        userId,
+        AuditActions.UPDATE.getValue().toUpperCase()
+    );
+    datasetDAO.insertDatasetAudit(audit);
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
@@ -381,12 +407,18 @@ public class DatasetServiceDAO implements ConsentLogger {
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
-          executePatchDataset(
-              handle,
-              datasetId,
-              patch.name(),
-              user.getUserId(),
-              patch.properties());
+          try {
+            executePatchDataset(
+                handle,
+                datasetId,
+                patch.name(),
+                user.getUserId(),
+                patch.properties());
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
           handle.commit();
         }
     );
@@ -399,11 +431,35 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties) {
     // update dataset
     if (datasetName == null || datasetName.isBlank()) {
+      logWarn(
+          "Attempt to update dataset name with null or blank value: dataset id: %s; user id: %s".formatted(
+              datasetId, userId));
+      Dataset dataset = datasetDAO.findDatasetById(datasetId);
+      // add entry to audit table
+      DatasetAudit audit = new DatasetAudit(
+          datasetId,
+          null,
+          dataset.getDatasetName(),
+          new Date(),
+          userId,
+          AuditActions.UPDATE.getValue().toUpperCase()
+      );
+      datasetDAO.insertDatasetAudit(audit);
       datasetDAO.updateDatasetUpdateUser(
           datasetId,
           new Timestamp(new Date().getTime()),
           userId);
     } else {
+      // add entry to audit table
+      DatasetAudit audit = new DatasetAudit(
+          datasetId,
+          null,
+          datasetName,
+          new Date(),
+          userId,
+          AuditActions.UPDATE.getValue().toUpperCase()
+      );
+      datasetDAO.insertDatasetAudit(audit);
       datasetDAO.updateDatasetNameWithUpdateUser(
           datasetId,
           datasetName,
