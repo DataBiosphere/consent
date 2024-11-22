@@ -180,15 +180,15 @@ public class DAOTestHelper {
      */
 
   protected String randomAlphabetic(int length) {
-    return RandomStringUtils.secure().nextAlphabetic(length);
+    return RandomStringUtils.secureStrong().nextAlphabetic(length);
   }
 
   protected String randomAlphanumeric(int length) {
-    return RandomStringUtils.secure().nextAlphanumeric(length);
+    return RandomStringUtils.secureStrong().nextAlphanumeric(length);
   }
 
   protected int randomInt(int startInclusive, int endExclusive) {
-    return RandomUtils.secure().randomInt(startInclusive, endExclusive);
+    return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
   }
 
   /**
