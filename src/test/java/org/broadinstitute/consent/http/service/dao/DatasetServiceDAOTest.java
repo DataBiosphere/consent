@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -72,27 +71,27 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     DatasetProperty prop1 = new DatasetProperty();
-    prop1.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop1.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setSchemaProperty(randomAlphabetic(10));
+    prop1.setPropertyName(randomAlphabetic(10));
     prop1.setPropertyType(PropertyType.Number);
     prop1.setPropertyValue(new Random().nextInt());
 
     DatasetProperty prop2 = new DatasetProperty();
-    prop2.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop2.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setSchemaProperty(randomAlphabetic(10));
+    prop2.setPropertyName(randomAlphabetic(10));
     prop2.setPropertyType(PropertyType.Date);
     prop2.setPropertyValueAsString("2000-10-20");
 
     FileStorageObject file1 = new FileStorageObject();
-    file1.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    file1.setMediaType(randomAlphabetic(20));
     file1.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     file1.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    file1.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    file1.setFileName(randomAlphabetic(10));
 
     DatasetServiceDAO.DatasetInsert insert = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setStigmatizeDiseases(true).setGeneralUse(true).build(),
         user.getUserId(),
@@ -139,13 +138,13 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     DatasetProperty prop1 = new DatasetProperty();
-    prop1.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop1.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setSchemaProperty(randomAlphabetic(10));
+    prop1.setPropertyName(randomAlphabetic(10));
     prop1.setPropertyValue(new Random().nextInt());
     prop1.setPropertyType(PropertyType.Number);
 
     DatasetServiceDAO.DatasetInsert insert1 = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
@@ -153,7 +152,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         List.of());
 
     DatasetServiceDAO.DatasetInsert insert2 = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setIllegalBehavior(true).build(),
         user.getUserId(),
@@ -196,17 +195,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        RandomStringUtils.secure().nextAlphabetic(10),
-        RandomStringUtils.secure().nextAlphabetic(10),
-        List.of(RandomStringUtils.secure().nextAlphabetic(10)),
-        RandomStringUtils.secure().nextAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        List.of(randomAlphabetic(10)),
+        randomAlphabetic(10),
         true,
         user.getUserId(),
         List.of(),
         List.of());
 
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
@@ -242,27 +241,27 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     StudyProperty prop1 = new StudyProperty();
-    prop1.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setKey(randomAlphabetic(10));
     prop1.setType(PropertyType.String);
-    prop1.setValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setValue(randomAlphabetic(10));
 
     StudyProperty prop2 = new StudyProperty();
-    prop2.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setKey(randomAlphabetic(10));
     prop2.setType(PropertyType.Number);
     prop2.setValue(new Random().nextInt());
 
     DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        RandomStringUtils.secure().nextAlphabetic(10),
-        RandomStringUtils.secure().nextAlphabetic(10),
-        List.of(RandomStringUtils.secure().nextAlphabetic(10)),
-        RandomStringUtils.secure().nextAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        List.of(randomAlphabetic(10)),
+        randomAlphabetic(10),
         true,
         user.getUserId(),
         List.of(prop1, prop2),
         List.of());
 
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
@@ -307,35 +306,35 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     StudyProperty prop1 = new StudyProperty();
-    prop1.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setKey(randomAlphabetic(10));
     prop1.setType(PropertyType.String);
-    prop1.setValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setValue(randomAlphabetic(10));
 
     StudyProperty prop2 = new StudyProperty();
-    prop2.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setKey(randomAlphabetic(10));
     prop2.setType(PropertyType.Number);
     prop2.setValue(new Random().nextInt());
 
     FileStorageObject file = new FileStorageObject();
-    file.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    file.setMediaType(randomAlphabetic(20));
     file.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     file.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    file.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    file.setFileName(randomAlphabetic(10));
 
     DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        RandomStringUtils.secure().nextAlphabetic(10),
-        RandomStringUtils.secure().nextAlphabetic(10),
-        List.of(RandomStringUtils.secure().nextAlphabetic(10)),
-        RandomStringUtils.secure().nextAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        List.of(randomAlphabetic(10)),
+        randomAlphabetic(10),
         true,
         user.getUserId(),
         List.of(prop1, prop2),
         List.of(file));
 
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
@@ -393,8 +392,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     // Set up two existing props for updating
     DatasetProperty prop1 = new DatasetProperty();
-    prop1.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop1.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setSchemaProperty(randomAlphabetic(10));
+    prop1.setPropertyName(randomAlphabetic(10));
     prop1.setPropertyType(PropertyType.Number);
     prop1.setPropertyKey(1);
     prop1.setPropertyValue(new Random().nextInt());
@@ -402,8 +401,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop1.setCreateDate(new Date());
 
     DatasetProperty prop2 = new DatasetProperty();
-    prop2.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop2.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setSchemaProperty(randomAlphabetic(10));
+    prop2.setPropertyName(randomAlphabetic(10));
     prop2.setPropertyType(PropertyType.Date);
     prop2.setPropertyKey(2);
     prop2.setPropertyValue("2000-10-20");
@@ -412,11 +411,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     // Prop for deletion
     DatasetProperty prop3 = new DatasetProperty();
-    prop3.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop3.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop3.setSchemaProperty(randomAlphabetic(10));
+    prop3.setPropertyName(randomAlphabetic(10));
     prop3.setPropertyType(PropertyType.String);
     prop3.setPropertyKey(3);
-    prop3.setPropertyValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop3.setPropertyValue(randomAlphabetic(10));
     prop3.setDatasetId(dataset.getDatasetId());
     prop3.setCreateDate(new Date());
 
@@ -433,8 +432,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     // New prop to add as part of the update
     DatasetProperty prop4 = new DatasetProperty();
-    prop4.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    prop4.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    prop4.setSchemaProperty(randomAlphabetic(10));
+    prop4.setPropertyName(randomAlphabetic(10));
     prop4.setPropertyType(PropertyType.String);
     prop4.setPropertyKey(4);
     prop4.setPropertyValue("new prop4 value");
@@ -522,9 +521,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<StudyProperty> props = List.copyOf(study.getProperties());
 
     StudyProperty newProp = new StudyProperty();
-    newProp.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    newProp.setKey(randomAlphabetic(10));
     newProp.setType(PropertyType.String);
-    newProp.setValue(RandomStringUtils.secure().nextAlphabetic(10));
+    newProp.setValue(randomAlphabetic(10));
 
     String newPropValue = "New Study Prop Value";
     StudyProperty prop1 = props.get(0);
@@ -623,37 +622,37 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @Test
   void testUpdateStudyWithFileUpdates() throws Exception {
     FileStorageObject fso1 = new FileStorageObject();
-    fso1.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    fso1.setMediaType(randomAlphabetic(20));
     fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     fso1.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    fso1.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    fso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject fso2 = new FileStorageObject();
-    fso2.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    fso2.setMediaType(randomAlphabetic(20));
     fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     fso2.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    fso2.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    fso2.setFileName(randomAlphabetic(10));
     Study study = createStudy(List.of(fso1, fso2));
 
     FileStorageObject updatedFso1 = new FileStorageObject();
-    updatedFso1.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    updatedFso1.setMediaType(randomAlphabetic(20));
     updatedFso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     updatedFso1.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    updatedFso1.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    updatedFso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject updatedFso2 = new FileStorageObject();
-    updatedFso2.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    updatedFso2.setMediaType(randomAlphabetic(20));
     updatedFso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     updatedFso2.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    updatedFso2.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    updatedFso2.setFileName(randomAlphabetic(10));
 
     StudyUpdate studyUpdate = new StudyUpdate(
         study.getName(),
@@ -692,20 +691,20 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteStudy() throws Exception {
     FileStorageObject fso1 = new FileStorageObject();
-    fso1.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    fso1.setMediaType(randomAlphabetic(20));
     fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     fso1.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    fso1.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    fso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject fso2 = new FileStorageObject();
-    fso2.setMediaType(RandomStringUtils.secure().nextAlphabetic(20));
+    fso2.setMediaType(randomAlphabetic(20));
     fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     fso2.setBlobId(
-        BlobId.of(RandomStringUtils.secure().nextAlphabetic(10),
-            RandomStringUtils.secure().nextAlphabetic(10)));
-    fso2.setFileName(RandomStringUtils.secure().nextAlphabetic(10));
+        BlobId.of(randomAlphabetic(10),
+            randomAlphabetic(10)));
+    fso2.setFileName(randomAlphabetic(10));
     Study study = createStudy(List.of(fso1, fso2));
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(
@@ -753,7 +752,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop1.setPropertyName(one.getKey());
     prop1.setPropertyType(PropertyType.String);
     prop1.setPropertyKey(one.getKeyId());
-    prop1.setPropertyValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setPropertyValue(randomAlphabetic(10));
     prop1.setDatasetId(dataset.getDatasetId());
     prop1.setCreateDate(new Date());
 
@@ -763,7 +762,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop2.setPropertyName(two.getKey());
     prop2.setPropertyType(PropertyType.String);
     prop2.setPropertyKey(two.getKeyId());
-    prop2.setPropertyValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setPropertyValue(randomAlphabetic(10));
     prop2.setDatasetId(dataset.getDatasetId());
     prop2.setCreateDate(new Date());
 
@@ -775,7 +774,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     patchProp.setPropertyName(prop2.getPropertyName());
     patchProp.setPropertyType(prop2.getPropertyType());
     patchProp.setPropertyKey(prop2.getPropertyKey());
-    patchProp.setPropertyValue(RandomStringUtils.secure().nextAlphabetic(10));
+    patchProp.setPropertyValue(randomAlphabetic(10));
 
     // New, added prop
     DatasetProperty prop3 = new DatasetProperty();
@@ -783,10 +782,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop3.setPropertyName(three.getKey());
     prop3.setPropertyType(PropertyType.String);
     prop3.setPropertyKey(three.getKeyId());
-    prop3.setPropertyValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop3.setPropertyValue(randomAlphabetic(10));
     prop3.setCreateDate(new Date());
 
-    String newName = RandomStringUtils.secure().nextAlphabetic(10);
+    String newName = randomAlphabetic(10);
     DatasetPatch patch = new DatasetPatch(newName, List.of(patchProp, prop3));
 
     serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
@@ -892,35 +891,35 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = createUser();
 
     StudyProperty prop1 = new StudyProperty();
-    prop1.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setKey(randomAlphabetic(10));
     prop1.setType(PropertyType.String);
-    prop1.setValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop1.setValue(randomAlphabetic(10));
 
     StudyProperty prop2 = new StudyProperty();
-    prop2.setKey(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setKey(randomAlphabetic(10));
     prop2.setType(PropertyType.String);
-    prop2.setValue(RandomStringUtils.secure().nextAlphabetic(10));
+    prop2.setValue(randomAlphabetic(10));
 
     DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        RandomStringUtils.secure().nextAlphabetic(10),
-        RandomStringUtils.secure().nextAlphabetic(10),
-        List.of(RandomStringUtils.secure().nextAlphabetic(10)),
-        RandomStringUtils.secure().nextAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        List.of(randomAlphabetic(10)),
+        randomAlphabetic(10),
         true,
         user.getUserId(),
         List.of(prop1, prop2),
         Objects.isNull(fso) ? List.of() : fso);
 
     DatasetProperty datasetProperty = new DatasetProperty();
-    datasetProperty.setSchemaProperty(RandomStringUtils.secure().nextAlphabetic(10));
-    datasetProperty.setPropertyName(RandomStringUtils.secure().nextAlphabetic(10));
+    datasetProperty.setSchemaProperty(randomAlphabetic(10));
+    datasetProperty.setPropertyName(randomAlphabetic(10));
     datasetProperty.setPropertyType(PropertyType.Number);
     datasetProperty.setPropertyKey(1);
     datasetProperty.setPropertyValue(new Random().nextInt());
     datasetProperty.setCreateDate(new Date());
 
     DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        RandomStringUtils.secure().nextAlphabetic(20),
+        randomAlphabetic(20),
         dac.getDacId(),
         new DataUseBuilder().setGeneralUse(true).build(),
         user.getUserId(),
@@ -935,9 +934,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.secure().nextAlphanumeric(20);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.secure().nextAlphanumeric(20);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -946,8 +945,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
   private Dac createDac() {
     Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.secure().nextAlphanumeric(20),
-        "Test_" + RandomStringUtils.secure().nextAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
         new Date());
     return dacDAO.findById(id);
   }

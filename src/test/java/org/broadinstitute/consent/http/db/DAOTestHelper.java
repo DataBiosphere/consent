@@ -188,6 +188,14 @@ public class DAOTestHelper {
        dao methods directly to do any manipulation.
      */
 
+  protected String randomAlphabetic(int length) {
+    return RandomStringUtils.secure().nextAlphabetic(length);
+  }
+
+  protected String randomAlphanumeric(int length) {
+    return RandomStringUtils.secure().nextAlphanumeric(length);
+  }
+
   /**
    * Creates a user with default role of Researcher and random user properties
    *
