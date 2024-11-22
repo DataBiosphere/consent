@@ -1,24 +1,16 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
-import jakarta.ws.rs.core.MediaType;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -32,7 +24,6 @@ import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -107,7 +98,7 @@ public class DAOTestHelper {
     testApp.before();
 
     // Initialize DAOs
-    String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
+    String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
     jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(),
@@ -188,20 +179,32 @@ public class DAOTestHelper {
        dao methods directly to do any manipulation.
      */
 
+  protected String randomAlphabetic(int length) {
+    return RandomStringUtils.secureStrong().nextAlphabetic(length);
+  }
+
+  protected String randomAlphanumeric(int length) {
+    return RandomStringUtils.secureStrong().nextAlphanumeric(length);
+  }
+
+  protected int randomInt(int startInclusive, int endExclusive) {
+    return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
+  }
+
   /**
    * Creates a user with default role of Researcher and random user properties
    *
    * @return Created User
    */
   protected User createUser() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
+    int i1 = randomInt(5, 10);
+    int i2 = randomInt(5, 10);
+    int i3 = randomInt(3, 5);
+    String email = randomAlphabetic(i1) +
         "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
+        randomAlphabetic(i2) +
         "." +
-        RandomStringUtils.randomAlphabetic(i3);
+        randomAlphabetic(i3);
     Integer userId = userDAO.insertUser(email, "display name", new Date());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
     UserProperty prop = new UserProperty();
@@ -219,25 +222,25 @@ public class DAOTestHelper {
    * @return Last DataAccessRequest of a DarCollection
    */
   protected DataAccessRequest createDataAccessRequestV3() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
+    int i1 = randomInt(5, 10);
+    String email = randomAlphabetic(i1);
+    String name = randomAlphabetic(10);
     Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         userId,
         new Date());
     userDAO.updateUser(name, userId, institutionId);
     userRoleDAO.insertSingleUserRole(7, userId);
     User user = userDAO.findUserById(userId);
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
+    String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     for (int i = 0; i < 4; i++) {
@@ -254,7 +257,7 @@ public class DAOTestHelper {
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
       String darCode) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     data.setDarCode(darCode);
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");

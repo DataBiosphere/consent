@@ -5,7 +5,8 @@ public enum AuditActions {
   CREATE("create"),
   DELETE("delete"),
   REMOVE("remove"),
-  REPLACE("replace");
+  REPLACE("replace"),
+  UPDATE("update");
 
   private final String value;
 

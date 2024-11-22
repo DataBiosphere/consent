@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetReducer;
+import org.broadinstitute.consent.http.db.mapper.DatasetAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetDTOWithPropertiesMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
@@ -493,6 +494,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
+
+  @UseRowMapper(DatasetAuditMapper.class)
+  @SqlQuery("""
+          SELECT *
+          FROM dataset_audit
+          WHERE dataset_id = :datasetId
+      """)
+  List<DatasetAudit> findAuditsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   @SqlUpdate(
       "UPDATE dataset_property "
