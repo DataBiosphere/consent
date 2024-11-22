@@ -98,7 +98,7 @@ public class DAOTestHelper {
     testApp.before();
 
     // Initialize DAOs
-    String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
+    String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
     jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(),
@@ -222,7 +222,7 @@ public class DAOTestHelper {
    * @return Last DataAccessRequest of a DarCollection
    */
   protected DataAccessRequest createDataAccessRequestV3() {
-    int i1 = RandomUtils.secure().randomInt(5, 10);
+    int i1 = randomInt(5, 10);
     String email = randomAlphabetic(i1);
     String name = randomAlphabetic(10);
     Integer userId = userDAO.insertUser(email, name, new Date());
