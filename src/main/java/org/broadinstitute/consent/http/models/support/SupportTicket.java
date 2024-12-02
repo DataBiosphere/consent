@@ -21,10 +21,11 @@ public class SupportTicket {
    * @param email       The email of the user requesting support
    * @param subject     Subject line of the request
    * @param description Description of the task or question
-   * @param url         The API url of this request
+   * @param url         The origin url of this request
+   * @param uploads     Optional list of attachment tokens
    */
   public SupportTicket(String name, SupportRequestType type, String email, String subject,
-      String description, String url) {
+      String description, String url, List<String> uploads) {
     if (Objects.isNull(name) || Objects.isNull(email)) {
       throw new IllegalArgumentException("Name and email of user requesting support is required");
     }
@@ -41,7 +42,7 @@ public class SupportTicket {
       throw new IllegalArgumentException("Support ticket url is required");
     }
 
-    this.request = new SupportRequest(name, type, email, subject, description, url);
+    this.request = new SupportRequest(name, type, email, subject, description, url, uploads);
   }
 
 
@@ -63,12 +64,12 @@ public class SupportTicket {
     private final long ticketFormId = 360000669472L;
 
     public SupportRequest(String name, SupportRequestType type, String email, String subject,
-        String description, String url) {
+        String description, String url, List<String> uploads) {
       this.requester = new SupportRequester(name, email);
       this.subject = subject;
       this.customFields = createCustomFields(name, type, email, description);
       this.comment = new SupportRequestComment(
-          description + "\n\n------------------\nSubmitted from: " + url);
+          description + "\n\n------------------\nSubmitted from: " + url, uploads);
     }
 
     public SupportRequester getRequester() {

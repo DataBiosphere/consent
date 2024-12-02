@@ -37,7 +37,7 @@ public class SupportRequestService implements ConsentLogger {
    * @param ticket SupportTicket to be sent to support application
    * @throws Exception if an error occurs while posting the HttpRequest
    */
-  public void postTicketToSupport(SupportTicket ticket) throws Exception {
+  public String postTicketToSupport(SupportTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       if (ticket.getRequest() != null && ticket.getRequest().getRequester() != null && ticket.getRequest().getRequester().getEmail() != null) {
         User user = userDAO.findUserByEmail(ticket.getRequest().getRequester().getEmail());
@@ -64,9 +64,11 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
+      return response.parseAsString();
     } else {
       logDebug("Not configured to send support requests");
     }
+    return null;
   }
 
 }

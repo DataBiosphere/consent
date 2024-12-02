@@ -69,7 +69,7 @@ class SupportRequestServiceTest {
     SupportTicket.SupportRequest supportRequest = ticket.getRequest();
 
     //simplifying comment body and custom fields for testing request body
-    supportRequest.setComment(new SupportRequestComment(RandomStringUtils.secure().nextAlphabetic(10)));
+    supportRequest.setComment(new SupportRequestComment(RandomStringUtils.secure().nextAlphabetic(10), null));
     CustomRequestField customField = new CustomRequestField(RandomUtils.secure().randomLong(),
         RandomStringUtils.secure().nextAlphabetic(10));
     supportRequest.setCustomFields(List.of(customField));
@@ -97,7 +97,7 @@ class SupportRequestServiceTest {
         supportRequest.getSubject(),
         customField.getId(),
         customField.getValue(),
-        supportRequest.getComment().getBody());
+        supportRequest.getComment().body());
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
@@ -147,6 +147,6 @@ class SupportRequestServiceTest {
     String url = RandomStringUtils.secure().nextAlphabetic(10);
 
     return new SupportTicket(requesterName, SupportRequestType.TASK, requesterEmail, subject,
-        description, url);
+        description, url, null);
   }
 }

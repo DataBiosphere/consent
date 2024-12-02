@@ -1,8 +1,10 @@
 type: object
 properties:
   name:
+    description: The name of the user requesting support
     type: string
   type:
+    description: The type of request ("question", "incident", "problem", "task")
     type: string
     enum:
       - question
@@ -10,10 +12,19 @@ properties:
       - problem
       - task
   email:
+    description: The email of the user requesting support
     type: string
   subject:
+    description: Subject line of the request
     type: string
   description:
+    description: Description of the task or question
     type: string
   url:
+    description: The origin url of this request
     type: string
+  uploads:
+    description: Optional list of attachment tokens
+    type: array
+    items:
+      type: string
