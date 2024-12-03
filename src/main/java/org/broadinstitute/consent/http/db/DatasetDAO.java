@@ -190,7 +190,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
       """)
-  List<Dataset> findDatasetsByIdList(@BindList("datasetIds") List<Integer> datasetIds);
+  List<Dataset> findDatasetsByIdList(@BindList("datasetIds") Collection<Integer> datasetIds);
 
   @Deprecated
   @UseRowReducer(DatasetReducer.class)

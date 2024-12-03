@@ -734,7 +734,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   void testExecuteUpdateDatasetWithNullName() throws Exception {
     // This creates a study with a single dataset:
     Study study = createStudy(List.of());
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds()));
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
     Dataset dataset = datasets.get(0);
     jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
         handle,
