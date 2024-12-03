@@ -368,23 +368,17 @@ public class DatasetServiceDAO implements ConsentLogger {
       boolean executeDeletes) {
 
     // Don't update the name if it isn't provided
-    if (StringUtils.isBlank(datasetName)) {
-      Dataset dataset = datasetDAO.findDatasetById(datasetId);
-      addAuditRecord(datasetId, dataset.getName(), userId, AuditActions.UPDATE);
-      datasetDAO.updateDatasetUpdateUser(datasetId, new Timestamp(new Date().getTime()),
-          userId
-      );
-    } else {
-      addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
-      // update dataset
-      datasetDAO.updateDatasetByDatasetId(
-          datasetId,
-          datasetName,
-          new Timestamp(new Date().getTime()),
-          userId,
-          dacId
-      );
-    }
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    String updateName = StringUtils.isBlank(datasetName) ? dataset.getName() : datasetName;
+    addAuditRecord(datasetId, updateName, userId, AuditActions.UPDATE);
+    // update dataset
+    datasetDAO.updateDatasetByDatasetId(
+        datasetId,
+        updateName,
+        new Timestamp(new Date().getTime()),
+        userId,
+        dacId
+    );
 
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, executeDeletes);
