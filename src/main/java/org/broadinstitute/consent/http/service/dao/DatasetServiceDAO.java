@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -365,15 +366,25 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
-    addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
-    // update dataset
-    datasetDAO.updateDatasetByDatasetId(
-        datasetId,
-        datasetName,
-        new Timestamp(new Date().getTime()),
-        userId,
-        dacId
-    );
+
+    // Don't update the name if it isn't provided
+    if (StringUtils.isBlank(datasetName)) {
+      Dataset dataset = datasetDAO.findDatasetById(datasetId);
+      addAuditRecord(datasetId, dataset.getName(), userId, AuditActions.UPDATE);
+      datasetDAO.updateDatasetUpdateUser(datasetId, new Timestamp(new Date().getTime()),
+          userId
+      );
+    } else {
+      addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
+      // update dataset
+      datasetDAO.updateDatasetByDatasetId(
+          datasetId,
+          datasetName,
+          new Timestamp(new Date().getTime()),
+          userId,
+          dacId
+      );
+    }
 
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, executeDeletes);
