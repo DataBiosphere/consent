@@ -781,7 +781,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Study study = createStudy(List.of());
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
     Dataset dataset = datasets.get(0);
-    String newName = RandomStringUtils.secureStrong().nextAlphabetic(dataset.getName().length() + 10);
+    String newName = randomAlphabetic(dataset.getName().length() + 10);
     jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
         handle,
         dataset.getDatasetId(),
