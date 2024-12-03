@@ -747,7 +747,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         false)
     );
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
-    assertNotNull(updatedDataset);
     assertNotNull(updatedDataset.getName());
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertFalse(audits.isEmpty());
