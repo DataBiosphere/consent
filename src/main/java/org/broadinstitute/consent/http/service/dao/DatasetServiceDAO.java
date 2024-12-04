@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -365,11 +366,15 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
-    addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
+
+    // Don't update the name if it isn't provided
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    String updateName = StringUtils.isBlank(datasetName) ? dataset.getName() : datasetName;
+    addAuditRecord(datasetId, updateName, userId, AuditActions.UPDATE);
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
-        datasetName,
+        updateName,
         new Timestamp(new Date().getTime()),
         userId,
         dacId

@@ -730,6 +730,73 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testExecuteUpdateDatasetWithNullName() throws Exception {
+    // This creates a study with a single dataset:
+    Study study = createStudy(List.of());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    Dataset dataset = datasets.get(0);
+    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
+        handle,
+        dataset.getDatasetId(),
+        null,
+        study.getCreateUserId(),
+        dataset.getDacId(),
+        List.of(),
+        List.of(),
+        false)
+    );
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(updatedDataset.getName());
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+  }
+
+  @Test
+  void testExecuteUpdateDatasetWithEmptyName() throws Exception {
+    // This creates a study with a single dataset:
+    Study study = createStudy(List.of());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+    Dataset dataset = datasets.get(0);
+    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
+        handle,
+        dataset.getDatasetId(),
+        "",
+        study.getCreateUserId(),
+        dataset.getDacId(),
+        List.of(),
+        List.of(),
+        false)
+    );
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(updatedDataset.getName());
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+  }
+
+  @Test
+  void testExecuteUpdateDatasetWithNewName() throws Exception {
+    // This creates a study with a single dataset:
+    Study study = createStudy(List.of());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+    Dataset dataset = datasets.get(0);
+    String newName = randomAlphabetic(dataset.getName().length() + 10);
+    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
+        handle,
+        dataset.getDatasetId(),
+        newName,
+        study.getCreateUserId(),
+        dataset.getDacId(),
+        List.of(),
+        List.of(),
+        false)
+    );
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertEquals(newName, updatedDataset.getName());
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+  }
+
+  @Test
   void testPatchDataset() throws Exception {
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     Dictionary one = dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst()
