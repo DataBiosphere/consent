@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.support;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 
