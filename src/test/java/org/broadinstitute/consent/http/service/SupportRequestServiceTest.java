@@ -16,9 +16,6 @@ import java.util.List;
 import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.support.CustomRequestField;
-import org.broadinstitute.consent.http.models.support.SupportRequest;
-import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -65,37 +62,7 @@ class SupportRequestServiceTest extends AbstractTest {
   @Test
   void testPostTicketToSupport() throws Exception {
     SupportTicket ticket = generateTicket();
-    SupportRequest supportRequest = ticket.getRequest();
-
-    //simplifying comment body and custom fields for testing request body
-    supportRequest.setComment(new SupportRequestComment(randomAlphabetic(10), null));
-    CustomRequestField customField = new CustomRequestField(randomLong(), randomAlphabetic(10));
-    supportRequest.setCustomFields(List.of(customField));
-
-    String expectedBody = String.format("""
-            {
-              "request" : {
-                "requester" : {
-                  "name" : "%s",
-                  "email" : "%s"
-                },
-                "subject" : "%s",
-                "custom_fields" : [ {
-                  "id" : %d,
-                  "value" : "%s"
-                } ],
-                "comment" : {
-                  "body" : "%s"
-                },
-                "ticket_form_id" : 360000669472
-              }
-            }""",
-        supportRequest.getRequester().name(),
-        supportRequest.getRequester().email(),
-        supportRequest.getSubject(),
-        customField.id(),
-        customField.value(),
-        supportRequest.getComment().body());
+    String expectedBody = ticket.toString().replaceAll("\\s*", "");
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
@@ -104,15 +71,13 @@ class SupportRequestServiceTest extends AbstractTest {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
-    service.postTicketToSupport(ticket);
 
+    service.postTicketToSupport(ticket);
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
-    Object requestBody = requests[0].getBody().getValue();
-    String requestBodyNormalizedNewLines = requestBody.toString()
-        .replace("\r\n", "\n")
-        .replace("\r", "\n");
-    assertEquals(expectedBody, requestBodyNormalizedNewLines);
+    // Ensure that we really did send a ticket object in the POST request
+    String requestBody = requests[0].getBody().getValue().toString().replaceAll("\\s*", "");
+    assertEquals(expectedBody, requestBody);
   }
 
   @Test

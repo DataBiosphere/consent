@@ -35,12 +35,7 @@ public class SupportRequestService implements ConsentLogger {
   public void postTicketToSupport(SupportTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-      //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
-      String ticketJson = new GsonBuilder()
-          .setPrettyPrinting()
-          .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-          .create()
-          .toJson(ticket);
+      String ticketJson = ticket.toString();
       ByteArrayContent content = new ByteArrayContent("application/json",
           ticketJson.getBytes(StandardCharsets.UTF_8));
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);

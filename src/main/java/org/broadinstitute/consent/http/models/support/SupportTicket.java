@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models.support;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.GsonBuilder;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 
@@ -56,4 +58,12 @@ public class SupportTicket {
     this.request = request;
   }
 
+  public String toString() {
+    //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
+    return new GsonBuilder()
+        .setPrettyPrinting()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .create()
+        .toJson(this);
+  }
 }
