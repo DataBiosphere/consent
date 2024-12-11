@@ -10,27 +10,18 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ServerErrorException;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 
 public class SupportRequestService implements ConsentLogger {
 
-  private final SupportTicketCreator supportTicketCreator;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
   @Inject
-  public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO,
-      UserDAO userDAO) {
-    this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
+  public SupportRequestService(ServicesConfiguration configuration) {
     this.clientUtil = new HttpClientUtil(configuration);
     this.configuration = configuration;
   }
@@ -67,37 +58,4 @@ public class SupportRequestService implements ConsentLogger {
     }
   }
 
-  /**
-   * Creates and sends a support ticket for a user selecting an existing or requesting an unfamiliar
-   * institution and/or signing official, if provided
-   *
-   * @param userUpdateFields A UserUpdateFields object containing update information for the user
-   * @param user             The user requesting the institution and/or signing official
-   */
-  public void handleInstitutionSOSupportRequest(UserUpdateFields userUpdateFields, User user) {
-    if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
-      boolean updateFieldProvided = Objects.nonNull(userUpdateFields.getSuggestedInstitution())
-          || Objects.nonNull(userUpdateFields.getInstitutionId())
-          || Objects.nonNull(userUpdateFields.getSuggestedSigningOfficial())
-          || Objects.nonNull(userUpdateFields.getSelectedSigningOfficialId());
-
-      //only send ticket if an institution or signing official is provided; ignore otherwise
-      if (updateFieldProvided) {
-        try {
-          SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(
-              userUpdateFields, user);
-          postTicketToSupport(ticket);
-        } catch (Exception e) {
-          String errorMessage =
-              "Exception sending suggested user fields support request: " + e.getMessage();
-          var errorException = new ServerErrorException(
-              "Unable to send support ticket for user with email:" +
-                  " " + user.getEmail(),
-              HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-          logException(errorMessage, errorException);
-          throw errorException;
-        }
-      }
-    }
-  }
 }
