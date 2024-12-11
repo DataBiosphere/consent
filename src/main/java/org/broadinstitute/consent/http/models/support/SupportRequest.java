@@ -6,7 +6,8 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 
 /**
  * Represents Request object for the Zendesk API
- * <a href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests API Reference</a>
+ * <a href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests
+ * API Reference</a>
  */
 public class SupportRequest {
 
@@ -61,14 +62,12 @@ public class SupportRequest {
     return ticketFormId;
   }
 
-  private List<CustomRequestField> createCustomFields(String name, SupportRequestType type,
+  static private List<CustomRequestField> createCustomFields(String name, SupportRequestType type,
       String email, String description) {
-    List<CustomRequestField> customFields = new ArrayList<>();
-    customFields.add(new CustomRequestField(360012744452L, type.getValue()));
-    customFields.add(new CustomRequestField(360007369412L, description));
-    customFields.add(new CustomRequestField(360012744292L, name));
-    customFields.add(new CustomRequestField(360012782111L, email));
-    customFields.add(new CustomRequestField(360018545031L, email));
-    return customFields;
+    return List.of(new CustomRequestField(360012744452L, type.getValue()),
+        new CustomRequestField(360007369412L, description),
+        new CustomRequestField(360012744292L, name),
+        new CustomRequestField(360012782111L, email),
+        new CustomRequestField(360018545031L, email));
   }
 }
