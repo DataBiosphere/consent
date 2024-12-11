@@ -9,12 +9,15 @@ import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.ServerErrorException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.CustomRequestField;
+import org.broadinstitute.consent.http.models.support.SupportRequest;
 import org.broadinstitute.consent.http.models.support.SupportRequestComment;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.junit.jupiter.api.AfterAll;
@@ -31,7 +34,7 @@ import org.mockserver.model.HttpRequest;
 import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class SupportRequestServiceTest {
+class SupportRequestServiceTest extends AbstractTest {
 
   private SupportRequestService service;
 
@@ -62,12 +65,11 @@ class SupportRequestServiceTest {
   @Test
   void testPostTicketToSupport() throws Exception {
     SupportTicket ticket = generateTicket();
-    SupportTicket.SupportRequest supportRequest = ticket.getRequest();
+    SupportRequest supportRequest = ticket.getRequest();
 
     //simplifying comment body and custom fields for testing request body
-    supportRequest.setComment(new SupportRequestComment(RandomStringUtils.randomAlphabetic(10)));
-    CustomRequestField customField = new CustomRequestField(RandomUtils.nextLong(),
-        RandomStringUtils.randomAlphabetic(10));
+    supportRequest.setComment(new SupportRequestComment(randomAlphabetic(10), null));
+    CustomRequestField customField = new CustomRequestField(randomLong(), randomAlphabetic(10));
     supportRequest.setCustomFields(List.of(customField));
 
     String expectedBody = String.format("""
@@ -88,12 +90,12 @@ class SupportRequestServiceTest {
                 "ticket_form_id" : 360000669472
               }
             }""",
-        supportRequest.getRequester().getName(),
-        supportRequest.getRequester().getEmail(),
+        supportRequest.getRequester().name(),
+        supportRequest.getRequester().email(),
         supportRequest.getSubject(),
-        customField.getId(),
-        customField.getValue(),
-        supportRequest.getComment().getBody());
+        customField.id(),
+        customField.value(),
+        supportRequest.getComment().body());
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
@@ -136,15 +138,17 @@ class SupportRequestServiceTest {
     });
   }
 
-  //creates support ticket with random values for testing postTicketToSupport
+  // Creates support ticket with random values
   private SupportTicket generateTicket() {
-    String requesterName = RandomStringUtils.randomAlphabetic(10);
-    String requesterEmail = RandomStringUtils.randomAlphabetic(10);
-    String subject = RandomStringUtils.randomAlphabetic(10);
-    String description = RandomStringUtils.randomAlphabetic(10);
-    String url = RandomStringUtils.randomAlphabetic(10);
-
-    return new SupportTicket(requesterName, SupportRequestType.TASK, requesterEmail, subject,
-        description, url);
+    List<SupportRequestType> types = new ArrayList<>(EnumSet.allOf(SupportRequestType.class));
+    Collections.shuffle(types);
+    return new SupportTicket(
+        randomAlphabetic(10),
+        types.get(0),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        List.of(randomAlphanumeric(10)));
   }
 }

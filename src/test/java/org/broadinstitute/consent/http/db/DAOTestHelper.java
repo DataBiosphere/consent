@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
+import org.broadinstitute.consent.http.AbstractTest;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class DAOTestHelper {
+public class DAOTestHelper extends AbstractTest {
 
   public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
   private static final int maxConnections = 100;
@@ -178,18 +178,6 @@ public class DAOTestHelper {
        entity. When testing, if you need a specific modification to an object, call
        dao methods directly to do any manipulation.
      */
-
-  protected String randomAlphabetic(int length) {
-    return RandomStringUtils.secureStrong().nextAlphabetic(length);
-  }
-
-  protected String randomAlphanumeric(int length) {
-    return RandomStringUtils.secureStrong().nextAlphanumeric(length);
-  }
-
-  protected int randomInt(int startInclusive, int endExclusive) {
-    return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
-  }
 
   /**
    * Creates a user with default role of Researcher and random user properties

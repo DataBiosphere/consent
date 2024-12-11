@@ -1,22 +1,13 @@
 package org.broadinstitute.consent.http.models.support;
 
+import java.util.List;
+
 /**
- * Represents comment describing issue for a Zendesk support ticket
- * https://broadinstitute.zendesk.com/api/v2/requests.json
+ * Represents the supported fields in a Request Comment describing an issue for a Zendesk support
+ * ticket <a
+ * href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/#request-comments">Requests
+ * Comments API Reference</a>
  */
-public class SupportRequestComment {
+public record SupportRequestComment(String body, List<String> uploads) {
 
-  private String body;
-
-  public SupportRequestComment(String body) {
-    this.body = body;
-  }
-
-  public String getBody() {
-    return body;
-  }
-
-  public void setBody(String body) {
-    this.body = body;
-  }
 }
