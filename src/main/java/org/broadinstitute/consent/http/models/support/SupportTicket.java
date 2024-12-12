@@ -1,13 +1,18 @@
 package org.broadinstitute.consent.http.models.support;
 
-import java.util.ArrayList;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.GsonBuilder;
 import java.util.List;
-import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 
 /**
  * Represents ticket to request support required by the Zendesk API
- * https://broadinstitute.zendesk.com/api/v2/requests.json
+ * <a
+ * href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests
+ * API Reference</a>
+ * <p>
+ * This is the base object that we use to construct a SupportRequest object that is eventually
+ * serialized and sent to Zendesk in json format.
  */
 public class SupportTicket {
 
@@ -21,29 +26,29 @@ public class SupportTicket {
    * @param email       The email of the user requesting support
    * @param subject     Subject line of the request
    * @param description Description of the task or question
-   * @param url         The API url of this request
+   * @param url         The origin url of this request
+   * @param uploads     Optional list of attachment tokens
    */
   public SupportTicket(String name, SupportRequestType type, String email, String subject,
-      String description, String url) {
-    if (Objects.isNull(name) || Objects.isNull(email)) {
+      String description, String url, List<String> uploads) {
+    if (name == null || email == null) {
       throw new IllegalArgumentException("Name and email of user requesting support is required");
     }
-    if (Objects.isNull(subject)) {
+    if (subject == null) {
       throw new IllegalArgumentException("Support ticket subject is required");
     }
-    if (Objects.isNull(description)) {
+    if (description == null) {
       throw new IllegalArgumentException("Support ticket description is required");
     }
-    if (Objects.isNull(type)) {
+    if (type == null) {
       throw new IllegalArgumentException("Support ticket type is required");
     }
-    if (Objects.isNull(url)) {
+    if (url == null) {
       throw new IllegalArgumentException("Support ticket url is required");
     }
 
-    this.request = new SupportRequest(name, type, email, subject, description, url);
+    this.request = new SupportRequest(name, type, email, subject, description, url, uploads);
   }
-
 
   public SupportRequest getRequest() {
     return request;
@@ -53,69 +58,12 @@ public class SupportTicket {
     this.request = request;
   }
 
-
-  public static class SupportRequest {
-
-    private SupportRequester requester;
-    private String subject;
-    private List<CustomRequestField> customFields;
-    private SupportRequestComment comment;
-    private final long ticketFormId = 360000669472L;
-
-    public SupportRequest(String name, SupportRequestType type, String email, String subject,
-        String description, String url) {
-      this.requester = new SupportRequester(name, email);
-      this.subject = subject;
-      this.customFields = createCustomFields(name, type, email, description);
-      this.comment = new SupportRequestComment(
-          description + "\n\n------------------\nSubmitted from: " + url);
-    }
-
-    public SupportRequester getRequester() {
-      return requester;
-    }
-
-    public void setRequester(SupportRequester requester) {
-      this.requester = requester;
-    }
-
-    public String getSubject() {
-      return subject;
-    }
-
-    public void setSubject(String subject) {
-      this.subject = subject;
-    }
-
-    public List<CustomRequestField> getCustomFields() {
-      return customFields;
-    }
-
-    public void setCustomFields(List<CustomRequestField> customFields) {
-      this.customFields = customFields;
-    }
-
-    public SupportRequestComment getComment() {
-      return comment;
-    }
-
-    public void setComment(SupportRequestComment comment) {
-      this.comment = comment;
-    }
-
-    public long getTicketFormId() {
-      return ticketFormId;
-    }
-
-    private List<CustomRequestField> createCustomFields(String name, SupportRequestType type,
-        String email, String description) {
-      List<CustomRequestField> customFields = new ArrayList<>();
-      customFields.add(new CustomRequestField(360012744452L, type.getValue()));
-      customFields.add(new CustomRequestField(360007369412L, description));
-      customFields.add(new CustomRequestField(360012744292L, name));
-      customFields.add(new CustomRequestField(360012782111L, email));
-      customFields.add(new CustomRequestField(360018545031L, email));
-      return customFields;
-    }
+  public String toString() {
+    //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
+    return new GsonBuilder()
+        .setPrettyPrinting()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .create()
+        .toJson(this);
   }
 }
