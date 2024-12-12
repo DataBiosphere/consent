@@ -13,7 +13,7 @@ import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.ConsentApplication;
-import org.broadinstitute.consent.http.AbstractTest;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class DAOTestHelper extends AbstractTest {
+public class DAOTestHelper extends AbstractTestHelper {
 
   public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
   private static final int maxConnections = 100;

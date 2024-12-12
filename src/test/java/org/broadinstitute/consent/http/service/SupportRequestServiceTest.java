@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import org.broadinstitute.consent.http.AbstractTest;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
@@ -31,7 +31,7 @@ import org.mockserver.model.HttpRequest;
 import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class SupportRequestServiceTest extends AbstractTest {
+class SupportRequestServiceTest extends AbstractTestHelper {
 
   private SupportRequestService service;
 

@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 
-public abstract class AbstractTest {
+public abstract class AbstractTestHelper {
 
   public String randomAlphabetic(int length) {
     return RandomStringUtils.secureStrong().nextAlphabetic(length);
