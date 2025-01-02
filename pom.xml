@@ -15,7 +15,7 @@
     <maven.compiler.target>21</maven.compiler.target>
     <liquibase.version>4.30.0</liquibase.version>
     <dropwizard.version>4.0.7</dropwizard.version>
-    <logback.version>1.5.7</logback.version>
+    <logback.version>1.5.13</logback.version>
     <pact.version>4.6.16</pact.version>
     <postgres.version>42.7.4</postgres.version>
     <surefire.version>3.5.2</surefire.version>
