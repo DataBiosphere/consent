@@ -5,8 +5,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
+import com.google.common.net.MediaType;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ServerErrorException;
 import java.nio.charset.StandardCharsets;
@@ -14,16 +13,41 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.support.SupportTicket;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.zendesk.client.v2.Zendesk;
+import org.zendesk.client.v2.model.Attachment.Upload;
+import org.zendesk.client.v2.model.Request;
+import org.zendesk.client.v2.model.Ticket;
 
 public class SupportRequestService implements ConsentLogger {
 
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final Zendesk zendeskClient;
 
   @Inject
   public SupportRequestService(ServicesConfiguration configuration) {
     this.clientUtil = new HttpClientUtil(configuration);
     this.configuration = configuration;
+    this.zendeskClient = new Zendesk.Builder("https://broadinstitute.zendesk.com")
+        .build();
+  }
+
+  public Upload postZendeskAttachment(String fileName, byte[] content) {
+    if (configuration.isActivateSupportNotifications()) {
+      return zendeskClient.createUpload(fileName, MediaType.APPLICATION_BINARY.type(), content);
+    } else {
+      logDebug("Not configured to send support requests");
+    }
+    return null;
+  }
+
+  public Request postZendeskTicket(Ticket ticket) {
+    if (configuration.isActivateSupportNotifications()) {
+      return zendeskClient.createRequest(ticket);
+    } else {
+      logDebug("Not configured to send support requests");
+    }
+    return null;
   }
 
   /**

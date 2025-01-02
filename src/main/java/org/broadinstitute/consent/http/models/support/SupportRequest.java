@@ -2,6 +2,9 @@ package org.broadinstitute.consent.http.models.support;
 
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
+import org.zendesk.client.v2.model.Comment;
+import org.zendesk.client.v2.model.CustomFieldValue;
+import org.zendesk.client.v2.model.Ticket;
 
 /**
  * Represents Request object for the Zendesk API
@@ -10,29 +13,48 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
  * API Reference</a>
  */
 public record SupportRequest(
-    SupportRequester requester,
+    Ticket.Requester requester,
     String subject,
-    List<CustomRequestField> customFields,
-    SupportRequestComment comment,
+    List<CustomFieldValue> customFields,
+    Comment comment,
     long ticketFormId) {
 
   public SupportRequest(String name, SupportRequestType type, String email, String subject,
       String description, String url, List<String> uploads) {
-    this(new SupportRequester(name, email),
+
+    this(new Ticket.Requester(name, email),
         subject,
         createCustomFields(name, type, email, description),
-        new SupportRequestComment(
-            description + "\n\n------------------\nSubmitted from: " + url, uploads),
+        createComment(description, url, uploads),
         360000669472L
     );
   }
 
-  static private List<CustomRequestField> createCustomFields(String name, SupportRequestType type,
+  public Ticket createTicket() {
+    Ticket ticket = new Ticket(
+        this.requester(),
+        this.subject(),
+        this.comment());
+    ticket.setCustomFields(this.customFields());
+    ticket.setTicketFormId(this.ticketFormId());
+    return ticket;
+  }
+
+  static private Comment createComment(String description, String url, List<String> uploads) {
+    Comment comment = new Comment();
+    comment.setBody(description + "\n\n------------------\nSubmitted from: " + url);
+    if (uploads != null && !uploads.isEmpty()) {
+      comment.setUploads(uploads);
+      }
+    return comment;
+  }
+
+  static private List<CustomFieldValue> createCustomFields(String name, SupportRequestType type,
       String email, String description) {
-    return List.of(new CustomRequestField(360012744452L, type.getValue()),
-        new CustomRequestField(360007369412L, description),
-        new CustomRequestField(360012744292L, name),
-        new CustomRequestField(360012782111L, email),
-        new CustomRequestField(360018545031L, email));
+    return List.of(new CustomFieldValue(360012744452L, new String[] {type.getValue()}),
+        new CustomFieldValue(360007369412L, new String[]{description}),
+        new CustomFieldValue(360012744292L, new String[]{name}),
+        new CustomFieldValue(360012782111L, new String[]{email}),
+        new CustomFieldValue(360018545031L, new String[]{email}));
   }
 }

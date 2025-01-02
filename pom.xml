@@ -759,6 +759,13 @@
       <version>1.9.0</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/com.cloudbees.thirdparty/zendesk-java-client -->
+    <dependency>
+      <groupId>com.cloudbees.thirdparty</groupId>
+      <artifactId>zendesk-java-client</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+
   </dependencies>
 
 </project>
