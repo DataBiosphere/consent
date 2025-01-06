@@ -17,6 +17,7 @@ public class ServicesConfiguration {
   public static final String ACCEPT_TOS_PATH = "api/termsOfService/v1/user/self/accept";
   public static final String REJECT_TOS_PATH = "api/termsOfService/v1/user/self/reject";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
+  public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
   @NotNull
   private String ontologyURL;
@@ -118,7 +119,7 @@ public class ServicesConfiguration {
   }
 
   public String postSupportRequestUrl() {
-    return "https://broadinstitute.zendesk.com/api/v2/requests.json";
+    return BROAD_ZENDESK_URL + "/api/v2/requests.json";
   }
 
   public boolean isActivateSupportNotifications() {
