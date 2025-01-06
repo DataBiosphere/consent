@@ -16,7 +16,8 @@ import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.support.SupportTicket;
+import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +62,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void testPostTicketToSupport() throws Exception {
-    SupportTicket ticket = generateTicket();
+    DuosTicket ticket = generateTicket();
     String expectedBody = ticket.toString().replaceAll("\\s*", "");
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
@@ -72,7 +73,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
 
-    service.postTicketToSupport(ticket);
+    service.postZendeskTicket(ticket);
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
     // Ensure that we really did send a ticket object in the POST request
@@ -82,15 +83,16 @@ class SupportRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void testPostTicketToSupportNotificationsNotActivated() throws Exception {
-    SupportTicket ticket = generateTicket();
+    DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
     mockServerClient.when(request()).error(new HttpError());
-    service.postTicketToSupport(ticket);
+    service.postZendeskTicket(ticket);
   }
 
   @Test
   void testPostTicketToSupportServerError() {
+    DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
         "http://" + container.getHost() + ":" + container.getServerPort() + "/");
@@ -99,15 +101,15 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     assertThrows(ServerErrorException.class, () -> {
-      service.postTicketToSupport(generateTicket());
+      service.postZendeskTicket(ticket);
     });
   }
 
   // Creates support ticket with random values
-  private SupportTicket generateTicket() {
+  private DuosTicket generateTicket() {
     List<SupportRequestType> types = new ArrayList<>(EnumSet.allOf(SupportRequestType.class));
     Collections.shuffle(types);
-    return new SupportTicket(
+    return new TicketFactory().createTicket(
         randomAlphabetic(10),
         types.get(0),
         randomAlphabetic(10),

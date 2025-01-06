@@ -4,12 +4,11 @@ import com.google.api.client.http.HttpResponse;
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
-import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.TicketCreator;
+import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.zendesk.client.v2.model.Ticket;
 
 /**
  * This test class should be used for manual integration testing only.
@@ -17,21 +16,21 @@ import org.zendesk.client.v2.model.Ticket;
 class SupportRequestServiceIntegrationTest {
 
   private SupportRequestService service;
-  private TicketCreator ticketCreator;
+  private TicketFactory ticketFactory;
 
   @BeforeEach
   void setUp() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setActivateSupportNotifications(true);
     service = new SupportRequestService(config);
-    ticketCreator = new TicketCreator();
+    ticketFactory = new TicketFactory();
   }
 
 
   @Disabled
   @Test
   void testPostZendeskTicket() throws Exception {
-    Ticket ticket = ticketCreator.createTicket(
+    DuosTicket ticket = ticketFactory.createTicket(
         "Test User Name",
         SupportRequestType.QUESTION,
         "test@duos.org",
@@ -41,21 +40,6 @@ class SupportRequestServiceIntegrationTest {
         List.of()
     );
     HttpResponse response = service.postZendeskTicket(ticket);
-  }
-
-  @Disabled
-  @Test
-  void testPostTicketToSupport() throws Exception {
-    SupportTicket supportTicket = new SupportTicket(
-        "Test User Name",
-        SupportRequestType.QUESTION,
-        "test@duos.org",
-        "Test Subject",
-        "Test Description",
-        "Test URL",
-        List.of()
-    );
-    service.postTicketToSupport(supportTicket);
   }
 
 }

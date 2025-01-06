@@ -6,10 +6,10 @@ import org.zendesk.client.v2.model.Comment;
 import org.zendesk.client.v2.model.CustomFieldValue;
 import org.zendesk.client.v2.model.Ticket;
 
-public class TicketCreator {
+public class TicketFactory {
 
   /**
-   * Constructs a ticket with the proper structure to request support via Zendesk
+   * Constructs a DuosTicket with the proper structure to request support via Zendesk
    *
    * @param name        The name of the user requesting support
    * @param type        The type of request ("question", "incident", "problem", "task")
@@ -19,7 +19,7 @@ public class TicketCreator {
    * @param url         The origin url of this request
    * @param uploads     Optional list of attachment tokens
    */
-  public Ticket createTicket(String name, SupportRequestType type, String email, String subject,
+  public DuosTicket createTicket(String name, SupportRequestType type, String email, String subject,
       String description, String url, List<String> uploads) {
     if (name == null || email == null) {
       throw new IllegalArgumentException("Name and email of user requesting support is required");
@@ -43,7 +43,7 @@ public class TicketCreator {
         createComment(description, url, uploads));
     ticket.setCustomFields(createCustomFields(name, type, email, description));
     ticket.setTicketFormId(360000669472L);
-    return ticket;
+    return new DuosTicket(ticket);
 
   }
 
