@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
@@ -28,7 +30,6 @@ class SupportRequestServiceIntegrationTest {
   @Test
   void testPostTicketToSupportWithAttachment() throws Exception {
     String token = service.postAttachmentToSupport("Test Image Content".getBytes());
-    System.out.println(token);
     DuosTicket ticket = new TicketFactory().createTicket(
         "Test User Name",
         SupportRequestType.QUESTION,
@@ -39,6 +40,7 @@ class SupportRequestServiceIntegrationTest {
         List.of(token)
     );
     Request request = service.postTicketToSupport(ticket);
+    assertNotNull(request);
   }
 
 }
