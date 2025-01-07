@@ -6,8 +6,9 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.zendesk.client.v2.model.Ticket;
 
 /**
- * Wrapper around org.zendesk.client.v2.model.Ticket to do two things: 1. Provide a top level field
- * "request" 2. Ignore the Ticket.hasIncidents field on serialization
+ * Wrapper around org.zendesk.client.v2.model.Ticket to do two things:
+ *  1. Provide a top level field "request"
+ *  2. Ignore the Ticket.hasIncidents field on serialization
  */
 public class DuosTicket {
 
@@ -17,7 +18,6 @@ public class DuosTicket {
     public boolean shouldSkipField(FieldAttributes f) {
       return f.getName().equals("hasIncidents");
     }
-
     @Override
     public boolean shouldSkipClass(Class<?> aClass) {
       return false;

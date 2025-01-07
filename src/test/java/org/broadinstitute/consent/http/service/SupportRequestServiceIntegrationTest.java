@@ -16,28 +16,27 @@ import org.junit.jupiter.api.Test;
 class SupportRequestServiceIntegrationTest {
 
   private SupportRequestService service;
-  private TicketFactory ticketFactory;
 
   @BeforeEach
   void setUp() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setActivateSupportNotifications(true);
     service = new SupportRequestService(config);
-    ticketFactory = new TicketFactory();
   }
-
 
   @Disabled
   @Test
-  void testPostZendeskTicket() throws Exception {
-    DuosTicket ticket = ticketFactory.createTicket(
+  void testPostZendeskTicketWithAttachment() throws Exception {
+    String token = service.postZendeskAttachment("Test Image Content".getBytes());
+    System.out.println(token);
+    DuosTicket ticket = new TicketFactory().createTicket(
         "Test User Name",
         SupportRequestType.QUESTION,
         "test@duos.org",
         "Test Subject",
         "Test Description",
         "Test URL",
-        List.of()
+        List.of(token)
     );
     HttpResponse response = service.postZendeskTicket(ticket);
   }

@@ -122,6 +122,10 @@ public class ServicesConfiguration {
     return BROAD_ZENDESK_URL + "/api/v2/requests.json";
   }
 
+  public String postSupportUploadUrl() {
+    return BROAD_ZENDESK_URL + "/api/v2/uploads?filename=Attachment";
+  }
+
   public boolean isActivateSupportNotifications() {
     return activateSupportNotifications;
   }

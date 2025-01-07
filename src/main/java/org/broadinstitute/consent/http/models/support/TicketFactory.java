@@ -44,7 +44,6 @@ public class TicketFactory {
     ticket.setCustomFields(createCustomFields(name, type, email, description));
     ticket.setTicketFormId(360000669472L);
     return new DuosTicket(ticket);
-
   }
 
   static private Comment createComment(String description, String url, List<String> uploads) {
@@ -58,7 +57,7 @@ public class TicketFactory {
 
   static private List<CustomFieldValue> createCustomFields(String name, SupportRequestType type,
       String email, String description) {
-    return List.of(new CustomFieldValue(360012744452L, new String[] {type.getValue()}),
+    return List.of(new CustomFieldValue(360012744452L, new String[]{type.getValue()}),
         new CustomFieldValue(360007369412L, new String[]{description}),
         new CustomFieldValue(360012744292L, new String[]{name}),
         new CustomFieldValue(360012782111L, new String[]{email}),
