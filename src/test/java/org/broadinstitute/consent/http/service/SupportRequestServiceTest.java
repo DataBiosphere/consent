@@ -73,7 +73,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
 
-    service.postZendeskTicket(ticket);
+    service.postTicketToSupport(ticket);
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
     // Ensure that we really did send a ticket object in the POST request
@@ -87,7 +87,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
     mockServerClient.when(request()).error(new HttpError());
-    service.postZendeskTicket(ticket);
+    service.postTicketToSupport(ticket);
   }
 
   @Test
@@ -101,7 +101,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     assertThrows(ServerErrorException.class, () -> {
-      service.postZendeskTicket(ticket);
+      service.postTicketToSupport(ticket);
     });
   }
 

@@ -26,8 +26,8 @@ class SupportRequestServiceIntegrationTest {
 
   @Disabled
   @Test
-  void testPostZendeskTicketWithAttachment() throws Exception {
-    String token = service.postZendeskAttachment("Test Image Content".getBytes());
+  void testPostTicketToSupportWithAttachment() throws Exception {
+    String token = service.postAttachmentToSupport("Test Image Content".getBytes());
     System.out.println(token);
     DuosTicket ticket = new TicketFactory().createTicket(
         "Test User Name",
@@ -38,7 +38,7 @@ class SupportRequestServiceIntegrationTest {
         "Test URL",
         List.of(token)
     );
-    HttpResponse response = service.postZendeskTicket(ticket);
+    HttpResponse response = service.postTicketToSupport(ticket);
   }
 
 }

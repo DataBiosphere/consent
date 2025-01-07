@@ -36,12 +36,13 @@ public class SupportRequestService implements ConsentLogger {
    * @return Token string for use as a DuosTicket.Ticket attachment
    * @throws Exception The exception
    */
-  public String postZendeskAttachment(byte[] content) throws Exception {
+  public String postAttachmentToSupport(byte[] content) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportUploadUrl());
       ByteArrayContent byteContent = new ByteArrayContent("application/binary", content);
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, byteContent);
       HttpResponse response = clientUtil.handleHttpRequest(request);
+
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error sending attachment to support: " + response.getStatusMessage();
         var errorException = new ServerErrorException(response.getStatusMessage(),
@@ -70,10 +71,9 @@ public class SupportRequestService implements ConsentLogger {
    * @return The response
    * @throws Exception The exception
    */
-  public HttpResponse postZendeskTicket(DuosTicket ticket) throws Exception {
+  public HttpResponse postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-
       ByteArrayContent content = new ByteArrayContent("application/json",
           ticket.toString().getBytes(StandardCharsets.UTF_8));
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
