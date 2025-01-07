@@ -6,9 +6,16 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.zendesk.client.v2.model.Ticket;
 
 /**
- * Wrapper around org.zendesk.client.v2.model.Ticket to do two things:
- *  1. Provide a top level field "request"
- *  2. Ignore the Ticket.hasIncidents field on serialization
+ * Wrapper around org.zendesk.client.v2.model.Ticket to do the following:
+ * <ul>
+ *   <li>Provide a top level field "request" that represents the native Request model which is
+ *   required for Zendesk API usage. See
+ *   <a href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests</a></a>
+ *   for more information.</li>
+ *   <li>It is required that we provide a `ticketFormId` which is not available on the `Request`
+ *   class, but is only on the `Ticket` class.</li>
+ *   <li>Ignore the Ticket.hasIncidents field on serialization</li>
+ * </ul>
  */
 public class DuosTicket {
 
@@ -18,6 +25,7 @@ public class DuosTicket {
     public boolean shouldSkipField(FieldAttributes f) {
       return f.getName().equals("hasIncidents");
     }
+
     @Override
     public boolean shouldSkipClass(Class<?> aClass) {
       return false;
@@ -29,9 +37,7 @@ public class DuosTicket {
   }
 
   public String toString() {
-    return GsonUtil.gsonBuilderWithAdapters()
-        .addSerializationExclusionStrategy(strategy)
-        .create()
+    return GsonUtil.gsonBuilderWithAdapters().addSerializationExclusionStrategy(strategy).create()
         .toJson(this);
   }
 
