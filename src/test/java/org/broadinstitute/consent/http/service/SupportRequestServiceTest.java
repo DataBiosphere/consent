@@ -71,7 +71,8 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(expectedBody));
 
     service.postTicketToSupport(ticket);
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
@@ -102,6 +103,43 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     assertThrows(ServerErrorException.class, () -> {
       service.postTicketToSupport(ticket);
+    });
+  }
+
+  @Test
+  void testPostAttachmentToSupport() throws Exception {
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportUploadUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request().withMethod("POST"))
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
+
+    service.postAttachmentToSupport("Test".getBytes());
+    HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
+    assertEquals(1, requests.length);
+  }
+
+  @Test
+  void testPostAttachmentToSupportNotificationsNotActivated() throws Exception {
+    when(config.isActivateSupportNotifications()).thenReturn(false);
+    // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
+    mockServerClient.when(request()).error(new HttpError());
+    service.postAttachmentToSupport("Test".getBytes());
+  }
+
+  @Test
+  void testPostAttachmentToSupportServerError() {
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportUploadUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+    assertThrows(ServerErrorException.class, () -> {
+      service.postAttachmentToSupport("Test".getBytes());
     });
   }
 

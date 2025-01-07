@@ -13,9 +13,11 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.zendesk.client.v2.model.Request;
 
 public class SupportRequestService implements ConsentLogger {
 
@@ -29,8 +31,8 @@ public class SupportRequestService implements ConsentLogger {
   }
 
   /**
-   * Submit binary content to Zendesk as an attachment. The token in the response can be used
-   * in a subsequent ticket submission.
+   * Submit binary content to Zendesk as an attachment. The token in the response can be used in a
+   * subsequent ticket submission.
    *
    * @param content Binary attachment content
    * @return Token string for use as a DuosTicket.Ticket attachment
@@ -71,7 +73,7 @@ public class SupportRequestService implements ConsentLogger {
    * @return The response
    * @throws Exception The exception
    */
-  public HttpResponse postTicketToSupport(DuosTicket ticket) throws Exception {
+  public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
       ByteArrayContent content = new ByteArrayContent("application/json",
@@ -86,7 +88,8 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return response;
+      return new TicketFactory().parseRequestResponse(
+          IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     } else {
       logDebug("Not configured to send support requests");
     }

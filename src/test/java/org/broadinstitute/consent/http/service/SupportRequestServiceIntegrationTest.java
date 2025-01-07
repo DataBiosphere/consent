@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.api.client.http.HttpResponse;
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
@@ -9,6 +8,7 @@ import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.zendesk.client.v2.model.Request;
 
 /**
  * This test class should be used for manual integration testing only.
@@ -38,7 +38,7 @@ class SupportRequestServiceIntegrationTest {
         "Test URL",
         List.of(token)
     );
-    HttpResponse response = service.postTicketToSupport(ticket);
+    Request request = service.postTicketToSupport(ticket);
   }
 
 }
