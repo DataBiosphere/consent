@@ -59,6 +59,7 @@ public class TicketFactory {
         subject,
         createComment(description, url, uploads));
     ticket.setCustomFields(createCustomFields(name, type, email, description));
+    // This value specifies tickets as belonging to the DUOS group defined in Zendesk
     ticket.setTicketFormId(360000669472L);
     return new DuosTicket(ticket);
   }
@@ -72,6 +73,16 @@ public class TicketFactory {
     return comment;
   }
 
+  /**
+   * Custom fields represent a Zendesk ID that corresponds to a component of the created ticket.
+   * These fields have IDs that are defined in the Zendesk administrative interface.
+   *
+   * @param name Name of user
+   * @param type SupportRequestType Type of request, i.e. Question, Incident, etc.
+   * @param email User's email address
+   * @param description The contents of the support request
+   * @return List of Custom Fields that are required by Zendesk
+   */
   static private List<CustomFieldValue> createCustomFields(String name, SupportRequestType type,
       String email, String description) {
     return List.of(new CustomFieldValue(360012744452L, new String[]{type.getValue()}),
