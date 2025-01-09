@@ -5,15 +5,19 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ServerErrorException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.models.support.SupportTicket;
+import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.zendesk.client.v2.model.Request;
 
 public class SupportRequestService implements ConsentLogger {
 
@@ -27,17 +31,53 @@ public class SupportRequestService implements ConsentLogger {
   }
 
   /**
-   * Posts the given SupportTicket as JSON to the Support Request API if notifications are enabled
+   * Submit binary content to Zendesk as an attachment. The token in the response can be used in a
+   * subsequent ticket submission.
    *
-   * @param ticket SupportTicket to be sent to support application
-   * @throws Exception if an error occurs while posting the HttpRequest
+   * @param content Binary attachment content
+   * @return Token string for use as a DuosTicket.Ticket attachment
+   * @throws Exception The exception
    */
-  public void postTicketToSupport(SupportTicket ticket) throws Exception {
+  public String postAttachmentToSupport(byte[] content) throws Exception {
+    if (configuration.isActivateSupportNotifications()) {
+      GenericUrl genericUrl = new GenericUrl(configuration.postSupportUploadUrl());
+      ByteArrayContent byteContent = new ByteArrayContent("application/binary", content);
+      HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, byteContent);
+      HttpResponse response = clientUtil.handleHttpRequest(request);
+
+      if (!response.isSuccessStatusCode()) {
+        String errorMessage = "Error sending attachment to support: " + response.getStatusMessage();
+        var errorException = new ServerErrorException(response.getStatusMessage(),
+            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        logException(errorMessage, errorException);
+        throw errorException;
+      }
+      String responseContent = IOUtils.toString(response.getContent(), Charset.defaultCharset());
+      JsonObject obj = GsonUtil.getInstance().fromJson(responseContent, JsonObject.class);
+      if (obj != null && obj.get("upload") != null) {
+        JsonObject uploadObj = obj.get("upload").getAsJsonObject();
+        if (uploadObj != null && uploadObj.get("token") != null) {
+          return uploadObj.get("token").getAsString();
+        }
+      }
+    } else {
+      logDebug("Not configured to send support attachments");
+    }
+    return null;
+  }
+
+  /**
+   * Submit a new ticket to Broad's Zendesk instance
+   *
+   * @param ticket An instance of DuosTicket
+   * @return The response
+   * @throws Exception The exception
+   */
+  public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-      String ticketJson = ticket.toString();
       ByteArrayContent content = new ByteArrayContent("application/json",
-          ticketJson.getBytes(StandardCharsets.UTF_8));
+          ticket.toString().getBytes(StandardCharsets.UTF_8));
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
       HttpResponse response = clientUtil.handleHttpRequest(request);
 
@@ -48,9 +88,12 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
+      return new TicketFactory().parseRequestResponse(
+          IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     } else {
       logDebug("Not configured to send support requests");
     }
+    return null;
   }
 
 }
