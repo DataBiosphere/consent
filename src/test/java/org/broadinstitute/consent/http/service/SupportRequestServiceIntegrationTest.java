@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
+import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -31,14 +32,14 @@ class SupportRequestServiceIntegrationTest {
   void testPostTicketToSupportWithAttachment() throws Exception {
     String token = service.postAttachmentToSupport("Test Image Content".getBytes());
     DuosTicket ticket = new TicketFactory().createTicket(
+        new TicketFields(
         "Test User Name",
         SupportRequestType.QUESTION,
         "test@duos.org",
         "Test Subject",
         "Test Description",
         "Test URL",
-        List.of(token)
-    );
+        List.of(token)));
     Request request = service.postTicketToSupport(ticket);
     assertNotNull(request);
   }

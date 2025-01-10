@@ -1,0 +1,21 @@
+post:
+  summary: Create a support request
+  description: Create a support request
+  tags:
+    - Support
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/TicketFields.yaml'
+  responses:
+    200:
+      description: The created support request
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SupportRequestResponse.yaml'
+    429:
+      description: Too many requests. Requests are rate limited
+    500:
+      description: Internal Server Error

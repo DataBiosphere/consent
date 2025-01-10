@@ -28,37 +28,15 @@ public class TicketFactory {
   /**
    * Constructs a DuosTicket with the proper structure to request support via Zendesk
    *
-   * @param name        The name of the user requesting support
-   * @param type        The type of request ("question", "incident", "problem", "task")
-   * @param email       The email of the user requesting support
-   * @param subject     Subject line of the request
-   * @param description Description of the task or question
-   * @param url         The origin url of this request
-   * @param uploads     Optional list of attachment tokens
+   * @param ticketFields  TicketFields
    */
-  public DuosTicket createTicket(String name, SupportRequestType type, String email, String subject,
-      String description, String url, List<String> uploads) {
-    if (name == null || email == null) {
-      throw new IllegalArgumentException("Name and email of user requesting support is required");
-    }
-    if (subject == null) {
-      throw new IllegalArgumentException("Support ticket subject is required");
-    }
-    if (description == null) {
-      throw new IllegalArgumentException("Support ticket description is required");
-    }
-    if (type == null) {
-      throw new IllegalArgumentException("Support ticket type is required");
-    }
-    if (url == null) {
-      throw new IllegalArgumentException("Support ticket url is required");
-    }
-
+  public DuosTicket createTicket(TicketFields ticketFields) {
+    ticketFields.validate();
     Ticket ticket = new Ticket(
-        new Ticket.Requester(name, email),
-        subject,
-        createComment(description, url, uploads));
-    ticket.setCustomFields(createCustomFields(name, type, email, description));
+        new Ticket.Requester(ticketFields.name(), ticketFields.email()),
+        ticketFields.subject(),
+        createComment(ticketFields.description(), ticketFields.url(), ticketFields.uploads()));
+    ticket.setCustomFields(createCustomFields(ticketFields.name(), ticketFields.type(), ticketFields.email(), ticketFields.description()));
     // This value specifies tickets as belonging to the DUOS group defined in Zendesk
     ticket.setTicketFormId(360000669472L);
     return new DuosTicket(ticket);

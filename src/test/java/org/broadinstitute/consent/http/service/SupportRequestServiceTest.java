@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
+import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,12 +149,13 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     List<SupportRequestType> types = new ArrayList<>(EnumSet.allOf(SupportRequestType.class));
     Collections.shuffle(types);
     return new TicketFactory().createTicket(
+        new TicketFields(
         randomAlphabetic(10),
         types.get(0),
         randomAlphabetic(10),
         randomAlphabetic(10),
         randomAlphabetic(10),
         randomAlphabetic(10),
-        List.of(randomAlphanumeric(10)));
+        List.of(randomAlphanumeric(10))));
   }
 }

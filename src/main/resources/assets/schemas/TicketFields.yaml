@@ -1,0 +1,32 @@
+type: object
+required:
+  - name
+  - type
+  - email
+  - subject
+  - description
+  - url
+properties:
+  name:
+    type: string
+    description: The name of the user requesting support
+  type:
+    type: string
+    enum: ["QUESTION", "INCIDENT", "PROBLEM", "TASK"]
+  email:
+    type: string
+    description: The email of the user requesting support
+  subject:
+    type: string
+    description: Subject line of the request
+  description:
+    type: string
+    description: Description of the support request
+  url:
+    type: string
+    description: The origin url of this request
+  uploads:
+    type: array
+    description: Optional list of attachment tokens
+    items:
+      type: string
