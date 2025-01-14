@@ -15,7 +15,5 @@ post:
         application/json:
           schema:
             $ref: '../schemas/SupportRequestResponse.yaml'
-    429:
-      description: Too many requests. Requests are rate limited
     500:
       description: Internal Server Error

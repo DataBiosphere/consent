@@ -18,7 +18,5 @@ post:
             type: string
     400:
       description: Bad Request. Max file upload size is 5 MB
-    429:
-      description: Too many requests. Requests are rate limited
     500:
       description: Internal Server Error
