@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.StudyResource;
+import org.broadinstitute.consent.http.resources.SupportResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
 import org.broadinstitute.consent.http.resources.TDRResource;
 import org.broadinstitute.consent.http.resources.TosResource;
@@ -232,6 +233,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new SchemaResource());
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
     env.jersey().register(new StatusResource(env.healthChecks()));
+    env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(
         new UserResource(samService, userService, datasetService, acknowledgementService));
     env.jersey().register(new TosResource(samService));

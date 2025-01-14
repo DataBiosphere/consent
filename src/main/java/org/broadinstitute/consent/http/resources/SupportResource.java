@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -20,6 +21,7 @@ public class SupportResource extends Resource {
   private final static Gson gson = GsonUtil.getInstance();
   private final static FileValidator validator = new FileValidator();
 
+  @Inject
   public SupportResource(SupportRequestService supportRequestService) {
     this.supportRequestService = supportRequestService;
   }
@@ -30,6 +32,7 @@ public class SupportResource extends Resource {
     try {
       TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
       DuosTicket ticket = ticketFactory.createTicket(ticketFields);
+      logInfo("Support Ticket Request: " + ticket.toString());
       Request request = supportRequestService.postTicketToSupport(ticket);
       return Response.ok(request).build();
     } catch (Exception e) {
@@ -45,6 +48,7 @@ public class SupportResource extends Resource {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
       String token = supportRequestService.postAttachmentToSupport(content);
+      logInfo("Content Uploaded: " + content.length + " bytes");
       return Response.ok(token).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
