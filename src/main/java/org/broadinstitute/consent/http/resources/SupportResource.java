@@ -32,7 +32,7 @@ public class SupportResource extends Resource {
     try {
       TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
       DuosTicket ticket = ticketFactory.createTicket(ticketFields);
-      logInfo("Support Ticket Request: " + ticket.toString());
+      logInfo("Support Request Ticket: " + ticket.toString());
       Request request = supportRequestService.postTicketToSupport(ticket);
       return Response.ok(request).build();
     } catch (Exception e) {
@@ -48,7 +48,7 @@ public class SupportResource extends Resource {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
       String token = supportRequestService.postAttachmentToSupport(content);
-      logInfo("Content Uploaded: " + content.length + " bytes");
+      logInfo("Support Request Content Upload: " + content.length + " bytes");
       return Response.ok(token).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
