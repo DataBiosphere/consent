@@ -7,6 +7,7 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -60,10 +61,9 @@ public class SupportRequestService implements ConsentLogger {
           return uploadObj.get("token").getAsJsonObject();
         }
       }
-    } else {
-      logDebug("Not configured to send support attachments");
     }
-    return null;
+    logDebug("Not configured to send support attachments");
+    throw new BadRequestException("Not configured to send support attachments");
   }
 
   /**
@@ -90,10 +90,9 @@ public class SupportRequestService implements ConsentLogger {
       }
       return new TicketFactory().parseRequestResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
-    } else {
-      logDebug("Not configured to send support requests");
     }
-    return null;
+    logDebug("Not configured to send support requests");
+    throw new BadRequestException("Not configured to send support requests");
   }
 
 }

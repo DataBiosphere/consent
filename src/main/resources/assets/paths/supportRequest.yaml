@@ -15,5 +15,8 @@ post:
         application/json:
           schema:
             $ref: '../schemas/SupportRequestResponse.yaml'
+    400:
+      description: |
+        Bad Request: not configured for support requests
     500:
       description: Internal Server Error

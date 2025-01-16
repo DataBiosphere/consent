@@ -21,6 +21,7 @@ post:
                 type: string
                 description: The upload token that represents this upload request
     400:
-      description: Bad Request. Max file upload size is 5 MB
+      description: | 
+        Bad Request: max file upload size is 5 MB or server not configured for uploads
     500:
       description: Internal Server Error
