@@ -1,0 +1,11 @@
+type: object
+description: A Data Management Incident.
+properties:
+  incidents:
+    type: array
+    items:
+      type: string
+    description: A list of incidents.
+  description:
+    type: string
+    description: A description of the data management incident.

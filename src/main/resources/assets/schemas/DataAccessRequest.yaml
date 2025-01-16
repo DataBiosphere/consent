@@ -203,3 +203,30 @@ properties:
       including any data that are downloaded or utilized in the cloud.
     items:
       $ref: './Collaborator.yaml'
+  progressReportSummary:
+    type: string
+    description: A Progress Report Summary.
+  intellectualPropertySummary:
+    type: string
+    description: An Intellectual Property Summary.
+  publications:
+    type: array
+    description: An array of publications.
+    items:
+      $ref: './Publication.yaml'
+  presentations:
+    type: array
+    description: An array of presentations.
+    items:
+      $ref: './Presentation.yaml'
+  dataManagementIncident:
+    $ref: './DataManagementIncident.yaml'
+    description: A Data Management Incident.
+  researchPlans:
+    type: String
+    description: Research Plans.
+  closeOutSupplement:
+    $ref: './CloseOutSupplement.yaml'
+    description: A Close Out Supplement value.
+
+

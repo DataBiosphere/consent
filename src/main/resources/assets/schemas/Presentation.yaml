@@ -1,0 +1,22 @@
+type: object
+description: A Presentation object.
+properties:
+  title:
+    type: string
+    description: The title of the presentation.
+  link:
+    type: string
+    description: The link to the presentation.
+  date:
+    type: string
+    format: date
+    description: The presentation date.
+  authors:
+    type: string
+    description: The authors of the presentation.
+  datasetCitation:
+    type: string
+    description: The dataset citation of the presentation.
+  citation:
+    type: boolean
+    description: Indicates if the dataset(s) were cited in the Presentation.

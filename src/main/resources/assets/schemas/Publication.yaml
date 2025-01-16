@@ -1,0 +1,25 @@
+type: object
+description: A Publication object.
+properties:
+  title:
+    type: string
+    description: The title of the publication.
+  pubmedId:
+    type: string
+    description: The PubMed ID of the publication.
+  date:
+    type: string
+    format: date
+    description: The publication date.
+  authors:
+    type: string
+    description: The authors of the publication.
+  bibliographicCitation:
+    type: string
+    description: The bibliographic citation of the publication.
+  datasetCitation:
+    type: string
+    description: The dataset citation of the publication.
+  citation:
+    type: boolean
+    description: Indicates if the dataset(s) were cited in the Publication.
