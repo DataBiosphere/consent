@@ -228,5 +228,3 @@ properties:
   closeOutSupplement:
     $ref: './CloseOutSupplement.yaml'
     description: A Close Out Supplement value.
-
-
