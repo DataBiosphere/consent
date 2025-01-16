@@ -51,7 +51,7 @@ public class SupportResourceTest extends ResourceTest {
         """.formatted(type.name());
     when(supportRequestService.postTicketToSupport(any())).thenReturn(new Request());
     try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
 

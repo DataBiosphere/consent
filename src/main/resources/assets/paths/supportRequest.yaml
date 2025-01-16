@@ -9,7 +9,7 @@ post:
         schema:
           $ref: '../schemas/TicketFields.yaml'
   responses:
-    200:
+    201:
       description: The created support request
       content:
         application/json:

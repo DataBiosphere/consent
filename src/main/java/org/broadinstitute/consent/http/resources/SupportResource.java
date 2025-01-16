@@ -41,7 +41,7 @@ public class SupportResource extends Resource {
       DuosTicket ticket = ticketFactory.createTicket(ticketFields);
       logInfo("Support Request Ticket: " + ticket.toString());
       Request request = supportRequestService.postTicketToSupport(ticket);
-      return Response.ok(request).build();
+      return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
