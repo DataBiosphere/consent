@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -18,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.zendesk.client.v2.model.Request;
 
 @ExtendWith(MockitoExtension.class)
-public class SupportResourceTest {
+public class SupportResourceTest extends ResourceTest {
 
   @Mock
   private SupportRequestService supportRequestService;
@@ -176,9 +178,11 @@ public class SupportResourceTest {
 
   @Test
   public void testPostUpload() throws Exception {
-    when(supportRequestService.postAttachmentToSupport(any())).thenReturn("token");
+    JsonObject obj = new JsonObject();
+    obj.add("token", new JsonPrimitive("token value"));
+    when(supportRequestService.postAttachmentToSupport(any())).thenReturn(obj);
     try (Response response = supportResource.postUpload("test".getBytes())) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
 

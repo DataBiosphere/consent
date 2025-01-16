@@ -63,7 +63,7 @@ public class TicketFactory {
    */
   static private List<CustomFieldValue> createCustomFields(String name, SupportRequestType type,
       String email, String description) {
-    return List.of(new CustomFieldValue(360012744452L, new String[]{type.getValue()}),
+    return List.of(new CustomFieldValue(360012744452L, new String[]{type.name()}),
         new CustomFieldValue(360007369412L, new String[]{description}),
         new CustomFieldValue(360012744292L, new String[]{name}),
         new CustomFieldValue(360012782111L, new String[]{email}),

@@ -10,12 +10,16 @@ post:
           type: string
           format: binary
   responses:
-    200:
-      description: The uploaded file token
+    201:
+      description: A token that represents the uploaded file
       content:
-        text/plain:
+        application/json:
           schema:
-            type: string
+            type: object
+            properties:
+              token:
+                type: string
+                description: The upload token that represents this upload request
     400:
       description: Bad Request. Max file upload size is 5 MB
     500:

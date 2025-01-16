@@ -35,10 +35,10 @@ public class SupportRequestService implements ConsentLogger {
    * subsequent ticket submission.
    *
    * @param content Binary attachment content
-   * @return Token string for use as a DuosTicket.Ticket attachment
+   * @return JsonObject with a "token" key containing the file upload token
    * @throws Exception The exception
    */
-  public String postAttachmentToSupport(byte[] content) throws Exception {
+  public JsonObject postAttachmentToSupport(byte[] content) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportUploadUrl());
       ByteArrayContent byteContent = new ByteArrayContent("application/binary", content);
@@ -57,7 +57,7 @@ public class SupportRequestService implements ConsentLogger {
       if (obj != null && obj.get("upload") != null) {
         JsonObject uploadObj = obj.get("upload").getAsJsonObject();
         if (uploadObj != null && uploadObj.get("token") != null) {
-          return uploadObj.get("token").getAsString();
+          return uploadObj.get("token").getAsJsonObject();
         }
       }
     } else {

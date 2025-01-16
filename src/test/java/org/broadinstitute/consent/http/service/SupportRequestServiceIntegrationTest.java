@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
@@ -30,7 +31,8 @@ class SupportRequestServiceIntegrationTest {
   @Disabled
   @Test
   void testPostTicketToSupportWithAttachment() throws Exception {
-    String token = service.postAttachmentToSupport("Test Image Content".getBytes());
+    JsonObject tokenObject = service.postAttachmentToSupport("Test Image Content".getBytes());
+    String token = tokenObject.get("token").getAsString();
     DuosTicket ticket = new TicketFactory().createTicket(
         new TicketFields(
         "Test User Name",
