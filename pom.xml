@@ -17,12 +17,12 @@
     <dropwizard.version>4.0.11</dropwizard.version>
     <logback.version>1.5.16</logback.version>
     <pact.version>4.6.16</pact.version>
-    <postgres.version>42.7.4</postgres.version>
+    <postgres.version>42.7.5</postgres.version>
     <surefire.version>3.5.2</surefire.version>
     <swagger.ui.version>5.18.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.10.3</junit.version>
+    <junit.version>5.11.4</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.15.2</mockito.version>
 
@@ -138,7 +138,7 @@
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <version>12.0.0</version>
+        <version>12.0.1</version>
         <executions>
           <execution>
             <goals>
@@ -370,7 +370,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.4</version>
+      <version>1.5.5</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -449,7 +449,7 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.79</version>
+      <version>1.80</version>
     </dependency>
 
     <dependency>
