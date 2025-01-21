@@ -48,7 +48,7 @@ public class SupportResourceTest extends ResourceTest {
             "token2",
           ]
         }
-        """.formatted(type.name());
+        """.formatted(type);
     when(supportRequestService.postTicketToSupport(any())).thenReturn(new Request());
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
