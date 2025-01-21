@@ -8,13 +8,16 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.core.Response;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.zendesk.client.v2.model.Request;
@@ -55,122 +58,74 @@ public class SupportResourceTest extends ResourceTest {
     }
   }
 
-  @Test
-  void testPostRequestInvalidName() {
-    String body = """
-        {
-          "email": "test.user@example.com",
-          "subject": "Test Subject",
-          "description": "Test Description",
-          "type": "QUESTION",
-          "url": "https://example.com",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
-    try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
+  private static Stream<Arguments> testPostRequestInvalidFields() {
+    return Stream.of(
+        Arguments.of("""
+            {
+              "email": "test.user@example.com",
+              "subject": "Test Subject",
+              "description": "Test Description",
+              "type": "QUESTION",
+              "url": "https://example.com",
+              "uploads": ["token1", "token2"]
+            }
+            """),
+        Arguments.of("""
+            {
+              "name": "Test User",
+              "subject": "Test Subject",
+              "description": "Test Description",
+              "type": "QUESTION",
+              "url": "https://example.com",
+              "uploads": ["token1", "token2"]
+            }
+            """),
+        Arguments.of("""
+            {
+              "name": "Test User",
+              "email": "test.user@example.com",
+              "description": "Test Description",
+              "type": "QUESTION",
+              "url": "https://example.com",
+              "uploads": ["token1", "token2"]
+            }
+            """),
+        Arguments.of("""
+            {
+              "name": "Test User",
+              "email": "test.user@example.com",
+              "subject": "Test Subject",
+              "type": "QUESTION",
+              "url": "https://example.com",
+              "uploads": ["token1", "token2"]
+            }
+            """),
+        Arguments.of("""
+            {
+              "name": "Test User",
+              "email": "test.user@example.com",
+              "subject": "Test Subject",
+              "description": "Test Description",
+              "url": "https://example.com",
+              "uploads": ["token1", "token2"]
+            }
+            """),
+        Arguments.of("""
+            {
+              "name": "Test User",
+              "email": "test.user@example.com",
+              "subject": "Test Subject",
+              "description": "Test Description",
+              "type": "QUESTION",
+              "uploads": ["token1", "token2"]
+            }
+            """)
+    );
   }
 
-  @Test
-  void testPostRequestInvalidEmail() {
-    String body = """
-        {
-          "name": "Test User",
-          "subject": "Test Subject",
-          "description": "Test Description",
-          "type": "QUESTION",
-          "url": "https://example.com",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
-    try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testPostRequestInvalidSubject() {
-    String body = """
-        {
-          "name": "Test User",
-          "email": "test.user@example.com",
-          "description": "Test Description",
-          "type": "QUESTION",
-          "url": "https://example.com",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
-    try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testPostRequestInvalidDescription() {
-    String body = """
-        {
-          "name": "Test User",
-          "email": "test.user@example.com",
-          "subject": "Test Subject",
-          "type": "QUESTION",
-          "url": "https://example.com",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
-    try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testPostRequestInvalidType() {
-    String body = """
-        {
-          "name": "Test User",
-          "email": "test.user@example.com",
-          "subject": "Test Subject",
-          "description": "Test Description",
-          "type": "type",
-          "url": "https://example.com",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
-    try (Response response = supportResource.postRequest(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testPostRequestInvalidURL() {
-    String body = """
-        {
-          "name": "Test User",
-          "email": "test.user@example.com",
-          "subject": "Test Subject",
-          "description": "Test Description",
-          "type": "QUESTION",
-          "uploads": [
-            "token1",
-            "token2",
-          ]
-        }
-        """;
+  @ParameterizedTest
+  @MethodSource
+  void testPostRequestInvalidFields(String body) {
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
