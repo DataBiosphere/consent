@@ -51,6 +51,7 @@ abstract public class Resource implements ConsentLogger {
   public static final String CHAIRPERSON = "Chairperson";
   public static final String MEMBER = "Member";
   public static final String RESEARCHER = "Researcher";
+  // nosemgrep
   public static final String SIGNINGOFFICIAL = "SigningOfficial";
   public static final String DATASUBMITTER = "DataSubmitter";
   public static final String ITDIRECTOR = "ITDirector";
