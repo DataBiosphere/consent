@@ -23,7 +23,7 @@ public class SupportResource extends Resource {
 
   private final SupportRequestService supportRequestService;
   private final static Gson gson = GsonUtil.getInstance();
-  private final static FileValidator validator = new FileValidator();
+  static final long MAX_FILE_UPLOAD_SIZE = new FileValidator().getMaxFileUploadSize();
 
   @Inject
   public SupportResource(SupportRequestService supportRequestService) {
@@ -52,7 +52,7 @@ public class SupportResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response postUpload(byte[] content) {
     try {
-      if (content.length > validator.getMaxFileUploadSize()) {
+      if (content.length > MAX_FILE_UPLOAD_SIZE) {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
       JsonObject token = supportRequestService.postAttachmentToSupport(content);
