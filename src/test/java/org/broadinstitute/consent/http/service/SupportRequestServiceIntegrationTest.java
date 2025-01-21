@@ -33,7 +33,7 @@ class SupportRequestServiceIntegrationTest {
   void testPostTicketToSupportWithAttachment() throws Exception {
     JsonObject tokenObject = service.postAttachmentToSupport("Test Image Content".getBytes());
     String token = tokenObject.get("token").getAsString();
-    DuosTicket ticket = new TicketFactory().createTicket(
+    DuosTicket ticket = TicketFactory.createTicket(
         new TicketFields(
         "Test User Name",
         SupportRequestType.QUESTION,

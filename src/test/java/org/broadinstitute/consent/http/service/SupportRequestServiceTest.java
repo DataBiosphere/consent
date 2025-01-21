@@ -150,7 +150,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
   private DuosTicket generateTicket() {
     List<SupportRequestType> types = new ArrayList<>(EnumSet.allOf(SupportRequestType.class));
     Collections.shuffle(types);
-    return new TicketFactory().createTicket(
+    return TicketFactory.createTicket(
         new TicketFields(
         randomAlphabetic(10),
         types.get(0),

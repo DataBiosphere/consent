@@ -62,7 +62,6 @@ public class SupportRequestService implements ConsentLogger {
         }
       }
     }
-    logDebug("Not configured to send support attachments");
     throw new BadRequestException("Not configured to send support attachments");
   }
 
@@ -88,10 +87,9 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return new TicketFactory().parseRequestResponse(
+      return TicketFactory.parseRequestResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     }
-    logDebug("Not configured to send support requests");
     throw new BadRequestException("Not configured to send support requests");
   }
 

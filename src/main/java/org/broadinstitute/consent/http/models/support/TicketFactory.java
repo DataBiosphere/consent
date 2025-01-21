@@ -18,7 +18,7 @@ public class TicketFactory {
    * @param response The response content from the Zendesk Request API
    * @return Parsed request.
    */
-  public Request parseRequestResponse(String response) {
+  public static Request parseRequestResponse(String response) {
     Gson gson = GsonUtil.getInstance();
     JsonObject obj = gson.fromJson(response, JsonObject.class);
     JsonObject request = obj.get("request").getAsJsonObject();
@@ -30,7 +30,7 @@ public class TicketFactory {
    *
    * @param ticketFields  TicketFields
    */
-  public DuosTicket createTicket(TicketFields ticketFields) {
+  public static DuosTicket createTicket(TicketFields ticketFields) {
     ticketFields.validate();
     Ticket ticket = new Ticket(
         new Ticket.Requester(ticketFields.name(), ticketFields.email()),

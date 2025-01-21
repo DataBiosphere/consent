@@ -22,7 +22,6 @@ import org.zendesk.client.v2.model.Request;
 public class SupportResource extends Resource {
 
   private final SupportRequestService supportRequestService;
-  private final static TicketFactory ticketFactory = new TicketFactory();
   private final static Gson gson = GsonUtil.getInstance();
   private final static FileValidator validator = new FileValidator();
 
@@ -38,7 +37,7 @@ public class SupportResource extends Resource {
   public Response postRequest(String body) {
     try {
       TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
-      DuosTicket ticket = ticketFactory.createTicket(ticketFields);
+      DuosTicket ticket = TicketFactory.createTicket(ticketFields);
       logInfo("Support Request Ticket: " + ticket.toString());
       Request request = supportRequestService.postTicketToSupport(ticket);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
