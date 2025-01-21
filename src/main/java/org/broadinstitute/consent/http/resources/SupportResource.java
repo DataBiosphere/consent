@@ -22,7 +22,7 @@ import org.zendesk.client.v2.model.Request;
 public class SupportResource extends Resource {
 
   private final SupportRequestService supportRequestService;
-  private final static Gson gson = GsonUtil.getInstance();
+  private static final Gson gson = GsonUtil.getInstance();
   static final long MAX_FILE_UPLOAD_SIZE = new FileValidator().getMaxFileUploadSize();
 
   @Inject

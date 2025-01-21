@@ -85,7 +85,7 @@ class EmailServiceTest {
   FreeMarkerTemplateHelper templateHelper;
 
 
-  private final static String serverUrl = "http://localhost:8000/#/";
+  private static final String serverUrl = "http://localhost:8000/#/";
 
   @BeforeEach
   void setUp() {
