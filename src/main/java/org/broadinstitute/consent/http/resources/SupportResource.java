@@ -38,7 +38,7 @@ public class SupportResource extends Resource {
     try {
       TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
       DuosTicket ticket = TicketFactory.createTicket(ticketFields);
-      logInfo("Support Request Ticket: " + ticket.toString());
+      logInfo("Support Request Ticket: " + ticket);
       Request request = supportRequestService.postTicketToSupport(ticket);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {

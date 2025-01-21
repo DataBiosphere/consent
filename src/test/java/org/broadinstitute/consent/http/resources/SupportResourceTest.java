@@ -177,7 +177,7 @@ public class SupportResourceTest extends ResourceTest {
   }
 
   @Test
-  public void testPostUpload() throws Exception {
+  void testPostUpload() throws Exception {
     JsonObject obj = new JsonObject();
     obj.add("token", new JsonPrimitive("token value"));
     when(supportRequestService.postAttachmentToSupport(any())).thenReturn(obj);
