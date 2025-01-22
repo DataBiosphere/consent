@@ -45,9 +45,9 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class UserService implements ConsentLogger {
 
-  public final static String LIBRARY_CARDS_FIELD = "libraryCards";
-  public final static String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
-  public final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+  public static final String LIBRARY_CARDS_FIELD = "libraryCards";
+  public static final String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+  public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
   private final UserPropertyDAO userPropertyDAO;
   private final UserDAO userDAO;

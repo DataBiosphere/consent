@@ -1,0 +1,27 @@
+post:
+  summary: Create a file upload for a support request
+  description: Create a file upload for a support request
+  tags:
+    - Support
+  requestBody:
+    content:
+      application/binary:
+        schema:
+          type: string
+          format: binary
+  responses:
+    201:
+      description: A token that represents the uploaded file
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                description: The upload token that represents this upload request
+    400:
+      description: | 
+        Bad Request: max file upload size is 5 MB or server not configured for uploads
+    500:
+      description: Internal Server Error

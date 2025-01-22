@@ -775,7 +775,7 @@ public class ConsentGroup {
     TDR_LOCATION("TDR Location"),
     NOT_DETERMINED("Not Determined");
     private final String value;
-    private final static Map<String, ConsentGroup.DataLocation> CONSTANTS = new HashMap<String, ConsentGroup.DataLocation>();
+    private static final Map<String, ConsentGroup.DataLocation> CONSTANTS = new HashMap<String, ConsentGroup.DataLocation>();
 
     static {
       for (ConsentGroup.DataLocation c : values()) {
@@ -817,7 +817,7 @@ public class ConsentGroup {
     CONTROLLED("controlled"),
     EXTERNAL("external");
     private final String value;
-    private final static Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
+    private static final Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
 
     static {
       for (ConsentGroup.AccessManagement c : values()) {

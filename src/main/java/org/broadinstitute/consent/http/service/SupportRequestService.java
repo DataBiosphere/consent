@@ -7,6 +7,7 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -35,10 +36,10 @@ public class SupportRequestService implements ConsentLogger {
    * subsequent ticket submission.
    *
    * @param content Binary attachment content
-   * @return Token string for use as a DuosTicket.Ticket attachment
+   * @return JsonObject with a "token" key containing the file upload token
    * @throws Exception The exception
    */
-  public String postAttachmentToSupport(byte[] content) throws Exception {
+  public JsonObject postAttachmentToSupport(byte[] content) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportUploadUrl());
       ByteArrayContent byteContent = new ByteArrayContent("application/binary", content);
@@ -57,13 +58,11 @@ public class SupportRequestService implements ConsentLogger {
       if (obj != null && obj.get("upload") != null) {
         JsonObject uploadObj = obj.get("upload").getAsJsonObject();
         if (uploadObj != null && uploadObj.get("token") != null) {
-          return uploadObj.get("token").getAsString();
+          return uploadObj.get("token").getAsJsonObject();
         }
       }
-    } else {
-      logDebug("Not configured to send support attachments");
     }
-    return null;
+    throw new BadRequestException("Not configured to send support attachments");
   }
 
   /**
@@ -88,12 +87,10 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return new TicketFactory().parseRequestResponse(
+      return TicketFactory.parseRequestResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
-    } else {
-      logDebug("Not configured to send support requests");
     }
-    return null;
+    throw new BadRequestException("Not configured to send support requests");
   }
 
 }

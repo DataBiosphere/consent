@@ -46,17 +46,18 @@ import org.slf4j.LoggerFactory;
 abstract public class Resource implements ConsentLogger {
 
   // Resource based role names
-  public final static String ADMIN = "Admin";
-  public final static String ALUMNI = "Alumni";
-  public final static String CHAIRPERSON = "Chairperson";
-  public final static String MEMBER = "Member";
-  public final static String RESEARCHER = "Researcher";
-  public final static String SIGNINGOFFICIAL = "SigningOfficial";
-  public final static String DATASUBMITTER = "DataSubmitter";
-  public final static String ITDIRECTOR = "ITDirector";
+  public static final String ADMIN = "Admin";
+  public static final String ALUMNI = "Alumni";
+  public static final String CHAIRPERSON = "Chairperson";
+  public static final String MEMBER = "Member";
+  public static final String RESEARCHER = "Researcher";
+  // nosemgrep
+  public static final String SIGNINGOFFICIAL = "SigningOfficial";
+  public static final String DATASUBMITTER = "DataSubmitter";
+  public static final String ITDIRECTOR = "ITDirector";
 
   // NOTE: implement more Postgres vendor codes as we encounter them
-  private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
+  private static final Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
       new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(),
           Response.Status.CONFLICT.getStatusCode())
   );

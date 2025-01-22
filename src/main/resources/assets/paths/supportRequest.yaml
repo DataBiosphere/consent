@@ -1,0 +1,22 @@
+post:
+  summary: Create a support request
+  description: Create a support request
+  tags:
+    - Support
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/TicketFields.yaml'
+  responses:
+    201:
+      description: The created support request
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SupportRequestResponse.yaml'
+    400:
+      description: |
+        Bad Request: not configured for support requests
+    500:
+      description: Internal Server Error

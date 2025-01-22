@@ -8,6 +8,7 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.HttpStatusCodes;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
+import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,12 +85,12 @@ class SupportRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPostTicketToSupportNotificationsNotActivated() throws Exception {
+  void testPostTicketToSupportNotificationsNotActivated() {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
     mockServerClient.when(request()).error(new HttpError());
-    service.postTicketToSupport(ticket);
+    assertThrows(BadRequestException.class, () -> service.postTicketToSupport(ticket));
   }
 
   @Test
@@ -101,32 +103,35 @@ class SupportRequestServiceTest extends AbstractTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-    assertThrows(ServerErrorException.class, () -> {
-      service.postTicketToSupport(ticket);
-    });
+    assertThrows(ServerErrorException.class, () -> service.postTicketToSupport(ticket));
   }
 
   @Test
   void testPostAttachmentToSupport() throws Exception {
+    String expectedBody = """
+        { "upload": { "token": { "token": "token string" } } }
+        """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
         "http://" + container.getHost() + ":" + container.getServerPort() + "/");
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED));
-
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(expectedBody)
+        );
+    service = new SupportRequestService(config);
     service.postAttachmentToSupport("Test".getBytes());
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
   }
 
   @Test
-  void testPostAttachmentToSupportNotificationsNotActivated() throws Exception {
+  void testPostAttachmentToSupportNotificationsNotActivated() {
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
     mockServerClient.when(request()).error(new HttpError());
-    service.postAttachmentToSupport("Test".getBytes());
+    assertThrows(BadRequestException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
@@ -138,22 +143,21 @@ class SupportRequestServiceTest extends AbstractTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-    assertThrows(ServerErrorException.class, () -> {
-      service.postAttachmentToSupport("Test".getBytes());
-    });
+    assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   // Creates support ticket with random values
   private DuosTicket generateTicket() {
     List<SupportRequestType> types = new ArrayList<>(EnumSet.allOf(SupportRequestType.class));
     Collections.shuffle(types);
-    return new TicketFactory().createTicket(
+    return TicketFactory.createTicket(
+        new TicketFields(
         randomAlphabetic(10),
         types.get(0),
         randomAlphabetic(10),
         randomAlphabetic(10),
         randomAlphabetic(10),
         randomAlphabetic(10),
-        List.of(randomAlphanumeric(10)));
+        List.of(randomAlphanumeric(10))));
   }
 }
