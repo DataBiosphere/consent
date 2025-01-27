@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 public class DAOTestHelper extends AbstractTestHelper {
 
@@ -74,7 +75,8 @@ public class DAOTestHelper extends AbstractTestHelper {
   public static void startUp() throws Exception {
     // Start the database
     postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
-        withCommand("postgres -c max_connections=" + maxConnections);
+        withCommand("postgres -c max_connections=" + maxConnections).
+        waitingFor(Wait.forListeningPorts());
     postgresContainer.start();
     ConfigOverride driverOverride = ConfigOverride.config("database.driverClass",
         postgresContainer.getDriverClassName());
