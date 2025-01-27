@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -47,10 +48,15 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.statement.StatementExceptions;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 @ExtendWith(MockitoExtension.class)
 class UserResourceTest {
@@ -454,6 +460,31 @@ class UserResourceTest {
     initResource();
     Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testUpdateSelfInvalidName() {
+    PSQLState psqlState = mock(PSQLState.class);
+    // PSQLState is missing the enum constant 22021 for invalid byte sequence but returns it so we mock it
+    when(psqlState.getState()).thenReturn("22021");
+    PSQLException psqlException = new PSQLException(
+        "invalid byte sequence for encoding \"UTF8\": 0x00", psqlState);
+    StatementContext ctx = mock(StatementContext.class);
+    StatementExceptions exceptions = mock(StatementExceptions.class);
+    when(ctx.getConfig(StatementExceptions.class)).thenReturn(exceptions);
+    UnableToExecuteStatementException exception = new UnableToExecuteStatementException(
+        "Failed to execute statement", psqlException, ctx);
+
+    User user = createUserWithRole();
+    String invalidName = "invalid\0name";
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setDisplayName(invalidName);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(userService.updateUserFieldsById(any(), any())).thenThrow(exception);
+    initResource();
+
+    Response response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields));
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test

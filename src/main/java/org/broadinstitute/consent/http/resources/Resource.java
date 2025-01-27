@@ -15,12 +15,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
@@ -57,9 +57,14 @@ abstract public class Resource implements ConsentLogger {
   public static final String ITDIRECTOR = "ITDirector";
 
   // NOTE: implement more Postgres vendor codes as we encounter them
-  private static final Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
-      new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(),
-          Response.Status.CONFLICT.getStatusCode())
+  private static final Map<String, ImmutablePair<Integer, String>> vendorCodeStatusMap = Map.ofEntries(
+      Map.entry(PSQLState.UNKNOWN_STATE.getState(),
+          ImmutablePair.of(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+              "Database error")),
+      Map.entry(PSQLState.UNIQUE_VIOLATION.getState(),
+          ImmutablePair.of(Response.Status.CONFLICT.getStatusCode(), "Database conflict")),
+      Map.entry("22021",
+          ImmutablePair.of(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid byte sequence"))
   );
 
   protected Response createExceptionResponse(Exception e) {
@@ -179,12 +184,13 @@ abstract public class Resource implements ConsentLogger {
   }
 
   //Helper method to process generic JDBI Postgres exceptions for responses
-  private static Response unableToExecuteExceptionHandler(Exception e) {
+  protected static Response unableToExecuteExceptionHandler(Exception e) {
     //default status definition
     LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
     // static makes using the interface less flexible
     Sentry.captureEvent(new SentryEvent(e));
-    Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+
+    var status = vendorCodeStatusMap.get(PSQLState.UNKNOWN_STATE.getState());
 
     try {
       if (e.getCause() instanceof PSQLException) {
@@ -197,9 +203,12 @@ abstract public class Resource implements ConsentLogger {
       //no need to handle, default status already assigned
     }
 
-    return Response.status(status)
+    int statusCode = status.getLeft();
+    String message = status.getRight();
+
+    return Response.status(statusCode)
         .type(MediaType.APPLICATION_JSON)
-        .entity(new Error("Database Error", status))
+        .entity(new Error(message, statusCode))
         .build();
   }
 
