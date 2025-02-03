@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -182,9 +183,9 @@ public class DraftResource extends Resource {
       DraftInterface draft = draftService.getAuthorizedDraft(
           validateUUID(draftUUID), user);
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-      DraftInterface updatedDraft = draftService.addAttachments(draft, user,
+      List<FileStorageObject> storedFiles = draftService.addAttachments(draft, user,
           files);
-      return Response.ok().entity(updatedDraft.getStoredFiles()).build();
+      return Response.ok().entity(storedFiles).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

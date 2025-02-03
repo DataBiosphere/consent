@@ -272,7 +272,7 @@ class DraftResourceTest {
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     draftWithAttachment.addStoredFile(mock(FileStorageObject.class));
-    when(draftService.addAttachments(any(), any(), any())).thenReturn(draftWithAttachment);
+    when(draftService.addAttachments(any(), any(), any())).thenReturn(draftWithAttachment.getStoredFiles().stream().toList());
     initResource();
     Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
         FormDataMultiPart.class));

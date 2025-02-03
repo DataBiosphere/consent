@@ -112,12 +112,12 @@ public class DraftService {
     return draftDAO.findDraftById(draftUUID);
   }
 
-  public DraftInterface addAttachments(DraftInterface draft, User user,
+  public List<FileStorageObject> addAttachments(DraftInterface draft, User user,
       Map<String, FormDataBodyPart> files) throws SQLException {
-    draftFileStorageService.storeDraftFiles(draft.getUUID(), user, files);
+    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(draft.getUUID(), user, files);
     draftDAO.updateDraftByDraftUUID(draft.getUUID(),
         new Date().toInstant(), user.getUserId());
-    return findDraftByDraftUUID(draft.getUUID());
+    return storedFiles;
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)

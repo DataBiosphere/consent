@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -148,6 +149,19 @@ class DraftServiceTest extends DAOTestHelper {
   }
 
   @Test
+  void testAddAttachmentToDraft() throws SQLException, IOException {
+    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
+        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 3);
+    Map<String, FormDataBodyPart> files = getRandomFiles(1);
+    List<FileStorageObject> addedAttachments = draftService.addAttachments(draft, user, files);
+    assertThat(addedAttachments, hasSize(1));
+    DraftInterface updatedDraft = draftService.getAuthorizedDraft(draft.getUUID(), user);
+    assertThat(updatedDraft.getStoredFiles(), hasSize(4));
+  }
+
+  @Test
   void testDeleteAttachmentFromDraft() throws SQLException, IOException {
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
@@ -204,7 +218,8 @@ class DraftServiceTest extends DAOTestHelper {
     DraftStudyDataset draft = new DraftStudyDataset("{}", user);
     draftService.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);
-    return draftService.addAttachments(draft, user, mapOfFiles);
+    draftService.addAttachments(draft, user, mapOfFiles);
+    return draftService.getAuthorizedDraft(draft.getUUID(), user);
   }
 
   private static class StreamingDeserializer {
