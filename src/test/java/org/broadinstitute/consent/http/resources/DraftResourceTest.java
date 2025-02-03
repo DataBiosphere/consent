@@ -277,7 +277,7 @@ class DraftResourceTest {
     Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
         FormDataMultiPart.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(draftWithAttachment.getStoredFiles(), response.getEntity());
+    assertEquals(draftWithAttachment.getStoredFiles().stream().toList(), response.getEntity());
   }
 
   @Test
