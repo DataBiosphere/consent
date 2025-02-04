@@ -56,10 +56,13 @@ public class SupportRequestService implements ConsentLogger {
       String responseContent = IOUtils.toString(response.getContent(), Charset.defaultCharset());
       JsonObject obj = GsonUtil.getInstance().fromJson(responseContent, JsonObject.class);
       if (obj != null && obj.get("upload") != null) {
-        JsonObject uploadObj = obj.get("upload").getAsJsonObject();
-        if (uploadObj != null && uploadObj.get("token") != null) {
-          return uploadObj.get("token").getAsJsonObject();
-        }
+        return obj.get("upload").getAsJsonObject();
+      } else {
+        var errorException = new ServerErrorException(response.getStatusMessage(),
+            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        String errorMessage = "Error reading attachment response content: " + responseContent;
+        logException(errorMessage, errorException);
+        throw errorException;
       }
     }
     throw new BadRequestException("Not configured to send support attachments");

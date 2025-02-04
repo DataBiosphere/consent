@@ -109,7 +109,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
   @Test
   void testPostAttachmentToSupport() throws Exception {
     String expectedBody = """
-        { "upload": { "token": { "token": "token string" } } }
+        { "upload": { "token": "token string" } }
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
@@ -124,6 +124,25 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     service.postAttachmentToSupport("Test".getBytes());
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
+  }
+
+  @Test
+  void testPostTicketToSupportServerError_UnableToParseResponse() {
+    // This case should never happen, but we do inspect the response for a valid "upload" object.
+    // We need to ensure that the service handles invalid response formats correctly.
+    String expectedBody = """
+        { "invalid": { "missing_token": "token string" } }
+        """;
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportUploadUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request().withMethod("POST"))
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(expectedBody)
+        );
+    assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
