@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -48,8 +49,10 @@ public class SupportRequestService implements ConsentLogger {
 
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error sending attachment to support: " + response.getStatusMessage();
-        var errorException = new ServerErrorException(response.getStatusMessage(),
-            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        var errorException =
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
+                new UnprocessableEntityException(errorMessage) :
+                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
         logException(errorMessage, errorException);
         throw errorException;
       }
@@ -85,8 +88,10 @@ public class SupportRequestService implements ConsentLogger {
 
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error posting ticket to support: " + response.getStatusMessage();
-        var errorException = new ServerErrorException(response.getStatusMessage(),
-            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        var errorException =
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
+                new UnprocessableEntityException(errorMessage) :
+                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
         logException(errorMessage, errorException);
         throw errorException;
       }
