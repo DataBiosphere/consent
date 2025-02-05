@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.MalformedJsonException;
 import io.sentry.Sentry;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -124,6 +126,9 @@ abstract public class Resource implements ConsentLogger {
     dispatch.put(ConsentConflictException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
+    dispatch.put(UnprocessableEntityException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)).build());
     dispatch.put(UnsupportedOperationException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());

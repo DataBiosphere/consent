@@ -23,5 +23,8 @@ post:
     400:
       description: | 
         Bad Request: max file upload size is 5 MB or server not configured for uploads
+    422:
+      description: |
+        Unprocessable Entity: provided content is not processable
     500:
       description: Internal Server Error

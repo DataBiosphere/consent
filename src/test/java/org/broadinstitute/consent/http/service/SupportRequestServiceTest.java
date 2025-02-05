@@ -10,6 +10,7 @@ import static org.mockserver.model.HttpResponse.response;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -17,6 +18,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
@@ -94,6 +96,19 @@ class SupportRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testPostTicketToSupportNotificationsUnprocessableEntity() {
+    DuosTicket ticket = generateTicket();
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportRequestUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
+    assertThrows(UnprocessableEntityException.class, () -> service.postTicketToSupport(ticket));
+  }
+
+  @Test
   void testPostTicketToSupportServerError() {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
@@ -109,7 +124,7 @@ class SupportRequestServiceTest extends AbstractTestHelper {
   @Test
   void testPostAttachmentToSupport() throws Exception {
     String expectedBody = """
-        { "upload": { "token": { "token": "token string" } } }
+        { "upload": { "token": "token string" } }
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
@@ -124,6 +139,25 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     service.postAttachmentToSupport("Test".getBytes());
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
     assertEquals(1, requests.length);
+  }
+
+  @Test
+  void testPostTicketToSupportUnableToParseResponse() {
+    // This case should never happen, but we do inspect the response for a valid "upload" object.
+    // We need to ensure that the service handles invalid response formats correctly.
+    String expectedBody = """
+        { "invalid": { "missing_token": "token string" } }
+        """;
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportUploadUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request().withMethod("POST"))
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+            .withBody(expectedBody)
+        );
+    assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
@@ -144,6 +178,18 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
+  }
+
+  @Test
+  void testPostAttachmentToSupportUnprocessableEntity() {
+    when(config.isActivateSupportNotifications()).thenReturn(true);
+    when(config.postSupportUploadUrl()).thenReturn(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    mockServerClient.when(request())
+        .respond(response()
+            .withHeader(Header.header("Content-Type", "application/json"))
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
+    assertThrows(UnprocessableEntityException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   // Creates support ticket with random values
