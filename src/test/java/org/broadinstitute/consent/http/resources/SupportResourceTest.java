@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -10,6 +11,7 @@ import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.core.Response;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -132,12 +134,40 @@ public class SupportResourceTest extends ResourceTest {
   }
 
   @Test
+  void testUnprocessableTicket() throws Exception {
+    doThrow(new UnprocessableEntityException("Unprocessable")).when(supportRequestService)
+        .postTicketToSupport(any());
+    try (Response response = supportResource.postRequest("""
+        {
+          "name": "Test User",
+          "email": "test.user@example.com",
+          "subject": "Test Subject",
+          "description": "Test Description",
+          "type": "QUESTION",
+          "url": "https://example.com",
+          "uploads": ["token1", "token2"]
+        }
+        """)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
+    }
+  }
+
+  @Test
   void testPostUpload() throws Exception {
     JsonObject obj = new JsonObject();
     obj.add("token", new JsonPrimitive("token value"));
     when(supportRequestService.postAttachmentToSupport(any())).thenReturn(obj);
     try (Response response = supportResource.postUpload("test".getBytes())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUnprocessableUpload() throws Exception {
+    doThrow(new UnprocessableEntityException("Unprocessable")).when(supportRequestService)
+        .postAttachmentToSupport(any());
+    try (Response response = supportResource.postUpload("test".getBytes())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
     }
   }
 
