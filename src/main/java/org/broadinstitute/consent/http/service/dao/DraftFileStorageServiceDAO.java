@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.dao;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
@@ -20,14 +20,14 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
-public class DraftFileStorageService implements ConsentLogger {
+public class DraftFileStorageServiceDAO implements ConsentLogger {
 
   Jdbi jdbi;
   GCSService gcsService;
   FileStorageObjectDAO fileStorageObjectDAO;
 
   @Inject
-  public DraftFileStorageService(Jdbi jdbi, GCSService gcsService,
+  public DraftFileStorageServiceDAO(Jdbi jdbi, GCSService gcsService,
       FileStorageObjectDAO fileStorageObjectDAO) {
     this.jdbi = jdbi;
     this.gcsService = gcsService;
@@ -106,9 +106,5 @@ public class DraftFileStorageService implements ConsentLogger {
           user.getEmail(), draftId.toString(), e));
       throw new RuntimeException(e);
     }
-  }
-
-  public InputStream get(FileStorageObject fileStorageObject) {
-    return gcsService.getDocument(fileStorageObject.getBlobId());
   }
 }

@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DraftService;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.junit.jupiter.api.Test;
@@ -58,12 +59,6 @@ class DraftResourceTest {
 
   @Mock
   private UserService userService;
-
-  @Mock
-  private UriInfo uriInfo;
-
-  @Mock
-  private UriBuilder uriBuilder;
 
   private DraftResource resource;
 

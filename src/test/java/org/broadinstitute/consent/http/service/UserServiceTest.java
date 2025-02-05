@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -95,7 +96,7 @@ class UserServiceTest {
   private EmailService emailService;
 
   @Mock
-  private DraftService draftService;
+  private DraftServiceDAO draftServiceDAO;
 
 
   private UserService service;
@@ -103,7 +104,7 @@ class UserServiceTest {
   private void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftService);
+        emailService, draftServiceDAO);
   }
 
   @Test
