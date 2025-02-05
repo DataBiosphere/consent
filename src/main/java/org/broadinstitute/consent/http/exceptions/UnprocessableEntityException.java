@@ -9,6 +9,4 @@ public class UnprocessableEntityException extends ClientErrorException {
     super(message, HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY);
   }
 
-
-
 }
