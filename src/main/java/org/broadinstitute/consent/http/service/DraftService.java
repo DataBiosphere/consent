@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
 public class DraftService implements ConsentLogger {
+
   DraftServiceDAO draftServiceDAO;
   GCSService gcsService;
 
@@ -33,33 +34,34 @@ public class DraftService implements ConsentLogger {
     return draftServiceDAO.getAuthorizedDraft(uuid, user);
   }
 
-  public List<FileStorageObject> addAttachments(DraftInterface draft, User user, Map<String, FormDataBodyPart> files)
+  public List<FileStorageObject> addAttachments(DraftInterface draft, User user,
+      Map<String, FormDataBodyPart> files)
       throws SQLException {
-      return draftServiceDAO.addAttachments(draft, user, files);
+    return draftServiceDAO.addAttachments(draft, user, files);
   }
 
   public InputStream getDraftAttachmentStream(FileStorageObject targetAttachment) {
-      return gcsService.getDocument(targetAttachment.getBlobId());
+    return gcsService.getDocument(targetAttachment.getBlobId());
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
       throws SQLException {
-      draftServiceDAO.deleteDraftAttachment(draft, user, fileId);
+    draftServiceDAO.deleteDraftAttachment(draft, user, fileId);
   }
 
   public StreamingOutput draftAsJson(DraftInterface draft) {
-      Gson gson = GsonUtil.buildGson();
-      return output -> {
-        output.write("{ \"document\":".getBytes());
-        output.write(draft.getJson().getBytes());
-        output.write(", \"meta\":".getBytes());
-        output.write(gson.toJson(draft).getBytes());
-        output.write("}".getBytes());
+    Gson gson = GsonUtil.buildGson();
+    return output -> {
+      output.write("{ \"document\":".getBytes());
+      output.write(draft.getJson().getBytes());
+      output.write(", \"meta\":".getBytes());
+      output.write(gson.toJson(draft).getBytes());
+      output.write("}".getBytes());
     };
   }
 
   public void insertDraft(DraftInterface draft) throws SQLException {
-      draftServiceDAO.insertDraft(draft);
+    draftServiceDAO.insertDraft(draft);
   }
 
   public Set<DraftSummary> findDraftSummariesForUser(User user) {
@@ -67,7 +69,7 @@ public class DraftService implements ConsentLogger {
   }
 
   public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
-      return draftServiceDAO.updateDraft(draft, user);
+    return draftServiceDAO.updateDraft(draft, user);
   }
 
   public void deleteDraft(DraftInterface draft, User user) {

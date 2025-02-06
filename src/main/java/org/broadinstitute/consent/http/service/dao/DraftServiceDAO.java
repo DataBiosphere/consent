@@ -110,7 +110,8 @@ public class DraftServiceDAO {
 
   public List<FileStorageObject> addAttachments(DraftInterface draft, User user,
       Map<String, FormDataBodyPart> files) throws SQLException {
-    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files);
+    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(
+        draft.getUUID(), user, files);
     draftDAO.updateDraftByDraftUUID(draft.getUUID(),
         new Date().toInstant(), user.getUserId());
     return storedFiles;

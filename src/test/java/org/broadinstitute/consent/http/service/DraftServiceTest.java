@@ -41,7 +41,7 @@ public class DraftServiceTest {
   public void testCreateDraft() throws SQLException {
     doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
     DraftService draftService = new DraftService(draftServiceDAO, gcsService);
-    assertThrows(BadRequestException.class, ()-> draftService.insertDraft(null));
+    assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
   }
 
   @Test
@@ -58,7 +58,8 @@ public class DraftServiceTest {
     Gson gson = GsonUtil.buildGson();
     StreamingDeserializer streamedData = gson.fromJson(byteArrayOutputStream.toString(),
         StreamingDeserializer.class);
-    assertEquals(studyDataset.getCreateDate().getTime(), streamedData.meta.getCreateDate().getTime());
+    assertEquals(studyDataset.getCreateDate().getTime(),
+        streamedData.meta.getCreateDate().getTime());
     assertEquals("{}", streamedData.document.toString());
   }
 
@@ -68,11 +69,11 @@ public class DraftServiceTest {
         .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
         });
     DraftService draftService = new DraftService(draftServiceDAO, gcsService);
-      FileStorageObject fileStorageObject = new FileStorageObject();
-      fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
-      InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);
-      assertEquals("{}",
-          new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
+    InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);
+    assertEquals("{}",
+        new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
   }
 
   private static class StreamingDeserializer {

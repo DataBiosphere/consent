@@ -15,14 +15,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -40,10 +37,7 @@ import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.jdbi.v3.core.statement.StatementException;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +54,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setup() throws IOException {
-    DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService,
+    DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi,
+        gcsService,
         fileStorageObjectDAO);
     this.draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO,
         draftFileStorageServiceDAO);
