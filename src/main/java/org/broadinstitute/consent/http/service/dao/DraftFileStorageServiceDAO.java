@@ -35,18 +35,13 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   }
 
   public List<FileStorageObject> storeDraftFiles(UUID associatedId, User user,
-      Map<String, FormDataBodyPart> files)
-      throws SQLException {
+      Map<String, FormDataBodyPart> files) throws SQLException {
     List<FileStorageObject> fileStorageObjects = new ArrayList<>();
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
         files.forEach((String key, FormDataBodyPart file) -> {
-          try {
-            fileStorageObjects.add(store(file, user, associatedId));
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+          fileStorageObjects.add(store(file, user, associatedId));
         });
       } catch (Exception e) {
         fileStorageObjects.forEach(file -> {
@@ -87,19 +82,11 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
     BlobId blobId;
     try {
       // upload to GCS
-      blobId = gcsService.storeDocument(
-          file.getValueAs(InputStream.class),
-          file.getMediaType().toString(),
-          UUID.randomUUID());
-      Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-          file.getName(),
-          FileCategory.DRAFT_UPLOADED_FILE.getValue(),
-          blobId.toGsUtilUri(),
-          file.getMediaType().toString(),
-          draftId.toString(),
-          user.getUserId(),
-          Instant.now()
-      );
+      blobId = gcsService.storeDocument(file.getValueAs(InputStream.class),
+          file.getMediaType().toString(), UUID.randomUUID());
+      Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(file.getName(),
+          FileCategory.DRAFT_UPLOADED_FILE.getValue(), blobId.toGsUtilUri(),
+          file.getMediaType().toString(), draftId.toString(), user.getUserId(), Instant.now());
       return fileStorageObjectDAO.findFileById(fileStorageObjectId);
     } catch (Exception e) {
       logWarn(String.format("Error storing file for user: %s, draft id : %s, error: %s",

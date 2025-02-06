@@ -22,14 +22,15 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -58,9 +59,9 @@ public class DraftResource extends Resource {
   public Response getDrafts(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Set<DraftSummary> draftSummariesSet = draftService.findDraftSummariesForUser(
+      Collection<DraftSummary> draftSummaries = draftService.findDraftSummariesForUser(
           user);
-      return Response.ok().entity(draftSummariesSet).build();
+      return Response.ok().entity(draftSummaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -126,7 +127,8 @@ public class DraftResource extends Resource {
   @Consumes({MediaType.TEXT_PLAIN})
   @Path("/v1/{draftUUID}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response patchDraftName(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID, String name) {
+  public Response patchDraftName(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID,
+      String name) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);

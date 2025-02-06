@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -29,7 +30,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class DraftServiceTest {
+class DraftServiceTest {
+
+  @Mock
+  private DraftDAO draftDAO;
 
   @Mock
   private DraftServiceDAO draftServiceDAO;
@@ -38,15 +42,15 @@ public class DraftServiceTest {
   private GCSService gcsService;
 
   @Test
-  public void testCreateDraft() throws SQLException {
+  void testCreateDraft() throws SQLException {
     doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
-    DraftService draftService = new DraftService(draftServiceDAO, gcsService);
+    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
     assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
   }
 
   @Test
-  public void testStreamingOutput() throws SQLException, IOException {
-    DraftService draftService = new DraftService(draftServiceDAO, gcsService);
+  void testStreamingOutput() throws SQLException, IOException {
+    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
     User user = new User();
     user.setEmail("test@test.com");
     user.setUserId(1);
@@ -68,7 +72,7 @@ public class DraftServiceTest {
     when(gcsService.getDocument((BlobId) any()))
         .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
         });
-    DraftService draftService = new DraftService(draftServiceDAO, gcsService);
+    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
     InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);

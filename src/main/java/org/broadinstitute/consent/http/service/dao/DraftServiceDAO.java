@@ -5,17 +5,15 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
-import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -46,7 +44,7 @@ public class DraftServiceDAO {
       } catch (Exception e) {
         handle.rollback();
         throw new BadRequestException(
-            "Error submitting draft.  Drafts require valid json to be submitted.");
+            "Error submitting draft.  Drafts require valid json to be submitted.", e);
       }
       handle.commit();
     });
@@ -63,6 +61,8 @@ public class DraftServiceDAO {
             draft.getUUID(), draft.getType().getValue());
       } catch (Exception e) {
         handle.rollback();
+        throw new BadRequestException(
+            "Error updating draft.  Drafts require valid json to be updated.", e);
       }
       handle.commit();
     });
@@ -75,9 +75,9 @@ public class DraftServiceDAO {
       draft = findDraftByDraftUUID(draftUUID);
     } catch (SQLException e) {
       throw new NotFoundException(
-          String.format("Draft with UUID %s not found.", draftUUID.toString()));
+          String.format("Draft with UUID %s not found.", draftUUID));
     }
-    if (Objects.isNull(draft)) {
+    if (draft == null) {
       throw new NotFoundException(
           String.format("Draft with UUID %s not found.", draftUUID.toString()));
     }
@@ -89,17 +89,13 @@ public class DraftServiceDAO {
   }
 
   public void deleteDraftsByUser(User user) {
-    Set<DraftInterface> userDrafts = findDraftsForUser(user);
+    Collection<DraftInterface> userDrafts = findDraftsForUser(user);
     for (DraftInterface draft : userDrafts) {
       deleteDraft(draft, user);
     }
   }
 
-  public Set<DraftSummary> findDraftSummariesForUser(User user) {
-    return draftDAO.findDraftSummariesByUserId(user.getUserId());
-  }
-
-  public Set<DraftInterface> findDraftsForUser(User user) {
+  public Collection<DraftInterface> findDraftsForUser(User user) {
     return draftDAO.findDraftsByUserId(user.getUserId());
   }
 

@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftServiceDAOTest extends DAOTestHelper {
+
   @Mock
   GCSService gcsService;
 
@@ -68,7 +70,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
-    Set<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
     assertThat(storedDrafts, hasSize(1));
     DraftInterface storedDraft = storedDrafts.iterator().next();
@@ -79,8 +81,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateDraftWithInvalidJson() {
     User user = createUser();
-    DraftStudyDataset draft = new DraftStudyDataset("Hello world!",user);
-    assertThrows(BadRequestException.class, ()-> draftServiceDAO.insertDraft(draft));
+    DraftStudyDataset draft = new DraftStudyDataset("Hello world!", user);
+    assertThrows(BadRequestException.class, () -> draftServiceDAO.insertDraft(draft));
   }
 
   @Test
@@ -122,7 +124,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     createDraft(user, 3);
-    Set<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
         user.getUserId());
     assertThat(loadedDrafts, hasSize(1));
     draftServiceDAO.deleteDraft(loadedDrafts.iterator().next(), user);
@@ -174,8 +176,6 @@ class DraftServiceDAOTest extends DAOTestHelper {
         hasSize(0));
   }
 
-
-
   @Test
   void testUpdateDraft() throws SQLException {
     User user = createUser();
@@ -186,7 +186,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     Date originalDocumentDate = draft.getUpdateDate();
     assertEquals(originalDocumentJson, draft.getJson());
     assertEquals(originalDocumentDate, draft.getUpdateDate());
-    assertNotEquals(draft.getName(), newDraftName);
+    assertNotEquals(newDraftName, draft.getName());
     draft.setName(newDraftName);
     draft.setJson(updatedJson);
     DraftInterface updatedDraft = draftServiceDAO.updateDraft(draft, user);
