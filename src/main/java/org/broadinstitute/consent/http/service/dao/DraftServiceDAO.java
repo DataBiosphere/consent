@@ -69,7 +69,7 @@ public class DraftServiceDAO {
     return getAuthorizedDraft(draft.getUUID(), user);
   }
 
-  public DraftInterface getAuthorizedDraft(UUID draftUUID, User user) {
+  public DraftInterface getAuthorizedDraft(UUID draftUUID, User user) throws NotFoundException, NotAuthorizedException {
     DraftInterface draft;
     try {
       draft = findDraftByDraftUUID(draftUUID);

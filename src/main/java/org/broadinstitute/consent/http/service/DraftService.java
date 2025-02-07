@@ -40,7 +40,7 @@ public class DraftService implements ConsentLogger {
 
   public List<FileStorageObject> addAttachments(DraftInterface draft, User user,
       Map<String, FormDataBodyPart> files)
-      throws SQLException {
+      throws SQLException, RuntimeException {
     return draftServiceDAO.addAttachments(draft, user, files);
   }
 
