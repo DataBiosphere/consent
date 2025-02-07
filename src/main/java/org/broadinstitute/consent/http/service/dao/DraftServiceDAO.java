@@ -73,9 +73,9 @@ public class DraftServiceDAO {
     DraftInterface draft;
     try {
       draft = findDraftByDraftUUID(draftUUID);
-    } catch (SQLException e) {
+    } catch (Exception e) {
       throw new NotFoundException(
-          String.format("Draft with UUID %s not found.", draftUUID));
+          String.format("Draft with UUID %s not found.", draftUUID), e);
     }
     if (draft == null) {
       throw new NotFoundException(
@@ -88,7 +88,7 @@ public class DraftServiceDAO {
     return draft;
   }
 
-  public void deleteDraftsByUser(User user) {
+  public void deleteDraftsByUser(User user) throws SQLException, NotFoundException {
     Collection<DraftInterface> userDrafts = findDraftsForUser(user);
     for (DraftInterface draft : userDrafts) {
       deleteDraft(draft, user);
@@ -100,7 +100,7 @@ public class DraftServiceDAO {
   }
 
   private DraftInterface findDraftByDraftUUID(
-      UUID draftUUID) throws SQLException {
+      UUID draftUUID) {
     return draftDAO.findDraftById(draftUUID);
   }
 
@@ -130,22 +130,18 @@ public class DraftServiceDAO {
   }
 
   public void deleteDraft(DraftInterface draft, User user)
-      throws RuntimeException {
+      throws SQLException, NotFoundException {
     jdbi.useHandle(handle -> {
       try {
         handle.useTransaction(handler -> {
           draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
-          draft.getStoredFiles().forEach(fileStorageObject -> {
-            try {
-              draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
-            } catch (SQLException e) {
-              throw new RuntimeException(e);
-            }
-          });
+          for (FileStorageObject fileStorageObject : draft.getStoredFiles()) {
+            draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
+          }
         });
       } catch (Exception e) {
         handle.rollback();
-        throw new RuntimeException(e);
+        throw e;
       }
       handle.commit();
     });

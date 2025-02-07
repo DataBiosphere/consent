@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -75,7 +76,7 @@ public class DraftService implements ConsentLogger {
     return draftServiceDAO.updateDraft(draft, user);
   }
 
-  public void deleteDraft(DraftInterface draft, User user) {
+  public void deleteDraft(DraftInterface draft, User user) throws SQLException, NotFoundException {
     draftServiceDAO.deleteDraft(draft, user);
   }
 }

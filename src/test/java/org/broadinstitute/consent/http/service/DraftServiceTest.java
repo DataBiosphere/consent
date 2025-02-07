@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -41,16 +42,21 @@ class DraftServiceTest {
   @Mock
   private GCSService gcsService;
 
+  private DraftService draftService;
+
+  @BeforeEach
+  void beforeEach() {
+    draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
+  }
+
   @Test
   void testCreateDraft() throws SQLException {
     doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
-    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
     assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
   }
 
   @Test
-  void testStreamingOutput() throws SQLException, IOException {
-    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
+  void testStreamingOutput() throws Exception {
     User user = new User();
     user.setEmail("test@test.com");
     user.setUserId(1);
@@ -68,16 +74,14 @@ class DraftServiceTest {
   }
 
   @Test
-  void testGetDraftFile() throws IOException, SQLException {
-    when(gcsService.getDocument((BlobId) any()))
-        .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
-        });
-    DraftService draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
+  void testGetDraftFile() throws IOException {
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
+    when(gcsService.getDocument(fileStorageObject.getBlobId())).thenAnswer(
+        inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
+        });
     InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);
-    assertEquals("{}",
-        new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
+    assertEquals("{}", new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
   }
 
   private static class StreamingDeserializer {

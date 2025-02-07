@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -57,10 +58,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
   @BeforeEach
   void setup() throws IOException {
     DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi,
-        gcsService,
-        fileStorageObjectDAO);
-    this.draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO,
-        draftFileStorageServiceDAO);
+        gcsService, fileStorageObjectDAO);
+    this.draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO, draftFileStorageServiceDAO);
   }
 
   @Test
@@ -70,8 +69,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
-    Collection<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
-        user.getUserId());
+    Collection<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(user.getUserId());
     assertThat(storedDrafts, hasSize(1));
     DraftInterface storedDraft = storedDrafts.iterator().next();
     assertThat(storedDraft.getStoredFiles(), hasSize(3));
@@ -111,8 +109,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertThrows(NotAuthorizedException.class,
         () -> draftServiceDAO.getAuthorizedDraft(draft.getUUID(), badUser));
     assertThat(draftDAO.findDraftsByUserId(adminUser.getUserId()), hasSize(0));
-    DraftInterface adminVisibleDraft = draftServiceDAO.getAuthorizedDraft(
-        draft.getUUID(), adminUser);
+    DraftInterface adminVisibleDraft = draftServiceDAO.getAuthorizedDraft(draft.getUUID(),
+        adminUser);
     assertEquals(adminVisibleDraft.getUUID(), draft.getUUID());
     assertEquals(adminVisibleDraft.getName(), draft.getName());
     assertThat(adminVisibleDraft.getStoredFiles(), hasSize(4));
@@ -124,8 +122,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     createDraft(user, 3);
-    Collection<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
-        user.getUserId());
+    Collection<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(user.getUserId());
     assertThat(loadedDrafts, hasSize(1));
     draftServiceDAO.deleteDraft(loadedDrafts.iterator().next(), user);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
@@ -198,8 +195,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @NotNull
-  private DraftInterface createDraft(User user, Integer numberOfFiles)
-      throws SQLException {
+  private DraftInterface createDraft(User user, int numberOfFiles) throws SQLException {
     DraftStudyDataset draft = new DraftStudyDataset("{}", user);
     draftServiceDAO.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);
@@ -208,28 +204,24 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   private void assertThinUser(User user) {
-    assertThat(user.getRoles(), is(nullValue()));
-    assertThat(user.getUserId(), is(notNullValue()));
-    assertThat(user.getInstitutionId(), is(nullValue()));
-    assertThat(user.getEraCommonsId(), is(nullValue()));
+    assertThat(user.getRoles(), nullValue());
+    assertThat(user.getUserId(), notNullValue());
+    assertThat(user.getInstitutionId(), nullValue());
+    assertThat(user.getEraCommonsId(), nullValue());
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
     Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
-    IntStream.range(0, count)
-        .forEach(index -> {
-          String name = String.format("file%d", index);
-          mapOfFiles.put(name, getFormDataBodyPartMock(name));
-        });
-    return mapOfFiles;
+    return IntStream.range(0, count).mapToObj("file%d"::formatted).collect(Collectors.toMap(
+        Function.identity(),this::getFormDataBodyPartMock));
   }
 
   private FormDataBodyPart getFormDataBodyPartMock(String name) {
     FormDataBodyPart part = mock(FormDataBodyPart.class);
     when(part.getName()).thenReturn(name);
     when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
-    when(part.getValueAs(InputStream.class))
-        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
+    when(part.getValueAs(InputStream.class)).thenReturn(
+        new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
     return part;
   }
 

@@ -60,7 +60,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
     return fileStorageObjects;
   }
 
-  public void deleteStoredFile(FileStorageObject fileStorageObject, User user) throws SQLException {
+  public void deleteStoredFile(FileStorageObject fileStorageObject, User user) throws SQLException, NotFoundException {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {

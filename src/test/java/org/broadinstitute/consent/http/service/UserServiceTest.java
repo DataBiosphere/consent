@@ -461,6 +461,7 @@ class UserServiceTest {
 
     try {
       service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      verify(draftServiceDAO).deleteDraftsByUser(u);
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }

@@ -269,7 +269,13 @@ public class UserService implements ConsentLogger {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    draftServiceDAO.deleteDraftsByUser(user);
+    try {
+      draftServiceDAO.deleteDraftsByUser(user);
+    } catch (Exception e) {
+      logException(
+          String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
+              userId, e.getMessage()), e);
+    }
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
