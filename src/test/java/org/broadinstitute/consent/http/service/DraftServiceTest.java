@@ -72,9 +72,15 @@ class DraftServiceTest {
   }
 
   @Test
-  void testCreateDraft() throws SQLException {
+  void testInsertDraftThrows() throws SQLException {
     doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
     assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
+  }
+
+  @Test
+  void testInsertDraft() throws SQLException {
+    doNothing().when(draftServiceDAO).insertDraft(draft);
+    assertDoesNotThrow(()->draftService.insertDraft(draft));
   }
 
   @Test
