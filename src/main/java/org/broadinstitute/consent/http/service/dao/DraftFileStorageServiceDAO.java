@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.dao;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
@@ -20,14 +20,14 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
-public class DraftFileStorageService implements ConsentLogger {
+public class DraftFileStorageServiceDAO implements ConsentLogger {
 
   Jdbi jdbi;
   GCSService gcsService;
   FileStorageObjectDAO fileStorageObjectDAO;
 
   @Inject
-  public DraftFileStorageService(Jdbi jdbi, GCSService gcsService,
+  public DraftFileStorageServiceDAO(Jdbi jdbi, GCSService gcsService,
       FileStorageObjectDAO fileStorageObjectDAO) {
     this.jdbi = jdbi;
     this.gcsService = gcsService;
@@ -35,18 +35,13 @@ public class DraftFileStorageService implements ConsentLogger {
   }
 
   public List<FileStorageObject> storeDraftFiles(UUID associatedId, User user,
-      Map<String, FormDataBodyPart> files)
-      throws SQLException {
+      Map<String, FormDataBodyPart> files) throws SQLException {
     List<FileStorageObject> fileStorageObjects = new ArrayList<>();
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
         files.forEach((String key, FormDataBodyPart file) -> {
-          try {
-            fileStorageObjects.add(store(file, user, associatedId));
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+          fileStorageObjects.add(store(file, user, associatedId));
         });
       } catch (Exception e) {
         fileStorageObjects.forEach(file -> {
@@ -65,7 +60,7 @@ public class DraftFileStorageService implements ConsentLogger {
     return fileStorageObjects;
   }
 
-  public void deleteStoredFile(FileStorageObject fileStorageObject, User user) throws SQLException {
+  public void deleteStoredFile(FileStorageObject fileStorageObject, User user) throws SQLException, NotFoundException {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       try {
@@ -87,28 +82,16 @@ public class DraftFileStorageService implements ConsentLogger {
     BlobId blobId;
     try {
       // upload to GCS
-      blobId = gcsService.storeDocument(
-          file.getValueAs(InputStream.class),
-          file.getMediaType().toString(),
-          UUID.randomUUID());
-      Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-          file.getName(),
-          FileCategory.DRAFT_UPLOADED_FILE.getValue(),
-          blobId.toGsUtilUri(),
-          file.getMediaType().toString(),
-          draftId.toString(),
-          user.getUserId(),
-          Instant.now()
-      );
+      blobId = gcsService.storeDocument(file.getValueAs(InputStream.class),
+          file.getMediaType().toString(), UUID.randomUUID());
+      Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(file.getName(),
+          FileCategory.DRAFT_UPLOADED_FILE.getValue(), blobId.toGsUtilUri(),
+          file.getMediaType().toString(), draftId.toString(), user.getUserId(), Instant.now());
       return fileStorageObjectDAO.findFileById(fileStorageObjectId);
     } catch (Exception e) {
       logWarn(String.format("Error storing file for user: %s, draft id : %s, error: %s",
           user.getEmail(), draftId.toString(), e));
       throw new RuntimeException(e);
     }
-  }
-
-  public InputStream get(FileStorageObject fileStorageObject) {
-    return gcsService.getDocument(fileStorageObject.getBlobId());
   }
 }

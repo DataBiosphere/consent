@@ -44,8 +44,6 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.DraftFileStorageService;
-import org.broadinstitute.consent.http.service.DraftService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -67,6 +65,8 @@ import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DraftFileStorageServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
@@ -628,14 +628,14 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DraftFileStorageService providesDraftFileStorageService() {
-    return new DraftFileStorageService(providesJdbi(), providesGCSService(),
+  DraftFileStorageServiceDAO providesDraftFileStorageService() {
+    return new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService(),
         providesFileStorageObjectDAO());
   }
 
   @Provides
-  DraftService providesDraftService() {
-    return new DraftService(providesJdbi(), providesDraftDAO(),
+  DraftServiceDAO providesDraftService() {
+    return new DraftServiceDAO(providesJdbi(), providesDraftDAO(),
         providesDraftFileStorageService());
   }
 }

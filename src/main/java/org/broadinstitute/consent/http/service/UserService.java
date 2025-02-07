@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -61,14 +62,14 @@ public class UserService implements ConsentLogger {
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final EmailService emailService;
-  private final DraftService draftService;
+  private final DraftServiceDAO draftServiceDAO;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
-      DraftService draftService) {
+      DraftServiceDAO draftServiceDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -81,7 +82,7 @@ public class UserService implements ConsentLogger {
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.emailService = emailService;
-    this.draftService = draftService;
+    this.draftServiceDAO = draftServiceDAO;
   }
 
   /**
@@ -268,7 +269,13 @@ public class UserService implements ConsentLogger {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    draftService.deleteDraftsByUser(user);
+    try {
+      draftServiceDAO.deleteDraftsByUser(user);
+    } catch (Exception e) {
+      logException(
+          String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
+              userId, e.getMessage()), e);
+    }
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);

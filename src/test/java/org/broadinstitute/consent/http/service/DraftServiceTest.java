@@ -1,17 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -19,29 +15,29 @@ import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
-import org.broadinstitute.consent.http.db.DAOTestHelper;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.db.DraftDAO;
+import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
+import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,123 +45,122 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DraftServiceTest extends DAOTestHelper {
+class DraftServiceTest {
+
   @Mock
-  GCSService gcsService;
+  private DraftDAO draftDAO;
+
+  @Mock
+  private DraftServiceDAO draftServiceDAO;
+
+  @Mock
+  private GCSService gcsService;
+
   private DraftService draftService;
 
+  private User user;
+
+  private DraftInterface draft;
+
   @BeforeEach
-  void setup() throws IOException {
-    DraftFileStorageService draftFileStorageService = new DraftFileStorageService(jdbi, gcsService,
-        fileStorageObjectDAO);
-    this.draftService = new DraftService(jdbi, draftDAO,
-        draftFileStorageService);
+  void beforeEach() {
+    draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
+    user = new User();
+    user.setEmail("email@email.com");
+    user.setUserId(1);
+    draft = new DraftStudyDataset("{}", user);
   }
 
   @Test
-  void testCreateDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 3);
-    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
-    Set<DraftInterface> storedDrafts = draftDAO.findDraftsByUserId(
-        user.getUserId());
-    assertThat(storedDrafts, hasSize(1));
-    DraftInterface storedDraft = storedDrafts.iterator().next();
-    assertThat(storedDraft.getStoredFiles(), hasSize(3));
-    assertEquals(storedDraft.getUUID(), draft.getUUID());
+  void testInsertDraftThrows() throws SQLException {
+    doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
+    assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
   }
 
   @Test
-  void testCreateDraftWithInvalidJson() {
-    User user = createUser();
-    DraftStudyDataset draft = new DraftStudyDataset("Hello world!",user);
-    assertThrows(BadRequestException.class, ()-> draftService.insertDraft(draft));
+  void testInsertDraft() throws SQLException {
+    doNothing().when(draftServiceDAO).insertDraft(draft);
+    assertDoesNotThrow(()->draftService.insertDraft(draft));
   }
 
   @Test
-  void testThinUserIsReturnedFromDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 3);
-    assertThat(user.getRoles(), hasSize(greaterThan(0)));
-    assertThinUser(draft.getCreateUser());
-    assertThinUser(draft.getUpdateUser());
+  void testGetAuthorizedDraftNotFound() {
+    doThrow(new NotFoundException("Not Found")).when(draftServiceDAO)
+        .getAuthorizedDraft(any(), any());
+    assertThrows(NotFoundException.class, () -> draftService.getAuthorizedDraft(null, user));
   }
 
   @Test
-  void testGetAuthorizedDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User goodUser = createUser();
-    User badUser = createUser();
-    User adminUser = createUser();
-    adminUser.addRole(UserRoles.Admin());
-    DraftInterface draft = createDraft(goodUser, 4);
-    assertThat(draftDAO.findDraftsByUserId(goodUser.getUserId()), hasSize(1));
-    assertThrows(NotFoundException.class,
-        () -> draftService.getAuthorizedDraft(UUID.randomUUID(), goodUser));
+  void testGetAuthorizedDraftsNotAuthorized() {
+    UUID draftId = UUID.randomUUID();
+    doThrow(new NotAuthorizedException("Not Authorized")).when(draftServiceDAO)
+        .getAuthorizedDraft(draftId, user);
     assertThrows(NotAuthorizedException.class,
-        () -> draftService.getAuthorizedDraft(draft.getUUID(), badUser));
-    assertThat(draftDAO.findDraftsByUserId(adminUser.getUserId()), hasSize(0));
-    DraftInterface adminVisibleDraft = draftService.getAuthorizedDraft(
-        draft.getUUID(), adminUser);
-    assertEquals(adminVisibleDraft.getUUID(), draft.getUUID());
-    assertEquals(adminVisibleDraft.getName(), draft.getName());
-    assertThat(adminVisibleDraft.getStoredFiles(), hasSize(4));
+        () -> draftService.getAuthorizedDraft(draftId, user));
   }
 
   @Test
-  void testDeleteDraft() throws Exception {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User user = createUser();
-    createDraft(user, 3);
-    Set<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(
-        user.getUserId());
-    assertThat(loadedDrafts, hasSize(1));
-    draftService.deleteDraft(loadedDrafts.iterator().next(), user);
-    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
+  void testGetAuthorizedDraft() {
+    when(draftServiceDAO.getAuthorizedDraft(any(), any())).thenReturn(draft);
+    assertEquals(draft, draftService.getAuthorizedDraft(draft.getUUID(), user));
   }
 
   @Test
-  void testDeleteDraftsForUser() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User user = createUser();
-    User user2 = createUser();
-    createDraft(user, 3);
-    createDraft(user2, 1);
-    createDraft(user2, 4);
-    assertThat(draftService.findDraftsForUser(user2), hasSize(2));
-    assertThat(draftService.findDraftsForUser(user), hasSize(1));
-    draftService.deleteDraftsByUser(user2);
-    assertThat(draftService.findDraftsForUser(user), hasSize(1));
-    assertThat(draftService.findDraftsForUser(user2), hasSize(0));
-    draftService.deleteDraftsByUser(user2);
+  void testaddAttachments() throws SQLException, RuntimeException {
+    Map<String, FormDataBodyPart> files = new HashMap<>();
+    files.put("test", new FormDataBodyPart("test", "test"));
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setFileName("test");
+    when(draftServiceDAO.addAttachments(draft, user, files)).thenReturn(List.of(fileStorageObject));
+    assertEquals(fileStorageObject,
+        draftService.addAttachments(draft, user, files).iterator().next());
   }
 
   @Test
-  void testDeleteAttachmentFromDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 3);
-    Set<FileStorageObject> storedFiles = draft.getStoredFiles();
-    assertThat(storedFiles, hasSize(3));
-    for (FileStorageObject file : storedFiles) {
-      draftService.deleteDraftAttachment(draft, user, file.getFileStorageObjectId());
-    }
-    assertThat(draftService.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(),
-        hasSize(0));
+  void testDeleteAttachment() throws SQLException {
+    doNothing().when(draftServiceDAO).deleteDraftAttachment(any(), any(), anyInt());
+    assertDoesNotThrow(() -> draftService.deleteDraftAttachment(null, null, 1));
   }
 
   @Test
-  void testStreamingOutput() throws SQLException, IOException {
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 1);
+  void testDeleteAttachmentThrows() throws SQLException {
+    doThrow(new SQLException("Couldn't delete document")).when(draftServiceDAO)
+        .deleteDraftAttachment(any(), any(), anyInt());
+    assertThrows(SQLException.class, () -> draftService.deleteDraftAttachment(null, null, 1));
+  }
+
+  @Test
+  void testFindDraftSummariesForUser() {
+    DraftSummary draftSummary = new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date(),
+        DraftType.STUDY_DATASET_SUBMISSION_V1);
+    when(draftDAO.findDraftSummariesByUserId(user.getUserId())).thenReturn(List.of(draftSummary));
+    draftService.findDraftSummariesForUser(user);
+    assertEquals(draftSummary, draftService.findDraftSummariesForUser(user).iterator().next());
+  }
+
+  @Test
+  void testUpdateDraft() throws SQLException {
+    DraftInterface updatedDraft = new DraftStudyDataset("{}", user);
+    updatedDraft.setUpdateDate(new Date());
+    when(draftServiceDAO.updateDraft(draft, user)).thenReturn(updatedDraft);
+    DraftInterface draftUpdate = draftService.updateDraft(draft, user);
+    assertNotEquals(draftUpdate, draft);
+  }
+
+  @Test
+  void testDeleteDraft() throws SQLException {
+    doNothing().when(draftServiceDAO).deleteDraft(draft, user);
+    draftService.deleteDraft(draft, user);
+  }
+
+  @Test
+  void testDeleteDraftThrows() throws SQLException {
+    doThrow(new SQLException("delete failed.")).when(draftServiceDAO).deleteDraft(draft, user);
+    assertThrows(SQLException.class, () -> draftService.deleteDraft(draft, user));
+  }
+
+  @Test
+  void testStreamingOutput() throws Exception {
     StreamingOutput output = draftService.draftAsJson(draft);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     output.write(byteArrayOutputStream);
@@ -173,38 +168,20 @@ class DraftServiceTest extends DAOTestHelper {
     Gson gson = GsonUtil.buildGson();
     StreamingDeserializer streamedData = gson.fromJson(byteArrayOutputStream.toString(),
         StreamingDeserializer.class);
-    assertEquals(draft.getCreateDate().getTime(), streamedData.meta.getCreateDate().getTime());
+    assertEquals(draft.getCreateDate().getTime(),
+        streamedData.meta.getCreateDate().getTime());
     assertEquals("{}", streamedData.document.toString());
   }
 
   @Test
-  void testUpdateDraft() throws SQLException {
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 1);
-    String updatedJson = "{\"study\": \"My example study\"}";
-    String newDraftName = "My favorite draft";
-    String originalDocumentJson = draft.getJson();
-    Date originalDocumentDate = draft.getUpdateDate();
-    assertEquals(originalDocumentJson, draft.getJson());
-    assertEquals(originalDocumentDate, draft.getUpdateDate());
-    assertNotEquals(draft.getName(), newDraftName);
-    draft.setName(newDraftName);
-    draft.setJson(updatedJson);
-    DraftInterface updatedDraft = draftService.updateDraft(draft, user);
-    assertEquals(draft.getUUID(), updatedDraft.getUUID());
-    assertEquals(newDraftName, updatedDraft.getName());
-    assertEquals(updatedJson, updatedDraft.getJson());
-    assertThinUser(updatedDraft.getCreateUser());
-    assertThinUser(updatedDraft.getUpdateUser());
-  }
-
-  @NotNull
-  private DraftInterface createDraft(User user, Integer numberOfFiles)
-      throws SQLException {
-    DraftStudyDataset draft = new DraftStudyDataset("{}", user);
-    draftService.insertDraft(draft);
-    Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);
-    return draftService.addAttachments(draft, user, mapOfFiles);
+  void testGetDraftFileInputStream() throws IOException {
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
+    when(gcsService.getDocument(fileStorageObject.getBlobId())).thenAnswer(
+        inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
+        });
+    InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);
+    assertEquals("{}", new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
   }
 
   private static class StreamingDeserializer {
@@ -217,32 +194,4 @@ class DraftServiceTest extends DAOTestHelper {
       this.meta = meta;
     }
   }
-
-  private void assertThinUser(User user) {
-    assertThat(user.getRoles(), is(nullValue()));
-    assertThat(user.getUserId(), is(notNullValue()));
-    assertThat(user.getInstitutionId(), is(nullValue()));
-    assertThat(user.getEraCommonsId(), is(nullValue()));
-  }
-
-  private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
-    Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
-    IntStream.range(0, count)
-        .forEach(index -> {
-          String name = String.format("file%d", index);
-          mapOfFiles.put(name, getFormDataBodyPartMock(name));
-        });
-    return mapOfFiles;
-  }
-
-  private FormDataBodyPart getFormDataBodyPartMock(String name) {
-    FormDataBodyPart part = mock(FormDataBodyPart.class);
-    when(part.getName()).thenReturn(name);
-    when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
-    when(part.getValueAs(InputStream.class))
-        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
-    return part;
-  }
-
-
 }

@@ -14,8 +14,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.core.UriInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,12 +21,13 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -57,12 +56,6 @@ class DraftResourceTest {
 
   @Mock
   private UserService userService;
-
-  @Mock
-  private UriInfo uriInfo;
-
-  @Mock
-  private UriBuilder uriBuilder;
 
   private DraftResource resource;
 
@@ -269,15 +262,17 @@ class DraftResourceTest {
 
   @Test
   void testUploadAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
+        new DraftStudyDataset("{}", user));
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     draftWithAttachment.addStoredFile(mock(FileStorageObject.class));
-    when(draftService.addAttachments(any(), any(), any())).thenReturn(draftWithAttachment);
+    when(draftService.addAttachments(any(), any(), any())).thenReturn(
+        List.copyOf(draftWithAttachment.getStoredFiles()));
     initResource();
     Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
         FormDataMultiPart.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(draftWithAttachment.getStoredFiles(), response.getEntity());
+    assertEquals(List.copyOf(draftWithAttachment.getStoredFiles()), response.getEntity());
   }
 
   @Test
@@ -309,7 +304,8 @@ class DraftResourceTest {
     initResource();
     Response response = resource.getAttachment(authUser, UUID.randomUUID().toString(), 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertTrue(response.getHeaderString("Content-Disposition").contains("attachment; filename=\"fileName1.txt\""));
+    assertTrue(response.getHeaderString("Content-Disposition")
+        .contains("attachment; filename=\"fileName1.txt\""));
   }
 
   @Test
@@ -345,7 +341,8 @@ class DraftResourceTest {
 
   @Test
   void testDeleteFileAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(new DraftStudyDataset("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
+        new DraftStudyDataset("{}", user));
     doNothing().when(draftService).deleteDraftAttachment(any(), any(), any());
     initResource();
     Response response = resource.deleteDraftAttachment(authUser, UUID.randomUUID().toString(), 1);

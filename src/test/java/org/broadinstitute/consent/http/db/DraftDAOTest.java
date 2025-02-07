@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import com.google.cloud.storage.BlobId;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -18,8 +19,8 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.mapper.DraftInterfaceMapper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.exceptions.UnknownDraftTypeException;
-import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftInterface;
+import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.DraftSummary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -45,7 +46,7 @@ class DraftDAOTest extends DAOTestHelper {
     String name = draft.getName();
     draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
         draft.getJson(), draft.getUUID(), draft.getType().getValue());
-    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     DraftInterface returnedDraft = user1submissions.iterator().next();
@@ -62,7 +63,7 @@ class DraftDAOTest extends DAOTestHelper {
     assertEquals(returnedDraft.getUpdateUser().getEmail(), user1.getEmail());
     assertEquals(returnedDraft.getUpdateUser().getInstitutionId(), user1.getInstitutionId());
     assertEquals(returnedDraft.getUpdateUser().getEraCommonsId(), user1.getEraCommonsId());
-    Set<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
         user2.getUserId());
     assertThat(user2submissions, hasSize(0));
   }
@@ -138,18 +139,18 @@ class DraftDAOTest extends DAOTestHelper {
     draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
         user2.getUserId(),
         draft2.getJson(), draft2.getUUID(), draft2.getType().getValue());
-    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
-    Set<DraftSummary> user1summaries = draftDAO.findDraftSummariesByUserId(
+    Collection<DraftSummary> user1summaries = draftDAO.findDraftSummariesByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     assertThat(user1summaries, hasSize(1));
     DraftSummary user1DraftSummary = user1summaries.iterator().next();
     DraftInterface user1Draft = user1submissions.iterator().next();
     summaryMatchesDetails(user1DraftSummary, user1Draft);
-    Set<DraftInterface> user2Drafts = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> user2Drafts = draftDAO.findDraftsByUserId(
         user2.getUserId());
-    Set<DraftSummary> user2summaries = draftDAO.findDraftSummariesByUserId(
+    Collection<DraftSummary> user2summaries = draftDAO.findDraftSummariesByUserId(
         user2.getUserId());
     DraftSummary user2DraftSummary = user2summaries.iterator().next();
     DraftInterface user2Draft = user2Drafts.iterator().next();
@@ -176,7 +177,7 @@ class DraftDAOTest extends DAOTestHelper {
     fileStorageObjectDAO.insertNewFile(fso.getFileName(), fso.getCategory().getValue(),
         fso.getBlobId().toGsUtilUri(), fso.getMediaType(), draft.getUUID().toString(),
         user1.getUserId(), fso.getCreateDate());
-    Set<DraftInterface> drafts = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> drafts = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(drafts, hasSize(1));
     Set<FileStorageObject> storedFiles = drafts.iterator().next().getStoredFiles();
@@ -198,7 +199,7 @@ class DraftDAOTest extends DAOTestHelper {
     draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
         user1.getUserId(),
         draft2.getJson(), draft2.getUUID(), draft2.getType().getValue());
-    Set<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
         user1.getUserId());
     assertThat(user1submissions, hasSize(2));
     draftDAO.deleteDraftByUUIDList(List.of(draft2.getUUID()));

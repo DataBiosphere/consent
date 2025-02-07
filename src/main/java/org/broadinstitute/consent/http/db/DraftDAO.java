@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.mapper.DraftInterfaceMapper;
 import org.broadinstitute.consent.http.db.mapper.DraftReducer;
@@ -101,13 +101,13 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           """
                WHERE ds.create_user_id = :createdUserId
               """)
-  Set<DraftInterface> findDraftsByUserId(
+  Collection<DraftInterface> findDraftsByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowMapper(DraftSummaryMapper.class)
   @SqlQuery(
       DRAFT_SUMMARY)
-  Set<DraftSummary> findDraftSummariesByUserId(
+  Collection<DraftSummary> findDraftSummariesByUserId(
       @Bind("createdUserId") Integer createdUserId);
 
   @UseRowReducer(DraftReducer.class)

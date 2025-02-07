@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.dao;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
@@ -17,7 +17,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -37,17 +36,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DraftFileStorageServiceTest extends DAOTestHelper {
+class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   @Mock
   private GCSService gcsService;
 
-  private DraftFileStorageService draftFileStorageService;
+  private DraftFileStorageServiceDAO draftFileStorageServiceDAO;
 
   @BeforeEach
   void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    draftFileStorageService = new DraftFileStorageService(jdbi, gcsService, fileStorageObjectDAO);
+    draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
   }
 
   @Test
@@ -55,7 +54,7 @@ class DraftFileStorageServiceTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
-    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(associatedUUID,
+    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(associatedUUID,
         user, testFiles);
     assertThat(testFiles.values(), hasSize(4));
     assertThat(storedFiles, hasSize(4));
@@ -72,34 +71,15 @@ class DraftFileStorageServiceTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);
-    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(associatedUUID,
+    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(associatedUUID,
         user, testFiles);
     assertThat(testFiles.values(), hasSize(2));
     assertThat(storedFiles, hasSize(2));
     for (FileStorageObject fileStorageObject : storedFiles) {
-      draftFileStorageService.deleteStoredFile(fileStorageObject, user);
+      draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
     }
     assertThrows(NotFoundException.class,
-        () -> draftFileStorageService.deleteStoredFile(new FileStorageObject(), user));
-  }
-
-  @Test
-  void testGetDraftFile() throws IOException, SQLException {
-    when(gcsService.getDocument((BlobId) any()))
-        .thenAnswer(inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
-        });
-    User user = createUser();
-    UUID associatedUUID = UUID.randomUUID();
-    Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);
-    List<FileStorageObject> storedFiles = draftFileStorageService.storeDraftFiles(associatedUUID,
-        user, testFiles);
-    assertThat(testFiles.values(), hasSize(2));
-    assertThat(storedFiles, hasSize(2));
-    for (FileStorageObject fileStorageObject : storedFiles) {
-      InputStream fileContents = draftFileStorageService.get(fileStorageObject);
-      assertEquals(EMPTY_JSON_DOCUMENT,
-          new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
-    }
+        () -> draftFileStorageServiceDAO.deleteStoredFile(new FileStorageObject(), user));
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {

@@ -1,6 +1,6 @@
 get:
-  summary: Get the list of attachments associated with a draft
-  description: Provides the list of attachments that are part of a draft.
+  summary: Get the list of all attachments associated with a draft
+  description: Provides the full list of attachments that are part of a draft.
   tags:
     - Draft
   parameters:
@@ -53,7 +53,7 @@ post:
               format: binary
   responses:
     200:
-      description: The attachment(s) were uploaded successfully.
+      description: The attachment(s) were uploaded successfully.  Response payload only includes references to the posted files
       content:
         application/json:
           schema:
