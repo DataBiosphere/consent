@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
@@ -29,10 +30,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class NihServiceTest {
 
   @Mock
-  private ResearcherService researcherService;
+  private UserDAO userDAO;
 
   @Mock
-  private UserDAO userDAO;
+  private UserPropertyDAO userPropertyDAO;
 
   @Mock
   private NihServiceDAO nihServiceDAO;
@@ -42,28 +43,26 @@ class NihServiceTest {
   private AuthUser authUser;
 
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     nihUserAccount = new NIHUserAccount("nih username", new ArrayList(), new Date().toString(),
         true);
     authUser = new AuthUser("test@test.com");
   }
 
   private void initService() {
-    service = new NihService(researcherService, userDAO, nihServiceDAO);
+    service = new NihService(userDAO, userPropertyDAO, nihServiceDAO);
   }
 
   @Test
   void testAuthenticateNih_InvalidUser() {
     initService();
-    assertThrows(NotFoundException.class, () -> {
-      service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1);
-    });
+    assertThrows(NotFoundException.class, () -> service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1));
   }
 
   @Test
   void testAuthenticateNih() {
     List<UserProperty> props = Collections.singletonList(new UserProperty(1, 1, "test", "value"));
-    when(researcherService.describeUserProperties(any())).thenReturn(props);
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(props);
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
@@ -86,17 +85,14 @@ class NihServiceTest {
     when(userDAO.findUserById(any())).thenReturn(user);
     nihUserAccount.setNihUsername("");
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      service.authenticateNih(nihUserAccount, authUser, 1);
-    });
+    assertThrows(BadRequestException.class,
+        () -> service.authenticateNih(nihUserAccount, authUser, 1));
   }
 
   @Test
   void testAuthenticateNih_BadRequestNullAccount() {
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      service.authenticateNih(null, authUser, 1);
-    });
+    assertThrows(BadRequestException.class, () -> service.authenticateNih(null, authUser, 1));
   }
 
   @Test
@@ -104,14 +100,22 @@ class NihServiceTest {
     NIHUserAccount account = new NIHUserAccount();
     account.setStatus(true);
     initService();
-    assertThrows(BadRequestException.class, () -> {
-      service.authenticateNih(account, authUser, 1);
-    });
+    assertThrows(BadRequestException.class, () -> service.authenticateNih(account, authUser, 1));
   }
 
   @Test
   void testDeleteNihAccountById() {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserById(any())).thenReturn(user);
     initService();
     service.deleteNihAccountById(1);
+    verify(userPropertyDAO, times(1)).deletePropertiesByUserAndKey(any());
+  }
+
+  @Test
+  void testDeleteNihAccountByIdNotFound() {
+    initService();
+    assertThrows(NotFoundException.class, () -> service.deleteNihAccountById(1));
   }
 }

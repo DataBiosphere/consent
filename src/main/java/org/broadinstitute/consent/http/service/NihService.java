@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
@@ -20,15 +21,15 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class NihService implements ConsentLogger {
 
-  private final ResearcherService researcherService;
   private final UserDAO userDAO;
+  private final UserPropertyDAO userPropertyDAO;
   private final NihServiceDAO serviceDAO;
 
   @Inject
-  public NihService(ResearcherService researcherService, UserDAO userDAO,
+  public NihService(UserDAO userDAO, UserPropertyDAO userPropertyDAO,
       NihServiceDAO serviceDAO) {
-    this.researcherService = researcherService;
     this.userDAO = userDAO;
+    this.userPropertyDAO = userPropertyDAO;
     this.serviceDAO = serviceDAO;
   }
 
@@ -57,7 +58,8 @@ public class NihService implements ConsentLogger {
       } catch (IllegalArgumentException e) {
         logException(e);
       }
-      return researcherService.describeUserProperties(userId);
+      return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId,
+          UserFields.getValues());
     } else {
       throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getEmail());
     }
@@ -67,7 +69,10 @@ public class NihService implements ConsentLogger {
     List<UserProperty> properties = new ArrayList<>();
     properties.add(new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()));
     properties.add(new UserProperty(userId, UserFields.ERA_STATUS.getValue()));
-    researcherService.deleteResearcherSpecificProperties(properties);
+    if (userDAO.findUserById(userId) == null) {
+      throw new NotFoundException("User with id: " + userId + " does not exist");
+    }
+    userPropertyDAO.deletePropertiesByUserAndKey(properties);
   }
 
 
