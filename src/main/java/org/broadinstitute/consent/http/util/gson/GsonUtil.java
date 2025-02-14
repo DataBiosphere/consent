@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.util.gson;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
@@ -29,6 +30,7 @@ public class GsonUtil {
 
   public static GsonBuilder gsonBuilderWithAdapters() {
     return new GsonBuilder()
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .registerTypeAdapter(
             Instant.class,
             new InstantTypeAdapter())

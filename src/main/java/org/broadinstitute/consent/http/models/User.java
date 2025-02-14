@@ -7,7 +7,6 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -211,6 +210,12 @@ public class User {
     this.roles = List.of(UserRoles.Member());
   }
 
+  public void setMemberRoleWithDAC(int dacId) {
+    UserRole memberRole = UserRoles.Member();
+    memberRole.setDacId(dacId);
+    this.roles = List.of(memberRole);
+  }
+
   public void setResearcherRole() {
     this.roles = List.of(UserRoles.Researcher());
   }
@@ -332,7 +337,7 @@ public class User {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public boolean hasUserRole(UserRoles role) {
@@ -352,13 +357,6 @@ public class User {
         .stream()
         .map(UserRole::getRoleId)
         .collect(Collectors.toList());
-  }
-
-  @Transient
-  public boolean doesUserHaveAnyRoleInSet(EnumSet<UserRoles> userRoles) {
-    List<Integer> queriedRoleIds = userRoles.stream().map(UserRoles::getRoleId)
-        .collect(Collectors.toList());
-    return getUserRoleIdsFromUser().stream().anyMatch(queriedRoleIds::contains);
   }
 
   @Transient

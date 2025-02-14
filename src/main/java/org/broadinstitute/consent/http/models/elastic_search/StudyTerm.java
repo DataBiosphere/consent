@@ -7,6 +7,7 @@ public class StudyTerm {
   private String description;
   private String studyName;
   private Integer studyId;
+  private String phsId;
   private String phenotype;
   private String species;
   private String piName;
@@ -40,6 +41,10 @@ public class StudyTerm {
   public void setStudyId(Integer studyId) {
     this.studyId = studyId;
   }
+
+  public String getPhsId() { return phsId; }
+
+  public void setPhsId(String phsId) { this.phsId = phsId; }
 
   public String getPhenotype() {
     return phenotype;

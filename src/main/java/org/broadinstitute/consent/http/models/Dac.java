@@ -32,6 +32,8 @@ public class Dac {
 
   private String email;
 
+  private DataAccessAgreement associatedDaa;
+
   public Dac() {
   }
 
@@ -116,13 +118,21 @@ public class Dac {
     this.email = email;
   }
 
+  public DataAccessAgreement getAssociatedDaa() {
+    return associatedDaa;
+  }
+
+  public void setAssociatedDaa(DataAccessAgreement associatedDaa) {
+    this.associatedDaa = associatedDaa;
+  }
+
   public void addDataset(Dataset dataset) {
     if (Objects.isNull(datasets)) {
       datasets = new ArrayList<>();
     }
     datasets.add(dataset);
-    if (!datasetIds.contains(dataset.getDataSetId())) {
-      addDatasetId(dataset.getDataSetId());
+    if (!datasetIds.contains(dataset.getDatasetId())) {
+      addDatasetId(dataset.getDatasetId());
     }
   }
 }

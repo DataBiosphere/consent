@@ -22,28 +22,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       SELECT m.*, r.*
         FROM match_entity m
         LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
-        WHERE m.consent = :consentId
-      """)
-  List<Match> findMatchesByConsentId(@Bind("consentId") String consentId);
-
-  @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
-      SELECT m.*, r.*
-        FROM match_entity m
-        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
         WHERE m.purpose = :purposeId
       """)
   List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
-
-  @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
-      SELECT m.*, r.*
-        FROM match_entity m
-        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
-        WHERE m.purpose = :purposeId AND m.consent = :consentId
-      """)
-  Match findMatchByPurposeIdAndConsentId(@Bind("purposeId") String purposeId,
-      @Bind("consentId") String consentId);
 
   @UseRowReducer(MatchReducer.class)
   @SqlQuery("""
@@ -96,17 +77,11 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate("INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")
   void insertRationale(@Bind("matchId") Integer matchId, @Bind("rationale") String rationale);
 
-  @SqlUpdate("DELETE FROM match_entity WHERE consent = :consentId")
-  void deleteMatchesByConsentId(@Bind("consentId") String consentId);
-
   @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
   void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
   @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
   void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
-
-  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE consent IN (<consentIds>)) ")
-  void deleteRationalesByConsentIds(@BindList("consentIds") List<String> consentIds);
 
   @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
   void deleteRationalesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);

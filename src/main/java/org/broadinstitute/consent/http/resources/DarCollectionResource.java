@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -46,6 +47,7 @@ public class DarCollectionResource extends Resource {
   @Path("role/{roleName}/summary")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  @Timed
   public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser,
       @PathParam("roleName") String roleName) {
     try {
@@ -80,7 +82,7 @@ public class DarCollectionResource extends Resource {
           break;
         case Resource.CHAIRPERSON:
         case Resource.MEMBER:
-          List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+          List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
           allowedAccess = summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
           break;
         case Resource.SIGNINGOFFICIAL:
@@ -145,10 +147,10 @@ public class DarCollectionResource extends Resource {
 
   private boolean checkDacPermissionsForCollection(User user, DarCollection collection) {
     // finds datasetIds for user based on the DACs they belong to
-    List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByUser(user);
+    List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
 
     return collection.getDatasets().stream()
-        .map(Dataset::getDataSetId)
+        .map(Dataset::getDatasetId)
         .anyMatch(userDatasetIds::contains);
   }
 

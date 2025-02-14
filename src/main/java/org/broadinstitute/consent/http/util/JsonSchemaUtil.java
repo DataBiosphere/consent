@@ -17,12 +17,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class JsonSchemaUtil {
+public class JsonSchemaUtil implements ConsentLogger {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final LoadingCache<String, String> cache;
   private final String datasetRegistrationSchemaV1 = "/dataset-registration-schema_v1.json";
   private JsonSchemaFactory factory;
@@ -43,7 +40,7 @@ public class JsonSchemaUtil {
     try {
       return cache.get(datasetRegistrationSchemaV1);
     } catch (ExecutionException ee) {
-      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
+      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
       return null;
     }
   }
@@ -77,7 +74,7 @@ public class JsonSchemaUtil {
 
       return schema.validate(datasetRegistrationJson);
     } catch (ExecutionException ee) {
-      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
+      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
       return Set.of();
     } catch (Exception e) {
       throw new BadRequestException("Invalid schema");
@@ -95,7 +92,7 @@ public class JsonSchemaUtil {
       Gson gson = new Gson();
       return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
     } catch (Exception ee) {
-      logger.error("Unable to load the data submitter schema: " + ee.getMessage());
+      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
       return null;
     }
   }

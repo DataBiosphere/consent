@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.db;
 /**
  * Generic container class for DAOs that can be used in service constructors to simplify instance
  * creation.
+ * Per feedback in https://github.com/DataBiosphere/consent/pull/2408
+ * 'We should only expand this usage if necessary.'
  */
 @SuppressWarnings("unused")
 public class DAOContainer {
@@ -12,7 +14,6 @@ public class DAOContainer {
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
   private DarCollectionSummaryDAO darCollectionSummaryDAO;
-  private DatasetAssociationDAO datasetAssociationDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
   private MailMessageDAO mailMessageDAO;
@@ -68,15 +69,6 @@ public class DAOContainer {
       DarCollectionSummaryDAO darCollectionSummaryDAO
   ) {
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
-  }
-
-  public DatasetAssociationDAO getDatasetAssociationDAO() {
-    return datasetAssociationDAO;
-  }
-
-  public void setDatasetAssociationDAO(
-      DatasetAssociationDAO datasetAssociationDAO) {
-    this.datasetAssociationDAO = datasetAssociationDAO;
   }
 
   public DatasetDAO getDatasetDAO() {

@@ -32,20 +32,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MatchDAOTest extends DAOTestHelper {
 
   @Test
-  void testFindMatchesByConsentId() {
-    Match m = createMatch();
-
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertFalse(matches.isEmpty());
-    Match found = matches.get(0);
-    assertEquals(found.getId(), m.getId());
-    assertEquals(found.getPurpose(), m.getPurpose());
-    assertEquals(found.getConsent(), m.getConsent());
-    assertEquals(found.getFailed(), m.getFailed());
-    assertEquals(found.getMatch(), m.getMatch());
-  }
-
-  @Test
   void testFindMatchesByPurposeId() {
     Match m = createMatch();
 
@@ -69,15 +55,6 @@ class MatchDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
     return match;
-  }
-
-  @Test
-  void testDeleteMatchesByConsentId() {
-    Match m = createMatch();
-
-    matchDAO.deleteMatchesByConsentId(m.getConsent());
-    List<Match> matches = matchDAO.findMatchesByConsentId(m.getConsent());
-    assertTrue(matches.isEmpty());
   }
 
   @Test
@@ -107,14 +84,14 @@ class MatchDAOTest extends DAOTestHelper {
     //creating two access elections with the same reference id and datasetid to test that condition
     String darReferenceId = UUID.randomUUID().toString();
     Election targetElection = createDataAccessElection(
-        darReferenceId, dataset.getDataSetId()
+        darReferenceId, dataset.getDatasetId()
     );
     Election ignoredAccessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDataSetId()
+        UUID.randomUUID().toString(), dataset.getDatasetId()
     );
 
     //Generate RP election to test that the query only references DataAccess elections
-    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDataSetId());
+    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     //This match represents the match record generated for the target election
@@ -142,10 +119,10 @@ class MatchDAOTest extends DAOTestHelper {
 
     //Generate access election for test
     Election accessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDataSetId());
+        UUID.randomUUID().toString(), dataset.getDatasetId());
 
     //Generate RP election for test
-    Election rpElection = createRPElection(darReferenceId, dataset.getDataSetId());
+    Election rpElection = createRPElection(darReferenceId, dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
@@ -160,22 +137,6 @@ class MatchDAOTest extends DAOTestHelper {
     List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
         List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
-  }
-
-  @Test
-  void testFindMatchByPurposeIdAndConsentId() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    matchDAO.insertMatch(
-      match.getConsent(),
-      match.getPurpose(),
-      match.getMatch(),
-      match.getFailed(),
-      new Date(),
-      match.getAlgorithmVersion(),
-      match.getAbstain());
-    Match foundMatch = matchDAO.findMatchByPurposeIdAndConsentId(match.getPurpose(),
-        match.getConsent());
-    assertNotNull(foundMatch);
   }
 
   @Test
@@ -213,28 +174,6 @@ class MatchDAOTest extends DAOTestHelper {
     assertNotNull(foundMatch);
     assertEquals(match.getRationales().size(),
         foundMatch.getRationales().size());
-  }
-
-  @Test
-  void testDeleteFailureReasonsByConsentIds() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
-    match.setMatch(false);
-    match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
-    match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
-    matchDAO.deleteRationalesByConsentIds(List.of(match.getConsent()));
-    Match foundMatch = matchDAO.findMatchById(matchId);
-    assertNotNull(foundMatch);
-    assertEquals(0, foundMatch.getRationales().size());
   }
 
   @Test
@@ -298,7 +237,7 @@ class MatchDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());

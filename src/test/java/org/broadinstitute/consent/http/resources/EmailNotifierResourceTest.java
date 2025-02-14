@@ -22,22 +22,24 @@ class EmailNotifierResourceTest {
   private EmailNotifierResource resource;
 
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     resource = new EmailNotifierResource(emailService);
   }
 
   @Test
   void testResourceSuccess() throws Exception {
     doNothing().when(emailService).sendReminderMessage(any());
-    Response response = resource.sendReminderMessage(
-        String.valueOf(RandomUtils.nextInt(100, 1000)));
-    assertEquals(200, response.getStatus());
+    try (Response response = resource.sendReminderMessage(
+        String.valueOf(RandomUtils.nextInt(100, 1000)))) {
+      assertEquals(200, response.getStatus());
+    }
   }
 
   @Test
   void testResourceFailure() {
-    Response response = resource.sendReminderMessage("invalidVoteId");
-    assertEquals(500, response.getStatus());
+    try (Response response = resource.sendReminderMessage("invalidVoteId")) {
+      assertEquals(500, response.getStatus());
+    }
   }
 
 }

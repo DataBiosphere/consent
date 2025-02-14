@@ -45,13 +45,11 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class DarCollectionService {
+public class DarCollectionService implements ConsentLogger {
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionServiceDAO collectionServiceDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
@@ -146,7 +144,7 @@ public class DarCollectionService {
       summary.addReferenceId(d.referenceId);
       return summary;
     } catch (Exception e) {
-      logger.warn("Error processing draft with id: " + d.getId());
+      logWarn("Error processing draft with id: %s".formatted(d.getId()), e);
     }
     return null;
   }
@@ -334,7 +332,7 @@ public class DarCollectionService {
         .filter(Predicate.not(List::isEmpty))
         .map(datasetDAO::findDatasetListByDacIds)
         .flatMap(List::stream)
-        .map(Dataset::getDataSetId)
+        .map(Dataset::getDatasetId)
         .toList();
   }
 
@@ -416,11 +414,13 @@ public class DarCollectionService {
     return this.processDraftAsSummary(new ArrayList<>(sourceCollection.getDars().values()).get(0));
   }
 
-  public List<Integer> findDatasetIdsByUser(User user) {
-    return datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
-        .stream()
-        .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+  /**
+   * Find all dataset ids by the DAC User. Will return ids for Chairpersons or Members
+   * @param user The DAC User
+   * @return List of Dataset IDs
+   */
+  public List<Integer> findDatasetIdsByDACUser(User user) {
+    return datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
   }
 
   public void deleteByCollectionId(User user, Integer collectionId)
@@ -480,7 +480,6 @@ public class DarCollectionService {
     List<Integer> electionIds = allElections.stream().map(Election::getElectionId)
         .collect(toList());
 
-    electionDAO.deleteElectionsFromAccessRPs(electionIds);
     electionDAO.deleteElectionsByIds(electionIds);
 
   }
@@ -532,7 +531,7 @@ public class DarCollectionService {
       }
       Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
       Map<Integer, Dataset> datasetMap = datasets.stream()
-          .collect(Collectors.toMap(Dataset::getDataSetId, Function.identity()));
+          .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
       return collections.stream().map(c -> {
         Set<Dataset> collectionDatasets = c.getDars().values().stream()
@@ -567,7 +566,8 @@ public class DarCollectionService {
         .collect(Collectors.toList());
 
     if (referenceIds.isEmpty()) {
-      logger.warn("DAR Collection does not have any associated DAR ids");
+      logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
+          collection.getDarCollectionId()));
       return collection;
     }
 
@@ -603,7 +603,8 @@ public class DarCollectionService {
         .collect(Collectors.toList());
 
     if (referenceIds.isEmpty()) {
-      logger.warn("DAR Collection does not have any associated DAR ids");
+      logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
+          collection.getDarCollectionId()));
       return collection;
     }
 
@@ -623,10 +624,7 @@ public class DarCollectionService {
    */
   public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
-    List<Integer> datasetIds = datasetDAO.findDatasetsByAuthUserEmail(user.getEmail())
-        .stream()
-        .map(Dataset::getDataSetId)
-        .collect(Collectors.toList());
+    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
     List<DataAccessRequest> dars = collection.getDars().values().stream()
@@ -638,8 +636,9 @@ public class DarCollectionService {
         .collect(Collectors.toList());
 
     if (referenceIds.isEmpty()) {
-      logger.warn(
-          "DAR Collection does not have any associated DARs that this chairperson can access");
+      logWarn(
+          "DAR Collection ID: [%s] does not have any associated DARs that this chairperson can access".formatted(
+              collection.getDarCollectionId()));
       return collection;
     }
 
@@ -667,12 +666,13 @@ public class DarCollectionService {
       try {
         emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
       } catch (Exception e) {
-        logger.error("Unable to send new case message to DAC members for DAR Collection: "
-            + collection.getDarCode());
+        logException(
+            "Unable to send new case message to DAC members for DAR Collection: %s".formatted(
+                collection.getDarCode()), e);
       }
     } catch (Exception e) {
-      logger.error("Exception creating elections and votes for collection: "
-          + collection.getDarCollectionId());
+      logException("Exception creating elections and votes for collection: %s".formatted(
+          collection.getDarCollectionId()), e);
     }
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }

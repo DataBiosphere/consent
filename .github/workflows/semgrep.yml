@@ -8,4 +8,6 @@ jobs:
     name: Check
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - run: semgrep ci --config=p/findsecbugs

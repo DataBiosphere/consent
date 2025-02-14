@@ -1273,7 +1273,7 @@ public class DatasetRegistrationSchemaV1 {
     OPEN_ACCESS("Open Access"),
     EXTERNAL_ACCESS("External Access");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement>();
+    private static final Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement>();
 
     static {
       for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement c : values()) {
@@ -1320,7 +1320,7 @@ public class DatasetRegistrationSchemaV1 {
     BY_BATCHES_OVER_STUDY_TIMELINE_E_G_BASED_ON_CLINICAL_TRIAL_ENROLLMENT_BENCHMARKS(
         "By batches over Study Timeline (e.g. based on clinical trial enrollment benchmarks)");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted>();
+    private static final Map<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted>();
 
     static {
       for (DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted c : values()) {
@@ -1371,7 +1371,7 @@ public class DatasetRegistrationSchemaV1 {
     I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL(
         "I am not NHGRI funded and do not plan to store data in AnVIL");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.NihAnvilUse> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihAnvilUse>();
+    private static final Map<String, DatasetRegistrationSchemaV1.NihAnvilUse> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihAnvilUse>();
 
     static {
       for (DatasetRegistrationSchemaV1.NihAnvilUse c : values()) {
@@ -1439,7 +1439,7 @@ public class DatasetRegistrationSchemaV1 {
     NCATS("NCATS"),
     NCCIH("NCCIH");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission>();
+    private static final Map<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission>();
 
     static {
       for (DatasetRegistrationSchemaV1.NihInstitutionCenterSubmission c : values()) {
@@ -1491,7 +1491,7 @@ public class DatasetRegistrationSchemaV1 {
     CROSS_SECTIONAL("Cross-sectional"),
     COHORT_STUDY("Cohort study");
     private final String value;
-    private final static Map<String, DatasetRegistrationSchemaV1.StudyType> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.StudyType>();
+    private static final Map<String, DatasetRegistrationSchemaV1.StudyType> CONSTANTS = new HashMap<String, DatasetRegistrationSchemaV1.StudyType>();
 
     static {
       for (DatasetRegistrationSchemaV1.StudyType c : values()) {

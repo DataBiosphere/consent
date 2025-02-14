@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
@@ -162,9 +163,10 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       @Bind("updateDate") Instant updateDate, @Bind("initialDacId") Integer initialDacId);
 
   @SqlUpdate("""
-      INSERT INTO dac_daa (dac_id, daa_id)
-      VALUES (:dacId, :daaId)
-      """)
+    INSERT INTO dac_daa (dac_id, daa_id)
+    VALUES (:dacId, :daaId)
+    ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
+  """)
   void createDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
   @SqlUpdate("""
@@ -173,5 +175,73 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       AND daa_id = :daaId
       """)
   void deleteDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+
+  /**
+   * Relationship chain:
+   * User -> Library Card -> Data Access Agreement -> DAC -> Dataset
+   * @param userId The requesting User ID
+   * @return List of Dataset Ids for which a user has DAA acceptances
+   */
+  @SqlQuery(
+      """
+      SELECT DISTINCT d.dataset_id
+      FROM dataset d
+      INNER JOIN dac_daa ON dac_daa.dac_id = d.dac_id
+      INNER JOIN lc_daa ON dac_daa.daa_id = lc_daa.daa_id
+      INNER JOIN library_card lc on lc.id = lc_daa.lc_id
+      WHERE lc.user_id = :userId
+      """)
+  List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
+
+  @SqlUpdate("""
+    WITH lc_deletes AS (DELETE FROM lc_daa WHERE lc_daa.daa_id = :daaId),
+    dac_delete AS (DELETE FROM dac_daa WHERE dac_daa.daa_id = :daaId)
+    DELETE FROM data_access_agreement WHERE daa_id = :daaId
+    """)
+  void deleteDaa(@Bind("daaId") Integer daaId);
+
+  /**
+   * Find all DAAs for a Data Access Request by Reference ID
+   * DAR -> dar dataset join table -> Dataset -> DAC -> dac daa join table -> DAA
+   *
+   * @param referenceId DAR Reference ID
+   * @return List of Data Access Agreements
+   */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = Dac.class)
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
+  @UseRowReducer(DataAccessAgreementReducer.class)
+  @SqlQuery("""
+          SELECT daa.daa_id as daa_daa_id,
+                daa.create_user_id as daa_create_user_id,
+                daa.create_date as daa_create_date,
+                daa.update_user_id as daa_update_user_id, 
+                daa.update_date as daa_update_date,
+                daa.initial_dac_id as daa_initial_dac_id,
+                fso.file_storage_object_id AS file_storage_object_id,
+                fso.entity_id AS entity_id,
+                fso.file_name AS file_name,
+                fso.category AS category,
+                fso.gcs_file_uri AS gcs_file_uri,
+                fso.media_type AS media_type,
+                fso.create_date AS create_date,
+                fso.create_user_id AS create_user_id,
+                fso.update_date AS update_date,
+                fso.update_user_id AS update_user_id,
+                fso.deleted AS deleted,
+                fso.delete_user_id AS delete_user_id,
+                dac.dac_id,
+                dac.email,
+                dac.name,
+                dac.description
+          FROM data_access_agreement daa
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN dataset ON dataset.dac_id = dac.dac_id
+          INNER JOIN dar_dataset dd on dd.dataset_id = dataset.dataset_id          
+          WHERE dd.reference_id = :referenceId
+      """)
+  List<DataAccessAgreement> findByDarReferenceId(@Bind("referenceId") String referenceId);
 
 }

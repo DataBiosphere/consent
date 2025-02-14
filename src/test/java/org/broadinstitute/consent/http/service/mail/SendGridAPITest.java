@@ -117,4 +117,22 @@ class SendGridAPITest {
     }
   }
 
+  @Test
+  void testSendNewDAAUploadSOMessage() {
+    try {
+      sendGridAPI.sendNewDAAUploadSOMessage(TO, template, "Test DAC");
+    } catch (Exception  e) {
+      fail("Should not throw exception");
+    }
+  }
+
+  @Test
+  void testSendNewDAAUploadResearcherMessage() {
+    try {
+      sendGridAPI.sendNewDAAUploadResearcherMessage(TO, template, "Test DAC");
+    } catch (Exception  e) {
+      fail("Should not throw exception");
+    }
+  }
+
 }

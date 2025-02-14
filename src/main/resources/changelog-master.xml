@@ -152,4 +152,18 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-05-03-rm-submitter-prop.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-06-04-unique-dac-id-daa.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-07-01-user-property-dao-fixes.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-23-dataset-associations.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-25-drop-access-rp.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-08-28-rm-consents.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-09-04-drop-deprecated-dataset-columns-.xml"
+    relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2024-09-17-draft.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

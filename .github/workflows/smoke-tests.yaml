@@ -18,13 +18,18 @@ jobs:
       - name: setup
         id: setup
         run:
-          echo "bee-name=${{ github.event.repository.name }}-${{ github.run_id }}-dev" >> $GITHUB_OUTPUT
+          echo "bee-name=${REPO_NAME}-${RUN_ID}-dev" >> $GITHUB_OUTPUT
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          RUN_ID: ${{ github.run_id }}
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: 'maven'
       - name: Bee Create
         uses: broadinstitute/workflow-dispatch@v4
@@ -36,7 +41,9 @@ jobs:
           inputs: '{ "bee-name": "${{ steps.setup.outputs.bee-name }}", "bee-template-name": "duos", "version-template": "dev" }'
       - name: Run Smoke Tests
         run: |
-          mvn clean test -P integration-tests -DbaseUrl=https://consent.${{ steps.setup.outputs.bee-name }}.bee.envs-terra.bio/
+          mvn clean test -P integration-tests -DbaseUrl="https://consent.${BEE_NAME}.bee.envs-terra.bio/"
+        env:
+          BEE_NAME: ${{ steps.setup.outputs.bee-name }}
       - name: Store Test Result Artifact
         uses: actions/upload-artifact@v4
         if: always()

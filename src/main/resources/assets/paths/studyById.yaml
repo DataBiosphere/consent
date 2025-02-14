@@ -38,14 +38,17 @@ put:
       Dataset registration schema instance and optional files for an alternative data sharing plan 
       and institutional certification files. The registration schema is always required. If a file 
       is also provided, then alternative data sharing information is required in the registration 
-      schema.
+      schema. Study Names can be updated, but they must be unique in the system. 
+      See [/api/dataset/studyNames](#/Study/findAllStudyNames) for a list of existing study names.
+      Data Use fields can only be modified using Admin permissions. See 
+      [/api/dataset/{id}/datause](#/Admin/updateDatasetDataUse) to update a dataset's Data Use.
       
       The following fields are not modifiable:
-      * Study Name
       * Data Submitter Name/Email
-      * Primary Data Use
-      * Secondary Data Use
+      * All Data Use fields (if any are provided, they will be ignored)
+      * Access Management (if provided, it will be ignored)
       * Consent Group Name
+      * Data Access Committee Id
       
       Additionally, existing Consent Groups cannot be removed from the study, but new ones can be
       added.

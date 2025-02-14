@@ -1,0 +1,32 @@
+post:
+  summary: Alert appropriate Signing Officials & Researchers of a new DAA Upload for the provided DAC
+  description: Email Signing Officials & Researchers that a new DAA was uploaded
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+    - name: oldDaaId
+      in: path
+      description: The previous DAA ID
+      required: true
+      schema:
+        type: integer
+    - name: newDaaName
+      in: path
+      description: The name of the newly uploaded DAA
+      required: true
+      schema:
+        type: string
+  tags:
+    - DAA
+    - Mail
+  responses:
+    200:
+      description: Successfully sent emails to Signing Officials and Researchers about the newly uploaded DAA
+    404:
+      description: DAC, DAA, or User Not Found
+    500:
+      description: Internal Server Error

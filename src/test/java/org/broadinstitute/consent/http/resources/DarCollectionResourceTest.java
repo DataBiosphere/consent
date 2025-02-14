@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +49,6 @@ class DarCollectionResourceTest {
 
   private DarCollectionResource resource;
 
-  @Mock
-  private DataAccessRequestService dataAccessRequestService;
   @Mock
   private DarCollectionService darCollectionService;
   @Mock
@@ -190,12 +187,12 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(2);
+    dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -211,12 +208,12 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(2);
+    dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -232,12 +229,12 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(researcher.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(3);
+    dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -255,12 +252,12 @@ class DarCollectionResourceTest {
     collection.setCreateUserId(user.getUserId());
 
     Dataset dataSet = new Dataset();
-    dataSet.setDataSetId(3);
+    dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
     when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.findDatasetIdsByUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
     initResource();
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
@@ -615,7 +612,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -636,7 +633,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -657,7 +654,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(1, 2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);
@@ -678,7 +675,7 @@ class DarCollectionResourceTest {
     Integer collectionId = RandomUtils.nextInt(1, 100);
 
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.findDatasetIdsByUser(user)).thenReturn(List.of(2));
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
     when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
         anyInt()))
         .thenReturn(mockSummary);

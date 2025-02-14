@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -38,51 +39,50 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class UserService {
+public class UserService implements ConsentLogger {
 
-  public final static String LIBRARY_CARDS_FIELD = "libraryCards";
-  public final static String USER_PROPERTIES_FIELD = "properties";
-  public final static String USER_STATUS_INFO_FIELD = "userStatusInfo";
+  public static final String LIBRARY_CARDS_FIELD = "libraryCards";
+  public static final String RESEARCHER_PROPERTIES_FIELD = "researcherProperties";
+  public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
   private final UserPropertyDAO userPropertyDAO;
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
   private final VoteDAO voteDAO;
-  private final DatasetAssociationDAO datasetAssociationDAO;
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final SamDAO samDAO;
   private final UserServiceDAO userServiceDAO;
+  private final DaaDAO daaDAO;
   private final EmailService emailService;
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final DraftServiceDAO draftServiceDAO;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO,
-      DatasetAssociationDAO datasetAssociationDAO, InstitutionDAO institutionDAO,
-      LibraryCardDAO libraryCardDAO,
+      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO,
-      UserServiceDAO userServiceDAO, EmailService emailService) {
+      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
+      DraftServiceDAO draftServiceDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
     this.voteDAO = voteDAO;
-    this.datasetAssociationDAO = datasetAssociationDAO;
     this.institutionDAO = institutionDAO;
     this.libraryCardDAO = libraryCardDAO;
     this.acknowledgementDAO = acknowledgementDAO;
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.samDAO = samDAO;
     this.userServiceDAO = userServiceDAO;
+    this.daaDAO = daaDAO;
     this.emailService = emailService;
+    this.draftServiceDAO = draftServiceDAO;
   }
 
   /**
@@ -128,7 +128,7 @@ public class UserService {
               soAfterUpdate.get()
           );
         } catch (Exception e) {
-          logger.warn("Could not send new researcher notification to SO: " + e.getMessage());
+          logWarn("Could not send new researcher notification to SO: %s".formatted(e.getMessage()));
         }
 
       }
@@ -162,54 +162,10 @@ public class UserService {
     try {
       userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
     } catch (Exception e) {
-      logger.error("Error when updating user: %s, institution: %s, role: %s",
-          userId.toString(), institutionId.toString(), role.toString());
+      logException(
+          "Error when updating user: %s, institution: %s, role: %s".formatted(userId.toString(),
+              institutionId.toString(), role.toString()), e);
       throw e;
-    }
-  }
-
-  public static class SimplifiedUser {
-
-    public Integer userId;
-    public String displayName;
-    public String email;
-
-    public SimplifiedUser(User user) {
-      this.userId = user.getUserId();
-      this.displayName = user.getDisplayName();
-      this.email = user.getEmail();
-    }
-
-    public SimplifiedUser() {
-    }
-
-    public void setUserId(Integer userId) {
-      this.userId = userId;
-    }
-
-    public void setDisplayName(String name) {
-      this.displayName = name;
-    }
-
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      SimplifiedUser that = (SimplifiedUser) o;
-      return Objects.equals(userId, that.userId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(userId);
     }
   }
 
@@ -276,8 +232,22 @@ public class UserService {
         }
       case Resource.ADMIN:
         return userDAO.findUsersWithLCsAndInstitution();
+      default:
+        // do nothing
     }
     return Collections.emptyList();
+  }
+
+  public List<SimplifiedUser> getUsersByDaaId(Integer daaId) {
+    if (Objects.isNull(daaId)) {
+      throw new IllegalArgumentException();
+    }
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (Objects.isNull(daa)) {
+      throw new NotFoundException();
+    }
+    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
+    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
   }
 
   public void deleteUserByEmail(String email) {
@@ -299,7 +269,13 @@ public class UserService {
       List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
       voteDAO.removeVotesByIds(voteIds);
     }
-    datasetAssociationDAO.deleteAllDatasetUserAssociationsByUser(userId);
+    try {
+      draftServiceDAO.deleteDraftsByUser(user);
+    } catch (Exception e) {
+      logException(
+          String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
+              userId, e.getMessage()), e);
+    }
     institutionDAO.deleteAllInstitutionsByUser(userId);
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
@@ -339,9 +315,9 @@ public class UserService {
 
   public void deleteUserRole(User authUser, Integer userId, Integer roleId) {
     userRoleDAO.removeSingleUserRole(userId, roleId);
-    logger.info(
-        "User " + authUser.getDisplayName() + " deleted roleId: " + roleId + " from User ID: "
-            + userId);
+    logInfo(
+        "User %s deleted roleId: %s from User ID: %s".formatted(authUser.getDisplayName(), roleId,
+            userId));
   }
 
   public List<User> findUsersWithNoInstitution() {
@@ -364,7 +340,7 @@ public class UserService {
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
     JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
-    userJson.add(USER_PROPERTIES_FIELD, propsJson);
+    userJson.add(RESEARCHER_PROPERTIES_FIELD, propsJson);
     userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
     if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
         authUser.getUserStatusInfo())) {
@@ -485,5 +461,56 @@ public class UserService {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
+  }
+
+  public static class SimplifiedUser {
+
+    public Integer userId;
+    public String displayName;
+    public String email;
+    public Integer institutionId;
+
+    public SimplifiedUser(User user) {
+      this.userId = user.getUserId();
+      this.displayName = user.getDisplayName();
+      this.email = user.getEmail();
+      this.institutionId = user.getInstitutionId();
+    }
+
+    public SimplifiedUser() {
+    }
+
+    public void setUserId(Integer userId) {
+      this.userId = userId;
+    }
+
+    public void setDisplayName(String name) {
+      this.displayName = name;
+    }
+
+    public void setEmail(String email) {
+      this.email = email;
+    }
+
+    public void setInstitutionId(Integer institutionId) {
+      this.institutionId = institutionId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SimplifiedUser that = (SimplifiedUser) o;
+      return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(userId);
+    }
   }
 }

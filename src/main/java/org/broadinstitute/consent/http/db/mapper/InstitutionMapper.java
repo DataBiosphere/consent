@@ -56,13 +56,13 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
           resultSet.getString("organization_type"));
       institution.setOrganizationType(type);
     }
-    if (hasColumn(resultSet, "create_user")) {
+    if (hasNonZeroColumn(resultSet, "create_user")) {
       institution.setCreateUserId(resultSet.getInt("create_user"));
     }
     if (hasColumn(resultSet, "create_date")) {
       institution.setCreateDate(resultSet.getDate("create_date"));
     }
-    if (hasColumn(resultSet, "update_user")) {
+    if (hasNonZeroColumn(resultSet, "update_user")) {
       institution.setUpdateUserId(resultSet.getInt("update_user"));
     }
     if (hasColumn(resultSet, "update_date")) {

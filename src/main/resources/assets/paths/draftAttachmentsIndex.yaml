@@ -1,0 +1,66 @@
+get:
+  summary: Get the list of all attachments associated with a draft
+  description: Provides the full list of attachments that are part of a draft.
+  tags:
+    - Draft
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft.  See https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    200:
+      description: A list of attachments for a draft.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/FileStorageObject.yaml'
+    401:
+      description: User not authorized to get list of file attachments
+    404:
+      description: The draft cannot be found.
+post:
+  summary: Upload attachments to the draft.
+  description: Upload attachments associated with this draft.
+  tags:
+    - Draft
+  parameters:
+    - name: draftUUID
+      in: path
+      description: The UUID identifying the draft.  See https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file[0]:
+              description: Example - Optional alternative data sharing plan
+              type: string
+              format: binary
+            file[1]:
+              description: Example - Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
+              type: string
+              format: binary
+  responses:
+    200:
+      description: The attachment(s) were uploaded successfully.  Response payload only includes references to the posted files
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/FileStorageObject.yaml'
+    401:
+      description: User not authorized to upload file attachments
+    404:
+      description: The draft cannot be found.

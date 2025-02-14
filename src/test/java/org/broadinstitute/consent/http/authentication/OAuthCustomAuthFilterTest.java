@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.when;
@@ -56,9 +57,7 @@ class OAuthCustomAuthFilterTest {
   void testFilterSuccessful() {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenReturn(Optional.of(user));
-    assertDoesNotThrow(() -> {
-      filter.filter(requestContext);
-    });
+    assertDoesNotThrow(() -> filter.filter(requestContext));
   }
 
 
@@ -66,8 +65,14 @@ class OAuthCustomAuthFilterTest {
   void testFilterExceptionBadCredentials() {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenReturn(Optional.empty());
-    assertThrows(WebApplicationException.class, () -> {
-      filter.filter(requestContext);
-    });
+    assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+  }
+
+  @Test
+  void testFilterAuthWebApplicationException() {
+    when(uriInfo.getPath()).thenReturn("api/something");
+    when(authenticator.authenticate(token)).thenThrow(new WebApplicationException("errorMessage"));
+    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+    assertEquals("errorMessage", ex.getMessage());
   }
 }

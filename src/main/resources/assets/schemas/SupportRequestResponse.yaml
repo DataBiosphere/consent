@@ -1,0 +1,80 @@
+type: object
+properties:
+  request:
+    type: object
+    properties:
+      url:
+        description: The request location in Zendesk
+        type: string
+      id:
+        type: number
+      status:
+        type: string
+      priority:
+        type: string
+      type:
+        type: string
+      subject:
+        type: string
+      description:
+        type: string
+      organization_id:
+        type: number
+      via:
+        type: object
+        properties:
+          channel:
+            type: string
+          source:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+              rel:
+                type: string
+      custom_fields:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+            value:
+              type: string
+      requester_id:
+        type: number
+      collaborator_ids:
+        type: array
+        items:
+          type: number
+      email_cc_ids:
+        type: array
+        items:
+          type: string
+      is_public:
+        type: boolean
+      due_at:
+        type: string
+      can_be_solved_by_me:
+        type: boolean
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      recipient:
+        type: string
+      followup_source_id:
+        type: number
+      assignee_id:
+        type: number
+      fields:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: number
+            value:
+              type: string

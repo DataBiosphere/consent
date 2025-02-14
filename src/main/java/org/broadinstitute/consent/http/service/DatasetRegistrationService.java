@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -66,6 +68,16 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
     this.emailService = emailService;
+  }
+
+  public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
+    try {
+      datasetServiceDAO.patchDataset(datasetId, user, patch);
+      return datasetDAO.findDatasetById(datasetId);
+    } catch (SQLException ex) {
+      logException(ex);
+      throw new InternalServerErrorException("An error occurred while patching the dataset.");
+    }
   }
 
   public Study findStudyById(Integer studyId) {
@@ -751,7 +763,7 @@ public class DatasetRegistrationService implements ConsentLogger {
       return List.of();
     }
     return updatedStudy.getDatasets().stream().filter(
-        dataset -> !datasetUpdateIds.contains(dataset.getDataSetId())).toList();
+        dataset -> !datasetUpdateIds.contains(dataset.getDatasetId())).toList();
   }
 
   /**
@@ -763,13 +775,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       for (Dataset dataset : datasets) {
         Dac dac = dacDAO.findById(dataset.getDacId());
-        List<User> chairPersons = dacDAO
-            .findMembersByDacId(dac.getDacId())
-            .stream()
-            .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
-            .toList();
+        if (dac == null) {
+          logWarn("Could not find DAC for dataset with identifier: " + dataset.getDatasetIdentifier());
+        }
+        List<User> chairPersons = (dac == null) ? List.of() :
+            dacDAO
+                .findMembersByDacId(dac.getDacId())
+                .stream()
+                .filter(user -> user.hasUserRole(UserRoles.CHAIRPERSON))
+                .toList();
         if (chairPersons.isEmpty()) {
-          logWarn("No chairpersons found for DAC " + dac.getName());
+          logWarn("No chairpersons found for Dataset " + dataset.getDatasetIdentifier());
         } else {
           for (User dacChair : chairPersons) {
             emailService.sendDatasetSubmittedMessage(dacChair,

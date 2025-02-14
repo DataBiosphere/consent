@@ -1,54 +1,15 @@
 get:
-  summary: Get Datasets
+  summary: Get Streamed Datasets
   description: | 
-    Returns Dataset list filtered by authenticated user role.
-    Admins can see all datasets, both active and inactive.
-    Chairpersons can see all active datasets and inactive ones 
-    associated to any of their Data Access Committees. 
-    All other users can see active datasets.
-    If the optional `asCustodian` parameter is provided, all datasets that the user has created
-    or is specified as a custodian for will be returned.
+    Returns all Datasets in a streamed format. This endpoint can be slow, but will eventually complete.
   tags:
     - Dataset
-  parameters:
-    - name: asCustodian
-      in: query
-      description: Query for datasets as a Data Custodian
-      required: false
-      schema:
-        type: boolean
   responses:
     200:
-      description: A list of Datasets
+      description: A streaming list of Datasets
       content:
         application/json:
           schema:
             type: array
             items:
               $ref: '../schemas/Dataset.yaml'
-post:
-  deprecated: true
-  summary: Creates the Dataset from JSON
-  description: Creates the Dataset from JSON
-  requestBody:
-    description: Submitted dataset registration form. Dataset must contain the property Dataset Name with a unique value and a valid DataUse object.
-    required: true
-    content:
-      application/json:
-        schema:
-          $ref: '../schemas/Dataset.yaml'
-  tags:
-    - Dataset
-  responses:
-    201:
-      description: Successfully created Dataset
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/Dataset.yaml'
-    400:
-      description: External Error (invalid input)
-    409:
-      description: Dataset Name given is already in use by another dataset
-    500:
-      description: Internal Error (something went wrong processing a valid input)

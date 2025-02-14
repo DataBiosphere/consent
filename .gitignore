@@ -154,3 +154,6 @@ hs_err_pid*
 
 ## Shade
 dependency-reduced-pom.xml
+
+## GHA Credentials
+gha-creds-*.json

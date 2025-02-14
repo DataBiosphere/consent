@@ -1,0 +1,17 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2024-06-04-unique-dac-id-daa" author="aarohinadkarni">
+    <validCheckSum>ANY</validCheckSum>
+    <sql>
+      DELETE FROM dac_daa
+      WHERE dac_id IN (
+        SELECT duplicates.dac_id FROM (SELECT dac_id, count(dac_id)
+                                       FROM dac_daa
+                                       GROUP by dac_id
+                                       HAVING count(dac_id) > 1) AS duplicates);
+      ALTER TABLE dac_daa
+        ADD CONSTRAINT dac_id_unique UNIQUE (dac_id);
+    </sql>
+  </changeSet>
+</databaseChangeLog>

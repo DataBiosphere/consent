@@ -11,8 +11,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +29,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
+import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
@@ -130,8 +138,8 @@ class ElasticSearchServiceTest {
 
   private Dataset createDataset(User user, User updateUser, DataUse dataUse, Dac dac) {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100));
-    dataset.setAlias(dataset.getDataSetId());
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDeletable(true);
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
@@ -183,7 +191,8 @@ class ElasticSearchServiceTest {
     return prop;
   }
 
-  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type, String propertyName) {
+  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type,
+      String propertyName) {
     DatasetProperty prop = new DatasetProperty();
     prop.setSchemaProperty(schemaProp);
     prop.setPropertyType(type);
@@ -217,6 +226,7 @@ class ElasticSearchServiceTest {
     Dac dac = createDac();
     Study study = createStudy(user);
     study.setProperties(Set.of(
+        createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
@@ -279,6 +289,10 @@ class ElasticSearchServiceTest {
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
     assertEquals(datasetRecord.study.getStudyId(), term.getStudy().getStudyId());
+    Optional<StudyProperty> phsIdProp = datasetRecord.study.getProperties().stream()
+        .filter(p -> p.getKey().equals("dbGaPPhsID")).findFirst();
+    assertTrue(phsIdProp.isPresent());
+    assertEquals(phsIdProp.get().getValue().toString(), term.getStudy().getPhsId());
     Optional<StudyProperty> phenoProp = datasetRecord.study.getProperties().stream()
         .filter(p -> p.getKey().equals("phenotypeIndication")).findFirst();
     assertTrue(phenoProp.isPresent());
@@ -319,7 +333,7 @@ class ElasticSearchServiceTest {
     initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
-    assertEquals(datasetRecord.dataset.getDataSetId(), term.getDatasetId());
+    assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
     assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
     assertEquals(datasetRecord.dataset.getDeletable(), term.getDeletable());
     assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
@@ -392,7 +406,7 @@ class ElasticSearchServiceTest {
   @Test
   void testToDatasetTermIncomplete() {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(100);
+    dataset.setDatasetId(100);
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
@@ -403,7 +417,7 @@ class ElasticSearchServiceTest {
     initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
-    assertEquals(dataset.getDataSetId(), term.getDatasetId());
+    assertEquals(dataset.getDatasetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
   }
 
@@ -523,12 +537,97 @@ class ElasticSearchServiceTest {
   }
 
   @Test
+  void testIndexDatasetIds() throws Exception {
+    Gson gson = GsonUtil.buildGson();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    String esResponseBody = """
+          {
+            "took": 2,
+            "errors": false,
+            "items": [
+              {
+                "index": {
+                  "_index": "dataset",
+                  "_type": "dataset",
+                  "_id": "%d",
+                  "_version": 3,
+                  "result": "updated",
+                  "_shards": {
+                    "total": 2,
+                    "successful": 1,
+                    "failed": 0
+                  },
+                  "created": false,
+                  "status": 200
+                }
+              }
+            ]
+          }
+        """;
+
+    initService();
+
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
+    var baos = new ByteArrayOutputStream();
+    output.write(baos);
+    var entityString = baos.toString();
+    Type listOfEsResponses = new TypeToken<List<JsonObject>>() {
+    }.getType();
+    List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
+    assertEquals(1, responseList.size());
+    JsonArray items = responseList.get(0).getAsJsonArray("items");
+    assertEquals(1, items.size());
+    assertEquals(
+        dataset.getDatasetId(),
+        items.get(0)
+            .getAsJsonObject()
+            .getAsJsonObject("index")
+            .get("_id")
+            .getAsInt());
+  }
+
+  @Test
+  void testIndexDatasetIdsErrors() throws Exception {
+    Gson gson = GsonUtil.buildGson();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    mockESClientResponse(500, "error condition");
+    initService();
+
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
+    var baos = new ByteArrayOutputStream();
+    output.write(baos);
+    JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
+    assertEquals(0, jsonArray.size());
+  }
+
+  // Helper method to mock an ElasticSearch Client response
+  private void mockESClientResponse(int status, String body) throws Exception {
+    var esClientResponse = mock(org.elasticsearch.client.Response.class);
+    var statusLine = mock(StatusLine.class);
+    when(esClientResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(status);
+    var httpEntity = mock(HttpEntity.class);
+    if (status == 200) {
+      when(httpEntity.getContent())
+          .thenReturn(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
+      when(esClientResponse.getEntity()).thenReturn(httpEntity);
+    }
+    when(esClient.performRequest(any())).thenReturn(esClientResponse);
+  }
+
+
+  @Test
   void testIndexStudyWithDatasets() {
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
-    d.setDataSetId(1);
-    study.addDatasetId(d.getDataSetId());
+    d.setDatasetId(1);
+    study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 

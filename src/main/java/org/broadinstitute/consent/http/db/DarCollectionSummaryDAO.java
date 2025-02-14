@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
@@ -49,7 +50,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
       @Bind("currentUserId") Integer currentUserId,
-      @BindList("datasetIds") List<Integer> datasetIds);
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds);
 
   @RegisterBeanMapper(value = DarCollectionSummary.class)
   @RegisterBeanMapper(value = DarCollection.class)

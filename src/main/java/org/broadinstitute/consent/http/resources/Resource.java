@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.MalformedJsonException;
 import io.sentry.Sentry;
@@ -15,21 +16,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
-import org.broadinstitute.consent.http.exceptions.UpdateConsentException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.owasp.fileio.FileValidator;
 import org.postgresql.util.PSQLException;
@@ -45,20 +48,25 @@ import org.slf4j.LoggerFactory;
 abstract public class Resource implements ConsentLogger {
 
   // Resource based role names
-  public final static String ADMIN = "Admin";
-  public final static String ALUMNI = "Alumni";
-  public final static String CHAIRPERSON = "Chairperson";
-  public final static String DATAOWNER = "DataOwner";
-  public final static String MEMBER = "Member";
-  public final static String RESEARCHER = "Researcher";
-  public final static String SIGNINGOFFICIAL = "SigningOfficial";
-  public final static String DATASUBMITTER = "DataSubmitter";
-  public final static String ITDIRECTOR = "ITDirector";
+  public static final String ADMIN = "Admin";
+  public static final String ALUMNI = "Alumni";
+  public static final String CHAIRPERSON = "Chairperson";
+  public static final String MEMBER = "Member";
+  public static final String RESEARCHER = "Researcher";
+  // nosemgrep
+  public static final String SIGNINGOFFICIAL = "SigningOfficial";
+  public static final String DATASUBMITTER = "DataSubmitter";
+  public static final String ITDIRECTOR = "ITDirector";
 
   // NOTE: implement more Postgres vendor codes as we encounter them
-  private final static Map<String, Integer> vendorCodeStatusMap = Map.ofEntries(
-      new AbstractMap.SimpleEntry<>(PSQLState.UNIQUE_VIOLATION.getState(),
-          Response.Status.CONFLICT.getStatusCode())
+  private static final Map<String, ImmutablePair<Integer, String>> vendorCodeStatusMap = Map.ofEntries(
+      Map.entry(PSQLState.UNKNOWN_STATE.getState(),
+          ImmutablePair.of(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
+              "Database error")),
+      Map.entry(PSQLState.UNIQUE_VIOLATION.getState(),
+          ImmutablePair.of(Response.Status.CONFLICT.getStatusCode(), "Database conflict")),
+      Map.entry("22021",
+          ImmutablePair.of(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid byte sequence"))
   );
 
   protected Response createExceptionResponse(Exception e) {
@@ -118,6 +126,9 @@ abstract public class Resource implements ConsentLogger {
     dispatch.put(ConsentConflictException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
+    dispatch.put(UnprocessableEntityException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)).build());
     dispatch.put(UnsupportedOperationException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
@@ -154,10 +165,6 @@ abstract public class Resource implements ConsentLogger {
     dispatch.put(UnknownIdentifierException.class, e ->
         Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
-    dispatch.put(UpdateConsentException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
     dispatch.put(UnableToExecuteStatementException.class,
         Resource::unableToExecuteExceptionHandler);
     dispatch.put(PSQLException.class,
@@ -182,12 +189,13 @@ abstract public class Resource implements ConsentLogger {
   }
 
   //Helper method to process generic JDBI Postgres exceptions for responses
-  private static Response unableToExecuteExceptionHandler(Exception e) {
+  protected static Response unableToExecuteExceptionHandler(Exception e) {
     //default status definition
     LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
     // static makes using the interface less flexible
     Sentry.captureEvent(new SentryEvent(e));
-    Integer status = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+
+    var status = vendorCodeStatusMap.get(PSQLState.UNKNOWN_STATE.getState());
 
     try {
       if (e.getCause() instanceof PSQLException) {
@@ -200,9 +208,12 @@ abstract public class Resource implements ConsentLogger {
       //no need to handle, default status already assigned
     }
 
-    return Response.status(status)
+    int statusCode = status.getLeft();
+    String message = status.getRight();
+
+    return Response.status(statusCode)
         .type(MediaType.APPLICATION_JSON)
-        .entity(new Error("Database Error", status))
+        .entity(new Error(message, statusCode))
         .build();
   }
 
@@ -261,4 +272,28 @@ abstract public class Resource implements ConsentLogger {
     return GsonUtil.buildGson().toJson(o);
   }
 
+  /**
+   * Finds and validates all the files uploaded to the multipart.
+   *
+   * @param multipart Form data
+   * @return Map of file body parts, where the key is the name of the field and the value is the
+   * body part including the file(s).
+   */
+  protected Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
+    if (Objects.isNull(multipart)) {
+      return Map.of();
+    }
+
+    Map<String, FormDataBodyPart> files = new HashMap<>();
+    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
+      for (FormDataBodyPart part : parts) {
+        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
+          validateFileDetails(part.getContentDisposition());
+          files.put(part.getName(), part);
+        }
+      }
+    }
+
+    return files;
+  }
 }

@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.models.Dac;
@@ -45,21 +44,6 @@ class FreeMarkerTemplateHelperTest {
   }
 
   @Test
-  void testGetDisabledDatasetsTemplate() throws Exception {
-    Writer template = helper.getDisabledDatasetsTemplate("DatasetTemp User",
-        sampleDatasets().stream().map(Dataset::getObjectId).collect(Collectors.toList()),
-        "entityId", "serverUrl");
-    String templateString = template.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Disabled Datasets Notification",
-        parsedTemplate.title());
-    assertEquals("Hello DatasetTemp User,", parsedTemplate.getElementById("userName").text());
-    assertTrue(templateString.contains("DS-101"));
-    assertTrue(templateString.contains("DS-102"));
-    assertTrue(templateString.contains("DS-103"));
-  }
-
-  @Test
   void testGetNewCaseTemplate() throws Exception {
     Writer template = helper.getNewCaseTemplate("NewCase User", "DARELECTION-1", "DAR-1",
         "localhost:1234");
@@ -72,11 +56,10 @@ class FreeMarkerTemplateHelperTest {
 
   @Test
   void testGetReminderTemplate() throws Exception {
-    Writer template = helper.getReminderTemplate("Reminder User", "DARELECTION-1", "DAR-1",
-        "localhost:1234");
+    Writer template = helper.getReminderTemplate("Reminder User", "DAR-1", "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a DAR",
+    assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
@@ -90,7 +73,7 @@ class FreeMarkerTemplateHelperTest {
     Dataset d1 = new Dataset();
     d1.setDacId(1);
     d1.setDatasetName("Dataset-01");
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setAlias(1);
     d1.setDatasetIdentifier();
 
@@ -204,6 +187,72 @@ class FreeMarkerTemplateHelperTest {
         .text()
         .contains(
             "Please login to review " + userName + "'s Data Access Agreements."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetNewDaaUploadSOTemplate() throws Exception {
+    String signingOfficialUserName = RandomStringUtils.randomAlphabetic(10);
+    String dacName = RandomStringUtils.randomAlphabetic(10);
+    String newDaaName = RandomStringUtils.randomAlphabetic(10);
+    String previousDaaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getNewDaaUploadSOTemplate(signingOfficialUserName, dacName,
+        newDaaName, previousDaaName, serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement Upload",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Dear " + signingOfficialUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "You previously pre-authorized researchers under the " + previousDaaName + " which was in use by the " + dacName + "."));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetNewDaaUploadResearcherTemplate() throws Exception {
+    String researcherUserName = RandomStringUtils.randomAlphabetic(10);
+    String dacName = RandomStringUtils.randomAlphabetic(10);
+    String newDaaName = RandomStringUtils.randomAlphabetic(10);
+    String previousDaaName = RandomStringUtils.randomAlphabetic(10);
+    String serverUrl = RandomStringUtils.randomAlphabetic(10);
+    Writer template = helper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
+        newDaaName, previousDaaName, serverUrl);
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals(
+        "Broad Data Use Oversight System - New Data Access Agreement Upload",
+        parsedTemplate.title());
+    assertTrue(parsedTemplate
+        .getElementById("userName")
+        .text()
+        .contains(
+            "Dear " + researcherUserName + ","));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "You were previously pre-authorized to request data from the " + dacName + " under the " + previousDaaName + "."));
+    assertTrue(parsedTemplate
+        .getElementById("content")
+        .text()
+        .contains(
+            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }

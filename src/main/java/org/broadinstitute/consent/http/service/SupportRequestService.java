@@ -5,99 +5,100 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.support.SupportTicket;
-import org.broadinstitute.consent.http.models.support.SupportTicketCreator;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
+import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.zendesk.client.v2.model.Request;
 
 public class SupportRequestService implements ConsentLogger {
 
-  private final SupportTicketCreator supportTicketCreator;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
   @Inject
-  public SupportRequestService(ServicesConfiguration configuration, InstitutionDAO institutionDAO,
-      UserDAO userDAO) {
-    this.supportTicketCreator = new SupportTicketCreator(institutionDAO, userDAO, configuration);
+  public SupportRequestService(ServicesConfiguration configuration) {
     this.clientUtil = new HttpClientUtil(configuration);
     this.configuration = configuration;
   }
 
   /**
-   * Posts the given SupportTicket as JSON to the Support Request API if notifications are enabled
+   * Submit binary content to Zendesk as an attachment. The token in the response can be used in a
+   * subsequent ticket submission.
    *
-   * @param ticket SupportTicket to be sent to support application
-   * @throws Exception if an error occurs while posting the HttpRequest
+   * @param content Binary attachment content
+   * @return JsonObject with a "token" key containing the file upload token
+   * @throws Exception The exception
    */
-  public void postTicketToSupport(SupportTicket ticket) throws Exception {
+  public JsonObject postAttachmentToSupport(byte[] content) throws Exception {
+    if (configuration.isActivateSupportNotifications()) {
+      GenericUrl genericUrl = new GenericUrl(configuration.postSupportUploadUrl());
+      ByteArrayContent byteContent = new ByteArrayContent("application/binary", content);
+      HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, byteContent);
+      HttpResponse response = clientUtil.handleHttpRequest(request);
+
+      if (!response.isSuccessStatusCode()) {
+        String errorMessage = "Error sending attachment to support: " + response.getStatusMessage();
+        var errorException =
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
+                new UnprocessableEntityException(errorMessage) :
+                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+        logException(errorMessage, errorException);
+        throw errorException;
+      }
+      String responseContent = IOUtils.toString(response.getContent(), Charset.defaultCharset());
+      JsonObject obj = GsonUtil.getInstance().fromJson(responseContent, JsonObject.class);
+      if (obj != null && obj.get("upload") != null) {
+        return obj.get("upload").getAsJsonObject();
+      } else {
+        var errorException = new ServerErrorException(response.getStatusMessage(),
+            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        String errorMessage = "Error reading attachment response content: " + responseContent;
+        logException(errorMessage, errorException);
+        throw errorException;
+      }
+    }
+    throw new BadRequestException("Not configured to send support attachments");
+  }
+
+  /**
+   * Submit a new ticket to Broad's Zendesk instance
+   *
+   * @param ticket An instance of DuosTicket
+   * @return The response
+   * @throws Exception The exception
+   */
+  public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-      //Using GsonBuilder directly to convert ticket to json since GsonFactory does not allow custom FieldNamingPolicy
-      String ticketJson = new GsonBuilder()
-          .setPrettyPrinting()
-          .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-          .create()
-          .toJson(ticket);
       ByteArrayContent content = new ByteArrayContent("application/json",
-          ticketJson.getBytes(StandardCharsets.UTF_8));
+          ticket.toString().getBytes(StandardCharsets.UTF_8));
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
       HttpResponse response = clientUtil.handleHttpRequest(request);
 
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error posting ticket to support: " + response.getStatusMessage();
-        var errorException = new ServerErrorException(response.getStatusMessage(),
-            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        var errorException =
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
+                new UnprocessableEntityException(errorMessage) :
+                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
         logException(errorMessage, errorException);
         throw errorException;
       }
-    } else {
-      logDebug("Not configured to send support requests");
+      return TicketFactory.parseRequestResponse(
+          IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     }
+    throw new BadRequestException("Not configured to send support requests");
   }
 
-  /**
-   * Creates and sends a support ticket for a user selecting an existing or requesting an unfamiliar
-   * institution and/or signing official, if provided
-   *
-   * @param userUpdateFields A UserUpdateFields object containing update information for the user
-   * @param user             The user requesting the institution and/or signing official
-   */
-  public void handleInstitutionSOSupportRequest(UserUpdateFields userUpdateFields, User user) {
-    if (Objects.nonNull(userUpdateFields) && Objects.nonNull(user)) {
-      boolean updateFieldProvided = Objects.nonNull(userUpdateFields.getSuggestedInstitution())
-          || Objects.nonNull(userUpdateFields.getInstitutionId())
-          || Objects.nonNull(userUpdateFields.getSuggestedSigningOfficial())
-          || Objects.nonNull(userUpdateFields.getSelectedSigningOfficialId());
-
-      //only send ticket if an institution or signing official is provided; ignore otherwise
-      if (updateFieldProvided) {
-        try {
-          SupportTicket ticket = supportTicketCreator.createInstitutionSOSupportTicket(
-              userUpdateFields, user);
-          postTicketToSupport(ticket);
-        } catch (Exception e) {
-          String errorMessage =
-              "Exception sending suggested user fields support request: " + e.getMessage();
-          var errorException = new ServerErrorException(
-              "Unable to send support ticket for user with email:" +
-                  " " + user.getEmail(),
-              HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-          logException(errorMessage, errorException);
-          throw errorException;
-        }
-      }
-    }
-  }
 }

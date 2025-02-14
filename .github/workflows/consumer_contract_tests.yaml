@@ -26,10 +26,11 @@ jobs:
     outputs:
       sha-short: ${{ steps.extract-branch.outputs.sha-short }}
       pact-b64: ${{ steps.encode-pact.outputs.pact-b64 }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -39,11 +40,11 @@ jobs:
         run: |
           GITHUB_EVENT_NAME=${{ github.event_name }}
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            GITHUB_REF=${{ github.ref }}
-            GITHUB_SHA=${{ github.sha }}
+            GITHUB_REF="${GITHUB_DEFAULT_REF}"
+            GITHUB_SHA="${GITHUB_DEFAULT_SHA}"
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            GITHUB_REF=refs/heads/${{ github.head_ref }}
-            GITHUB_SHA=${{ github.event.pull_request.head.sha }}
+            GITHUB_REF="refs/heads/${GITHUB_HEAD_REF}"
+            GITHUB_SHA="${GITHUB_HEAD_SHA}"
           else
             echo "Failed to extract branch information"
             exit 1
@@ -52,13 +53,23 @@ jobs:
           echo "sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
           echo "sha-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "branch=${GITHUB_REF/refs\/heads\//""}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_DEFAULT_SHA: ${{ github.sha }}
+          GITHUB_DEFAULT_REF: ${{ github.ref }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
       - name: Echo branch information
         run: |
-          echo ${{ steps.extract-branch.outputs.ref }}
-          echo ${{ steps.extract-branch.outputs.sha }}
-          echo ${{ steps.extract-branch.outputs.sha-short }}
-          echo ${{ steps.extract-branch.outputs.branch }}
+          echo "${BRANCH_REF}"
+          echo "${BRANCH_SHA}"
+          echo "${BRANCH_SHA_SHORT}"
+          echo "${BRANCH_NAME}"
+        env:
+          BRANCH_REF: ${{ steps.extract-branch.outputs.ref }}
+          BRANCH_SHA: ${{ steps.extract-branch.outputs.sha }}
+          BRANCH_SHA_SHORT: ${{ steps.extract-branch.outputs.sha-short }}
+          BRANCH_NAME: ${{ steps.extract-branch.outputs.branch }}
 
       - name: Run consumer tests
         run: mvn clean test -Ppact-tests
@@ -75,10 +86,9 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Dispatch to terra-github-workflows
-        uses: aurelien-baudet/workflow-dispatch@93e95b157d791ae7f42aef8f8a0d3d723eba1c31 #commit sha for v2.1.1
+        uses: aurelien-baudet/workflow-dispatch@3133c5d135c7dbe4be4f9793872b6ef331b53bc7 #commit sha for v4.0.0
         with:
           workflow: publish-pacts.yaml
           repo: broadinstitute/terra-github-workflows

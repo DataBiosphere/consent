@@ -8,10 +8,12 @@ import java.sql.Timestamp;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, RowMapperHelper {
+public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, RowMapperHelper,
+    ConsentLogger {
 
   @Override
   public FileStorageObject map(ResultSet r, StatementContext statementContext) throws SQLException {
@@ -30,17 +32,21 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
     }
 
     if (hasColumn(r, addPrefix("gcs_file_uri"))) {
+      String value = r.getString(addPrefix("gcs_file_uri"));
       try {
-        file.setBlobId(BlobId.fromGsUtilUri(r.getString(addPrefix("gcs_file_uri"))));
+        file.setBlobId(BlobId.fromGsUtilUri(value));
       } catch (Exception e) {
+        logException("Error parsing blob id: %s for fso id: %s".formatted(value, file.getFileStorageObjectId()), e);
         file.setBlobId(null);
       }
     }
 
     if (hasColumn(r, addPrefix("category"))) {
+      String value = r.getString(addPrefix("category"));
       try {
-        file.setCategory(FileCategory.findValue(r.getString(addPrefix("category"))));
+        file.setCategory(FileCategory.findValue(value));
       } catch (Exception e) {
+        logException("Error parsing file category: %s for fso id: %s".formatted(value, file.getFileStorageObjectId()), e);
         file.setCategory(null);
       }
     }
@@ -49,7 +55,7 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setMediaType(r.getString(addPrefix("media_type")));
     }
 
-    if (hasColumn(r, addPrefix("create_user_id"))) {
+    if (hasNonZeroColumn(r, addPrefix("create_user_id"))) {
       file.setCreateUserId(r.getInt(addPrefix("create_user_id")));
     }
 
@@ -62,9 +68,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setDeleted(r.getBoolean(addPrefix("deleted")));
     }
 
-    if (hasColumn(r, addPrefix("delete_user_id"))) {
-      Integer id = r.getInt(addPrefix("delete_user_id"));
-      file.setDeleteUserId(id.equals(0) ? null : id);
+    if (hasNonZeroColumn(r, addPrefix("delete_user_id"))) {
+      file.setDeleteUserId(r.getInt(addPrefix("delete_user_id")));
     }
 
     if (hasColumn(r, addPrefix("delete_date"))) {
@@ -72,9 +77,8 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       file.setDeleteDate((Objects.nonNull(deleteDate) ? deleteDate.toInstant() : null));
     }
 
-    if (hasColumn(r, addPrefix("update_user_id"))) {
-      Integer id = r.getInt(addPrefix("update_user_id"));
-      file.setUpdateUserId(id.equals(0) ? null : id);
+    if (hasNonZeroColumn(r, addPrefix("update_user_id"))) {
+      file.setUpdateUserId(r.getInt(addPrefix("update_user_id")));
     }
 
     if (hasColumn(r, addPrefix("update_date"))) {

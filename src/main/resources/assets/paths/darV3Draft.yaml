@@ -1,0 +1,23 @@
+post:
+  summary: Create Draft Data Access Request
+  description: |
+    Create Draft Data Access Request
+    Datasets are restricted to those for which the user has a Library Card with a Data Access Agreement for the dataset's Data Access Committee
+  parameters:
+    - name: dar
+      in: body
+      description: The fields that represent a Data Access Request, json format.
+      required: true
+      schema:
+        $ref: '../schemas/DataAccessRequest.yaml'
+  tags:
+    - Data Access Request
+  responses:
+    201:
+      description: Returns the created draft Data Access Request.
+    400:
+      description: |
+        Bad Request. Input is malformed or user does not have appropriate Data Access Agreement
+        for the requested Datasets
+    500:
+      description: Internal Server Error.

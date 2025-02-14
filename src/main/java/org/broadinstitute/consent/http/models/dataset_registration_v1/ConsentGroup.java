@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -776,7 +775,7 @@ public class ConsentGroup {
     TDR_LOCATION("TDR Location"),
     NOT_DETERMINED("Not Determined");
     private final String value;
-    private final static Map<String, ConsentGroup.DataLocation> CONSTANTS = new HashMap<String, ConsentGroup.DataLocation>();
+    private static final Map<String, ConsentGroup.DataLocation> CONSTANTS = new HashMap<String, ConsentGroup.DataLocation>();
 
     static {
       for (ConsentGroup.DataLocation c : values()) {
@@ -818,7 +817,7 @@ public class ConsentGroup {
     CONTROLLED("controlled"),
     EXTERNAL("external");
     private final String value;
-    private final static Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
+    private static final Map<String, ConsentGroup.AccessManagement> CONSTANTS = new HashMap<String, ConsentGroup.AccessManagement>();
 
     static {
       for (ConsentGroup.AccessManagement c : values()) {
@@ -849,34 +848,6 @@ public class ConsentGroup {
         return constant;
       }
     }
-  }
-
-  public boolean isInvalidForUpdate() {
-    return Objects.nonNull(this.accessManagement) ||
-        Objects.nonNull(this.generalResearchUse) ||
-        Objects.nonNull(this.hmb) ||
-        (Objects.nonNull(this.diseaseSpecificUse) && this.diseaseSpecificUse.size() > 0) ||
-        Objects.nonNull(this.poa) ||
-        Objects.nonNull(this.otherPrimary) ||
-        Objects.nonNull(this.nmds) ||
-        Objects.nonNull(this.gso) ||
-        Objects.nonNull(this.pub) ||
-        Objects.nonNull(this.col) ||
-        Objects.nonNull(this.irb) ||
-        Objects.nonNull(this.gs) ||
-        Objects.nonNull(this.mor) ||
-        Objects.nonNull(this.morDate) ||
-        Objects.nonNull(this.npu) ||
-        Objects.nonNull(this.otherSecondary);
-  }
-
-  public boolean hasPrimaryDataUse() {
-    return Objects.nonNull(this.accessManagement) ||
-        Objects.nonNull(this.generalResearchUse) ||
-        Objects.nonNull(this.hmb) ||
-        (Objects.nonNull(this.diseaseSpecificUse) && !this.diseaseSpecificUse.isEmpty()) ||
-        Objects.nonNull(this.poa) ||
-        Objects.nonNull(this.otherPrimary);
   }
 
 }

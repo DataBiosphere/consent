@@ -12,23 +12,11 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM approval_expiration_time")
   void deleteAllApprovalTimes();
 
-  @SqlUpdate("DELETE FROM consent_audit")
-  void deleteAllConsentAudits();
-
   @SqlUpdate("DELETE FROM match_rationale")
   void deleteAllMatchEntityRationales();
 
   @SqlUpdate("DELETE FROM match_entity")
   void deleteAllMatchEntities();
-
-  @SqlUpdate("DELETE FROM consent_associations")
-  void deleteAllConsentAssociations();
-
-  @SqlUpdate("DELETE FROM consents")
-  void deleteAllConsents();
-
-  @SqlUpdate("DELETE FROM access_rp")
-  void deleteAllAccessRps();
 
   @SqlUpdate("DELETE FROM election")
   void deleteAllElections();
@@ -46,9 +34,6 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM dictionary WHERE key_id > 11")
   void deleteAllDictionaryTerms();
 
-  @SqlUpdate("DELETE FROM dataset_user_association")
-  void deleteAllDatasetAssociations();
-
   @SqlUpdate("DELETE FROM dataset")
   void deleteAllDatasets();
 
@@ -58,6 +43,8 @@ public interface TestingDAO extends Transactional<TestingDAO> {
   @SqlUpdate("DELETE FROM study_property")
   void deleteAllStudyProperties();
 
+  @SqlUpdate("DELETE FROM draft")
+  void deleteAllDrafts();
 
   @SqlUpdate("DELETE FROM user_role where dac_id is not null")
   void deleteAllDacUserRoles();

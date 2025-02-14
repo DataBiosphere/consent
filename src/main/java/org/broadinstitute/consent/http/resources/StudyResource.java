@@ -148,7 +148,7 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
 
-      boolean deletable = study.getDatasets()
+      boolean deletable = (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
           .stream()
           .allMatch(Dataset::getDeletable);
       if (!deletable) {
@@ -157,13 +157,15 @@ public class StudyResource extends Resource {
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      studyDatasetIds.forEach(id -> {
-        try {
-          elasticSearchService.deleteIndex(id);
-        } catch (IOException e) {
-          logException(e);
-        }
-      });
+      if (studyDatasetIds != null) {
+        studyDatasetIds.forEach(id -> {
+          try {
+            elasticSearchService.deleteIndex(id);
+          } catch (IOException e) {
+            logException(e);
+          }
+        });
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -209,10 +211,8 @@ public class StudyResource extends Resource {
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator();
-      Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 registration = gson.fromJson(json,
-          DatasetRegistrationSchemaV1.class);
+      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
+      DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
 
       if (updateValidator.validate(existingStudy, registration)) {
         // Update study from registration
@@ -237,30 +237,4 @@ public class StudyResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
-  /**
-   * Finds and validates all the files uploaded to the multipart.
-   *
-   * @param multipart Form data
-   * @return Map of file body parts, where the key is the name of the field and the value is the
-   * body part including the file(s).
-   */
-  private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
-    if (Objects.isNull(multipart)) {
-      return Map.of();
-    }
-
-    Map<String, FormDataBodyPart> files = new HashMap<>();
-    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
-      for (FormDataBodyPart part : parts) {
-        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
-          validateFileDetails(part.getContentDisposition());
-          files.put(part.getName(), part);
-        }
-      }
-    }
-
-    return files;
-  }
-
 }

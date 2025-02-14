@@ -19,7 +19,7 @@ public class DatasetDTO {
   private Integer dacId;
 
   @JsonProperty
-  private Integer dataSetId;
+  private Integer datasetId;
 
   @JsonProperty
   private String consentId;
@@ -29,12 +29,6 @@ public class DatasetDTO {
 
   @JsonProperty
   private List<DatasetPropertyDTO> properties;
-
-  @JsonProperty
-  private Boolean active;
-
-  @JsonProperty
-  private Boolean needsApproval;
 
   @JsonProperty
   private Boolean isAssociatedToDataOwners;
@@ -115,22 +109,6 @@ public class DatasetDTO {
     this.properties = properties;
   }
 
-  public Boolean getActive() {
-    return active;
-  }
-
-  public void setActive(Boolean active) {
-    this.active = active;
-  }
-
-  public Boolean getNeedsApproval() {
-    return needsApproval;
-  }
-
-  public void setNeedsApproval(Boolean needsApproval) {
-    this.needsApproval = needsApproval;
-  }
-
   public Boolean getIsAssociatedToDataOwners() {
     return isAssociatedToDataOwners;
   }
@@ -147,12 +125,12 @@ public class DatasetDTO {
     this.updateAssociationToDataOwnerAllowed = updateAssociationToDataOwnerAllowed;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
   public void setAlias(Integer alias) {
@@ -227,11 +205,11 @@ public class DatasetDTO {
       return false;
     }
     DatasetDTO that = (DatasetDTO) o;
-    return dataSetId.equals(that.dataSetId);
+    return datasetId.equals(that.datasetId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(dataSetId);
+    return Objects.hash(datasetId);
   }
 }

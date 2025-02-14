@@ -21,12 +21,10 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class GCSService {
+public class GCSService implements ConsentLogger {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private StoreConfiguration config;
   private Storage storage;
 
@@ -46,7 +44,7 @@ public class GCSService {
           getService();
       this.setStorage(storage);
     } catch (Exception e) {
-      logger.error("Exception initializing GCSService: " + e.getMessage());
+      logException("Exception initializing GCSService: " + e.getMessage(), e);
     }
   }
 

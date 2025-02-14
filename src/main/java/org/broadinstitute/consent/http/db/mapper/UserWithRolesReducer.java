@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -21,9 +22,9 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
   public void accumulate(Map<Integer, User> map, RowView rowView) {
     // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
     Integer userId = 0;
-    if (hasColumn(rowView, "user_id", Integer.class)) {
+    if (hasNonZeroColumn(rowView, "user_id")) {
       userId = rowView.getColumn("user_id", Integer.class);
-    } else if (hasColumn(rowView, "u_user_id", Integer.class)) {
+    } else if (hasNonZeroColumn(rowView, "u_user_id")) {
       userId = rowView.getColumn("u_user_id", Integer.class);
     }
     User user =
@@ -34,9 +35,9 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     try {
       // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
       Integer userRoleId = null;
-      if (hasColumn(rowView, "user_role_id", Integer.class)) {
+      if (hasNonZeroColumn(rowView, "user_role_id")) {
         userRoleId = rowView.getColumn("user_role_id", Integer.class);
-      } else if (hasColumn(rowView, "ur_user_role_id", Integer.class)) {
+      } else if (hasNonZeroColumn(rowView, "ur_user_role_id")) {
         userRoleId = rowView.getColumn("ur_user_role_id", Integer.class);
       }
       if (Objects.nonNull(userRoleId)) {
@@ -61,8 +62,15 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     //ex) The same LC can end up being repeated multiple times
     //Below only adds LC if not currently saved on the array
     try {
-      if (Objects.nonNull(rowView.getColumn("lc_id", Integer.class))) {
-        LibraryCard lc = rowView.getRow(LibraryCard.class);
+      if (rowView.getColumn("lc_id", Integer.class) != null) {
+        int lcId = rowView.getColumn("lc_id", Integer.class);
+        LibraryCard lc;
+        Optional<LibraryCard> existingLibraryCard = user.getLibraryCards() == null ?
+            Optional.empty() :
+            user.getLibraryCards().stream()
+                .filter(card -> card.getId().equals(lcId))
+                .findFirst();
+        lc = existingLibraryCard.orElseGet(() -> rowView.getRow(LibraryCard.class));
         try {
           if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {
             Institution institution = rowView.getRow(Institution.class);
@@ -74,10 +82,10 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         } catch (MappingException e) {
           // Ignore institution mapping errors
         }
-        if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().stream()
-            .noneMatch(card -> card.getId().equals(lc.getId()))) {
-          user.addLibraryCard(lc);
+        if (rowView.getColumn("lc_daa_id", Integer.class) != null) {
+          lc.addDaa(rowView.getColumn("lc_daa_id", Integer.class));
         }
+        user.addLibraryCard(lc);
       }
     } catch (MappingException e) {
       //Ignore exceptions here, user may not have a library card issued under this instiution

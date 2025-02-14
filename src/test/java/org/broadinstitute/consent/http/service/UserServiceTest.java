@@ -20,13 +20,14 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.DatasetAssociationDAO;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -37,6 +38,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -46,6 +48,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,8 +70,6 @@ class UserServiceTest {
   @Mock
   private VoteDAO voteDAO;
 
-  @Mock
-  private DatasetAssociationDAO datasetAssociationDAO;
 
   @Mock
   private InstitutionDAO institutionDAO;
@@ -89,15 +90,21 @@ class UserServiceTest {
   private UserServiceDAO userServiceDAO;
 
   @Mock
+  private DaaDAO daaDAO;
+
+  @Mock
   private EmailService emailService;
+
+  @Mock
+  private DraftServiceDAO draftServiceDAO;
 
 
   private UserService service;
 
   private void initService() {
-    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, datasetAssociationDAO,
-        institutionDAO, libraryCardDAO,
-        acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, emailService);
+    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
+        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
+        emailService, draftServiceDAO);
   }
 
   @Test
@@ -159,8 +166,8 @@ class UserServiceTest {
     when(userDAO.findUserById(any())).thenReturn(user);
     UserProperty prop = new UserProperty();
     prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of()) // first time, no SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of()) // first time, no SO id
         .thenReturn(List.of(prop)); // second time, has SO id
     initService();
     try {
@@ -192,8 +199,8 @@ class UserServiceTest {
     prop1.setPropertyValue("1");
     UserProperty prop2 = new UserProperty();
     prop2.setPropertyValue("2");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of(prop1)) // first SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of(prop1)) // first SO id
         .thenReturn(List.of(prop2)); // second SO id
     initService();
     try {
@@ -223,8 +230,8 @@ class UserServiceTest {
     when(userDAO.findUserById(any())).thenReturn(user);
     UserProperty prop = new UserProperty();
     prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of(prop)) // first SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of(prop)) // first SO id
         .thenReturn(List.of(prop)); // second SO id
     initService();
     try {
@@ -314,8 +321,7 @@ class UserServiceTest {
     initService();
     User user = service.createUser(u);
     assertFalse(user.getRoles().isEmpty());
-    assertEquals(UserRoles.RESEARCHER.getRoleId(),
-        user.getRoles().get(0).getRoleId());
+    assertEquals(UserRoles.RESEARCHER.getRoleId(), user.getRoles().get(0).getRoleId());
   }
 
   @Test
@@ -383,10 +389,8 @@ class UserServiceTest {
   @Test
   void testFindUserByIdWithRoles() {
     User u = generateUser();
-    List<UserRole> roleList = List.of(
-        generateRole(UserRoles.RESEARCHER.getRoleId()),
-        generateRole(UserRoles.MEMBER.getRoleId())
-    );
+    List<UserRole> roleList = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()),
+        generateRole(UserRoles.MEMBER.getRoleId()));
     u.setRoles(roleList);
     when(userDAO.findUserById(any())).thenReturn(u);
     initService();
@@ -424,10 +428,8 @@ class UserServiceTest {
   @Test
   void testFindUserByEmailWithRoles() {
     User u = generateUser();
-    List<UserRole> roleList = List.of(
-        generateRole(UserRoles.RESEARCHER.getRoleId()),
-        generateRole(UserRoles.MEMBER.getRoleId())
-    );
+    List<UserRole> roleList = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()),
+        generateRole(UserRoles.MEMBER.getRoleId()));
     u.setRoles(roleList);
     when(userDAO.findUserByEmail(any())).thenReturn(u);
     initService();
@@ -459,6 +461,7 @@ class UserServiceTest {
 
     try {
       service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      verify(draftServiceDAO).deleteDraftsByUser(u);
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }
@@ -532,13 +535,15 @@ class UserServiceTest {
   void testGetUsersByUserRole_SO() {
     User u = generateUser();
     u.setInstitutionId(1);
-    when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(
-        List.of(new User(), new User()));
+    LibraryCard lc = generateLibraryCard(u);
+    u.setLibraryCards(List.of(lc));
+    when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(u, new User()));
     initService();
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertNotNull(users);
     assertEquals(2, users.size());
+    assertEquals(List.of(lc), users.get(0).getLibraryCards());
   }
 
   @Test
@@ -564,11 +569,125 @@ class UserServiceTest {
     if (!returnedUsers.contains(u3)) {
       returnedUsers.add(u3);
     }
+    LibraryCard lc = generateLibraryCard(u1);
+    u1.setLibraryCards(List.of(lc));
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
     initService();
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
+    assertEquals(List.of(lc), users.get(0).getLibraryCards());
+    assertNull(users.get(1).getLibraryCards());
+  }
+
+  @Test
+  void testGetUsersAsRoleInvalidRole() {
+    User u1 = generateUser();
+    initService();
+    List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
+    assertNotNull(users);
+    assertEquals(0, users.size());
+    assertEquals(Collections.emptyList(), users);
+  }
+
+  @Test
+  void testGetUsersByDaaId() {
+    User u1 = generateUser();
+    int dacId = RandomUtils.nextInt(0, 50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(any())).thenReturn(daa);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(1, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1)), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdMultipleUsers() {
+    User u1 = generateUser();
+    User u2 = generateUser();
+    int dacId = RandomUtils.nextInt(0, 50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    LibraryCard card2 = generateLibraryCard(u2);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(daaId)).thenReturn(daa);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(2, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdMultipleUsersMultipleDaas() {
+    User u1 = generateUser();
+    User u2 = generateUser();
+    User u3 = generateUser();
+    int dacId = RandomUtils.nextInt(0, 50);
+    int dacId2 = RandomUtils.nextInt(0, 50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    LibraryCard card2 = generateLibraryCard(u2);
+    LibraryCard card3 = generateLibraryCard(u3);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId2 = daaDAO.createDaa(card3.getUserId(), now, card3.getUserId(), now, dacId2);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(daaId2);
+    when(daaDAO.findById(any())).thenReturn(daa, daa2);
+    when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2), List.of(u3));
+    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(card3.getId(), daaId2);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(2, users.size());
+    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+
+    List<SimplifiedUser> users2 = service.getUsersByDaaId(daaId2);
+    assertNotNull(users2);
+    assertEquals(1, users2.size());
+    assertEquals(List.of(new SimplifiedUser(u3)), users2);
+  }
+
+  @Test
+  void testGetUsersByDaaIdNoMatchingUsers() {
+    User u1 = generateUser();
+    int dacId = RandomUtils.nextInt(0, 50);
+    Instant now = Instant.now();
+    LibraryCard card = generateLibraryCard(u1);
+    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(daaId);
+    when(daaDAO.findById(any())).thenReturn(daa);
+    initService();
+    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    assertNotNull(users);
+    assertEquals(0, users.size());
+    assertEquals(Collections.emptyList(), users);
+  }
+
+  @Test
+  void testGetUsersByDaaIdNoMatchingDaa() {
+    initService();
+    assertThrows(NotFoundException.class, () -> {
+      service.getUsersByDaaId(RandomUtils.nextInt(10, 50));
+    });
   }
 
   @Test
@@ -585,14 +704,10 @@ class UserServiceTest {
   @Test
   void testFindUserWithPropertiesAsJsonObjectById() {
     User user = generateUser();
-    UserStatusInfo info = new UserStatusInfo()
-        .setUserEmail(user.getEmail())
-        .setEnabled(true)
+    UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
-    AuthUser authUser = new AuthUser()
-        .setEmail(user.getEmail())
-        .setAuthToken(RandomStringUtils.random(30, true, false))
-        .setUserStatusInfo(info);
+    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
+        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -602,25 +717,19 @@ class UserServiceTest {
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
+    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
-        userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-    assertTrue(
-        userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
-    assertTrue(
-        userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
+        userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+    assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
   }
 
   @Test
   void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
     User user = generateUser();
-    UserStatusInfo info = new UserStatusInfo()
-        .setUserEmail(user.getEmail())
-        .setEnabled(true)
+    UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
-    AuthUser authUser = new AuthUser()
-        .setEmail("not the user's email address")
-        .setAuthToken(RandomStringUtils.random(30, true, false))
-        .setUserStatusInfo(info);
+    AuthUser authUser = new AuthUser().setEmail("not the user's email address")
+        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -630,25 +739,20 @@ class UserServiceTest {
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
+    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
-        userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
-    assertTrue(
-        userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
+        userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
   }
 
   @Test
   void testFindOrCreateUser() throws Exception {
     User user = generateUser();
-    UserStatus.UserInfo info = new UserStatus.UserInfo()
-        .setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled()
-        .setAllUsersGroup(true)
-        .setGoogle(true)
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser()
-        .setEmail(user.getEmail())
+    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
         .setAuthToken(RandomStringUtils.random(30, true, false));
 
     when(userDAO.findUserByEmail(any())).thenReturn(user);
@@ -664,16 +768,11 @@ class UserServiceTest {
     User user = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     user.setRoles(roles);
-    UserStatus.UserInfo info = new UserStatus.UserInfo()
-        .setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled()
-        .setAllUsersGroup(true)
-        .setGoogle(true)
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser()
-        .setName(user.getDisplayName())
-        .setEmail(user.getEmail())
+    AuthUser authUser = new AuthUser().setName(user.getDisplayName()).setEmail(user.getEmail())
         .setAuthToken(RandomStringUtils.random(30, true, false));
 
     // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser) and then return null (createUser)
@@ -793,14 +892,11 @@ class UserServiceTest {
     int i1 = RandomUtils.nextInt(10, 50);
     int i2 = RandomUtils.nextInt(10, 50);
     int i3 = RandomUtils.nextInt(5, 25);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    String displayName = RandomStringUtils.randomAlphabetic(i1) +
-        " " +
-        RandomStringUtils.randomAlphabetic(i2);
+    String email =
+        RandomStringUtils.randomAlphabetic(i1) + "@" + RandomStringUtils.randomAlphabetic(i2) + "."
+            + RandomStringUtils.randomAlphabetic(i3);
+    String displayName =
+        RandomStringUtils.randomAlphabetic(i1) + " " + RandomStringUtils.randomAlphabetic(i2);
     u.setEmail(email);
     u.setDisplayName(displayName);
     u.setUserId(RandomUtils.nextInt(1, 100));
