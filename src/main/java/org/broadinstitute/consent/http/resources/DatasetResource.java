@@ -11,8 +11,10 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -32,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
@@ -48,8 +50,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -128,31 +128,6 @@ public class DatasetResource extends Resource {
   }
 
   /**
-   * Finds and validates all the files uploaded to the multipart.
-   *
-   * @param multipart Form data
-   * @return Map of file body parts, where the key is the name of the field and the value is the
-   * body part including the file(s).
-   */
-  private Map<String, FormDataBodyPart> extractFilesFromMultiPart(FormDataMultiPart multipart) {
-    if (Objects.isNull(multipart)) {
-      return Map.of();
-    }
-
-    Map<String, FormDataBodyPart> files = new HashMap<>();
-    for (List<FormDataBodyPart> parts : multipart.getFields().values()) {
-      for (FormDataBodyPart part : parts) {
-        if (Objects.nonNull(part.getContentDisposition().getFileName())) {
-          validateFileDetails(part.getContentDisposition());
-          files.put(part.getName(), part);
-        }
-      }
-    }
-
-    return files;
-  }
-
-  /**
    * This endpoint updates the dataset.
    */
   @PUT
@@ -190,53 +165,52 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
+  /**
+   * This endpoint updates the dataset.
+   */
+  @PATCH
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON})
   @Path("/{datasetId}")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response updateDataset(@Auth AuthUser authUser, @Context UriInfo info,
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
       @PathParam("datasetId") Integer datasetId, String json) {
     try {
-      DatasetDTO inputDataset = new Gson().fromJson(json, DatasetDTO.class);
-      if (Objects.isNull(inputDataset)) {
-        throw new BadRequestException("Dataset is required");
-      }
-      if (Objects.isNull(inputDataset.getProperties()) || inputDataset.getProperties().isEmpty()) {
-        throw new BadRequestException("Dataset must contain required properties");
-      }
-      Dataset datasetExists = datasetService.findDatasetById(datasetId);
-      if (Objects.isNull(datasetExists)) {
+      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      if (existingDataset == null) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
       }
-      List<DatasetPropertyDTO> invalidProperties = datasetService.findInvalidProperties(
-          inputDataset.getProperties());
-      if (invalidProperties.size() > 0) {
-        List<String> invalidKeys = invalidProperties.stream()
-            .map(DatasetPropertyDTO::getPropertyName)
-            .collect(Collectors.toList());
-        throw new BadRequestException(
-            "Dataset contains invalid properties that could not be recognized or associated with a key: "
-                + invalidKeys.toString());
-      }
-      List<DatasetPropertyDTO> duplicateProperties = datasetService.findDuplicateProperties(
-          inputDataset.getProperties());
-      if (duplicateProperties.size() > 0) {
-        throw new BadRequestException("Dataset contains multiple values for the same property.");
-      }
+      // Check permissions for non-admin roles.
       User user = userService.findUserByEmail(authUser.getEmail());
-      // Validate that the admin/chairperson has edit access to this dataset
-      validateDatasetDacAccess(user, datasetExists);
-      Integer userId = user.getUserId();
-      Optional<Dataset> updatedDataset = datasetService.updateDataset(inputDataset, datasetId,
-          userId);
-      if (updatedDataset.isPresent()) {
-        URI uri = info.getRequestUriBuilder().replacePath("api/dataset/{datasetId}")
-            .build(updatedDataset.get().getDataSetId());
-        return Response.ok(uri).entity(updatedDataset.get()).build();
-      } else {
-        return Response.noContent().build();
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        if (!existingDataset.isCreator(user) && !existingDataset.isCustodian(user)) {
+          throw new ForbiddenException("User does not have permission to update this dataset");
+        }
       }
+      if (json == null || json.isEmpty()) {
+        throw new BadRequestException("Dataset Patch is required");
+      }
+      Gson gson = GsonUtil.getInstance();
+      DatasetPatch patch;
+      try {
+        patch = gson.fromJson(json, DatasetPatch.class);
+      } catch (Exception e) {
+        throw new BadRequestException("Unable to parse dataset patch: " + json);
+      }
+      if (!patch.isPatchable(existingDataset)) {
+        return Response.notModified().entity(existingDataset).build();
+      }
+      // Validate DatasetPatch values
+      List<String> existingNames = datasetService.findAllDatasetNames();
+      if (patch.name() != null && !patch.name().equals(existingDataset.getName())
+          && existingNames.contains(patch.name())) {
+        throw new BadRequestException("The new name for this dataset already exists: " + patch.name());
+      }
+      if (!patch.validateProperties()) {
+        throw new BadRequestException("Properties are invalid");
+      }
+      Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
+      return Response.ok(patched).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -321,7 +295,7 @@ public class DatasetResource extends Resource {
     try {
       List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
 
-      Set<Integer> foundIds = datasets.stream().map(Dataset::getDataSetId)
+      Set<Integer> foundIds = datasets.stream().map(Dataset::getDatasetId)
           .collect(Collectors.toSet());
       if (!foundIds.containsAll(datasetIds)) {
         // find the differences
@@ -350,7 +324,7 @@ public class DatasetResource extends Resource {
   public Response validateDatasetName(@QueryParam("name") String name) {
     try {
       Dataset datasetWithName = datasetService.getDatasetByName(name);
-      return Response.ok().entity(datasetWithName.getDataSetId()).build();
+      return Response.ok().entity(datasetWithName.getDatasetId()).build();
     } catch (Exception e) {
       throw new NotFoundException("Could not find the dataset with name: " + name);
     }
@@ -549,7 +523,7 @@ public class DatasetResource extends Resource {
       throw new NotFoundException();
     } else {
       if (Objects.isNull(dataset) || Objects.isNull(dataset.getDacId())) {
-        logWarn("Cannot find a valid dac id for dataset: " + dataset.getDataSetId());
+        logWarn("Cannot find a valid dac id for dataset: " + dataset.getDatasetId());
         throw new NotFoundException();
       } else {
         if (!dacIds.contains(dataset.getDacId())) {
@@ -558,4 +532,5 @@ public class DatasetResource extends Resource {
       }
     }
   }
+
 }

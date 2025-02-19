@@ -33,7 +33,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("status") String status,
       @Bind("createDate") Date createDate,
       @Bind("referenceId") String referenceId,
-      @Bind("datasetId") Integer dataSetId);
+      @Bind("datasetId") Integer datasetId);
 
   @SqlUpdate("DELETE FROM election WHERE election_id in (<electionIds>)")
   void deleteElectionsByIds(@BindList("electionIds") List<Integer> electionIds);

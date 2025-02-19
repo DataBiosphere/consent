@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.db;
 /**
  * Generic container class for DAOs that can be used in service constructors to simplify instance
  * creation.
+ * Per feedback in https://github.com/DataBiosphere/consent/pull/2408
+ * 'We should only expand this usage if necessary.'
  */
 @SuppressWarnings("unused")
 public class DAOContainer {

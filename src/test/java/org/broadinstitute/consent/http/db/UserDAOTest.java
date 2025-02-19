@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -206,7 +208,8 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
     int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getInstitutionId(), "asdf",
@@ -271,6 +274,14 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDisplayNameInvalidChars() {
+    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    String newName = "invalid\0name";
+    assertThrows(UnableToExecuteStatementException.class,
+        () -> userDAO.updateDisplayName(researcher.getUserId(), newName));
+  }
+
+  @Test
   void testFindUserByEmailAndRoleId() {
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(),
@@ -285,10 +296,10 @@ class UserDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDataSetId()),
+        Collections.singletonList(dataset.getDatasetId()),
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     Optional<User> foundUser = users.stream().findFirst();
     assertNotNull(users);
@@ -302,10 +313,10 @@ class UserDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
-    datasetDAO.updateDatasetDacId(dataset.getDataSetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDataSetId()),
+        Collections.singletonList(dataset.getDatasetId()),
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     assertNotNull(users);
     assertTrue(users.isEmpty());
@@ -341,7 +352,8 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -360,7 +372,8 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersWithCardsByDaaId() {
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
+        RandomStringUtils.randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -478,7 +491,7 @@ class UserDAOTest extends DAOTestHelper {
   private void createDatasetProperties(Integer datasetId) {
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
-    dsp.setDataSetId(datasetId);
+    dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
     dsp.setCreateDate(new Date());

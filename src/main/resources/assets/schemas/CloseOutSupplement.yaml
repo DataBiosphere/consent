@@ -1,0 +1,7 @@
+type: string
+description: An enumeration of Closeout Supplement values.
+enum:
+  - PROJECT_COMPLETED
+  - REQUESTOR_MOVED_INSTITUTION
+  - PROJECT_TRANSFERRED
+  - PROJECT_SUPERSEDED

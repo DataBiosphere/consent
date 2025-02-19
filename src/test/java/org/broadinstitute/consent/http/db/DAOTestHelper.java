@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
@@ -33,18 +33,16 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
-public class DAOTestHelper {
+public class DAOTestHelper extends AbstractTestHelper {
 
   public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
-
-  private static DropwizardTestSupport<ConsentConfiguration> testApp;
-
+  public static final String EMPTY_JSON_DOCUMENT = "{}";
   protected static Jdbi jdbi;
-
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
   protected static DaaDAO daaDAO;
@@ -64,7 +62,8 @@ public class DAOTestHelper {
   protected static DarCollectionSummaryDAO darCollectionSummaryDAO;
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
-
+  protected static DraftDAO draftDAO;
+  private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
   private static TestingDAO testingDAO;
@@ -76,7 +75,8 @@ public class DAOTestHelper {
   public static void startUp() throws Exception {
     // Start the database
     postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
-        withCommand("postgres -c max_connections=" + maxConnections);
+        withCommand("postgres -c max_connections=" + maxConnections).
+        waitingFor(Wait.forListeningPorts());
     postgresContainer.start();
     ConfigOverride driverOverride = ConfigOverride.config("database.driverClass",
         postgresContainer.getDriverClassName());
@@ -100,7 +100,7 @@ public class DAOTestHelper {
     testApp.before();
 
     // Initialize DAOs
-    String dbiExtension = "_" + RandomStringUtils.random(10, true, false);
+    String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
     jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(),
@@ -131,6 +131,7 @@ public class DAOTestHelper {
     darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
+    draftDAO = jdbi.onDemand(DraftDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
   }
 
@@ -153,6 +154,7 @@ public class DAOTestHelper {
     testingDAO.deleteAllDictionaryTerms();
     testingDAO.deleteAllDatasetAudits();
     testingDAO.deleteAllDatasets();
+    testingDAO.deleteAllDrafts();
     testingDAO.deleteAllStudyProperties();
     testingDAO.deleteAllStudies();
     testingDAO.deleteAllDacUserRoles();
@@ -185,14 +187,14 @@ public class DAOTestHelper {
    * @return Created User
    */
   protected User createUser() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
+    int i1 = randomInt(5, 10);
+    int i2 = randomInt(5, 10);
+    int i3 = randomInt(3, 5);
+    String email = randomAlphabetic(i1) +
         "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
+        randomAlphabetic(i2) +
         "." +
-        RandomStringUtils.randomAlphabetic(i3);
+        randomAlphabetic(i3);
     Integer userId = userDAO.insertUser(email, "display name", new Date());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
     UserProperty prop = new UserProperty();
@@ -210,25 +212,25 @@ public class DAOTestHelper {
    * @return Last DataAccessRequest of a DarCollection
    */
   protected DataAccessRequest createDataAccessRequestV3() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
+    int i1 = randomInt(5, 10);
+    String email = randomAlphabetic(i1);
+    String name = randomAlphabetic(10);
     Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         userId,
         new Date());
     userDAO.updateUser(name, userId, institutionId);
     userRoleDAO.insertSingleUserRole(7, userId);
     User user = userDAO.findUserById(userId);
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 999999999);
+    String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     for (int i = 0; i < 4; i++) {
@@ -245,7 +247,7 @@ public class DAOTestHelper {
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
       String darCode) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     data.setDarCode(darCode);
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");

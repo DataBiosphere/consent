@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -64,6 +65,8 @@ import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DraftFileStorageServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
@@ -79,11 +82,11 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 public class ConsentModule extends AbstractModule {
 
+  public static final String DB_ENV = "postgresql";
   @Inject
   private final ConsentConfiguration config;
   @Inject
   private final Environment environment;
-
   private final Client client;
   private final Jdbi jdbi;
   private final CounterDAO counterDAO;
@@ -105,8 +108,7 @@ public class ConsentModule extends AbstractModule {
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final AcknowledgementDAO acknowledgementDAO;
-
-  public static final String DB_ENV = "postgresql";
+  private final DraftDAO draftDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -140,6 +142,7 @@ public class ConsentModule extends AbstractModule {
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
+    this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
   }
 
   @Override
@@ -569,7 +572,8 @@ public class ConsentModule extends AbstractModule {
         providesSamDAO(),
         providesUserServiceDAO(),
         providesDaaDAO(),
-        providesEmailService());
+        providesEmailService(),
+        providesDraftService());
   }
 
   @Provides
@@ -615,7 +619,23 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   SupportRequestService providesSupportRequestService() {
-    return new SupportRequestService(config.getServicesConfiguration(), providesInstitutionDAO(),
-        providesUserDAO());
+    return new SupportRequestService(config.getServicesConfiguration());
+  }
+
+  @Provides
+  DraftDAO providesDraftDAO() {
+    return draftDAO;
+  }
+
+  @Provides
+  DraftFileStorageServiceDAO providesDraftFileStorageService() {
+    return new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService(),
+        providesFileStorageObjectDAO());
+  }
+
+  @Provides
+  DraftServiceDAO providesDraftService() {
+    return new DraftServiceDAO(providesJdbi(), providesDraftDAO(),
+        providesDraftFileStorageService());
   }
 }

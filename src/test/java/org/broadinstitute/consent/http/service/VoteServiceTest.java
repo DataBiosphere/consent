@@ -465,13 +465,13 @@ class VoteServiceTest {
     v2.setUserId(1);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
+    d2.setDatasetId(2);
     d2.setName(RandomStringUtils.random(50, true, false));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
@@ -480,13 +480,13 @@ class VoteServiceTest {
     e1.setElectionId(1);
     e1.setReferenceId(referenceId1);
     e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e1.setDataSetId(1);
+    e1.setDatasetId(1);
 
     Election e2 = new Election();
     e2.setElectionId(2);
     e2.setReferenceId(referenceId2);
     e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e2.setDataSetId(2);
+    e2.setDatasetId(2);
 
     DatasetProperty depositorProp = new DatasetProperty();
     depositorProp.setPropertyName("Data Depositor");
@@ -495,7 +495,7 @@ class VoteServiceTest {
 
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
-    dar1.addDatasetId(d1.getDataSetId());
+    dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
     dar1.setReferenceId(referenceId1);
@@ -503,7 +503,7 @@ class VoteServiceTest {
 
     DataAccessRequest dar2 = new DataAccessRequest();
     DataAccessRequestData data2 = new DataAccessRequestData();
-    dar2.addDatasetId(d2.getDataSetId());
+    dar2.addDatasetId(d2.getDatasetId());
     dar2.setCollectionId(1);
     dar2.setData(data2);
     dar2.setReferenceId(referenceId2);
@@ -555,14 +555,14 @@ class VoteServiceTest {
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
 
     Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
+    d2.setDatasetId(2);
     d2.setName(RandomStringUtils.random(50, true, false));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
@@ -572,24 +572,24 @@ class VoteServiceTest {
     e1.setElectionId(1);
     e1.setReferenceId(referenceId1);
     e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e1.setDataSetId(1);
+    e1.setDatasetId(1);
 
     Election e2 = new Election();
     e2.setElectionId(2);
     e2.setReferenceId(referenceId2);
     e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
-    e2.setDataSetId(2);
+    e2.setDatasetId(2);
 
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
-    dar1.addDatasetId(d1.getDataSetId());
+    dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
     dar1.setReferenceId(referenceId1);
 
     DataAccessRequest dar2 = new DataAccessRequest();
     DataAccessRequestData data2 = new DataAccessRequestData();
-    dar2.addDatasetId(d2.getDataSetId());
+    dar2.addDatasetId(d2.getDatasetId());
     dar2.setCollectionId(2);
     dar2.setData(data2);
     dar2.setReferenceId(referenceId2);
@@ -632,14 +632,14 @@ class VoteServiceTest {
     v1.setUserId(1);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
-    dar1.addDatasetId(d1.getDataSetId());
+    dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
     dar1.setReferenceId(referenceId1);
@@ -671,14 +671,14 @@ class VoteServiceTest {
     v1.setUserId(1);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     DataAccessRequest dar1 = new DataAccessRequest();
     DataAccessRequestData data1 = new DataAccessRequestData();
-    dar1.addDatasetId(d1.getDataSetId());
+    dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
     dar1.setReferenceId(referenceId1);
@@ -713,7 +713,7 @@ class VoteServiceTest {
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
@@ -721,7 +721,7 @@ class VoteServiceTest {
     d1.setCreateUserId(submitter.getUserId());
 
     Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
+    d2.setDatasetId(2);
     d2.setName(RandomStringUtils.random(50, true, false));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
@@ -763,7 +763,7 @@ class VoteServiceTest {
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
@@ -771,7 +771,7 @@ class VoteServiceTest {
     d1.setCreateUserId(submitterNotFound.getUserId());
 
     Dataset d2 = new Dataset();
-    d2.setDataSetId(2);
+    d2.setDatasetId(2);
     d2.setName(RandomStringUtils.random(50, true, false));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
@@ -826,7 +826,7 @@ class VoteServiceTest {
     study.setCreateUserId(studySubmitter.getUserId());
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
@@ -894,7 +894,7 @@ class VoteServiceTest {
     study.setCreateUserId(studySubmitter.getUserId());
 
     Dataset d1 = new Dataset();
-    d1.setDataSetId(1);
+    d1.setDatasetId(1);
     d1.setName(RandomStringUtils.random(50, true, false));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());

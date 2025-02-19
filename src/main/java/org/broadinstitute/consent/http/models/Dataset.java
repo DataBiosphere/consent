@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -9,11 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-public class Dataset {
+public class Dataset implements ConsentLogger {
 
-  private Integer dataSetId;
+  private Integer datasetId;
 
   private String objectId;
 
@@ -54,9 +58,9 @@ public class Dataset {
   public Dataset() {
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate,
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate,
       Integer createUserId, Date updateDate, Integer updateUserId, Integer alias) {
-    this.dataSetId = dataSetId;
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -67,8 +71,8 @@ public class Dataset {
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate, Integer alias) {
-    this.dataSetId = dataSetId;
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate, Integer alias) {
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -76,8 +80,8 @@ public class Dataset {
     this.alias = alias;
   }
 
-  public Dataset(Integer dataSetId, String objectId, String name, Date createDate) {
-    this.dataSetId = dataSetId;
+  public Dataset(Integer datasetId, String objectId, String name, Date createDate) {
+    this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
     this.datasetName = name;
@@ -90,12 +94,12 @@ public class Dataset {
     this.objectId = objectId;
   }
 
-  public Integer getDataSetId() {
-    return dataSetId;
+  public Integer getDatasetId() {
+    return datasetId;
   }
 
-  public void setDataSetId(Integer dataSetId) {
-    this.dataSetId = dataSetId;
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public String getObjectId() {
@@ -335,7 +339,42 @@ public class Dataset {
     this.study = study;
   }
 
-  @Override
+  /**
+   * Determine if the user is a dataset/study creator
+   *
+   * @param user    User
+   * @return User is a creator of the dataset/study
+   */
+  public boolean isCustodian(User user) {
+    if (getStudy() != null && getStudy().getProperties() != null) {
+      Optional<StudyProperty> dataCustodians = getStudy()
+          .getProperties()
+          .stream()
+          .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
+          .findFirst();
+      if (dataCustodians.isPresent()) {
+        JsonArray jsonArray = (JsonArray) dataCustodians.get().getValue();
+        return jsonArray.contains(new JsonPrimitive(user.getEmail()));
+      } else {
+        logWarn(
+            "No data custodians found for dataset: %s".formatted(getDatasetIdentifier()));
+      }
+    } else {
+      logWarn(
+          "No study properties found for dataset: %s".formatted(getDatasetIdentifier()));
+    }
+    return false;
+  }
+
+  public boolean isCreator(User user) {
+    if (Objects.equals(user.getUserId(), getCreateUserId())) {
+      return true;
+    }
+    return getStudy() != null && Objects.equals(user.getUserId(),
+        getStudy().getCreateUserId());
+  }
+
+    @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -344,12 +383,12 @@ public class Dataset {
       return false;
     }
     Dataset dataset = (Dataset) o;
-    return com.google.common.base.Objects.equal(dataSetId, dataset.dataSetId);
+    return com.google.common.base.Objects.equal(datasetId, dataset.datasetId);
   }
 
   @Override
   public int hashCode() {
-    return com.google.common.base.Objects.hashCode(dataSetId);
+    return com.google.common.base.Objects.hashCode(datasetId);
   }
 
   public FileStorageObject getNihInstitutionalCertificationFile() {

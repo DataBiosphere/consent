@@ -21,7 +21,7 @@ public enum AlternativeDataSharingPlanReason {
   OTHER_INFORMED_CONSENT_LIMITATIONS_OR_CONCERNS("Other informed consent limitations or concerns"),
   OTHER("Other");
   private final String value;
-  private final static Map<String, AlternativeDataSharingPlanReason> CONSTANTS = new HashMap<String, AlternativeDataSharingPlanReason>();
+  private static final Map<String, AlternativeDataSharingPlanReason> CONSTANTS = new HashMap<String, AlternativeDataSharingPlanReason>();
 
   static {
     for (AlternativeDataSharingPlanReason c : values()) {

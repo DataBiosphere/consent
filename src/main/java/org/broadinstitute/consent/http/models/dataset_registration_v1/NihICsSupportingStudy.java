@@ -35,7 +35,7 @@ public enum NihICsSupportingStudy {
   NCATS("NCATS"),
   NCCIH("NCCIH");
   private final String value;
-  private final static Map<String, NihICsSupportingStudy> CONSTANTS = new HashMap<String, NihICsSupportingStudy>();
+  private static final Map<String, NihICsSupportingStudy> CONSTANTS = new HashMap<String, NihICsSupportingStudy>();
 
   static {
     for (NihICsSupportingStudy c : values()) {

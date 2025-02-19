@@ -5,7 +5,7 @@ import java.io.Writer;
 
 public class DisabledDatasetMessage extends MailMessage {
 
-  private final static String MISSING_DATASET = "Datasets not available for Data Access Request Application id: %s.";
+  private static final String MISSING_DATASET = "Datasets not available for Data Access Request Application id: %s.";
 
   public Mail disabledDatasetMessage(String toAddress, String fromAddress, Writer template,
       String referenceId, String type) {

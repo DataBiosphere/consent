@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -13,7 +16,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -33,6 +35,159 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   @BeforeEach
   void setUp() {
     validator = new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
+  }
+
+  @Test
+  void testValidation_knownFieldsExcluded() {
+    String json = """
+        {
+          "studyId": 6077,
+          "studyName": "All of Us (Controlled+ Tier)",
+          "studyType": null,
+          "studyDescription": "This study and dataset(s) represents the All of Us controlled+ tier data",
+          "dataTypes": [
+            "Whole Genome (WGS)"
+          ],
+          "phenotypeIndication": "NA",
+          "species": "Human",
+          "piName": "Paul Harris, Melissa Basford",
+          "dataSubmitterUserId": 3396,
+          "dataCustodianEmail": ["email@test.com"],
+          "publicVisibility": true,
+          "nihAnvilUse": "I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL",
+          "submittingToAnvil": null,
+          "dbGaPPhsID": null,
+          "dbGaPStudyRegistrationName": null,
+          "embargoReleaseDate": null,
+          "sequencingCenter": null,
+          "piInstitution": null,
+          "nihGrantContractNumber": null,
+          "nihICsSupportingStudy": [],
+          "nihProgramOfficerName": null,
+          "nihInstitutionCenterSubmission": null,
+          "nihGenomicProgramAdministratorName": null,
+          "multiCenterStudy": null,
+          "collaboratingSites": [],
+          "controlledAccessRequiredForGenomicSummaryResultsGSR": null,
+          "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation": null,
+          "alternativeDataSharingPlan": null,
+          "alternativeDataSharingPlanReasons": [],
+          "alternativeDataSharingPlanExplanation": null,
+          "alternativeDataSharingPlanFileName": null,
+          "alternativeDataSharingPlanDataSubmitted": null,
+          "alternativeDataSharingPlanDataReleased": null,
+          "alternativeDataSharingPlanTargetDeliveryDate": null,
+          "alternativeDataSharingPlanTargetPublicReleaseDate": null,
+          "alternativeDataSharingPlanAccessManagement": null,
+          "consentGroups": [
+            {
+              "datasetId": 2583,
+              "datasetIdentifier": "DUOS-001078",
+              "consentGroupName": "All of Us (Controlled+ Tier) - Set 1",
+              "accessManagement": "OPEN",
+              "generalResearchUse": true,
+              "hmb": false,
+              "diseaseSpecificUse": ["https://disease-ontology.org/term/DOID:162/"],
+              "poa": true,
+              "otherPrimary": "String",
+              "nmds": true,
+              "gso": false,
+              "pub": false,
+              "col": false,
+              "irb": false,
+              "gs": "GS",
+              "mor": true,
+              "morDate": "More Date",
+              "npu": false,
+              "otherSecondary": "String",
+              "dataAccessCommitteeId": 99,
+              "dataLocation": "TDR_LOCATION",
+              "url": "https://abcnews.com",
+              "numberOfParticipants": 2,
+              "fileTypes": [
+                {
+                  "fileType": null,
+                  "functionalEquivalence": null
+                }
+              ]
+            },
+            {
+              "consentGroupName": "All of Us (Controlled+ Tier) - Set 2",
+              "accessManagement": "OPEN",
+              "generalResearchUse": true,
+              "hmb": false,
+              "diseaseSpecificUse": ["https://disease-ontology.org/term/DOID:162/"],
+              "poa": true,
+              "otherPrimary": "String",
+              "nmds": true,
+              "gso": false,
+              "pub": false,
+              "col": false,
+              "irb": false,
+              "gs": "GS",
+              "mor": true,
+              "morDate": "More Date",
+              "npu": false,
+              "otherSecondary": "String",
+              "dataAccessCommitteeId": 99,
+              "dataLocation": "TDR_LOCATION",
+              "url": "https://abcnews.com",
+              "numberOfParticipants": 2,
+              "fileTypes": [
+                {
+                  "fileType": null,
+                  "functionalEquivalence": null
+                }
+              ]
+            }
+          ]
+        }
+        """;
+    DatasetRegistrationSchemaV1 registration = validator.deserializeRegistration(json);
+    assertNull(registration.getDataSubmitterUserId());
+    assertNull(registration.getConsentGroups().get(0).getAccessManagement());
+    assertNull(registration.getConsentGroups().get(0).getCol());
+    assertNull(registration.getConsentGroups().get(0).getDataAccessCommitteeId());
+    assertNull(registration.getConsentGroups().get(0).getDatasetIdentifier());
+    assertTrue(registration.getConsentGroups().get(0).getDiseaseSpecificUse().isEmpty());
+    assertNull(registration.getConsentGroups().get(0).getGeneralResearchUse());
+    assertNull(registration.getConsentGroups().get(0).getGso());
+    assertNull(registration.getConsentGroups().get(0).getGs());
+    assertNull(registration.getConsentGroups().get(0).getHmb());
+    assertNull(registration.getConsentGroups().get(0).getIrb());
+    assertNull(registration.getConsentGroups().get(0).getMor());
+    assertNull(registration.getConsentGroups().get(0).getMorDate());
+    assertNull(registration.getConsentGroups().get(0).getNmds());
+    assertNull(registration.getConsentGroups().get(0).getNpu());
+    assertNull(registration.getConsentGroups().get(0).getOtherPrimary());
+    assertNull(registration.getConsentGroups().get(0).getOtherSecondary());
+    assertNull(registration.getConsentGroups().get(0).getPoa());
+    assertNull(registration.getConsentGroups().get(0).getPub());
+    // Spot check some of the non-null expectations
+    assertNotNull(registration.getStudyName());
+    assertNotNull(registration.getPublicVisibility());
+    assertNotNull(registration.getConsentGroups().get(0).getDatasetId());
+    // Assert that the second consent group is populated with data use values
+    assertNotNull(registration.getConsentGroups().get(1).getAccessManagement());
+    assertNotNull(registration.getConsentGroups().get(1).getCol());
+    assertNotNull(registration.getConsentGroups().get(1).getDataAccessCommitteeId());
+    assertFalse(registration.getConsentGroups().get(1).getDiseaseSpecificUse().isEmpty());
+    assertNotNull(registration.getConsentGroups().get(1).getGeneralResearchUse());
+    assertNotNull(registration.getConsentGroups().get(1).getGso());
+    assertNotNull(registration.getConsentGroups().get(1).getGs());
+    assertNotNull(registration.getConsentGroups().get(1).getHmb());
+    assertNotNull(registration.getConsentGroups().get(1).getIrb());
+    assertNotNull(registration.getConsentGroups().get(1).getMor());
+    assertNotNull(registration.getConsentGroups().get(1).getMorDate());
+    assertNotNull(registration.getConsentGroups().get(1).getNmds());
+    assertNotNull(registration.getConsentGroups().get(1).getNpu());
+    assertNotNull(registration.getConsentGroups().get(1).getOtherPrimary());
+    assertNotNull(registration.getConsentGroups().get(1).getOtherSecondary());
+    assertNotNull(registration.getConsentGroups().get(1).getPoa());
+    assertNotNull(registration.getConsentGroups().get(1).getPub());
+    assertNotNull(registration.getConsentGroups().get(1).getDataLocation());
+    assertNotNull(registration.getConsentGroups().get(1).getUrl());
+    assertFalse(registration.getConsentGroups().get(1).getFileTypes().isEmpty());
   }
 
   @Test
@@ -80,17 +235,6 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   }
 
   @Test
-  void testValidation_invalid_data_use_changes() {
-    Study study = createMockStudy();
-    DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.getConsentGroups().get(0).setGeneralResearchUse(true);
-
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
-  }
-
-  @Test
   void testValidation_non_study_dataset() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
@@ -106,7 +250,9 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   void testValidation_consent_group_name_change_allowed() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    study.getDatasets().forEach(d -> { d.setName("");});
+    study.getDatasets().forEach(d -> {
+      d.setName("");
+    });
 
     boolean valid = validator.validate(study, registration);
     assertTrue(valid);
@@ -116,19 +262,8 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   void testValidation_consent_group_name_change_not_allowed() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    study.getDatasets().forEach(d -> { d.setName("Existing Name");});
-
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
-  }
-
-  @Test
-  void testValidation_consent_group_access_management_not_allowed() {
-    Study study = createMockStudy();
-    DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.getConsentGroups().forEach(cg -> {
-      cg.setAccessManagement(AccessManagement.CONTROLLED);
+    study.getDatasets().forEach(d -> {
+      d.setName("Existing Name");
     });
 
     assertThrows(BadRequestException.class, () -> {
@@ -156,11 +291,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     Dataset dataset = new Dataset();
     dataset.setName(RandomStringUtils.randomAlphabetic(10));
     // mock data is limited to 10->100
-    dataset.setDataSetId(10000);
+    dataset.setDatasetId(10000);
     dataset.setDacId(RandomUtils.nextInt(10, 100));
     study.getDatasets().add(dataset);
     ArrayList<Integer> datasetIds = new ArrayList<>(study.getDatasetIds().stream().toList());
-    datasetIds.add(dataset.getDataSetId());
+    datasetIds.add(dataset.getDatasetId());
     study.setDatasetIds(new HashSet<>(datasetIds));
 
     assertThrows(BadRequestException.class, () -> {
@@ -255,7 +390,8 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   void testValidation_pi_institution() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.setNihAnvilUse(NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
+    registration.setNihAnvilUse(
+        NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(null);
 
     assertThrows(BadRequestException.class, () -> {
@@ -267,20 +403,10 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   void testValidation_pi_institution_nih_grant_contract_number() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.setNihAnvilUse(NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
+    registration.setNihAnvilUse(
+        NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(RandomUtils.nextInt(10, 100));
     registration.setNihGrantContractNumber(null);
-
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
-  }
-
-  @Test
-  void testValidation_phenotype_indication() {
-    Study study = createMockStudy();
-    DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.setPhenotypeIndication(null);
 
     assertThrows(BadRequestException.class, () -> {
       validator.validate(study, registration);
@@ -298,28 +424,15 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     });
   }
 
-  @Test
-  void testValidation_data_custodian_email() {
-    Study study = createMockStudy();
-    DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.setDataCustodianEmail(List.of());
-
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
-  }
-
-
-
   private Study createMockStudy() {
     Study study = new Study();
     study.setName(RandomStringUtils.randomAlphabetic(10));
     Dataset dataset = new Dataset();
     dataset.setName("");
-    dataset.setDataSetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
     dataset.setDacId(RandomUtils.nextInt(10, 100));
     study.addDatasets(List.of(dataset));
-    study.setDatasetIds(Set.of(dataset.getDataSetId()));
+    study.setDatasetIds(Set.of(dataset.getDatasetId()));
     return study;
   }
 
@@ -341,7 +454,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
       cg.setDataLocation(DataLocation.NOT_DETERMINED);
       cg.setNumberOfParticipants(RandomUtils.nextInt(10, 100));
       cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-      cg.setDatasetId(d.getDataSetId());
+      cg.setDatasetId(d.getDatasetId());
       cg.setDataAccessCommitteeId(d.getDacId());
       return cg;
     }).toList();

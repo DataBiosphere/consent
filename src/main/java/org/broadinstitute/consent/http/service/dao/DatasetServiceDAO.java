@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -19,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -49,12 +51,10 @@ public class DatasetServiceDAO implements ConsentLogger {
       // Some legacy dataset names can be null
       String dsAuditName =
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
-      DatasetAudit dsAudit = new DatasetAudit(dataset.getDataSetId(), dataset.getObjectId(), dsAuditName,
-        new Date(), userId, AuditActions.DELETE.getValue().toUpperCase());
       try {
-        datasetDAO.insertDatasetAudit(dsAudit);
-        datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDataSetId());
-        datasetDAO.deleteDatasetById(dataset.getDataSetId());
+        addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
+        datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+        datasetDAO.deleteDatasetById(dataset.getDatasetId());
       } catch (Exception e) {
         handle.rollback();
         logException(e);
@@ -190,6 +190,8 @@ public class DatasetServiceDAO implements ConsentLogger {
         dataUse.toString(),
         dacId
     );
+
+    addAuditRecord(datasetId, name, userId, AuditActions.CREATE);
 
     if (Objects.nonNull(studyId)) {
       datasetDAO.updateStudyId(datasetId, studyId);
@@ -336,17 +338,21 @@ public class DatasetServiceDAO implements ConsentLogger {
           // Turn that off for this connection. This will not affect existing or new connections and
           // only applies to the current one in this handle.
           handle.getConnection().setAutoCommit(false);
-
-          executeUpdateDatasetWithFiles(
-              handle,
-              updates.datasetId(),
-              updates.name(),
-              updates.userId(),
-              updates.dacId(),
-              updates.props(),
-              updates.files(),
-              true);
-
+          try {
+            executeUpdateDatasetWithFiles(
+                handle,
+                updates.datasetId(),
+                updates.name(),
+                updates.userId(),
+                updates.dacId(),
+                updates.props(),
+                updates.files(),
+                true);
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
           handle.commit();
         }
     );
@@ -360,10 +366,15 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles,
       boolean executeDeletes) {
+
+    // Don't update the name if it isn't provided
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    String updateName = StringUtils.isBlank(datasetName) ? dataset.getName() : datasetName;
+    addAuditRecord(datasetId, updateName, userId, AuditActions.UPDATE);
     // update dataset
     datasetDAO.updateDatasetByDatasetId(
         datasetId,
-        datasetName,
+        updateName,
         new Timestamp(new Date().getTime()),
         userId,
         dacId
@@ -374,6 +385,68 @@ public class DatasetServiceDAO implements ConsentLogger {
 
     // files
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
+  }
+
+  public void patchDataset(Integer datasetId, User user, DatasetPatch patch) throws SQLException {
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          try {
+            executePatchDataset(
+                handle,
+                datasetId,
+                patch.name(),
+                user.getUserId(),
+                patch.properties());
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
+          handle.commit();
+        }
+    );
+  }
+
+  public void executePatchDataset(Handle handle,
+      Integer datasetId,
+      String datasetName,
+      Integer userId,
+      List<DatasetProperty> properties) {
+    // update dataset
+    if (datasetName == null || datasetName.isBlank()) {
+      logWarn(
+          "Attempt to update dataset name with null or blank value: dataset id: %s; user id: %s".formatted(
+              datasetId, userId));
+      Dataset dataset = datasetDAO.findDatasetById(datasetId);
+      addAuditRecord(datasetId, dataset.getDatasetName(), userId, AuditActions.UPDATE);
+      datasetDAO.updateDatasetUpdateUser(
+          datasetId,
+          new Timestamp(new Date().getTime()),
+          userId);
+    } else {
+      addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
+      datasetDAO.updateDatasetNameWithUpdateUser(
+          datasetId,
+          datasetName,
+          new Timestamp(new Date().getTime()),
+          userId);
+    }
+    // insert properties
+    executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
+
+  }
+
+  private void addAuditRecord(Integer datasetId, String name, Integer userId, AuditActions action) {
+    DatasetAudit audit = new DatasetAudit(
+        datasetId,
+        null,
+        name,
+        new Date(),
+        userId,
+        action.getValue().toUpperCase()
+    );
+    datasetDAO.insertDatasetAudit(audit);
   }
 
   // Helper methods to generate Dictionary inserts
@@ -433,7 +506,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     // Generate new inserts for props we don't know about yet
     properties.forEach(prop -> {
       if (!existingPropNames.contains(prop.getPropertyName())) {
-        prop.setDataSetId(datasetId);
+        prop.setDatasetId(datasetId);
         prop.setCreateDate(now);
         updates.add(createPropertyInsert(handle, prop, now));
       }
@@ -449,7 +522,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                     :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
         """;
     Update insert = handle.createUpdate(sql);
-    insert.bind("datasetId", property.getDataSetId());
+    insert.bind("datasetId", property.getDatasetId());
     insert.bind("propertyKey", property.getPropertyKey());
     insert.bind("propertyName", property.getPropertyName());
     insert.bind("schemaProperty", property.getSchemaProperty());
@@ -527,7 +600,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             AND property_id = :propertyId
         """;
     Update insert = handle.createUpdate(sql);
-    insert.bind("datasetId", property.getDataSetId());
+    insert.bind("datasetId", property.getDatasetId());
     insert.bind("propertyKey", property.getPropertyKey());
     insert.bind("propertyId", property.getPropertyId());
     return insert;

@@ -1,6 +1,12 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +16,9 @@ import org.apache.commons.collections4.SetUtils;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class DatasetRegistrationSchemaV1UpdateValidator {
 
@@ -18,6 +26,89 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
 
   public DatasetRegistrationSchemaV1UpdateValidator(DatasetService datasetService) {
     this.datasetService = datasetService;
+  }
+
+  private final ExclusionStrategy studyExclusionStrategy = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+      return fieldAttributes.getName().equalsIgnoreCase("dataSubmitterUserId");
+    }
+
+    @Override
+    public boolean shouldSkipClass(Class<?> aClass) {
+      return aClass.getSimpleName().equalsIgnoreCase("ConsentGroup");
+    }
+  };
+
+  private final ExclusionStrategy consentGroupExclusionStrategy = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(FieldAttributes fieldAttributes) {
+      final HashSet<String> exclusions = new HashSet<>(List.of(
+          DatasetRegistrationSchemaV1Builder.accessManagement,
+          DatasetRegistrationSchemaV1Builder.col,
+          DatasetRegistrationSchemaV1Builder.dataAccessCommitteeId,
+          DatasetRegistrationSchemaV1Builder.datasetIdentifier,
+          DatasetRegistrationSchemaV1Builder.diseaseSpecificUse,
+          DatasetRegistrationSchemaV1Builder.generalResearchUse,
+          DatasetRegistrationSchemaV1Builder.gs,
+          DatasetRegistrationSchemaV1Builder.gso,
+          DatasetRegistrationSchemaV1Builder.hmb,
+          DatasetRegistrationSchemaV1Builder.irb,
+          DatasetRegistrationSchemaV1Builder.nmds,
+          DatasetRegistrationSchemaV1Builder.mor,
+          DatasetRegistrationSchemaV1Builder.morDate,
+          DatasetRegistrationSchemaV1Builder.npu,
+          DatasetRegistrationSchemaV1Builder.otherPrimary,
+          DatasetRegistrationSchemaV1Builder.otherSecondary,
+          DatasetRegistrationSchemaV1Builder.pub,
+          DatasetRegistrationSchemaV1Builder.poa
+      ));
+      return exclusions.contains(fieldAttributes.getName());
+    }
+
+    @Override
+    public boolean shouldSkipClass(Class<?> aClass) {
+      return false;
+    }
+  };
+
+  /**
+   * Create a registration object suitable for the Update operation.
+   *
+   * @param json DatasetRegistrationSchemaV1 in JSON format
+   * @return DatasetRegistrationSchemaV1
+   */
+  public DatasetRegistrationSchemaV1 deserializeRegistration(String json) {
+    Gson studyGson = GsonUtil.gsonBuilderWithAdapters()
+        .addDeserializationExclusionStrategy(studyExclusionStrategy)
+        .create();
+    // Create the registration without any ConsentGroups
+    DatasetRegistrationSchemaV1 registration = studyGson.fromJson(json,
+        DatasetRegistrationSchemaV1.class);
+    // Ensure that we have no null entries before parsing them.
+    registration.setConsentGroups(new ArrayList<>());
+
+    // Conditionally parse the consent groups
+    Gson gson = GsonUtil.getInstance();
+    Gson filteredCGGson = GsonUtil.gsonBuilderWithAdapters()
+        .addDeserializationExclusionStrategy(consentGroupExclusionStrategy).create();
+    JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+    JsonArray jsonArray = jsonObject.getAsJsonArray("consentGroups");
+    if (jsonArray != null) {
+      jsonArray.asList().forEach(jsonElement -> {
+        JsonObject cgJson = jsonElement.getAsJsonObject();
+        if (cgJson.has("datasetId")) {
+          // If we have a dataset id, we're updating. Filter out non-updatable fields
+          ConsentGroup cg = filteredCGGson.fromJson(cgJson, ConsentGroup.class);
+          registration.getConsentGroups().add(cg);
+        } else {
+          // If we have don't have a dataset id, we're trying to add a new one to the study.
+          ConsentGroup cg = gson.fromJson(cgJson, ConsentGroup.class);
+          registration.getConsentGroups().add(cg);
+        }
+      });
+    }
+    return registration;
   }
 
   public boolean validate(Study existingStudy, DatasetRegistrationSchemaV1 registration) {
@@ -29,8 +120,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
       throw new BadRequestException("Invalid change to Study Name");
     }
 
-    // Not modifiable: Data Submitter Name/Email, Primary Data Use,
-    // Secondary Data Use
+    // Not modifiable: Data Submitter Name/Email
     if (registration.getDataSubmitterUserId() != null
         && !registration.getDataSubmitterUserId().equals(existingStudy.getCreateUserId())) {
       throw new BadRequestException("Invalid change to Data Submitter");
@@ -39,16 +129,6 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     // Minimum number of consent groups is 1
     if (registration.getConsentGroups().isEmpty()) {
       throw new BadRequestException("Invalid number of Consent Groups");
-    }
-
-    // Data use changes are not allowed for existing datasets
-    List<ConsentGroup> invalidConsentGroups = registration.getConsentGroups()
-        .stream()
-        .filter(cg -> Objects.nonNull(cg.getDatasetId()))
-        .filter(ConsentGroup::isInvalidForUpdate)
-        .toList();
-    if (!invalidConsentGroups.isEmpty()) {
-      throw new BadRequestException("Invalid Data Use changes to existing Consent Groups");
     }
 
     // Ensure that all consent group changes are for datasets in the current study
@@ -73,7 +153,7 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         .filter(cg -> {
           Optional<Dataset> dataset = SetUtils.emptyIfNull(existingStudy.getDatasets())
               .stream()
-              .filter(d -> d.getDataSetId().equals(cg.getDatasetId()))
+              .filter(d -> d.getDatasetId().equals(cg.getDatasetId()))
               .findFirst();
           return dataset.isPresent() && !dataset.get().getName().isBlank();
         })
@@ -141,15 +221,8 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
         throw new BadRequestException("NIH Grant of Contract Number is required");
       }
     }
-    if (Objects.isNull(registration.getPhenotypeIndication())) {
-      throw new BadRequestException("Phenotype Indication is required");
-    }
     if (Objects.isNull(registration.getPiName())) {
       throw new BadRequestException("Principal Investigator is required");
-    }
-    if (Objects.isNull(registration.getDataCustodianEmail()) || registration.getDataCustodianEmail()
-        .isEmpty()) {
-      throw new BadRequestException("Data Custodian Email is required");
     }
 
     return true;

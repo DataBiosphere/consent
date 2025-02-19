@@ -23,13 +23,11 @@ import jakarta.ws.rs.BadRequestException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -392,7 +390,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -408,7 +406,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -424,7 +422,7 @@ class DacServiceTest {
   void testFilterDataAccessRequestsByDAC_memberCase_3() {
     // Member no direct access to datasets
     List<Dataset> memberDataSets = Collections.emptyList();
-    when(dataSetDAO.findDatasetsByAuthUserEmail(getMember().getEmail())).thenReturn(memberDataSets);
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of());
 
     initService();
 
@@ -471,7 +469,7 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Election election = new Election();
-          election.setDataSetId(i);
+          election.setDatasetId(i);
           return election;
         }).collect(Collectors.toList());
   }
@@ -483,11 +481,11 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           String referenceId = UUID.randomUUID().toString();
-          List<Integer> dataSetIds = Collections.singletonList(i);
+          List<Integer> datasetIds = Collections.singletonList(i);
           DataAccessRequest dar = new DataAccessRequest();
           dar.setReferenceId(referenceId);
           DataAccessRequestData data = new DataAccessRequestData();
-          dar.setDatasetIds(dataSetIds);
+          dar.setDatasetIds(datasetIds);
           data.setReferenceId(referenceId);
           dar.setData(data);
           return dar;
@@ -501,7 +499,7 @@ class DacServiceTest {
     return IntStream.range(1, 5).
         mapToObj(i -> {
           Dataset dataSet = new Dataset();
-          dataSet.setDataSetId(i);
+          dataSet.setDatasetId(i);
           return dataSet;
         }).collect(Collectors.toList());
   }

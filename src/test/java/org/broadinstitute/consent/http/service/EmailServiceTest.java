@@ -85,7 +85,7 @@ class EmailServiceTest {
   FreeMarkerTemplateHelper templateHelper;
 
 
-  private final static String serverUrl = "http://localhost:8000/#/";
+  private static final String serverUrl = "http://localhost:8000/#/";
 
   @BeforeEach
   void setUp() {
@@ -212,11 +212,11 @@ class EmailServiceTest {
 
   private Dataset createDataset(Integer dacId) {
     Dataset dataset = new Dataset();
-    dataset.setDataSetId(RandomUtils.nextInt(1, 100000));
-    dataset.setAlias(dataset.getDataSetId());
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100000));
+    dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDacId(dacId);
-    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10), dataset.getDataSetId()));
+    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10), dataset.getDatasetId()));
     return dataset;
   }
 

@@ -118,7 +118,7 @@ public class FileTypeObject {
     SURVEY("Survey"),
     PHENOTYPE("Phenotype");
     private final String value;
-    private final static Map<String, FileTypeObject.FileType> CONSTANTS = new HashMap<String, FileTypeObject.FileType>();
+    private static final Map<String, FileTypeObject.FileType> CONSTANTS = new HashMap<String, FileTypeObject.FileType>();
 
     static {
       for (FileTypeObject.FileType c : values()) {

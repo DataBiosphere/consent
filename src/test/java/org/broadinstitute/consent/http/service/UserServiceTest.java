@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -94,12 +95,16 @@ class UserServiceTest {
   @Mock
   private EmailService emailService;
 
+  @Mock
+  private DraftServiceDAO draftServiceDAO;
+
 
   private UserService service;
 
   private void initService() {
-    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO, libraryCardDAO,
-        acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO, emailService);
+    service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
+        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
+        emailService, draftServiceDAO);
   }
 
   @Test
@@ -161,8 +166,8 @@ class UserServiceTest {
     when(userDAO.findUserById(any())).thenReturn(user);
     UserProperty prop = new UserProperty();
     prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of()) // first time, no SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of()) // first time, no SO id
         .thenReturn(List.of(prop)); // second time, has SO id
     initService();
     try {
@@ -194,8 +199,8 @@ class UserServiceTest {
     prop1.setPropertyValue("1");
     UserProperty prop2 = new UserProperty();
     prop2.setPropertyValue("2");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of(prop1)) // first SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of(prop1)) // first SO id
         .thenReturn(List.of(prop2)); // second SO id
     initService();
     try {
@@ -225,8 +230,8 @@ class UserServiceTest {
     when(userDAO.findUserById(any())).thenReturn(user);
     UserProperty prop = new UserProperty();
     prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any()))
-        .thenReturn(List.of(prop)) // first SO id
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
+            List.of(prop)) // first SO id
         .thenReturn(List.of(prop)); // second SO id
     initService();
     try {
@@ -316,8 +321,7 @@ class UserServiceTest {
     initService();
     User user = service.createUser(u);
     assertFalse(user.getRoles().isEmpty());
-    assertEquals(UserRoles.RESEARCHER.getRoleId(),
-        user.getRoles().get(0).getRoleId());
+    assertEquals(UserRoles.RESEARCHER.getRoleId(), user.getRoles().get(0).getRoleId());
   }
 
   @Test
@@ -385,10 +389,8 @@ class UserServiceTest {
   @Test
   void testFindUserByIdWithRoles() {
     User u = generateUser();
-    List<UserRole> roleList = List.of(
-        generateRole(UserRoles.RESEARCHER.getRoleId()),
-        generateRole(UserRoles.MEMBER.getRoleId())
-    );
+    List<UserRole> roleList = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()),
+        generateRole(UserRoles.MEMBER.getRoleId()));
     u.setRoles(roleList);
     when(userDAO.findUserById(any())).thenReturn(u);
     initService();
@@ -426,10 +428,8 @@ class UserServiceTest {
   @Test
   void testFindUserByEmailWithRoles() {
     User u = generateUser();
-    List<UserRole> roleList = List.of(
-        generateRole(UserRoles.RESEARCHER.getRoleId()),
-        generateRole(UserRoles.MEMBER.getRoleId())
-    );
+    List<UserRole> roleList = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()),
+        generateRole(UserRoles.MEMBER.getRoleId()));
     u.setRoles(roleList);
     when(userDAO.findUserByEmail(any())).thenReturn(u);
     initService();
@@ -461,6 +461,7 @@ class UserServiceTest {
 
     try {
       service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      verify(draftServiceDAO).deleteDraftsByUser(u);
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }
@@ -536,8 +537,7 @@ class UserServiceTest {
     u.setInstitutionId(1);
     LibraryCard lc = generateLibraryCard(u);
     u.setLibraryCards(List.of(lc));
-    when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(
-        List.of(u, new User()));
+    when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(u, new User()));
     initService();
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
@@ -593,7 +593,7 @@ class UserServiceTest {
   @Test
   void testGetUsersByDaaId() {
     User u1 = generateUser();
-    int dacId = RandomUtils.nextInt(0,50);
+    int dacId = RandomUtils.nextInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -612,8 +612,8 @@ class UserServiceTest {
   @Test
   void testGetUsersByDaaIdMultipleUsers() {
     User u1 = generateUser();
-    User u2= generateUser();
-    int dacId = RandomUtils.nextInt(0,50);
+    User u2 = generateUser();
+    int dacId = RandomUtils.nextInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
@@ -636,8 +636,8 @@ class UserServiceTest {
     User u1 = generateUser();
     User u2 = generateUser();
     User u3 = generateUser();
-    int dacId = RandomUtils.nextInt(0,50);
-    int dacId2 = RandomUtils.nextInt(0,50);
+    int dacId = RandomUtils.nextInt(0, 50);
+    int dacId2 = RandomUtils.nextInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
@@ -668,7 +668,7 @@ class UserServiceTest {
   @Test
   void testGetUsersByDaaIdNoMatchingUsers() {
     User u1 = generateUser();
-    int dacId = RandomUtils.nextInt(0,50);
+    int dacId = RandomUtils.nextInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -704,14 +704,10 @@ class UserServiceTest {
   @Test
   void testFindUserWithPropertiesAsJsonObjectById() {
     User user = generateUser();
-    UserStatusInfo info = new UserStatusInfo()
-        .setUserEmail(user.getEmail())
-        .setEnabled(true)
+    UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
-    AuthUser authUser = new AuthUser()
-        .setEmail(user.getEmail())
-        .setAuthToken(RandomStringUtils.random(30, true, false))
-        .setUserStatusInfo(info);
+    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
+        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -721,25 +717,19 @@ class UserServiceTest {
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
-    assertTrue(
-        userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
-    assertTrue(
-        userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
+    assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
   }
 
   @Test
   void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
     User user = generateUser();
-    UserStatusInfo info = new UserStatusInfo()
-        .setUserEmail(user.getEmail())
-        .setEnabled(true)
+    UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
-    AuthUser authUser = new AuthUser()
-        .setEmail("not the user's email address")
-        .setAuthToken(RandomStringUtils.random(30, true, false))
-        .setUserStatusInfo(info);
+    AuthUser authUser = new AuthUser().setEmail("not the user's email address")
+        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -749,8 +739,7 @@ class UserServiceTest {
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
-    assertTrue(
-        userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.RESEARCHER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
@@ -759,15 +748,11 @@ class UserServiceTest {
   @Test
   void testFindOrCreateUser() throws Exception {
     User user = generateUser();
-    UserStatus.UserInfo info = new UserStatus.UserInfo()
-        .setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled()
-        .setAllUsersGroup(true)
-        .setGoogle(true)
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser()
-        .setEmail(user.getEmail())
+    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
         .setAuthToken(RandomStringUtils.random(30, true, false));
 
     when(userDAO.findUserByEmail(any())).thenReturn(user);
@@ -783,16 +768,11 @@ class UserServiceTest {
     User user = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     user.setRoles(roles);
-    UserStatus.UserInfo info = new UserStatus.UserInfo()
-        .setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled()
-        .setAllUsersGroup(true)
-        .setGoogle(true)
+    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
+    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser()
-        .setName(user.getDisplayName())
-        .setEmail(user.getEmail())
+    AuthUser authUser = new AuthUser().setName(user.getDisplayName()).setEmail(user.getEmail())
         .setAuthToken(RandomStringUtils.random(30, true, false));
 
     // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser) and then return null (createUser)
@@ -912,14 +892,11 @@ class UserServiceTest {
     int i1 = RandomUtils.nextInt(10, 50);
     int i2 = RandomUtils.nextInt(10, 50);
     int i3 = RandomUtils.nextInt(5, 25);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    String displayName = RandomStringUtils.randomAlphabetic(i1) +
-        " " +
-        RandomStringUtils.randomAlphabetic(i2);
+    String email =
+        RandomStringUtils.randomAlphabetic(i1) + "@" + RandomStringUtils.randomAlphabetic(i2) + "."
+            + RandomStringUtils.randomAlphabetic(i3);
+    String displayName =
+        RandomStringUtils.randomAlphabetic(i1) + " " + RandomStringUtils.randomAlphabetic(i2);
     u.setEmail(email);
     u.setDisplayName(displayName);
     u.setUserId(RandomUtils.nextInt(1, 100));

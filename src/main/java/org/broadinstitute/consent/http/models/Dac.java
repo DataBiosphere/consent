@@ -131,8 +131,8 @@ public class Dac {
       datasets = new ArrayList<>();
     }
     datasets.add(dataset);
-    if (!datasetIds.contains(dataset.getDataSetId())) {
-      addDatasetId(dataset.getDataSetId());
+    if (!datasetIds.contains(dataset.getDatasetId())) {
+      addDatasetId(dataset.getDatasetId());
     }
   }
 }

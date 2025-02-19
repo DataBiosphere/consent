@@ -499,6 +499,14 @@ paths:
     $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/draft/v1:
+    $ref: './paths/draftIndex.yaml'
+  /api/draft/v1/{draftUUID}:
+    $ref: './paths/draftDocumentIndex.yaml'
+  /api/draft/v1/{draftUUID}/attachments:
+    $ref: './paths/draftAttachmentsIndex.yaml'
+  /api/draft/v1/{draftUUID}/attachments/{fileId}:
+    $ref: './paths/draftAttachments.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -1049,6 +1057,10 @@ paths:
           description: All systems are OK
         500:
           description: Some number of subsystems are not OK.
+  /support/request:
+    $ref: './paths/supportRequest.yaml'
+  /support/upload:
+    $ref: './paths/supportUpload.yaml'
   /tos/text:
     $ref: './paths/tosText.yaml'
   /tos/text/duos:

@@ -172,7 +172,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testGetUsersApprovedForDataset() {
     Dataset d = new Dataset();
-    d.setDataSetId(10);
+    d.setDatasetId(10);
 
     User user1 = new User();
     user1.setUserId(10);
@@ -184,7 +184,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest dar2 = new DataAccessRequest();
     dar2.setUserId(20);
     when(dataAccessRequestDAO
-        .findApprovedDARsByDatasetId(d.getDataSetId()))
+        .findApprovedDARsByDatasetId(d.getDatasetId()))
         .thenReturn(List.of(dar1, dar2));
     initService();
 

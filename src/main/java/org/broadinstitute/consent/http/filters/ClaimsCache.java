@@ -18,10 +18,10 @@ public class ClaimsCache {
 
   private static ClaimsCache INSTANCE;
   public final Cache<String, Map<String, String>> cache;
-  public final static String OAUTH2_CLAIM_email = "OAUTH2_CLAIM_email";
-  public final static String OAUTH2_CLAIM_name = "OAUTH2_CLAIM_name";
-  public final static String OAUTH2_CLAIM_access_token = "OAUTH2_CLAIM_access_token";
-  public final static String OAUTH2_CLAIM_aud = "OAUTH2_CLAIM_aud";
+  public static final String OAUTH2_CLAIM_email = "OAUTH2_CLAIM_email";
+  public static final String OAUTH2_CLAIM_name = "OAUTH2_CLAIM_name";
+  public static final String OAUTH2_CLAIM_access_token = "OAUTH2_CLAIM_access_token";
+  public static final String OAUTH2_CLAIM_aud = "OAUTH2_CLAIM_aud";
 
   private ClaimsCache() {
     cache = CacheBuilder
