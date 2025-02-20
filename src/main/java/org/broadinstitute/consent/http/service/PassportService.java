@@ -28,7 +28,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 
 public class PassportService {
 
-  public static final String ISS = "http://duos.org";
+  public static final String ISS = "https://duos.org";
 
   private final DatasetDAO datasetDAO;
   private final InstitutionDAO institutionDAO;
