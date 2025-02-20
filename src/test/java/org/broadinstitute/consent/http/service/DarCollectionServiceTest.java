@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
@@ -330,7 +331,8 @@ class DarCollectionServiceTest {
     dar.setReferenceId(UUID.randomUUID().toString());
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
-    when(darCollectionServiceDAO.createElectionsForDarCollection(any(), any())).thenReturn(null);
+    when(darCollectionServiceDAO.createElectionsForDarCollection(user, collection)).thenReturn(
+        null);
 
     assertThrows(IllegalStateException.class, () -> {
       service.createElectionsForDarCollection(user, collection);
@@ -345,16 +347,17 @@ class DarCollectionServiceTest {
     dar.setReferenceId(UUID.randomUUID().toString());
     DarCollection collection = createMockCollections(1).get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
-    when(darCollectionServiceDAO.createElectionsForDarCollection(any(), any())).thenReturn(
-        List.of("electionId"));
-    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenThrow(
+    List<String> electionIds = List.of("electionId");
+    when(darCollectionServiceDAO.createElectionsForDarCollection(user, collection)).thenReturn(
+        electionIds);
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(electionIds)).thenThrow(
         IllegalArgumentException.class);
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
-    verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(emailService, times(0)).sendDarNewCollectionElectionMessage(any(), any());
-    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
+    verify(darCollectionServiceDAO).createElectionsForDarCollection(user, collection);
+    verify(voteDAO).findVoteUsersByElectionReferenceIdList(electionIds);
+    verifyNoInteractions(emailService);
+    verify(darCollectionDAO).findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
 
   @Test
