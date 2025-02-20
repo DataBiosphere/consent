@@ -416,6 +416,7 @@ public class DarCollectionService implements ConsentLogger {
 
   /**
    * Find all dataset ids by the DAC User. Will return ids for Chairpersons or Members
+   *
    * @param user The DAC User
    * @return List of Dataset IDs
    */
@@ -657,13 +658,21 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The updated DarCollection
    */
-  public DarCollection createElectionsForDarCollection(User user, DarCollection collection) {
+  public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
+      throws Exception {
     try {
       List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(
           user, collection);
-      List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
-          createdElectionReferenceIds);
+      if (createdElectionReferenceIds == null || createdElectionReferenceIds.isEmpty()) {
+        var e = new IllegalStateException(
+            "No elections were created for DAR Collection: %s".formatted(
+                collection.getDarCode()));
+        logException(e);
+        throw e;
+      }
       try {
+        List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
+            createdElectionReferenceIds);
         emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
       } catch (Exception e) {
         logException(
@@ -673,6 +682,7 @@ public class DarCollectionService implements ConsentLogger {
     } catch (Exception e) {
       logException("Exception creating elections and votes for collection: %s".formatted(
           collection.getDarCollectionId()), e);
+      throw e;
     }
     return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
   }
