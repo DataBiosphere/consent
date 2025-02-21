@@ -324,22 +324,6 @@ class DarCollectionServiceTest {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionNull() throws Exception {
-    User user = new User();
-    user.setEmail("email");
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections(1).get(0);
-    collection.setDars(Map.of(dar.getReferenceId(), dar));
-    when(darCollectionServiceDAO.createElectionsForDarCollection(user, collection)).thenReturn(
-        null);
-
-    assertThrows(IllegalStateException.class, () -> {
-      service.createElectionsForDarCollection(user, collection);
-    });
-  }
-
-  @Test
   void testCreateElectionsForDarCollectionVoteUsersException() throws Exception {
     User user = new User();
     user.setEmail("email");

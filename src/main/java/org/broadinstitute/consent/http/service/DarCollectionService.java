@@ -663,7 +663,7 @@ public class DarCollectionService implements ConsentLogger {
     try {
       List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(
           user, collection);
-      if (createdElectionReferenceIds == null || createdElectionReferenceIds.isEmpty()) {
+      if (createdElectionReferenceIds.isEmpty()) {
         var e = new IllegalStateException(
             "No elections were created for DAR Collection: %s".formatted(
                 collection.getDarCode()));
