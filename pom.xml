@@ -51,13 +51,6 @@
               <includes>**/*.java</includes>
               <excludes>**/integration/**/*.java</excludes>
             </configuration>
-            <dependencies>
-              <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${junit.version}</version>
-              </dependency>
-            </dependencies>
           </plugin>
         </plugins>
       </build>
@@ -76,13 +69,6 @@
               </systemPropertyVariables>
               <includes>**/pact/**/*.java</includes>
             </configuration>
-            <dependencies>
-              <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${junit.version}</version>
-              </dependency>
-            </dependencies>
           </plugin>
         </plugins>
       </build>
@@ -98,13 +84,6 @@
             <configuration>
               <includes>**/integration/**/*.java</includes>
             </configuration>
-            <dependencies>
-              <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${junit.version}</version>
-              </dependency>
-            </dependencies>
           </plugin>
         </plugins>
       </build>
@@ -361,6 +340,13 @@
         <version>3.48.0</version>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -599,20 +585,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
       <version>${dropwizard.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
