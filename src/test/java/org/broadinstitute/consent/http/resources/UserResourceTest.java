@@ -28,19 +28,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
@@ -1098,20 +1093,4 @@ class UserResourceTest {
     return user;
   }
 
-  private List<UserProperty> createResearcherProperties() {
-    return Arrays.stream(UserFields.values())
-        .filter(UserFields::getRequired)
-        .map(f -> new UserProperty(1, f.getValue(), f.getValue()))
-        .collect(Collectors.toList());
-  }
-
-  private List<LibraryCard> createLibraryCards() {
-    LibraryCard e = new LibraryCard();
-    String randomValue = RandomStringUtils.random(10, true, false);
-    e.setEraCommonsId(randomValue);
-    e.setUserEmail(randomValue);
-    e.setUserName(randomValue);
-    e.setInstitutionId(new Random().nextInt());
-    return Collections.singletonList(e);
-  }
 }

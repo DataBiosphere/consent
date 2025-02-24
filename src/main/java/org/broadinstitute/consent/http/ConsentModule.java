@@ -55,7 +55,6 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
-import org.broadinstitute.consent.http.service.ResearcherService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -577,18 +576,10 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  ResearcherService providesResearcherService() {
-    return new ResearcherService(
-        providesUserPropertyDAO(),
-        providesUserDAO()
-    );
-  }
-
-  @Provides
   NihService providesNihService() {
     return new NihService(
-        providesResearcherService(),
         providesUserDAO(),
+        providesUserPropertyDAO(),
         providesNIHServiceDAO());
   }
 

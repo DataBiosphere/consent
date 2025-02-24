@@ -28,7 +28,7 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
           ON CONFLICT (user_id, property_key)
           DO UPDATE SET property_value = :propertyValue
       """)
-  void insertAll(@BindBean Collection<UserProperty> researcherProperties);
+  void insertAll(@BindBean Collection<UserProperty> userProperties);
 
   @SqlUpdate("""
     DELETE FROM user_property WHERE user_id = :userId
@@ -38,5 +38,5 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
   @SqlBatch("""
     DELETE FROM user_property WHERE user_id = :userId AND property_key = :propertyKey
     """)
-  void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
+  void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> userProperties);
 }
