@@ -730,6 +730,21 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteStudyWithNoDatasets() throws Exception {
+    // Registration process creates a study and dataset with properties
+    Study study = createStudy(List.of());
+    // Delete any created datasets
+    study.getDatasetIds().forEach(id -> {
+      datasetDAO.deleteDatasetPropertiesByDatasetId(id);
+      datasetDAO.deleteDatasetById(id);
+    });
+    // Ensure that study deletion succeeds
+    serviceDAO.deleteStudy(study, createUser());
+    Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(deletedStudy);
+  }
+
+  @Test
   void testExecuteUpdateDatasetWithNullName() throws Exception {
     // This creates a study with a single dataset:
     Study study = createStudy(List.of());
