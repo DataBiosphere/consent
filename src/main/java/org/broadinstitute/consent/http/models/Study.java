@@ -119,7 +119,7 @@ public class Study {
   }
 
   public Set<Dataset> getDatasets() {
-    return datasets;
+    return datasets == null? Set.of() : datasets;
   }
 
   public Date getCreateDate() {
