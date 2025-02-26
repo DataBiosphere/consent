@@ -67,15 +67,17 @@ public class DatasetServiceDAO implements ConsentLogger {
   public void deleteStudy(Study study, User user) throws Exception {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
-      study.getDatasets().forEach(d -> {
-        try {
-          deleteDataset(d, user.getUserId());
-        } catch (Exception e) {
-          handle.rollback();
-          logException(e);
-          throw new DatasetDeletionException(e);
-        }
-      });
+      if (study.getDatasets() != null) {
+        study.getDatasets().forEach(d -> {
+          try {
+            deleteDataset(d, user.getUserId());
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw new DatasetDeletionException(e);
+          }
+        });
+      }
       try {
         studyDAO.deleteStudyByStudyId(study.getStudyId());
       } catch (Exception e) {
