@@ -4,6 +4,8 @@
       description: |
         List all Datasets of a DAC. The datasets returned from this endpoint are limited in the 
         volume of data returned. To get the full dataset, use the `/datasets/{datasetId}` endpoint.
+        Note that study information is not included in dataset list endpoints but is provided in
+        individual dataset endpoints.
       parameters:
         - name: dacId
           in: path

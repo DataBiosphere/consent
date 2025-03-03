@@ -1,6 +1,7 @@
 get:
-  summary:
-  description:
+  summary: List of Dataset Study Summary objects
+  description: |
+    Provides a list of datasets and their associated study information in a very minimal format.
   tags:
     - Dataset
   responses:
