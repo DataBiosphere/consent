@@ -219,7 +219,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -275,7 +275,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -348,7 +348,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -1010,8 +1010,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
         List.of(datasetInsert));
-    List<Dataset> createdDatasets = datasetDAO.findDatasetsByIdList(createdIds);
-    return createdDatasets.get(0).getStudy();
+    Dataset createdDataset = datasetDAO.findDatasetById(createdIds.get(0));
+    return createdDataset.getStudy();
   }
 
   private Dataset createDataset() {
