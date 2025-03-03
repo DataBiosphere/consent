@@ -172,8 +172,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           FROM dataset d
           INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
@@ -219,8 +219,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           FROM dataset d
           INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          LEFT JOIN dictionary k ON k.key_id = dp.property_key
           WHERE d.dac_id = :dacId
           OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)
       """)
@@ -284,8 +284,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           FROM dataset d
           INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
           LEFT JOIN study_property sp ON sp.study_id = s.study_id
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
@@ -325,8 +325,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           FROM dataset d
           INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
           WHERE d.alias IN (<aliases>)
       """)
