@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -530,7 +531,7 @@ public class DarCollectionService implements ConsentLogger {
       if (!filterDatasetIds.isEmpty()) {
         datasetIds.retainAll(filterDatasetIds);
       }
-      Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
+      Set<Dataset> datasets = new HashSet<>(datasetDAO.findDatasetsByIdList(datasetIds));
       Map<Integer, Dataset> datasetMap = datasets.stream()
           .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 

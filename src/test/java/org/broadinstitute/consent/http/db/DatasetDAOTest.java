@@ -14,7 +14,6 @@ import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -723,19 +722,6 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(foundDataset);
     assertEquals(user.getUserId(), foundDataset.getUpdateUserId());
     assertTrue(foundDataset.getUpdateDate().after(dataset.getUpdateDate()));
-  }
-
-  @Test
-  void testFindDatasetWithDataUseByIdList() {
-    Dataset dataset = insertDataset();
-    Dac dac = insertDac();
-    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-
-    Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(
-        Collections.singletonList(dataset.getDatasetId()));
-    assertFalse(datasets.isEmpty());
-    List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
-    assertTrue(datasetIds.contains(dataset.getDatasetId()));
   }
 
   @Test
