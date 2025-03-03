@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ class DacServiceDAOTest extends DAOTestHelper {
     //  * DAC Member and Chairperson
     //  * Dataset associated to the DAC
     List<Dac> dacs = createMockDACs();
+    List<Integer> createdDatasetIds = new ArrayList<>();
     dacs.forEach(dac -> {
       // DAC
       int dacId = dacDAO.createDac(
@@ -98,6 +100,7 @@ class DacServiceDAOTest extends DAOTestHelper {
           "object id: " + RandomStringUtils.randomAlphabetic(10),
           new DataUseBuilder().setGeneralUse(true).build().toString(),
           dacId);
+      createdDatasetIds.add(datasetId);
       datasetDAO.updateDatasetDacId(datasetId, dacId);
     });
     dacDAO.findAll().forEach(dac -> {
@@ -125,7 +128,8 @@ class DacServiceDAOTest extends DAOTestHelper {
         }
       });
     });
-    datasetDAO.findAllDatasets().forEach(ds -> {
+    createdDatasetIds.forEach(id -> {
+      Dataset ds = datasetDAO.findDatasetById(id);
       assertNull(ds.getDacId(), "Dataset should not have a DAC");
       assertNull(ds.getDacApproval(), "Dataset should not have a DAC approval");
     });

@@ -141,6 +141,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   Dataset findDatasetById(@Bind("datasetId") Integer datasetId);
 
+  /**
+   * Return a list of Dataset objects from a list of dataset ids. This explicitly does NOT populate
+   * study information due to performance issues.
+   *
+   * @param datasetIds List of dataset ids
+   * @return List of datasets
+   */
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
@@ -150,22 +157,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
               k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
-              s.study_id AS s_study_id,
-              s.name AS s_name,
-              s.description AS s_description,
-              s.data_types AS s_data_types,
-              s.pi_name AS s_pi_name,
-              s.create_user_id AS s_create_user_id,
-              s.create_date AS s_create_date,
-              s.update_user_id AS s_user_id,
-              s.update_date AS s_update_date,
-              s.public_visibility AS s_public_visibility,
-              s_dataset.dataset_id AS s_dataset_id,
-              sp.study_property_id AS sp_study_property_id,
-              sp.study_id AS sp_study_id,
-              sp.key AS sp_key,
-              sp.value AS sp_value,
-              sp.type AS sp_type,
               fso.file_storage_object_id AS fso_file_storage_object_id,
               fso.entity_id AS fso_entity_id,
               fso.file_name AS fso_file_name,
@@ -179,68 +170,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.deleted AS fso_deleted,
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
-          LEFT JOIN users u on d.create_user_id = u.user_id
+          INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          LEFT JOIN dictionary k ON k.key_id = dp.property_key
-          LEFT JOIN study s ON s.study_id = d.study_id
-          LEFT JOIN study_property sp ON sp.study_id = s.study_id
-          LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-          LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
+          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
       """)
   List<Dataset> findDatasetsByIdList(@BindList("datasetIds") Collection<Integer> datasetIds);
-
-  @Deprecated
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
-          SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
-              u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
-              u.create_date AS u_create_date, u.email_preference AS u_email_preference,
-              u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
-              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
-              s.study_id AS s_study_id,
-              s.name AS s_name,
-              s.description AS s_description,
-              s.data_types AS s_data_types,
-              s.pi_name AS s_pi_name,
-              s.create_user_id AS s_create_user_id,
-              s.create_date AS s_create_date,
-              s.update_user_id AS s_user_id,
-              s.update_date AS s_update_date,
-              s.public_visibility AS s_public_visibility,
-              s_dataset.dataset_id AS s_dataset_id,
-              sp.study_property_id AS sp_study_property_id,
-              sp.study_id AS sp_study_id,
-              sp.key AS sp_key,
-              sp.value AS sp_value,
-              sp.type AS sp_type,
-              fso.file_storage_object_id AS fso_file_storage_object_id,
-              fso.entity_id AS fso_entity_id,
-              fso.file_name AS fso_file_name,
-              fso.category AS fso_category,
-              fso.gcs_file_uri AS fso_gcs_file_uri,
-              fso.media_type AS fso_media_type,
-              fso.create_date AS fso_create_date,
-              fso.create_user_id AS fso_create_user_id,
-              fso.update_date AS fso_update_date,
-              fso.update_user_id AS fso_update_user_id,
-              fso.deleted AS fso_deleted,
-              fso.delete_user_id AS fso_delete_user_id
-          FROM dataset d
-          LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          LEFT JOIN dictionary k ON k.key_id = dp.property_key
-          LEFT JOIN study s ON s.study_id = d.study_id
-          LEFT JOIN study_property sp ON sp.study_id = s.study_id
-          LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-          LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
-      """)
-  List<Dataset> findAllDatasets();
 
   @SqlQuery("""
         SELECT dataset_id FROM dataset ORDER BY dataset_id
@@ -262,8 +200,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Integer> findDatasetIdsByDACUserId(@Bind("userId") Integer userId);
 
   /**
-   * Finds all minimal dataset/study  information for datasets assigned to this DAC and which have
-   * been requested for this DAC.
+   * Finds all minimal dataset information for datasets assigned to this DAC and which have
+   * been requested for this DAC. This explicitly does NOT populate study information due to
+   * performance issues.
    *
    * @param dacId id
    * @return all datasets associated with DAC
@@ -277,84 +216,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
               k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
-              s.study_id AS s_study_id,
-              s.name AS s_name,
-              s.description AS s_description,
-              s.data_types AS s_data_types,
-              s.pi_name AS s_pi_name,
-              s.create_user_id AS s_create_user_id,
-              s.create_date AS s_create_date,
-              s.update_user_id AS s_user_id,
-              s.update_date AS s_update_date,
-              s.public_visibility AS s_public_visibility,
-              s_dataset.dataset_id AS s_dataset_id,
-              sp.study_property_id AS sp_study_property_id,
-              sp.study_id AS sp_study_id,
-              sp.key AS sp_key,
-              sp.value AS sp_value,
-              sp.type AS sp_type
           FROM dataset d
-          LEFT JOIN users u on d.create_user_id = u.user_id
+          INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          LEFT JOIN dictionary k ON k.key_id = dp.property_key
-          LEFT JOIN study s ON s.study_id = d.study_id
-          LEFT JOIN study_property sp ON sp.study_id = s.study_id
-          LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          INNER JOIN dictionary k ON k.key_id = dp.property_key
           WHERE d.dac_id = :dacId
           OR (dp.schema_property = 'dataAccessCommitteeId' AND dp.property_value = :dacId::text)
       """)
   List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
-
-  @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
-          SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
-              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
-              u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
-              u.create_date AS u_create_date, u.email_preference AS u_email_preference,
-              u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
-              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
-              s.study_id AS s_study_id,
-              s.name AS s_name,
-              s.description AS s_description,
-              s.data_types AS s_data_types,
-              s.pi_name AS s_pi_name,
-              s.create_user_id AS s_create_user_id,
-              s.create_date AS s_create_date,
-              s.update_user_id AS s_user_id,
-              s.update_date AS s_update_date,
-              s.public_visibility AS s_public_visibility,
-              s_dataset.dataset_id AS s_dataset_id,
-              sp.study_property_id AS sp_study_property_id,
-              sp.study_id AS sp_study_id,
-              sp.key AS sp_key,
-              sp.value AS sp_value,
-              sp.type AS sp_type,
-              fso.file_storage_object_id AS fso_file_storage_object_id,
-              fso.entity_id AS fso_entity_id,
-              fso.file_name AS fso_file_name,
-              fso.category AS fso_category,
-              fso.gcs_file_uri AS fso_gcs_file_uri,
-              fso.media_type AS fso_media_type,
-              fso.create_date AS fso_create_date,
-              fso.create_user_id AS fso_create_user_id,
-              fso.update_date AS fso_update_date,
-              fso.update_user_id AS fso_update_user_id,
-              fso.deleted AS fso_deleted,
-              fso.delete_user_id AS fso_delete_user_id
-          FROM dataset d
-          LEFT JOIN users u on d.create_user_id = u.user_id
-          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          LEFT JOIN dictionary k ON k.key_id = dp.property_key
-          LEFT JOIN study s ON s.study_id = d.study_id
-          LEFT JOIN study_property sp ON sp.study_id = s.study_id
-          LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-          LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
-          WHERE d.name IS NOT NULL
-      """)
-  List<Dataset> getDatasets();
 
   @SqlQuery("""
           SELECT DISTINCT dp.property_value as name
@@ -412,10 +282,10 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.deleted AS fso_deleted,
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
-          LEFT JOIN users u on d.create_user_id = u.user_id
+          INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-          LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-          LEFT JOIN dictionary k ON k.key_id = dp.property_key
+          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          INNER JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN study s ON s.study_id = d.study_id
           LEFT JOIN study_property sp ON sp.study_id = s.study_id
           LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
@@ -424,39 +294,42 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   Dataset findDatasetByAlias(@Bind("alias") Integer alias);
 
+  /**
+   * Return a list of Dataset objects from a list of dataset aliases. This explicitly does NOT
+   * populate study information due to performance issues.
+   *
+   * @param aliases List of dataset aliases
+   * @return List of datasets
+   */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery(
-      """
-          SELECT d.*, k.key, dp.property_value, dp.property_key, dp.property_id, d.dac_id, dar_ds_ids.id as in_use,
-              s.study_id AS s_study_id,
-              s.name AS s_name,
-              s.description AS s_description,
-              s.data_types AS s_data_types,
-              s.pi_name AS s_pi_name,
-              s.create_user_id AS s_create_user_id,
-              s.create_date AS s_create_date,
-              s.update_user_id AS s_user_id,
-              s.update_date AS s_update_date,
-              s.public_visibility AS s_public_visibility,
-              s_dataset.dataset_id AS s_dataset_id,
-              sp.study_property_id AS sp_study_property_id,
-              sp.study_id AS sp_study_id,
-              sp.key AS sp_key,
-              sp.value AS sp_value,
-              sp.type AS sp_type,
-          """
-          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
-          """
-                   FROM dataset d
-                   LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
-                   LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-                   LEFT JOIN dictionary k ON k.key_id = dp.property_key
-                   LEFT JOIN study s ON s.study_id = d.study_id
-                   LEFT JOIN study_property sp ON sp.study_id = s.study_id
-                   LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
-                   LEFT JOIN file_storage_object fso ON (fso.entity_id = d.dataset_id::text OR fso.entity_id = s.uuid::text) AND fso.deleted = false
-                   WHERE d.alias IN (<aliases>)
-              """)
+  @SqlQuery("""
+          SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, 
+              d.dac_approval, dar_ds_ids.id AS in_use,
+              u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+              u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+              u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+              fso.file_storage_object_id AS fso_file_storage_object_id,
+              fso.entity_id AS fso_entity_id,
+              fso.file_name AS fso_file_name,
+              fso.category AS fso_category,
+              fso.gcs_file_uri AS fso_gcs_file_uri,
+              fso.media_type AS fso_media_type,
+              fso.create_date AS fso_create_date,
+              fso.create_user_id AS fso_create_user_id,
+              fso.update_date AS fso_update_date,
+              fso.update_user_id AS fso_update_user_id,
+              fso.deleted AS fso_deleted,
+              fso.delete_user_id AS fso_delete_user_id
+          FROM dataset d
+          INNER JOIN users u on d.create_user_id = u.user_id
+          LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
+          INNER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+          INNER JOIN dictionary k ON k.key_id = dp.property_key
+          LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+          WHERE d.alias IN (<aliases>)
+      """)
   List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
 
   @Deprecated
@@ -668,8 +541,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<Dataset> findDatasetListByDacIds(@BindList("dacIds") List<Integer> dacIds);
 
   /**
-   * DACs -> Datasets Datasets -> DatasetProperties ->
-   * Dictionary
+   * DACs -> Datasets -> DatasetProperties -> Dictionary
    *
    * @return Set of datasets, with properties, that are associated to any Dac.
    */

@@ -580,22 +580,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllDatasets() {
-    List<Dataset> datasetList = IntStream.range(1, 5).mapToObj(i -> {
-      Dataset dataset = insertDataset();
-      return dataset;
-    }).toList();
-
-    List<Dataset> datasets = datasetDAO.findAllDatasets();
-    assertFalse(datasets.isEmpty());
-    assertEquals(datasetList.size(), datasets.size());
-    List<Integer> insertedDatasetIds = datasetList.stream().map(Dataset::getDatasetId).toList();
-    List<Integer> foundDatasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
-    assertTrue(foundDatasetIds.containsAll(insertedDatasetIds));
-    assertTrue(insertedDatasetIds.containsAll(foundDatasetIds));
-  }
-
-  @Test
   void testFindAllDatasetIds() {
     List<Integer> insertedDatasetIds = IntStream.range(1, 5).mapToObj(i -> {
       Dataset dataset = insertDataset();
