@@ -215,7 +215,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
-              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id
           FROM dataset d
           INNER JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
