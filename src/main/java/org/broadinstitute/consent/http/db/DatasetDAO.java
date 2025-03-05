@@ -94,7 +94,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
+              dar_ds_ids.id AS in_use, d.study_id,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
@@ -151,7 +151,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
+              dar_ds_ids.id AS in_use, d.study_id,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
@@ -210,7 +210,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
+              dar_ds_ids.id AS in_use, d.study_id,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
@@ -247,7 +247,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
-              dar_ds_ids.id AS in_use,
+              dar_ds_ids.id AS in_use, d.study_id,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
@@ -304,7 +304,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("""
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use,
-              d.dac_approval, dar_ds_ids.id AS in_use,
+              d.dac_approval, dar_ds_ids.id AS in_use, d.study_id,
               u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
               u.create_date AS u_create_date, u.email_preference AS u_email_preference,
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,

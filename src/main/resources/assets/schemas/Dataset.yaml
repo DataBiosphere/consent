@@ -48,6 +48,10 @@ properties:
         propertyValue: http://...
       - propertyName: Sample Collection ID
         propertyValue: SC-000
+  studyId:
+    type: integer
+    format: int32
+    description: The study's id.
   study:
     $ref: "./Study.yaml"
   alias:

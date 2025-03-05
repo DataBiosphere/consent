@@ -66,6 +66,10 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
       }
     }
 
+    if (hasNonZeroColumn(rowView, "study_id")) {
+      dataset.setStudyId(rowView.getColumn("study_id", Integer.class));
+    }
+
     if (hasNonZeroColumn(rowView, "s_study_id")) {
       if (Objects.isNull(dataset.getStudy())) {
         dataset.setStudy(rowView.getRow(Study.class));
