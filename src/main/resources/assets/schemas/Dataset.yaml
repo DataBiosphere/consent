@@ -51,7 +51,7 @@ properties:
   studyId:
     type: integer
     format: int32
-    description: The study's id.
+    description: The dataset's study id.
   study:
     $ref: "./Study.yaml"
   alias:
