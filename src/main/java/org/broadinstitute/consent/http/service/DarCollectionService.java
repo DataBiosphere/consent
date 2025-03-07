@@ -530,8 +530,9 @@ public class DarCollectionService implements ConsentLogger {
       if (!filterDatasetIds.isEmpty()) {
         datasetIds.retainAll(filterDatasetIds);
       }
-      Set<Dataset> datasets = datasetDAO.findDatasetWithDataUseByIdList(datasetIds);
-      Map<Integer, Dataset> datasetMap = datasets.stream()
+      Map<Integer, Dataset> datasetMap = datasetDAO.findDatasetsByIdList(datasetIds)
+          .stream()
+          .distinct()
           .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
       return collections.stream().map(c -> {

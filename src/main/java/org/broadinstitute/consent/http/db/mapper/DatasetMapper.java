@@ -47,6 +47,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "alias")) {
       dataset.setAlias(r.getInt("alias"));
     }
+    if (hasNonZeroColumn(r, "study_id")) {
+      dataset.setStudyId(r.getInt("study_id"));
+    }
 
     return dataset;
   }

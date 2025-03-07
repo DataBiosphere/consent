@@ -228,11 +228,6 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetsByIdList(datasetIds);
   }
 
-  @Deprecated
-  public List<Dataset> findAllDatasets() {
-    return datasetDAO.findAllDatasets();
-  }
-
   public List<Integer> findAllDatasetIds() {
     return datasetDAO.findAllDatasetIds();
   }

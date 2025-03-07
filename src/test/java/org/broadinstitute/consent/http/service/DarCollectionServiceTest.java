@@ -99,7 +99,7 @@ class DarCollectionServiceTest {
         .sorted()
         .collect(Collectors.toList());
 
-    when(datasetDAO.findDatasetWithDataUseByIdList(anyList())).thenReturn(datasets);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(new ArrayList<>(datasets));
     when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
 
     collections = service.addDatasetsToCollections(collections, List.of());
@@ -130,9 +130,8 @@ class DarCollectionServiceTest {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(datasetIds.get(0));
 
-    // mocking out findDatasetWithDataUseByIdList to only return one of the datasets
-    when(datasetDAO.findDatasetWithDataUseByIdList(List.of(dataset.getDatasetId()))).thenReturn(
-        new HashSet<>(List.of(dataset)));
+    // mocking out findDatasetsByIdList to only return one of the datasets
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
 
     collections = service.addDatasetsToCollections(collections, List.of(dataset.getDatasetId()));

@@ -16,7 +16,6 @@ properties:
     format: int32
     description: The create user id, if available
   createUser:
-    description: The create user, if available
     $ref: './User.yaml'
   dacId:
     type: string
@@ -49,9 +48,12 @@ properties:
         propertyValue: http://...
       - propertyName: Sample Collection ID
         propertyValue: SC-000
+  studyId:
+    type: integer
+    format: int32
+    description: The dataset's study id.
   study:
     $ref: "./Study.yaml"
-    description: The study which produced this dataset.
   alias:
     type: string
     description: The dataset id, short format
