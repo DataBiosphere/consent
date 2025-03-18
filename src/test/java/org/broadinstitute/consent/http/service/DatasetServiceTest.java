@@ -437,8 +437,7 @@ class DatasetServiceTest {
 
   @Test
   void testGetStudyWithDatasetsById() {
-    Study study = new Study();
-    when(studyDAO.findStudyById(anyInt())).thenReturn(study);
+    when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
     initService();
     assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(1));
   }
