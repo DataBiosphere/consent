@@ -275,7 +275,6 @@ public class DatasetService implements ConsentLogger {
       logException(e);
       throw e;
     }
-
   }
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {
