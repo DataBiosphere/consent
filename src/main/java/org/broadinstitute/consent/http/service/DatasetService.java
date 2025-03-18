@@ -269,6 +269,8 @@ public class DatasetService implements ConsentLogger {
         study.addDatasets(datasets);
       }
       return study;
+    } catch (NotFoundException nfe) {
+      throw nfe;
     } catch (Exception e) {
       logException(e);
       throw e;
