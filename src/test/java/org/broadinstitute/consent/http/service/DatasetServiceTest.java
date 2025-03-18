@@ -436,6 +436,28 @@ class DatasetServiceTest {
   }
 
   @Test
+  void testGetStudyWithDatasetsById() {
+    Study study = new Study();
+    when(studyDAO.findStudyById(anyInt())).thenReturn(study);
+    initService();
+    assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(1));
+  }
+
+  @Test
+  void testGetStudyWithDatasetsByIdNFE() {
+    when(studyDAO.findStudyById(anyInt())).thenReturn(null);
+    initService();
+    assertThrows(NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(1));
+  }
+
+  @Test
+  void testGetStudyWithDatasetsByIdGeneralException() {
+    when(studyDAO.findStudyById(anyInt())).thenThrow(new RuntimeException("General Exception"));
+    initService();
+    assertThrows(Exception.class, () -> datasetService.getStudyWithDatasetsById(1));
+  }
+
+  @Test
   void testGetApprovedDatasets() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
         List.of(UserRoles.Researcher()));
