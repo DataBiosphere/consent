@@ -206,6 +206,32 @@ public class DatasetServiceDAO implements ConsentLogger {
     return datasetId;
   }
 
+  /**
+   * Updates the dataset index date and adds an audit record.
+   *
+   * @param datasetId The ID of the dataset to update.
+   * @param userId    The ID of the user performing the update.
+   * @param indexDate The new index date, or null to un-index the dataset.
+   * @throws SQLException if DB transaction fails.
+   */
+  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate) throws SQLException {
+    jdbi.useHandle(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      Dataset dataset = datasetDAO.findDatasetById(datasetId);
+      AuditActions action = indexDate == null ? AuditActions.DEINDEXED : AuditActions.INDEXED;
+      String dsAuditName = dataset.getName() == null ? dataset.getDatasetIdentifier() : dataset.getName();
+      try {
+        datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);
+        addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, action);
+      } catch (Exception e) {
+        handle.rollback();
+        logException(e);
+        throw e;
+      }
+      handle.commit();
+    });
+  }
+
   private Integer executeInsertStudy(Handle handle, StudyInsert insert) {
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     UUID uuid = UUID.randomUUID();

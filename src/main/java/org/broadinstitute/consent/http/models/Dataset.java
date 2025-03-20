@@ -58,6 +58,8 @@ public class Dataset implements ConsentLogger {
 
   private Study study;
 
+  private Date indexedDate;
+
   public Dataset() {
   }
 
@@ -348,6 +350,14 @@ public class Dataset implements ConsentLogger {
 
   public void setStudyId(Integer studyId) {
     this.studyId = studyId;
+  }
+
+  public Date getIndexedDate() {
+    return indexedDate;
+  }
+
+  public void setIndexedDate(Date indexedDate) {
+    this.indexedDate = indexedDate;
   }
 
   /**

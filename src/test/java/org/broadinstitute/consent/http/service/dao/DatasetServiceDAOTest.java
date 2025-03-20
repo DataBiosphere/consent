@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -959,6 +960,38 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertFalse(audits.isEmpty());
     assertTrue(
         audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+  }
+
+  @Test
+  void testUpdateDatasetIndexWithDate() throws Exception {
+    Dataset dataset = createDataset();
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), Instant.now());
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the indexed date is updated
+    assertNotNull(updatedDataset.getIndexedDate());
+
+    // Validate that an INDEXED audit record was added:
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+    assertTrue(
+        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.INDEXED.name())));
+  }
+
+  @Test
+  void testUpdateDatasetIndexWithNull() throws Exception {
+    Dataset dataset = createDataset();
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), null);
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the indexed date is null
+    assertNull(updatedDataset.getIndexedDate());
+
+    // Validate that a DEINDEXED audit record was added:
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+    assertTrue(
+        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
   }
 
   /**

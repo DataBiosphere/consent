@@ -934,6 +934,17 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateDatasetIndexedDate() {
+    Dataset dataset = createDataset();
+    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), Instant.now());
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(updatedDataset.getIndexedDate());
+    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
+    Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNull(updatedDataset2.getIndexedDate());
+  }
+
+  @Test
   void testFindDatasetSummariesByQuery_NotApproved() {
     Dataset dataset = createDataset();
 

@@ -24,6 +24,8 @@ import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
+import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -514,6 +516,15 @@ class DatasetServiceTest {
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
+  }
+
+  @Test
+  void testUpdateDatasetIndex() throws SQLException {
+    doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+    when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
+    initService();
+    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, Instant.now()));
+    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, null));
   }
 
   /* Helper functions */

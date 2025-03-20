@@ -166,4 +166,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2024-09-17-draft.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2025-03-19-indexed.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>
