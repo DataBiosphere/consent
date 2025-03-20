@@ -147,7 +147,7 @@ class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString(), any()))
         .thenReturn(List.of(vote));
     initResource();
 
@@ -173,7 +173,7 @@ class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString(), any()))
         .thenReturn(List.of(vote));
 
     initResource();
@@ -196,7 +196,7 @@ class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(false, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString(), any()))
         .thenReturn(List.of(vote));
     initResource();
 
@@ -222,7 +222,7 @@ class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString(), any()))
         .thenReturn(List.of(vote, voteTwo));
     when(electionService.findElectionsByVoteIdsAndType(anyList(), anyString()))
         .thenReturn(List.of(election));
@@ -253,7 +253,7 @@ class VoteResourceTest {
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(false, "example", List.of(1, 2, 3));
     when(voteService.findVotesByIds(anyList())).thenReturn(List.of(vote, voteTwo));
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString()))
+    when(voteService.updateVotesWithValue(anyList(), anyBoolean(), anyString(), any()))
         .thenReturn(List.of(vote, voteTwo));
     initResource();
 

@@ -209,17 +209,18 @@ public class VoteService implements ConsentLogger {
    * @param votes     List of Votes to update
    * @param voteValue Value to update the votes to
    * @param rationale Value to update the rationales to. Only update if non-null.
+   * @param user      The user making the update
    * @return The updated Vote
    * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
    */
-  public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale)
+  public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale, User user)
       throws IllegalArgumentException {
     validateVotesCanUpdate(votes);
     try {
       List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
       if (voteValue) {
         try {
-          sendDatasetApprovalNotifications(updatedVotes);
+          sendDatasetApprovalNotifications(updatedVotes, user);
         } catch (Exception e) {
           // We can recover from email errors, log it and don't fail the overall process.
           String voteIds = votes.stream().map(Vote::getVoteId).map(Object::toString)
@@ -244,8 +245,9 @@ public class VoteService implements ConsentLogger {
    *              elections for datasets that all have the same data use restriction in a single
    *              DarCollection. This method is flexible enough to send email for any number of
    *              unrelated elections in various DarCollections.
+   * @param user
    */
-  public void sendDatasetApprovalNotifications(List<Vote> votes) {
+  public void sendDatasetApprovalNotifications(List<Vote> votes, User user) {
 
     List<Integer> finalElectionIds = votes.stream()
         .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election
@@ -278,7 +280,7 @@ public class VoteService implements ConsentLogger {
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
     try {
-      elasticSearchService.indexDatasets(datasets);
+      elasticSearchService.indexDatasets(datasets, user);
     } catch (Exception e) {
       logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
     }

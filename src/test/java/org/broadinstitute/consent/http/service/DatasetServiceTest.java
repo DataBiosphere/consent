@@ -518,15 +518,6 @@ class DatasetServiceTest {
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
   }
 
-  @Test
-  void testUpdateDatasetIndex() throws SQLException {
-    doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
-    when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
-    initService();
-    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, Instant.now()));
-    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, null));
-  }
-
   /* Helper functions */
 
   private List<Dataset> getDatasets() {

@@ -21,8 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -55,7 +54,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class VoteServiceTest {
+class VoteServiceTest extends AbstractTestHelper {
 
   private VoteService service;
 
@@ -89,9 +88,9 @@ class VoteServiceTest {
   @Test
   void testUpdateVote() {
     Vote v = new Vote();
-    v.setVoteId(RandomUtils.nextInt(1, 10));
-    v.setUserId(RandomUtils.nextInt(1, 10));
-    v.setElectionId(RandomUtils.nextInt(1, 10));
+    v.setVoteId(randomInt(1, 10));
+    v.setUserId(randomInt(1, 10));
+    v.setElectionId(randomInt(1, 10));
     v.setIsReminderSent(false);
     v.setVote(false);
     when(voteDAO.findVoteById(anyInt())).thenReturn(v);
@@ -114,9 +113,9 @@ class VoteServiceTest {
   @Test
   void testUpdateVote_ByReferenceId() {
     Vote v = new Vote();
-    v.setVoteId(RandomUtils.nextInt(1, 10));
-    v.setUserId(RandomUtils.nextInt(1, 10));
-    v.setElectionId(RandomUtils.nextInt(1, 10));
+    v.setVoteId(randomInt(1, 10));
+    v.setUserId(randomInt(1, 10));
+    v.setElectionId(randomInt(1, 10));
     v.setIsReminderSent(false);
     v.setVote(false);
     when(voteDAO.findVoteById(anyInt())).thenReturn(v);
@@ -131,7 +130,7 @@ class VoteServiceTest {
   void testUpdateVotesWithValue() {
     initService();
 
-    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
+    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", new User());
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
   }
@@ -269,7 +268,7 @@ class VoteServiceTest {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, null);
+      service.updateVotesWithValue(List.of(v), true, null, new User());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -279,7 +278,7 @@ class VoteServiceTest {
   void testUpdateVotesWithValue_emptyList() throws Exception {
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
     initService();
-    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale");
+    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", new User());
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
   }
@@ -295,7 +294,7 @@ class VoteServiceTest {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale", new User()));
   }
 
 
@@ -318,7 +317,7 @@ class VoteServiceTest {
 
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale"));
+    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale", new User()));
   }
 
   @Test
@@ -363,7 +362,7 @@ class VoteServiceTest {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
+      service.updateVotesWithValue(List.of(v), true, "rationale", new User());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -383,7 +382,7 @@ class VoteServiceTest {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, "rationale");
+      service.updateVotesWithValue(List.of(v), true, "rationale", new User());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -466,13 +465,13 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
     Dataset d2 = new Dataset();
     d2.setDatasetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
+    d2.setName(randomAlphabetic(50));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
 
@@ -527,7 +526,7 @@ class VoteServiceTest {
     when(userDAO.findUserById(any())).thenReturn(researcher);
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1, v2));
+    service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
     verify(emailService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
   }
@@ -556,14 +555,14 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
 
     Dataset d2 = new Dataset();
     d2.setDatasetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
+    d2.setName(randomAlphabetic(50));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
     d2.setProperties(Set.of(depositorProp));
@@ -616,7 +615,7 @@ class VoteServiceTest {
     when(userDAO.findUserById(any())).thenReturn(researcher);
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1, v2));
+    service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
     verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
   }
@@ -633,7 +632,7 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
@@ -650,7 +649,7 @@ class VoteServiceTest {
     c1.setDarCode("DAR-CODE-1");
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1));
+    service.sendDatasetApprovalNotifications(List.of(v1), new User());
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
@@ -672,7 +671,7 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
 
@@ -689,7 +688,7 @@ class VoteServiceTest {
     c1.setDarCode("DAR-CODE-1");
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1));
+    service.sendDatasetApprovalNotifications(List.of(v1), new User());
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
@@ -714,7 +713,7 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
@@ -722,7 +721,7 @@ class VoteServiceTest {
 
     Dataset d2 = new Dataset();
     d2.setDatasetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
+    d2.setName(randomAlphabetic(50));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
     d2.setProperties(Set.of(depositorProp));
@@ -764,7 +763,7 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setProperties(Set.of(depositorProp));
@@ -772,7 +771,7 @@ class VoteServiceTest {
 
     Dataset d2 = new Dataset();
     d2.setDatasetId(2);
-    d2.setName(RandomStringUtils.random(50, true, false));
+    d2.setName(randomAlphabetic(50));
     d2.setAlias(2);
     d2.setDataUse(new DataUseBuilder().setGeneralUse(false).setHmbResearch(true).build());
     d2.setProperties(Set.of(depositorProp));
@@ -827,7 +826,7 @@ class VoteServiceTest {
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setCreateUserId(datasetSubmitter.getUserId());
@@ -888,14 +887,14 @@ class VoteServiceTest {
     custodianStudyProperty.setValue(jsonArray);
 
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setName(randomAlphabetic(10));
     study.setStudyId(1);
     study.setProperties(Set.of(custodianStudyProperty));
     study.setCreateUserId(studySubmitter.getUserId());
 
     Dataset d1 = new Dataset();
     d1.setDatasetId(1);
-    d1.setName(RandomStringUtils.random(50, true, false));
+    d1.setName(randomAlphabetic(50));
     d1.setAlias(1);
     d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
     d1.setCreateUserId(datasetSubmitter.getUserId());
@@ -928,7 +927,7 @@ class VoteServiceTest {
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 10));
+    user.setUserId(randomInt(1, 10));
     UserRole chairRole = new UserRole();
     chairRole.setUserId(user.getUserId());
     chairRole.setRoleId(userRoles.getRoleId());
@@ -942,9 +941,9 @@ class VoteServiceTest {
 
   private Vote setUpTestVote(Boolean vote, Boolean reminderSent) {
     Vote v = new Vote();
-    v.setVoteId(RandomUtils.nextInt(1, 10));
-    v.setUserId(RandomUtils.nextInt(1, 10));
-    v.setElectionId(RandomUtils.nextInt(1, 10));
+    v.setVoteId(randomInt(1, 10));
+    v.setUserId(randomInt(1, 10));
+    v.setElectionId(randomInt(1, 10));
     v.setIsReminderSent(reminderSent);
     v.setVote(vote);
     return v;

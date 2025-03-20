@@ -379,7 +379,7 @@ public class DatasetResource extends Resource {
         return createExceptionResponse(e);
       }
       try {
-        elasticSearchService.deleteIndex(datasetId);
+        elasticSearchService.deleteIndex(datasetId, user);
       } catch (IOException e) {
         logException(e);
         return createExceptionResponse(e);
@@ -393,10 +393,11 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index")
   @RolesAllowed(ADMIN)
-  public Response indexDatasets() {
+  public Response indexDatasets(@Auth AuthUser authUser) {
     try {
+      User user = userService.findUserByEmail(authUser.getEmail());
       var datasetIds = datasetService.findAllDatasetIds();
-      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
+      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
       return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -406,10 +407,11 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
+  public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
+      User user = userService.findUserByEmail(authUser.getEmail());
       var dataset = datasetService.findDatasetById(datasetId);
-      return elasticSearchService.indexDataset(dataset);
+      return elasticSearchService.indexDataset(dataset, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -418,9 +420,10 @@ public class DatasetResource extends Resource {
   @DELETE
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
+  public Response deleteDatasetIndex(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      return elasticSearchService.deleteIndex(datasetId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      return elasticSearchService.deleteIndex(datasetId, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

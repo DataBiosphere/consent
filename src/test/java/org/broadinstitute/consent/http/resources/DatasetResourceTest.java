@@ -32,8 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -68,7 +67,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DatasetResourceTest {
+class DatasetResourceTest extends AbstractTestHelper {
 
   @Mock
   private DatasetService datasetService;
@@ -110,11 +109,11 @@ class DatasetResourceTest {
   void testPatchByDatasetUpdate_emptyInput() {
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
@@ -128,11 +127,11 @@ class DatasetResourceTest {
   void testPatchByDatasetUpdate_malformedInput() {
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
@@ -163,14 +162,14 @@ class DatasetResourceTest {
   @Test
   void testPatchByDatasetUpdate_userForbiddenException() {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 10));
+    dataset.setDatasetId(randomInt(1, 10));
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 10));
+    when(user.getUserId()).thenReturn(randomInt(1, 10));
     // This ensures the dataset create user is NOT the current authUser
-    dataset.setCreateUserId(RandomUtils.nextInt(100, 200));
+    dataset.setCreateUserId(randomInt(100, 200));
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "{}")) {
@@ -183,8 +182,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -198,7 +197,7 @@ class DatasetResourceTest {
 
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -213,8 +212,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -231,11 +230,11 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     when(datasetService.findAllDatasetNames()).thenReturn(List.of(dataset.getName(), patch.name()));
@@ -252,8 +251,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -270,12 +269,12 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -290,8 +289,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -314,7 +313,7 @@ class DatasetResourceTest {
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -329,8 +328,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty invalidProp = new DatasetProperty();
     invalidProp.setPropertyName("invalid");
@@ -347,11 +346,11 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(AccessManagement.CONTROLLED.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
     when(authUser.getEmail()).thenReturn("test@test.com");
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -374,9 +373,7 @@ class DatasetResourceTest {
   void testValidateDatasetNameNotFound() {
     initResource();
 
-    assertThrows(NotFoundException.class, () -> {
-      resource.validateDatasetName("test");
-    });
+    assertThrows(NotFoundException.class, () -> resource.validateDatasetName("test"));
   }
 
   @Test
@@ -483,7 +480,7 @@ class DatasetResourceTest {
   @Test
   void testIndexAllDatasets() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(randomInt(10, 100));
     Gson gson = GsonUtil.buildGson();
     String esResponseArray = """
         [
@@ -514,10 +511,11 @@ class DatasetResourceTest {
     StreamingOutput output = out -> out.write(
         esResponseArray.formatted(dataset.getDatasetId()).getBytes());
     when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
-    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()), user)).thenReturn(output);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
-    try (Response response = resource.indexDatasets()) {
+    try (Response response = resource.indexDatasets(authUser)) {
       var entity = (StreamingOutput) response.getEntity();
       var baos = new ByteArrayOutputStream();
       entity.write(baos);
@@ -542,24 +540,27 @@ class DatasetResourceTest {
   @Test
   void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
+    User user = new User();
+    user.setUserId(1);
 
     Response mockResponse = Response.ok().entity(dataset).build();
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticSearchService.indexDataset(dataset)).thenReturn(mockResponse);
+    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
-    Response response = resource.indexDataset(1);
+    Response response = resource.indexDataset(authUser,1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
-  void testIndexDelete() throws IOException {
+  void testIndexDelete() throws IOException, SQLException {
     Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
         .build();
-    when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
-    Response response = resource.deleteDatasetIndex(0);
+    Response response = resource.deleteDatasetIndex(authUser,0);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -778,7 +779,7 @@ class DatasetResourceTest {
   @Test
   void testFindAllDatasetsStreaming() throws Exception {
     var dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(100, 1000));
+    dataset.setDatasetId(randomInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
     final Gson gson = GsonUtil.buildGson();
     StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
@@ -1234,30 +1235,30 @@ class DatasetResourceTest {
     dataset.setDataUse(new DataUse());
 
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setName(randomAlphabetic(10));
+    study.setDescription(randomAlphabetic(20));
     study.setStudyId(12345);
-    study.setPiName(RandomStringUtils.randomAlphabetic(10));
-    study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+    study.setPiName(randomAlphabetic(10));
+    study.setDataTypes(List.of(randomAlphabetic(10)));
     study.setCreateUserId(9);
-    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
+    study.setCreateUserEmail(randomAlphabetic(10));
     study.setPublicVisibility(true);
     study.setDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
     phenotypeProperty.setType(PropertyType.String);
-    phenotypeProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    phenotypeProperty.setValue(randomAlphabetic(10));
 
     StudyProperty speciesProperty = new StudyProperty();
     speciesProperty.setKey("species");
     speciesProperty.setType(PropertyType.String);
-    speciesProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    speciesProperty.setValue(randomAlphabetic(10));
 
     StudyProperty dataCustodianEmailProperty = new StudyProperty();
     dataCustodianEmailProperty.setKey("dataCustodianEmail");
     dataCustodianEmailProperty.setType(PropertyType.Json);
-    dataCustodianEmailProperty.setValue(List.of(RandomStringUtils.randomAlphabetic(10)));
+    dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
     study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
 

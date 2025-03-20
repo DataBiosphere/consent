@@ -20,8 +20,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -160,8 +160,8 @@ public class StudyResource extends Resource {
       if (studyDatasetIds != null) {
         studyDatasetIds.forEach(id -> {
           try {
-            elasticSearchService.deleteIndex(id);
-          } catch (IOException e) {
+            elasticSearchService.deleteIndex(id, user);
+          } catch (IOException | SQLException e) {
             logException(e);
           }
         });
@@ -222,7 +222,7 @@ public class StudyResource extends Resource {
             registration,
             user,
             files);
-        try (Response indexResponse = elasticSearchService.indexStudy(studyId))  {
+        try (Response indexResponse = elasticSearchService.indexStudy(studyId, user))  {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);
           }

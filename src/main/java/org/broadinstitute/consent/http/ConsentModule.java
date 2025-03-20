@@ -443,6 +443,7 @@ public class ConsentModule extends AbstractModule {
         providesOntologyService(),
         providesInstitutionDAO(),
         providesDatasetDAO(),
+        providesDatasetServiceDAO(),
         providesStudyDAO()
     );
   }

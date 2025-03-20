@@ -226,7 +226,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+      verify(elasticSearchService, atLeastOnce()).deleteIndex(any(), any());
     }
   }
 
@@ -237,7 +237,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -254,7 +254,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -271,7 +271,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -288,7 +288,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -307,7 +307,7 @@ class StudyResourceTest {
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -320,12 +320,12 @@ class StudyResourceTest {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(elasticSearchService.deleteIndex(any())).thenThrow(new IOException());
+    when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException());
     initResource();
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+      verify(elasticSearchService, atLeastOnce()).deleteIndex(any(), any());
     }
   }
 

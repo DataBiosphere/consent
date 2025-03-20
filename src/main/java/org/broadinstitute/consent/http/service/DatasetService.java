@@ -10,7 +10,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -524,12 +523,6 @@ public class DatasetService implements ConsentLogger {
 
   public void setDatasetBatchSize(Integer datasetBatchSize) {
     this.datasetBatchSize = datasetBatchSize;
-  }
-
-  public Dataset updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
-      throws SQLException {
-    datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
-    return datasetDAO.findDatasetById(datasetId);
   }
 
 }
