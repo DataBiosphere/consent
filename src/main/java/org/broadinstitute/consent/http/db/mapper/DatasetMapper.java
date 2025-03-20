@@ -30,6 +30,9 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     if (hasColumn(r, "update_date")) {
       dataset.setUpdateDate(r.getTimestamp("update_date"));
     }
+    if (hasColumn(r, "indexed_date")) {
+      dataset.setIndexedDate(r.getTimestamp("indexed_date"));
+    }
     if (hasColumn(r, "dac_approval")) {
       String boolString = r.getString("dac_approval");
       Boolean value = Objects.isNull(boolString) ? null : r.getBoolean("dac_approval");

@@ -17,6 +17,10 @@ properties:
     description: The create user id, if available
   createUser:
     $ref: './User.yaml'
+  createDate:
+    type: string
+    format: date-time
+    description: The dataset creation date
   dacId:
     type: string
     description: The id of the DAC this dataset belongs to, if defined.
@@ -69,7 +73,17 @@ properties:
   dacApproval:
     type: boolean
     description: DAC approval/disapproval for this dataset
-  nihCertificationFile:
+  nihInstitutionalCertificationFile:
     $ref: './FileStorageObject.yaml'
-  alternativeDataSharingPlanFile:
-    $ref: './FileStorageObject.yaml'
+  updateUserId:
+    type: integer
+    format: int32
+    description: The update user id, if available
+  updateDate:
+    type: string
+    format: date-time
+    description: The dataset update date
+  indexedDate:
+    type: string
+    format: date-time
+    description: The dataset index date
