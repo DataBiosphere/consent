@@ -218,7 +218,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       Dataset dataset = datasetDAO.findDatasetById(datasetId);
-      AuditActions action = indexDate == null ? AuditActions.UN_INDEXED : AuditActions.INDEXED;
+      AuditActions action = indexDate == null ? AuditActions.DEINDEXED : AuditActions.INDEXED;
       String dsAuditName = dataset.getName() == null ? dataset.getDatasetIdentifier() : dataset.getName();
       try {
         datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);

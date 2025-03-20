@@ -987,11 +987,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     // Validate that the indexed date is null
     assertNull(updatedDataset.getIndexedDate());
 
-    // Validate that a UN_INDEXED audit record was added:
+    // Validate that a DEINDEXED audit record was added:
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
     assertFalse(audits.isEmpty());
     assertTrue(
-        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UN_INDEXED.name())));
+        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
   }
 
   /**

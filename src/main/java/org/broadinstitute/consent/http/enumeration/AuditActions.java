@@ -8,7 +8,7 @@ public enum AuditActions {
   REPLACE("replace"),
   UPDATE("update"),
   INDEXED("indexed"),
-  UN_INDEXED("un_indexed");
+  DEINDEXED("deindexed");
 
   private final String value;
 
