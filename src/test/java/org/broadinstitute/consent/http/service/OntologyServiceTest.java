@@ -10,46 +10,22 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class OntologyServiceTest implements WithMockServer {
-
-  private MockServerClient client;
-
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
+class OntologyServiceTest extends MockServerTestHelper {
 
   private OntologyService service;
 
-  @BeforeAll
-  static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  static void tearDown() {
-    container.stop();
-  }
-
-  @BeforeEach
-  void startUp() {
-    client = new MockServerClient(container.getHost(), container.getServerPort());
-    client.reset();
-  }
 
   ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
@@ -124,7 +100,7 @@ class OntologyServiceTest implements WithMockServer {
   }
 
   private void mockDataUseTranslateSummarySuccess() {
-    client
+    mockServerClient
         .when(request().withMethod("POST").withPath("/translate/summary"))
         .respond(
             response()
@@ -168,7 +144,7 @@ class OntologyServiceTest implements WithMockServer {
   }
 
   private void mockDataUseTranslateSuccess() {
-    client
+    mockServerClient
         .when(request().withMethod("POST").withPath("/translate"))
         .respond(
             response()

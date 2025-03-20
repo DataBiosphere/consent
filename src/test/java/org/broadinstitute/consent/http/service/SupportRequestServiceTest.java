@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.WithMockServer.IMAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
@@ -10,57 +9,36 @@ import static org.mockserver.model.HttpResponse.response;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
-import jakarta.ws.rs.WebApplicationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
 import org.mockserver.model.HttpRequest;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class SupportRequestServiceTest extends AbstractTestHelper {
+class SupportRequestServiceTest extends MockServerTestHelper {
 
   private SupportRequestService service;
-
-  private MockServerClient mockServerClient;
-
   @Mock
   private ServicesConfiguration config;
 
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
-
-  @BeforeAll
-  static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  static void tearDown() {
-    container.stop();
-  }
 
   @BeforeEach
   void init() {
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    mockServerClient.reset();
     service = new SupportRequestService(config);
   }
 
@@ -157,7 +135,8 @@ class SupportRequestServiceTest extends AbstractTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
             .withBody(expectedBody)
         );
-    assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
+    assertThrows(ServerErrorException.class,
+        () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
@@ -165,7 +144,8 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     when(config.isActivateSupportNotifications()).thenReturn(false);
     // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
     mockServerClient.when(request()).error(new HttpError());
-    assertThrows(BadRequestException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
+    assertThrows(BadRequestException.class,
+        () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
@@ -177,7 +157,8 @@ class SupportRequestServiceTest extends AbstractTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-    assertThrows(ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
+    assertThrows(ServerErrorException.class,
+        () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
@@ -189,7 +170,8 @@ class SupportRequestServiceTest extends AbstractTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
-    assertThrows(UnprocessableEntityException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
+    assertThrows(UnprocessableEntityException.class,
+        () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   // Creates support ticket with random values
@@ -198,12 +180,12 @@ class SupportRequestServiceTest extends AbstractTestHelper {
     Collections.shuffle(types);
     return TicketFactory.createTicket(
         new TicketFields(
-        randomAlphabetic(10),
-        types.get(0),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        List.of(randomAlphanumeric(10))));
+            randomAlphabetic(10),
+            types.get(0),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphanumeric(10))));
   }
 }

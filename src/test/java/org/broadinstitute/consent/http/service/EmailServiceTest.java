@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,6 +90,12 @@ class EmailServiceTest {
 
   @BeforeEach
   void setUp() {
+  }
+
+  @AfterEach
+  void afterEach() {
+    sendGridAPI = null;
+    templateHelper = null;
   }
 
   private void initService() {

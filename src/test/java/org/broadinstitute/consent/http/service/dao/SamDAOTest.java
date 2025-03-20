@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -35,53 +35,38 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
 import org.mockserver.model.MediaType;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class SamDAOTest implements WithMockServer {
+class SamDAOTest extends MockServerTestHelper {
 
-  private SamDAO samDAO;
-
-  private MockServerClient mockServerClient;
+  private static SamDAO samDAO;
 
   @Mock
   private AuthUser authUser;
-
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
 
   private UserStatus status;
 
   @BeforeAll
   public static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    container.stop();
+    ServicesConfiguration servicesConfig = new ServicesConfiguration();
+    servicesConfig.setTimeoutSeconds(1);
+    servicesConfig.setSamUrl(
+        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+    samDAO = new SamDAO(new HttpClientUtil(servicesConfig), servicesConfig);
   }
 
   @BeforeEach
   public void init() {
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    mockServerClient.reset();
-    ServicesConfiguration config = new ServicesConfiguration();
-    config.setTimeoutSeconds(1);
-    config.setSamUrl("http://" + container.getHost() + ":" + container.getServerPort() + "/");
-    samDAO = new SamDAO(new HttpClientUtil(config), config);
-
     UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
         .setUserSubjectId("subjectId");
     UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
@@ -216,8 +201,11 @@ class SamDAOTest implements WithMockServer {
             .withBody(("{\"message\":\"errorMessage\"}")));
     when(authUser.getEmail()).thenReturn("email@email.com");
 
-    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> samDAO.postRegistrationInfo(authUser));
-    assertEquals("Error posting user registration information. Email: email@email.com. errorMessage.", ex.getMessage());
+    WebApplicationException ex = assertThrows(WebApplicationException.class,
+        () -> samDAO.postRegistrationInfo(authUser));
+    assertEquals(
+        "Error posting user registration information. Email: email@email.com. errorMessage.",
+        ex.getMessage());
   }
 
   /**
@@ -344,7 +332,8 @@ class SamDAOTest implements WithMockServer {
     when(authUser.getEmail()).thenReturn("email@email.com");
     String body = """
         {"code":500, "message": "Cannot update azureB2cId"}""";
-    assertEquals("Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
+    assertEquals(
+        "Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
         getErrorMessage(authUser, body));
   }
 
@@ -353,7 +342,8 @@ class SamDAOTest implements WithMockServer {
     when(authUser.getEmail()).thenReturn("email@email.com");
     String body = """
         {"code":500, "message": "some other error"}""";
-    assertEquals("Error posting user registration information. Email: email@email.com. some other error.",
+    assertEquals(
+        "Error posting user registration information. Email: email@email.com. some other error.",
         getErrorMessage(authUser, body));
   }
 
@@ -363,7 +353,7 @@ class SamDAOTest implements WithMockServer {
     String body = """
         {"code":500}""";
     assertEquals("""
-        Error posting user registration information. Email: email@email.com. {"code":500}.""",
+            Error posting user registration information. Email: email@email.com. {"code":500}.""",
         getErrorMessage(authUser, body));
   }
 
@@ -372,7 +362,7 @@ class SamDAOTest implements WithMockServer {
     when(authUser.getEmail()).thenReturn("email@email.com");
     String body = null;
     assertEquals("""
-        Error posting user registration information. Email: email@email.com.""",
+            Error posting user registration information. Email: email@email.com.""",
         getErrorMessage(authUser, body));
   }
 
@@ -381,7 +371,7 @@ class SamDAOTest implements WithMockServer {
     when(authUser.getEmail()).thenReturn("email@email.com");
     String body = "random non-JSON string";
     assertEquals("""
-        Error posting user registration information. Email: email@email.com. random non-JSON string.""",
+            Error posting user registration information. Email: email@email.com. random non-JSON string.""",
         getErrorMessage(authUser, body));
   }
 }

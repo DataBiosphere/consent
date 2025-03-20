@@ -9,45 +9,25 @@ import static org.mockserver.model.HttpResponse.response;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import java.util.Collections;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class ElasticSearchHealthCheckTest implements WithMockServer {
+class ElasticSearchHealthCheckTest extends MockServerTestHelper {
 
   private ElasticSearchHealthCheck healthCheck;
   private ElasticSearchConfiguration config;
-  private MockServerClient mockServerClient;
 
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
-
-  @BeforeAll
-  static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  static void tearDown() {
-    container.stop();
-  }
 
   @BeforeEach
   void init() {
-
     config = new ElasticSearchConfiguration();
     config.setServers(Collections.singletonList("localhost"));
     config.setPort(container.getServerPort());
-
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    mockServerClient.reset();
   }
 
   private void initHealthCheck(String status, Integer statusCode) {
