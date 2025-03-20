@@ -73,35 +73,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   @SuppressWarnings("rawtypes")
   private static PostgreSQLContainer postgresContainer;
 
-  @AfterAll
-  public static void shutDown() {
-//    testApp.after();
-//    postgresContainer.stop();
-//    counterDAO = null;
-//    dacDAO = null;
-//    daaDAO = null;
-//    userDAO = null;
-//    datasetDAO = null;
-//    electionDAO = null;
-//    userRoleDAO = null;
-//    voteDAO = null;
-//    studyDAO = null;
-//    dataAccessRequestDAO = null;
-//    matchDAO = null;
-//    mailMessageDAO = null;
-//    userPropertyDAO = null;
-//    institutionDAO = null;
-//    libraryCardDAO = null;
-//    darCollectionDAO = null;
-//    darCollectionSummaryDAO = null;
-//    fileStorageObjectDAO = null;
-//    acknowledgementDAO = null;
-//    draftDAO = null;
-//    testingDAO = null;
-//    jdbi = null;
-  }
-
-  @Override
+   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
     try {
       startUp();
@@ -171,41 +143,6 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
     draftDAO = jdbi.onDemand(DraftDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
-  }
-
-  @AfterEach
-  public void tearDown() {
-    // Order is important for FK constraints
-//    testingDAO.deleteAllDARDataset();
-//    testingDAO.deleteAllApprovalTimes();
-//    testingDAO.deleteAllVotes();
-//    testingDAO.deleteAllMatchEntityRationales();
-//    testingDAO.deleteAllMatchEntities();
-//    testingDAO.deleteAllElections();
-//    testingDAO.deleteAllDatasetProperties();
-//    testingDAO.deleteAllDictionaryTerms();
-//    testingDAO.deleteAllDatasetAudits();
-//    testingDAO.deleteAllDatasets();
-//    testingDAO.deleteAllDrafts();
-//    testingDAO.deleteAllStudyProperties();
-//    testingDAO.deleteAllStudies();
-//    testingDAO.deleteAllDacUserRoles();
-//    testingDAO.deleteAllLibraryCardDAAs();
-//    testingDAO.deleteAllDACDAAs();
-//    testingDAO.deleteAllDataAccessAgreements();
-//    testingDAO.deleteAllDacs();
-//    testingDAO.deleteAllLibraryCards();
-//    testingDAO.deleteAllInstitutions();
-//    testingDAO.deleteAllUserProperties();
-//    testingDAO.deleteAllUserRoles();
-//    testingDAO.deleteAllAcknowledgements();
-//    testingDAO.deleteAllFileStorageObjects();
-//    testingDAO.deleteAllUsers();
-//    testingDAO.deleteAllDARs();
-//    testingDAO.deleteAllDARCollections();
-//    testingDAO.deleteAllCounters();
-//    testingDAO.deleteAllEmailEntities();
-//    testingDAO.truncateAllTables();
   }
 
   @BeforeEach()
