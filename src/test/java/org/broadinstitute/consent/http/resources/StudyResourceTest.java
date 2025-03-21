@@ -62,6 +62,9 @@ class StudyResourceTest {
   @Mock
   private User user;
 
+  @Mock
+  private Response response;
+
   private StudyResource resource;
 
   private void initResource() {
@@ -222,6 +225,7 @@ class StudyResourceTest {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
     initResource();
 
     try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
