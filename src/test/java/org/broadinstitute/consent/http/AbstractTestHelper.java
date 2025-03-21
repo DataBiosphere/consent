@@ -6,7 +6,8 @@ import org.apache.commons.lang3.RandomUtils;
 public abstract class AbstractTestHelper {
 
   public static boolean disableTestContainers() {
-    return System.getProperty("disableTestContainers", "false").equals("true");
+    String defaultProp = "false";
+    return System.getProperty("disableTestContainers", defaultProp).equals("true");
   }
 
   public String randomAlphabetic(int length) {
