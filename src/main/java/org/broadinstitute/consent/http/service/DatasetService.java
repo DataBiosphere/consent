@@ -10,6 +10,7 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -142,7 +143,7 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(datasetId);
   }
 
-  public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
+  public Dataset syncDatasetDataUseTranslation(Integer datasetId, User user) {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset == null) {
       throw new NotFoundException("Dataset not found");
@@ -151,6 +152,11 @@ public class DatasetService implements ConsentLogger {
     String translation = ontologyService.translateDataUse(dataset.getDataUse(),
         DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
+
+    // Re-index if the dataset is already indexed
+    if (dataset.getIndexedDate() != null) {
+      updateDatasetIndex(datasetId, user.getUserId(), Instant.now());
+    }
 
     return datasetDAO.findDatasetById(datasetId);
   }
@@ -319,6 +325,11 @@ public class DatasetService implements ConsentLogger {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
 
+    // Re-index if the dataset is already indexed
+    if (dataset.getIndexedDate() != null) {
+      updateDatasetIndex(dataset.getDatasetId(), user.getUserId(), Instant.now());
+    }
+
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -379,6 +390,12 @@ public class DatasetService implements ConsentLogger {
     } else {
       studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     }
+    study.getDatasetIds().forEach(datasetId -> {
+      Dataset updatedDataset = findDatasetById(datasetId);
+      if (updatedDataset.getIndexedDate() != null) {
+        updateDatasetIndex(datasetId, user.getUserId(), Instant.now());
+      }
+    });
     return studyDAO.findStudyById(studyId);
   }
 
@@ -523,6 +540,14 @@ public class DatasetService implements ConsentLogger {
 
   public void setDatasetBatchSize(Integer datasetBatchSize) {
     this.datasetBatchSize = datasetBatchSize;
+  }
+
+  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate) {
+    try {
+      datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+    } catch (SQLException e) {
+      logWarn("Unable to update index date for dataset %s".formatted(datasetId), e);
+    }
   }
 
 }

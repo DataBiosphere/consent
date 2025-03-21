@@ -424,7 +424,7 @@ class DatasetServiceTest {
         DataUseTranslationType.DATASET)).thenReturn(translation);
 
     initService();
-    datasetService.syncDatasetDataUseTranslation(1);
+    datasetService.syncDatasetDataUseTranslation(1, new User());
 
     verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
   }
@@ -433,7 +433,7 @@ class DatasetServiceTest {
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     initService();
-    assertThrows(NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1));
+    assertThrows(NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, new User()));
 
   }
 
@@ -516,6 +516,14 @@ class DatasetServiceTest {
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
+  }
+
+  @Test
+  void testUpdateDatasetIndex() throws SQLException {
+    doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+    initService();
+    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, Instant.now()));
+    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, null));
   }
 
   /* Helper functions */

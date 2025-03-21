@@ -1102,7 +1102,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testSyncDataUseTranslation() {
-    when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
+    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenReturn(new Dataset());
     initResource();
 
     Response response = resource.syncDataUseTranslation(authUser, 1);
@@ -1111,7 +1111,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testSyncDataUseTranslationNotFound() {
-    when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
+    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenThrow(new NotFoundException());
     initResource();
 
     Response response = resource.syncDataUseTranslation(authUser, 1);

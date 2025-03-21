@@ -159,6 +159,9 @@ public class DatasetResource extends Resource {
 
       Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update,
           files);
+      if (updatedDataset.getIndexedDate() != null) {
+        elasticSearchService.indexDataset(updatedDataset, user);
+      }
       return Response.ok().entity(updatedDataset).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -479,6 +482,10 @@ public class DatasetResource extends Resource {
         return Response.notModified().entity(originalDataset).build();
       }
       Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
+      // Re-index if the dataset is already indexed
+      if (dataset.getIndexedDate() != null) {
+        elasticSearchService.indexDataset(dataset, user);
+      }
       return Response.ok().entity(dataset).build();
     } catch (JsonSyntaxException jse) {
       return createExceptionResponse(
@@ -494,7 +501,8 @@ public class DatasetResource extends Resource {
   @Path("/{id}/reprocess/datause")
   public Response syncDataUseTranslation(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
-      Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset ds = datasetService.syncDatasetDataUseTranslation(id, user);
       return Response.ok(ds).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

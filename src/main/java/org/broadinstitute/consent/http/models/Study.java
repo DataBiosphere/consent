@@ -15,7 +15,7 @@ public class Study {
   private Boolean publicVisibility;
   private String piName;
   private List<String> dataTypes;
-  private Set<Integer> datasetIds;
+  private Set<Integer> datasetIds = new HashSet<>();
   private Set<Dataset> datasets;
   private Set<StudyProperty> properties;
   private FileStorageObject alternativeDataSharingPlan;
