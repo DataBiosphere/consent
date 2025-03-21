@@ -5,6 +5,10 @@ import org.apache.commons.lang3.RandomUtils;
 
 public abstract class AbstractTestHelper {
 
+  public static boolean disableTestContainers() {
+    return System.getProperty("disableTestContainers", "false").equals("true");
+  }
+
   public String randomAlphabetic(int length) {
     return RandomStringUtils.secureStrong().nextAlphabetic(length);
   }
@@ -20,9 +24,5 @@ public abstract class AbstractTestHelper {
   public long randomLong() {
     return RandomUtils.secureStrong().randomLong();
   }
-
-public static boolean disableTestContainers() {
-    return System.getProperty("disableTestContainers", "false").equals("true");
-}
 
 }
