@@ -1042,7 +1042,7 @@ class DatasetResourceTest extends AbstractTestHelper {
    * tests the case that there are no updates to the dataset properties, should result in success
    */
   @Test
-  void testUpdateDatasetWithNoProperties() {
+  void testUpdateDatasetWithNoProperties() throws Exception{
     Dataset dataset = new Dataset();
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
@@ -1055,6 +1055,8 @@ class DatasetResourceTest extends AbstractTestHelper {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(dataset);
+    when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
     Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart,
         "{\"properties\":[]}");
