@@ -29,8 +29,6 @@ import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
@@ -75,6 +73,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
 
    @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
+     if (disableTestContainers()) {
+       return;
+     }
     try {
       startUp();
     } catch (Exception e) {

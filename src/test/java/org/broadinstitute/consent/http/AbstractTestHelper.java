@@ -21,4 +21,8 @@ public abstract class AbstractTestHelper {
     return RandomUtils.secureStrong().randomLong();
   }
 
+public static boolean disableTestContainers() {
+    return System.getProperty("disableTestContainers", "false").equals("true");
+}
+
 }

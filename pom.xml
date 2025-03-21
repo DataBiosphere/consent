@@ -87,6 +87,9 @@
             <version>${surefire.version}</version>
             <configuration>
               <includes>**/integration/**/*.java</includes>
+              <systemProperties>
+                <disableTestContainers>true</disableTestContainers>
+              </systemProperties>
             </configuration>
           </plugin>
         </plugins>

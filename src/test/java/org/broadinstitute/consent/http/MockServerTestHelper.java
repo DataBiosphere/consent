@@ -15,6 +15,9 @@ public class MockServerTestHelper extends AbstractTestHelper implements TestExec
   public static MockServerClient mockServerClient;
 
   static void startUp() {
+    if (disableTestContainers()) {
+      return;
+    }
     container.start();
     mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
   }
