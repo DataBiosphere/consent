@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -59,7 +59,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DatasetServiceTest {
+class DatasetServiceTest extends AbstractTestHelper {
 
   private DatasetService datasetService;
 
@@ -232,7 +232,7 @@ class DatasetServiceTest {
 
   @Test
   void testFindAllDatasetsAsStreamingOutput() throws Exception {
-    var datasets = getDatasets(RandomUtils.nextInt(10, 20));
+    var datasets = getDatasets(randomInt(10, 20));
     when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDatasetId).toList());
     datasets.forEach(d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(List.of(d)));
     initService();
@@ -434,7 +434,6 @@ class DatasetServiceTest {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     initService();
     assertThrows(NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, new User()));
-
   }
 
   @Test
@@ -475,7 +474,7 @@ class DatasetServiceTest {
     User user = new User();
     user.setEmail("test@gmail.com");
     Study study = new Study();
-    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    study.setStudyId(randomInt(100, 10000));
     StudyProperty prop = new StudyProperty();
     prop.setValue("[test@gmail.com]");
     prop.setStudyId(study.getStudyId());
@@ -495,7 +494,7 @@ class DatasetServiceTest {
     User user = new User();
     user.setEmail("test@gmail.com");
     Study study = new Study();
-    study.setStudyId(RandomUtils.nextInt(100, 10000));
+    study.setStudyId(randomInt(100, 10000));
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
     initService();
@@ -519,11 +518,13 @@ class DatasetServiceTest {
   }
 
   @Test
-  void testUpdateDatasetIndex() throws SQLException {
+  void testUpdateIfIndexed() throws SQLException {
+    Dataset dataset = new Dataset();
+    dataset.setIndexedDate(new Date());
     doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
     initService();
-    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, Instant.now()));
-    assertDoesNotThrow(() -> datasetService.updateDatasetIndex(1, 1, null));
+    assertDoesNotThrow(() -> datasetService.updateIfIndexed(dataset, 1, Instant.now()));
+    assertDoesNotThrow(() -> datasetService.updateIfIndexed(dataset, 1, null));
   }
 
   /* Helper functions */

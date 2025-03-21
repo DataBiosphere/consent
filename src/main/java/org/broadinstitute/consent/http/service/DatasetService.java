@@ -140,10 +140,7 @@ public class DatasetService implements ConsentLogger {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
-    // Re-index if the dataset is already indexed
-    if (d.getIndexedDate() != null) {
-      updateDatasetIndex(d.getDatasetId(), user.getUserId(), Instant.now());
-    }
+    updateIfIndexed(d, user.getUserId(), Instant.now());
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -156,16 +153,12 @@ public class DatasetService implements ConsentLogger {
     String translation = ontologyService.translateDataUse(dataset.getDataUse(),
         DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
-
-    // Re-index if the dataset is already indexed
-    if (dataset.getIndexedDate() != null) {
-      updateDatasetIndex(datasetId, user.getUserId(), Instant.now());
-    }
-
+    updateIfIndexed(dataset, user.getUserId(), Instant.now());
     return datasetDAO.findDatasetById(datasetId);
   }
 
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
+    // TODO: Figure out how to remove from index
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
       datasetServiceDAO.deleteDataset(dataset, userId);
@@ -173,6 +166,7 @@ public class DatasetService implements ConsentLogger {
   }
 
   public void deleteStudy(Study study, User user) throws Exception {
+    // TODO: Figure out how to remove from index
     datasetServiceDAO.deleteStudy(study, user);
   }
 
@@ -192,6 +186,7 @@ public class DatasetService implements ConsentLogger {
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
+      updateIfIndexed(dataset, user.getUserId(), Instant.now());
       datasetReturn = datasetDAO.findDatasetById(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -328,12 +323,7 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
-
-    // Re-index if the dataset is already indexed
-    if (dataset.getIndexedDate() != null) {
-      updateDatasetIndex(dataset.getDatasetId(), user.getUserId(), Instant.now());
-    }
-
+    updateIfIndexed(dataset, user.getUserId(), Instant.now());
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -396,9 +386,7 @@ public class DatasetService implements ConsentLogger {
     }
     study.getDatasetIds().forEach(datasetId -> {
       Dataset updatedDataset = findDatasetById(datasetId);
-      if (updatedDataset.getIndexedDate() != null) {
-        updateDatasetIndex(datasetId, user.getUserId(), Instant.now());
-      }
+      updateIfIndexed(updatedDataset, user.getUserId(), Instant.now());
     });
     return studyDAO.findStudyById(studyId);
   }
@@ -546,11 +534,13 @@ public class DatasetService implements ConsentLogger {
     this.datasetBatchSize = datasetBatchSize;
   }
 
-  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate) {
-    try {
-      datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
-    } catch (SQLException e) {
-      logWarn("Unable to update index date for dataset %s".formatted(datasetId), e);
+  protected void updateIfIndexed(Dataset dataset, Integer userId, Instant indexDate) {
+    if (dataset.getIndexedDate() != null) {
+      try {
+        datasetServiceDAO.updateDatasetIndex(dataset.getDatasetId(), userId, indexDate);
+      } catch (SQLException e) {
+        logWarn("Unable to update index date for dataset %s".formatted(dataset.getDatasetId()), e);
+      }
     }
   }
 
