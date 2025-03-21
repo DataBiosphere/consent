@@ -44,7 +44,11 @@
             <version>${surefire.version}</version>
             <configuration>
               <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
+              <!-- Updated configuration for mockito-->
+              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
+                -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+                -Xshare:off
+              </argLine>
               <systemPropertyVariables>
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
