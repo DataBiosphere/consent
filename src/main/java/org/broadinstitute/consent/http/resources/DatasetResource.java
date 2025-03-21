@@ -159,9 +159,6 @@ public class DatasetResource extends Resource {
 
       Dataset updatedDataset = datasetRegistrationService.updateDataset(datasetId, user, update,
           files);
-      if (updatedDataset.getIndexedDate() != null) {
-        elasticSearchService.indexDataset(updatedDataset, user);
-      }
       return Response.ok().entity(updatedDataset).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -482,10 +479,6 @@ public class DatasetResource extends Resource {
         return Response.notModified().entity(originalDataset).build();
       }
       Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
-      // Re-index if the dataset is already indexed
-      if (dataset.getIndexedDate() != null) {
-        elasticSearchService.indexDataset(dataset, user);
-      }
       return Response.ok().entity(dataset).build();
     } catch (JsonSyntaxException jse) {
       return createExceptionResponse(

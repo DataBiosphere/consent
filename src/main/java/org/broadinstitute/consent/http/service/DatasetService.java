@@ -140,6 +140,10 @@ public class DatasetService implements ConsentLogger {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
+    // Re-index if the dataset is already indexed
+    if (d.getIndexedDate() != null) {
+      updateDatasetIndex(d.getDatasetId(), user.getUserId(), Instant.now());
+    }
     return datasetDAO.findDatasetById(datasetId);
   }
 

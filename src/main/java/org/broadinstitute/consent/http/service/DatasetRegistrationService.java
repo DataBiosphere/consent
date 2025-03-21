@@ -285,12 +285,14 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
-    try (Response response = elasticSearchService.indexDataset(dataset, user)) {
-      if (response.getStatus() >= 400) {
-        logWarn(String.format("Error indexing dataset update: %s", dataset.getName()));
+    if (updatedDataset.getIndexedDate() != null) {
+      try (Response response = elasticSearchService.indexDataset(dataset, user)) {
+        if (response.getStatus() >= 400) {
+          logWarn(String.format("Error indexing dataset update: %s", dataset.getName()));
+        }
+      } catch (Exception e) {
+        logException(e);
       }
-    } catch (Exception e) {
-      logException(e);
     }
     return updatedDataset;
   }
