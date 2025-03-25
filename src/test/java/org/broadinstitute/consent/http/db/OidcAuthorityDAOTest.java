@@ -10,52 +10,33 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.OidcAuthorityConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
-import org.testcontainers.containers.MockServerContainer;
+
 
 @ExtendWith(MockitoExtension.class)
-class OidcAuthorityDAOTest implements WithMockServer {
+class OidcAuthorityDAOTest extends MockServerTestHelper {
 
   private OidcAuthorityDAO dao;
 
-  private MockServerClient mockServerClient;
-
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
-
-  @BeforeAll
-  public static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    container.stop();
+  @NotNull
+  private static String getMockContainerBaseUrl() {
+    return "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort();
   }
 
   @BeforeEach
   public void init() {
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    mockServerClient.reset();
     OidcConfiguration config = new OidcConfiguration();
     config.setAuthorityEndpoint(getMockContainerBaseUrl());
     dao = new OidcAuthorityDAO(new HttpClientUtil(new ServicesConfiguration()), config);
-  }
-
-  @NotNull
-  private static String getMockContainerBaseUrl() {
-    return "http://" + container.getHost() + ":" + container.getServerPort();
   }
 
   @Test
@@ -92,7 +73,8 @@ class OidcAuthorityDAOTest implements WithMockServer {
             response()
                 .withStatusCode(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(bodyFormat.formatted(expectedIssuer, expectedAuthorizationEndpoint, expectedTokenEndpoint, expectedIssuer)));
+                .withBody(bodyFormat.formatted(expectedIssuer, expectedAuthorizationEndpoint,
+                    expectedTokenEndpoint, expectedIssuer)));
     var actual = dao.getOidcAuthorityConfiguration();
     assertEquals(expectedTokenEndpoint, actual.token_endpoint());
     assertEquals(expectedAuthorizationEndpoint, actual.authorization_endpoint());
@@ -114,14 +96,19 @@ class OidcAuthorityDAOTest implements WithMockServer {
     var formParameters = new MultivaluedHashMap<>(Map.of("formParam", "formValue"));
     var queryParameters = new MultivaluedHashMap<>(Map.of("queryParam", "queryValue"));
     var tokenPath = "/oauth2/token";
-    dao.setOidcAuthorityConfiguration(new OidcAuthorityConfiguration(null, null, getMockContainerBaseUrl() + tokenPath));
+    dao.setOidcAuthorityConfiguration(
+        new OidcAuthorityConfiguration(null, null, getMockContainerBaseUrl() + tokenPath));
     mockServerClient
         .when(
             request()
                 .withMethod("POST")
                 .withPath(tokenPath)
-                .withQueryStringParameters(queryParameters.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .withBody(URLEncodedUtils.format(formParameters.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(value -> new BasicNameValuePair(entry.getKey(), value))).toList(), StandardCharsets.UTF_8))
+                .withQueryStringParameters(queryParameters.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .withBody(URLEncodedUtils.format(formParameters.entrySet().stream().flatMap(
+                        entry -> entry.getValue().stream()
+                            .map(value -> new BasicNameValuePair(entry.getKey(), value))).toList(),
+                    StandardCharsets.UTF_8))
         )
         .respond(
             response()

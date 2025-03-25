@@ -17,8 +17,10 @@ cd consent
 mvn clean test package 
 ```
 
-Tests spin up embedded postgres and http servers that run against localhost.
-Ensure that your test environment supports that.
+Tests require docker or another OCI runtime to spin up postgres and http servers that run against
+localhost. Ensure that your test environment supports that.  Command line docker, podman, and 
+Docker Desktop have all worked to run these tests.  Podman was observed to perform better when running tests,
+however docker is the tool of choice for other developers and the CI/CD environment.
 
 #### Docker
 

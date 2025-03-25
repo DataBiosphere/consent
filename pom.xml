@@ -44,7 +44,11 @@
             <version>${surefire.version}</version>
             <configuration>
               <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1</argLine>
+              <!-- Updated configuration for mockito-->
+              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
+                -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+                -Xshare:off
+              </argLine>
               <systemPropertyVariables>
                 <pact.rootDir>target/pacts</pact.rootDir>
               </systemPropertyVariables>
@@ -83,6 +87,9 @@
             <version>${surefire.version}</version>
             <configuration>
               <includes>**/integration/**/*.java</includes>
+              <systemProperties>
+                <enableTestContainers>false</enableTestContainers>
+              </systemProperties>
             </configuration>
           </plugin>
         </plugins>
@@ -535,21 +542,21 @@
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
     <dependency>
-        <groupId>ch.qos.logback.access</groupId>
-        <artifactId>common</artifactId>
-        <version>2.0.3</version>
+      <groupId>ch.qos.logback.access</groupId>
+      <artifactId>common</artifactId>
+      <version>2.0.3</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-core</artifactId>
-        <version>${logback.version}</version>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
     </dependency>
 
     <!--suppress VulnerableLibrariesLocal -->
@@ -599,6 +606,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-launcher</artifactId>
+      <version>1.12.1</version>
       <scope>test</scope>
     </dependency>
 

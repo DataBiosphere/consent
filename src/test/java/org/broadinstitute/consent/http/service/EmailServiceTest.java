@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,10 +87,6 @@ class EmailServiceTest {
 
 
   private static final String serverUrl = "http://localhost:8000/#/";
-
-  @BeforeEach
-  void setUp() {
-  }
 
   private void initService() {
     boolean serviceActive = false;

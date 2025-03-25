@@ -12,7 +12,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.UUID;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -20,41 +20,16 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.OntologyEntry;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class UseRestrictionConverterTest implements WithMockServer {
-
-  private MockServerClient client;
-
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
-
-  @BeforeAll
-  public static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    container.stop();
-  }
-
-  @BeforeEach
-  public void startUp() {
-    client = new MockServerClient(container.getHost(), container.getServerPort());
-    client.reset();
-  }
+class UseRestrictionConverterTest extends MockServerTestHelper {
 
   private void mockDataUseTranslateSuccess() {
-    client
+    mockServerClient
         .when(request().withMethod("POST").withPath("/translate"))
         .respond(
             response()
@@ -70,7 +45,7 @@ class UseRestrictionConverterTest implements WithMockServer {
   }
 
   private void mockDataUseTranslateFailure() {
-    client
+    mockServerClient
         .when(request().withMethod("POST").withPath("/translate"))
         .respond(
             response()
@@ -83,7 +58,7 @@ class UseRestrictionConverterTest implements WithMockServer {
   public ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setLocalURL("http://localhost:8180/");
-    config.setOntologyURL(getRootUrl(container));
+    config.setOntologyURL(getRootUrl(CONTAINER));
     return config;
   }
 
