@@ -453,7 +453,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.4.0</version>
+      <version>8.5.0</version>
     </dependency>
 
     <dependency>
@@ -505,7 +505,7 @@
     <dependency>
       <groupId>org.eclipse.jetty.http2</groupId>
       <artifactId>http2-common</artifactId>
-      <version>11.0.24</version>
+      <version>11.0.25</version>
     </dependency>
 
     <dependency>
@@ -630,7 +630,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.4.0-jre</version>
+      <version>33.4.5-jre</version>
     </dependency>
 
     <dependency>
