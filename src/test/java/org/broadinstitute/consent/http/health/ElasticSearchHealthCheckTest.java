@@ -27,7 +27,7 @@ class ElasticSearchHealthCheckTest extends MockServerTestHelper {
   void init() {
     config = new ElasticSearchConfiguration();
     config.setServers(Collections.singletonList("localhost"));
-    config.setPort(container.getServerPort());
+    config.setPort(CONTAINER.getServerPort());
   }
 
   private void initHealthCheck(String status, Integer statusCode) {

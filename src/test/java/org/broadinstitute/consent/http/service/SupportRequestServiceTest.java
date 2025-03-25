@@ -49,7 +49,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -78,7 +78,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -91,7 +91,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -106,7 +106,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -128,7 +128,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request().withMethod("POST"))
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -152,7 +152,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostAttachmentToSupportServerError() {
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
@@ -165,7 +165,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostAttachmentToSupportUnprocessableEntity() {
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     mockServerClient.when(request())
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))

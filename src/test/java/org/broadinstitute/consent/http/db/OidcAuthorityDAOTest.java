@@ -29,7 +29,7 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
 
   @NotNull
   private static String getMockContainerBaseUrl() {
-    return "http://" + container.getHost() + ":" + container.getServerPort();
+    return "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort();
   }
 
   @BeforeEach

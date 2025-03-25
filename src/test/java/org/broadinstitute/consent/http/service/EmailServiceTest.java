@@ -88,16 +88,6 @@ class EmailServiceTest {
 
   private static final String serverUrl = "http://localhost:8000/#/";
 
-  @BeforeEach
-  void setUp() {
-  }
-
-  @AfterEach
-  void afterEach() {
-    sendGridAPI = null;
-    templateHelper = null;
-  }
-
   private void initService() {
     boolean serviceActive = false;
 

@@ -71,19 +71,18 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   @SuppressWarnings("rawtypes")
   private static PostgreSQLContainer postgresContainer;
 
-   @Override
+  @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
-     /* The tests that extend this class make the necessary assumption that the app will be started
-     and backed by a running database.  When we do not need the containers, we are also indicating
-     we do not need the application within this class, hence we can early return and skip resource
-     construction.
-     This became a necessary optimization because of command line generated output that could not
-     be properly handled by a CI/CD process. */
-     if (disableTestContainers()) {
-       return;
-     }
+    // The tests that extend this class make the necessary assumption that the app will be started
+    // and backed by a running database.  When we do not need the containers, we are also
+    // indicating we do not need the application within this class, hence we can early return and
+    // skip resource construction.
+    // This became a necessary optimization because of command line generated output that could not
+    // be properly handled by a CI/CD process. */
     try {
-      startUp();
+      if (enableTestContainers()) {
+        startUp();
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

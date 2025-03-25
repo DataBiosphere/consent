@@ -61,7 +61,7 @@ class SamDAOTest extends MockServerTestHelper {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setSamUrl(
-        "http://" + container.getHost() + ":" + container.getServerPort() + "/");
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     samDAO = new SamDAO(new HttpClientUtil(servicesConfig), servicesConfig);
   }
 

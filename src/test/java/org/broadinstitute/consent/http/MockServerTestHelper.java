@@ -10,22 +10,18 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class MockServerTestHelper extends AbstractTestHelper implements TestExecutionListener,
     WithMockServer {
 
-  public static final MockServerContainer container = new MockServerContainer(IMAGE).waitingFor(
+  public static final MockServerContainer CONTAINER = new MockServerContainer(IMAGE).waitingFor(
       Wait.forLogMessage(".*started on port:.*", 1));
   public static MockServerClient mockServerClient;
 
-  static void startUp() {
-    if (disableTestContainers()) {
-      return;
-    }
-    container.start();
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-  }
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
     try {
-      startUp();
+      if (enableTestContainers()) {
+        CONTAINER.start();
+        mockServerClient = new MockServerClient(CONTAINER.getHost(), CONTAINER.getServerPort());
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

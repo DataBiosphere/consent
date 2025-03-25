@@ -25,8 +25,8 @@ import org.mockserver.verify.VerificationTimes;
 @ExtendWith(MockitoExtension.class)
 class HttpClientUtilTest extends MockServerTestHelper {
 
-  private final String statusUrl = String.format("http://%s:%s/", container.getHost(),
-      container.getServerPort());
+  private final String statusUrl = String.format("http://%s:%s/", CONTAINER.getHost(),
+      CONTAINER.getServerPort());
   private HttpClientUtil clientUtil;
 
   @BeforeEach

@@ -30,7 +30,7 @@ class OntologyServiceTest extends MockServerTestHelper {
   ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setLocalURL("http://localhost:8180/");
-    config.setOntologyURL(getRootUrl(container));
+    config.setOntologyURL(getRootUrl(CONTAINER));
     return config;
   }
 

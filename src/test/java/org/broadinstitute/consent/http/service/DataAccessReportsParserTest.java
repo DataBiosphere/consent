@@ -113,8 +113,6 @@ class DataAccessReportsParserTest {
         i++;
       }
       assertEquals(2, i);
-    } catch (Exception e) {
-      fail(e);
     }
   }
 
@@ -157,8 +155,6 @@ class DataAccessReportsParserTest {
         i++;
       }
       assertEquals(2, i);
-    } catch (Exception e) {
-      fail(e);
     }
   }
 
@@ -202,8 +198,6 @@ class DataAccessReportsParserTest {
         i++;
       }
       assertEquals(2, i);
-    } catch (Exception e) {
-      fail(e);
     }
   }
 
