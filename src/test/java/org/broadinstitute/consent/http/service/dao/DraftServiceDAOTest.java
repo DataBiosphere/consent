@@ -41,32 +41,30 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftServiceDAOTest extends DAOTestHelper {
-
-  @Mock
-  GCSService gcsService;
-
-  private DraftServiceDAO draftServiceDAO;
+  private static GCSService gcsService;
+  private static DraftServiceDAO draftServiceDAO;
 
   @BeforeEach
-  void setup() throws IOException {
-    DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi,
-        gcsService, fileStorageObjectDAO);
-    this.draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO, draftFileStorageServiceDAO);
-  }
-
-  @Test
-  void testCreateDraft() throws SQLException, IOException {
+  void beforeEachTestSetup() throws IOException {
+    gcsService = Mockito.mock(GCSService.class);
     when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
         BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+    DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi,
+        gcsService, fileStorageObjectDAO);
+    draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO, draftFileStorageServiceDAO);
+  }
+
+
+  @Test
+  void testCreateDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
@@ -79,15 +77,14 @@ class DraftServiceDAOTest extends DAOTestHelper {
 
   @Test
   void testCreateDraftWithInvalidJson() {
+    Mockito.reset(gcsService);
     User user = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("Hello world!", user);
     assertThrows(BadRequestException.class, () -> draftServiceDAO.insertDraft(draft));
   }
 
   @Test
-  void testThinUserIsReturnedFromDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+  void testThinUserIsReturnedFromDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(user.getRoles(), hasSize(greaterThan(0)));
@@ -96,9 +93,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetAuthorizedDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+  void testGetAuthorizedDraft() throws SQLException {
     User goodUser = createUser();
     User badUser = createUser();
     User adminUser = createUser();
@@ -119,8 +114,6 @@ class DraftServiceDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDraft() throws Exception {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     User user = createUser();
     createDraft(user, 3);
     Collection<DraftInterface> loadedDrafts = draftDAO.findDraftsByUserId(user.getUserId());
@@ -130,9 +123,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDraftsForUser() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+  void testDeleteDraftsForUser() throws SQLException {
     User user = createUser();
     User user2 = createUser();
     createDraft(user, 3);
@@ -147,9 +138,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testAddAttachmentToDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+  void testAddAttachmentToDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Map<String, FormDataBodyPart> files = getRandomFiles(1);
@@ -160,9 +149,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteAttachmentFromDraft() throws SQLException, IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+  void testDeleteAttachmentFromDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Set<FileStorageObject> storedFiles = draft.getStoredFiles();
