@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -78,7 +77,7 @@ class DataAccessReportsParserTest {
     parser.addApprovedDARLine(darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION,
         CONSENT_NAME, sDUL);
     darWriter.flush();
-    try (Stream<String> stream = Files.lines(Paths.get(file.getPath()))) {
+    try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -126,7 +125,7 @@ class DataAccessReportsParserTest {
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(Stream<String> stream = Files.lines(Paths.get(file.getPath()))){
+    try(var stream = Files.lines(Paths.get(file.getPath()))){
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -169,7 +168,7 @@ class DataAccessReportsParserTest {
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(Stream<String> stream = Files.lines(Paths.get(file.getPath()))){
+    try(var stream = Files.lines(Paths.get(file.getPath()))){
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
