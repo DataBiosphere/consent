@@ -396,7 +396,7 @@ public class ElasticSearchService implements ConsentLogger {
     return term;
   }
 
-  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
+  protected void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
       throws SQLException {
     datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
   }
