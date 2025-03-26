@@ -78,6 +78,8 @@ class VoteServiceTest extends AbstractTestHelper {
   private VoteDAO voteDAO;
   @Mock
   private VoteServiceDAO voteServiceDAO;
+  @Mock
+  private User user;
 
   private void initService() {
     service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO,
@@ -130,7 +132,7 @@ class VoteServiceTest extends AbstractTestHelper {
   void testUpdateVotesWithValue() {
     initService();
 
-    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", new User());
+    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", user);
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
   }
@@ -268,7 +270,7 @@ class VoteServiceTest extends AbstractTestHelper {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, null, new User());
+      service.updateVotesWithValue(List.of(v), true, null, user);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -278,7 +280,7 @@ class VoteServiceTest extends AbstractTestHelper {
   void testUpdateVotesWithValue_emptyList() throws Exception {
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
     initService();
-    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", new User());
+    List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", user);
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
   }
@@ -294,7 +296,9 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale", new User()));
+    List<Vote> voteList = List.of(v);
+    assertThrows(IllegalArgumentException.class,
+        () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
 
@@ -317,7 +321,9 @@ class VoteServiceTest extends AbstractTestHelper {
 
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> service.updateVotesWithValue(List.of(v), true, "rationale", new User()));
+    List<Vote> voteList = List.of(v);
+    assertThrows(IllegalArgumentException.class,
+        () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
   @Test
@@ -362,7 +368,7 @@ class VoteServiceTest extends AbstractTestHelper {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, "rationale", new User());
+      service.updateVotesWithValue(List.of(v), true, "rationale", user);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -382,7 +388,7 @@ class VoteServiceTest extends AbstractTestHelper {
     initService();
 
     try {
-      service.updateVotesWithValue(List.of(v), true, "rationale", new User());
+      service.updateVotesWithValue(List.of(v), true, "rationale", user);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -432,7 +438,8 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
+    assertThrows(IllegalArgumentException.class,
+        () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -443,7 +450,8 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
+    assertThrows(IllegalArgumentException.class,
+        () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -785,7 +793,9 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
 
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code"));
+    List<Dataset> datasetsList = List.of(d1, d2);
+    assertThrows(IllegalArgumentException.class,
+        () -> service.notifyCustodiansOfApprovedDatasets(datasetsList, researcher, "Dar Code"));
     verify(emailService, times(0)).sendDataCustodianApprovalMessage(
         any(),
         any(),
@@ -839,7 +849,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
     when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
-    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(List.of(custodian));
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
+        List.of(custodian));
 
     initService();
 
@@ -858,8 +869,8 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   /**
-   * This test exercises the bug seen in DUOS-3066:
-   * java.lang.ClassCastException: class com.google.gson.JsonArray cannot be cast to class java.lang.String
+   * This test exercises the bug seen in DUOS-3066: java.lang.ClassCastException: class
+   * com.google.gson.JsonArray cannot be cast to class java.lang.String
    */
   @Test
   void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
@@ -907,7 +918,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
     when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
-    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(List.of(custodian));
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
+        List.of(custodian));
 
     initService();
 
