@@ -29,19 +29,19 @@ import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-public class DAOTestHelper extends AbstractTestHelper {
+public class DAOTestHelper extends AbstractTestHelper implements TestExecutionListener {
 
   public static final String POSTGRES_IMAGE = "postgres:16.4-alpine";
+  public static final String EMPTY_JSON_DOCUMENT = "{}";
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
       "database.maxSize", String.valueOf(maxConnections));
-  public static final String EMPTY_JSON_DOCUMENT = "{}";
   protected static Jdbi jdbi;
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
@@ -71,8 +71,24 @@ public class DAOTestHelper extends AbstractTestHelper {
   @SuppressWarnings("rawtypes")
   private static PostgreSQLContainer postgresContainer;
 
-  @BeforeAll
-  public static void startUp() throws Exception {
+  @Override
+  public void testPlanExecutionStarted(TestPlan testPlan) {
+    // The tests that extend this class make the necessary assumption that the app will be started
+    // and backed by a running database.  When we do not need the containers, we are also
+    // indicating we do not need the application within this class, hence we can early return and
+    // skip resource construction.
+    // This became a necessary optimization because of command line generated output that could not
+    // be properly handled by a CI/CD process. */
+    try {
+      if (enableTestContainers()) {
+        startUp();
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void startUp() throws Exception {
     // Start the database
     postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
         withCommand("postgres -c max_connections=" + maxConnections).
@@ -135,44 +151,9 @@ public class DAOTestHelper extends AbstractTestHelper {
     testingDAO = jdbi.onDemand(TestingDAO.class);
   }
 
-  @AfterAll
-  public static void shutDown() {
-    testApp.after();
-    postgresContainer.stop();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    // Order is important for FK constraints
-    testingDAO.deleteAllDARDataset();
-    testingDAO.deleteAllApprovalTimes();
-    testingDAO.deleteAllVotes();
-    testingDAO.deleteAllMatchEntityRationales();
-    testingDAO.deleteAllMatchEntities();
-    testingDAO.deleteAllElections();
-    testingDAO.deleteAllDatasetProperties();
-    testingDAO.deleteAllDictionaryTerms();
-    testingDAO.deleteAllDatasetAudits();
-    testingDAO.deleteAllDatasets();
-    testingDAO.deleteAllDrafts();
-    testingDAO.deleteAllStudyProperties();
-    testingDAO.deleteAllStudies();
-    testingDAO.deleteAllDacUserRoles();
-    testingDAO.deleteAllLibraryCardDAAs();
-    testingDAO.deleteAllDACDAAs();
-    testingDAO.deleteAllDataAccessAgreements();
-    testingDAO.deleteAllDacs();
-    testingDAO.deleteAllLibraryCards();
-    testingDAO.deleteAllInstitutions();
-    testingDAO.deleteAllUserProperties();
-    testingDAO.deleteAllUserRoles();
-    testingDAO.deleteAllAcknowledgements();
-    testingDAO.deleteAllFileStorageObjects();
-    testingDAO.deleteAllUsers();
-    testingDAO.deleteAllDARs();
-    testingDAO.deleteAllDARCollections();
-    testingDAO.deleteAllCounters();
-    testingDAO.deleteAllEmailEntities();
+  @BeforeEach()
+  public void before() {
+    testingDAO.truncateAllTables();
   }
 
     /*

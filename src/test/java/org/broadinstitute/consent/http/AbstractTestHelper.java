@@ -5,6 +5,11 @@ import org.apache.commons.lang3.RandomUtils;
 
 public abstract class AbstractTestHelper {
 
+  public static boolean enableTestContainers() {
+    String defaultProp = "true";
+    return Boolean.parseBoolean(System.getProperty("enableTestContainers", defaultProp));
+  }
+
   public String randomAlphabetic(int length) {
     return RandomStringUtils.secureStrong().nextAlphabetic(length);
   }
