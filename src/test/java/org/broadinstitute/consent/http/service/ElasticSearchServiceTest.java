@@ -7,11 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -22,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -658,15 +659,34 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
     initService();
-    assertDoesNotThrow(() -> service.indexStudy(1, user));
+    assertDoesNotThrow(() -> {
+      try (var response = service.indexStudy(1, user)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      }
+    });
   }
 
   @Test
-  void testUpdateDatasetIndex() throws SQLException {
-    doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+  void testUpdateDatasetIndexWithValue() {
     initService();
     assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, Instant.now()));
+  }
+
+  @Test
+  void testDeleteDatasetIndexWhenDatasetExists() throws Exception {
+    Dataset dataset = new Dataset();
+    when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
+    initService();
     assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
+    verify(datasetServiceDAO, times(1)).updateDatasetIndex(any(), any(), any());
+  }
+
+  @Test
+  void testDeleteDatasetIndexWhenDatasetIsNull() throws Exception {
+    when(datasetDAO.findDatasetById(any())).thenReturn(null);
+    initService();
+    assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
+    verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
   }
 
 }

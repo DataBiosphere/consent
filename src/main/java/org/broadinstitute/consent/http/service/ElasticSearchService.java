@@ -398,7 +398,11 @@ public class ElasticSearchService implements ConsentLogger {
 
   protected void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
       throws SQLException {
-    datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+    // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    if (dataset != null) {
+      datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+    }
   }
 
   Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,
