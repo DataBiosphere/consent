@@ -17,7 +17,7 @@ public class Study {
   private List<String> dataTypes;
   private Set<Integer> datasetIds = new HashSet<>();
   private Set<Dataset> datasets;
-  private Set<StudyProperty> properties;
+  private Set<StudyProperty> properties = new HashSet<>();
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
   private String createUserEmail;

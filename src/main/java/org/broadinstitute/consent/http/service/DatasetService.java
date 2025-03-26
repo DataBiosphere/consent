@@ -382,24 +382,23 @@ public class DatasetService implements ConsentLogger {
   }
 
   public Study updateStudyCustodians(User user, Integer studyId, String custodians) {
-    logInfo(String.format("User %s is updating custodians for study id: %s; custodians: %s", user.getEmail(), studyId, custodians));
+    logInfo(String.format("User %s is updating custodians for study id: %s; custodians: %s",
+        user.getEmail(), studyId, custodians));
     Study study = studyDAO.findStudyById(studyId);
     if (study == null) {
       throw new NotFoundException("Study not found");
     }
-    Optional<StudyProperty> optionalProp = study.getProperties() == null ?
-        Optional.empty() :
-        study
-        .getProperties()
-        .stream()
-        .filter(p -> p.getKey().equals(dataCustodianEmail))
-        .findFirst();
-    if (optionalProp.isPresent()) {
-      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
+    boolean propPresent = study.getProperties().stream()
+        .anyMatch(prop -> prop.getKey().equals(dataCustodianEmail));
+    if (propPresent) {
+      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(),
+          custodians);
     } else {
-      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
+      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(),
+          custodians);
     }
-    List<Dataset> datasets = study.getDatasetIds().isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    List<Dataset> datasets = study.getDatasetIds().isEmpty() ? List.of()
+        : datasetDAO.findDatasetsByIdList(study.getDatasetIds());
     datasets.forEach(dataset -> synchronizeDatasetInESIndex(dataset, user));
     return studyDAO.findStudyById(studyId);
   }
