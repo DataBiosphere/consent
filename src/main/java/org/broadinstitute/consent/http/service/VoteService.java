@@ -245,7 +245,7 @@ public class VoteService implements ConsentLogger {
    *              elections for datasets that all have the same data use restriction in a single
    *              DarCollection. This method is flexible enough to send email for any number of
    *              unrelated elections in various DarCollections.
-   * @param user
+   * @param user  The user sending approval notifications
    */
   public void sendDatasetApprovalNotifications(List<Vote> votes, User user) {
 
