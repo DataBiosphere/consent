@@ -459,7 +459,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     term2.setDatasetId(2);
     User user = new User();
     user.setUserId(1);
-
     String datasetIndexName = randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
@@ -468,9 +467,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     initService();
     try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
       verify(esClient).performRequest(request.capture());
-
       Request capturedRequest = request.getValue();
-
       assertEquals("PUT", capturedRequest.getMethod());
       assertEquals("""
               { "index": {"_type": "dataset", "_id": "1"} }
