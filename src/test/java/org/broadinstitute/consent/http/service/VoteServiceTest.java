@@ -657,7 +657,7 @@ class VoteServiceTest extends AbstractTestHelper {
     c1.setDarCode("DAR-CODE-1");
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1), new User());
+    service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
@@ -696,7 +696,7 @@ class VoteServiceTest extends AbstractTestHelper {
     c1.setDarCode("DAR-CODE-1");
 
     initService();
-    service.sendDatasetApprovalNotifications(List.of(v1), new User());
+    service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
