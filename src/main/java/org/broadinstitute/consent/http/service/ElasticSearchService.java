@@ -257,7 +257,7 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public Response indexDataset(Dataset dataset, User user) throws IOException {
-    return indexDatasetTerms(List.of(toDatasetTerm(dataset)), user);
+    return indexDatasets(List.of(dataset), user);
   }
 
   public Response indexDatasets(List<Dataset> datasets, User user) throws IOException {
