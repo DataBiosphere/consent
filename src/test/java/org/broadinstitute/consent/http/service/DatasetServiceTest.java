@@ -442,7 +442,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     initService();
-    datasetService.syncDatasetDataUseTranslation(1, new User());
+    datasetService.syncDatasetDataUseTranslation(1, user);
 
     verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
   }
