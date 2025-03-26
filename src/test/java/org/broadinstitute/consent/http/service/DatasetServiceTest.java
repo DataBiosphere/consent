@@ -25,9 +25,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -58,7 +55,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,6 +81,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Mock
   private UserDAO userDAO;
   @Mock
+  private User user;
+  @Mock
   private Response response;
 
   private void initService() {
@@ -103,7 +101,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindDatasetsByDacIdsEmptyList() {
     initService();
-    assertThrows(BadRequestException.class, () -> datasetService.findDatasetsByDacIds(Collections.emptyList()));
+    assertThrows(BadRequestException.class,
+        () -> datasetService.findDatasetsByDacIds(Collections.emptyList()));
   }
 
   @Test
@@ -123,7 +122,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindDatasetListByDacIdsEmptyList() {
     initService();
-    assertThrows(BadRequestException.class, () -> datasetService.findDatasetListByDacIds(Collections.emptyList()));
+    assertThrows(BadRequestException.class,
+        () -> datasetService.findDatasetListByDacIds(Collections.emptyList()));
   }
 
   @Test
@@ -241,8 +241,11 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindAllDatasetsAsStreamingOutput() throws Exception {
     var datasets = getDatasets(randomInt(10, 20));
-    when(datasetDAO.findAllDatasetIds()).thenReturn(datasets.stream().map(Dataset::getDatasetId).toList());
-    datasets.forEach(d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(List.of(d)));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(
+        datasets.stream().map(Dataset::getDatasetId).toList());
+    datasets.forEach(
+        d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(
+            List.of(d)));
     initService();
     // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
     // the number of datasets generated in the test.
@@ -252,7 +255,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     var baos = new ByteArrayOutputStream();
     output.write(baos);
     var datasetsJson = baos.toString();
-    var listOfDatasetsType = new TypeToken<List<Dataset>>() {}.getType();
+    var listOfDatasetsType = new TypeToken<List<Dataset>>() {
+    }.getType();
     var gson = GsonUtil.buildGson();
     List<Dataset> returnedDatasets = gson.fromJson(datasetsJson, listOfDatasetsType);
     assertFalse(returnedDatasets.isEmpty());
@@ -298,7 +302,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setDacApproval(true);
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, false));
+    assertThrows(IllegalArgumentException.class,
+        () -> datasetService.approveDataset(dataset, user, false));
   }
 
   @Test
@@ -308,7 +313,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setDacApproval(true);
     initService();
 
-    assertThrows(IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, null));
+    assertThrows(IllegalArgumentException.class,
+        () -> datasetService.approveDataset(dataset, user, null));
   }
 
   @Test
@@ -445,7 +451,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     initService();
-    assertThrows(NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, new User()));
+    assertThrows(NotFoundException.class,
+        () -> datasetService.syncDatasetDataUseTranslation(1, user));
   }
 
   @Test
@@ -525,8 +532,10 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
-    assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
-    assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
+    assertThrows(BadRequestException.class,
+        () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
+    assertThrows(BadRequestException.class,
+        () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
   }
 
   /* Helper functions */
@@ -544,11 +553,14 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   /**
    * Minimum count is 1
+   *
    * @param count The number of required datasets
    * @return List of datasets with minimum default mocked fields.
    */
   private List<Dataset> getDatasets(Integer count) {
-    if (count < 1) { count = 1; }
+    if (count < 1) {
+      count = 1;
+    }
     return IntStream.range(1, count + 1)
         .mapToObj(i -> {
           Dataset dataset = new Dataset();
