@@ -558,6 +558,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
         .build();
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
     Response response = resource.deleteDatasetIndex(authUser,0);

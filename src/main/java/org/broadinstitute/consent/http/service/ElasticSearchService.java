@@ -82,11 +82,11 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
 
-  private static final String bulkHeader = """
+  private static final String BULK_HEADER = """
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
-  private static final String deleteQuery = """
+  private static final String DELETE_QUERY = """
       { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
       """;
 
@@ -105,7 +105,7 @@ public class ElasticSearchService implements ConsentLogger {
     List<String> bulkApiCall = new ArrayList<>();
 
     datasets.forEach(dsTerm -> {
-      bulkApiCall.add(bulkHeader.formatted(dsTerm.getDatasetId()));
+      bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
       bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
       try {
         updateDatasetIndex(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
@@ -126,14 +126,14 @@ public class ElasticSearchService implements ConsentLogger {
     return performRequest(bulkRequest);
   }
 
-  public Response deleteIndex(Integer datasetId, User user) throws IOException, SQLException {
+  public Response deleteIndex(Integer datasetId, Integer userId) throws IOException, SQLException {
     Request deleteRequest = new Request(
         HttpMethod.POST,
         "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.setEntity(new NStringEntity(
-        deleteQuery.formatted(datasetId),
+        DELETE_QUERY.formatted(datasetId),
         ContentType.APPLICATION_JSON));
-    updateDatasetIndex(datasetId, user.getUserId(), null);
+    updateDatasetIndex(datasetId, userId, null);
     return performRequest(deleteRequest);
   }
 

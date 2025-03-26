@@ -379,7 +379,7 @@ public class DatasetResource extends Resource {
         return createExceptionResponse(e);
       }
       try {
-        elasticSearchService.deleteIndex(datasetId, user);
+        elasticSearchService.deleteIndex(datasetId, user.getUserId());
       } catch (IOException e) {
         logException(e);
         return createExceptionResponse(e);
@@ -423,7 +423,7 @@ public class DatasetResource extends Resource {
   public Response deleteDatasetIndex(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      return elasticSearchService.deleteIndex(datasetId, user);
+      return elasticSearchService.deleteIndex(datasetId, user.getUserId());
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

@@ -159,7 +159,7 @@ public class StudyResource extends Resource {
       // Remove from ES index
       if (studyDatasetIds != null) {
         studyDatasetIds.forEach(id -> {
-          try (Response indexResponse = elasticSearchService.deleteIndex(id, user)) {
+          try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
             if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
               logWarn("Non-OK response when deleting index for dataset with id: " + id);
             }

@@ -23,7 +23,9 @@ import static org.mockito.Mockito.when;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collections;
@@ -56,6 +58,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +73,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Mock
   private DacDAO dacDAO;
   @Mock
+  private ElasticSearchService elasticSearchService;
+  @Mock
   private EmailService emailService;
   @Mock
   private OntologyService ontologyService;
@@ -79,10 +84,12 @@ class DatasetServiceTest extends AbstractTestHelper {
   private DatasetServiceDAO datasetServiceDAO;
   @Mock
   private UserDAO userDAO;
+  @Mock
+  private Response response;
 
   private void initService() {
-    datasetService = new DatasetService(datasetDAO, daaDAO, dacDAO, emailService,
-      ontologyService, studyDAO, datasetServiceDAO, userDAO);
+    datasetService = new DatasetService(datasetDAO, daaDAO, dacDAO, elasticSearchService,
+        emailService, ontologyService, studyDAO, datasetServiceDAO, userDAO);
   }
 
   @Test
@@ -192,9 +199,10 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateDatasetDataUseAdmin() {
+  void testUpdateDatasetDataUseAdmin() throws Exception {
     doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
     initService();
     User u = new User();
     u.setAdminRole();
@@ -323,6 +331,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     dac.setName("DAC NAME");
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
@@ -357,6 +366,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     dac.setEmail("dacEmail@gmail.com");
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
@@ -391,6 +401,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     dac.setName("DAC NAME");
     initService();
     when(dacDAO.findById(3)).thenReturn(dac);
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
@@ -407,7 +418,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSyncDataUseTranslation() {
+  void testSyncDataUseTranslation() throws Exception {
     Dataset ds = new Dataset();
     ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
@@ -422,6 +433,7 @@ class DatasetServiceTest extends AbstractTestHelper {
         """;
     when(ontologyService.translateDataUse(ds.getDataUse(),
         DataUseTranslationType.DATASET)).thenReturn(translation);
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     initService();
     datasetService.syncDatasetDataUseTranslation(1, new User());
@@ -515,16 +527,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3, 4)));
     assertThrows(BadRequestException.class, () -> datasetService.enforceDAARestrictions(user, List.of(2, 3, 4, 5)));
-  }
-
-  @Test
-  void testUpdateIfIndexed() throws SQLException {
-    Dataset dataset = new Dataset();
-    dataset.setIndexedDate(new Date());
-    doNothing().when(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
-    initService();
-    assertDoesNotThrow(() -> datasetService.updateIfIndexed(dataset, 1, Instant.now()));
-    assertDoesNotThrow(() -> datasetService.updateIfIndexed(dataset, 1, null));
   }
 
   /* Helper functions */
