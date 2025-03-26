@@ -466,22 +466,22 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     mockElasticSearchResponse(200, "");
 
     initService();
-    service.indexDatasetTerms(List.of(term1, term2), user);
+    try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
+      verify(esClient).performRequest(request.capture());
 
-    verify(esClient).performRequest(request.capture());
+      Request capturedRequest = request.getValue();
 
-    Request capturedRequest = request.getValue();
-
-    assertEquals("PUT", capturedRequest.getMethod());
-    assertEquals("""
-            { "index": {"_type": "dataset", "_id": "1"} }
-            {"datasetId":1}
-            { "index": {"_type": "dataset", "_id": "2"} }
-            {"datasetId":2}
-                        
-            """,
-        new String(capturedRequest.getEntity().getContent().readAllBytes(),
-            StandardCharsets.UTF_8));
+      assertEquals("PUT", capturedRequest.getMethod());
+      assertEquals("""
+              { "index": {"_type": "dataset", "_id": "1"} }
+              {"datasetId":1}
+              { "index": {"_type": "dataset", "_id": "2"} }
+              {"datasetId":2}
+              
+              """,
+          new String(capturedRequest.getEntity().getContent().readAllBytes(),
+              StandardCharsets.UTF_8));
+    }
   }
 
   @Test
@@ -498,8 +498,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
 
     initService();
-    var response = service.searchDatasets(query);
-    assertEquals(200, response.getStatus());
+    try (var response = service.searchDatasets(query)) {
+      assertEquals(200, response.getStatus());
+    }
   }
 
   @Test
