@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -27,10 +28,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -378,11 +377,10 @@ public class DatasetResource extends Resource {
         logException(e);
         return createExceptionResponse(e);
       }
-      try {
-        elasticSearchService.deleteIndex(datasetId, user.getUserId());
-      } catch (IOException e) {
-        logException(e);
-        return createExceptionResponse(e);
+      try (var deleteResponse = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
+        if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
+          logWarn("Unable to delete index for dataset: " + datasetId);
+        }
       }
       return Response.ok().build();
     } catch (Exception e) {

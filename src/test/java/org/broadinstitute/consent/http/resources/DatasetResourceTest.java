@@ -85,6 +85,9 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Mock
   private User user;
 
+  @Mock
+  private Response response;
+
   private DatasetResource resource;
 
   private void initResource() {
@@ -387,12 +390,13 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteSuccessAdmin() {
+  void testDeleteSuccessAdmin() throws Exception {
     Dataset dataSet = new Dataset();
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
 
     initResource();
     try (var response = resource.delete(authUser, 1, null)) {
@@ -401,7 +405,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteSuccessChairperson() {
+  void testDeleteSuccessChairperson() throws Exception {
     Dataset dataSet = new Dataset();
     dataSet.setDatasetId(1);
     dataSet.setDacId(1);
@@ -413,6 +417,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
 
     initResource();
     try (var response = resource.delete(authUser, 1, null)) {
