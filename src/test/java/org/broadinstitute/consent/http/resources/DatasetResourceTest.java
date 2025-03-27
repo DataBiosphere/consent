@@ -88,7 +88,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   private User user;
 
   @Mock
-  private Response response;
+  private Response mockResponse;
 
   private DatasetResource resource;
 
@@ -334,7 +334,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail("test@test.com")).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
-    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(response);
+    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
@@ -426,7 +426,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
     try (var response = resource.delete(authUser, 1, null)) {
@@ -447,7 +447,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
     try (var response = resource.delete(authUser, 1, null)) {
@@ -575,7 +575,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
-    Response mockResponse = Response.ok().entity(dataset).build();
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -588,8 +588,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testIndexDelete() throws IOException, SQLException {
-    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
-        .build();
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
     when(userService.findUserByEmail(any())).thenReturn(user);
 
@@ -616,7 +615,8 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testSearchDatasetIndex() throws IOException {
     String query = "{ \"dataUse\": [\"HMB\"] }";
 
-    Response mockResponse = Response.ok().entity(query).build();
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(mockResponse.getEntity()).thenReturn(query);
     when(authUser.getEmail()).thenReturn("testauthuser@test.com");
     when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
