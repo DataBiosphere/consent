@@ -49,7 +49,7 @@ properties:
       - propertyName: Description
         propertyValue: Description of Dataset
       - propertyName: url
-        propertyValue: http://...
+        propertyValue: "https://..."
       - propertyName: Sample Collection ID
         propertyValue: SC-000
   studyId:

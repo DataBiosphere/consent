@@ -30,7 +30,7 @@ properties:
   datasets:
     type: array
     items:
-      type: './Dataset.yaml'
+      $ref: './Dataset.yaml'
     description: All of the datasets related to this study.
   properties:
     type: array
@@ -38,8 +38,7 @@ properties:
       $ref: './StudyProperty.yaml'
     description: Optional properties describing the study.
   alternativeDataSharingPlan:
-    $ref: './FileStorageObject.yaml'
-    description: Metadata about the study's alternative data sharing plan (if present).
+      $ref: './FileStorageObject.yaml'
   createDate:
     type: string
     format: date-time

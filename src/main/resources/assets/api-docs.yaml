@@ -13,7 +13,7 @@ info:
   version: 1.0.1
   license:
     name: BSD
-    url: http://opensource.org/licenses/BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
   termsOfService: https://github.com/DataBiosphere/consent
 
 servers:
@@ -48,31 +48,31 @@ paths:
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
   /api/daa:
-    $ref: 'paths/daa.yaml'
+    $ref: './paths/daa.yaml'
   /api/daa/{daaId}:
-    $ref: 'paths/daaByDaaId.yaml'
+    $ref: './paths/daaByDaaId.yaml'
   /api/daa/{daaId}/file:
-    $ref: 'paths/daaFileByDaaId.yaml'
+    $ref: './paths/daaFileByDaaId.yaml'
   /api/daa/{daaId}/{userId}:
-    $ref: 'paths/daaForUserId.yaml'
+    $ref: './paths/daaForUserId.yaml'
   /api/daa/{daaId}/dac/{dacId}:
-    $ref: 'paths/daaForDacId.yaml'
+    $ref: './paths/daaForDacId.yaml'
   /api/daa/bulk/{daaId}:
-    $ref: 'paths/daaBulkByDaaId.yaml'
+    $ref: './paths/daaBulkByDaaId.yaml'
   /api/daa/bulk/user/{userId}:
-    $ref: 'paths/daaBulkByUserId.yaml'
+    $ref: './paths/daaBulkByUserId.yaml'
   /api/daa/dac/{dacId}:
-    $ref: 'paths/daaById.yaml'
+    $ref: './paths/daaById.yaml'
   /api/daa/request/{daaId}:
-    $ref: 'paths/daaRequestByDaaId.yaml'
+    $ref: './paths/daaRequestByDaaId.yaml'
   /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}:
-    $ref: 'paths/daaUpdateByDacId.yaml'
+    $ref: './paths/daaUpdateByDacId.yaml'
   /api/dac:
-    $ref: 'paths/dac.yaml'
+    $ref: './paths/dac.yaml'
   /api/dac/{dacId}:
-    $ref: 'paths/dacById.yaml'
+    $ref: './paths/dacById.yaml'
   /api/dac/{dacId}/dataset/{datasetId}:
-    $ref: 'paths/approveDataset.yaml'
+    $ref: './paths/approveDataset.yaml'
   /api/dac/{dacId}/member/{userId}:
     post:
       summary: Add DAC Member
@@ -99,7 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: './schemas/User.yaml'
         404:
           description: No DAC or User found with the provided ID
         409:
@@ -242,13 +242,13 @@ paths:
       description: |
         Create Draft Data Access Request.
         Deprecated in favor of /api/dar/v3/draft
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        description: The fields that represent a Data Access Request, json format.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -287,12 +287,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        description: The fields that represent a Data Access Request, json format.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -796,11 +797,13 @@ paths:
       parameters:
         - name: roleName
           in: path
+          required: true
           description: The name of the role of the user
           schema:
             type: string
-            required: true
-            enum: [ Admin, SigningOfficial ]
+            enum:
+              - Admin
+              - SigningOfficial
       tags:
         - User
       responses:
@@ -949,13 +952,13 @@ paths:
     post:
       summary: Store NIH information
       description: Save user's eRA Commons account
-      parameters:
-        - name: nihAccount
-          in: body
-          description: NIH Account information
-          required: true
-          schema:
-            $ref: '#/components/schemas/NIHUserAccount'
+      requestBody:
+        description: NIH Account information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NIHUserAccount'
       tags:
         - User
         - eRA Commons
@@ -1026,8 +1029,7 @@ paths:
           description: Dataset Metrics
           content:
             application/json:
-              schema:
-                $ref: '#/components/schema/DatasetMetrics'
+              schema: {}
         404:
           description: Dataset with specified ID does not exist
         500:
@@ -1128,9 +1130,9 @@ components:
       $ref: './schemas/Collaborator.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
-    Data Access Agreement:
+    DataAccessAgreement:
       $ref: './schemas/DataAccessAgreement.yaml'
-    Data Access Committee:
+    DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
