@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -238,7 +240,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchByDatasetUpdate_patchable() {
+  void testPatchByDatasetUpdate_patchable() throws Exception {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
@@ -272,6 +274,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, never()).indexDataset(dataset, user);
     }
   }
 
@@ -310,6 +313,33 @@ class DatasetResourceTest extends AbstractTestHelper {
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchByDatasetUpdate_invokeIndexUpdate() throws Exception {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
+    dataset.setIndexedDate(new Date());
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    String newName = randomAlphabetic(20);
+    DatasetPatch patch = new DatasetPatch(newName, List.of());
+
+    when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
+    when(authUser.getEmail()).thenReturn("test@test.com");
+    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(response);
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
+        gson.toJson(patch))) {
+      verify(elasticSearchService, times(1)).indexDataset(dataset, user);
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
