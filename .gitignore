@@ -157,3 +157,6 @@ dependency-reduced-pom.xml
 
 ## GHA Credentials
 gha-creds-*.json
+
+## Gradle
+build/
