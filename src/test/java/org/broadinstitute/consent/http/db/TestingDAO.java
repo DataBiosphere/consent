@@ -10,7 +10,7 @@ public interface TestingDAO extends Transactional<TestingDAO> {
           table_name text;
       BEGIN
           FOR table_name IN (SELECT tablename FROM pg_tables WHERE schemaname='public'
-                AND tablename NOT IN ('roles', 'dictionary')) LOOP
+                AND tablename NOT IN ('roles', 'dictionary', 'dac_automation_rules')) LOOP
               EXECUTE 'TRUNCATE TABLE ' || table_name || ' CASCADE;';
           END LOOP;
       END $$;

@@ -168,4 +168,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2025-03-19-indexed.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2025-03-28-automation_rules.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -63,6 +63,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static FileStorageObjectDAO fileStorageObjectDAO;
   protected static AcknowledgementDAO acknowledgementDAO;
   protected static DraftDAO draftDAO;
+  protected static DACAutomationRuleDAO dacAutomationRuleDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -148,6 +149,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
     draftDAO = jdbi.onDemand(DraftDAO.class);
+    dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
   }
 
