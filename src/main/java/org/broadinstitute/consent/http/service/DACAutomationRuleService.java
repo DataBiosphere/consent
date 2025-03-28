@@ -18,8 +18,8 @@ public class DACAutomationRuleService {
     return ruleDAO.findAll();
   }
 
-  public List<DACAutomationRule> findAllAvailable() {
-    return ruleDAO.findAllAvailable();
+  public List<DACAutomationRule> findAllByDacId(Integer dacId) {
+    return ruleDAO.findAllDACAutomationRulesByDACId(dacId);
   }
 
 }

@@ -16,7 +16,11 @@ public class DACAutomationRuleMapper implements RowMapper<DACAutomationRule>, Ro
     DACAutomationRuleType ruleType = DACAutomationRuleType.valueOf(rs.getString("rule_type"));
     String description = rs.getString("description");
     RuleState ruleState = RuleState.valueOf(rs.getString("rule_state"));
-    return new DACAutomationRule(id, ruleType, description, ruleState);
+    Integer enabledByUserId = null;
+    if (hasNonZeroColumn(rs, "user_id")) {
+      enabledByUserId = rs.getInt("user_id");
+    }
+    return new DACAutomationRule(id, ruleType, description, ruleState, enabledByUserId);
   }
 
 }

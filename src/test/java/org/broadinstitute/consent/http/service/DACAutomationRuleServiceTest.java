@@ -22,21 +22,10 @@ class DACAutomationRuleServiceTest {
   @Test
   void testFindAll() {
     when(mockRuleDAO.findAll()).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE)));
+        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE, null)));
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
 
     List<DACAutomationRule> rules = service.findAll();
-    Assertions.assertNotNull(rules);
-    Assertions.assertFalse(rules.isEmpty());
-  }
-
-  @Test
-  void testFindAllAvailable() {
-    when(mockRuleDAO.findAllAvailable()).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE)));
-    DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
-
-    List<DACAutomationRule> rules = service.findAllAvailable();
     Assertions.assertNotNull(rules);
     Assertions.assertFalse(rules.isEmpty());
   }
