@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
-import org.broadinstitute.consent.http.rules.RuleState;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
