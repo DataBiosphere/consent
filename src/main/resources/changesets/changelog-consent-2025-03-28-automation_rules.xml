@@ -1,28 +1,25 @@
 <databaseChangeLog
   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
-        http://www.liquibase.org/xml/ns/dbchangelog-ext
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
   <changeSet id="changelog-consent-2025-03-28-automation_rules.xml.cs1" author="grushton">
     <sql>
-      CREATE TYPE dac_automation_rule as ENUM ('GRU_V1');
+      CREATE TYPE dac_rule_type as ENUM ('GRU_V1');
       CREATE TYPE rule_state as ENUM ('AVAILABLE', 'DEPRECATED', 'UNAVAILABLE');
       CREATE TYPE rule_audit_action as enum ('ADD', 'REMOVE');
     </sql>
     <createTable tableName="dac_automation_rules">
-      <column name="id" type="bigint" autoIncrement="true" >
+      <column name="id" type="bigint" autoIncrement="true">
         <constraints primaryKey="true" nullable="false"/>
       </column>
-      <column name="rule" type="dac_automation_rule">
+      <column name="rule" type="dac_rule_type">
         <constraints nullable="false"/>
       </column>
       <column name="description" type="text">
         <constraints nullable="false"/>
       </column>
-      <column name="rule_state" type="rule_state">
+      <column name="state" type="rule_state">
         <constraints nullable="false"/>
       </column>
     </createTable>
@@ -32,15 +29,18 @@
       <column name="rule_id" type="bigint"/>
       <column name="user_id" type="bigint"/>
     </createTable>
-    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="dac_id" constraintName="fk_dac_rule_dac_id"
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="dac_id"
+      constraintName="fk_dac_rule_dac_id"
       deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
       referencedTableName="dac" referencedColumnNames="dac_id"
       referencesUniqueColumn="true"/>
-    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="rule_id" constraintName="fk_dac_rule_rule_id"
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="rule_id"
+      constraintName="fk_dac_rule_rule_id"
       deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
       referencedTableName="dac_automation_rules" referencedColumnNames="id"
       referencesUniqueColumn="true"/>
-    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="user_id" constraintName="fk_dac_rule_user_id"
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="user_id"
+      constraintName="fk_dac_rule_user_id"
       deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
       referencedColumnNames="user_id" referencedTableName="users"
       referencesUniqueColumn="true"/>
@@ -72,7 +72,7 @@
       <column name="rule" value="GRU_V1"/>
       <column name="description"
         value="Automatically approve Data Access Requests when the dataset Data Use is GRU only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
-      <column name="rule_state" value="AVAILABLE"/>
+      <column name="state" value="AVAILABLE"/>
     </insert>
     <rollback>
       <delete tableName="dac_automation_rules">

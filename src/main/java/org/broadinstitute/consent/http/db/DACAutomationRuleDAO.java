@@ -29,11 +29,17 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       """)
   void deleteDACRuleSetting(@Bind("dacId") int dacId, @Bind("ruleId") int ruleId);
 
+  @SqlUpdate("""
+      DELETE FROM dac_rule_settings WHERE dac_id = :dacId  WHERE user_id = :userId
+      """)
+  void deleteDACRuleSettingByUser(@Bind("dacId") int dacId, @Bind("userId") int userId);
+
   @SqlQuery("""
-      SELECT rules.*, settings.user_id
+      SELECT rules.*, settings.user_id, u.*
       FROM dac_automation_rules rules
       LEFT JOIN dac_rule_settings settings ON rules.id = settings.rule_id AND settings.dac_id = :dacId
-      WHERE rule_state = 'AVAILABLE'
+      LEFT JOIN users u on settings.user_id = u.user_id 
+      WHERE state = 'AVAILABLE'
       """)
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
 
