@@ -12,6 +12,7 @@ public class GeneralResearchUseV1 {
 
   private boolean isOnlyHMB(DataAccessRequestData data) {
     // Primary condition checks
+    if (Boolean.TRUE.equals(data.getDiseases())) return false;
     if (data.getOtherText() != null) return false;
     if (Boolean.TRUE.equals(data.getOther())) return false;
 
