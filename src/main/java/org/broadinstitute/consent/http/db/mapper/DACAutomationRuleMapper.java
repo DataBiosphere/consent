@@ -13,7 +13,7 @@ public class DACAutomationRuleMapper implements RowMapper<DACAutomationRule>, Ro
   @Override
   public DACAutomationRule map(ResultSet rs, StatementContext ctx) throws SQLException {
     Integer id = rs.getInt("id");
-    DACAutomationRuleType ruleType = DACAutomationRuleType.valueOf(rs.getString("rule_type"));
+    DACAutomationRuleType ruleType = DACAutomationRuleType.valueOf(rs.getString("rule"));
     String description = rs.getString("description");
     RuleState ruleState = RuleState.valueOf(rs.getString("rule_state"));
     Integer enabledByUserId = null;
