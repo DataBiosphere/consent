@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -83,9 +84,12 @@ class DacServiceTest {
   @Mock
   private DacServiceDAO dacServiceDAO;
 
+  @Mock
+  private DACAutomationRuleDAO  ruleDAO;
+
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService, daaService, dacServiceDAO);
+        voteService, daaService, dacServiceDAO, ruleDAO);
   }
 
   @Test
@@ -343,6 +347,7 @@ class DacServiceTest {
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
     doNothing().when(dacDAO).removeDacMember(anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
+    when(ruleDAO.deleteDACRuleSettingByUser(anyInt(), anyInt())).thenReturn(1);
     initService();
 
     try {
@@ -352,6 +357,7 @@ class DacServiceTest {
     }
     verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
     verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
+    verify(ruleDAO, atLeastOnce()).deleteDACRuleSettingByUser(anyInt(), anyInt());
   }
 
   @Test
@@ -367,6 +373,7 @@ class DacServiceTest {
       service.removeDacMember(role, chair, dac);
       verify(dacDAO, times(0)).removeDacMember(anyInt());
       verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+      verify(ruleDAO, times(0)).deleteDACRuleSettingByUser(anyInt(), anyInt());
     });
   }
 

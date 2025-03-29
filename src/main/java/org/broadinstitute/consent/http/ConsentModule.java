@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -108,6 +109,7 @@ public class ConsentModule extends AbstractModule {
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final DraftDAO draftDAO;
+  private final DACAutomationRuleDAO rulesDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -142,6 +144,7 @@ public class ConsentModule extends AbstractModule {
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
+    this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
   }
 
   @Override
@@ -429,7 +432,7 @@ public class ConsentModule extends AbstractModule {
         providesDataAccessRequestDAO(),
         providesVoteService(),
         providesDaaService(),
-        providesDacServiceDAO());
+        providesDacServiceDAO(), providesDACAutomationRuleDAO());
   }
 
   @Provides
@@ -572,7 +575,8 @@ public class ConsentModule extends AbstractModule {
         providesUserServiceDAO(),
         providesDaaDAO(),
         providesEmailService(),
-        providesDraftService());
+        providesDraftService(),
+        providesDACAutomationRuleDAO());
   }
 
   @Provides
@@ -628,5 +632,10 @@ public class ConsentModule extends AbstractModule {
   DraftServiceDAO providesDraftService() {
     return new DraftServiceDAO(providesJdbi(), providesDraftDAO(),
         providesDraftFileStorageService());
+  }
+
+  @Provides
+  DACAutomationRuleDAO providesDACAutomationRuleDAO() {
+    return rulesDAO;
   }
 }

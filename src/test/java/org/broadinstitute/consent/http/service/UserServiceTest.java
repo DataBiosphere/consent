@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -27,6 +28,7 @@ import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -98,13 +100,16 @@ class UserServiceTest {
   @Mock
   private DraftServiceDAO draftServiceDAO;
 
+  @Mock
+  private DACAutomationRuleDAO ruleDAO;
+
 
   private UserService service;
 
   private void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftServiceDAO);
+        emailService, draftServiceDAO, ruleDAO);
   }
 
   @Test
@@ -461,7 +466,8 @@ class UserServiceTest {
 
     try {
       service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
-      verify(draftServiceDAO).deleteDraftsByUser(u);
+      verify(draftServiceDAO, atLeastOnce()).deleteDraftsByUser(u);
+      verify(ruleDAO, atLeastOnce()).deleteAllDACRuleSettingForUser(anyInt());
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }

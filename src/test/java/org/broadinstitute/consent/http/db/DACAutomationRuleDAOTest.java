@@ -71,7 +71,52 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDACRuleSettingByUserId() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId);
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId, rulesByDacId.get(0).id(), user.getUserId());
+    Integer deletedCount = dacAutomationRuleDAO.deleteDACRuleSettingByUser(dacId, user.getUserId());
+    Assertions.assertEquals(1, deletedCount);
+    List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId);
+    updatedRulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
+  }
 
+  @Test
+  void testDeleteDACRuleSetting() {
+    User user = createUser();
+    Integer dacId1 = createRandomDAC();
+    Integer dacId2 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
+    Integer deletedCount = dacAutomationRuleDAO.deleteDACRuleSettingByUser(dacId1, user.getUserId());
+    Assertions.assertEquals(1, deletedCount);
+    List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId1);
+    updatedRulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
+    updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId2);
+    updatedRulesByDacId.forEach(r -> Assertions.assertNotNull(r.enabledByUserId()));
+  }
+
+  @Test
+  void testDeleteAllSettingsByUserId() {
+    User user = createUser();
+    Integer dacId1 = createRandomDAC();
+    Integer dacId2 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
+    Integer deletedCount = dacAutomationRuleDAO.deleteAllDACRuleSettingForUser(user.getUserId());
+    Assertions.assertEquals(2, deletedCount);
+    List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId1);
+    updatedRulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
+    updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+        dacId2);
+    updatedRulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
   }
 
   private Integer createRandomDAC() {

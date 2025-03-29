@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 
 public class DACAutomationRuleService {
 
-  private DACAutomationRuleDAO ruleDAO;
+  private final DACAutomationRuleDAO ruleDAO;
 
   @Inject
   public DACAutomationRuleService(DACAutomationRuleDAO ruleDAO) {
@@ -28,14 +28,23 @@ public class DACAutomationRuleService {
   }
 
   public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, Integer userId) {
-    Optional<DACAutomationRule> matchingRule = ruleDAO.findAllDACAutomationRulesByDACId(dacId).stream().filter(r-> Objects.equals(r.id(),
-        ruleId) && !isNull(r.enabledByUserId())).findFirst();
+    Optional<DACAutomationRule> matchingRule = ruleDAO.findAllDACAutomationRulesByDACId(dacId)
+        .stream().filter(r -> Objects.equals(r.id(),
+            ruleId) && !isNull(r.enabledByUserId())).findFirst();
     if (matchingRule.isPresent()) {
       ruleDAO.deleteDACRuleSetting(dacId, ruleId);
       return new AutomationRuleToggleResponse(ruleId, false);
     }
-      ruleDAO.insertDACRuleSetting(dacId, ruleId, userId);
-      return new AutomationRuleToggleResponse(ruleId, true);
+    ruleDAO.insertDACRuleSetting(dacId, ruleId, userId);
+    return new AutomationRuleToggleResponse(ruleId, true);
+  }
+
+  public Integer removeChairpersonFromDAC(Integer dacId, Integer userId) {
+    return ruleDAO.deleteDACRuleSettingByUser(dacId, userId);
+  }
+
+  public Integer removeChairpersonUser(Integer userId) {
+    return ruleDAO.deleteAllDACRuleSettingForUser(userId);
   }
 
 }

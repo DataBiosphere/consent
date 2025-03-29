@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -44,12 +45,13 @@ public class DacService implements ConsentLogger {
   private final VoteService voteService;
   private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
+  private final DACAutomationRuleDAO ruleDAO;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
       VoteService voteService, DaaService daaService,
-      DacServiceDAO dacServiceDAO) {
+      DacServiceDAO dacServiceDAO, DACAutomationRuleDAO ruleDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
@@ -58,6 +60,7 @@ public class DacService implements ConsentLogger {
     this.voteService = voteService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
+    this.ruleDAO = ruleDAO;
   }
 
   public List<Dac> findAll() {
@@ -252,6 +255,7 @@ public class DacService implements ConsentLogger {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
+      ruleDAO.deleteDACRuleSettingByUser(dac.getDacId(), user.getUserId());
     }
     List<UserRole> dacRoles = user.
         getRoles().
@@ -259,7 +263,7 @@ public class DacService implements ConsentLogger {
         filter(r -> Objects.nonNull(r.getDacId())).
         filter(r -> r.getDacId().equals(dac.getDacId())).
         filter(r -> r.getRoleId().equals(role.getRoleId())).
-        collect(Collectors.toList());
+        toList();
     dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
