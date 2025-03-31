@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.security.RolesAllowed;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -21,7 +22,7 @@ import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
 
-@Path("/api/dac")
+@Path("api/dac/rules")
 public class DACAutomationRuleResource extends Resource {
 
   private final DACAutomationRuleService ruleService;
@@ -36,7 +37,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @GET
-  @Path("/rules")
+  @Path("")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response getAllRules() {
@@ -49,7 +50,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @GET
-  @Path("/rules/{dacId}")
+  @Path("/{dacId}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getAvailableRules(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
@@ -57,7 +58,8 @@ public class DACAutomationRuleResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       boolean ok = user.getRoles().stream().map(UserRole::getDacId).anyMatch(id -> Objects.equals(
           id, dacId));
-      if (!ok) {
+      if (!ok && !user.getUserRoleIdsFromUser().contains(UserRoles.ADMIN.getRoleId())
+      ) {
         return Response.status(Response.Status.FORBIDDEN)
             .entity("User does not have access to the specified DAC ID").build();
       }
@@ -75,7 +77,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @PUT
-  @Path("/rules/{dacId}/{ruleId}/toggle")
+  @Path("/{dacId}/{ruleId}/toggle")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("ruleId") Integer ruleId) {
@@ -83,7 +85,7 @@ public class DACAutomationRuleResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       boolean ok = user.getRoles().stream().map(UserRole::getDacId).anyMatch(id -> Objects.equals(
           id, dacId));
-      if (!ok) {
+      if (!ok && !user.getUserRoleIdsFromUser().contains(UserRoles.ADMIN.getRoleId())) {
         return Response.status(Response.Status.FORBIDDEN)
             .entity("User does not have access to the specified DAC ID").build();
       }
