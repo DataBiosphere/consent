@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -12,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -56,13 +58,7 @@ public class DACAutomationRuleResource extends Resource {
   public Response getAvailableRules(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      boolean ok = user.getRoles().stream().map(UserRole::getDacId).anyMatch(id -> Objects.equals(
-          id, dacId));
-      if (!ok && !user.getUserRoleIdsFromUser().contains(UserRoles.ADMIN.getRoleId())
-      ) {
-        return Response.status(Response.Status.FORBIDDEN)
-            .entity("User does not have access to the specified DAC ID").build();
-      }
+      validateAdminOrChairForDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -83,12 +79,7 @@ public class DACAutomationRuleResource extends Resource {
   public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("ruleId") Integer ruleId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      boolean ok = user.getRoles().stream().map(UserRole::getDacId).anyMatch(id -> Objects.equals(
-          id, dacId));
-      if (!ok && !user.getUserRoleIdsFromUser().contains(UserRoles.ADMIN.getRoleId())) {
-        return Response.status(Response.Status.FORBIDDEN)
-            .entity("User does not have access to the specified DAC ID").build();
-      }
+      validateAdminOrChairForDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -97,6 +88,18 @@ public class DACAutomationRuleResource extends Resource {
       return Response.ok(ruleService.toggleRule(dacId, ruleId, user.getUserId())).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private void validateAdminOrChairForDAC(User user, Integer dacId) {
+    boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) ||
+        Stream.ofNullable(user.getRoles())
+            .flatMap(List::stream)
+            .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
+            .map(UserRole::getDacId)
+            .anyMatch(id -> Objects.equals(id, dacId));
+    if (!isAdminOrChair) {
+      throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
 
