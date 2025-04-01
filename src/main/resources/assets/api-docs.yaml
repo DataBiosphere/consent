@@ -71,9 +71,9 @@ paths:
     $ref: 'paths/dac.yaml'
   /api/dac/rules:
     $ref: './paths/dacRules.yaml'
-  /api/dac/rules/{dacId}:
+  /api/dac/{dacId}/rules:
     $ref: './paths/dacRulesById.yaml'
-  /api/dac/rules/{dacId}/{ruleId}/toggle:
+  /api/dac/{dacId}/rules/{ruleId}/toggle:
     $ref: './paths/dacRuleToggle.yaml'
   /api/dac/{dacId}:
     $ref: 'paths/dacById.yaml'

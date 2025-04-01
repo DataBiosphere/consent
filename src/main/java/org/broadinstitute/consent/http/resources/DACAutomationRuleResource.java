@@ -24,7 +24,7 @@ import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
 
-@Path("api/dac/rules")
+@Path("api/dac/")
 public class DACAutomationRuleResource extends Resource {
 
   private final DACAutomationRuleService ruleService;
@@ -39,7 +39,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @GET
-  @Path("")
+  @Path("rules")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response getAllRules() {
@@ -52,7 +52,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @GET
-  @Path("/{dacId}")
+  @Path("{dacId}/rules")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getAvailableRules(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
@@ -73,7 +73,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   @PUT
-  @Path("/{dacId}/{ruleId}/toggle")
+  @Path("{dacId}/rules/{ruleId}/toggle")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("ruleId") Integer ruleId) {
@@ -92,6 +92,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
+    //TODO: harmonize this with the logic in the DACResource so we're consistent.
     boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) ||
         Stream.ofNullable(user.getRoles())
             .flatMap(List::stream)
