@@ -32,7 +32,7 @@ public class DACAutomationRuleService {
         .stream().filter(r -> Objects.equals(r.id(),
             ruleId) && !isNull(r.enabledByUserId())).findFirst();
     if (matchingRule.isPresent()) {
-      ruleDAO.deleteDACRuleSetting(dacId, ruleId);
+      ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, userId);
       return new AutomationRuleToggleResponse(ruleId, false);
     }
     ruleDAO.insertDACRuleSetting(dacId, ruleId, userId);

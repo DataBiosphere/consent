@@ -71,6 +71,26 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testAuditedDeleteDACRuleSetting() {
+    User user = createUser();
+    User auditUser = createUser();
+    Integer dacId1 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+
+    dacAutomationRuleDAO.auditedDeleteDACRuleSetting(dacId1, rulesByDacId.get(0).id(), auditUser.getUserId());
+    jdbi.useHandle(handle -> {
+      Optional<Integer> count = handle
+          .createQuery("SELECT count(id) FROM dac_rule_audit WHERE action = 'REMOVE' AND user_id = :userId")
+          .bind("userId", auditUser.getUserId())
+          .mapTo(Integer.class)
+          .findFirst();
+      Assertions.assertTrue(count.isPresent());
+      Assertions.assertEquals(1, count.get());
+    });
+  }
+
+  @Test
   void testDeleteDACRuleSettingByUserId() {
     User user = createUser();
     Integer dacId = createRandomDAC();
@@ -113,7 +133,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertEquals(1, deletedCount);
     jdbi.useHandle(handle -> {
       Optional<Integer> count = handle
-          .createQuery("SELECT count(id) from dac_rule_audit where user_id = :userId")
+          .createQuery("SELECT count(id) from dac_rule_audit where action = 'REMOVE' AND user_id = :userId")
           .bind("userId", auditUser.getUserId())
           .mapTo(Integer.class)
           .findFirst();
