@@ -35,7 +35,7 @@ public class DACAutomationRuleService {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, userId);
       return new AutomationRuleToggleResponse(ruleId, false);
     }
-    ruleDAO.insertDACRuleSetting(dacId, ruleId, userId);
+    ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, userId);
     return new AutomationRuleToggleResponse(ruleId, true);
   }
 

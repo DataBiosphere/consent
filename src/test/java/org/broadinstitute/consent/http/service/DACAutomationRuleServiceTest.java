@@ -49,7 +49,7 @@ class DACAutomationRuleServiceTest {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             null, null, null)));
-    when(mockRuleDAO.insertDACRuleSetting(1, 1, 1)).thenReturn(1);
+    when(mockRuleDAO.auditedInsertDACRuleSetting(1, 1, 1)).thenReturn(1);
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
     AutomationRuleToggleResponse result = service.toggleRule(
         1, 1, 1);

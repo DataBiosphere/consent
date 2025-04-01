@@ -34,6 +34,24 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testAuditedInsertDACRuleSetting() {
+    User user = createUser();
+    Integer dacId1 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+
+    jdbi.useHandle(handle -> {
+      Optional<Integer> count = handle
+          .createQuery("SELECT count(id) FROM dac_rule_audit WHERE action = 'ADD' AND user_id = :userId")
+          .bind("userId", user.getUserId())
+          .mapTo(Integer.class)
+          .findFirst();
+      Assertions.assertTrue(count.isPresent());
+      Assertions.assertEquals(1, count.get());
+    });
+  }
+
+  @Test
   void testFindRulesByDacIdAddSetting() {
     Integer dacId = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
@@ -42,7 +60,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertFalse(rulesByDacId.isEmpty());
     rulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
     User user = createUser();
-    Integer settingId = dacAutomationRuleDAO.insertDACRuleSetting(dacId, rulesByDacId.get(0).id(),
+    Integer settingId = dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(),
         user.getUserId());
     Assertions.assertNotNull(settingId);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
@@ -61,7 +79,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
         dacId);
     User user = createUser();
-    Integer settingId = dacAutomationRuleDAO.insertDACRuleSetting(dacId, rulesByDacId.get(0).id(),
+    Integer settingId = dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(),
         user.getUserId());
     Assertions.assertNotNull(settingId);
     dacAutomationRuleDAO.deleteDACRuleSetting(dacId, rulesByDacId.get(0).id());
@@ -76,7 +94,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     User auditUser = createUser();
     Integer dacId1 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
 
     dacAutomationRuleDAO.auditedDeleteDACRuleSetting(dacId1, rulesByDacId.get(0).id(), auditUser.getUserId());
     jdbi.useHandle(handle -> {
@@ -96,7 +114,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Integer dacId = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
         dacId);
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(), user.getUserId());
     Integer deletedCount = dacAutomationRuleDAO.deleteDACRuleSettingByUser(dacId, user.getUserId());
     Assertions.assertEquals(1, deletedCount);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
@@ -110,8 +128,8 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Integer dacId1 = createRandomDAC();
     Integer dacId2 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
     Integer deletedCount = dacAutomationRuleDAO.deleteDACRuleSettingByUser(dacId1, user.getUserId());
     Assertions.assertEquals(1, deletedCount);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
@@ -128,7 +146,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     User auditUser = createUser();
     Integer dacId1 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
     Integer deletedCount = dacAutomationRuleDAO.auditedDeleteDACRuleSettingByUser(dacId1, user.getUserId(), auditUser.getUserId());
     Assertions.assertEquals(1, deletedCount);
     jdbi.useHandle(handle -> {
@@ -148,8 +166,8 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Integer dacId1 = createRandomDAC();
     Integer dacId2 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
-    dacAutomationRuleDAO.insertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
     Integer deletedCount = dacAutomationRuleDAO.deleteAllDACRuleSettingForUser(user.getUserId());
     Assertions.assertEquals(2, deletedCount);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
