@@ -25,10 +25,58 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   @GetGeneratedKeys
   Integer insertDACRuleSetting(@Bind("dacId") int dacId, @Bind("ruleId") int ruleId, @Bind("userId") int userId);
 
+  default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId) {
+    Handle handle = getHandle();
+    Integer id;
+    String auditSql = """
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
+        VALUES ('ADD', :dacId, :ruleId, :auditUserId)
+        """;
+    try (var audit = getHandle().createUpdate(auditSql)) {
+      audit
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .bind("auditUserId", userId)
+          .execute();
+      id = insertDACRuleSetting(dacId, ruleId, userId);
+      handle.commit();
+    } catch (Exception e) {
+      handle.rollback();
+      throw e;
+    } finally {
+      handle.close();
+    }
+    return id;
+  }
+
   @SqlUpdate("""
       DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
       """)
   void deleteDACRuleSetting(@Bind("dacId") int dacId, @Bind("ruleId") int ruleId);
+
+  default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
+    Handle handle = getHandle();
+    String auditSql = """
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
+        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId
+        FROM dac_rule_settings s
+        WHERE s.dac_id = :dacId AND s.rule_id = :ruleId
+        """;
+    try (var audit = getHandle().createUpdate(auditSql)) {
+      audit
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .bind("auditUserId", auditUserId)
+          .execute();
+      deleteDACRuleSetting(dacId, ruleId);
+      handle.commit();
+    } catch (Exception e) {
+      handle.rollback();
+      throw e;
+    } finally {
+      handle.close();
+    }
+  }
 
   @SqlUpdate("""
       DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
