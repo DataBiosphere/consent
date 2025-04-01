@@ -67,12 +67,6 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       """)
   Integer deleteAllDACRuleSettingForUser(@Bind("userId") int userId);
 
-  @SqlUpdate("""
-      DELETE FROM dac_rule_settings WHERE dac_id = :dacId 
-      """)
-  Integer deleteAllDACRuleSettings(@Bind("dacId") int dacId);
-
-
   @SqlQuery("""
       SELECT rules.*, settings.user_id, u.*
       FROM dac_automation_rules rules
