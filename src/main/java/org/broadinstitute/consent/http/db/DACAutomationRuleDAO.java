@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -33,6 +34,33 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
       """)
   Integer deleteDACRuleSettingByUser(@Bind("dacId") int dacId, @Bind("userId") int userId);
+
+  default Integer auditedDeleteDACRuleSettingByUser(int dacId, int userId, int auditUserId) {
+    Handle handle = getHandle();
+    // Note that we're logging the audit user as the user for the audit record
+    String auditSql = """
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
+        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId
+        FROM dac_rule_settings s
+        WHERE s.dac_id = :dacId  AND s.user_id = :userId;
+        """;
+    Integer count;
+    try (var audit = getHandle().createUpdate(auditSql)) {
+      audit
+          .bind("dacId", dacId)
+          .bind("userId", userId)
+          .bind("auditUserId", auditUserId)
+          .execute();
+      count = deleteDACRuleSettingByUser(dacId, userId);
+      handle.commit();
+    } catch (Exception e) {
+      handle.rollback();
+      throw e;
+    } finally {
+      handle.close();
+    }
+    return count;
+  }
 
   @SqlUpdate("""
       DELETE FROM dac_rule_settings WHERE user_id = :userId 

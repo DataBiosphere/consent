@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -99,6 +100,26 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
         dacId2);
     updatedRulesByDacId.forEach(r -> Assertions.assertNotNull(r.enabledByUserId()));
+  }
+
+  @Test
+  void testAuditedDeleteDACRuleSettingByUser() {
+    User user = createUser();
+    User auditUser = createUser();
+    Integer dacId1 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    dacAutomationRuleDAO.insertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    Integer deletedCount = dacAutomationRuleDAO.auditedDeleteDACRuleSettingByUser(dacId1, user.getUserId(), auditUser.getUserId());
+    Assertions.assertEquals(1, deletedCount);
+    jdbi.useHandle(handle -> {
+      Optional<Integer> count = handle
+          .createQuery("SELECT count(id) from dac_rule_audit where user_id = :userId")
+          .bind("userId", auditUser.getUserId())
+          .mapTo(Integer.class)
+          .findFirst();
+      Assertions.assertTrue(count.isPresent());
+      Assertions.assertEquals(1, count.get());
+    });
   }
 
   @Test

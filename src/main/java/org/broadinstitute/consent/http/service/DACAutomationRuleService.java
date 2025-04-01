@@ -43,6 +43,10 @@ public class DACAutomationRuleService {
     return ruleDAO.deleteDACRuleSettingByUser(dacId, userId);
   }
 
+  public Integer auditedRemoveChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
+    return ruleDAO.auditedDeleteDACRuleSettingByUser(dacId, userId, auditUserId);
+  }
+
   public Integer removeChairpersonUser(Integer userId) {
     return ruleDAO.deleteAllDACRuleSettingForUser(userId);
   }
