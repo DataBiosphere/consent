@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.models;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,9 +14,9 @@ public class Study {
   private Boolean publicVisibility;
   private String piName;
   private List<String> dataTypes;
-  private Set<Integer> datasetIds = new HashSet<>();
+  private final Set<Integer> datasetIds = new HashSet<>();
   private Set<Dataset> datasets;
-  private Set<StudyProperty> properties = new HashSet<>();
+  private final Set<StudyProperty> properties = new HashSet<>();
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
   private String createUserEmail;
@@ -80,13 +79,10 @@ public class Study {
   }
 
   public void setProperties(Set<StudyProperty> properties) {
-    this.properties = properties;
+    this.properties.addAll(properties);
   }
 
   public void addProperty(StudyProperty prop) {
-    if (Objects.isNull(this.properties)) {
-      this.properties = new HashSet<>();
-    }
     this.properties.add(prop);
   }
 
@@ -103,14 +99,10 @@ public class Study {
   }
 
   public void setDatasetIds(Set<Integer> datasetIds) {
-    this.datasetIds = datasetIds;
+    this.datasetIds.addAll(datasetIds);
   }
 
   public void addDatasetId(Integer datasetId) {
-    if (Objects.isNull(this.datasetIds)) {
-      this.datasetIds = new HashSet<>();
-    }
-
     this.datasetIds.add(datasetId);
   }
 

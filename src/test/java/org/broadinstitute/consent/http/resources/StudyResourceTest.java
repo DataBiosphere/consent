@@ -222,6 +222,7 @@ class StudyResourceTest extends AbstractTestHelper {
         .map(ConsentGroup::getDatasetId)
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
+    study.getDatasetIds().clear();
     study.setDatasetIds(datasetIds);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
@@ -316,7 +317,7 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testDeleteStudyByIdNoDatasets() throws Exception {
     Study study = createMockStudy();
-    study.setDatasetIds(Set.of());
+    study.getDatasetIds().clear();
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
     User admin = new User();

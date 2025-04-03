@@ -157,17 +157,15 @@ public class StudyResource extends Resource {
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      if (studyDatasetIds != null) {
-        studyDatasetIds.forEach(id -> {
-          try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
-            if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
-              logWarn("Non-OK response when deleting index for dataset with id: " + id);
-            }
-          } catch (IOException | SQLException e) {
-            logException(e);
+      studyDatasetIds.forEach(id -> {
+        try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
+          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+            logWarn("Non-OK response when deleting index for dataset with id: " + id);
           }
-        });
-      }
+        } catch (IOException | SQLException e) {
+          logException(e);
+        }
+      });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
