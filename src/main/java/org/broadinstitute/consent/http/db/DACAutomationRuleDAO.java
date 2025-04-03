@@ -20,7 +20,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   List<DACAutomationRule> findAll();
 
   @SqlUpdate("""
-      INSERT INTO dac_rule_settings (dac_id, rule_id, user_id) VALUES (:dacId, :ruleId, :userId)
+      INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date) VALUES (:dacId, :ruleId, :userId, current_timestamp)
       """)
   @GetGeneratedKeys
   Integer insertDACRuleSetting(@Bind("dacId") int dacId, @Bind("ruleId") int ruleId, @Bind("userId") int userId);
@@ -29,8 +29,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
     Handle handle = getHandle();
     Integer id;
     String auditSql = """
-        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
-        VALUES ('ADD', :dacId, :ruleId, :auditUserId)
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
+        VALUES ('ADD', :dacId, :ruleId, :auditUserId, current_timestamp)
         """;
     try (var audit = getHandle().createUpdate(auditSql)) {
       audit
@@ -57,8 +57,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
     Handle handle = getHandle();
     String auditSql = """
-        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
-        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
+        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId AND s.rule_id = :ruleId
         """;
@@ -87,8 +87,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
     Handle handle = getHandle();
     // Note that we're logging the audit user as the user for the audit record
     String auditSql = """
-        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id)
-        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
+        SELECT 'REMOVE', s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId  AND s.user_id = :userId;
         """;
@@ -116,7 +116,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   Integer deleteAllDACRuleSettingForUser(@Bind("userId") int userId);
 
   @SqlQuery("""
-      SELECT rules.*, settings.user_id, u.*
+      SELECT rules.*, settings.user_id, settings.activation_date, u.*
       FROM dac_automation_rules rules
       LEFT JOIN dac_rule_settings settings ON rules.id = settings.rule_id AND settings.dac_id = :dacId
       LEFT JOIN users u on settings.user_id = u.user_id 

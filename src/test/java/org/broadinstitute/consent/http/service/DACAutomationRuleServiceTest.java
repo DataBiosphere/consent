@@ -3,6 +3,9 @@ package org.broadinstitute.consent.http.service;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
@@ -25,7 +28,7 @@ class DACAutomationRuleServiceTest {
   void testFindAll() {
     when(mockRuleDAO.findAll()).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null)));
+            null, null, null, null)));
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
 
     List<DACAutomationRule> rules = service.findAll();
@@ -37,7 +40,7 @@ class DACAutomationRuleServiceTest {
   void testFindById() {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null)));
+            null, null, null, null)));
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
     List<DACAutomationRule> rules = service.findAllByDacId(1);
     Assertions.assertNotNull(rules);
@@ -48,7 +51,7 @@ class DACAutomationRuleServiceTest {
   void testToggleRuleFromOffToOn() {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null)));
+            null, null, null, null)));
     when(mockRuleDAO.auditedInsertDACRuleSetting(1, 1, 1)).thenReturn(1);
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
     AutomationRuleToggleResponse result = service.toggleRule(
@@ -61,7 +64,7 @@ class DACAutomationRuleServiceTest {
   void testToggleRuleFromOnToOff() {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            1, "alice", "alice@fake.org")));
+            Timestamp.from(Instant.now()),1, "alice", "alice@fake.org")));
     doNothing().when(mockRuleDAO).auditedDeleteDACRuleSetting(1, 1, 1);
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, 1);

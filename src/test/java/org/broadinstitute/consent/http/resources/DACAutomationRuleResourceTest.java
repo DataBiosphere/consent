@@ -87,11 +87,9 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
   void testToggleRuleAsAdmin() {
     User chairperson = createUserWithRole(UserRoles.Admin());
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chairperson);
-    when(dacService.findById(1)).thenReturn(new Dac());
-    when(ruleService.toggleRule(1, 1, chairperson.getUserId())).thenReturn(new AutomationRuleToggleResponse(1, true));
 
     try (var response = resource.toggleRule(authUser, 1, 1)) {
-      Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 

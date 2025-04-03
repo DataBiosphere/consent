@@ -5,7 +5,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
   <changeSet id="changelog-consent-2025-03-28-automation_rules.xml.cs1" author="grushton">
     <sql>
-      CREATE TYPE dac_rule_type as ENUM ('GRU_V1');
+      CREATE TYPE dac_rule_type as ENUM ('GRU_V1', 'HMB_V1');
       CREATE TYPE rule_state as ENUM ('AVAILABLE', 'DEPRECATED', 'UNAVAILABLE');
       CREATE TYPE rule_audit_action as enum ('ADD', 'REMOVE');
     </sql>
@@ -28,6 +28,7 @@
       <column name="dac_id" type="bigint"/>
       <column name="rule_id" type="bigint"/>
       <column name="user_id" type="bigint"/>
+      <column name="activation_date" type="timestamp" defaultValueDate="current_timestamp"/>
     </createTable>
     <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="dac_id"
       constraintName="fk_dac_rule_dac_id"
@@ -58,7 +59,12 @@
       <column name="dac_id" type="bigint"/>
       <column name="rule_id" type="bigint"/>
       <column name="user_id" type="bigint"/>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp"/>
     </createTable>
+    <createIndex tableName="dac_rule_audit" indexName="idx_dac_rule_audit_dac_id_and_action_date_descending">
+      <column name="dac_id"/>
+      <column name="action_date" descending="true" />
+    </createIndex>
     <rollback>
       <dropTable tableName="dac_automation_rules" cascadeConstraints="true"/>
       <dropTable tableName="dac_rule_settings" cascadeConstraints="true"/>
@@ -72,6 +78,12 @@
       <column name="rule" value="GRU_V1"/>
       <column name="description"
         value="Automatically approve Data Access Requests when the dataset Data Use is GRU only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="HMB_V1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests when the dataset Data Use is HMB only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <rollback>

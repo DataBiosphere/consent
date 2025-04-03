@@ -128,10 +128,12 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Integer dacId1 = createRandomDAC();
     Integer dacId2 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
-    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId2, rulesByDacId.get(0).id(), user.getUserId());
+    rulesByDacId.forEach(r -> {
+      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId());
+      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId2, r.id(), user.getUserId());
+    });
     Integer deletedCount = dacAutomationRuleDAO.deleteDACRuleSettingByUser(dacId1, user.getUserId());
-    Assertions.assertEquals(1, deletedCount);
+    Assertions.assertEquals(rulesByDacId.size(), deletedCount);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
         dacId1);
     updatedRulesByDacId.forEach(r -> Assertions.assertNull(r.enabledByUserId()));
@@ -146,9 +148,11 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     User auditUser = createUser();
     Integer dacId1 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, rulesByDacId.get(0).id(), user.getUserId());
+    rulesByDacId.forEach(r -> {
+      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId());
+    });
     Integer deletedCount = dacAutomationRuleDAO.auditedDeleteDACRuleSettingByUser(dacId1, user.getUserId(), auditUser.getUserId());
-    Assertions.assertEquals(1, deletedCount);
+    Assertions.assertEquals(rulesByDacId.size(), deletedCount);
     jdbi.useHandle(handle -> {
       Optional<Integer> count = handle
           .createQuery("SELECT count(id) from dac_rule_audit where action = 'REMOVE' AND user_id = :userId")
@@ -156,7 +160,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
           .mapTo(Integer.class)
           .findFirst();
       Assertions.assertTrue(count.isPresent());
-      Assertions.assertEquals(1, count.get());
+      Assertions.assertEquals(rulesByDacId.size(), count.get());
     });
   }
 

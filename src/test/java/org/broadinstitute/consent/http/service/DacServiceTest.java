@@ -232,9 +232,9 @@ class DacServiceTest {
     dac.setName("DAC name");
     dac.setAssociatedDaa(daa);
     when(dacDAO.findById(any())).thenReturn(dac);
-    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
+    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
   }
 
   @ParameterizedTest
@@ -257,9 +257,9 @@ class DacServiceTest {
     initService();
 
     if (dac.getName().toLowerCase().contains("broad")) {
-      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
     } else {
-      assertDoesNotThrow(() -> service.deleteDac(dac.getDacId()));
+      assertDoesNotThrow(() -> service.deleteDac(any(), dac.getDacId()));
     }
   }
 

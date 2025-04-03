@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleState;
@@ -16,6 +17,10 @@ public class DACAutomationRuleMapper implements RowMapper<DACAutomationRule>, Ro
     DACAutomationRuleType ruleType = DACAutomationRuleType.valueOf(rs.getString("rule"));
     String description = rs.getString("description");
     RuleState ruleState = RuleState.valueOf(rs.getString("state"));
+    Timestamp activationDate = null;
+    if (hasColumn(rs, "activation_date")) {
+      activationDate = rs.getTimestamp("activation_date");
+    }
     Integer enabledByUserId = null;
     String userName = null;
     String userEmail = null;
@@ -28,7 +33,7 @@ public class DACAutomationRuleMapper implements RowMapper<DACAutomationRule>, Ro
     if (hasColumn(rs, "display_name")) {
       userName = rs.getString("display_name");
     }
-    return new DACAutomationRule(id, ruleType, description, ruleState, enabledByUserId, userName,
+    return new DACAutomationRule(id, ruleType, description, ruleState, activationDate, enabledByUserId, userName,
         userEmail);
   }
 

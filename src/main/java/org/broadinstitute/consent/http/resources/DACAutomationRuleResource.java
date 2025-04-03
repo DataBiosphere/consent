@@ -79,7 +79,7 @@ public class DACAutomationRuleResource extends Resource {
   public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("ruleId") Integer ruleId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateAdminOrChairForDAC(user, dacId);
+      validateIsChairOfDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -93,15 +93,24 @@ public class DACAutomationRuleResource extends Resource {
 
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
     //TODO: harmonize this with the logic in the DACResource so we're consistent.
-    boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) ||
-        Stream.ofNullable(user.getRoles())
-            .flatMap(List::stream)
-            .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
-            .map(UserRole::getDacId)
-            .anyMatch(id -> Objects.equals(id, dacId));
+    boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) || isChairOfDAC(user, dacId);
     if (!isAdminOrChair) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
+  }
+
+  private void validateIsChairOfDAC(User user, Integer dacId) {
+    if (!isChairOfDAC(user, dacId)) {
+      throw new ForbiddenException("User does not have access to the specified DAC ID");
+    }
+  }
+
+  private boolean isChairOfDAC(User user, Integer dacId) {
+    return Stream.ofNullable(user.getRoles())
+        .flatMap(List::stream)
+        .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
+        .map(UserRole::getDacId)
+        .anyMatch(id -> Objects.equals(id, dacId));
   }
 
 }

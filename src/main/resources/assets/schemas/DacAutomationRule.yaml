@@ -2,20 +2,25 @@ type: object
 properties:
   id:
     type: integer
-    description: The rule ID
+    description: 'The rule ID'
   ruleType:
     type: string
     enum:
       - GRU_V1
+      - HMB_V1
   description:
     type: string
-    description: A narrative of the rule.
+    description: 'A narrative of the rule.'
   ruleState:
     type: string
     enum:
       - AVAILABLE
       - DEPRECATED
       - UNAVAILABLE
+  activationDate:
+    type: integer
+    nullable: true
+    description: 'When the rule was most recently activated, in the number of seconds since the epoch.'
   enabledByUserId:
     type: integer
     nullable: true

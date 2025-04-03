@@ -184,14 +184,14 @@ public class DacService implements ConsentLogger {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
+  public void deleteDac(User user, Integer dacId) throws IllegalArgumentException, SQLException {
     Dac fullDac = dacDAO.findById(dacId);
     // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
     if (fullDac.getName().toLowerCase().contains("broad")) {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     try {
-      dacServiceDAO.deleteDacAndDaas(fullDac);
+      dacServiceDAO.deleteDacAndDaas(user, fullDac);
     } catch (IllegalArgumentException e) {
       String logMessage = "Could not find DAC with the provided id: " + dacId;
       logException(logMessage, e);

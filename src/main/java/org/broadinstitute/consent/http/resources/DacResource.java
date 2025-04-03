@@ -142,10 +142,11 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDac(@PathParam("dacId") Integer dacId) {
+  public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     findDacById(dacId);
+    User user = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.deleteDac(dacId);
+      dacService.deleteDac(user, dacId);
     } catch (Exception e) {
       logger.log(Level.SEVERE, "Error deleting DAC with id: " + dacId + "; " + e);
       return Response.status(500)
