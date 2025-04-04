@@ -319,7 +319,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setName("DAC NAME");
     when(dacDAO.findById(3)).thenReturn(dac);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
@@ -353,7 +352,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     dac.setName("DAC NAME");
     dac.setEmail("dacEmail@gmail.com");
     when(dacDAO.findById(3)).thenReturn(dac);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
@@ -387,7 +385,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setName("DAC NAME");
     when(dacDAO.findById(3)).thenReturn(dac);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     Dataset returnedDataset = datasetService.approveDataset(dataset, user, payloadBool);
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());

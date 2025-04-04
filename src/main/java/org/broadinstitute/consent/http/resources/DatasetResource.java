@@ -209,14 +209,7 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Properties are invalid");
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
-      if (patched != null && patched.getIndexedDate() != null) {
-        // If the dataset was indexed, we need to re-index it
-        try (var indexResponse = elasticSearchService.indexDataset(patched, user)) {
-          if (!HttpStatusCodes.isSuccess(indexResponse.getStatus())) {
-            logWarn("Unable to index patched dataset: " + patched.getDatasetId());
-          }
-        }
-      }
+      elasticSearchService.synchronizeDatasetInESIndex(patched, user, false);
       return Response.ok(patched).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

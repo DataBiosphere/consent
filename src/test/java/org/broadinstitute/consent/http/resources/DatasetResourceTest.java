@@ -326,12 +326,11 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
-    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
-      verify(elasticSearchService).indexDataset(dataset, user);
+      verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, user, false);
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }

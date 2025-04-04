@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -254,6 +255,27 @@ public class ElasticSearchService implements ConsentLogger {
       return null;
     }
     return new InstitutionTerm(institution.getId(), institution.getName());
+  }
+
+  /**
+   * Synchronize the dataset in the ES index. This will only index the dataset if it has been
+   * previously indexed, UNLESS the force argument is true which means it will index the dataset
+   * and update the dataset's last indexed date value.
+   *
+   * @param dataset The Dataset
+   * @param user    The User
+   * @param force   Boolean to force the index update regardless of dataset's indexed date status.
+   */
+  public void synchronizeDatasetInESIndex(Dataset dataset, User user, boolean force) {
+    if (force || dataset.getIndexedDate() != null) {
+      try (var response = indexDataset(dataset, user)) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+        }
+      } catch (IOException e) {
+        logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+      }
+    }
   }
 
   public Response indexDataset(Dataset dataset, User user) throws IOException {
