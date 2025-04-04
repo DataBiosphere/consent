@@ -182,8 +182,9 @@ public class DacResource extends Resource {
     User user = findDacUser(userId);
     Dac dac = findDacById(dacId);
     checkUserRoleInDac(dac, authUser);
+    User auditUser = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.removeDacMember(role, user, dac);
+      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -217,8 +218,9 @@ public class DacResource extends Resource {
     User user = findDacUser(userId);
     Dac dac = findDacById(dacId);
     checkUserRoleInDac(dac, authUser);
+    User auditUser = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.removeDacMember(role, user, dac);
+      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

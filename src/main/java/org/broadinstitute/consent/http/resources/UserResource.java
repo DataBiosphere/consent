@@ -421,8 +421,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{email}")
   @RolesAllowed(ADMIN)
-  public Response delete(@PathParam("email") String email, @Context UriInfo info) {
-    userService.deleteUserByEmail(email);
+  public Response delete(@Auth AuthUser authUser, @PathParam("email") String email, @Context UriInfo info) {
+    User auditUser = userService.findUserByEmail(authUser.getEmail());
+    userService.deleteUserByEmail(email, auditUser.getUserId());
     return Response.ok().build();
   }
 

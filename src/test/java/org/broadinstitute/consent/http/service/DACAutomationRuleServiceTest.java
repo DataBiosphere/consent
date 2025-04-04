@@ -74,9 +74,9 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testRemoveChairpersonFromDAC() {
-    when(mockRuleDAO.deleteDACRuleSettingByUser(1, 1)).thenReturn(1);
+    when(mockRuleDAO.auditedDeleteDACRuleSettingByUser(1, 1, 1)).thenReturn(1);
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
-    Integer countRemoved = service.removeChairpersonFromDAC(1, 1);
+    Integer countRemoved = service.removeChairpersonFromDAC(1, 1, 1);
     Assertions.assertEquals(1, countRemoved);
   }
 
@@ -90,9 +90,9 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testRemoveChairpersonUser() {
-    when(mockRuleDAO.deleteAllDACRuleSettingForUser(1)).thenReturn(2);
+    when(mockRuleDAO.auditedDeleteAllDACRuleSettingForUser(1, 1)).thenReturn(2);
     DACAutomationRuleService service = new DACAutomationRuleService(mockRuleDAO);
-    Integer count = service.removeChairpersonUser(1);
+    Integer count = service.removeChairpersonUser(1, 1);
 
   }
 

@@ -237,9 +237,12 @@ class UserResourceTest {
 
   @Test
   void testDeleteUser() {
-    doNothing().when(userService).deleteUserByEmail(any());
+    doNothing().when(userService).deleteUserByEmail(any(), any());
+    User activeUser = createUserWithRole();
+    activeUser.setAdminRole();
+    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     initResource();
-    Response response = userResource.delete(RandomStringUtils.randomAlphabetic(10), uriInfo);
+    Response response = userResource.delete(authUser, RandomStringUtils.randomAlphabetic(10), uriInfo);
     assertEquals(200, response.getStatus());
   }
 

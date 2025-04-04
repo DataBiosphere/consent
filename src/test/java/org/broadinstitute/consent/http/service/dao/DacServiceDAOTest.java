@@ -110,7 +110,7 @@ class DacServiceDAOTest extends DAOTestHelper {
       Optional<DACAutomationRule> activeAutomation = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
           dacId).stream().filter(r -> r.ruleState() == RuleState.AVAILABLE).findFirst();
       assertTrue(activeAutomation.isPresent());
-      dacAutomationRuleDAO.insertDACRuleSetting(dacId, activeAutomation.get().id(),
+      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, activeAutomation.get().id(),
           chair.getUserId());
     });
     dacDAO.findAll().forEach(dac -> {

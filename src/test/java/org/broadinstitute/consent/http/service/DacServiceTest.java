@@ -329,7 +329,7 @@ class DacServiceTest {
     initService();
 
     try {
-      service.removeDacMember(role, member, dac);
+      service.removeDacMember(role, member, dac, 1);
     } catch (Exception e) {
       fail();
     }
@@ -347,17 +347,17 @@ class DacServiceTest {
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
     doNothing().when(dacDAO).removeDacMember(anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
-    when(ruleDAO.deleteDACRuleSettingByUser(anyInt(), anyInt())).thenReturn(1);
+    when(ruleDAO.auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt())).thenReturn(1);
     initService();
 
     try {
-      service.removeDacMember(role, chair1, dac);
+      service.removeDacMember(role, chair1, dac, 1);
     } catch (Exception e) {
       fail();
     }
     verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
     verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
-    verify(ruleDAO, atLeastOnce()).deleteDACRuleSettingByUser(anyInt(), anyInt());
+    verify(ruleDAO, atLeastOnce()).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
   }
 
   @Test
@@ -370,10 +370,10 @@ class DacServiceTest {
     initService();
 
     assertThrows(BadRequestException.class, () -> {
-      service.removeDacMember(role, chair, dac);
+      service.removeDacMember(role, chair, dac, 1);
       verify(dacDAO, times(0)).removeDacMember(anyInt());
       verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
-      verify(ruleDAO, times(0)).deleteDACRuleSettingByUser(anyInt(), anyInt());
+      verify(ruleDAO, times(0)).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
     });
   }
 

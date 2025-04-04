@@ -250,12 +250,12 @@ public class DacService implements ConsentLogger {
     return userDAO.findUserById(updatedUser.getUserId());
   }
 
-  public void removeDacMember(Role role, User user, Dac dac) throws BadRequestException {
+  public void removeDacMember(Role role, User user, Dac dac, Integer auditUser) throws BadRequestException {
     if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
-      ruleDAO.deleteDACRuleSettingByUser(dac.getDacId(), user.getUserId());
+      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUser);
     }
     List<UserRole> dacRoles = user.
         getRoles().

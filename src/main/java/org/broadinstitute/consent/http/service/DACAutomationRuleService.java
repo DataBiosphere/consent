@@ -8,7 +8,9 @@ import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
+import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 
 public class DACAutomationRuleService {
 
@@ -39,16 +41,22 @@ public class DACAutomationRuleService {
     return new AutomationRuleToggleResponse(ruleId, true);
   }
 
-  public Integer removeChairpersonFromDAC(Integer dacId, Integer userId) {
-    return ruleDAO.deleteDACRuleSettingByUser(dacId, userId);
+  public Integer removeChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
+    return ruleDAO.auditedDeleteDACRuleSettingByUser(dacId, userId, auditUserId);
   }
 
   public Integer auditedRemoveChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
     return ruleDAO.auditedDeleteDACRuleSettingByUser(dacId, userId, auditUserId);
   }
 
-  public Integer removeChairpersonUser(Integer userId) {
-    return ruleDAO.deleteAllDACRuleSettingForUser(userId);
+  public Integer removeChairpersonUser(Integer userId, Integer auditUserId) {
+    return ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
+  }
+
+  public AuditPageResults findAuditRecords(Integer dacId, Integer pageSize, Integer page) {
+    int offset = page * pageSize;
+    return new AuditPageResults(ruleDAO.findAutomationAuditsForDac(dacId, pageSize, offset),
+        ruleDAO.findCountOfAutomationAuditsForDac(dacId),pageSize, page);
   }
 
 }

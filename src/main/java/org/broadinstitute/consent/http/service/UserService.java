@@ -254,7 +254,7 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
   }
 
-  public void deleteUserByEmail(String email) {
+  public void deleteUserByEmail(String email, Integer auditUserId) {
     User user = userDAO.findUserByEmail(email);
     if (user == null) {
       throw new NotFoundException("The user for the specified E-Mail address does not exist");
@@ -285,7 +285,7 @@ public class UserService implements ConsentLogger {
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
     fileStorageObjectDAO.deleteAllUserFiles(userId);
-    ruleDAO.deleteAllDACRuleSettingForUser(userId);
+    ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
     userDAO.deleteUserById(userId);
   }
 

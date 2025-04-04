@@ -9,6 +9,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -19,7 +20,9 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -32,7 +35,8 @@ public class DACAutomationRuleResource extends Resource {
   private final UserService userService;
 
   @Inject
-  public DACAutomationRuleResource(DACAutomationRuleService ruleService, DacService dacService, UserService userService) {
+  public DACAutomationRuleResource(DACAutomationRuleService ruleService, DacService dacService,
+      UserService userService) {
     this.ruleService = ruleService;
     this.dacService = dacService;
     this.userService = userService;
@@ -72,11 +76,34 @@ public class DACAutomationRuleResource extends Resource {
     }
   }
 
+  @GET
+  @Path("{dacId}/rules/audit")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
+  public Response getDacRuleAuditRecords(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+      @QueryParam("page") Integer page, @QueryParam("page_size") Integer pageSize) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      validateAdminOrChairForDAC(user, dacId);
+
+      if (dacService.findById(dacId) == null) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+      }
+      validateOffsetAndLimit(page, pageSize);
+      AuditPageResults auditRecords = ruleService.findAuditRecords(dacId, pageSize, page);
+
+      return Response.ok(auditRecords).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @PUT
   @Path("{dacId}/rules/{ruleId}/toggle")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
-  public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId, @PathParam("ruleId") Integer ruleId) {
+  public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+      @PathParam("ruleId") Integer ruleId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateIsChairOfDAC(user, dacId);
@@ -103,6 +130,17 @@ public class DACAutomationRuleResource extends Resource {
     if (!isChairOfDAC(user, dacId)) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
+  }
+
+  private void validateOffsetAndLimit(Integer offset, Integer limit) {
+    if (offset < 0 || limit < 0) {
+      throw new IllegalArgumentException("Offset and limit must be zero or greater");
+    }
+
+    if (limit > 100) {
+      throw new IllegalArgumentException("Limit must be less than 100");
+    }
+
   }
 
   private boolean isChairOfDAC(User user, Integer dacId) {

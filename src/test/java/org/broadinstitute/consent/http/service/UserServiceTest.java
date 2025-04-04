@@ -465,9 +465,9 @@ class UserServiceTest {
     initService();
 
     try {
-      service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      service.deleteUserByEmail(RandomStringUtils.random(10, true, false), RandomUtils.insecure().randomInt());
       verify(draftServiceDAO, atLeastOnce()).deleteDraftsByUser(u);
-      verify(ruleDAO, atLeastOnce()).deleteAllDACRuleSettingForUser(anyInt());
+      verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }
@@ -478,7 +478,7 @@ class UserServiceTest {
     when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
     initService();
     assertThrows(NotFoundException.class, () -> {
-      service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      service.deleteUserByEmail(RandomStringUtils.random(10, true, false), anyInt());
     });
   }
 
