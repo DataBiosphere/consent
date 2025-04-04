@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -85,7 +86,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Mock
   private Response response;
 
-  private void initService() {
+  @BeforeEach
+  public void initService() {
     datasetService = new DatasetService(datasetDAO, daaDAO, dacDAO, elasticSearchService,
         emailService, ontologyService, studyDAO, datasetServiceDAO, userDAO);
   }
@@ -93,42 +95,36 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindDatasetsByDacIds() {
     when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
-    initService();
 
     assertDoesNotThrow(() -> datasetService.findDatasetsByDacIds(List.of(1, 2, 3)));
   }
 
   @Test
   void testFindDatasetsByDacIdsEmptyList() {
-    initService();
     assertThrows(BadRequestException.class,
         () -> datasetService.findDatasetsByDacIds(Collections.emptyList()));
   }
 
   @Test
   void testFindDatasetsByDacIdsNullList() {
-    initService();
     assertThrows(BadRequestException.class, () -> datasetService.findDatasetsByDacIds(null));
   }
 
   @Test
   void testFindDatasetListByDacIds() {
     when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
-    initService();
 
     assertDoesNotThrow(() -> datasetService.findDatasetListByDacIds(List.of(1, 2, 3)));
   }
 
   @Test
   void testFindDatasetListByDacIdsEmptyList() {
-    initService();
     assertThrows(BadRequestException.class,
         () -> datasetService.findDatasetListByDacIds(Collections.emptyList()));
   }
 
   @Test
   void testFindDatasetListByDacIdsNullList() {
-    initService();
     assertThrows(BadRequestException.class, () -> datasetService.findDatasetListByDacIds(null));
   }
 
@@ -136,7 +132,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testGetDatasetByName() {
     when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
         .thenReturn(getDatasets().get(0));
-    initService();
 
     Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
@@ -148,7 +143,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testFindStudyNames() {
     when(datasetDAO.findAllStudyNames())
         .thenReturn(Set.of("Hi", "Hello"));
-    initService();
 
     Set<String> returned = datasetService.findAllStudyNames();
 
@@ -160,7 +154,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testFindDatasetById() {
     when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
         .thenReturn(getDatasets().get(0));
-    initService();
 
     Dataset dataset = datasetService.findDatasetById(1);
 
@@ -175,7 +168,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     d.setDatasetIdentifier();
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
-    initService();
     assertEquals(d, datasetService.findDatasetByIdentifier("DUOS-000003"));
   }
 
@@ -186,7 +178,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     d.setDatasetIdentifier();
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
-    initService();
     assertNull(datasetService.findDatasetByIdentifier("DUOS-0003"));
   }
 
@@ -194,7 +185,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testFindDatasetByIdentifier_NoDataset() {
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(null);
 
-    initService();
     assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
   }
 
@@ -202,7 +192,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testUpdateDatasetDataUseAdmin() {
     doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
-    initService();
     User u = new User();
     u.setAdminRole();
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
@@ -216,7 +205,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateDatasetDataUseNonAdmin() {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
-    initService();
     User u = new User();
     Stream.of(
         UserRoles.CHAIRPERSON,
@@ -245,7 +233,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     datasets.forEach(
         d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(
             List.of(d)));
-    initService();
     // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
     // the number of datasets generated in the test.
     datasetService.setDatasetBatchSize(1);
@@ -279,7 +266,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    initService();
 
     Dataset datasetResult = datasetService.approveDataset(dataset, user, true);
     assertNotNull(datasetResult);
@@ -299,7 +285,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     User user = new User();
     dataset.setDacApproval(true);
-    initService();
 
     assertThrows(IllegalArgumentException.class,
         () -> datasetService.approveDataset(dataset, user, false));
@@ -310,7 +295,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     User user = new User();
     dataset.setDacApproval(true);
-    initService();
 
     assertThrows(IllegalArgumentException.class,
         () -> datasetService.approveDataset(dataset, user, null));
@@ -334,7 +318,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    initService();
     when(dacDAO.findById(3)).thenReturn(dac);
     when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
@@ -369,7 +352,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setName("DAC NAME");
     dac.setEmail("dacEmail@gmail.com");
-    initService();
     when(dacDAO.findById(3)).thenReturn(dac);
     when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
@@ -404,7 +386,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setDacId(3);
     Dac dac = new Dac();
     dac.setName("DAC NAME");
-    initService();
     when(dacDAO.findById(3)).thenReturn(dac);
     when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
@@ -439,7 +420,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(ontologyService.translateDataUse(ds.getDataUse(),
         DataUseTranslationType.DATASET)).thenReturn(translation);
 
-    initService();
     datasetService.syncDatasetDataUseTranslation(1, user);
 
     verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
@@ -448,7 +428,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
-    initService();
     assertThrows(NotFoundException.class,
         () -> datasetService.syncDatasetDataUseTranslation(1, user));
   }
@@ -456,21 +435,18 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testGetStudyWithDatasetsById() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
-    initService();
     assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(1));
   }
 
   @Test
   void testGetStudyWithDatasetsByIdNFE() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(null);
-    initService();
     assertThrows(NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(1));
   }
 
   @Test
   void testGetStudyWithDatasetsByIdGeneralException() {
     when(studyDAO.findStudyById(anyInt())).thenThrow(new RuntimeException("General Exception"));
-    initService();
     assertThrows(Exception.class, () -> datasetService.getStudyWithDatasetsById(1));
   }
 
@@ -481,7 +457,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac",
         new Date());
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
-    initService();
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
     assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
   }
@@ -500,7 +475,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setProperties(Set.of(prop));
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    initService();
     datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
     verify(studyDAO, times(1)).updateStudyProperty(any(), any(), any(), any());
     verify(studyDAO, never()).insertStudyProperty(any(), any(), any(), any());
@@ -514,7 +488,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setStudyId(randomInt(100, 10000));
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    initService();
     datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");
     verify(studyDAO, never()).updateStudyProperty(any(), any(), any(), any());
     verify(studyDAO, times(1)).insertStudyProperty(any(), any(), any(), any());
@@ -526,7 +499,6 @@ class DatasetServiceTest extends AbstractTestHelper {
         List.of(UserRoles.Researcher()));
     when(daaDAO.findDaaDatasetIdsByUserId(any())).thenReturn(List.of(1, 2, 3));
 
-    initService();
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
