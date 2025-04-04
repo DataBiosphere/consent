@@ -74,7 +74,8 @@ public class DACAutomationRuleService {
   }
 
   public AuditPageResults findAuditRecords(Integer dacId, Integer pageSize, Integer page) {
-    int offset = page * pageSize;
+    int realPage = page - 1;
+    int offset = realPage * pageSize;
     return new AuditPageResults(ruleDAO.findAutomationAuditsForDac(dacId, pageSize, offset),
         ruleDAO.findCountOfAutomationAuditsForDac(dacId),pageSize, page);
   }

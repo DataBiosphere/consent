@@ -81,7 +81,7 @@ public class DACAutomationRuleResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getDacRuleAuditRecords(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
-      @QueryParam("page") Integer page, @QueryParam("page_size") Integer pageSize) {
+      @QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateAdminOrChairForDAC(user, dacId);
@@ -133,12 +133,12 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private void validateOffsetAndLimit(Integer offset, Integer limit) {
-    if (offset < 0 || limit < 0) {
-      throw new IllegalArgumentException("Offset and limit must be zero or greater");
+    if (offset < 1 || limit < 1) {
+      throw new IllegalArgumentException("Page and PageSize must be zero or greater");
     }
 
     if (limit > 100) {
-      throw new IllegalArgumentException("Limit must be less than 100");
+      throw new IllegalArgumentException("PageSize must be less than or equal to 100");
     }
 
   }
