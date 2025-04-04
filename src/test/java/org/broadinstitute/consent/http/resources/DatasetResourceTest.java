@@ -81,8 +81,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Mock
   private UserService userService;
 
-  @Mock
-  private AuthUser authUser;
+  private final AuthUser authUser = new AuthUser().setEmail("test@test.com");
 
   @Mock
   private User user;
@@ -99,8 +98,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testPatchByDatasetUpdate_emptyInput() {
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
@@ -117,8 +115,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testPatchByDatasetUpdate_malformedInput() {
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
@@ -157,8 +154,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataset.setDatasetId(randomInt(1, 10));
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 10));
     // This ensures the dataset create user is NOT the current authUser
     dataset.setCreateUserId(randomInt(100, 200));
@@ -188,8 +184,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     DatasetPatch patch = new DatasetPatch(dataset.getDatasetName(),
         dataset.getProperties().stream().toList());
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
@@ -225,8 +220,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
@@ -265,8 +259,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
@@ -305,8 +298,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     DatasetPatch patch = new DatasetPatch(null, List.of(patchProp));
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
@@ -330,8 +322,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     DatasetPatch patch = new DatasetPatch(newName, List.of());
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
     when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
@@ -339,7 +330,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
-      verify(elasticSearchService, times(1)).indexDataset(dataset, user);
+      verify(elasticSearchService).indexDataset(dataset, user);
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -369,8 +360,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
@@ -386,7 +376,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
     initResource();
-    try(var response = resource.validateDatasetName("test")) {
+    try (var response = resource.validateDatasetName("test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -555,9 +545,7 @@ class DatasetResourceTest extends AbstractTestHelper {
       var baos = new ByteArrayOutputStream();
       entity.write(baos);
       var entityString = baos.toString();
-      Type listOfEsResponses = new TypeToken<List<JsonObject>>() {
-      }.getType();
-      List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
+      List<JsonObject> responseList = gson.fromJson(entityString, new TypeToken<>() {});
       assertEquals(1, responseList.size());
       JsonArray items = responseList.get(0).getAsJsonArray("items");
       assertEquals(1, items.size());
@@ -600,8 +588,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testAutocompleteDatasets() {
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.searchDatasetSummaries(any())).thenReturn(
         List.of(new DatasetSummary(1, "ID", "Name")));
 
@@ -617,8 +604,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(mockResponse.getEntity()).thenReturn(query);
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     initResource();
