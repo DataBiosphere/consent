@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -822,7 +823,7 @@ class DatasetResourceTest extends AbstractTestHelper {
       }.getType();
       List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
       assertThat(returnedDatasets, hasSize(1));
-      assertEquals(dataset.getDatasetId(), returnedDatasets.get(0).getDatasetId());
+      assertThat(returnedDatasets, contains(dataset));
     }
   }
 
