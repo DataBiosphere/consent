@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,6 +60,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -103,7 +103,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Mock
   private StudyDAO studyDAO;
 
-  private void initService() {
+  @BeforeEach
+  void initService() {
     service = new ElasticSearchService(
         esClient,
         esConfig,
@@ -117,10 +118,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         studyDAO);
   }
 
-  private void mockElasticSearchResponse(int statusCode, String body) throws IOException {
+  private void mockElasticSearchResponse(String body) throws IOException {
     Response response = mock(Response.class);
-    String reasonPhrase = fromStatusCode(statusCode).getReasonPhrase();
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase);
+    String reasonPhrase = fromStatusCode(200).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, reasonPhrase);
     HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
 
     when(esClient.performRequest(any())).thenReturn(response);
@@ -266,7 +267,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         datasetRecord.updateUser.getInstitution());
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.createUser.getUserId(), term.getCreateUserId());
     assertEquals(datasetRecord.createUser.getDisplayName(), term.getCreateUserDisplayName());
@@ -293,7 +293,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
@@ -339,7 +338,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
     when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
@@ -377,7 +375,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
         datasetRecord.createUser);
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
@@ -403,12 +400,11 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createDatasetProperty("url", PropertyType.String, "url")
     ));
     dataset.setStudy(study);
-    DatasetRecord record = new DatasetRecord(user, updateUser, dac, dataset, study);
+    DatasetRecord datasetRecord = new DatasetRecord(user, updateUser, dac, dataset, study);
     when(dacDAO.findById(any())).thenReturn(dac);
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
-    when(dacDAO.findById(any())).thenReturn(record.dac);
-    when(userDao.findUserById(record.createUser.getUserId())).thenReturn(record.createUser);
-    initService();
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -423,7 +419,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(dataset.getDatasetId(), term.getDatasetId());
@@ -433,7 +428,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Test
   void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
-    initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -445,7 +439,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.setDescription(randomAlphabetic(20));
     study.setStudyId(randomInt(1, 100));
     dataset.setStudy(study);
-    initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -463,9 +456,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     String datasetIndexName = randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
-    mockElasticSearchResponse(200, "");
+    mockElasticSearchResponse("");
 
-    initService();
     try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
       verify(esClient).performRequest(request.capture());
       Request capturedRequest = request.getValue();
@@ -493,9 +485,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
      *  more classes and methods. Alternately, it is possible to just mock the Gson parsing, but
      *  this seems to affect the results of the other tests.
      */
-    mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
+    mockElasticSearchResponse("{\"valid\":true,\"hits\":{\"hits\":[]}}");
 
-    initService();
     try (var response = service.searchDatasets(query)) {
       assertEquals(200, response.getStatus());
     }
@@ -505,9 +496,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testValidateQuery() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
-    initService();
     assertTrue(service.validateQuery(query));
   }
 
@@ -515,9 +505,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testValidateQueryWithFromAndSize() throws IOException {
     String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
-    initService();
     assertTrue(service.validateQuery(query));
   }
 
@@ -531,7 +520,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(esClient.performRequest(any())).thenReturn(response);
     when(response.getStatusLine()).thenReturn(status);
 
-    initService();
     assertThrows(IOException.class, () -> service.validateQuery(query));
   }
 
@@ -539,9 +527,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testValidateQueryInvalid() throws IOException {
     String query = "{ \"bad\": [\"and\", \"invalid\"] }";
 
-    mockElasticSearchResponse(200, "{\"valid\":false}");
+    mockElasticSearchResponse("{\"valid\":false}");
 
-    initService();
     assertFalse(service.validateQuery(query));
   }
 
@@ -577,8 +564,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
           }
         """;
 
-    initService();
-
     when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
     StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
@@ -609,7 +594,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setDatasetId(randomInt(10, 100));
     when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     mockESClientResponse(500, "error condition");
-    initService();
 
     StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
     var baos = new ByteArrayOutputStream();
@@ -646,7 +630,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyById(any())).thenReturn(study);
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 
-    initService();
     assertDoesNotThrow(() -> service.indexStudy(1, user));
   }
 
@@ -658,7 +641,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.setStudyId(1);
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    initService();
     assertDoesNotThrow(() -> {
       try (var response = service.indexStudy(1, user)) {
         assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -668,7 +650,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetIndexWithValue() {
-    initService();
     assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, Instant.now()));
   }
 
@@ -676,15 +657,13 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testDeleteDatasetIndexWhenDatasetExists() throws Exception {
     Dataset dataset = new Dataset();
     when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
-    initService();
     assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
-    verify(datasetServiceDAO, times(1)).updateDatasetIndex(any(), any(), any());
+    verify(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
   }
 
   @Test
   void testDeleteDatasetIndexWhenDatasetIsNull() throws Exception {
     when(datasetDAO.findDatasetById(any())).thenReturn(null);
-    initService();
     assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
     verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
   }
