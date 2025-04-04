@@ -74,6 +74,8 @@ class DataAccessRequestServiceTest {
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
   private UseRestrictionConverter useRestrictionConverter;
+  @Mock
+  private DACAutomationRuleService ruleService;
 
   private DataAccessRequestService service;
 
@@ -89,7 +91,7 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, useRestrictionConverter);
+        dataAccessRequestServiceDAO, useRestrictionConverter, ruleService);
   }
 
   @Test

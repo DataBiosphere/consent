@@ -48,11 +48,12 @@ public class DataAccessRequestService implements ConsentLogger {
 
   private final DacService dacService;
   private final DataAccessReportsParser dataAccessReportsParser;
+  private final DACAutomationRuleService ruleService;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
       DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+      UseRestrictionConverter useRestrictionConverter, DACAutomationRuleService ruleService) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -65,6 +66,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.dacService = dacService;
     this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
+    this.ruleService = ruleService;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -291,6 +293,7 @@ public class DataAccessRequestService implements ConsentLogger {
           darData);
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
+    ruleService.triggerDACRuleSettings(datasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
 

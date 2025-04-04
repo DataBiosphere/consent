@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
+import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
@@ -245,13 +246,25 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  DACAutomationRuleService providesRuleService() {
+    return new DACAutomationRuleService(
+        providesDataAccessRequestDAO(),
+        providesDatasetDAO(),
+        providesDACAutomationRuleDAO(),
+        providesElectionDAO(),
+        providesVoteDAO()
+    );
+  }
+
+  @Provides
   DataAccessRequestService providesDataAccessRequestService() {
     return new DataAccessRequestService(
         providesCounterService(),
         providesDAOContainer(),
         providesDacService(),
         providesDataAccessRequestServiceDAO(),
-        providesUseRestrictionConverter()
+        providesUseRestrictionConverter(),
+        providesRuleService()
     );
   }
 
