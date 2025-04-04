@@ -649,22 +649,22 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateDatasetIndexWithValue() {
-    assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, Instant.now()));
+  void testUpdateDatasetIndexDateWithValue() {
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, Instant.now()));
   }
 
   @Test
   void testDeleteDatasetIndexWhenDatasetExists() throws Exception {
     Dataset dataset = new Dataset();
     when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
-    assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
     verify(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
   }
 
   @Test
   void testDeleteDatasetIndexWhenDatasetIsNull() throws Exception {
     when(datasetDAO.findDatasetById(any())).thenReturn(null);
-    assertDoesNotThrow(() -> service.updateDatasetIndex(1, 1, null));
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
     verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
   }
 
