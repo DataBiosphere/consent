@@ -95,7 +95,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
     initService();
 
-    datasetService.findDatasetsByDacIds(List.of(1, 2, 3));
+    assertDoesNotThrow(() -> datasetService.findDatasetsByDacIds(List.of(1, 2, 3)));
   }
 
   @Test
@@ -116,7 +116,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
     initService();
 
-    datasetService.findDatasetListByDacIds(List.of(1, 2, 3));
+    assertDoesNotThrow(() -> datasetService.findDatasetListByDacIds(List.of(1, 2, 3)));
   }
 
   @Test
@@ -199,10 +199,9 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateDatasetDataUseAdmin() throws Exception {
+  void testUpdateDatasetDataUseAdmin() {
     doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
     initService();
     User u = new User();
     u.setAdminRole();
@@ -424,7 +423,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSyncDataUseTranslation() throws Exception {
+  void testSyncDataUseTranslation() {
     Dataset ds = new Dataset();
     ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
@@ -439,7 +438,6 @@ class DatasetServiceTest extends AbstractTestHelper {
         """;
     when(ontologyService.translateDataUse(ds.getDataUse(),
         DataUseTranslationType.DATASET)).thenReturn(translation);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(response);
 
     initService();
     datasetService.syncDatasetDataUseTranslation(1, user);

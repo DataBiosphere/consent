@@ -59,7 +59,7 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
-  public Integer datasetBatchSize = 50;
+  public static final Integer DATASET_BATCH_SIZE = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, ElasticSearchService
@@ -143,7 +143,7 @@ public class DatasetService implements ConsentLogger {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
-    synchronizeDatasetInESIndex(d, user);
+    synchronizeDatasetInESIndex(d, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -156,7 +156,7 @@ public class DatasetService implements ConsentLogger {
     String translation = ontologyService.translateDataUse(dataset.getDataUse(),
         DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
-    synchronizeDatasetInESIndex(dataset, user);
+    synchronizeDatasetInESIndex(dataset, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -201,7 +201,7 @@ public class DatasetService implements ConsentLogger {
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
-      synchronizeDatasetInESIndex(dataset, user);
+      synchronizeDatasetInESIndex(dataset, user, true);
       datasetReturn = datasetDAO.findDatasetById(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -223,7 +223,7 @@ public class DatasetService implements ConsentLogger {
   private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval)
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
-    if (approval) {
+    if (Boolean.TRUE.equals(approval)) {
       emailService.sendDatasetApprovedMessage(
           user,
           dac.getName(),
@@ -254,7 +254,7 @@ public class DatasetService implements ConsentLogger {
 
   public StreamingOutput findAllDatasetsAsStreamingOutput() {
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
+    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, DATASET_BATCH_SIZE);
     final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
     final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
     Gson gson = GsonUtil.buildGson();
@@ -338,7 +338,7 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
-    synchronizeDatasetInESIndex(dataset, user);
+    synchronizeDatasetInESIndex(dataset, user, false);
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -399,7 +399,7 @@ public class DatasetService implements ConsentLogger {
     }
     List<Dataset> datasets = study.getDatasetIds().isEmpty() ? List.of()
         : datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    datasets.forEach(dataset -> synchronizeDatasetInESIndex(dataset, user));
+    datasets.forEach(dataset -> synchronizeDatasetInESIndex(dataset, user, false));
     return studyDAO.findStudyById(studyId);
   }
 
@@ -543,16 +543,18 @@ public class DatasetService implements ConsentLogger {
   }
 
   public void setDatasetBatchSize(Integer datasetBatchSize) {
-    this.datasetBatchSize = datasetBatchSize;
+    this.DATASET_BATCH_SIZE = datasetBatchSize;
   }
 
-  private void synchronizeDatasetInESIndex(Dataset dataset, User user) {
-    try (var response = elasticSearchService.indexDataset(dataset, user)) {
-      if (!HttpStatusCodes.isSuccess(response.getStatus())) {
-        logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+  private void synchronizeDatasetInESIndex(Dataset dataset, User user, boolean force) {
+    if (force || dataset.getIndexedDate() != null) {
+      try (var response = elasticSearchService.indexDataset(dataset, user)) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+        }
+      } catch (IOException e) {
+        logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()));
       }
-    } catch (IOException e) {
-      logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()));
     }
   }
 
