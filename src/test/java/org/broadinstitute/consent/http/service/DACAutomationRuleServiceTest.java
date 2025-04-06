@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleState;
@@ -33,6 +36,8 @@ class DACAutomationRuleServiceTest {
   private ElectionDAO electionDAO;
   @Mock
   private VoteDAO voteDAO;
+  @Mock
+  private User user;
 
   @Mock
   private DACAutomationRuleDAO mockRuleDAO;
@@ -71,22 +76,25 @@ class DACAutomationRuleServiceTest {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             null, null, null, null)));
-    when(mockRuleDAO.auditedInsertDACRuleSetting(1, 1, 1)).thenReturn(1);
+    when(mockRuleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(
+        1);
     AutomationRuleToggleResponse result = service.toggleRule(
-        1, 1, 1);
+        1, 1, user);
     Assertions.assertTrue(result.isRuleEnabled());
     Assertions.assertEquals(1, (int) result.getRuleId());
+    Assertions.assertTrue(result.getEnabledTime() > 1);
   }
 
   @Test
   void testToggleRuleFromOnToOff() {
     when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),1, "alice", "alice@fake.org")));
-    doNothing().when(mockRuleDAO).auditedDeleteDACRuleSetting(1, 1, 1);
-    AutomationRuleToggleResponse result = service.toggleRule(1, 1, 1);
+            Timestamp.from(Instant.now()), 1, "alice", "alice@fake.org")));
+    doNothing().when(mockRuleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
+    AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
     Assertions.assertFalse(result.isRuleEnabled());
     Assertions.assertEquals(1, (int) result.getRuleId());
+    Assertions.assertEquals(-1, result.getEnabledTime());
   }
 
   @Test
@@ -109,7 +117,6 @@ class DACAutomationRuleServiceTest {
     Integer count = service.removeChairpersonUser(1, 1);
 
   }
-
 
 
 }

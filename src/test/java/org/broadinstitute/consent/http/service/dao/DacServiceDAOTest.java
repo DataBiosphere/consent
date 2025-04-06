@@ -111,10 +111,11 @@ class DacServiceDAOTest extends DAOTestHelper {
           dacId).stream().filter(r -> r.ruleState() == RuleState.AVAILABLE).findFirst();
       assertTrue(activeAutomation.isPresent());
       dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, activeAutomation.get().id(),
-          chair.getUserId());
+          chair.getUserId(), Instant.now());
     });
     dacDAO.findAll().forEach(dac -> {
-      assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(superUser, dac), "Delete should not fail");
+      assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(superUser, dac),
+          "Delete should not fail");
       List<DACAutomationRule> rules = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
           dac.getDacId()).stream().filter(r -> r.enabledByUserId() != null).toList();
       assertTrue(rules.isEmpty(), "There should be no dac automation rules enabled by users.");

@@ -22,7 +22,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
-import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -112,7 +111,7 @@ public class DACAutomationRuleResource extends Resource {
         return Response.status(Response.Status.NOT_FOUND).build();
       }
 
-      return Response.ok(ruleService.toggleRule(dacId, ruleId, user.getUserId())).build();
+      return Response.ok(ruleService.toggleRule(dacId, ruleId, user)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

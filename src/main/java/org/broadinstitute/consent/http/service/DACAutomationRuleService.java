@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static java.util.Objects.isNull;
 
 import com.google.inject.Inject;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -33,7 +35,8 @@ public class DACAutomationRuleService {
   private final VoteDAO voteDAO;
 
   @Inject
-  public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO, DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO) {
+  public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
+      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.ruleDAO = ruleDAO;
@@ -49,23 +52,26 @@ public class DACAutomationRuleService {
     return ruleDAO.findAllDACAutomationRulesByDACId(dacId);
   }
 
-  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, Integer userId) {
+  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user) {
     Optional<DACAutomationRule> matchingRule = ruleDAO.findAllDACAutomationRulesByDACId(dacId)
         .stream().filter(r -> Objects.equals(r.id(),
             ruleId) && !isNull(r.enabledByUserId())).findFirst();
     if (matchingRule.isPresent()) {
-      ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, userId);
-      return new AutomationRuleToggleResponse(ruleId, false);
+      ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
+      return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
     }
-    ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, userId);
-    return new AutomationRuleToggleResponse(ruleId, true);
+    Instant insertTime = Instant.now();
+    ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
+    return new AutomationRuleToggleResponse(ruleId, true, insertTime.getEpochSecond(),
+        user.getDisplayName(), user.getEmail());
   }
 
   public Integer removeChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
     return ruleDAO.auditedDeleteDACRuleSettingByUser(dacId, userId, auditUserId);
   }
 
-  public Integer auditedRemoveChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
+  public Integer auditedRemoveChairpersonFromDAC(Integer dacId, Integer userId,
+      Integer auditUserId) {
     return ruleDAO.auditedDeleteDACRuleSettingByUser(dacId, userId, auditUserId);
   }
 
@@ -77,7 +83,7 @@ public class DACAutomationRuleService {
     int realPage = page - 1;
     int offset = realPage * pageSize;
     return new AuditPageResults(ruleDAO.findAutomationAuditsForDac(dacId, pageSize, offset),
-        ruleDAO.findCountOfAutomationAuditsForDac(dacId),pageSize, page);
+        ruleDAO.findCountOfAutomationAuditsForDac(dacId), pageSize, page);
   }
 
   public void triggerDACRuleSettings(List<Integer> datasetIds, String referenceId) {
@@ -89,15 +95,19 @@ public class DACAutomationRuleService {
         boolean isActive = rule.enabledByUserId() != null;
         if (isActive) {
           DACAutomationRuleType type = rule.ruleType();
-          List<RuleImplementationInterface> ruleImplementations = Rules.implementationList.stream().filter(r -> r.getRuleType().equals(type)).toList();
+          List<RuleImplementationInterface> ruleImplementations = Rules.implementationList.stream()
+              .filter(r -> r.getRuleType().equals(type)).toList();
           ruleImplementations.forEach(ruleImplementation -> {
             boolean shouldApprove = ruleImplementation.compare(dataset, dar);
             if (shouldApprove) {
               // TODO _ Check on new election type ...
-              int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(), ElectionStatus.OPEN.getValue(), new Date(),  dar.getReferenceId(), datasetId);
-              int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.FINAL.getValue());
+              int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
+                  ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), datasetId);
+              int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
+                  VoteType.FINAL.getValue());
               // TODO: bug in that this changes the create date
-              voteDAO.updateVote(true, "DAC Bot", new Date(), voteId, false, electionId, new Date(), false);
+              voteDAO.updateVote(true, "DAC Bot", new Date(), voteId, false, electionId, new Date(),
+                  false);
               // TODO: Add emails
             }
           });

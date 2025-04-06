@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
+import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
-import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
+import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -30,12 +31,13 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       @Bind("ruleId") int ruleId,
       @Bind("userId") int userId);
 
-  default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId) {
+  default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId,
+      Instant activationDate) {
     Handle handle = getHandle();
     Integer id;
     String auditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
-        VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, current_timestamp)
+        VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
         """;
     try (var audit = getHandle().createUpdate(auditSql)) {
       audit
@@ -43,6 +45,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
           .bind("ruleId", ruleId)
           .bind("auditUserId", userId)
           .bind("auditType", RuleAuditAction.ADD)
+          .bind("actionDate", activationDate)
           .execute();
       id = useAuditedInsertDACRuleSettingInsteadOfThisMethod(dacId, ruleId, userId);
       handle.commit();
