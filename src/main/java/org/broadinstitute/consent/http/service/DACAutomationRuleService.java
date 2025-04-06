@@ -25,8 +25,9 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleImplementationInterface;
 import org.broadinstitute.consent.http.rules.Rules;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class DACAutomationRuleService {
+public class DACAutomationRuleService implements ConsentLogger {
 
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
@@ -109,6 +110,10 @@ public class DACAutomationRuleService {
               voteDAO.updateVote(true, "DAC Bot", new Date(), voteId, false, electionId, new Date(),
                   false);
               // TODO: Add emails
+              // TODO: Add better logging
+              logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(), datasetId));
+            } else {
+              logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(), datasetId));
             }
           });
         }
