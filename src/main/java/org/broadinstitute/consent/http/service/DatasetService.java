@@ -178,7 +178,7 @@ public class DatasetService implements ConsentLogger {
         if (!HttpStatusCodes.isSuccess(response.getStatus())) {
           logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
         }
-      } catch (SQLException| IOException e) {
+      } catch (IOException e) {
         throw new RuntimeException(e);
       }
     });

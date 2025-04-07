@@ -162,7 +162,7 @@ public class StudyResource extends Resource {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when deleting index for dataset with id: " + id);
           }
-        } catch (IOException | SQLException e) {
+        } catch (IOException e) {
           logException(e);
         }
       });

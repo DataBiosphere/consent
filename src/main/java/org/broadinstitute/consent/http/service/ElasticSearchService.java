@@ -108,12 +108,7 @@ public class ElasticSearchService implements ConsentLogger {
     datasets.forEach(dsTerm -> {
       bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
       bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
-      try {
-        updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
-      } catch (SQLException e) {
-        // We don't want to send these to Sentry, but we do want to log them for follow up off cycle
-        logWarn("Error updating dataset indexed date for dataset id: %d ".formatted(dsTerm.getDatasetId()), e);
-      }
+      updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
     });
 
     Request bulkRequest = new Request(
@@ -127,7 +122,7 @@ public class ElasticSearchService implements ConsentLogger {
     return performRequest(bulkRequest);
   }
 
-  public Response deleteIndex(Integer datasetId, Integer userId) throws IOException, SQLException {
+  public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
     Request deleteRequest = new Request(
         HttpMethod.POST,
         "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
@@ -419,11 +414,16 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate)
-      throws SQLException {
+      {
     // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
-      datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+      try {
+        datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+      } catch (SQLException e) {
+        // We don't want to send these to Sentry, but we do want to log them for follow up off cycle
+        logWarn("Error updating dataset indexed date for dataset id: %d ".formatted(datasetId), e);
+      }
     }
   }
 
