@@ -252,7 +252,8 @@ public class ConsentModule extends AbstractModule {
         providesDatasetDAO(),
         providesDACAutomationRuleDAO(),
         providesElectionDAO(),
-        providesVoteDAO()
+        providesVoteDAO(),
+        providesVoteServiceDAO()
     );
   }
 

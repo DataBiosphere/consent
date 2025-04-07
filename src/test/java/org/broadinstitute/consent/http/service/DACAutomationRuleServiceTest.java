@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleState;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ class DACAutomationRuleServiceTest {
   @Mock
   private VoteDAO voteDAO;
   @Mock
+  private VoteServiceDAO voteServiceDAO;
+  @Mock
   private User user;
 
   @Mock
@@ -47,7 +50,7 @@ class DACAutomationRuleServiceTest {
   @BeforeEach
   public void setUp() {
     service = new DACAutomationRuleService(dataAccessRequestDAO,
-        datasetDAO, mockRuleDAO, electionDAO, voteDAO);
+        datasetDAO, mockRuleDAO, electionDAO, voteDAO, voteServiceDAO);
   }
 
   @Test

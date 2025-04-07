@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static java.util.Objects.isNull;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -20,11 +21,13 @@ import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleImplementationInterface;
 import org.broadinstitute.consent.http.rules.Rules;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class DACAutomationRuleService implements ConsentLogger {
@@ -34,15 +37,17 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final DACAutomationRuleDAO ruleDAO;
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
+  private final VoteServiceDAO voteServiceDAO;
 
   @Inject
   public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
-      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO) {
+      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.ruleDAO = ruleDAO;
     this.electionDAO = electionDAO;
     this.voteDAO = voteDAO;
+    this.voteServiceDAO = voteServiceDAO;
   }
 
   public List<DACAutomationRule> findAll() {
@@ -106,6 +111,12 @@ public class DACAutomationRuleService implements ConsentLogger {
                   ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), datasetId);
               int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
                   VoteType.FINAL.getValue());
+              Vote vote = voteDAO.findVoteById(voteId);
+              try {
+                voteServiceDAO.updateVotesWithValue(List.of(vote), true, "DACBot Approval");
+              } catch (SQLException e) {
+                logException("Error updating vote", e);
+              }
               // TODO: bug in that this changes the create date
               voteDAO.updateVote(true, "DAC Bot", new Date(), voteId, false, electionId, new Date(),
                   false);
