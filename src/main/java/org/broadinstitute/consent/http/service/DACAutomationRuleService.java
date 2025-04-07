@@ -117,9 +117,6 @@ public class DACAutomationRuleService implements ConsentLogger {
               } catch (SQLException e) {
                 logException("Error updating vote", e);
               }
-              // TODO: bug in that this changes the create date
-              voteDAO.updateVote(true, "DAC Bot", new Date(), voteId, false, electionId, new Date(),
-                  false);
               // TODO: Add emails
               // TODO: Add better logging
               logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(), datasetId));
