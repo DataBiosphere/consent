@@ -17,7 +17,7 @@ public class GeneralResearchUseV1 implements RuleImplementationInterface {
   private boolean isOnlyHMB(DataAccessRequestData data) {
     // Primary condition checks
     if (Boolean.TRUE.equals(data.getDiseases())) return false;
-    if (data.getOtherText() != null) return false;
+    if (!data.getOtherText().isBlank()) return false;
     if (Boolean.TRUE.equals(data.getOther())) return false;
 
     // Secondary condition checks, part 1
@@ -26,7 +26,7 @@ public class GeneralResearchUseV1 implements RuleImplementationInterface {
     if (Boolean.TRUE.equals(data.getForProfit())) return false;
 
     // Secondary condition checks, part 2
-    if (data.getGender() != null) return false;
+    if (!data.getGender().isBlank() ) return false;
     if (Boolean.TRUE.equals(data.getPediatric())) return false;
     if (Boolean.TRUE.equals(data.getVulnerablePopulation())) return false;
 
