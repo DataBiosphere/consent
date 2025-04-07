@@ -18,7 +18,8 @@ class GeneralResearchUseV1Test {
   private static Stream<Arguments> testCompare() {
     return Stream.of(
         Arguments.of(new DataUseBuilder().setGeneralUse(true), new DataAccessRequestDataBuilder().setHmb(true), true),
-        Arguments.of(new DataUseBuilder().setHmbResearch(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(false), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder(), new DataAccessRequestDataBuilder().setHmb(true), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true), new DataAccessRequestDataBuilder().setDiseases(true), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true), new DataAccessRequestDataBuilder().setOther(true), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true), new DataAccessRequestDataBuilder().setOtherText("Other Condition"), false),
