@@ -113,7 +113,7 @@ public class DACAutomationRuleService implements ConsentLogger {
                   VoteType.FINAL.getValue());
               Vote vote = voteDAO.findVoteById(voteId);
               try {
-                voteServiceDAO.updateVotesWithValue(List.of(vote), true, "DACBot Approval");
+                voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("DACBot Approval using rule: %s", ruleImplementation.getRuleType()));
               } catch (SQLException e) {
                 logException("Error updating vote", e);
               }
