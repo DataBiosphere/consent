@@ -11,7 +11,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
