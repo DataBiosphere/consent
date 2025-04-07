@@ -103,7 +103,7 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chairperson);
     when(dacService.findById(1)).thenReturn(new Dac());
     when(ruleService.toggleRule(1, 1, chairperson)).thenReturn(
-        new AutomationRuleToggleResponse(1, true, Instant.now().getEpochSecond(),
+        new AutomationRuleToggleResponse(1, true, Instant.now().toEpochMilli(),
             chairperson.getDisplayName(),
             chairperson.getEmail()));
 

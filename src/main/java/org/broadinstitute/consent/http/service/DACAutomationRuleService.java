@@ -63,7 +63,7 @@ public class DACAutomationRuleService implements ConsentLogger {
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
-    return new AutomationRuleToggleResponse(ruleId, true, insertTime.getEpochSecond(),
+    return new AutomationRuleToggleResponse(ruleId, true, insertTime.toEpochMilli(),
         user.getDisplayName(), user.getEmail());
   }
 
