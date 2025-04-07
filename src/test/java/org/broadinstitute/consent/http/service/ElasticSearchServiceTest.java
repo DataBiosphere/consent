@@ -235,7 +235,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.setProperties(Set.of(
+    study.addProperties(Set.of(
         createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
@@ -389,7 +389,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.setProperties(Set.of(
+    study.addProperties(Set.of(
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)

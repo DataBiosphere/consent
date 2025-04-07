@@ -126,7 +126,7 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setName(randomAlphabetic(10));
     study.setStudyId(12345);
-    study.setDatasetIds(Set.of(1, 2, 3));
+    study.addDatasetIds(Set.of(1, 2, 3));
 
     when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
 
@@ -199,7 +199,7 @@ class StudyResourceTest extends AbstractTestHelper {
           DatasetRegistrationSchemaV1.class);
       List<Integer> datasetIds = schemaV1.getConsentGroups().stream()
           .map(ConsentGroup::getDatasetId).toList();
-      study.setDatasetIds(Set.of(datasetIds.get(0) + 1));
+      study.addDatasetIds(Set.of(datasetIds.get(0) + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
@@ -223,7 +223,7 @@ class StudyResourceTest extends AbstractTestHelper {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
     study.getDatasetIds().clear();
-    study.setDatasetIds(datasetIds);
+    study.addDatasetIds(datasetIds);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
     initResource();
@@ -371,7 +371,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.setCreateUserId(9);
     study.setCreateUserEmail(randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDatasetId()));
+    study.addDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
@@ -388,7 +388,7 @@ class StudyResourceTest extends AbstractTestHelper {
     dataCustodianEmailProperty.setType(PropertyType.Json);
     dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
-    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+    study.addProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
 
     dataset.setStudy(study);
 

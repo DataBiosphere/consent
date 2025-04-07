@@ -1273,7 +1273,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     study.setCreateUserId(9);
     study.setCreateUserEmail(randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDatasetId()));
+    study.addDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
@@ -1290,7 +1290,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataCustodianEmailProperty.setType(PropertyType.Json);
     dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
-    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+    study.addProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
 
     dataset.setStudy(study);
 

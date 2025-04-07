@@ -78,7 +78,7 @@ public class Study {
     return properties;
   }
 
-  public void setProperties(Set<StudyProperty> properties) {
+  public void addProperties(Set<StudyProperty> properties) {
     this.properties.addAll(properties);
   }
 
@@ -98,7 +98,7 @@ public class Study {
     return datasetIds;
   }
 
-  public void setDatasetIds(Set<Integer> datasetIds) {
+  public void addDatasetIds(Set<Integer> datasetIds) {
     this.datasetIds.addAll(datasetIds);
   }
 
