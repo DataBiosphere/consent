@@ -335,12 +335,14 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testFindDatasetsByEmptyIdList() {
+    insertDataset();
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of());
     assertTrue(datasets.isEmpty());
   }
 
   @Test
   void testFindDatasetsByNullIdList() {
+    insertDataset();
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(null);
     assertTrue(datasets.isEmpty());
   }
