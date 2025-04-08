@@ -97,12 +97,14 @@ class DacDAOTest extends DAOTestHelper {
     Integer dacId2 = createRandomDAC();
     List<Dac> dacs = dacDAO.findAll();
 
-    Dac dac1 = dacs.get(0);
+    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElse(null);
+    assertNotNull(dac1);
     assertEquals(dacId1, dac1.getDacId());
     assertEquals(0, dac1.getDatasetIds().size());
     assertNull(dac1.getAssociatedDaa());
 
-    Dac dac2 = dacs.get(1);
+    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElse(null);
+    assertNotNull(dac2);
     assertEquals(dacId2, dac2.getDacId());
     assertEquals(0, dac2.getDatasetIds().size());
     assertNull(dac2.getAssociatedDaa());
@@ -130,14 +132,16 @@ class DacDAOTest extends DAOTestHelper {
 
     List<Dac> dacs = dacDAO.findAll();
 
-    Dac dac1 = dacs.get(0);
+    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElse(null);
+    assertNotNull(dac1);
     List<Integer> datasetIds = dac1.getDatasetIds();
     assertEquals(dacId1, dac1.getDacId());
     assertEquals(1, datasetIds.size());
     assertEquals(datasetId, datasetIds.get(0));
     assertNull(dac1.getAssociatedDaa());
 
-    Dac dac2 = dacs.get(1);
+    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElse(null);
+    assertNotNull(dac2);
     List<Integer> datasetIds2 = dac2.getDatasetIds();
     assertEquals(dacId2, dac2.getDacId());
     assertEquals(1, datasetIds2.size());
