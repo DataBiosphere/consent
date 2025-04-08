@@ -302,9 +302,9 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
     List<UserRole> memberRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(memberRoles.isEmpty());
-    UserRole userRole = memberRoles.get(0);
+    UserRole userRole = memberRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElse(null);
+    assertNotNull(userRole);
     assertEquals(userRole.getDacId(), dac.getDacId());
-    assertEquals(userRole.getRoleId(), roleId);
   }
 
   @Test
@@ -315,9 +315,9 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
     List<UserRole> chairRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(chairRoles.isEmpty());
-    UserRole userRole = chairRoles.get(0);
+    UserRole userRole = chairRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElse(null);
+    assertNotNull(userRole);
     assertEquals(userRole.getDacId(), dac.getDacId());
-    assertEquals(userRole.getRoleId(), roleId);
   }
 
   @Test
