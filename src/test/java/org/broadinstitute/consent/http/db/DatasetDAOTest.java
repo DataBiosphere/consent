@@ -22,8 +22,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -119,7 +117,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testTranslatedDataUse() {
     Dataset d1 = insertDataset();
 
-    String tdu = RandomStringUtils.randomAlphabetic(10);
+    String tdu = randomAlphabetic(10);
     datasetDAO.updateDatasetTranslatedDataUse(d1.getDatasetId(), tdu);
 
     d1 = datasetDAO.findDatasetById(d1.getDatasetId());
@@ -130,7 +128,7 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testUpdateDatasetName() {
     Dataset dataset = insertDataset();
-    String newName = RandomStringUtils.randomAlphabetic(25);
+    String newName = randomAlphabetic(25);
     datasetDAO.updateDatasetName(dataset.getDatasetId(), newName);
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
@@ -194,9 +192,9 @@ class DatasetDAOTest extends DAOTestHelper {
   void testGetNIHInstitutionalFile_AlwaysLatestUpdated() {
     Dataset dataset = insertDataset();
 
-    String fileName = RandomStringUtils.randomAlphabetic(10);
-    String bucketName = RandomStringUtils.randomAlphabetic(10);
-    String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+    String fileName = randomAlphabetic(10);
+    String bucketName = randomAlphabetic(10);
+    String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
 
     Integer nihFileIdCreatedFirstUpdatedSecond = fileStorageObjectDAO.insertNewFile(
@@ -223,15 +221,15 @@ class DatasetDAOTest extends DAOTestHelper {
 
     fileStorageObjectDAO.updateFileById(
         nihFileIdCreatedSecondUpdatedFirst,
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20),
+        randomAlphabetic(20),
+        randomAlphabetic(20),
         updateUser.getUserId(),
         Instant.ofEpochMilli(120));
 
     fileStorageObjectDAO.updateFileById(
         nihFileIdCreatedFirstUpdatedSecond,
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20),
+        randomAlphabetic(20),
+        randomAlphabetic(20),
         updateUser.getUserId(),
         Instant.ofEpochMilli(130));
 
@@ -246,9 +244,9 @@ class DatasetDAOTest extends DAOTestHelper {
   void testGetNIHInstitutionalFile_AlwaysLatestCreated() {
     Dataset dataset = insertDataset();
 
-    String fileName = RandomStringUtils.randomAlphabetic(10);
-    String bucketName = RandomStringUtils.randomAlphabetic(10);
-    String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+    String fileName = randomAlphabetic(10);
+    String bucketName = randomAlphabetic(10);
+    String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
 
     Integer nihFileIdCreatedFirst = fileStorageObjectDAO.insertNewFile(
@@ -265,8 +263,8 @@ class DatasetDAOTest extends DAOTestHelper {
 
     fileStorageObjectDAO.updateFileById(
         nihFileIdCreatedFirst,
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20),
+        randomAlphabetic(20),
+        randomAlphabetic(20),
         updateUser.getUserId(),
         Instant.ofEpochMilli(120));
 
@@ -333,6 +331,20 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(datasets.get(0).getCreateUser());
   }
 
+  @Test
+  void testFindDatasetsByEmptyIdList() {
+    insertDataset();
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of());
+    assertTrue(datasets.isEmpty());
+  }
+
+  @Test
+  void testFindDatasetsByNullIdList() {
+    insertDataset();
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(null);
+    assertTrue(datasets.isEmpty());
+  }
+
   // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
   @Test
   void testFindDataSetsByAuthUserEmail() {
@@ -351,16 +363,16 @@ class DatasetDAOTest extends DAOTestHelper {
   void testFindDatasetPropertiesByDatasetId() {
     Dataset d = insertDataset();
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    assertEquals(properties.size(), 1);
+    assertEquals(1, properties.size());
   }
 
   @Test
   void testUpdateDataset() {
     Dataset d = insertDataset();
     Dac dac = insertDac();
-    String name = RandomStringUtils.random(20, true, true);
+    String name = randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    Integer userId = RandomUtils.nextInt(1, 1000);
+    Integer userId = randomInt(1, 1000);
 
     datasetDAO.updateDataset(d.getDatasetId(), name, now, userId, dac.getDacId());
     Dataset updated = datasetDAO.findDatasetById(d.getDatasetId());
@@ -376,8 +388,13 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty originalProperty = properties.stream().toList().get(0);
-    DatasetProperty newProperty = new DatasetProperty(d.getDatasetId(), 1, "Updated Value",
-        PropertyType.String, new Date());
+    DatasetProperty newProperty = new DatasetProperty(
+        d.getDatasetId(),
+        1,
+        "dataAccessCommitteeId",
+        "Updated Value",
+        PropertyType.String, new Date()
+    );
     List<DatasetProperty> updatedProperties = new ArrayList<>();
     updatedProperties.add(newProperty);
     datasetDAO.updateDatasetProperty(d.getDatasetId(), updatedProperties.get(0).getPropertyKey(),
@@ -405,6 +422,7 @@ class DatasetDAOTest extends DAOTestHelper {
         new DatasetProperty(
             d.getDatasetId(),
             1,
+            "dataAccessCommitteeId",
             "10",
             PropertyType.Number,
             new Date())
@@ -433,6 +451,7 @@ class DatasetDAOTest extends DAOTestHelper {
     DatasetProperty propToAdd = new DatasetProperty(
         d.getDatasetId(),
         1,
+        "dataAccessCommitteeId",
         date.toString(),
         PropertyType.Date,
         new Date());
@@ -464,6 +483,7 @@ class DatasetDAOTest extends DAOTestHelper {
         new DatasetProperty(
             d.getDatasetId(),
             1,
+            "dataAccessCommitteeId",
             bool.toString(),
             PropertyType.Boolean,
             new Date())
@@ -494,6 +514,7 @@ class DatasetDAOTest extends DAOTestHelper {
         new DatasetProperty(
             d.getDatasetId(),
             1,
+            "dataAccessCommitteeId",
             jsonObject.toString(),
             PropertyType.Json,
             new Date())
@@ -523,6 +544,7 @@ class DatasetDAOTest extends DAOTestHelper {
         new DatasetProperty(
             d.getDatasetId(),
             1,
+            "dataAccessCommitteeId",
             value,
             PropertyType.String,
             new Date())
@@ -606,15 +628,15 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
-    String ds1Name = RandomStringUtils.randomAlphabetic(20);
+    String ds1Name = randomAlphabetic(20);
     createDatasetProperty(ds1.getDatasetId(), "studyName", ds1Name, PropertyType.String);
 
     Dataset ds2 = insertDataset();
-    String ds2Name = RandomStringUtils.randomAlphabetic(25);
+    String ds2Name = randomAlphabetic(25);
     createDatasetProperty(ds2.getDatasetId(), "studyName", ds2Name, PropertyType.String);
 
     Dataset ds3 = insertDataset();
-    String ds3Name = RandomStringUtils.randomAlphabetic(15);
+    String ds3Name = randomAlphabetic(15);
     createDatasetProperty(ds3.getDatasetId(), "studyName", ds3Name, PropertyType.String);
 
     Study study = insertStudyWithProperties();
@@ -699,7 +721,7 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testUpdateDatasetNameWithUpdateUser() {
     Dataset dataset = insertDataset();
-    String newName = RandomStringUtils.randomAlphabetic(dataset.getName().length() + 5);
+    String newName = randomAlphabetic(dataset.getName().length() + 5);
     datasetDAO.updateDatasetNameWithUpdateUser(
         dataset.getDatasetId(),
         newName,
@@ -758,9 +780,9 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testUniqueDatasetName() {
-    Dataset dataset0 = createStaticDataset();
+    createStaticDataset();
     try {
-      Dataset dataset1 = createStaticDataset();
+      createStaticDataset();
       Assertions.fail();
     } catch (Exception e) {
       assertTrue(e.getMessage().contains("duplicate key value violates unique constraint"));
@@ -851,9 +873,8 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(approvedDatasets);
 
     // checks that all datasets in the result are approved
-    approvedDatasets.forEach(approvedDataset -> {
-      assertTrue(datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval());
-    });
+    approvedDatasets.forEach(approvedDataset -> assertTrue(
+        datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
 
     ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(),
         dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(),
@@ -973,7 +994,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,
       List<Dataset> datasets) {
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 999999);
+    String darCode = "DAR-" + randomInt(1, 999999);
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     IntStream.range(0, datasets.size()).forEach(index -> {
@@ -989,18 +1010,17 @@ class DatasetDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(roleId, userId, dacId);
   }
 
-  private FileStorageObject createFileStorageObject() {
+  private void createFileStorageObject() {
     FileCategory category = List.of(FileCategory.values())
         .get(new Random().nextInt(FileCategory.values().length));
-    String entityId = RandomStringUtils.randomAlphabetic(10);
-
-    return createFileStorageObject(entityId, category);
+    String entityId = randomAlphabetic(10);
+    createFileStorageObject(entityId, category);
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-    String fileName = RandomStringUtils.randomAlphabetic(10);
-    String bucketName = RandomStringUtils.randomAlphabetic(10);
-    String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+    String fileName = randomAlphabetic(10);
+    String bucketName = randomAlphabetic(10);
+    String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
@@ -1018,9 +1038,9 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Dataset insertDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -1045,8 +1065,8 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Dac insertDac() {
     Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
         new Date());
     return dacDAO.findById(id);
   }
@@ -1059,13 +1079,13 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Study insertStudyWithProperties(User user) {
 
-    String name = RandomStringUtils.randomAlphabetic(20);
-    String description = RandomStringUtils.randomAlphabetic(20);
+    String name = randomAlphabetic(20);
+    String description = randomAlphabetic(20);
     List<String> dataTypes = List.of(
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20)
+        randomAlphabetic(20),
+        randomAlphabetic(20)
     );
-    String piName = RandomStringUtils.randomAlphabetic(20);
+    String piName = randomAlphabetic(20);
     Boolean publicVisibility = true;
 
     Integer id = studyDAO.insertStudy(
@@ -1103,13 +1123,13 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Study insertPrivateStudyWithProperties(User u) {
 
-    String name = RandomStringUtils.randomAlphabetic(20);
-    String description = RandomStringUtils.randomAlphabetic(20);
+    String name = randomAlphabetic(20);
+    String description = randomAlphabetic(20);
     List<String> dataTypes = List.of(
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20)
+        randomAlphabetic(20),
+        randomAlphabetic(20)
     );
-    String piName = RandomStringUtils.randomAlphabetic(20);
+    String piName = randomAlphabetic(20);
     Boolean publicVisibility = false;
 
     Integer id = studyDAO.insertStudy(
@@ -1140,15 +1160,14 @@ class DatasetDAOTest extends DAOTestHelper {
     return studyDAO.findStudyById(id);
   }
 
-  private DataAccessRequest createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
+  private void createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
       int datasetId, int userId) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
-    String referenceId = RandomStringUtils.randomAlphanumeric(20);
+    data.setProjectTitle(randomAlphabetic(10));
+    String referenceId = randomAlphanumeric(20);
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
         new Date(), new Date(), new Date(), data);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
-    return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
   private void createDatasetProperties(Integer datasetId) {
@@ -1164,9 +1183,9 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -1177,10 +1196,10 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private Dataset createDataset(boolean dacApproval) {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
     Instant instant = Instant.now();
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -1193,7 +1212,7 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     String name = "test_unique_constraint_dataset_name";
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -1217,6 +1236,5 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetApproval(finalVoteApproval, Instant.now(), userId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
-
 
 }

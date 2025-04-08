@@ -2,15 +2,18 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,12 +31,12 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -52,8 +55,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -68,7 +69,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DatasetResourceTest {
+class DatasetResourceTest extends AbstractTestHelper {
 
   @Mock
   private DatasetService datasetService;
@@ -81,11 +82,13 @@ class DatasetResourceTest {
   @Mock
   private UserService userService;
 
-  @Mock
-  private AuthUser authUser;
+  private final AuthUser authUser = new AuthUser().setEmail("test@test.com");
 
   @Mock
   private User user;
+
+  @Mock
+  private Response mockResponse;
 
   private DatasetResource resource;
 
@@ -94,27 +97,14 @@ class DatasetResourceTest {
         datasetRegistrationService, elasticSearchService);
   }
 
-  private String createPropertiesJson(List<DatasetPropertyDTO> properties) {
-    DatasetDTO json = new DatasetDTO();
-    json.setProperties(properties);
-    return new Gson().toJson(json);
-  }
-
-  private String createPropertiesJson(String propertyName, String propertyValue) {
-    List<DatasetPropertyDTO> jsonProperties = new ArrayList<>();
-    jsonProperties.add(new DatasetPropertyDTO(propertyName, propertyValue));
-    return createPropertiesJson(jsonProperties);
-  }
-
   @Test
   void testPatchByDatasetUpdate_emptyInput() {
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
@@ -126,13 +116,12 @@ class DatasetResourceTest {
 
   @Test
   void testPatchByDatasetUpdate_malformedInput() {
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
 
@@ -163,14 +152,13 @@ class DatasetResourceTest {
   @Test
   void testPatchByDatasetUpdate_userForbiddenException() {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 10));
+    dataset.setDatasetId(randomInt(1, 10));
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 10));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 10));
     // This ensures the dataset create user is NOT the current authUser
-    dataset.setCreateUserId(RandomUtils.nextInt(100, 200));
+    dataset.setCreateUserId(randomInt(100, 200));
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "{}")) {
@@ -183,8 +171,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -194,11 +182,11 @@ class DatasetResourceTest {
     dataset.setProperties(Set.of(dataLocationProp));
 
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    DatasetPatch patch = new DatasetPatch(dataset.getDatasetName(), dataset.getProperties().stream().toList());
+    DatasetPatch patch = new DatasetPatch(dataset.getDatasetName(),
+        dataset.getProperties().stream().toList());
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -213,8 +201,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -231,11 +219,10 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     when(datasetService.findAllDatasetNames()).thenReturn(List.of(dataset.getName(), patch.name()));
@@ -248,12 +235,12 @@ class DatasetResourceTest {
   }
 
   @Test
-  void testPatchByDatasetUpdate_patchable() {
+  void testPatchByDatasetUpdate_patchable() throws Exception {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -270,18 +257,18 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(DataLocation.TDR_LOCATION.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      verify(elasticSearchService, never()).indexDataset(dataset, user);
     }
   }
 
@@ -290,8 +277,8 @@ class DatasetResourceTest {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty dataLocationProp = new DatasetProperty();
     dataLocationProp.setPropertyName("data location");
@@ -312,9 +299,8 @@ class DatasetResourceTest {
     DatasetPatch patch = new DatasetPatch(null, List.of(patchProp));
 
     when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -325,12 +311,37 @@ class DatasetResourceTest {
   }
 
   @Test
+  void testPatchByDatasetUpdate_invokeIndexUpdate() throws Exception {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
+    dataset.setIndexedDate(new Date());
+    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    String newName = randomAlphabetic(20);
+    DatasetPatch patch = new DatasetPatch(newName, List.of());
+
+    when(datasetRegistrationService.patchDataset(any(), any(), any())).thenReturn(dataset);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
+    dataset.setCreateUserId(user.getUserId());
+
+    initResource();
+    try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
+        gson.toJson(patch))) {
+      verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, user, false);
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
   void testPatchByDatasetUpdate_invalidPatchProperties() {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
 
     DatasetProperty invalidProp = new DatasetProperty();
     invalidProp.setPropertyName("invalid");
@@ -347,11 +358,10 @@ class DatasetResourceTest {
     patchProp.setPropertyType(PropertyType.String);
     patchProp.setPropertyValue(AccessManagement.CONTROLLED.value());
 
-    DatasetPatch patch = new DatasetPatch(RandomStringUtils.randomAlphabetic(20), List.of(patchProp));
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), List.of(patchProp));
 
-    when(authUser.getEmail()).thenReturn("test@test.com");
-    when(userService.findUserByEmail("test@test.com")).thenReturn(user);
-    when(user.getUserId()).thenReturn(RandomUtils.nextInt(1, 100));
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(user.getUserId()).thenReturn(randomInt(1, 100));
     dataset.setCreateUserId(user.getUserId());
 
     initResource();
@@ -366,16 +376,18 @@ class DatasetResourceTest {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
     initResource();
-    Response response = resource.validateDatasetName("test");
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.validateDatasetName("test")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testValidateDatasetNameNotFound() {
     initResource();
-
     assertThrows(NotFoundException.class, () -> {
-      resource.validateDatasetName("test");
+      try (var response = resource.validateDatasetName("test")) {
+        fail("Should not get to this point");
+      }
     });
   }
 
@@ -383,33 +395,37 @@ class DatasetResourceTest {
   void testFindAllStudyNamesSuccess() {
     when(datasetService.findAllStudyNames()).thenReturn(Set.of("Hi", "Hello"));
     initResource();
-    Response response = resource.findAllStudyNames();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.findAllStudyNames()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testFindAllStudyNamesFail() {
     when(datasetService.findAllStudyNames()).thenThrow();
     initResource();
-    Response response = resource.findAllStudyNames();
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    try (var response = resource.findAllStudyNames()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
   }
 
   @Test
-  void testDeleteSuccessAdmin() {
+  void testDeleteSuccessAdmin() throws Exception {
     Dataset dataSet = new Dataset();
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
-    Response response = resource.delete(authUser, 1, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.delete(authUser, 1, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
-  void testDeleteSuccessChairperson() {
+  void testDeleteSuccessChairperson() throws Exception {
     Dataset dataSet = new Dataset();
     dataSet.setDatasetId(1);
     dataSet.setDacId(1);
@@ -421,10 +437,12 @@ class DatasetResourceTest {
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
-    Response response = resource.delete(authUser, 1, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.delete(authUser, 1, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -439,8 +457,9 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
     initResource();
-    Response response = resource.delete(authUser, 1, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.delete(authUser, 1, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -457,8 +476,9 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
     initResource();
-    Response response = resource.delete(authUser, 1, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.delete(authUser, 1, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -476,14 +496,15 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(dataSet);
 
     initResource();
-    Response response = resource.delete(authUser, 1, null);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.delete(authUser, 1, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
   void testIndexAllDatasets() throws Exception {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(randomInt(10, 100));
     Gson gson = GsonUtil.buildGson();
     String esResponseArray = """
         [
@@ -514,17 +535,17 @@ class DatasetResourceTest {
     StreamingOutput output = out -> out.write(
         esResponseArray.formatted(dataset.getDatasetId()).getBytes());
     when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
-    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()), user)).thenReturn(
+        output);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
-    try (Response response = resource.indexDatasets()) {
+    try (Response response = resource.indexDatasets(authUser)) {
       var entity = (StreamingOutput) response.getEntity();
       var baos = new ByteArrayOutputStream();
       entity.write(baos);
       var entityString = baos.toString();
-      Type listOfEsResponses = new TypeToken<List<JsonObject>>() {
-      }.getType();
-      List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
+      List<JsonObject> responseList = gson.fromJson(entityString, new TypeToken<>() {});
       assertEquals(1, responseList.size());
       JsonArray items = responseList.get(0).getAsJsonArray("items");
       assertEquals(1, items.size());
@@ -542,36 +563,37 @@ class DatasetResourceTest {
   @Test
   void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
-
-    Response mockResponse = Response.ok().entity(dataset).build();
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticSearchService.indexDataset(dataset)).thenReturn(mockResponse);
+    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
-    Response response = resource.indexDataset(1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.indexDataset(authUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
-  void testIndexDelete() throws IOException {
-    Response mockResponse = Response.status(HttpStatusCodes.STATUS_CODE_OK).entity("deleted")
-        .build();
-    when(elasticSearchService.deleteIndex(any())).thenReturn(mockResponse);
+  void testIndexDelete() throws IOException, SQLException {
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
+    when(userService.findUserByEmail(any())).thenReturn(user);
 
     initResource();
-    Response response = resource.deleteDatasetIndex(0);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.deleteDatasetIndex(authUser, 0)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testAutocompleteDatasets() {
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(datasetService.searchDatasetSummaries(any())).thenReturn(
         List.of(new DatasetSummary(1, "ID", "Name")));
 
     initResource();
-    try (Response response = resource.autocompleteDatasets(authUser, "test")) {
+    try (var response = resource.autocompleteDatasets(authUser, "test")) {
       assertTrue(HttpStatusCodes.isSuccess(response.getStatus()));
     }
   }
@@ -580,16 +602,16 @@ class DatasetResourceTest {
   void testSearchDatasetIndex() throws IOException {
     String query = "{ \"dataUse\": [\"HMB\"] }";
 
-    Response mockResponse = Response.ok().entity(query).build();
-    when(authUser.getEmail()).thenReturn("testauthuser@test.com");
-    when(userService.findUserByEmail("testauthuser@test.com")).thenReturn(user);
+    when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(mockResponse.getEntity()).thenReturn(query);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     initResource();
-    Response response = resource.searchDatasetIndex(authUser, query);
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertTrue(response.getEntity().toString().length() > 2);
+    try (var response = resource.searchDatasetIndex(authUser, query)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertTrue(response.getEntity().toString().length() > 2);
+    }
   }
 
   @Test
@@ -724,8 +746,9 @@ class DatasetResourceTest {
 
     initResource();
     String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
-    Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, duString)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -733,8 +756,9 @@ class DatasetResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(new User());
 
     initResource();
-    Response response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, "invalid json")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -747,8 +771,9 @@ class DatasetResourceTest {
 
     initResource();
     String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
-    Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, duString)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -758,8 +783,9 @@ class DatasetResourceTest {
 
     initResource();
     String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
-    Response response = resource.updateDatasetDataUse(new AuthUser(), 1, duString);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, duString)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -771,31 +797,33 @@ class DatasetResourceTest {
     when(datasetService.findDatasetById(any())).thenReturn(d);
 
     initResource();
-    Response response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
   }
 
   @Test
   void testFindAllDatasetsStreaming() throws Exception {
     var dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(100, 1000));
+    dataset.setDatasetId(randomInt(100, 1000));
     when(userService.findUserByEmail(any())).thenReturn(user);
     final Gson gson = GsonUtil.buildGson();
     StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
     when(datasetService.findAllDatasetsAsStreamingOutput()).thenReturn(output);
     initResource();
 
-    Response response = resource.findAllDatasetsStreaming(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    var entity = (StreamingOutput) response.getEntity();
-    var baos = new ByteArrayOutputStream();
-    entity.write(baos);
-    var entityString = baos.toString();
-    Type listOfDatasetsType = new TypeToken<List<Dataset>>() {
-    }.getType();
-    List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
-    assertThat(returnedDatasets, hasSize(1));
-    assertEquals(dataset.getDatasetId(), returnedDatasets.get(0).getDatasetId());
+    try (var response = resource.findAllDatasetsStreaming(authUser)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      var entity = (StreamingOutput) response.getEntity();
+      var baos = new ByteArrayOutputStream();
+      entity.write(baos);
+      var entityString = baos.toString();
+      Type listOfDatasetsType = new TypeToken<List<Dataset>>() {
+      }.getType();
+      List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
+      assertThat(returnedDatasets, hasSize(1));
+      assertThat(returnedDatasets, contains(dataset));
+    }
   }
 
   @Test
@@ -803,22 +831,25 @@ class DatasetResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetService.findAllDatasetStudySummaries()).thenReturn(List.of());
     initResource();
-    Response response = resource.findAllDatasetStudySummaries(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.findAllDatasetStudySummaries(authUser)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testCreateDatasetRegistration_invalidSchema_case1() {
     initResource();
-    Response response = resource.createDatasetRegistration(authUser, null, "");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.createDatasetRegistration(authUser, null, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testCreateDatasetRegistration_invalidSchema_case2() {
     initResource();
-    Response response = resource.createDatasetRegistration(authUser, null, "{}");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.createDatasetRegistration(authUser, null, "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -826,8 +857,9 @@ class DatasetResourceTest {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
     String schemaString = new Gson().toJson(schemaV1);
     initResource();
-    Response response = resource.createDatasetRegistration(authUser, null, schemaString);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.createDatasetRegistration(authUser, null, schemaString)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -842,9 +874,9 @@ class DatasetResourceTest {
     String schemaV1 = createDatasetRegistrationMock(user);
     initResource();
 
-    Response response = resource.createDatasetRegistration(authUser, null, schemaV1);
-    System.out.println(response.getEntity());
-    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    try (var response = resource.createDatasetRegistration(authUser, null, schemaV1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    }
   }
 
   @Test
@@ -1007,41 +1039,36 @@ class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+    }
   }
 
   @Test
   void testUpdateDatasetWithNoJson() {
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("validFile.txt")
-        .build();
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     initResource();
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDatasetWithInvalidJson() {
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("validFile.txt")
-        .build();
     String json = createInvalidDataset(user);
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     initResource();
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   /**
    * tests the case that there are no updates to the dataset properties, should result in success
    */
   @Test
-  void testUpdateDatasetWithNoProperties() {
+  void testUpdateDatasetWithNoProperties() throws Exception {
     Dataset dataset = new Dataset();
     FormDataContentDisposition content = FormDataContentDisposition
         .name("file")
@@ -1054,25 +1081,25 @@ class DatasetResourceTest {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(dataset);
+    when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart,
-        "{\"properties\":[]}");
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart,
+        "{\"properties\":[]}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateDatasetWIthDatasetIdNotFound() {
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("validFile.txt")
-        .build();
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     String json = createDatasetRegistrationMock(user);
     when(datasetService.findDatasetById(anyInt())).thenReturn(null);
 
     initResource();
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -1095,26 +1122,30 @@ class DatasetResourceTest {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    Response response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testSyncDataUseTranslation() {
-    when(datasetService.syncDatasetDataUseTranslation(any())).thenReturn(new Dataset());
+    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenReturn(new Dataset());
     initResource();
 
-    Response response = resource.syncDataUseTranslation(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testSyncDataUseTranslationNotFound() {
-    when(datasetService.syncDatasetDataUseTranslation(any())).thenThrow(new NotFoundException());
+    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenThrow(
+        new NotFoundException());
     initResource();
 
-    Response response = resource.syncDataUseTranslation(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   /**
@@ -1234,32 +1265,32 @@ class DatasetResourceTest {
     dataset.setDataUse(new DataUse());
 
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setName(randomAlphabetic(10));
+    study.setDescription(randomAlphabetic(20));
     study.setStudyId(12345);
-    study.setPiName(RandomStringUtils.randomAlphabetic(10));
-    study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+    study.setPiName(randomAlphabetic(10));
+    study.setDataTypes(List.of(randomAlphabetic(10)));
     study.setCreateUserId(9);
-    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
+    study.setCreateUserEmail(randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDatasetId()));
+    study.addDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
     phenotypeProperty.setType(PropertyType.String);
-    phenotypeProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    phenotypeProperty.setValue(randomAlphabetic(10));
 
     StudyProperty speciesProperty = new StudyProperty();
     speciesProperty.setKey("species");
     speciesProperty.setType(PropertyType.String);
-    speciesProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    speciesProperty.setValue(randomAlphabetic(10));
 
     StudyProperty dataCustodianEmailProperty = new StudyProperty();
     dataCustodianEmailProperty.setKey("dataCustodianEmail");
     dataCustodianEmailProperty.setType(PropertyType.Json);
-    dataCustodianEmailProperty.setValue(List.of(RandomStringUtils.randomAlphabetic(10)));
+    dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
-    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+    study.addProperties(phenotypeProperty, speciesProperty, dataCustodianEmailProperty);
 
     dataset.setStudy(study);
 

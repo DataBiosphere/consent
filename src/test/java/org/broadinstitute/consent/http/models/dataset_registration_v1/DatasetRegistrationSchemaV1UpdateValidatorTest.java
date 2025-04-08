@@ -296,7 +296,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     study.getDatasets().add(dataset);
     ArrayList<Integer> datasetIds = new ArrayList<>(study.getDatasetIds().stream().toList());
     datasetIds.add(dataset.getDatasetId());
-    study.setDatasetIds(new HashSet<>(datasetIds));
+    study.addDatasetIds(new HashSet<>(datasetIds));
 
     assertThrows(BadRequestException.class, () -> {
       validator.validate(study, registration);
@@ -432,7 +432,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     dataset.setDatasetId(RandomUtils.nextInt(10, 100));
     dataset.setDacId(RandomUtils.nextInt(10, 100));
     study.addDatasets(List.of(dataset));
-    study.setDatasetIds(Set.of(dataset.getDatasetId()));
+    study.addDatasetIds(Set.of(dataset.getDatasetId()));
     return study;
   }
 

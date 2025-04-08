@@ -96,7 +96,7 @@ public class VoteResource extends Resource {
       }
 
       List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(),
-          voteUpdate.getRationale());
+          voteUpdate.getRationale(), user);
       return Response.ok().entity(updatedVotes).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

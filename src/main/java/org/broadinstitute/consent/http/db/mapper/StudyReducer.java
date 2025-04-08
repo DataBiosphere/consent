@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -51,8 +50,6 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
           // do nothing.
         }
       }
-    } else if (Objects.isNull(study.getProperties())) {
-      study.setProperties(new HashSet<>());
     }
 
     if (hasNonZeroColumn(rowView, "fso_file_storage_object_id")
