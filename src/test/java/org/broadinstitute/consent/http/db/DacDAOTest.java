@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -81,8 +84,7 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
 
     Set<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
-    assertFalse(users.isEmpty());
-    assertEquals(1, users.size());
+    assertThat(users, hasSize(1));
   }
 
   @Test
@@ -98,12 +100,10 @@ class DacDAOTest extends DAOTestHelper {
     List<Dac> dacs = dacDAO.findAll();
 
     Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElseThrow();
-    assertEquals(dacId1, dac1.getDacId());
     assertEquals(0, dac1.getDatasetIds().size());
     assertNull(dac1.getAssociatedDaa());
 
     Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElseThrow();
-    assertEquals(dacId2, dac2.getDacId());
     assertEquals(0, dac2.getDatasetIds().size());
     assertNull(dac2.getAssociatedDaa());
   }
@@ -132,16 +132,14 @@ class DacDAOTest extends DAOTestHelper {
 
     Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElseThrow();
     List<Integer> datasetIds = dac1.getDatasetIds();
-    assertEquals(dacId1, dac1.getDacId());
-    assertEquals(1, datasetIds.size());
-    assertEquals(datasetId, datasetIds.get(0));
+    assertThat(datasetIds, hasSize(1));
+    assertThat(datasetIds, contains(datasetId));
     assertNull(dac1.getAssociatedDaa());
 
     Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElseThrow();
     List<Integer> datasetIds2 = dac2.getDatasetIds();
-    assertEquals(dacId2, dac2.getDacId());
-    assertEquals(1, datasetIds2.size());
-    assertEquals(datasetId2, datasetIds2.get(0));
+    assertThat(datasetIds2, hasSize(1));
+    assertThat(datasetIds2, contains(datasetId2));
     assertNull(dac2.getAssociatedDaa());
   }
 
@@ -264,9 +262,7 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
     List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-    assertNotNull(dacMembers);
-    assertFalse(dacMembers.isEmpty());
-    assertEquals(4, dacMembers.size());
+    assertThat(dacMembers, hasSize(4));
   }
 
   @Test
@@ -284,14 +280,10 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
 
     List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
-    assertNotNull(chairs);
-    assertFalse(chairs.isEmpty());
-    assertEquals(1, chairs.size());
+    assertThat(chairs, hasSize(1));
 
     List<User> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
-    assertNotNull(members);
-    assertFalse(members.isEmpty());
-    assertEquals(3, members.size());
+    assertThat(members, hasSize(3));
   }
 
   @Test
@@ -412,7 +404,7 @@ class DacDAOTest extends DAOTestHelper {
     createDataAccessRequestInCollectionWithDataset(collection, d1);
 
     Collection<Dac> results = dacDAO.findDacsForCollectionId(collection.getDarCollectionId());
-    assertEquals(1, results.size());
+    assertThat(results, hasSize(1));
     assertTrue(results.stream().map(Dac::getDacId).toList().contains(dac.getDacId()));
   }
 
