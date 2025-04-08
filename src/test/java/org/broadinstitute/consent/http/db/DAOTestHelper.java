@@ -152,7 +152,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   }
 
   @BeforeEach()
-  public void before() {
+  void before() {
     testingDAO.truncateAllTables();
   }
 
