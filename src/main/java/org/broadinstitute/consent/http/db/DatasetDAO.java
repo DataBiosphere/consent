@@ -32,6 +32,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
@@ -177,7 +178,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
       """)
-  List<Dataset> findDatasetsByIdList(@BindList("datasetIds") Collection<Integer> datasetIds);
+  List<Dataset> findDatasetsByIdList(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> datasetIds);
 
   @SqlQuery("""
       SELECT dataset_id FROM dataset ORDER BY dataset_id

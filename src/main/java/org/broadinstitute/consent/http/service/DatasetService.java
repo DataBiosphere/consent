@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -10,7 +11,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,6 +52,7 @@ public class DatasetService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
+  private final ElasticSearchService elasticSearchService;
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
@@ -60,12 +61,13 @@ public class DatasetService implements ConsentLogger {
   public Integer datasetBatchSize = 50;
 
   @Inject
-  public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, EmailService emailService,
-      OntologyService ontologyService, StudyDAO studyDAO,
-      DatasetServiceDAO datasetServiceDAO, UserDAO userDAO) {
+  public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, ElasticSearchService
+      elasticSearchService, EmailService emailService, OntologyService ontologyService, StudyDAO
+      studyDAO, DatasetServiceDAO datasetServiceDAO, UserDAO userDAO) {
     this.datasetDAO = dataSetDAO;
     this.daaDAO = daaDAO;
     this.dacDAO = dacDAO;
+    this.elasticSearchService = elasticSearchService;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
@@ -140,10 +142,11 @@ public class DatasetService implements ConsentLogger {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
+    elasticSearchService.synchronizeDatasetInESIndex(d, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
-  public Dataset syncDatasetDataUseTranslation(Integer datasetId) {
+  public Dataset syncDatasetDataUseTranslation(Integer datasetId, User user) {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset == null) {
       throw new NotFoundException("Dataset not found");
@@ -152,18 +155,32 @@ public class DatasetService implements ConsentLogger {
     String translation = ontologyService.translateDataUse(dataset.getDataUse(),
         DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
-
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
+      try (var response = elasticSearchService.deleteIndex(datasetId, userId)) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+        }
+      }
       datasetServiceDAO.deleteDataset(dataset, userId);
     }
   }
 
   public void deleteStudy(Study study, User user) throws Exception {
+    study.getDatasetIds().forEach(datasetId -> {
+      try (var response = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     datasetServiceDAO.deleteStudy(study, user);
   }
 
@@ -183,6 +200,7 @@ public class DatasetService implements ConsentLogger {
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
+      elasticSearchService.synchronizeDatasetInESIndex(dataset, user, true);
       datasetReturn = datasetDAO.findDatasetById(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -201,7 +219,7 @@ public class DatasetService implements ConsentLogger {
     return datasetReturn;
   }
 
-  private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval)
+  private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, boolean approval)
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
     if (approval) {
@@ -319,7 +337,7 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
-
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -363,23 +381,23 @@ public class DatasetService implements ConsentLogger {
   }
 
   public Study updateStudyCustodians(User user, Integer studyId, String custodians) {
-    logInfo(String.format("User %s is updating custodians for study id: %s; custodians: %s", user.getEmail(), studyId, custodians));
+    logInfo(String.format("User %s is updating custodians for study id: %s; custodians: %s",
+        user.getEmail(), studyId, custodians));
     Study study = studyDAO.findStudyById(studyId);
     if (study == null) {
       throw new NotFoundException("Study not found");
     }
-    Optional<StudyProperty> optionalProp = study.getProperties() == null ?
-        Optional.empty() :
-        study
-        .getProperties()
-        .stream()
-        .filter(p -> p.getKey().equals(dataCustodianEmail))
-        .findFirst();
-    if (optionalProp.isPresent()) {
-      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
+    boolean propPresent = study.getProperties().stream()
+        .anyMatch(prop -> prop.getKey().equals(dataCustodianEmail));
+    if (propPresent) {
+      studyDAO.updateStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(),
+          custodians);
     } else {
-      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
+      studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(),
+          custodians);
     }
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    datasets.forEach(dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
     return studyDAO.findStudyById(studyId);
   }
 
@@ -524,12 +542,6 @@ public class DatasetService implements ConsentLogger {
 
   public void setDatasetBatchSize(Integer datasetBatchSize) {
     this.datasetBatchSize = datasetBatchSize;
-  }
-
-  public Dataset updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
-      throws SQLException {
-    datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
-    return datasetDAO.findDatasetById(datasetId);
   }
 
 }

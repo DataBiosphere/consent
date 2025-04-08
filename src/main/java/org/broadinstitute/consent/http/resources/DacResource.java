@@ -270,7 +270,7 @@ public class DacResource extends Resource {
         throw new BadRequestException("Invalid request payload");
       }
       Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
-      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset))  {
+      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset, user))  {
         if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
           logWarn("Non-OK response when reindexing dataset with id: " + datasetId);
         }

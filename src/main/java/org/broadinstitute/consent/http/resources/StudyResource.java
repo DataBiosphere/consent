@@ -21,7 +21,6 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -135,7 +134,7 @@ public class StudyResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      final User user = userService.findUserByEmail(authUser.getEmail());
       Study study = datasetService.getStudyWithDatasetsById(studyId);
 
       if (Objects.isNull(study)) {
@@ -157,15 +156,15 @@ public class StudyResource extends Resource {
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      if (studyDatasetIds != null) {
-        studyDatasetIds.forEach(id -> {
-          try {
-            elasticSearchService.deleteIndex(id);
-          } catch (IOException e) {
-            logException(e);
+      studyDatasetIds.forEach(id -> {
+        try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
+          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+            logWarn("Non-OK response when deleting index for dataset with id: " + id);
           }
-        });
-      }
+        } catch (IOException e) {
+          logException(e);
+        }
+      });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -222,7 +221,7 @@ public class StudyResource extends Resource {
             registration,
             user,
             files);
-        try (Response indexResponse = elasticSearchService.indexStudy(studyId))  {
+        try (Response indexResponse = elasticSearchService.indexStudy(studyId, user))  {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);
           }
