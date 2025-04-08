@@ -469,7 +469,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     prop.setStudyId(study.getStudyId());
     prop.setType(PropertyType.Json);
     prop.setKey(dataCustodianEmail);
-    study.addProperties(Set.of(prop));
+    study.addProperties(prop);
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
     datasetService.updateStudyCustodians(user, study.getStudyId(), "[new-user@test.com]");

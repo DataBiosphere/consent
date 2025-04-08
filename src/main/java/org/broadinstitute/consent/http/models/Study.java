@@ -78,8 +78,8 @@ public class Study {
     return properties;
   }
 
-  public void addProperties(Set<StudyProperty> properties) {
-    this.properties.addAll(properties);
+  public void addProperties(StudyProperty... properties) {
+    this.properties.addAll(Set.of(properties));
   }
 
   public void addProperty(StudyProperty prop) {

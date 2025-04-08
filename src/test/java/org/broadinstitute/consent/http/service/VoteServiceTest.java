@@ -831,7 +831,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     Study study = new Study();
     study.setStudyId(1);
-    study.addProperties(Set.of(custodianStudyProperty));
+    study.addProperties(custodianStudyProperty);
     study.setCreateUserId(studySubmitter.getUserId());
 
     Dataset d1 = new Dataset();
@@ -900,7 +900,7 @@ class VoteServiceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setName(randomAlphabetic(10));
     study.setStudyId(1);
-    study.addProperties(Set.of(custodianStudyProperty));
+    study.addProperties(custodianStudyProperty);
     study.setCreateUserId(studySubmitter.getUserId());
 
     Dataset d1 = new Dataset();

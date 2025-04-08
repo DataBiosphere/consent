@@ -235,12 +235,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.addProperties(Set.of(
+    study.addProperties(
         createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    ));
+    );
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
         createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
@@ -389,11 +389,11 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.addProperties(Set.of(
+    study.addProperties(
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    ));
+    );
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
         createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),

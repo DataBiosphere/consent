@@ -333,6 +333,18 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(datasets.get(0).getCreateUser());
   }
 
+  @Test
+  void testFindDatasetsByEmptyIdList() {
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of());
+    assertTrue(datasets.isEmpty());
+  }
+
+  @Test
+  void testFindDatasetsByNullIdList() {
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(null);
+    assertTrue(datasets.isEmpty());
+  }
+
   // User -> UserRoles -> DACs -> Consents -> Consent Associations -> DataSets
   @Test
   void testFindDataSetsByAuthUserEmail() {

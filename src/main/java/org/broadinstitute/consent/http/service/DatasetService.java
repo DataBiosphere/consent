@@ -219,10 +219,10 @@ public class DatasetService implements ConsentLogger {
     return datasetReturn;
   }
 
-  private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, Boolean approval)
+  private void sendDatasetApprovalNotificationEmail(Dataset dataset, User user, boolean approval)
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
-    if (Boolean.TRUE.equals(approval)) {
+    if (approval) {
       emailService.sendDatasetApprovedMessage(
           user,
           dac.getName(),
@@ -396,8 +396,7 @@ public class DatasetService implements ConsentLogger {
       studyDAO.insertStudyProperty(studyId, dataCustodianEmail, PropertyType.Json.toString(),
           custodians);
     }
-    List<Dataset> datasets = study.getDatasetIds().isEmpty() ? List.of()
-        : datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
     datasets.forEach(dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
     return studyDAO.findStudyById(studyId);
   }

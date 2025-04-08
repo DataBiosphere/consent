@@ -1290,7 +1290,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataCustodianEmailProperty.setType(PropertyType.Json);
     dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
-    study.addProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+    study.addProperties(phenotypeProperty, speciesProperty, dataCustodianEmailProperty);
 
     dataset.setStudy(study);
 

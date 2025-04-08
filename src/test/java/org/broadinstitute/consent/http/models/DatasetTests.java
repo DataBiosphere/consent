@@ -60,7 +60,7 @@ class DatasetTests {
     JsonArray a = new JsonArray();
     a.add(user.getEmail());
     p.setValue(a);
-    study.addProperties(Set.of(p));
+    study.addProperties(p);
 
     assertTrue(dataset.isCustodian(user));
   }
@@ -80,7 +80,7 @@ class DatasetTests {
     JsonArray a = new JsonArray();
     a.add("different_user@test.com");
     p.setValue(a);
-    study.addProperties(Set.of(p));
+    study.addProperties(p);
 
     assertFalse(dataset.isCustodian(user));
   }
