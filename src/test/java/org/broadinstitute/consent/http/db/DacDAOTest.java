@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -112,7 +110,9 @@ class DacDAOTest extends DAOTestHelper {
     Integer dacId1 = createRandomDAC();
     Integer dacId2 = createRandomDAC();
     User user = createUser();
-    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), dacId1);
+    Integer datasetId = datasetDAO.insertDataset(randomAlphabetic(20),
+        new Timestamp(new Date().getTime()), user.getUserId(), randomAlphabetic(20),
+        new DataUseBuilder().setGeneralUse(true).build().toString(), dacId1);
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
     dsp.setDatasetId(datasetId);
@@ -121,7 +121,9 @@ class DacDAOTest extends DAOTestHelper {
     dsp.setCreateDate(new Date());
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
-    Integer datasetId2 = datasetDAO.insertDataset(RandomStringUtils.random(20, true, true), new Timestamp(new Date().getTime()), user.getUserId(), RandomStringUtils.random(20, true, true), new DataUseBuilder().setGeneralUse(true).build().toString(), dacId2);
+    Integer datasetId2 = datasetDAO.insertDataset(randomAlphabetic(20),
+        new Timestamp(new Date().getTime()), user.getUserId(), randomAlphabetic(20),
+        new DataUseBuilder().setGeneralUse(true).build().toString(), dacId2);
 
     List<Dac> dacs = dacDAO.findAll();
 
@@ -145,12 +147,14 @@ class DacDAOTest extends DAOTestHelper {
     User user = createUser();
 
     Integer dacId1 = createRandomDAC();
-    Integer daaId1 = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacId1);
+    Integer daaId1 = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(),
+        new Date().toInstant(), dacId1);
     createFSO(user.getUserId(), daaId1);
     daaDAO.createDacDaaRelation(dacId1, daaId1);
 
     Integer dacId2 = createRandomDAC();
-    Integer daaId2 = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), dacId2);
+    Integer daaId2 = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(),
+        new Date().toInstant(), dacId2);
     createFSO(user.getUserId(), daaId2);
     daaDAO.createDacDaaRelation(dacId2, daaId2);
 
@@ -172,7 +176,8 @@ class DacDAOTest extends DAOTestHelper {
   void testFindByIdWithDaa() {
     Integer id = createRandomDAC();
     User user = createUser();
-    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(), new Date().toInstant(), id);
+    Integer daaId = daaDAO.createDaa(user.getUserId(), new Date().toInstant(), user.getUserId(),
+        new Date().toInstant(), id);
     DataAccessAgreement daa = daaDAO.findById(daaId);
     daaDAO.createDacDaaRelation(id, daaId);
     Dac dac = dacDAO.findById(id);
@@ -200,8 +205,8 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.updateDac(newValue, newValue, new Date(), dacId);
     Dac updatedDac = dacDAO.findById(dacId);
 
-    assertEquals(updatedDac.getName(), newValue);
-    assertEquals(updatedDac.getDescription(), newValue);
+    assertEquals(newValue, updatedDac.getName());
+    assertEquals(newValue, updatedDac.getDescription());
   }
 
   @Test
@@ -212,9 +217,9 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.updateDac(newValue, newValue, newEmail, new Date(), dac.getDacId());
     Dac updatedDac = dacDAO.findById(dac.getDacId());
 
-    assertEquals(updatedDac.getName(), newValue);
-    assertEquals(updatedDac.getDescription(), newValue);
-    assertEquals(updatedDac.getEmail(), newEmail);
+    assertEquals(newValue, updatedDac.getName());
+    assertEquals(newValue, updatedDac.getDescription());
+    assertEquals(newEmail, updatedDac.getEmail());
   }
 
   @Test
@@ -258,7 +263,7 @@ class DacDAOTest extends DAOTestHelper {
     List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
     assertNotNull(dacMembers);
     assertFalse(dacMembers.isEmpty());
-    assertEquals(dacMembers.size(), 4);
+    assertEquals(4, dacMembers.size());
   }
 
   @Test
@@ -278,12 +283,12 @@ class DacDAOTest extends DAOTestHelper {
     List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
     assertNotNull(chairs);
     assertFalse(chairs.isEmpty());
-    assertEquals(chairs.size(), 1);
+    assertEquals(1, chairs.size());
 
     List<User> members = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), memberRoleId);
     assertNotNull(members);
     assertFalse(members.isEmpty());
-    assertEquals(members.size(), 3);
+    assertEquals(3, members.size());
   }
 
   @Test
@@ -292,7 +297,7 @@ class DacDAOTest extends DAOTestHelper {
     Integer roleId = UserRoles.MEMBER.getRoleId();
     User user = createUser();
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
-    List<UserRole> memberRoles = dacDAO.findUserRolesForUser(user.getUserId());
+    List<UserRole> memberRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(memberRoles.isEmpty());
     UserRole userRole = memberRoles.get(0);
     assertEquals(userRole.getDacId(), dac.getDacId());
@@ -305,7 +310,7 @@ class DacDAOTest extends DAOTestHelper {
     Integer roleId = UserRoles.CHAIRPERSON.getRoleId();
     User user = createUser();
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
-    List<UserRole> chairRoles = dacDAO.findUserRolesForUser(user.getUserId());
+    List<UserRole> chairRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(chairRoles.isEmpty());
     UserRole userRole = chairRoles.get(0);
     assertEquals(userRole.getDacId(), dac.getDacId());
@@ -321,10 +326,10 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
     User user2 = createUser();
     dacDAO.addDacMember(chairRoleId, user2.getUserId(), dac.getDacId());
-    List<UserRole> userRoles = dacDAO.findUserRolesForUser(user2.getUserId());
+    List<UserRole> userRoles = userDAO.findUserById(user2.getUserId()).getRoles();
     userRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
-    List<UserRole> userRolesRemoved = dacDAO.findUserRolesForUser(user2.getUserId());
-    assertTrue(userRolesRemoved.isEmpty());
+    List<UserRole> userRolesRemoved = userDAO.findUserById(user2.getUserId()).getRoles();
+    assertNull(userRolesRemoved);
   }
 
   @Test
@@ -343,9 +348,8 @@ class DacDAOTest extends DAOTestHelper {
     User chair = createUser(); // Creates a user with researcher role; UserRole #1
     dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(),
         dac.getDacId()); // ; UserRole #2
-    List<UserRole> userRoles = dacDAO.findUserRolesForUser(chair.getUserId()).stream().distinct()
-        .toList();
-    assertEquals(userRoles.size(), 2);
+    List<UserRole> userRoles = userDAO.findUserById(chair.getUserId()).getRoles();
+    assertEquals(2, userRoles.size());
   }
 
   @Test
@@ -359,7 +363,7 @@ class DacDAOTest extends DAOTestHelper {
         dac.getDacId()); // ; UserRole #4
     List<Integer> userIds = Arrays.asList(chair.getUserId(), member.getUserId());
     List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds).stream().distinct().toList();
-    assertEquals(userRoles.size(), 4);
+    assertEquals(4, userRoles.size());
   }
 
   @Test
@@ -414,8 +418,8 @@ class DacDAOTest extends DAOTestHelper {
   private Dac insertDacWithEmail() {
     String testEmail = "test@email.com";
     Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + randomAlphabetic(20),
+        "Test_" + randomAlphabetic(20),
         testEmail,
         new Date());
     return dacDAO.findById(id);
@@ -427,18 +431,18 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
+    int i1 = randomInt(5, 10);
+    String email = randomAlphabetic(i1);
+    String name = randomAlphabetic(10);
     Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         userId,
         new Date());
@@ -449,19 +453,19 @@ class DacDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
-    createDataAccessRequest(user.getUserId(), collection_id);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");
     entry.setValue("value");
@@ -501,11 +505,12 @@ class DacDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphabetic(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(),
+        null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -523,9 +528,9 @@ class DacDAOTest extends DAOTestHelper {
 
   private Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphabetic(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), dacId);
@@ -535,16 +540,16 @@ class DacDAOTest extends DAOTestHelper {
 
   private Integer createRandomDAC() {
     return dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + randomAlphabetic(20),
+        "Test_" + randomAlphabetic(20),
         new Date());
   }
 
   private void createFSO(Integer userId, Integer daaId) {
     fileStorageObjectDAO.insertNewFile(
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         FileCategory.DATA_ACCESS_AGREEMENT.getValue(),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         MediaType.TEXT_PLAIN_TYPE.getType(),
         daaId.toString(),
         userId,

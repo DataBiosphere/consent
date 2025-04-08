@@ -248,11 +248,6 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @UseRowMapper(UserRoleMapper.class)
   @SqlQuery(
-      "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = :userId")
-  List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
-
-  @UseRowMapper(UserRoleMapper.class)
-  @SqlQuery(
       "SELECT ur.*, r.name FROM user_role ur "
           + " INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id IN (<userIds>)")
   List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
