@@ -97,14 +97,12 @@ class DacDAOTest extends DAOTestHelper {
     Integer dacId2 = createRandomDAC();
     List<Dac> dacs = dacDAO.findAll();
 
-    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElse(null);
-    assertNotNull(dac1);
+    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElseThrow();
     assertEquals(dacId1, dac1.getDacId());
     assertEquals(0, dac1.getDatasetIds().size());
     assertNull(dac1.getAssociatedDaa());
 
-    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElse(null);
-    assertNotNull(dac2);
+    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElseThrow();
     assertEquals(dacId2, dac2.getDacId());
     assertEquals(0, dac2.getDatasetIds().size());
     assertNull(dac2.getAssociatedDaa());
@@ -132,16 +130,14 @@ class DacDAOTest extends DAOTestHelper {
 
     List<Dac> dacs = dacDAO.findAll();
 
-    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElse(null);
-    assertNotNull(dac1);
+    Dac dac1 = dacs.stream().filter(d -> d.getDacId().equals(dacId1)).findFirst().orElseThrow();
     List<Integer> datasetIds = dac1.getDatasetIds();
     assertEquals(dacId1, dac1.getDacId());
     assertEquals(1, datasetIds.size());
     assertEquals(datasetId, datasetIds.get(0));
     assertNull(dac1.getAssociatedDaa());
 
-    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElse(null);
-    assertNotNull(dac2);
+    Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElseThrow();
     List<Integer> datasetIds2 = dac2.getDatasetIds();
     assertEquals(dacId2, dac2.getDacId());
     assertEquals(1, datasetIds2.size());
@@ -306,8 +302,7 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
     List<UserRole> memberRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(memberRoles.isEmpty());
-    UserRole userRole = memberRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElse(null);
-    assertNotNull(userRole);
+    UserRole userRole = memberRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElseThrow();
     assertEquals(userRole.getDacId(), dac.getDacId());
   }
 
@@ -319,8 +314,7 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
     List<UserRole> chairRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(chairRoles.isEmpty());
-    UserRole userRole = chairRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElse(null);
-    assertNotNull(userRole);
+    UserRole userRole = chairRoles.stream().filter(r -> r.getRoleId().equals(roleId)).findFirst().orElseThrow();
     assertEquals(userRole.getDacId(), dac.getDacId());
   }
 
