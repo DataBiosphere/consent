@@ -77,25 +77,25 @@
     <insert tableName="dac_automation_rules">
       <column name="rule" value="GRU_V1"/>
       <column name="description"
-        value="Automatically approve Data Access Requests when the dataset Data Use is GRU only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **General Research Use (GRU)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Health/Medical/Biomedical Use (HMB)** only with no ethical concerns designated."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <insert tableName="dac_automation_rules">
       <column name="rule" value="HMB_V1"/>
       <column name="description"
-        value="Automatically approve Data Access Requests when the dataset Data Use is HMB only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **Health/Medical/Biomedical Use (HMB)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Health/Medical/Biomedical Use (HMB)** only with no ethical concerns designated."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <insert tableName="dac_automation_rules">
       <column name="rule" value="GRU_DSV1"/>
       <column name="description"
-        value="Automatically approve Data Access Requests when the dataset Data Use is GRU only, the data access request is HMB only, the primary purpose is to investigate a specific disease, at least one disease is provided, and when no ethical questions or other modifiers are applied to the Data Access Request."/>
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **General Research Use (GRU)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Disease Specific (DS) with one or more selected diseases** with no ethical concerns designated."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <insert tableName="dac_automation_rules">
       <column name="rule" value="HMB_DSV1"/>
       <column name="description"
-        value="Automatically approve Data Access Requests when the dataset Data Use is HMB only, the data access request is HMB, the primary purpose is to investigate a specific disease, at least one disease is provided, and when no ethical questions or other modifiers are applied to the Data Access Request."/>
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **Health/Medical/Biomedical Use (HMB)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Disease Specific (DS) with one or more selected diseases** only with no ethical concerns designated."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <rollback>
