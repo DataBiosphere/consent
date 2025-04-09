@@ -21,13 +21,13 @@ public class GeneralResearchUseWithDiseaseSpecificV1Test {
   private static Stream<Arguments> testCompare() {
     return Stream.of(
         Arguments.of(new DataUseBuilder().setGeneralUse(true),
-            new DataAccessRequestDataBuilder().setHmb(true).setDiseases(true).setOntologies(
+            new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 List.of(new OntologyEntry())), true),
         Arguments.of(new DataUseBuilder().setGeneralUse(true),
-            new DataAccessRequestDataBuilder().setHmb(true).setDiseases(false).setOntologies(
+            new DataAccessRequestDataBuilder().setDiseases(false).setOntologies(
                 List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true),
-            new DataAccessRequestDataBuilder().setHmb(true).setDiseases(true).setOntologies(
+            new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 Collections.emptyList()), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(false),
             new DataAccessRequestDataBuilder().setHmb(true), false),

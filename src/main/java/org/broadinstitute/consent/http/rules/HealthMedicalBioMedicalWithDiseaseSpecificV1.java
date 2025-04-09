@@ -10,6 +10,6 @@ public class HealthMedicalBioMedicalWithDiseaseSpecificV1 implements RuleImpleme
 
   @Override
   public boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest) {
-    return Boolean.TRUE.equals(dataset.getDataUse().getHmbResearch()) && requestIsHmbAndDiseases(dataAccessRequest.getData());
+    return Boolean.TRUE.equals(dataset.getDataUse().getHmbResearch()) && requestHasDiseases(dataAccessRequest.getData());
   }
 }

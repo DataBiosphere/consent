@@ -75,14 +75,11 @@ public interface RuleImplementationInterface {
     return Boolean.TRUE.equals(data.getHmb());
   }
 
-  default boolean requestIsHmbAndDiseases(DataAccessRequestData data) {
+  default boolean requestHasDiseases(DataAccessRequestData data) {
     if (!Boolean.TRUE.equals(data.getDiseases())) {
       return false;
     }
-    //TODO confirm we need one entry.
-    if (data.getOntologies().isEmpty()) {
-      return false;
-    }
+
     if (!StringUtils.isBlank(data.getOtherText())) {
       return false;
     }
@@ -93,6 +90,7 @@ public interface RuleImplementationInterface {
     if (!secondaryConditionChecks(data)) {
       return false;
     }
-    return Boolean.TRUE.equals(data.getHmb());
+
+    return Boolean.TRUE.equals(!data.getOntologies().isEmpty());
   }
 }
