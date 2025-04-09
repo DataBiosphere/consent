@@ -5,7 +5,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
   <changeSet id="changelog-consent-2025-03-28-automation_rules.xml.cs1" author="grushton">
     <sql>
-      CREATE TYPE dac_rule_type as ENUM ('GRU_V1', 'HMB_V1');
+      CREATE TYPE dac_rule_type as ENUM ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1');
       CREATE TYPE rule_state as ENUM ('AVAILABLE', 'DEPRECATED', 'UNAVAILABLE');
       CREATE TYPE rule_audit_action as enum ('ADD', 'REMOVE');
     </sql>
@@ -84,6 +84,18 @@
       <column name="rule" value="HMB_V1"/>
       <column name="description"
         value="Automatically approve Data Access Requests when the dataset Data Use is HMB only, the data access request is HMB only, and when no ethical questions or modifiers are applied to the Data Access Request."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="GRU_DSV1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests when the dataset Data Use is GRU only, the data access request is HMB only, the primary purpose is to investigate a specific disease, at least one disease is provided, and when no ethical questions or other modifiers are applied to the Data Access Request."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="HMB_DSV1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests when the dataset Data Use is HMB only, the data access request is HMB, the primary purpose is to investigate a specific disease, at least one disease is provided, and when no ethical questions or other modifiers are applied to the Data Access Request."/>
       <column name="state" value="AVAILABLE"/>
     </insert>
     <rollback>

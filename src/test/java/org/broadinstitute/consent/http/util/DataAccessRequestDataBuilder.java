@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.util;
 
+import java.util.List;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.OntologyEntry;
 
 public class DataAccessRequestDataBuilder {
 
@@ -89,4 +91,13 @@ public class DataAccessRequestDataBuilder {
     return this;
   }
 
+  public DataAccessRequestDataBuilder setGender(String b) {
+    data.setGender(b);
+    return this;
+  }
+
+  public DataAccessRequestDataBuilder setOntologies(List<OntologyEntry> l) {
+    data.setOntologies(l);
+    return this;
+  }
 }
