@@ -12,7 +12,8 @@ public class GeneralResearchUseWithDiseaseSpecificV1 implements RuleImplementati
 
   @Override
   public boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest) {
-    return Boolean.TRUE.equals(dataset.getDataUse().getGeneralUse()) && requestHasDiseases(
-        dataAccessRequest.getData());
+    return Boolean.TRUE.equals(dataset.getDataUse().getGeneralUse())
+        && hasNoModifiers(dataset.getDataUse())
+        && requestHasDiseases(dataAccessRequest.getData());
   }
 }

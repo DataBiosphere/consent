@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.rules;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -17,6 +19,31 @@ class GeneralResearchUseV1Test {
 
   private static Stream<Arguments> testCompare() {
     return Stream.of(
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(List.of("setDiseaseRestrictions")), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(null), new DataAccessRequestDataBuilder().setHmb(true), true),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(
+            Collections.emptyList()), new DataAccessRequestDataBuilder().setHmb(true), true),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setNonProfitUse(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setMethodsResearch(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setCollaboratorRequired(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setEthicsApprovalRequired(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGeneticStudiesOnly(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGeographicalRestrictions("setGeographicalRestrictions"), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setIllegalBehavior(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setOther("setOther"), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPopulationOriginsAncestry(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPopulation(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPublicationMoratorium("setPublicationMoratorium"), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setSecondaryOther("setSecondaryOther"), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPublicationResults(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setControl(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGender("Gender"), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setStigmatizeDiseases(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setNotHealth(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPediatric(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPsychologicalTraits(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setSexualDiseases(true), new DataAccessRequestDataBuilder().setHmb(true), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setVulnerablePopulations(true), new DataAccessRequestDataBuilder().setHmb(true), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true),
             new DataAccessRequestDataBuilder().setHmb(true), true),
         Arguments.of(new DataUseBuilder().setGeneralUse(false),

@@ -20,6 +20,55 @@ public class GeneralResearchUseWithDiseaseSpecificV1Test {
 
   private static Stream<Arguments> testCompare() {
     return Stream.of(
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(List.of("setDiseaseRestrictions")), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(null), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), true),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(
+            Collections.emptyList()), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), true),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setNonProfitUse(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setMethodsResearch(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setCollaboratorRequired(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setEthicsApprovalRequired(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGeneticStudiesOnly(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGeographicalRestrictions("setGeographicalRestrictions"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setIllegalBehavior(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setOther("setOther"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPopulationOriginsAncestry(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPopulation(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPublicationMoratorium("setPublicationMoratorium"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setSecondaryOther("setSecondaryOther"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPublicationResults(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setControl(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setGender("Gender"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setStigmatizeDiseases(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setNotHealth(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPediatric(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setPsychologicalTraits(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setSexualDiseases(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).setVulnerablePopulations(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setGeneralUse(true),
             new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 List.of(new OntologyEntry())), true),

@@ -20,6 +20,55 @@ public class HealthMedicalBioMedicalWithDiseaseSpecificV1Test {
 
   private static Stream<Arguments> testCompare() {
     return Stream.of(
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(List.of("setDiseaseRestrictions")), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(null), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), true),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(
+            Collections.emptyList()), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), true),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setNonProfitUse(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setMethodsResearch(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setCollaboratorRequired(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setEthicsApprovalRequired(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setGeneticStudiesOnly(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setGeographicalRestrictions("setGeographicalRestrictions"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setIllegalBehavior(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setOther("setOther"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPopulationOriginsAncestry(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPopulation(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPublicationMoratorium("setPublicationMoratorium"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setSecondaryOther("setSecondaryOther"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPublicationResults(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setControl(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setGender("Gender"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setStigmatizeDiseases(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setNotHealth(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPediatric(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setPsychologicalTraits(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setSexualDiseases(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setVulnerablePopulations(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setHmbResearch(true),
             new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 List.of(new OntologyEntry())), true),
