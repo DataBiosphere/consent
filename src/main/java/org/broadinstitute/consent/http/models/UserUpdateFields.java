@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import static com.google.common.base.Objects.equal;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -186,17 +188,15 @@ public class UserUpdateFields {
       return false;
     }
     UserUpdateFields that = (UserUpdateFields) o;
-    return com.google.common.base.Objects.equal(displayName, that.displayName)
-        && com.google.common.base.Objects.equal(institutionId, that.institutionId)
-        && com.google.common.base.Objects.equal(emailPreference, that.emailPreference)
-        && com.google.common.base.Objects.equal(userRoleIds, that.userRoleIds)
-        && com.google.common.base.Objects.equal(eraCommonsId, that.eraCommonsId)
-        && com.google.common.base.Objects.equal(selectedSigningOfficialId,
-        that.selectedSigningOfficialId) && com.google.common.base.Objects.equal(
-        suggestedInstitution,
-        that.suggestedInstitution) && com.google.common.base.Objects.equal(suggestedSigningOfficial,
-        that.suggestedSigningOfficial) && com.google.common.base.Objects.equal(daaAcceptance,
-        that.daaAcceptance);
+    return equal(displayName, that.displayName)
+        && equal(institutionId, that.institutionId)
+        && equal(emailPreference, that.emailPreference)
+        && equal(userRoleIds, that.userRoleIds)
+        && equal(eraCommonsId, that.eraCommonsId)
+        && equal(selectedSigningOfficialId, that.selectedSigningOfficialId)
+        && equal(suggestedInstitution, that.suggestedInstitution)
+        && equal(suggestedSigningOfficial, that.suggestedSigningOfficial)
+        && equal(daaAcceptance, that.daaAcceptance);
   }
 
   @Override
