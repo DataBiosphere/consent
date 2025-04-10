@@ -719,7 +719,6 @@ class UserResourceTest {
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of(new Dataset()));
     when(userService.findUserByEmail(anyString())).thenReturn(user);
 
-
     Response response = userResource.getDatasetsFromUserDacsV2(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -775,7 +774,6 @@ class UserResourceTest {
 
   @Test
   void testPostAcknowledgementBadJson() {
-
     String jsonString = "The quick brown fox jumped over the lazy dog.";
 
     Response response = userResource.postAcknowledgements(authUser, jsonString);
@@ -784,16 +782,12 @@ class UserResourceTest {
 
   @Test
   void testPostAcknowledgementEmptyJson() {
-
-
     Response response = userResource.postAcknowledgements(authUser, "");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testPostAcknowledgementEmptyJsonList() {
-
-
     Response response = userResource.postAcknowledgements(authUser, "[]");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
@@ -877,9 +871,8 @@ class UserResourceTest {
 
   @Test
   void testDeleteMissingAcknowledgementForUser() {
-    User user = createUserWithRole();
+    createUserWithRole();
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
-
 
     Response response = userResource.deleteUserAcknowledgement(authUser, "key");
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -891,7 +884,6 @@ class UserResourceTest {
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
         acknowledgementKey);
-
 
     Response response = userResource.getUserAcknowledgements(authUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
