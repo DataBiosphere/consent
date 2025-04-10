@@ -202,8 +202,8 @@ public class UserUpdateFields {
   @Override
   public int hashCode() {
     return com.google.common.base.Objects.hashCode(displayName, institutionId, emailPreference,
-        userRoleIds, eraCommonsId,
-        selectedSigningOfficialId, suggestedInstitution, suggestedSigningOfficial, daaAcceptance);
+        userRoleIds, eraCommonsId, selectedSigningOfficialId, suggestedInstitution,
+        suggestedSigningOfficial, daaAcceptance);
   }
 
 }
