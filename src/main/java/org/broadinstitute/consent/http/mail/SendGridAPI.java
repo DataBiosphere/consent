@@ -67,6 +67,10 @@ public class SendGridAPI implements ConsentLogger {
     this.fromAccount = fromAccount;
   }
 
+  public String getFromAccount() {
+    return fromAccount;
+  }
+
   @VisibleForTesting
   public void setSendGrid(SendGrid sendGrid) {
     this.sendGrid = sendGrid;

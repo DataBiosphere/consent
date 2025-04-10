@@ -24,6 +24,10 @@ public class FreeMarkerTemplateHelper {
     freeMarkerConfig.setDefaultEncoding(config.getDefaultEncoding());
   }
 
+  public Configuration getFreeMarkerConfig() {
+    return freeMarkerConfig;
+  }
+
   public Writer getNewCaseTemplate(String userName, String election, String entityId,
       String serverUrl) throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-case.html");

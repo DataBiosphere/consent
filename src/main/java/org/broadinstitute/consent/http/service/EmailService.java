@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.message.DACAutomationApprovalResearcherMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -53,7 +54,7 @@ public class EmailService implements ConsentLogger {
   private final DacDAO dacDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
-  private final String SERVER_URL;
+  public final String SERVER_URL;
 
   @Inject
   public EmailService(
@@ -417,6 +418,34 @@ public class EmailService implements ConsentLogger {
         userId,
         EmailType.NEW_DAA_UPLOAD_RESEARCHER,
         template
+    );
+  }
+
+  public void sendDACAutomationApprovalResearcherMessage(
+      DarCollection darCollection,
+      List<Dataset> datasets,
+      User researcher,
+      String dacName,
+      String automationRuleName,
+      User triggerUser) throws Exception {
+    DACAutomationApprovalResearcherMessage message = new DACAutomationApprovalResearcherMessage(
+        templateHelper,
+        darCollection,
+        dacName,
+        researcher,
+        SERVER_URL,
+        datasets,
+        automationRuleName,
+        sendGridAPI.getFromAccount()
+    );
+    Optional<Response> response = sendGridAPI.sendMessage(message.generateEmailMessage());
+    saveEmailAndResponse(
+        response.orElse(null),
+        darCollection.getDarCode(),
+        null,
+        triggerUser.getUserId(),
+        EmailType.DAC_AUTOMATION_APPROVAL,
+        message.getWriter()
     );
   }
 
