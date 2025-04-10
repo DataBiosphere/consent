@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -229,13 +228,14 @@ public class UserResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
+      // Users cannot update their own institution id through this service
+      if (userUpdateFields.getInstitutionId() != null) {
+        throw new BadRequestException("Institution ID is not updatable");
+      }
+
       if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
           UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");
-      }
-
-      if (!canUpdateInstitution(user, userUpdateFields.getInstitutionId())) {
-        throw new BadRequestException("Cannot update user's institution id.");
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
@@ -246,24 +246,6 @@ public class UserResource extends Resource {
       return Response.ok().entity(gson.toJson(jsonUser)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
-    }
-  }
-
-  @VisibleForTesting
-  protected boolean canUpdateInstitution(User user, Integer newInstitutionId) {
-    if ((!Objects.isNull(user.getUserId()) || !Objects.isNull(newInstitutionId)) && !Objects.equals(
-        user.getInstitutionId(), newInstitutionId)) {
-      if (user.hasUserRole(UserRoles.ADMIN)) {
-        return true; // admins can do everything.
-      }
-      if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
-        // can only update institution if not set.
-        return Objects.isNull(user.getInstitutionId()) && Objects.nonNull(newInstitutionId);
-      }
-      // User is not restricted based on role
-      return true;
-    } else {
-      return true; // no op, no change, supports keeping no institution set to no institution.
     }
   }
 

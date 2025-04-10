@@ -18,7 +18,7 @@ public class UserUpdateFields {
   protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(),
       UserRoles.MEMBER.getRoleId());
   private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
+      .map(UserRoles::getRoleId).toList();
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
@@ -177,6 +177,33 @@ public class UserUpdateFields {
                   VALID_ROLE_IDS.contains(
                       id);                            // Only remove roles we know about
             })
-        .collect(Collectors.toList());
+        .toList();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    UserUpdateFields that = (UserUpdateFields) o;
+    return com.google.common.base.Objects.equal(displayName, that.displayName)
+        && com.google.common.base.Objects.equal(institutionId, that.institutionId)
+        && com.google.common.base.Objects.equal(emailPreference, that.emailPreference)
+        && com.google.common.base.Objects.equal(userRoleIds, that.userRoleIds)
+        && com.google.common.base.Objects.equal(eraCommonsId, that.eraCommonsId)
+        && com.google.common.base.Objects.equal(selectedSigningOfficialId,
+        that.selectedSigningOfficialId) && com.google.common.base.Objects.equal(
+        suggestedInstitution,
+        that.suggestedInstitution) && com.google.common.base.Objects.equal(suggestedSigningOfficial,
+        that.suggestedSigningOfficial) && com.google.common.base.Objects.equal(daaAcceptance,
+        that.daaAcceptance);
+  }
+
+  @Override
+  public int hashCode() {
+    return com.google.common.base.Objects.hashCode(displayName, institutionId, emailPreference,
+        userRoleIds, eraCommonsId,
+        selectedSigningOfficialId, suggestedInstitution, suggestedSigningOfficial, daaAcceptance);
+  }
+
 }
