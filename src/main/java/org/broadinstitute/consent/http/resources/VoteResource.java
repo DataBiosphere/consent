@@ -95,6 +95,10 @@ public class VoteResource extends Resource {
         voteUpdateLCCheck(votes);
       }
 
+      if (votes.stream().anyMatch(vote -> vote.getType().equalsIgnoreCase(VoteType.DACBOTAPPROVE.getValue()))) {
+        return createExceptionResponse(new BadRequestException("Manual DACBot Approval is not permitted"));
+      }
+
       List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(),
           voteUpdate.getRationale(), user);
       return Response.ok().entity(updatedVotes).build();
