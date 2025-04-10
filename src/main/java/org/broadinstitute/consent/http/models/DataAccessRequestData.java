@@ -31,7 +31,6 @@ public class DataAccessRequestData {
   @Deprecated
   private String referenceId;
   private String projectTitle;
-  private Boolean checkCollaborator;
   private Boolean checkNihDataOnly;
   private String rus;
   @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
@@ -141,14 +140,6 @@ public class DataAccessRequestData {
 
   public void setProjectTitle(String projectTitle) {
     this.projectTitle = projectTitle;
-  }
-
-  public Boolean getCheckCollaborator() {
-    return checkCollaborator;
-  }
-
-  public void setCheckCollaborator(Boolean checkCollaborator) {
-    this.checkCollaborator = checkCollaborator;
   }
 
   public Boolean getCheckNihDataOnly() {
@@ -498,14 +489,6 @@ public class DataAccessRequestData {
 
   public void setPublication(Boolean publication) {
     this.publication = publication;
-  }
-
-  public Boolean getCollaboration() {
-    return collaboration;
-  }
-
-  public void setCollaboration(Boolean collaboration) {
-    this.collaboration = collaboration;
   }
 
   public String getCollaborationLetterLocation() {
