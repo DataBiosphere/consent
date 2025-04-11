@@ -102,7 +102,6 @@ public class DataAccessRequestData {
   private String itDirector;
   private String signingOfficial;
   private Boolean publication;
-  private Boolean collaboration;
   private String collaborationLetterLocation;
   private String collaborationLetterName;
   private Boolean forensicActivities;
