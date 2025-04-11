@@ -1,21 +1,21 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class InstitutionDomainMap {
 
-  private Map<String, List<String>> institutionDomainMap;
+  private Map<String, Set<String>> institutionDomainMap;
 
-  public Map<String, List<String>> getInstitutionDomainMap() {
+  public Map<String, Set<String>> getInstitutionDomainMap() {
     return institutionDomainMap;
   }
 
-  public void setInstitutionDomainMap(Map<String, List<String>> institutionDomainMap) {
+  public void setInstitutionDomainMap(Map<String, Set<String>> institutionDomainMap) {
     this.institutionDomainMap = institutionDomainMap;
   }
 
-  public List<String> getDomainsForInstitution(String institution) {
+  public Set<String> getDomainsForInstitution(String institution) {
     return institutionDomainMap.get(institution);
   }
 }

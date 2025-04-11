@@ -2,10 +2,11 @@ package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 public class InstitutionDomainMapTest {
@@ -18,9 +19,9 @@ public class InstitutionDomainMapTest {
     assertNull(map.getInstitutionDomainMap());
 
     // set a test map
-    Map<String, List<String>> testMap = Map.of(
-        "Broad Institute", List.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", List.of("harvard.edu", "hms.harvard.edu")
+    Map<String, Set<String>> testMap = Map.of(
+        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
     );
     map.setInstitutionDomainMap(testMap);
 
@@ -47,9 +48,9 @@ public class InstitutionDomainMapTest {
 
     // object representation
     InstitutionDomainMap map2 = new InstitutionDomainMap();
-    Map<String, List<String>> domainMap = Map.of(
-        "Broad Institute", List.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", List.of("harvard.edu", "hms.harvard.edu")
+    Map<String, Set<String>> domainMap = Map.of(
+        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
     );
     map2.setInstitutionDomainMap(domainMap);
 
@@ -64,19 +65,19 @@ public class InstitutionDomainMapTest {
   @Test
   public void testGetDomainsForInstitution() {
     InstitutionDomainMap map = new InstitutionDomainMap();
-    Map<String, List<String>> testMap = Map.of(
-        "Broad Institute", List.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", List.of("harvard.edu", "hms.harvard.edu")
+    Map<String, Set<String>> testMap = Map.of(
+        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
     );
 
     map.setInstitutionDomainMap(testMap);
 
-    List<String> domains = map.getDomainsForInstitution("Broad Institute");
+    Set<String> domains = map.getDomainsForInstitution("Broad Institute");
     assertEquals(2, domains.size());
-    assertEquals("broadinstitute.org", domains.get(0));
-    assertEquals("broad.mit.edu", domains.get(1));
+    assertTrue(domains.contains("broadinstitute.org"));
+    assertTrue(domains.contains("broad.mit.edu"));
 
-    List<String> emptyDomains = map.getDomainsForInstitution("Non-Existent Institution");
+    Set<String> emptyDomains = map.getDomainsForInstitution("Non-Existent Institution");
     assertNull(emptyDomains);
   }
 }
