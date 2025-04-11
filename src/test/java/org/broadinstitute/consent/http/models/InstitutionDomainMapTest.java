@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class InstitutionDomainMapTest {
 
   @Test
-  public void testInstitutionDomainMapGetAndSet() {
+  void testInstitutionDomainMapGetAndSet() {
     InstitutionDomainMap map = new InstitutionDomainMap();
 
     // should be null by default
@@ -31,7 +31,7 @@ public class InstitutionDomainMapTest {
   }
 
   @Test
-  public void testInstitutionDomainMapSerDeser() {
+  void testInstitutionDomainMapSerDeser() {
     Gson gson = new Gson();
 
     // json string representation
@@ -63,7 +63,7 @@ public class InstitutionDomainMapTest {
   }
 
   @Test
-  public void testGetDomainsForInstitution() {
+  void testGetDomainsForInstitution() {
     InstitutionDomainMap map = new InstitutionDomainMap();
     Map<String, Set<String>> testMap = Map.of(
         "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
