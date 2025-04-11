@@ -180,18 +180,9 @@ public class UserService implements ConsentLogger {
       throw new BadRequestException("User exists with this email address: " + user.getEmail());
     }
     Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
-    Integer institutionId = deriveInstitutionFromEmail(user.getEmail());
-    if (Objects.nonNull(institutionId)) {
-      userDAO.updateInstitutionId(userId, institutionId);
-    }
     insertUserRoles(user.getRoles(), userId);
     addExistingLibraryCards(user);
     return userDAO.findUserById(userId);
-  }
-
-  private Integer deriveInstitutionFromEmail(String email) {
-    String domain = email.substring(email.indexOf('@') + 1);
-    return 1;
   }
 
   public User findUserById(Integer id) throws NotFoundException {
