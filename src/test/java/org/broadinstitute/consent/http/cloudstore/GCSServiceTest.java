@@ -21,7 +21,6 @@ import java.util.UUID;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -144,26 +143,20 @@ class GCSServiceTest {
   void testReadJsonFileFromBucket() throws Exception {
     String testJson = """
         {
-          "institutionDomainMap": {
-            "Broad Institute": ["broadinstitute.org", "broad.mit.edu"],
-            "Harvard": ["harvard.edu", "hms.harvard.edu"]
-          }
+          "hello": "world",
+          "foo": "bar"
         }
         """;
 
-    String blobIdName = "institution-domain-mapping.json";
-    Blob blob = mock(Blob.class);
     when(blob.getContent()).thenReturn(testJson.getBytes());
     when(storage.get(any(BlobId.class))).thenReturn(blob);
 
     initStore();
 
-    InstitutionDomainMap result = service.readJsonFileFromBucket(blobIdName,
-        InstitutionDomainMap.class);
+    var result = service.readJsonFileFromBucket("test.json", Map.class);
 
     assertNotNull(result);
-    assertEquals(2, result.getInstitutionDomainMap().size());
-    assertTrue(
-        result.getInstitutionDomainMap().get("Broad Institute").contains("broadinstitute.org"));
+    assertEquals(2, result.size());
+    assertEquals("world", result.get("hello"));
   }
 }
