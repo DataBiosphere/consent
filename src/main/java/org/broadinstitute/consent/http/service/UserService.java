@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -32,6 +34,7 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -63,13 +66,14 @@ public class UserService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final EmailService emailService;
   private final DraftServiceDAO draftServiceDAO;
+  private final GCSService store;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
-      DraftServiceDAO draftServiceDAO) {
+      DraftServiceDAO draftServiceDAO, GCSService store) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -83,6 +87,7 @@ public class UserService implements ConsentLogger {
     this.daaDAO = daaDAO;
     this.emailService = emailService;
     this.draftServiceDAO = draftServiceDAO;
+    this.store = store;
   }
 
   /**
@@ -169,7 +174,12 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public User createUser(User user) {
+  public User createUser(User user) throws IOException {
+    var institutionDomainMap = store.readJsonFileFromBucket("institution-domain/allowlist.json",
+        InstitutionDomainMap.class);
+    if (institutionDomainMap != null) {
+      logDebug("remove this check after implementation of institution domain");
+    }
     // Default role is researcher.
     if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
       user.setResearcherRole();

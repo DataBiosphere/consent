@@ -20,12 +20,14 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -40,6 +42,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -98,13 +101,15 @@ class UserServiceTest {
   @Mock
   private DraftServiceDAO draftServiceDAO;
 
+  @Mock
+  private GCSService store;
 
   private UserService service;
 
   private void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftServiceDAO);
+        emailService, draftServiceDAO, store);
   }
 
   @Test
@@ -315,9 +320,11 @@ class UserServiceTest {
   }
 
   @Test
-  void testCreateUserNoRoles() {
+  void testCreateUserNoRoles() throws IOException {
     User u = generateUser();
     when(userDAO.findUserById(any())).thenReturn(u);
+    when(store.readJsonFileFromBucket("institution-domain/allowlist.json",
+        InstitutionDomainMap.class)).thenReturn(new InstitutionDomainMap());
     initService();
     User user = service.createUser(u);
     assertFalse(user.getRoles().isEmpty());
