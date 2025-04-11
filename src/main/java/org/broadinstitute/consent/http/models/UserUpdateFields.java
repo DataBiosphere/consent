@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import static com.google.common.base.Objects.equal;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -187,23 +185,30 @@ public class UserUpdateFields {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     UserUpdateFields that = (UserUpdateFields) o;
-    return equal(displayName, that.displayName)
-        && equal(institutionId, that.institutionId)
-        && equal(emailPreference, that.emailPreference)
-        && equal(userRoleIds, that.userRoleIds)
-        && equal(eraCommonsId, that.eraCommonsId)
-        && equal(selectedSigningOfficialId, that.selectedSigningOfficialId)
-        && equal(suggestedInstitution, that.suggestedInstitution)
-        && equal(suggestedSigningOfficial, that.suggestedSigningOfficial)
-        && equal(daaAcceptance, that.daaAcceptance);
+    return Objects.equals(displayName, that.displayName) && Objects.equals(
+        institutionId, that.institutionId) && Objects.equals(emailPreference,
+        that.emailPreference) && Objects.equals(userRoleIds, that.userRoleIds)
+        && Objects.equals(eraCommonsId, that.eraCommonsId) && Objects.equals(
+        selectedSigningOfficialId, that.selectedSigningOfficialId) && Objects.equals(
+        suggestedInstitution, that.suggestedInstitution) && Objects.equals(
+        suggestedSigningOfficial, that.suggestedSigningOfficial) && Objects.equals(
+        daaAcceptance, that.daaAcceptance);
   }
 
   @Override
   public int hashCode() {
-    return com.google.common.base.Objects.hashCode(displayName, institutionId, emailPreference,
-        userRoleIds, eraCommonsId, selectedSigningOfficialId, suggestedInstitution,
-        suggestedSigningOfficial, daaAcceptance);
+    int result = Objects.hashCode(displayName);
+    result = 31 * result + Objects.hashCode(institutionId);
+    result = 31 * result + Objects.hashCode(emailPreference);
+    result = 31 * result + Objects.hashCode(userRoleIds);
+    result = 31 * result + Objects.hashCode(eraCommonsId);
+    result = 31 * result + Objects.hashCode(selectedSigningOfficialId);
+    result = 31 * result + Objects.hashCode(suggestedInstitution);
+    result = 31 * result + Objects.hashCode(suggestedSigningOfficial);
+    result = 31 * result + Objects.hashCode(daaAcceptance);
+    return result;
   }
 
 }
