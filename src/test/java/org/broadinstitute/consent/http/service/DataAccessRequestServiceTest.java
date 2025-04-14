@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -141,7 +142,7 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of());
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(NIHComplianceRuleException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
   }

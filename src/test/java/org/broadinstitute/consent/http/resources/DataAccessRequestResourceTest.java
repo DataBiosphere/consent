@@ -129,7 +129,7 @@ class DataAccessRequestResourceTest {
     initResource();
 
     Response response = resource.createDataAccessRequest(authUser, info, "");
-    assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
   }
 
   @Test

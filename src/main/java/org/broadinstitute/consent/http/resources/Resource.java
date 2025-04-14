@@ -24,6 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.Error;
@@ -68,67 +69,22 @@ abstract public class Resource implements ConsentLogger {
       Map.entry("22021",
           ImmutablePair.of(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid byte sequence"))
   );
-
-  protected Response createExceptionResponse(Exception e) {
-    try {
-      logWarn("Returning error response to client: " + e.getMessage());
-      ExceptionHandler handler = dispatch.get(e.getClass());
-      if (handler != null) {
-        return handler.handle(e);
-      } else {
-        logException(e);
-        return Response.serverError().type(MediaType.APPLICATION_JSON).entity(
-                new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
-            .build();
-      }
-    } catch (Throwable t) {
-      logThrowable(t);
-      return Response.serverError().type(MediaType.APPLICATION_JSON)
-          .entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
-          .build();
-    }
-  }
-
-  StreamingOutput createStreamingOutput(InputStream inputStream) {
-    return output -> {
-      try {
-        output.write(IOUtils.toByteArray(inputStream));
-      } catch (Exception e) {
-        logException(e);
-        throw e;
-      }
-    };
-  }
-
-  protected void validateFileDetails(ContentDisposition contentDisposition) {
-    FileValidator validator = new FileValidator();
-    boolean validName = validator.isValidFileName("validating uploaded file name",
-        contentDisposition.getFileName(), true);
-    if (!validName) {
-      throw new IllegalArgumentException("File name is invalid");
-    }
-    boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
-    if (!validSize) {
-      throw new IllegalArgumentException(
-          "File size is invalid. Max size is: " + validator.getMaxFileUploadSize() / 1000000
-              + " MB");
-    }
-  }
-
-  private interface ExceptionHandler {
-
-    Response handle(Exception e);
-  }
-
   private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
 
   static {
+    dispatch.put(NIHComplianceRuleException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
     dispatch.put(ConsentConflictException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
     dispatch.put(UnprocessableEntityException.class, e ->
-        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)).build());
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
     dispatch.put(UnsupportedOperationException.class, e ->
         Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
             .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
@@ -217,6 +173,52 @@ abstract public class Resource implements ConsentLogger {
         .build();
   }
 
+  protected Response createExceptionResponse(Exception e) {
+    try {
+      logWarn("Returning error response to client: " + e.getMessage());
+      ExceptionHandler handler = dispatch.get(e.getClass());
+      if (handler != null) {
+        return handler.handle(e);
+      } else {
+        logException(e);
+        return Response.serverError().type(MediaType.APPLICATION_JSON).entity(
+                new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
+            .build();
+      }
+    } catch (Throwable t) {
+      logThrowable(t);
+      return Response.serverError().type(MediaType.APPLICATION_JSON)
+          .entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
+          .build();
+    }
+  }
+
+  StreamingOutput createStreamingOutput(InputStream inputStream) {
+    return output -> {
+      try {
+        output.write(IOUtils.toByteArray(inputStream));
+      } catch (Exception e) {
+        logException(e);
+        throw e;
+      }
+    };
+  }
+
+  protected void validateFileDetails(ContentDisposition contentDisposition) {
+    FileValidator validator = new FileValidator();
+    boolean validName = validator.isValidFileName("validating uploaded file name",
+        contentDisposition.getFileName(), true);
+    if (!validName) {
+      throw new IllegalArgumentException("File name is invalid");
+    }
+    boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
+    if (!validSize) {
+      throw new IllegalArgumentException(
+          "File size is invalid. Max size is: " + validator.getMaxFileUploadSize() / 1000000
+              + " MB");
+    }
+  }
+
   /**
    * Validate that the current authenticated user can access this resource. If the user has one of
    * the provided roles, then access is allowed. If not, then the authenticated user must have the
@@ -295,5 +297,10 @@ abstract public class Resource implements ConsentLogger {
     }
 
     return files;
+  }
+
+  private interface ExceptionHandler {
+
+    Response handle(Exception e);
   }
 }

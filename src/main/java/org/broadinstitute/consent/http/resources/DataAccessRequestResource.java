@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -106,7 +107,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       User user = findUserByEmail(authUser.getEmail());
       if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+        throw new NIHComplianceRuleException();
       }
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
@@ -136,7 +137,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       User user = findUserByEmail(authUser.getEmail());
       if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+        throw new NIHComplianceRuleException();
       }
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement

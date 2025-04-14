@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -244,7 +245,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
 
     if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-      throw new IllegalArgumentException("User must have a library card.");
+      throw new NIHComplianceRuleException();
     }
 
     Date now = new Date();
