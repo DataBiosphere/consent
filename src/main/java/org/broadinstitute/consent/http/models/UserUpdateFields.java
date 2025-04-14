@@ -18,7 +18,7 @@ public class UserUpdateFields {
   protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(),
       UserRoles.MEMBER.getRoleId());
   private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
+      .map(UserRoles::getRoleId).toList();
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
@@ -177,6 +177,38 @@ public class UserUpdateFields {
                   VALID_ROLE_IDS.contains(
                       id);                            // Only remove roles we know about
             })
-        .collect(Collectors.toList());
+        .toList();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    UserUpdateFields that = (UserUpdateFields) o;
+    return Objects.equals(displayName, that.displayName) && Objects.equals(
+        institutionId, that.institutionId) && Objects.equals(emailPreference,
+        that.emailPreference) && Objects.equals(userRoleIds, that.userRoleIds)
+        && Objects.equals(eraCommonsId, that.eraCommonsId) && Objects.equals(
+        selectedSigningOfficialId, that.selectedSigningOfficialId) && Objects.equals(
+        suggestedInstitution, that.suggestedInstitution) && Objects.equals(
+        suggestedSigningOfficial, that.suggestedSigningOfficial) && Objects.equals(
+        daaAcceptance, that.daaAcceptance);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(displayName);
+    result = 31 * result + Objects.hashCode(institutionId);
+    result = 31 * result + Objects.hashCode(emailPreference);
+    result = 31 * result + Objects.hashCode(userRoleIds);
+    result = 31 * result + Objects.hashCode(eraCommonsId);
+    result = 31 * result + Objects.hashCode(selectedSigningOfficialId);
+    result = 31 * result + Objects.hashCode(suggestedInstitution);
+    result = 31 * result + Objects.hashCode(suggestedSigningOfficial);
+    result = 31 * result + Objects.hashCode(daaAcceptance);
+    return result;
+  }
+
 }
