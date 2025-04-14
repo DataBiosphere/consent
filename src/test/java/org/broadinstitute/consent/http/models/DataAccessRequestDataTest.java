@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 class DataAccessRequestDataTest {
 
@@ -19,5 +20,6 @@ class DataAccessRequestDataTest {
         {"projectTitle":"title","checkNihDataOnly":false}""";
     // does not include fields removed from the object (ex. checkCollaborator, institution)
     assertEquals(expectedDarData, resultingDarData.toString());
+    JSONAssert.assertEquals(expectedDarData, resultingDarData.toString(), false);
   }
 }
