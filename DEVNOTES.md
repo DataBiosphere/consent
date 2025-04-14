@@ -49,6 +49,7 @@ create your own environment-specific configuration.
 Specific to internal Broad systems:
 
 ```bash
+mvn clean compile
 docker-compose -p consent -f config/docker-compose.yaml up
 ```
 

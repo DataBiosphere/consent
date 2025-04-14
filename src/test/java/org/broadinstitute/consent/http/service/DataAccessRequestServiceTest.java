@@ -226,7 +226,6 @@ class DataAccessRequestServiceTest {
     data.setForProfit(false);
     data.setAddiction(false);
     data.setAnvilUse(true);
-    data.setCheckCollaborator(false);
     data.setCloudUse(true);
     data.setCloudProvider("Google Cloud");
     data.setCloudProviderDescription("Google");
