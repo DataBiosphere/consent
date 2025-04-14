@@ -8,12 +8,14 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +24,11 @@ import java.util.UUID;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class GCSService implements ConsentLogger {
+
+  private static final Gson GSON = GsonUtil.gsonBuilderWithAdapters().create();
 
   private StoreConfiguration config;
   private Storage storage;
@@ -135,6 +140,23 @@ public class GCSService implements ConsentLogger {
       return output;
     } else {
       throw new NotFoundException("Document Not Found: " + blobIds.toString());
+    }
+  }
+
+  /**
+   * Read JSON file from GCS bucket
+   *
+   * @param blobIdName String value of the document blob id name
+   * @param valueType  Class type of the object to be read
+   * @return Object of the specified type
+   */
+  public <T> T readJsonFileFromBucket(String blobIdName, Class<T> valueType) throws IOException {
+    try (InputStream is = getDocument(blobIdName)) {
+      InputStreamReader reader = new InputStreamReader(is);
+      return GSON.fromJson(reader, valueType);
+    } catch (Exception e) {
+      logException("Error reading JSON file from bucket: " + e.getMessage(), e);
+      throw new IOException("Failed to read JSON file from bucket: " + blobIdName, e);
     }
   }
 

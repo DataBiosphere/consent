@@ -1,0 +1,11 @@
+{
+    "institutionDomainMap": {
+        "Broad Institute": [
+            "broadinstitute.org",
+            "broad.mit.edu"
+        ],
+        "Gmail Testing": [
+            "gmail.com"
+        ]
+    }
+}
