@@ -13,19 +13,24 @@ import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
 
-  private final SamService samService;
   private final ClaimsCache claimsCache;
+  private final SamService samService;
+  private final UserService userService;
+  private final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
 
   @Inject
-  public OAuthAuthenticator(SamService samService) {
-    this.samService = samService;
+  public OAuthAuthenticator(SamService samService, UserService userService) {
     this.claimsCache = ClaimsCache.getInstance();
+    this.samService = samService;
+    this.userService = userService;
   }
 
   @Override
@@ -67,7 +72,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
    * Attempt to get the registration status of the current user and set the value on AuthUser
    *
    * @param authUser The AuthUser
-   * @return A cloned AuthUser with Sam registration status
+   * @return A cloned AuthUser with Sam registration status and a Consent User
    */
   private AuthUser getUserWithStatusInfo(AuthUser authUser) {
     if (authUser == null || authUser.getEmail() == null) {
@@ -75,13 +80,18 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       return null;
     }
     try {
+      authUser.setUser(userService.findUserByEmail(authUser.getEmail()));
+    } catch (Exception e) {
+      logException("Error finding Consent user: " + authUser.getEmail(), e);
+    }
+    try {
       UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
       if (Objects.nonNull(userStatusInfo)) {
         // safety check in case the call to generic user (i.e. Google) failed.
-        if (Objects.isNull(authUser.getEmail())) {
+        if (authUser.getEmail() == null) {
           authUser.setEmail(userStatusInfo.getUserEmail());
         }
-        if (Objects.isNull(authUser.getName())) {
+        if (authUser.getName() == null) {
           authUser.setName(userStatusInfo.getUserEmail());
         }
       } else {
@@ -89,11 +99,10 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       }
       return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
     } catch (NotFoundException e) {
-      Gson gson = new Gson();
       try {
         // Try to post the user to Sam if they have not registered previously
         UserStatus userStatus = samService.postRegistrationInfo(authUser);
-        if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
+        if ((userStatus != null) && (userStatus.getUserInfo() != null)) {
           authUser.setEmail(userStatus.getUserInfo().getUserEmail());
         } else {
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));

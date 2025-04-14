@@ -16,9 +16,11 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,25 +29,28 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class OAuthAuthenticatorTest {
+class OAuthAuthenticatorTest extends AbstractTestHelper {
 
   @Mock
   private SamService samService;
+  @Mock
+  private UserService userService;
   private OAuthAuthenticator oAuthAuthenticator;
   private final ClaimsCache headerCache = ClaimsCache.getInstance();
-  private final String bearerToken = RandomStringUtils.randomAlphabetic(100);
+  private final String bearerToken = randomAlphabetic(100);
   private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
 
   @BeforeEach
   void setUp() {
     headerCache.cache.invalidateAll();
+    oAuthAuthenticator = new OAuthAuthenticator(samService, userService);
   }
 
   @Test
   void testAuthenticateWithToken() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
+
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertTrue(authUser.isPresent());
   }
@@ -56,10 +61,9 @@ class OAuthAuthenticatorTest {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
+
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertNotNull(authUser.get().getEmail());
+    assertNotNull(authUser.orElseThrow().getEmail());
     assertNotNull(authUser.get().getAuthToken());
   }
 
@@ -70,11 +74,9 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserInfoFailure() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
   }
 
   /**
@@ -87,11 +89,9 @@ class OAuthAuthenticatorTest {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
     verify(samService, times(1)).postRegistrationInfo(any());
   }
 
@@ -105,7 +105,6 @@ class OAuthAuthenticatorTest {
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
     when(samService.postRegistrationInfo(any())).thenThrow(new Exception("errorMessage"));
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     WebApplicationException ex = assertThrows(WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
     assertEquals("errorMessage", ex.getMessage());
@@ -118,11 +117,9 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserWithStatusInfoIncompleteClaims() throws Exception {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
     verify(samService, never()).getRegistrationInfo(any());
   }
 
@@ -131,17 +128,25 @@ class OAuthAuthenticatorTest {
    */
   @Test
   void testUnknownNameDefaultsToEmail() {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("unknown"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getName(), authUser.get().getEmail());
+    assertEquals(authUser.orElseThrow().getName(), authUser.orElseThrow().getEmail());
+  }
+
+  @Test
+  void testAuthenticateGetUserInfoWithDUOSUser() {
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
+    headerCache.loadCache(bearerToken, headerMap);
+    when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenReturn(new User());
+
+    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
+    assertNotNull(authUser.orElseThrow().getUser());
   }
 
 }

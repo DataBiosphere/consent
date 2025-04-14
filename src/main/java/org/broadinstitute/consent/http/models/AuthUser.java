@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.google.gson.Gson;
 import java.security.Principal;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class AuthUser implements Principal {
 
@@ -11,6 +12,7 @@ public class AuthUser implements Principal {
   private String name;
   private String aud;
   private UserStatusInfo userStatusInfo;
+  private User user;
 
   public AuthUser() {
   }
@@ -20,7 +22,7 @@ public class AuthUser implements Principal {
   }
 
   public AuthUser deepCopy() {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     return gson.fromJson(gson.toJson(this), AuthUser.class);
   }
 
@@ -68,5 +70,13 @@ public class AuthUser implements Principal {
   public AuthUser setUserStatusInfo(UserStatusInfo userStatusInfo) {
     this.userStatusInfo = userStatusInfo;
     return this;
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
   }
 }
