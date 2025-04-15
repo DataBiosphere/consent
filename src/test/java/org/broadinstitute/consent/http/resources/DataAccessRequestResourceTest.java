@@ -61,6 +61,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestResourceTest {
 
+  private final AuthUser authUser = new AuthUser("test@test.com");
+  private final AuthUser adminUser = new AuthUser("admin@test.com");
+  private final AuthUser chairpersonUser = new AuthUser("chariperson@test.com");
+  private final AuthUser memberUser = new AuthUser("member@test.com");
+  private final AuthUser anotherUser = new AuthUser("bob@test.com");
+  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
+  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
+  private final List<UserRole> chairpersonRoles = Collections.singletonList(
+      UserRoles.Chairperson());
+  private final List<UserRole> memberRoles = Collections.singletonList(UserRoles.Member());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+  private final User admin = new User(2, adminUser.getEmail(), "Admin user", new Date(),
+      adminRoles);
+  private final User chairperson = new User(3, chairpersonUser.getEmail(), "Chairperson user",
+      new Date(), chairpersonRoles);
+  private final User member = new User(4, memberUser.getEmail(), "Member user", new Date(),
+      memberRoles);
+  private final User bob = new User(5, anotherUser.getEmail(), "Bob", new Date(), roles);
   @Mock
   private DaaService daaService;
   @Mock
@@ -81,28 +99,10 @@ class DataAccessRequestResourceTest {
   private UriBuilder builder;
   @Mock
   private User mockUser;
-
-  private final AuthUser authUser = new AuthUser("test@test.com");
-  private final AuthUser adminUser = new AuthUser("admin@test.com");
-  private final AuthUser chairpersonUser = new AuthUser("chariperson@test.com");
-  private final AuthUser memberUser = new AuthUser("member@test.com");
-  private final AuthUser anotherUser = new AuthUser("bob@test.com");
-  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
-  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
-  private final List<UserRole> chairpersonRoles = Collections.singletonList(UserRoles.Chairperson());
-  private final List<UserRole> memberRoles = Collections.singletonList(UserRoles.Member());
-  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-  private final User admin = new User(2, adminUser.getEmail(), "Admin user", new Date(),
-      adminRoles);
-  private final User chairperson = new User(3, chairpersonUser.getEmail(), "Chairperson user",
-      new Date(), chairpersonRoles);
-  private final User member = new User(4, memberUser.getEmail(), "Member user", new Date(),
-      memberRoles);
-  private final User bob = new User(5, anotherUser.getEmail(), "Bob", new Date(), roles);
-
   private DataAccessRequestResource resource;
 
   private void initResource() {
+    user.setLibraryCards(List.of(new LibraryCard()));
     try {
       resource =
           new DataAccessRequestResource(daaService,
@@ -127,7 +127,7 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
     initResource();
-
+    user.setLibraryCards(null);
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
   }
@@ -187,6 +187,7 @@ class DataAccessRequestResourceTest {
   @Test
   void testUpdateByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
+    user.setLibraryCards(List.of(new LibraryCard()));
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -418,11 +419,27 @@ class DataAccessRequestResourceTest {
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
     initResource();
+    user.setLibraryCards(null);
 
-    assertThrows(ForbiddenException.class, () -> {
-      resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-          collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    });
+    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testPostProgressReportCollabAndEthicsFilesWithoutLibraryCardsThrows() throws IOException {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setCollaborationLetterLocation("collaborationLetterLocation");
+    parentDar.getData().setIrbDocumentLocation("irbDocumentLocation");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    initResource();
+    user.setLibraryCards(null);
+    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
   }
 
   @Test
@@ -815,7 +832,8 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info,
+        "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
@@ -841,7 +859,8 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info,
+        "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -863,7 +882,8 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser,
+        info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
@@ -881,7 +901,8 @@ class DataAccessRequestResourceTest {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequestWithDAARestrictions(authUser,
+        info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -894,7 +915,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     initResource();
 
-    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
+    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser,
+        "", "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -907,7 +929,8 @@ class DataAccessRequestResourceTest {
     doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
     initResource();
 
-    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser, "", "{}")) {
+    try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser,
+        "", "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

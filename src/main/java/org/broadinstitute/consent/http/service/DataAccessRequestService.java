@@ -112,6 +112,9 @@ public class DataAccessRequestService implements ConsentLogger {
         || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
+    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
+    }
     Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         dar.getReferenceId(),
@@ -157,6 +160,9 @@ public class DataAccessRequestService implements ConsentLogger {
       DarCollection sourceCollection) {
     if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
       throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
+    }
+    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
     }
     DataAccessRequest sourceDar = new ArrayList<>(sourceCollection.getDars().values()).get(0);
     DataAccessRequestData sourceData = sourceDar.getData();

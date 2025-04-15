@@ -418,7 +418,12 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
     User user = userService.findUserByEmail(authUser.getEmail());
     DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
-    checkAuthorizedUpdateUser(user, parentDar);
+    try {
+      checkAuthorizedUpdateUser(user, parentDar);
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+
     DataAccessRequest payload = populateDarFromJsonString(user, dar);
     DataAccessRequest childDar = dataAccessRequestService.createDataAccessRequest(user, payload);
 
@@ -585,6 +590,9 @@ public class DataAccessRequestResource extends Resource {
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
+    }
+    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
     }
   }
 
