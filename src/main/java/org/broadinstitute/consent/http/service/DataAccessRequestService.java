@@ -254,6 +254,9 @@ public class DataAccessRequestService implements ConsentLogger {
       darData.setCreateDate(nowTime);
     }
     darData.setSortDate(nowTime);
+
+    validateNoKeyPersonnelDuplicates(darData);
+
     DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(
         dataAccessRequest.getReferenceId());
     Integer collectionId;
@@ -311,6 +314,28 @@ public class DataAccessRequestService implements ConsentLogger {
       //Response class will catch it, log it, and throw a 500 through the "unableToExecuteExceptionHandler"
       //on the Resource class, just like it would with a SQLException
       throw new UnableToExecuteStatementException(e.getMessage());
+    }
+  }
+
+  /**
+   * Validates that PI email is not duplicated with SO or IT Director emails
+   *
+   * @param darData The data access request data to validate
+   * @throws IllegalArgumentException if duplicate emails are found
+   */
+  public void validateNoKeyPersonnelDuplicates(DataAccessRequestData darData) {
+    String piEmail = darData.getPiName().trim();
+    String soEmail = darData.getSigningOfficial().trim();
+    String itEmail = darData.getItDirector().trim();
+
+    if (piEmail.equalsIgnoreCase(soEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as Signing Official email");
+    }
+
+    if (piEmail.equalsIgnoreCase(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as IT Director email");
     }
   }
 
