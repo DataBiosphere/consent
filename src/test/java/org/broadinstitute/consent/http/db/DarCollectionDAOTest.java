@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -147,7 +148,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
         p.getUserId()));
 
-    assertNull(returned.getCreateUser().getLibraryCards());
+    assertTrue(returned.getCreateUser().getLibraryCards().isEmpty());
   }
 
   @Test

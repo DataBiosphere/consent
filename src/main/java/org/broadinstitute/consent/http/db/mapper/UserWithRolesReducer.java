@@ -65,9 +65,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
       if (rowView.getColumn("lc_id", Integer.class) != null) {
         int lcId = rowView.getColumn("lc_id", Integer.class);
         LibraryCard lc;
-        Optional<LibraryCard> existingLibraryCard = user.getLibraryCards() == null ?
-            Optional.empty() :
-            user.getLibraryCards().stream()
+        Optional<LibraryCard> existingLibraryCard = user.getLibraryCards().stream()
                 .filter(card -> card.getId().equals(lcId))
                 .findFirst();
         lc = existingLibraryCard.orElseGet(() -> rowView.getRow(LibraryCard.class));

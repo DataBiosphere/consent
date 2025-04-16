@@ -106,7 +106,7 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+      if (user.getLibraryCards().isEmpty()) {
         throw new NIHComplianceRuleException();
       }
 
@@ -136,7 +136,7 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+      if (user.getLibraryCards().isEmpty()) {
         throw new NIHComplianceRuleException();
       }
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
@@ -591,7 +591,7 @@ public class DataAccessRequestResource extends Resource {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
-    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
+    if (user.getLibraryCards().isEmpty()) {
       throw new NIHComplianceRuleException();
     }
   }
