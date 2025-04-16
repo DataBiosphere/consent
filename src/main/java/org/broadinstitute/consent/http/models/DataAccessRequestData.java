@@ -100,7 +100,9 @@ public class DataAccessRequestData {
   private String irbDocumentName;
   private String irbProtocolExpiration;
   private String itDirector;
+  private String itDirectorEmail;
   private String signingOfficial;
+  private String signingOfficialEmail;
   private Boolean publication;
   private Boolean collaboration;
   private String collaborationLetterLocation;
@@ -114,6 +116,7 @@ public class DataAccessRequestData {
   private Boolean gsoAcknowledgement;
   private Boolean pubAcknowledgement;
   private String piName;
+  private String piEmail;
 
   @Override
   public String toString() {
@@ -591,12 +594,28 @@ public class DataAccessRequestData {
     this.itDirector = itDirector;
   }
 
+  public String getItDirectorEmail() {
+    return itDirectorEmail;
+  }
+
+  public void setItDirectorEmail(String itDirectorEmail) {
+    this.itDirectorEmail = itDirectorEmail;
+  }
+
   public String getSigningOfficial() {
     return signingOfficial;
   }
 
   public void setSigningOfficial(String signingOfficial) {
     this.signingOfficial = signingOfficial;
+  }
+
+  public String getSigningOfficialEmail() {
+    return signingOfficialEmail;
+  }
+
+  public void setSigningOfficialEmail(String signingOfficialEmail) {
+    this.signingOfficialEmail = signingOfficialEmail;
   }
 
   public void setDSAcknowledgement(Boolean dsAcknowledgement) {
@@ -629,6 +648,14 @@ public class DataAccessRequestData {
 
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
   }
 
   // Validate all ontology entries

@@ -223,9 +223,9 @@ class DataAccessRequestServiceTest {
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
-    data.setPiName("Principal Investigator");
-    data.setSigningOfficial("Signing Official");
-    data.setItDirector("IT Director");
+    data.setPiEmail("pi@example.broadinstitute.org");
+    data.setItDirectorEmail("it@example.broadinstitute.org");
+    data.setSigningOfficialEmail("so@example.broadinstitute.org");
     data.setForProfit(false);
     data.setAddiction(false);
     data.setAnvilUse(true);
@@ -458,9 +458,9 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateNoKeyPersonnelDuplicates() {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiName("pi@example.broadinstitute.org");
-    data.setItDirector("it@example.broadinstitute.org");
-    data.setSigningOfficial("so@example.broadinstitute.org");
+    data.setPiEmail("pi@example.broadinstitute.org");
+    data.setItDirectorEmail("it@example.broadinstitute.org");
+    data.setSigningOfficialEmail("so@example.broadinstitute.org");
     initService();
     try {
       service.validateNoKeyPersonnelDuplicates(data);
@@ -472,9 +472,9 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateNoKeyPersonnelDuplicatesItDirector() {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiName("pi@example.broadinstitute.org");
-    data.setItDirector("pi@example.broadinstitute.org");
-    data.setSigningOfficial("so@example.broadinstitute.org");
+    data.setPiEmail("pi@example.broadinstitute.org");
+    data.setItDirectorEmail("pi@example.broadinstitute.org");
+    data.setSigningOfficialEmail("so@example.broadinstitute.org");
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
       service.validateNoKeyPersonnelDuplicates(data);
@@ -484,9 +484,9 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateNoKeyPersonnelDuplicatesSO() {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiName("pi@example.broadinstitute.org");
-    data.setItDirector("it@example.broadinstitute.org");
-    data.setSigningOfficial("pi@example.broadinstitute.org");
+    data.setPiEmail("pi@example.broadinstitute.org");
+    data.setItDirectorEmail("it@example.broadinstitute.org");
+    data.setSigningOfficialEmail("pi@example.broadinstitute.org");
     initService();
     assertThrows(IllegalArgumentException.class, () -> {
       service.validateNoKeyPersonnelDuplicates(data);

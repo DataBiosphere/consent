@@ -324,9 +324,9 @@ public class DataAccessRequestService implements ConsentLogger {
    * @throws IllegalArgumentException if duplicate emails are found
    */
   public void validateNoKeyPersonnelDuplicates(DataAccessRequestData darData) {
-    String piEmail = darData.getPiName().trim();
-    String soEmail = darData.getSigningOfficial().trim();
-    String itEmail = darData.getItDirector().trim();
+    String piEmail = darData.getPiEmail();
+    String soEmail = darData.getSigningOfficialEmail();
+    String itEmail = darData.getItDirectorEmail();
 
     if (piEmail.equalsIgnoreCase(soEmail)) {
       throw new IllegalArgumentException(
