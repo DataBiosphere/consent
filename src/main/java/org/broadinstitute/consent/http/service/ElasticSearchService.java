@@ -278,7 +278,12 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public Response indexDatasets(List<Dataset> datasets, User user) throws IOException {
-    List<DatasetTerm> datasetTerms = datasets.stream().map(this::toDatasetTerm).toList();
+    // Datasets in list context may not have their study populated, so we need to ensure that is
+    // true before trying to index them in ES.
+    List<DatasetTerm> datasetTerms = datasets.stream()
+        .map(d -> datasetDAO.findDatasetById(d.getDatasetId()))
+        .map(this::toDatasetTerm)
+        .toList();
     return indexDatasetTerms(datasetTerms, user);
   }
 
