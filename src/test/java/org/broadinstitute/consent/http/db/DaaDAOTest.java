@@ -31,7 +31,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testInsert() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     assertNotNull(daaId);
@@ -39,7 +40,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertMultipleDaasOneDacId() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -57,7 +59,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAllOneDaa() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     assertNotNull(daaId);
@@ -68,7 +71,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAllMultipleDaas() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -90,7 +94,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindById() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -112,7 +117,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindByDacId() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -130,7 +136,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindByDacIdInvalid() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -145,7 +152,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testCreateDaaDacRelation() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId3 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
@@ -166,7 +174,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDaaDacRelation() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer dacId3 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
@@ -190,7 +199,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindWithFileStorageObject() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer fsoId = fileStorageObjectDAO.insertNewFile(
@@ -210,7 +220,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindWithDacs() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 1", RandomStringUtils.randomAlphabetic(15),  new Date());
     Integer dacId2 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 2", RandomStringUtils.randomAlphabetic(15),  new Date());
     Integer dacId3 = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), "Dac 3", RandomStringUtils.randomAlphabetic(15),  new Date());
@@ -261,7 +272,8 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteDaa() {
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     User user = userDAO.findUserById(userId);
     Institution institution = createRandomInstitution(user.getUserId());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());;
@@ -284,7 +296,8 @@ class DaaDAOTest extends DAOTestHelper {
     // This test requires a good deal of model setup: DAR, Dataset, DAC, and DataAccessAgreements
     // We'll create a single DAR with 2 datasets, each one in a separate DAC with separate DAAs
     // and a third dac/dataset/daa that should not be found.
-    Integer dataSubmitterId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer dataSubmitterId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     User dataSubmitter = userDAO.findUserById(dataSubmitterId);
 
     // DAC/Dataset/DAA 1
@@ -327,7 +340,7 @@ class DaaDAOTest extends DAOTestHelper {
 
   private User createRandomUser() {
     int userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(15),
-        RandomStringUtils.randomAlphabetic(5), new Date());
+        RandomStringUtils.randomAlphabetic(5), null, new Date());
     return userDAO.findUserById(userId);
   }
 

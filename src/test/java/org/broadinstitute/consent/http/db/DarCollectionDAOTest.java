@@ -509,7 +509,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer userId = user.getUserId();
     createUserProperty(userId, UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-    createUserProperty(userId, UserFields.SUGGESTED_INSTITUTION.getValue());
     createUserProperty(userId, UserFields.ERA_STATUS.getValue());
     String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
@@ -599,26 +598,4 @@ class DarCollectionDAOTest extends DAOTestHelper {
     );
     return electionDAO.findElectionById(electionId);
   }
-
-  private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

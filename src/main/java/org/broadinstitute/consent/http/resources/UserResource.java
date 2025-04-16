@@ -228,11 +228,6 @@ public class UserResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
-      // Users cannot update their own institution id through this service
-      if (userUpdateFields.getInstitutionId() != null) {
-        throw new BadRequestException("Institution ID is not updatable");
-      }
-
       if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
           UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");
@@ -275,9 +270,8 @@ public class UserResource extends Resource {
         // update the user role with the active user's institution id.
         if (!currentUserRoleIds.contains(roleId)) {
           // update the user's institution if it was set to null and add the role.
-          if (Optional.ofNullable(user.getInstitutionId()).isEmpty()) {
-            userService.insertRoleAndInstitutionForUser(role, activeUser.getInstitutionId(),
-                user.getUserId());
+          if (user.getInstitutionId() == null) {
+            userService.insertRoleAndInstitutionForUser(role, activeUser.getInstitutionId(), user);
           } else {
             userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
           }

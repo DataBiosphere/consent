@@ -22,11 +22,6 @@ public class UserPropertyDAOTest extends DAOTestHelper {
   public void testFindUserProperties() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
-    UserProperty suggestedInstitution = new UserProperty();
-    suggestedInstitution.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-    suggestedInstitution.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
-    suggestedInstitution.setUserId(user.getUserId());
-
     UserProperty suggestedSigningOfficial = new UserProperty();
     suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
     suggestedSigningOfficial.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
@@ -39,47 +34,25 @@ public class UserPropertyDAOTest extends DAOTestHelper {
 
     List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         user.getUserId(),
-        List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
-            UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
+        List.of(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
             UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(0, props.size());
 
     userPropertyDAO.insertAll(List.of(
-        suggestedInstitution,
         suggestedSigningOfficial,
         notPresent
     ));
 
     props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         user.getUserId(),
-        List.of(UserFields.SUGGESTED_INSTITUTION.getValue(),
-            UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
+        List.of(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
             UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(2, props.size());
 
     assertTrue(props.stream().anyMatch((p) ->
-        (p.getPropertyKey().equals(UserFields.SUGGESTED_INSTITUTION.getValue())
-            && p.getPropertyValue().equals(suggestedInstitution.getPropertyValue()))));
-
-    assertTrue(props.stream().anyMatch((p) ->
         (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
             && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
   }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

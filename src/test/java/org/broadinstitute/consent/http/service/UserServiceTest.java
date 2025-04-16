@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -27,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -102,14 +101,14 @@ class UserServiceTest {
   private DraftServiceDAO draftServiceDAO;
 
   @Mock
-  private GCSService store;
+  private InstitutionService institutionService;
 
   private UserService service;
 
   private void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftServiceDAO, store);
+        emailService, draftServiceDAO, institutionService);
   }
 
   @Test
@@ -145,7 +144,6 @@ class UserServiceTest {
       fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
       fields.setSelectedSigningOfficialId(1);
       fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
-      fields.setSuggestedInstitution(RandomStringUtils.random(10, true, false));
       fields.setDaaAcceptance(true);
       assertEquals(4, fields.buildUserProperties(user.getUserId()).size());
       service.updateUserFieldsById(fields, user.getUserId());
@@ -154,7 +152,6 @@ class UserServiceTest {
     }
     // We added 3 user property values, we should have props for them:
     verify(userDAO, times(1)).updateDisplayName(any(), any());
-    verify(userDAO, times(1)).updateInstitutionId(any(), any());
     verify(userDAO, times(1)).updateEmailPreference(any(), any());
     verify(userDAO, times(1)).updateEraCommonsId(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
@@ -186,7 +183,6 @@ class UserServiceTest {
     }
     // We added 3 user property values, we should have props for them:
     verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateInstitutionId(any(), any());
     verify(userDAO, never()).updateEmailPreference(any(), any());
     verify(userDAO, never()).updateEraCommonsId(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
@@ -219,7 +215,6 @@ class UserServiceTest {
     }
     // We added 3 user property values, we should have props for them:
     verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateInstitutionId(any(), any());
     verify(userDAO, never()).updateEmailPreference(any(), any());
     verify(userDAO, never()).updateEraCommonsId(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
@@ -250,7 +245,6 @@ class UserServiceTest {
     }
     // We added 3 user property values, we should have props for them:
     verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateInstitutionId(any(), any());
     verify(userDAO, never()).updateEmailPreference(any(), any());
     verify(userDAO, never()).updateEraCommonsId(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
@@ -320,14 +314,15 @@ class UserServiceTest {
   }
 
   @Test
-  void testCreateUserNoRoles() throws IOException {
+  void testCreateUserNoRoles() {
     User u = generateUser();
-    when(userDAO.findUserById(any())).thenReturn(u);
-    when(store.readJsonFileFromBucket("institution-domain/allowlist.json",
-        InstitutionDomainMap.class)).thenReturn(new InstitutionDomainMap());
+    when(userDAO.findUserById(u.getUserId())).thenReturn(u);
+    Institution institution = new Institution();
+    when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(institution);
     initService();
     User user = service.createUser(u);
     assertFalse(user.getRoles().isEmpty());
+    assertEquals(institution, user.getInstitution());
     assertEquals(UserRoles.RESEARCHER.getRoleId(), user.getRoles().get(0).getRoleId());
   }
 
@@ -785,16 +780,15 @@ class UserServiceTest {
     // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser) and then return null (createUser)
     when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException())
         .thenReturn(null);
-    when(userDAO.insertUser(any(), any(), any())).thenReturn(user.getUserId());
+    when(userDAO.insertUser(any(), any(), eq(user.getInstitutionId()), any())).thenReturn(user.getUserId());
     when(userDAO.findUserById(any())).thenReturn(user);
     when(samDAO.postRegistrationInfo(any())).thenReturn(status);
     initService();
 
     User newUser = service.findOrCreateUser(authUser);
     assertEquals(user.getEmail(), newUser.getEmail());
-    verify(userRoleDAO, times(1)).insertUserRoles(any(), any());
-    verify(libraryCardDAO, times(1)).findAllLibraryCardsByUserEmail(any());
-    verify(userDAO, times(1)).insertUser(any(), any(), any());
+    verify(userRoleDAO).insertUserRoles(any(), any());
+    verify(libraryCardDAO).findAllLibraryCardsByUserEmail(any());
   }
 
   @Test
@@ -813,7 +807,7 @@ class UserServiceTest {
     when(userDAO.findUserById(anyInt())).thenReturn(returnUser);
     initService();
     try {
-      service.insertRoleAndInstitutionForUser(role, institutionId, testUser.getUserId());
+      service.insertRoleAndInstitutionForUser(role, institutionId, testUser);
     } catch (Exception e) {
       encounteredException = true;
     }
@@ -834,7 +828,7 @@ class UserServiceTest {
         .insertRoleAndInstitutionTxn(any(), any(), any());
     initService();
     try {
-      service.insertRoleAndInstitutionForUser(role, institutionId, testUser.getUserId());
+      service.insertRoleAndInstitutionForUser(role, institutionId, testUser);
     } catch (Exception e) {
       encounteredException = true;
     }
