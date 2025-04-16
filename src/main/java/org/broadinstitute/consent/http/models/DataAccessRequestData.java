@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -553,6 +554,14 @@ public class DataAccessRequestData {
   public void setInternalCollaborators(
       List<Collaborator> internalCollaborators) {
     this.internalCollaborators = internalCollaborators;
+  }
+
+  public List<Collaborator> getLabAndInternalCollaborators() {
+   List<Collaborator> empty = Collections.emptyList();
+    return Stream.of(Objects.requireNonNullElse(labCollaborators, empty),
+            Objects.requireNonNullElse(internalCollaborators, empty))
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
   }
 
   public List<Collaborator> getExternalCollaborators() {
