@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.cloud.storage.BlobId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -36,12 +37,14 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -110,6 +113,7 @@ public class DataAccessRequestResource extends Resource {
       }
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      validateInternalCollaborators(payload, user);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
       try {
@@ -123,6 +127,27 @@ public class DataAccessRequestResource extends Resource {
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @VisibleForTesting
+  public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
+    Integer institution = requestingUser.getInstitutionId();
+    List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
+    if (internalCollaborators != null && !internalCollaborators.isEmpty()) {
+      for (Collaborator collaborator : internalCollaborators) {
+        // throws not found exception
+        User collabUser = findUserByEmail(collaborator.getEmail());
+        if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
+          throw new BadRequestException(
+              "Collaborator " + collaborator.getEmail() + " is not part of the same institution");
+        }
+        List<LibraryCard> libraryCards = collabUser.getLibraryCards();
+        if (libraryCards == null || libraryCards.isEmpty()) {
+          throw new BadRequestException(
+              "Collaborator " + collaborator.getEmail() + " does not have a library card.");
+        }
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,6 +38,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -52,6 +54,7 @@ import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -160,6 +163,111 @@ class DataAccessRequestResourceTest {
 
     Response response = resource.createDataAccessRequest(authUser, info, "");
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+  }
+
+  @NotNull
+  private User getRequestingUser() {
+    User requestingUser = new User(1, "requestor@test.com", "Requestor", new Date(), roles);
+    requestingUser.setInstitutionId(1);
+    return requestingUser;
+  }
+
+  @NotNull
+  private static Collaborator getCollaborator() {
+    Collaborator validCollaborator = new Collaborator();
+    validCollaborator.setEmail("collaborator@test.com");
+    return validCollaborator;
+  }
+
+  @NotNull
+  private static DataAccessRequest getDataAccessRequest(List<Collaborator> internalCollaborators) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setInternalCollaborators(internalCollaborators);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(data);
+    return dar;
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNone() {
+    User requestingUser = getRequestingUser();
+    DataAccessRequest dar = getDataAccessRequest(Collections.emptyList());
+    initResource();
+    assertDoesNotThrow(() -> resource.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsValid() {
+    User requestingUser = getRequestingUser();
+
+    Collaborator validCollaborator = getCollaborator();
+    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(List.of(libraryCard));
+
+    DataAccessRequest dar = getDataAccessRequest(List.of(validCollaborator));
+
+    when(userService.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initResource();
+    assertDoesNotThrow(() -> resource.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsDoesNotExist() {
+    User requestingUser = getRequestingUser();
+
+    Collaborator invalidCollaborator = getCollaborator();
+
+    DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
+
+    when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenThrow(
+        new NotFoundException("Unable to find User with the provided email: " + invalidCollaborator.getEmail()));
+
+    initResource();
+    NotFoundException exception = assertThrows(NotFoundException.class, () ->
+        resource.validateInternalCollaborators(dar, requestingUser));
+    assertEquals(exception.getMessage(), "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
+  }
+  @Test
+  void testValidateInternalCollaboratorsDifferentInstitution() {
+    User requestingUser = getRequestingUser();
+
+    Collaborator invalidCollaborator = getCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(2);
+
+    DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
+
+    when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initResource();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        resource.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " is not part of the same institution");
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNoLibraryCard() {
+    User requestingUser = getRequestingUser();
+
+    Collaborator invalidCollaborator = getCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(Collections.emptyList());
+
+    DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
+
+    when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initResource();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        resource.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
   }
 
   @Test
