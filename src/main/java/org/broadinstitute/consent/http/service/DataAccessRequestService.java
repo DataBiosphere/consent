@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -324,9 +325,17 @@ public class DataAccessRequestService implements ConsentLogger {
    * @throws IllegalArgumentException if duplicate emails are found
    */
   public void validateNoKeyPersonnelDuplicates(DataAccessRequestData darData) {
+    EmailValidator emailValidator = EmailValidator.getInstance();
+
     String piEmail = darData.getPiEmail();
     String soEmail = darData.getSigningOfficialEmail();
     String itEmail = darData.getItDirectorEmail();
+
+    if (!emailValidator.isValid(piEmail) || !emailValidator.isValid(soEmail)
+        || !emailValidator.isValid(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator, Signing Official, and IT Director emails must be valid");
+    }
 
     if (piEmail.equalsIgnoreCase(soEmail)) {
       throw new IllegalArgumentException(
