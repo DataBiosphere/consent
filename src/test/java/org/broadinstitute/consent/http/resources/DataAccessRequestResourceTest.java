@@ -462,8 +462,8 @@ class DataAccessRequestResourceTest {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     initResource();
 
     assertThrows(BadRequestException.class, () -> {
@@ -502,8 +502,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseCollabAndEthics = new DataUseBuilder()
@@ -525,8 +525,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     when(datasetService.findDatasetById(any())).thenReturn(null);
     initResource();
 
@@ -543,8 +543,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     when(dataset.getDataUse()).thenReturn(null);
@@ -563,8 +563,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseEthicsOnly = new DataUseBuilder().setEthicsApprovalRequired(true).build();
@@ -584,8 +584,8 @@ class DataAccessRequestResourceTest {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     Dataset dataset = mock(Dataset.class);
     when(datasetService.findDatasetById(any())).thenReturn(dataset);
     DataUse dataUseCollaboratorOnly = new DataUseBuilder().setCollaboratorRequired(true).build();
