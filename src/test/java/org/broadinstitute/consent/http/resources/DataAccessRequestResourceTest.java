@@ -433,8 +433,8 @@ class DataAccessRequestResourceTest {
     parentDar.getData().setCollaborationLetterLocation("collaborationLetterLocation");
     parentDar.getData().setIrbDocumentLocation("irbDocumentLocation");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
     initResource();
     user.setLibraryCards(null);
     Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
