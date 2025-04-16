@@ -24,6 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
@@ -72,6 +73,11 @@ abstract public class Resource implements ConsentLogger {
   private static final Map<Class<? extends Throwable>, ExceptionHandler> DISPATCH = new HashMap<>();
 
   static {
+    DISPATCH.put(LibraryCardRequiredException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
     DISPATCH.put(NIHComplianceRuleException.class, e ->
         Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
             .type(MediaType.APPLICATION_JSON)

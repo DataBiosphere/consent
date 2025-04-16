@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -108,7 +109,15 @@ public class DataAccessRequestService implements ConsentLogger {
 
   //NOTE: rewrite method into new servicedao method on another ticket
   public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
-    validateUserAndRequestObject(user, dar);
+    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
+        dar.getReferenceId()) || Objects.isNull(dar.getData())) {
+      throw new IllegalArgumentException("User and DataAccessRequest are required");
+    }
+
+    if (user.getLibraryCards().isEmpty()) {
+      throw new LibraryCardRequiredException();
+    }
+
     Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         dar.getReferenceId(),
@@ -156,7 +165,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
     }
     if (user.getLibraryCards().isEmpty()) {
-      throw new NIHComplianceRuleException();
+      throw new LibraryCardRequiredException();
     }
     DataAccessRequest sourceDar = new ArrayList<>(sourceCollection.getDars().values()).get(0);
     DataAccessRequestData sourceData = sourceDar.getData();
@@ -239,7 +248,15 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The created DAR.
    */
   public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
-    validateUserAndRequestObject(user, dataAccessRequest);
+    if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(
+        dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
+      throw new IllegalArgumentException("User and DataAccessRequest are required");
+    }
+
+    if (user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
+    }
+
     Date now = new Date();
     long nowTime = now.getTime();
     DataAccessRequestData darData = dataAccessRequest.getData();
@@ -285,19 +302,6 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);
-  }
-
-  private void validateUserAndRequestObject(User user, DataAccessRequest dataAccessRequest) {
-    if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(
-        dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
-      throw new IllegalArgumentException("User and DataAccessRequest are required");
-    }
-
-    if (user.getLibraryCards().isEmpty()) {
-      throw new NIHComplianceRuleException();
-    }
-
-    Date now = new Date();
   }
 
   /**

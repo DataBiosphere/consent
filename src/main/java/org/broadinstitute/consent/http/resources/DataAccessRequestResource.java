@@ -35,7 +35,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -592,7 +594,7 @@ public class DataAccessRequestResource extends Resource {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
     if (user.getLibraryCards().isEmpty()) {
-      throw new NIHComplianceRuleException();
+      throw new LibraryCardRequiredException();
     }
   }
 
