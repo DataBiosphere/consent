@@ -199,16 +199,13 @@ class DataAccessRequestResourceTest {
   @Test
   void testValidateInternalCollaboratorsValid() {
     User requestingUser = getRequestingUser();
-
     Collaborator validCollaborator = getCollaborator();
     User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(), roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setInstitutionId(requestingUser.getInstitutionId());
     collaboratorUser.setLibraryCards(List.of(libraryCard));
-
     DataAccessRequest dar = getDataAccessRequest(List.of(validCollaborator));
-
     when(userService.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
 
     initResource();
@@ -218,11 +215,8 @@ class DataAccessRequestResourceTest {
   @Test
   void testValidateInternalCollaboratorsDoesNotExist() {
     User requestingUser = getRequestingUser();
-
     Collaborator invalidCollaborator = getCollaborator();
-
     DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
-
     when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenThrow(
         new NotFoundException("Unable to find User with the provided email: " + invalidCollaborator.getEmail()));
 
@@ -234,13 +228,10 @@ class DataAccessRequestResourceTest {
   @Test
   void testValidateInternalCollaboratorsDifferentInstitution() {
     User requestingUser = getRequestingUser();
-
     Collaborator invalidCollaborator = getCollaborator();
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
     collaboratorUser.setInstitutionId(2);
-
     DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
-
     when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
     initResource();
@@ -253,14 +244,11 @@ class DataAccessRequestResourceTest {
   @Test
   void testValidateInternalCollaboratorsNoLibraryCard() {
     User requestingUser = getRequestingUser();
-
     Collaborator invalidCollaborator = getCollaborator();
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     collaboratorUser.setLibraryCards(Collections.emptyList());
-
     DataAccessRequest dar = getDataAccessRequest(List.of(invalidCollaborator));
-
     when(userService.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
     initResource();
