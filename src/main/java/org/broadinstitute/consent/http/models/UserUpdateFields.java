@@ -25,7 +25,6 @@ public class UserUpdateFields {
   private List<Integer> userRoleIds;
   private String eraCommonsId;
   private Integer selectedSigningOfficialId;
-  private String suggestedInstitution;
   private String suggestedSigningOfficial;
   private Boolean daaAcceptance;
 
