@@ -159,20 +159,18 @@ public class UserService implements ConsentLogger {
     return findUserById(userId);
   }
 
-  public void insertRoleAndInstitutionForUser(UserRole role, Integer institutionId,
-      User user) {
+  public void insertRoleAndInstitutionForUser(UserRole role, User user) {
     var userId = user.getUserId();
     try {
-      Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
-      if (!institution.getId().equals(institutionId)) {
-        throw new BadRequestException("User %s cannot be associated with institution %s".formatted(
-            user.getEmail(), institutionId));
+      if (user.getInstitutionId() == null) {
+        Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
+        userServiceDAO.insertRoleAndInstitutionTxn(role, institution.getId(), userId);
+      } else {
+        userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
       }
-      userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
     } catch (Exception e) {
       logException(
-          "Error when updating user: %s, institution: %s, role: %s".formatted(userId,
-              institutionId, role), e);
+          "Error when updating user: %s, role: %s".formatted(userId, role), e);
       throw e;
     }
   }
@@ -420,7 +418,7 @@ public class UserService implements ConsentLogger {
         .forEach(lc -> {
           libraryCardDAO.updateLibraryCardById(
               lc.getId(),
-              lc.getUserId(),
+              user.getUserId(),
               lc.getInstitutionId(),
               lc.getEraCommonsId(),
               lc.getUserName(),

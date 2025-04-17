@@ -264,22 +264,10 @@ public class UserResource extends Resource {
       User activeUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
       List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
-      if (activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(roleId)) {
+      if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole)) ||
+          signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
         if (!currentUserRoleIds.contains(roleId)) {
-          userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
-          return getUserResponse(authUser, userId);
-        } else {
-          return Response.notModified().build();
-        }
-      } else if (signingOfficialMeetsRequirements(roleId, activeUser, user)) {
-        // update the user role with the active user's institution id.
-        if (!currentUserRoleIds.contains(roleId)) {
-          // update the user's institution if it was set to null and add the role.
-          if (user.getInstitutionId() == null) {
-            userService.insertRoleAndInstitutionForUser(role, activeUser.getInstitutionId(), user);
-          } else {
-            userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
-          }
+          userService.insertRoleAndInstitutionForUser(role, user);
           return getUserResponse(authUser, userId);
         } else {
           return Response.notModified().build();
@@ -292,13 +280,12 @@ public class UserResource extends Resource {
     }
   }
 
-  private static boolean signingOfficialMeetsRequirements(Integer roleId, User activeUser,
+  private static boolean signingOfficialMeetsRequirements(UserRoles role, User activeUser,
       User user) {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
-        && Objects.nonNull(activeUser.getInstitutionId())
-        && UserRoles.isValidSoAdjustableRoleId(roleId)
-        && (Objects.equals(user.getInstitutionId(), activeUser.getInstitutionId()) ||
-        Optional.ofNullable(user.getInstitutionId()).isEmpty());
+        && activeUser.getInstitutionId() != null
+        && UserRoles.isValidSoAdjustableRoleId(role)
+        && (user.getInstitutionId() == null || user.getInstitutionId().equals(activeUser.getInstitutionId()));
   }
 
   private Response getUserResponse(AuthUser authUser, Integer userId) {
@@ -320,12 +307,12 @@ public class UserResource extends Resource {
       User activeUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
       if (activeUser.hasUserRole(UserRoles.ADMIN)) {
-        if (!UserRoles.isValidNonDACRoleId(roleId)) {
+        if (!UserRoles.isValidNonDACRoleId(targetRole)) {
           throw new BadRequestException("Invalid Role Id");
         }
         return doDelete(authUser, userId, roleId, activeUser, user);
       } else if (activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-        if (!UserRoles.isValidSoAdjustableRoleId(roleId)) {
+        if (!UserRoles.isValidSoAdjustableRoleId(targetRole)) {
           throw new ForbiddenException(
               "A Signing Official may only remove the following role ids: [6, 7, 8] ");
         }
