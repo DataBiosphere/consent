@@ -33,6 +33,8 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -149,7 +151,7 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of());
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(NIHComplianceRuleException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
   }
@@ -295,6 +297,7 @@ class DataAccessRequestServiceTest {
   void testInsertDraftDataAccessRequest() {
     User user = new User();
     user.setUserId(1);
+    user.setLibraryCards(List.of(new LibraryCard()));
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
@@ -410,6 +413,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDraftDarFromCanceledCollection_NoDarData() {
     User user = new User();
+    user.setLibraryCards(List.of(new LibraryCard()));
     DarCollection sourceCollection = new DarCollection();
     DataAccessRequest newDar = new DataAccessRequest();
     newDar.setReferenceId(UUID.randomUUID().toString());
@@ -423,6 +427,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
     User user = new User();
+    user.setLibraryCards(List.of(new LibraryCard()));
     DarCollection sourceCollection = new DarCollection();
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
@@ -440,6 +445,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDraftDarFromCanceledCollection_NoDatasets() {
     User user = new User();
+    user.setLibraryCards(List.of(new LibraryCard()));
     DarCollection sourceCollection = new DarCollection();
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
@@ -458,6 +464,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
     User user = new User();
+    user.setLibraryCards(List.of(new LibraryCard()));
     DarCollection sourceCollection = new DarCollection();
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
@@ -477,6 +484,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDraftDarFromCanceledCollection() {
     User user = new User();
+    user.setLibraryCards(List.of(new LibraryCard()));
     DarCollection sourceCollection = new DarCollection();
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
@@ -499,6 +507,23 @@ class DataAccessRequestServiceTest {
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
     initService();
     service.createDraftDarFromCanceledCollection(user, sourceCollection);
+  }
+
+  @Test
+  void testCreateDraftDarFromCanceledCollectionNoLibraryCards() {
+    User user = new User();
+    DarCollection sourceCollection = new DarCollection();
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setStatus(DarStatus.CANCELED.getValue());
+    dar.addDatasetId(1);
+    data.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(data);
+    dar.setReferenceId(data.getReferenceId());
+    sourceCollection.addDar(dar);
+    initService();
+    assertThrows(LibraryCardRequiredException.class,
+        () -> service.createDraftDarFromCanceledCollection(user, sourceCollection));
   }
 
   @Test

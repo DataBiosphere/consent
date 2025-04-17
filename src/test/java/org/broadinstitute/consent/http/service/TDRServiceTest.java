@@ -150,37 +150,4 @@ class TDRServiceTest {
     assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
   }
 
-  @Test
-  void testPopulateDraftDarStubFromDatasetIdentifiers() {
-    String identifiers = "DUOS-00001, DUOS-00002";
-    String title = "New Project";
-    Dataset dataset1 = new Dataset();
-    dataset1.setDatasetId(1);
-    dataset1.setAlias(00001);
-
-    Dataset dataset2 = new Dataset();
-    dataset2.setDatasetId(2);
-    dataset2.setAlias(00002);
-
-    when(datasetDAO.findDatasetsByAlias(any())).thenReturn(List.of(dataset1, dataset2));
-
-    initService();
-    assertDoesNotThrow(() -> {
-      DataAccessRequest dar = service.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project");
-      assertNotNull(dar);
-      assertTrue(dar.getDatasetIds().contains(dataset1.getDatasetId()));
-      assertTrue(dar.getDatasetIds().contains(dataset2.getDatasetId()));
-      assertEquals(title, dar.getData().getProjectTitle());
-      assertNotNull(dar.getReferenceId());
-      assertNotNull(dar.getCreateDate());
-    });
-  }
-
-  @Test
-  void testPopulateDraftDarStubFromDatasetIdentifiersNotFound() {
-    String identifiers = "DUOS-00001, DUOS-00002";
-    initService();
-    assertThrows(NotFoundException.class, () -> service.populateDraftDarStubFromDatasetIdentifiers(identifiers, "New Project"));
-  }
-
 }

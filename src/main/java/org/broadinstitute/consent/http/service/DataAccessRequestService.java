@@ -24,6 +24,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -111,10 +113,15 @@ public class DataAccessRequestService implements ConsentLogger {
 
   //NOTE: rewrite method into new servicedao method on another ticket
   public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
-    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId())
-        || Objects.isNull(dar.getData())) {
+    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
+        dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
+
+    if (user.getLibraryCards().isEmpty()) {
+      throw new LibraryCardRequiredException();
+    }
+
     Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         dar.getReferenceId(),
@@ -160,6 +167,9 @@ public class DataAccessRequestService implements ConsentLogger {
       DarCollection sourceCollection) {
     if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
       throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
+    }
+    if (user.getLibraryCards().isEmpty()) {
+      throw new LibraryCardRequiredException();
     }
     DataAccessRequest sourceDar = new ArrayList<>(sourceCollection.getDars().values()).get(0);
     DataAccessRequestData sourceData = sourceDar.getData();
@@ -247,8 +257,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
 
-    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-      throw new IllegalArgumentException("User must have a library card.");
+    if (user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
     }
 
     validateInternalCollaborators(dataAccessRequest, user);
