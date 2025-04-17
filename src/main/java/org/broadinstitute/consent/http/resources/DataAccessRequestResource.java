@@ -35,6 +35,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -105,8 +108,8 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+      if (user.getLibraryCards().isEmpty()) {
+        throw new NIHComplianceRuleException();
       }
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
@@ -135,8 +138,8 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-        throw new IllegalArgumentException("User must have a library card to create a DAR.");
+      if (user.getLibraryCards().isEmpty()) {
+        throw new NIHComplianceRuleException();
       }
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement
@@ -417,7 +420,12 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
     User user = userService.findUserByEmail(authUser.getEmail());
     DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
-    checkAuthorizedUpdateUser(user, parentDar);
+    try {
+      checkAuthorizedUpdateUser(user, parentDar);
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+
     DataAccessRequest payload = populateDarFromJsonString(user, dar);
     DataAccessRequest childDar = dataAccessRequestService.createDataAccessRequest(user, payload);
 
@@ -584,6 +592,9 @@ public class DataAccessRequestResource extends Resource {
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
+    }
+    if (user.getLibraryCards().isEmpty()) {
+      throw new LibraryCardRequiredException();
     }
   }
 

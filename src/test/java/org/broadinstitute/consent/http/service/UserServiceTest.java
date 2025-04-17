@@ -584,7 +584,7 @@ class UserServiceTest {
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
     assertEquals(List.of(lc), users.get(0).getLibraryCards());
-    assertNull(users.get(1).getLibraryCards());
+    assertTrue(users.get(1).getLibraryCards().isEmpty());
   }
 
   @Test
