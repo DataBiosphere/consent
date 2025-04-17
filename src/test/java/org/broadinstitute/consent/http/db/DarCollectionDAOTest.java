@@ -147,7 +147,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
         p.getUserId()));
 
-    assertNull(returned.getCreateUser().getLibraryCards());
+    assertTrue(returned.getCreateUser().getLibraryCards().isEmpty());
   }
 
   @Test

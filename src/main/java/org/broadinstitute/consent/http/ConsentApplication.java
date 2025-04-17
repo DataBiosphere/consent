@@ -241,7 +241,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new VoteResource(userService, voteService, electionService));
     env.jersey().register(new LivenessResource());
     env.jersey().register(
-        new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
+        new TDRResource(tdrService, datasetService));
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
     env.jersey().register(new OAuth2Resource(oidcService));
