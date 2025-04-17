@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
@@ -22,12 +24,14 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -247,6 +251,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException("User must have a library card.");
     }
 
+    validateInternalCollaborators(dataAccessRequest, user);
+
     Date now = new Date();
     long nowTime = now.getTime();
     DataAccessRequestData darData = dataAccessRequest.getData();
@@ -292,6 +298,27 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);
+  }
+
+  @VisibleForTesting
+  public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
+    Integer institution = requestingUser.getInstitutionId();
+    List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
+    for (Collaborator collaborator : internalCollaborators) {
+      User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
+      if (collabUser == null) {
+        throw new NotFoundException("Unable to find User with the provided email: " + collaborator.getEmail());
+      }
+      if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
+        throw new BadRequestException(
+            "Collaborator " + collaborator.getEmail() + " is not part of the same institution, " + requestingUser.getInstitution().getName());
+      }
+      List<LibraryCard> libraryCards = collabUser.getLibraryCards();
+      if (libraryCards == null || libraryCards.isEmpty()) {
+        throw new BadRequestException(
+            "Collaborator " + collaborator.getEmail() + " does not have a library card.");
+      }
+    }
   }
 
   /**

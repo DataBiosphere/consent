@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -31,13 +33,17 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,6 +82,8 @@ class DataAccessRequestServiceTest {
   private UseRestrictionConverter useRestrictionConverter;
 
   private DataAccessRequestService service;
+
+  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
 
   private void initService() {
     DAOContainer container = new DAOContainer();
@@ -144,6 +152,98 @@ class DataAccessRequestServiceTest {
     assertThrows(IllegalArgumentException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
+  }
+
+  private User createRequestingUser() {
+    User requestingUser = new User(1, "requestor@test.com", "Requestor", new Date(), roles);
+    requestingUser.setInstitutionId(1);
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    requestingUser.setInstitution(institution);
+    return requestingUser;
+  }
+
+  private static Collaborator cerateCollaborator() {
+    Collaborator validCollaborator = new Collaborator();
+    validCollaborator.setEmail("collaborator@test.com");
+    return validCollaborator;
+  }
+
+  private static DataAccessRequest createDataAccessRequest(List<Collaborator> internalCollaborators) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setInternalCollaborators(internalCollaborators);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(data);
+    return dar;
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNone() {
+    User requestingUser = createRequestingUser();
+    DataAccessRequest dar = createDataAccessRequest(List.of());
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsValid() {
+    User requestingUser = createRequestingUser();
+    Collaborator validCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(List.of(libraryCard));
+    DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
+    when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsDoesNotExist() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
+
+    initService();
+    NotFoundException exception = assertThrows(NotFoundException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser));
+    assertEquals(exception.getMessage(), "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
+  }
+  @Test
+  void testValidateInternalCollaboratorsDifferentInstitution() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(2);
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " is not part of the same institution, Test Institution");
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNoLibraryCard() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(Collections.emptyList());
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
   }
 
   @Test

@@ -557,11 +557,9 @@ public class DataAccessRequestData {
   }
 
   public List<Collaborator> getLabAndInternalCollaborators() {
-   List<Collaborator> empty = Collections.emptyList();
-    return Stream.of(Objects.requireNonNullElse(labCollaborators, empty),
-            Objects.requireNonNullElse(internalCollaborators, empty))
+    return Stream.of(getInternalCollaborators(), getLabCollaborators())
         .flatMap(List::stream)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public List<Collaborator> getExternalCollaborators() {
