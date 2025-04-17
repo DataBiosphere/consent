@@ -24,7 +24,6 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
   private final ClaimsCache claimsCache;
   private final SamService samService;
   private final UserService userService;
-  private final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
 
   @Inject
   public OAuthAuthenticator(SamService samService, UserService userService) {
@@ -105,13 +104,14 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
         if ((userStatus != null) && (userStatus.getUserInfo() != null)) {
           authUser.setEmail(userStatus.getUserInfo().getUserEmail());
         } else {
+          Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
       } catch (Exception ex) {
         // if post response is not successful, propagate the error to the user
         throw new WebApplicationException(ex.getMessage());
       }
-    } catch (Throwable e) {
+    } catch (Exception e) {
       // if there is some other error getting the user, log it and return the user without status info
       logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
