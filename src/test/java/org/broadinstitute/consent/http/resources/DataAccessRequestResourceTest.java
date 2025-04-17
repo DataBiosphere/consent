@@ -408,22 +408,6 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testPostProgressReportCollabAndEthicsFilesWithoutLibraryCardsThrows() throws IOException {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.getData().setCollaborationLetterLocation("collaborationLetterLocation");
-    parentDar.getData().setIrbDocumentLocation("irbDocumentLocation");
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    initResource();
-    user.setLibraryCards(null);
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
-  }
-
-  @Test
   void testPostProgressReportMissingParentDar() throws IOException {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);

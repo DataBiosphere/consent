@@ -413,7 +413,9 @@ public class DataAccessRequestResource extends Resource {
     User user = userService.findUserByEmail(authUser.getEmail());
     DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
     try {
-      checkAuthorizedUpdateUser(user, parentDar);
+      if (!user.getUserId().equals(parentDar.getUserId())) {
+        throw new ForbiddenException("User not authorized to update this Data Access Request");
+      }
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
