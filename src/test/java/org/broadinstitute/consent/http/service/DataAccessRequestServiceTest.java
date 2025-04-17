@@ -91,7 +91,7 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, useRestrictionConverter);
+        dataAccessRequestServiceDAO);
   }
 
   @Test

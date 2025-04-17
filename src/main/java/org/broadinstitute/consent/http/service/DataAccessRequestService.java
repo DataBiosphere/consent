@@ -43,29 +43,22 @@ public class DataAccessRequestService implements ConsentLogger {
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
   private final MatchDAO matchDAO;
-  private final UserDAO userDAO;
   private final VoteDAO voteDAO;
-  private final InstitutionDAO institutionDAO;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
   private final DacService dacService;
-  private final DataAccessReportsParser dataAccessReportsParser;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
     this.datasetDAO = container.getDatasetDAO();
     this.electionDAO = container.getElectionDAO();
     this.matchDAO = container.getMatchDAO();
-    this.userDAO = container.getUserDAO();
     this.voteDAO = container.getVoteDAO();
-    this.institutionDAO = container.getInstitutionDAO();
     this.dacService = dacService;
-    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
   }
 
