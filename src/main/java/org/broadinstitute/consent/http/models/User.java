@@ -283,6 +283,9 @@ public class User {
   }
 
   public List<LibraryCard> getLibraryCards() {
+    if (this.libraryCards == null) {
+      this.libraryCards = new ArrayList<>();
+    }
     return this.libraryCards;
   }
 
@@ -306,11 +309,11 @@ public class User {
   }
 
   public void addLibraryCard(LibraryCard card) {
-    if (Objects.isNull(this.getLibraryCards())) {
-      this.setLibraryCards(new ArrayList<>());
+    if (this.libraryCards == null) {
+      this.libraryCards = new ArrayList<>();
     }
-    if (!this.getLibraryCards().contains(card)) {
-      this.getLibraryCards().add(card);
+    if (!this.libraryCards.contains(card)) {
+      this.libraryCards.add(card);
     }
   }
 
