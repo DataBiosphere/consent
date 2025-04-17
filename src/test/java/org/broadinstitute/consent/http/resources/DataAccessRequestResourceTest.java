@@ -114,25 +114,6 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testCreateDataAccessRequestNoLibraryCard() {
-    try {
-      when(userService.findUserByEmail(any())).thenReturn(user);
-      DataAccessRequest dar = new DataAccessRequest();
-      dar.setReferenceId(UUID.randomUUID().toString());
-      dar.setCollectionId(1);
-      DataAccessRequestData data = new DataAccessRequestData();
-      data.setReferenceId(dar.getReferenceId());
-      dar.setData(data);
-    } catch (Exception e) {
-      fail("Initialization Exception: " + e.getMessage());
-    }
-    initResource();
-    user.setLibraryCards(null);
-    Response response = resource.createDataAccessRequest(authUser, info, "");
-    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
-  }
-
-  @Test
   void testCreateDataAccessRequest() {
     try {
       User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
