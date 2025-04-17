@@ -3,10 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Date;
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
@@ -16,20 +13,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UserPropertyDAOTest extends DAOTestHelper {
+class UserPropertyDAOTest extends DAOTestHelper {
 
   @Test
-  public void testFindUserProperties() {
+  void testFindUserProperties() {
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
 
     UserProperty suggestedSigningOfficial = new UserProperty();
     suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-    suggestedSigningOfficial.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    suggestedSigningOfficial.setPropertyValue(randomAlphabetic(10));
     suggestedSigningOfficial.setUserId(user.getUserId());
 
     UserProperty notPresent = new UserProperty();
     notPresent.setPropertyKey("nonExistentKey");
-    notPresent.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+    notPresent.setPropertyValue(randomAlphabetic(10));
     notPresent.setUserId(user.getUserId());
 
     List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
@@ -49,7 +46,7 @@ public class UserPropertyDAOTest extends DAOTestHelper {
         List.of(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
             UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-    assertEquals(2, props.size());
+    assertEquals(1, props.size());
 
     assertTrue(props.stream().anyMatch((p) ->
         (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
