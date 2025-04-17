@@ -164,6 +164,9 @@ public class UserService implements ConsentLogger {
     try {
       if (user.getInstitutionId() == null) {
         Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
+        if (institution == null) {
+          throw new BadRequestException("No institution found for user: %s".formatted(user.getEmail()));
+        }
         userServiceDAO.insertRoleAndInstitutionTxn(role, institution.getId(), userId);
       } else {
         userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);

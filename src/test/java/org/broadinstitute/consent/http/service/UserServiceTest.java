@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -363,9 +362,9 @@ class UserServiceTest {
     User user = service.findUserById(u.getUserId());
     assertNotNull(user);
     assertNotNull(user.getLibraryCards());
-    assertEquals(user.getLibraryCards().size(), 2);
-    assertEquals(user.getLibraryCards().get(0).getId(), one.getId());
-    assertEquals(user.getLibraryCards().get(1).getId(), two.getId());
+    assertEquals(2, user.getLibraryCards().size());
+    assertEquals(one.getId(), user.getLibraryCards().get(0).getId());
+    assertEquals(two.getId(), user.getLibraryCards().get(1).getId());
   }
 
   @Test
@@ -761,25 +760,15 @@ class UserServiceTest {
     Institution institution = new Institution();
     institution.setId(1);
     User testUser = generateUserWithoutInstitution();
-    User returnUser = new User();
     Integer testUserId = testUser.getUserId();
-    returnUser.setUserId(testUserId);
-    returnUser.setEmail(testUser.getEmail());
-    returnUser.setDisplayName(testUser.getDisplayName());
-    returnUser.setInstitutionId(1);
     UserRole role = UserRoles.Researcher();
-    assertNotEquals(testUser.getInstitutionId(), returnUser.getInstitutionId());
-    when(userDAO.findUserById(testUserId)).thenReturn(returnUser);
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institution);
     service.insertRoleAndInstitutionForUser(role, testUser);
     verify(userServiceDAO).insertRoleAndInstitutionTxn(role, institution.getId(), testUserId);
-    User fetchedUser = service.findUserById(testUserId);
-    assertEquals(fetchedUser.getUserId(), testUserId);
-    assertEquals(fetchedUser.getInstitutionId(), returnUser.getInstitutionId());
   }
 
   @Test
-  void insertUserRole() {
+  void insertUserRoleAndInstitution_roleOnly() {
     User testUser = generateUser();
     UserRole role = UserRoles.Researcher();
     service.insertRoleAndInstitutionForUser(role, testUser);
@@ -799,6 +788,13 @@ class UserServiceTest {
     doThrow(new TransactionException("txn error")).when(userServiceDAO)
         .insertRoleAndInstitutionTxn(role, institution.getId(), testUser.getUserId());
     assertThrows(TransactionException.class, () -> service.insertRoleAndInstitutionForUser(role, testUser));
+  }
+
+  @Test
+  void insertUserRoleAndInstitution_FailingInstitution() {
+    User testUser = generateUserWithoutInstitution();
+    UserRole role = UserRoles.Researcher();
+    assertThrows(BadRequestException.class, () -> service.insertRoleAndInstitutionForUser(role, testUser));
   }
 
   @Test
