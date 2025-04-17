@@ -268,7 +268,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     try (Response response = resource.patchByDatasetUpdate(authUser, dataset.getDatasetId(),
         gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).indexDataset(dataset, user);
+      verify(elasticSearchService, never()).indexDataset(dataset.getDatasetId(), user);
     }
   }
 
@@ -311,7 +311,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchByDatasetUpdate_invokeIndexUpdate() throws Exception {
+  void testPatchByDatasetUpdate_invokeIndexUpdate() {
     Gson gson = GsonUtil.buildGson();
 
     Dataset dataset = new Dataset();
@@ -564,18 +564,17 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
     when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    when(elasticSearchService.indexDataset(dataset, user)).thenReturn(mockResponse);
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(elasticSearchService.indexDataset(dataset.getDatasetId(), user)).thenReturn(mockResponse);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
 
     initResource();
-    try (var response = resource.indexDataset(authUser, 1)) {
+    try (var response = resource.indexDataset(authUser, dataset.getDatasetId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
   @Test
-  void testIndexDelete() throws IOException, SQLException {
+  void testIndexDelete() throws IOException {
     when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -1018,7 +1017,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testupdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
+  void testUpdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(

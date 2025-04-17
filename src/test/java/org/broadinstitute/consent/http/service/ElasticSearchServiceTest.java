@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -46,6 +48,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
@@ -446,7 +449,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   ArgumentCaptor<Request> request;
 
   @Test
-  void testIndexDatasets() throws IOException {
+  void testIndexDatasetTerms() throws IOException {
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
@@ -471,6 +474,33 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
               """,
           new String(capturedRequest.getEntity().getContent().readAllBytes(),
               StandardCharsets.UTF_8));
+    }
+  }
+
+  @Test
+  void testIndexDatasets() throws Exception {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset1 = datasetRecord.dataset;
+    Dataset dataset2 = createDataset(datasetRecord.createUser, datasetRecord.updateUser,
+        new DataUseBuilder().setGeneralUse(true).build(), datasetRecord.dac);
+    dataset2.setStudy(datasetRecord.study);
+    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
+    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
+    when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(dataset2.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+
+    try (var ignored = service.indexDatasets(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
+        datasetRecord.createUser)) {
+      // Each dataset should be looked up once when defining the term and a second time
+      // when updating the indexed date.
+      verify(datasetDAO, times(2)).findDatasetById(dataset1.getDatasetId());
+      verify(datasetDAO, times(2)).findDatasetById(dataset2.getDatasetId());
     }
   }
 
@@ -628,7 +658,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     d.setDatasetId(1);
     study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
-    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 
     assertDoesNotThrow(() -> service.indexStudy(1, user));
   }
