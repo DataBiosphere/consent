@@ -349,16 +349,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   // local method to create a DAR
   protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode, Timestamp submissionDate) {
+    var now = new Timestamp(new Date().getTime());
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        submissionDate);
+        now);
     DataAccessRequest testDar = new DataAccessRequest();
     testDar.setCollectionId(collectionId);
     testDar.setReferenceId(UUID.randomUUID().toString());
     testDar.setUserId(user.getUserId());
-    testDar.setCreateDate(submissionDate);
-    testDar.setSortDate(submissionDate);
+    testDar.setCreateDate(now);
+    testDar.setSortDate(now);
     testDar.setSubmissionDate(submissionDate);
-    testDar.setUpdateDate(submissionDate);
+    testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
     testDar.setData(contents);
     dataAccessRequestDAO.insertDataAccessRequest(
@@ -630,6 +631,31 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     }
 
     assertEquals(expectedDARS,
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId())
+            .size());
+  }
+
+  @Test
+  void testFindAllApprovedDataAccessRequestsByDatasetId_NullSubmissionDate() {
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+    Dataset dataset1 = createDARDAOTestDataset();
+    User user1 = createUserWithInstitution();
+    DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1, null);
+
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        v1.getVoteId(),
+        false,
+        e1.getElectionId(),
+        now,
+        false);
+
+    // If submission date is null, then the DAR should not be returned from findApprovedDARsByDatasetId
+    assertEquals(0,
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId())
             .size());
   }
