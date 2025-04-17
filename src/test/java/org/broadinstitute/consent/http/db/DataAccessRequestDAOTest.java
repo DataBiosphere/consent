@@ -32,6 +32,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -341,19 +343,22 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(dar.getData().getMethods(), canceledDar.getData().getMethods());
   }
 
-  // local method to create a DAR
   protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode) {
-    Timestamp now = new Timestamp(new Date().getTime());
+    return createDAR(user, dataset, darCode, new Timestamp(new Date().getTime()));
+  }
+
+  // local method to create a DAR
+  protected DataAccessRequest createDAR(User user, Dataset dataset, String darCode, Timestamp submissionDate) {
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
+        submissionDate);
     DataAccessRequest testDar = new DataAccessRequest();
     testDar.setCollectionId(collectionId);
     testDar.setReferenceId(UUID.randomUUID().toString());
     testDar.setUserId(user.getUserId());
-    testDar.setCreateDate(now);
-    testDar.setSortDate(now);
-    testDar.setSubmissionDate(now);
-    testDar.setUpdateDate(now);
+    testDar.setCreateDate(submissionDate);
+    testDar.setSortDate(submissionDate);
+    testDar.setSubmissionDate(submissionDate);
+    testDar.setUpdateDate(submissionDate);
     DataAccessRequestData contents = new DataAccessRequestData();
     testDar.setData(contents);
     dataAccessRequestDAO.insertDataAccessRequest(
@@ -592,6 +597,39 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     assertEquals(0,
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId())
+            .size());
+  }
+
+
+  @ParameterizedTest
+  @ValueSource(longs = {200, 370})
+  void testFindAllApprovedDataAccessRequestsByDatasetId_ExpiredDARCase(long submissionDaysAgo) {
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+    Dataset dataset1 = createDARDAOTestDataset();
+    User user1 = createUserWithInstitution();
+    var submissionDate = new Timestamp(new Date().getTime() - 1000 * 60 * 60 * 24 * submissionDaysAgo);
+    DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1, submissionDate);
+
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        v1.getVoteId(),
+        false,
+        e1.getElectionId(),
+        now,
+        false);
+
+    var expectedDARS = 1;
+    // If submission date is more than a year ago, then the DAR should not be returned from findApprovedDARsByDatasetId
+    if (submissionDaysAgo >= 365) {
+      expectedDARS = 0;
+    }
+
+    assertEquals(expectedDARS,
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId())
             .size());
   }
