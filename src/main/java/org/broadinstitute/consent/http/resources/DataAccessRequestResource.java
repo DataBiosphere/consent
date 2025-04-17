@@ -134,9 +134,6 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (user.getLibraryCards().isEmpty()) {
-        throw new NIHComplianceRuleException();
-      }
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
