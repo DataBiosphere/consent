@@ -1,11 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -14,17 +12,12 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -38,7 +31,6 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 public class DataAccessRequestService implements ConsentLogger {
 
   private final CounterService counterService;
-  private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
@@ -54,7 +46,6 @@ public class DataAccessRequestService implements ConsentLogger {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
-    this.datasetDAO = container.getDatasetDAO();
     this.electionDAO = container.getElectionDAO();
     this.matchDAO = container.getMatchDAO();
     this.voteDAO = container.getVoteDAO();
