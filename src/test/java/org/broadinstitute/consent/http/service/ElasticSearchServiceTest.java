@@ -495,7 +495,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(mockResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(200);
 
-    try (var ignored = service.indexDatasets(List.of(dataset1, dataset2),
+    try (var ignored = service.indexDatasets(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
         datasetRecord.createUser)) {
       // Each dataset should be looked up once when defining the term and a second time
       // when updating the indexed date.
@@ -658,7 +658,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     d.setDatasetId(1);
     study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
-    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 
     assertDoesNotThrow(() -> service.indexStudy(1, user));
   }
