@@ -195,8 +195,12 @@ class UserDAOTest extends DAOTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
-    assertNotNull(users);
-    assertFalse(users.isEmpty());
+    // Four users: two admin users, two signing official users with library cards.
+    assertEquals(4, users.size());
+    // Filter out admin users, which don't have institutions.
+    users = users.stream()
+        .filter(u -> u.getInstitution() != null)
+        .toList();
     assertEquals(2, users.size());
     assertNotNull(users.get(0).getInstitution());
     assertNotNull(users.get(0).getLibraryCards());
@@ -315,7 +319,7 @@ class UserDAOTest extends DAOTestHelper {
     String displayName = user.getDisplayName();
     String email = user.getEmail();
     List<User> users = userDAO.getSOsByInstitution(institutionId);
-    assertEquals(2, users.size());
+    assertEquals(1, users.size());
     assertEquals(displayName, users.get(0).getDisplayName());
     assertEquals(email, users.get(0).getEmail());
 
@@ -374,8 +378,10 @@ class UserDAOTest extends DAOTestHelper {
     createUserWithInstitution();
     User user = createUser();
     List<User> users = userDAO.getUsersWithNoInstitution();
-    assertEquals(1, users.size());
-    assertEquals(user.getUserId(), users.get(0).getUserId());
+    // One user we created just now, one is the admin user for the institution.
+    assertEquals(2, users.size());
+    assertTrue(users.stream()
+        .anyMatch(u -> u.getUserId().equals(user.getUserId())));
   }
 
   @Test
