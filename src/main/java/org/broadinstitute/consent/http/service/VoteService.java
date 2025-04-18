@@ -280,7 +280,7 @@ public class VoteService implements ConsentLogger {
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
     try {
-      elasticSearchService.indexDatasets(datasets, user);
+      elasticSearchService.indexDatasets(datasetIds, user);
     } catch (Exception e) {
       logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
     }

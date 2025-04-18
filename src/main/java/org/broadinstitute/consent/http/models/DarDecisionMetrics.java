@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.common.collect.Streams;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Calendar;
@@ -121,10 +120,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
   private void setCountUniqueUser(DataAccessRequest dar) {
     this.countUniqueUser =
         (Objects.nonNull(dar.getData())) ?
-            (int) Streams
-                .concat(
-                    dar.getData().getLabCollaborators().stream(),
-                    dar.getData().getInternalCollaborators().stream())
+            (int) dar.getData().getLabAndInternalCollaborators().stream()
                 .filter(Objects::nonNull)
                 .map(Collaborator::getEmail)
                 .filter(Objects::nonNull)
