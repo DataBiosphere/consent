@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -180,6 +181,9 @@ public class DataAccessRequestService implements ConsentLogger {
       darData.setCreateDate(nowTime);
     }
     darData.setSortDate(nowTime);
+
+    validateNoKeyPersonnelDuplicates(darData);
+
     DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(
         dataAccessRequest.getReferenceId());
     Integer collectionId;
@@ -258,6 +262,36 @@ public class DataAccessRequestService implements ConsentLogger {
       //Response class will catch it, log it, and throw a 500 through the "unableToExecuteExceptionHandler"
       //on the Resource class, just like it would with a SQLException
       throw new UnableToExecuteStatementException(e.getMessage());
+    }
+  }
+
+  /**
+   * Validates that PI email is not duplicated with SO or IT Director emails
+   *
+   * @param darData The data access request data to validate
+   * @throws IllegalArgumentException if duplicate emails are found
+   */
+  public void validateNoKeyPersonnelDuplicates(DataAccessRequestData darData) {
+    EmailValidator emailValidator = EmailValidator.getInstance();
+
+    String piEmail = darData.getPiEmail();
+    String soEmail = darData.getSigningOfficialEmail();
+    String itEmail = darData.getItDirectorEmail();
+
+    if (!emailValidator.isValid(piEmail) || !emailValidator.isValid(soEmail)
+        || !emailValidator.isValid(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator, Signing Official, and IT Director emails must be valid");
+    }
+
+    if (piEmail.equalsIgnoreCase(soEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as Signing Official email");
+    }
+
+    if (piEmail.equalsIgnoreCase(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as IT Director email");
     }
   }
 
