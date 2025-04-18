@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
@@ -17,12 +16,12 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.models.Collaborator;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -42,6 +41,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final MatchDAO matchDAO;
   private final VoteDAO voteDAO;
+  private final UserDAO userDAO;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
   private final DacService dacService;
@@ -55,6 +55,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.electionDAO = container.getElectionDAO();
     this.matchDAO = container.getMatchDAO();
     this.voteDAO = container.getVoteDAO();
+    this.userDAO = container.getUserDAO();
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
   }
