@@ -193,7 +193,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     int i1 = RandomUtils.nextInt(5, 10);
     String email = RandomStringUtils.randomAlphabetic(i1);
     String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer userId = userDAO.insertUser(email, name, null, new Date());
     Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",

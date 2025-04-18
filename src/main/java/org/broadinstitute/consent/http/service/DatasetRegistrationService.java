@@ -207,7 +207,7 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
     sendDatasetSubmittedEmails(datasets);
-    try (Response response = elasticSearchService.indexDatasets(datasets, user)) {
+    try (Response response = elasticSearchService.indexDatasets(createdDatasetIds, user)) {
       if (response.getStatus() >= 400) {
         logWarn(String.format("Error indexing datasets from registration: %s", registration.getStudyName()));
       }

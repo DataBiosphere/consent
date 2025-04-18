@@ -99,7 +99,7 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, useRestrictionConverter);
+        dataAccessRequestServiceDAO);
   }
 
   @Test
@@ -321,7 +321,8 @@ class DataAccessRequestServiceTest {
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName", new Date());
+    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName",
+        null, new Date());
     dar.setUserId(userId);
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
@@ -398,132 +399,6 @@ class DataAccessRequestServiceTest {
     assertThrows(NotFoundException.class, () -> {
       service.findByReferenceId("referenceId");
     });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoDars() {
-    User user = new User();
-    DarCollection sourceCollection = new DarCollection();
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoDarData() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest newDar = new DataAccessRequest();
-    newDar.setReferenceId(UUID.randomUUID().toString());
-    sourceCollection.addDar(newDar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setReferenceId(UUID.randomUUID().toString());
-    data.setStatus("Not Canceled");
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoDatasets() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setReferenceId(UUID.randomUUID().toString());
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.setData(data);
-    dar.setDatasetIds(null);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
-    doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
-        any(),
-        any(),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-    initService();
-    service.createDraftDarFromCanceledCollection(user, sourceCollection);
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollectionNoLibraryCards() {
-    User user = new User();
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(LibraryCardRequiredException.class,
-        () -> service.createDraftDarFromCanceledCollection(user, sourceCollection));
   }
 
   @Test

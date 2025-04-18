@@ -16,13 +16,11 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -176,13 +174,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
         randomAlphabetic(i2) +
         "." +
         randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
-    UserProperty prop = new UserProperty();
-    prop.setUserId(userId);
-    prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-    prop.setPropertyValue("test");
-    userPropertyDAO.insertAll(List.of(prop));
     return userDAO.findUserById(userId);
   }
 
@@ -196,7 +189,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     int i1 = randomInt(5, 10);
     String email = randomAlphabetic(i1);
     String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
+    Integer userId = userDAO.insertUser(email, name, null, new Date());
     Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
@@ -248,4 +241,40 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
+  User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
+  User createUserWithRole(Integer roleId) {
+    int i1 = randomInt(5, 10);
+    int i2 = randomInt(5, 10);
+    int i3 = randomInt(3, 5);
+    String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
+  }
+
+  User createUserWithInstitution() {
+    int i1 = randomInt(5, 10);
+    String email = randomAlphabetic(i1);
+    String name = randomAlphabetic(10);
+    Integer userId = userDAO.insertUser(email, name, null, new Date());
+    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        randomAlphabetic(10),
+        new Random().nextInt(),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        userId,
+        new Date());
+    userDAO.updateUser(name, userId, institutionId);
+    userRoleDAO.insertSingleUserRole(7, userId);
+    return userDAO.findUserById(userId);
+  }
 }
