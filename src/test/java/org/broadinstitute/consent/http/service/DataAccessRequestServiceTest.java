@@ -79,6 +79,10 @@ class DataAccessRequestServiceTest {
 
   private DataAccessRequestService service;
 
+  private static final String PI_EMAIL = "pi@example.broadinstitute.org";
+  private static final String SO_EMAIL = "so@example.broadinstitute.org";
+  private static final String IT_EMAIL = "it@example.broadinstitute.org";
+
   private void initService() {
     DAOContainer container = new DAOContainer();
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
@@ -227,6 +231,9 @@ class DataAccessRequestServiceTest {
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
     data.setAddiction(false);
     data.setAnvilUse(true);
@@ -349,6 +356,80 @@ class DataAccessRequestServiceTest {
 
     assertThrows(NotAcceptableException.class, () -> {
       service.deleteByReferenceId(user, referenceId);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicates() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    try {
+      service.validateNoKeyPersonnelDuplicates(data);
+    } catch (IllegalArgumentException e) {
+      fail("Should not have thrown exception");
+    }
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadPIEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("invalid");
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadITDirectorEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail("invalid");
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail("invalid");
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesItDirector() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(PI_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(PI_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
     });
   }
 
