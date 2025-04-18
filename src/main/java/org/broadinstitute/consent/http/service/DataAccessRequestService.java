@@ -234,7 +234,7 @@ public class DataAccessRequestService implements ConsentLogger {
             "Collaborator " + collaborator.getEmail() + " is not part of the same institution, " + requestingUser.getInstitution().getName());
       }
       List<LibraryCard> libraryCards = collabUser.getLibraryCards();
-      if (libraryCards == null || libraryCards.isEmpty()) {
+      if (libraryCards.isEmpty()) {
         throw new BadRequestException(
             "Collaborator " + collaborator.getEmail() + " does not have a library card.");
       }
