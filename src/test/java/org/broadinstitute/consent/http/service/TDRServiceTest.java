@@ -63,6 +63,9 @@ class TDRServiceTest {
     Collaborator lab = new Collaborator();
     lab.setEmail("lab@gmail.com");
     data.setLabCollaborators(List.of(lab));
+    Collaborator internal = new Collaborator();
+    internal.setEmail("internal@gmail.com");
+    data.setInternalCollaborators(List.of(internal));
     dar1.setData(data);
     User user2 = new User();
     user2.setUserId(2);
@@ -80,7 +83,7 @@ class TDRServiceTest {
         .toList();
 
     assertTrue(
-        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail(), lab.getEmail())));
+        approvedUsersEmails.containsAll(List.of(user1.getEmail(), user2.getEmail(), lab.getEmail(), internal.getEmail())));
   }
 
   @Test

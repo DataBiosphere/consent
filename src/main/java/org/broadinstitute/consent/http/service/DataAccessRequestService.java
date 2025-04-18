@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
@@ -15,15 +17,18 @@ import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -37,6 +42,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final MatchDAO matchDAO;
   private final VoteDAO voteDAO;
+  private final UserDAO userDAO;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
   private final DacService dacService;
@@ -50,6 +56,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.electionDAO = container.getElectionDAO();
     this.matchDAO = container.getMatchDAO();
     this.voteDAO = container.getVoteDAO();
+    this.userDAO = container.getUserDAO();
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
   }
@@ -165,6 +172,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new NIHComplianceRuleException();
     }
 
+    validateInternalCollaborators(dataAccessRequest, user);
+
     Date now = new Date();
     long nowTime = now.getTime();
     DataAccessRequestData darData = dataAccessRequest.getData();
@@ -213,6 +222,27 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);
+  }
+
+  @VisibleForTesting
+  public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
+    Integer institution = requestingUser.getInstitutionId();
+    List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
+    for (Collaborator collaborator : internalCollaborators) {
+      User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
+      if (collabUser == null) {
+        throw new NotFoundException("Unable to find User with the provided email: " + collaborator.getEmail());
+      }
+      if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
+        throw new BadRequestException(
+            "Collaborator " + collaborator.getEmail() + " is not part of the same institution, " + requestingUser.getInstitution().getName());
+      }
+      List<LibraryCard> libraryCards = collabUser.getLibraryCards();
+      if (libraryCards.isEmpty()) {
+        throw new BadRequestException(
+            "Collaborator " + collaborator.getEmail() + " does not have a library card.");
+      }
+    }
   }
 
   /**
