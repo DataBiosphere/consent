@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
@@ -37,8 +38,11 @@ class InstitutionServiceTest {
   @Mock
   private UserDAO userDAO;
 
+  @Mock
+  private GCSService store;
+
   private void initService() {
-    service = new InstitutionService(institutionDAO, userDAO);
+    service = new InstitutionService(institutionDAO, userDAO, store);
   }
 
   private Institution initMockModel() {

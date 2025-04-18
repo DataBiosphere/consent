@@ -518,7 +518,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   InstitutionService providesInstitutionService() {
-    return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
+    return new InstitutionService(providesInstitutionDAO(), providesUserDAO(), providesGCSService());
   }
 
   @Provides
@@ -574,7 +574,7 @@ public class ConsentModule extends AbstractModule {
         providesDaaDAO(),
         providesEmailService(),
         providesDraftService(),
-        providesGCSService());
+        providesInstitutionService());
   }
 
   @Provides

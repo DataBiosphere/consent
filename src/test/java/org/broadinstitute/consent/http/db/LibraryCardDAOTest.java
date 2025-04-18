@@ -149,7 +149,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
   @Test
   void testFindLibraryCardDaaByIdMultipleDaas() {
     LibraryCard card = createLibraryCard();
-    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), new Date());
+    Integer userId = userDAO.insertUser(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5),
+        null, new Date());
     Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5), RandomStringUtils.randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
@@ -421,7 +422,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   private LibraryCard createLibraryCard() {
     Integer institutionId = createInstitution().getId();
     String email = RandomStringUtils.randomAlphabetic(11);
-    Integer userId = userDAO.insertUser(email, "displayName", new Date());
+    Integer userId = userDAO.insertUser(email, "displayName", null, new Date());
     userDAO.updateUser(email, userId, institutionId);
     String stringValue = "value";
     Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,

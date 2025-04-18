@@ -43,9 +43,6 @@ put:
             selectedSigningOfficialId:
               description: The selected user id of the user's preferred signing official
               type: number
-            suggestedInstitution:
-              description: The suggested institution for the user
-              type: string
             suggestedSigningOfficial:
               description: The suggested signing official for the user
               type: string

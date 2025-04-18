@@ -875,25 +875,4 @@ class ElectionDAOTest extends DAOTestHelper {
     );
     return electionDAO.findElectionById(electionId);
   }
-
-  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

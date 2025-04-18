@@ -221,7 +221,8 @@ class DataAccessRequestServiceTest {
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName", new Date());
+    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName",
+        null, new Date());
     dar.setUserId(userId);
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
