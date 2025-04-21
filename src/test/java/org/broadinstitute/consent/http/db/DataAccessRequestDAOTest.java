@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -785,10 +786,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
           referenceId);
     });
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(
-        (double) (new Date().getTime() - DataAccessRequest.EXPIRATION_DURATION_MILLIS) / 1000,
-        (double) new Date().getTime()
-            / 1000);
+    double oneYearAgo = new Date().getTime() - DataAccessRequest.EXPIRATION_DURATION_MILLIS;
+    double oneMinuteInTheFuture = new Date().getTime() + (60 * 1000);
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(oneYearAgo/1000, oneMinuteInTheFuture/1000);
     assertFalse(dars.isEmpty());
     assertEquals(darCollection.getDars().size(), dars.size());
   }
