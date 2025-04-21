@@ -534,53 +534,11 @@ class UserDAOTest extends DAOTestHelper {
   private LibraryCard createLibraryCard() {
     Integer institutionId = createInstitution().getId();
     String email = RandomStringUtils.randomAlphabetic(11);
-    Integer userId = userDAO.insertUser(email, "displayName", new Date());
+    Integer userId = userDAO.insertUser(email, "displayName", null, new Date());
     userDAO.updateUser(email, userId, institutionId);
     String stringValue = "value";
     Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
         stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
-
-  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
-  private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -34,7 +32,6 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -66,14 +63,14 @@ public class UserService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final EmailService emailService;
   private final DraftServiceDAO draftServiceDAO;
-  private final GCSService store;
+  private final InstitutionService institutionService;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, EmailService emailService,
-      DraftServiceDAO draftServiceDAO, GCSService store) {
+      DraftServiceDAO draftServiceDAO, InstitutionService institutionService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -87,7 +84,7 @@ public class UserService implements ConsentLogger {
     this.daaDAO = daaDAO;
     this.emailService = emailService;
     this.draftServiceDAO = draftServiceDAO;
-    this.store = store;
+    this.institutionService = institutionService;
   }
 
   /**
@@ -162,26 +159,28 @@ public class UserService implements ConsentLogger {
     return findUserById(userId);
   }
 
-  public void insertRoleAndInstitutionForUser(UserRole role, Integer institutionId,
-      Integer userId) {
+  public void insertRoleAndInstitutionForUser(UserRole role, User user) {
+    var userId = user.getUserId();
     try {
-      userServiceDAO.insertRoleAndInstitutionTxn(role, institutionId, userId);
+      if (user.getInstitutionId() == null) {
+        Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
+        if (institution == null) {
+          throw new BadRequestException("No institution found for user: %s".formatted(user.getEmail()));
+        }
+        userServiceDAO.insertRoleAndInstitutionTxn(role, institution.getId(), userId);
+      } else {
+        userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
+      }
     } catch (Exception e) {
       logException(
-          "Error when updating user: %s, institution: %s, role: %s".formatted(userId.toString(),
-              institutionId.toString(), role.toString()), e);
+          "Error when updating user: %s, role: %s".formatted(userId, role), e);
       throw e;
     }
   }
 
-  public User createUser(User user) throws IOException {
-    var institutionDomainMap = store.readJsonFileFromBucket("institution-domain/allowlist.json",
-        InstitutionDomainMap.class);
-    if (institutionDomainMap != null) {
-      logDebug("remove this check after implementation of institution domain");
-    }
+  public User createUser(User user) {
     // Default role is researcher.
-    if (Objects.isNull(user.getRoles()) || CollectionUtils.isEmpty(user.getRoles())) {
+    if (CollectionUtils.isEmpty(user.getRoles())) {
       user.setResearcherRole();
     }
     validateRequiredFields(user);
@@ -189,7 +188,11 @@ public class UserService implements ConsentLogger {
     if (Objects.nonNull(existingUser)) {
       throw new BadRequestException("User exists with this email address: " + user.getEmail());
     }
-    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
+    Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
+    if (institution != null) {
+      user.setInstitutionId(institution.getId());
+    }
+    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
     insertUserRoles(user.getRoles(), userId);
     addExistingLibraryCards(user);
     return userDAO.findUserById(userId);
@@ -362,17 +365,15 @@ public class UserService implements ConsentLogger {
   }
 
   private void validateRequiredFields(User user) {
-    if (Objects.isNull(user.getDisplayName()) || StringUtils.isEmpty(user.getDisplayName())) {
+    if (StringUtils.isEmpty(user.getDisplayName())) {
       throw new BadRequestException("Display Name cannot be empty");
     }
-    if (Objects.isNull(user.getEmail()) || StringUtils.isEmpty(user.getEmail())) {
+    if (StringUtils.isEmpty(user.getEmail())) {
       throw new BadRequestException("Email address cannot be empty");
     }
+    List<String> validRoleNameList = Stream.of(UserRoles.RESEARCHER, UserRoles.ALUMNI,
+        UserRoles.ADMIN).map(UserRoles::getRoleName).toList();
     user.getRoles().forEach(role -> {
-      List<UserRoles> validRoles = Stream.of(UserRoles.RESEARCHER,
-          UserRoles.ALUMNI, UserRoles.ADMIN).collect(Collectors.toList());
-      List<String> validRoleNameList = validRoles.stream().map(UserRoles::getRoleName)
-          .collect(Collectors.toList());
       if (!validRoleNameList.contains(role.getName())) {
         String validRoleNames = String.join(", ", validRoleNameList);
         throw new BadRequestException(
@@ -416,21 +417,11 @@ public class UserService implements ConsentLogger {
   private void addExistingLibraryCards(User user) {
     List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
 
-    if (Objects.isNull(libraryCards) || libraryCards.isEmpty()) {
-      return;
-    }
-
     libraryCards
         .forEach(lc -> {
-          lc.setUserId(user.getUserId());
-
-          if (!Objects.isNull(lc.getInstitutionId())) {
-            user.setInstitutionId(lc.getInstitutionId());
-          }
-
           libraryCardDAO.updateLibraryCardById(
               lc.getId(),
-              lc.getUserId(),
+              user.getUserId(),
               lc.getInstitutionId(),
               lc.getEraCommonsId(),
               lc.getUserName(),
@@ -438,8 +429,6 @@ public class UserService implements ConsentLogger {
               user.getUserId(),
               new Date());
         });
-
-    userDAO.updateUser(user.getDisplayName(), user.getUserId(), user.getInstitutionId());
   }
 
   public User findOrCreateUser(AuthUser authUser) throws Exception {

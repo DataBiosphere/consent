@@ -511,10 +511,6 @@ paths:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
     $ref: './paths/tdrDataset.yaml'
-  /api/tdr/dar/draft:
-    $ref: './paths/tdrDraftDAR.yaml'
-  /api/tdr/v2/dar/draft:
-    $ref: './paths/tdrV2DraftDAR.yaml'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email

@@ -492,7 +492,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         RandomStringUtils.randomAlphabetic(i2) +
         "." +
         RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
+    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
     userRoleDAO.insertSingleUserRole(roleId, userId);
     return userDAO.findUserById(userId);
   }

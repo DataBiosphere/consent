@@ -24,6 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.Error;
@@ -68,11 +70,119 @@ abstract public class Resource implements ConsentLogger {
       Map.entry("22021",
           ImmutablePair.of(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid byte sequence"))
   );
+  private static final Map<Class<? extends Throwable>, ExceptionHandler> DISPATCH = new HashMap<>();
+
+  static {
+    DISPATCH.put(LibraryCardRequiredException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
+    DISPATCH.put(NIHComplianceRuleException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
+    DISPATCH.put(ConsentConflictException.class, e ->
+        Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
+    DISPATCH.put(UnprocessableEntityException.class, e ->
+        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY))
+            .build());
+    DISPATCH.put(UnsupportedOperationException.class, e ->
+        Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
+    DISPATCH.put(IllegalArgumentException.class, e ->
+        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+            .build());
+    DISPATCH.put(IOException.class, e ->
+        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+            .build());
+    DISPATCH.put(BadRequestException.class, e ->
+        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+            .build());
+    DISPATCH.put(MalformedJsonException.class, e ->
+        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+            .build());
+    DISPATCH.put(JsonSyntaxException.class, e ->
+        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+            .build());
+    DISPATCH.put(NotAuthorizedException.class, e ->
+        Response.status(Response.Status.UNAUTHORIZED).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.UNAUTHORIZED.getStatusCode()))
+            .build());
+    DISPATCH.put(ForbiddenException.class, e ->
+        Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.FORBIDDEN.getStatusCode())).build());
+    DISPATCH.put(NotFoundException.class, e ->
+        Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
+    DISPATCH.put(UnknownIdentifierException.class, e ->
+        Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
+            .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
+    DISPATCH.put(UnableToExecuteStatementException.class,
+        Resource::unableToExecuteExceptionHandler);
+    DISPATCH.put(PSQLException.class,
+        Resource::unableToExecuteExceptionHandler);
+    DISPATCH.put(SQLSyntaxErrorException.class, e ->
+        errorLoggedExceptionHandler(e,
+            new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
+    DISPATCH.put(SQLException.class, e ->
+        errorLoggedExceptionHandler(e,
+            new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
+    DISPATCH.put(Exception.class, e ->
+        errorLoggedExceptionHandler(e,
+            new Error(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
+  }
+
+  private static Response errorLoggedExceptionHandler(Exception e, Error error) {
+    LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+    // static makes using the interface less flexible
+    Sentry.captureEvent(new SentryEvent(e));
+    return Response.serverError().type(MediaType.APPLICATION_JSON).entity(error).build();
+  }
+
+  //Helper method to process generic JDBI Postgres exceptions for responses
+  protected static Response unableToExecuteExceptionHandler(Exception e) {
+    //default status definition
+    LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
+    // static makes using the interface less flexible
+    Sentry.captureEvent(new SentryEvent(e));
+
+    var status = vendorCodeStatusMap.get(PSQLState.UNKNOWN_STATE.getState());
+
+    try {
+      if (e.getCause() instanceof PSQLException) {
+        String vendorCode = ((PSQLException) e.getCause()).getSQLState();
+        if (vendorCodeStatusMap.containsKey(vendorCode)) {
+          status = vendorCodeStatusMap.get(vendorCode);
+        }
+      }
+    } catch (Exception error) {
+      //no need to handle, default status already assigned
+    }
+
+    int statusCode = status.getLeft();
+    String message = status.getRight();
+
+    return Response.status(statusCode)
+        .type(MediaType.APPLICATION_JSON)
+        .entity(new Error(message, statusCode))
+        .build();
+  }
 
   protected Response createExceptionResponse(Exception e) {
     try {
       logWarn("Returning error response to client: " + e.getMessage());
-      ExceptionHandler handler = dispatch.get(e.getClass());
+      ExceptionHandler handler = DISPATCH.get(e.getClass());
       if (handler != null) {
         return handler.handle(e);
       } else {
@@ -113,108 +223,6 @@ abstract public class Resource implements ConsentLogger {
           "File size is invalid. Max size is: " + validator.getMaxFileUploadSize() / 1000000
               + " MB");
     }
-  }
-
-  private interface ExceptionHandler {
-
-    Response handle(Exception e);
-  }
-
-  private static final Map<Class<? extends Throwable>, ExceptionHandler> dispatch = new HashMap<>();
-
-  static {
-    dispatch.put(ConsentConflictException.class, e ->
-        Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
-    dispatch.put(UnprocessableEntityException.class, e ->
-        Response.status(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY)).build());
-    dispatch.put(UnsupportedOperationException.class, e ->
-        Response.status(Response.Status.CONFLICT).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode())).build());
-    dispatch.put(IllegalArgumentException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
-    dispatch.put(IOException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
-    dispatch.put(BadRequestException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
-    dispatch.put(MalformedJsonException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
-    dispatch.put(JsonSyntaxException.class, e ->
-        Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
-            .build());
-    dispatch.put(NotAuthorizedException.class, e ->
-        Response.status(Response.Status.UNAUTHORIZED).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.UNAUTHORIZED.getStatusCode()))
-            .build());
-    dispatch.put(ForbiddenException.class, e ->
-        Response.status(Response.Status.FORBIDDEN).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.FORBIDDEN.getStatusCode())).build());
-    dispatch.put(NotFoundException.class, e ->
-        Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
-    dispatch.put(UnknownIdentifierException.class, e ->
-        Response.status(Response.Status.NOT_FOUND).type(MediaType.APPLICATION_JSON)
-            .entity(new Error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode())).build());
-    dispatch.put(UnableToExecuteStatementException.class,
-        Resource::unableToExecuteExceptionHandler);
-    dispatch.put(PSQLException.class,
-        Resource::unableToExecuteExceptionHandler);
-    dispatch.put(SQLSyntaxErrorException.class, e ->
-        errorLoggedExceptionHandler(e,
-            new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
-    dispatch.put(SQLException.class, e ->
-        errorLoggedExceptionHandler(e,
-            new Error("Database Error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
-    dispatch.put(Exception.class, e ->
-        errorLoggedExceptionHandler(e,
-            new Error(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode())));
-  }
-
-  private static Response errorLoggedExceptionHandler(Exception e, Error error) {
-    LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
-    // static makes using the interface less flexible
-    Sentry.captureEvent(new SentryEvent(e));
-    return Response.serverError().type(MediaType.APPLICATION_JSON).entity(error).build();
-  }
-
-  //Helper method to process generic JDBI Postgres exceptions for responses
-  protected static Response unableToExecuteExceptionHandler(Exception e) {
-    //default status definition
-    LoggerFactory.getLogger(Resource.class.getName()).error(e.getMessage());
-    // static makes using the interface less flexible
-    Sentry.captureEvent(new SentryEvent(e));
-
-    var status = vendorCodeStatusMap.get(PSQLState.UNKNOWN_STATE.getState());
-
-    try {
-      if (e.getCause() instanceof PSQLException) {
-        String vendorCode = ((PSQLException) e.getCause()).getSQLState();
-        if (vendorCodeStatusMap.containsKey(vendorCode)) {
-          status = vendorCodeStatusMap.get(vendorCode);
-        }
-      }
-    } catch (Exception error) {
-      //no need to handle, default status already assigned
-    }
-
-    int statusCode = status.getLeft();
-    String message = status.getRight();
-
-    return Response.status(statusCode)
-        .type(MediaType.APPLICATION_JSON)
-        .entity(new Error(message, statusCode))
-        .build();
   }
 
   /**
@@ -295,5 +303,10 @@ abstract public class Resource implements ConsentLogger {
     }
 
     return files;
+  }
+
+  private interface ExceptionHandler {
+
+    Response handle(Exception e);
   }
 }

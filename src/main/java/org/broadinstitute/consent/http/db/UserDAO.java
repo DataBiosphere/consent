@@ -122,12 +122,14 @@ public interface UserDAO extends Transactional<UserDAO> {
       """)
   List<User> findUsersByEmailList(@BindList("emails") List<String> emails);
 
-  @SqlUpdate("INSERT INTO users (email, display_name, create_date) values (:email, :displayName, :createDate)")
+  @SqlUpdate("INSERT INTO users (email, display_name, institution_id, create_date) values (:email, :displayName, :institutionId, :createDate)")
   @GetGeneratedKeys
   Integer insertUser(@Bind("email") String email,
       @Bind("displayName") String displayName,
+      @Bind("institutionId") Integer institutionId,
       @Bind("createDate") Date createDate);
 
+  // Only used by tests; all users except Admin have an institution ID set on creation.
   @SqlUpdate("UPDATE users SET display_name=:displayName, institution_id=:institutionId WHERE user_id=:id")
   void updateUser(@Bind("displayName") String displayName,
       @Bind("id") Integer id,

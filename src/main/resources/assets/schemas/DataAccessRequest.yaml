@@ -154,12 +154,24 @@ properties:
   pubAcknowledgement:
     type: boolean
     description: Boolean value that represents user acknowledgement of publication requirements (if applicable)
+  piName:
+    type: string
+    description: Principal Investigator
+  piEmail:
+    type: string
+    description: Principal Investigator email
   itDirector:
     type: string
     description: IT Director
+  itDirectorEmail:
+    type: string
+    description: IT Director email
   signingOfficial:
     type: string
     description: Signing Official
+  signingOfficialEmail:
+    type: string
+    description: Signing Official email
   publication:
     type: boolean
     description: Publication Required
