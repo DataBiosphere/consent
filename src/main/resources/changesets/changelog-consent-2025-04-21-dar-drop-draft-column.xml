@@ -5,5 +5,8 @@
       <dropColumn tableName="data_access_request">
         <column name="draft"/>
       </dropColumn>
+    <createIndex tableName="data_access_request" indexName="idx_submission_date">
+      <column name="submission_date"/>
+    </createIndex>
   </changeSet>
 </databaseChangeLog>
