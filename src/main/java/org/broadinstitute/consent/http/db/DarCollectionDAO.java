@@ -86,7 +86,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "dd.dataset_id, " +
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           +
-          "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
           "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
@@ -127,10 +127,11 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           +
-          "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
           "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           +
-          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dd.dataset_id " +
+          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dd.dataset_id "
+          +
           "FROM dar_collection c " +
           "INNER JOIN users u ON c.create_user_id = u.user_id " +
           "LEFT JOIN user_property up ON u.user_id = up.user_id " +
@@ -165,7 +166,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
           + "dd.dataset_id, "
           + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
+          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, "
           + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
           + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "

@@ -546,7 +546,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequest(collectionId, userId);
 
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), true); // draft DAR
+    dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.userId, new Date(), null,
+        new Date(), dar.getData()); // draft DAR
 
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(
         userId);

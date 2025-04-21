@@ -457,9 +457,10 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
     dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
-        now, now, now, data);
-    dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
-    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        now, now, data);
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
+    dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
+        new Date(), new Date(), data);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }

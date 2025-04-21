@@ -12,6 +12,7 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +24,9 @@ import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
+
+  public static final long EXPIRATION_DURATION_MILLIS = 365L * 24 * 60 * 60
+      * 1000; // 365 days/year 24 hours/day 60 minutes/hour 60 seconds/minute 1000 ms/second
 
   @JsonProperty
   public Integer id;
@@ -40,7 +44,13 @@ public class DataAccessRequest {
   public DataAccessRequestData data;
 
   @JsonProperty
-  public Boolean draft;
+  public Boolean draft = true;
+
+  @JsonProperty
+  public Boolean expired = false;
+
+  @JsonProperty
+  public long expiresAt = -1;
 
   @JsonProperty
   public Integer userId;
@@ -60,12 +70,10 @@ public class DataAccessRequest {
 
   @JsonProperty
   public Timestamp updateDate;
-
-  @JsonProperty
-  private Map<Integer, Election> elections;
-
   @JsonProperty
   public List<Integer> datasetIds;
+  @JsonProperty
+  private Map<Integer, Election> elections;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -123,8 +131,12 @@ public class DataAccessRequest {
     return draft;
   }
 
-  public void setDraft(Boolean draft) {
-    this.draft = draft;
+  public boolean getExpired() {
+    return expired;
+  }
+
+  public long getExpiresAt() {
+    return expiresAt;
   }
 
   public Integer getUserId() {
@@ -157,6 +169,11 @@ public class DataAccessRequest {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    draft = submissionDate == null;
+    expired = submissionDate != null
+        && Instant.now().toEpochMilli() - submissionDate.getTime() > EXPIRATION_DURATION_MILLIS;
+    expiresAt = (submissionDate != null) ? submissionDate.getTime() + EXPIRATION_DURATION_MILLIS
+        : -1; // no expiration for drafts;
   }
 
   public Timestamp getUpdateDate() {
@@ -167,12 +184,12 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setElections(Map<Integer, Election> elections) {
-    this.elections = elections;
-  }
-
   public Map<Integer, Election> getElections() {
     return elections;
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
+    this.elections = elections;
   }
 
   public void addElection(Election election) {
@@ -195,6 +212,10 @@ public class DataAccessRequest {
     return datasetIds;
   }
 
+  public void setDatasetIds(List<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
+  }
+
   public void addDatasetId(Integer id) {
     if (Objects.isNull(datasetIds)) {
       datasetIds = new ArrayList<>();
@@ -214,10 +235,6 @@ public class DataAccessRequest {
           .distinct()
           .collect(Collectors.toList());
     }
-  }
-
-  public void setDatasetIds(List<Integer> datasetIds) {
-    this.datasetIds = datasetIds;
   }
 
   /**
@@ -301,6 +318,12 @@ public class DataAccessRequest {
     }
     if (Objects.nonNull(dar.getDraft())) {
       copy.put("draft", dar.getDraft());
+    }
+    if (Objects.nonNull(dar.getExpired())) {
+      copy.put("expired", dar.getExpired());
+    }
+    if (Objects.nonNull(dar.getExpiresAt())) {
+      copy.put("expiredAt", dar.getExpiresAt());
     }
     if (Objects.nonNull(dar.getId())) {
       copy.put("id", dar.getId());

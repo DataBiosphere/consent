@@ -1,0 +1,9 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+  <changeSet id="changelog-consent-2025-03-19-indexed.xml" author="otchet-broad">
+      <dropColumn tableName="data_access_request">
+        <column name="draft"/>
+      </dropColumn>
+  </changeSet>
+</databaseChangeLog>

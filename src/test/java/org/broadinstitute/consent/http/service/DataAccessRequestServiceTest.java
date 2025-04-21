@@ -198,7 +198,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
+        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     initService();
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
@@ -388,7 +388,6 @@ class DataAccessRequestServiceTest {
     sourceCollection.addDar(dar);
     when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
     doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
-        any(),
         any(),
         any(),
         any(),

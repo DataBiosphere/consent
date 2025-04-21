@@ -62,7 +62,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name "
+              +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -122,8 +123,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, " +
-              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, "
+              +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status "
+              +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +
@@ -143,7 +146,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               "WHERE c.create_user_id = :userId " +
               "AND (e.latest = e.election_id OR e.election_id IS NULL) " +
               "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL ) " +
-              "AND (EXISTS (SELECT 1 FROM data_access_request WHERE (collection_id = c.collection_id and draft = false)))"
+              "AND (EXISTS (SELECT 1 FROM data_access_request WHERE (collection_id = c.collection_id and dar.submission_date is not null)))"
       )
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(
       @Bind("userId") Integer userId);
@@ -198,8 +201,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               +
               "u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid, "
               +
-              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, " +
-              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status " +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name, "
+              +
+              "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status "
+              +
               "FROM dar_collection c " +
               "INNER JOIN users u " +
               "ON u.user_id = c.create_user_id " +

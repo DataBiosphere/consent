@@ -22,6 +22,12 @@ properties:
   draft:
     type: boolean
     description: Draft status of this DAR
+  expired:
+    type: boolean
+    description: Expired status of this DAR
+  expiredAt:
+    type: number
+    description: When this DAR expires, in milliseconds since the epoch.  A value of -1 indicates this DAR does not have an expiration date because it is a draft.
   darCode:
     type: string
     description: Unique DAR Code
