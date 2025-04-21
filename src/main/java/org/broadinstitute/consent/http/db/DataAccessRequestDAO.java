@@ -93,7 +93,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param begin Oldest submission date, in seconds since the epoch
    * @param end   Newest submission date, in seconds since the epoch
-   * @return List of approved DARs for the dataset
+   * @return List of submitted DARs within the date range provided.
    */
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
