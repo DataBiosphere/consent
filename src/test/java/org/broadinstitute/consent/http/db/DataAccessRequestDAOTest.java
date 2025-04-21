@@ -800,11 +800,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
           referenceId);
     });
-    //we need to sleep for one second to ensure the clock has ticked since the query resolution is in seconds since
-    //the epoch.
-    Thread.sleep(1000);
+    double oneHourAgo = ((double) new Date().getTime() /1000 - (60*60));
+    double halfAnHourAgo = ((double) new Date().getTime() /1000 - (30*60));
+    // query far enough into the past so slight clock variations do not matter for this test
     List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(
-        (double) (new Date().getTime()) / 1000, (double) new Date().getTime() / 1000);
+        oneHourAgo, halfAnHourAgo);
     assertTrue(dars.isEmpty());
   }
 
