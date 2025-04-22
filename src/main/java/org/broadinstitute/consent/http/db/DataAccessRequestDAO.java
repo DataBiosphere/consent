@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
@@ -103,10 +104,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                 dd.dataset_id
               FROM data_access_request dar
               LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-              WHERE dar.submission_date BETWEEN SYMMETRIC to_timestamp(:begin) AND to_timestamp(:end)
+              WHERE dar.submission_date BETWEEN SYMMETRIC :begin AND :end
           """)
-  List<DataAccessRequest> findSubmittedDarsByTimeRange(@Bind("begin") double begin,
-      @Bind("end") double end);
+  List<DataAccessRequest> findSubmittedDarsByTimeRange(@Bind("begin") Timestamp begin,
+      @Bind("end") Timestamp end);
 
   /**
    * Find all draft/partial DataAccessRequests, sorted descending order
