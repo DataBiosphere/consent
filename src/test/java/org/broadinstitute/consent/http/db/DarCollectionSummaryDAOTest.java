@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -249,9 +251,10 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertEquals(1, summaries.size());
     summaries.forEach((s) -> {
       assertEquals(1, s.getDatasetIds().size());
-      s.getDatasetIds().stream()
+      s.getDatasetIds()
           .forEach((id) -> assertTrue(targetDatasets.contains(id)));
-
+      assertFalse(s.isExpired());
+      assertTrue(s.getExpiresAt().after(new Date()));
       assertEquals(0, s.getElections().size());
       assertEquals(0, s.getVotes().size());
       assertEquals(1, s.getDatasetCount());
