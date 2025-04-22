@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -22,36 +21,38 @@ public class LibraryCardService {
 
   private final LibraryCardDAO libraryCardDAO;
   private final InstitutionDAO institutionDAO;
+  private final InstitutionService institutionService;
   private final UserDAO userDAO;
 
   @Inject
   public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO,
+      InstitutionService institutionService,
       UserDAO userDAO) {
     this.libraryCardDAO = libraryCardDAO;
     this.institutionDAO = institutionDAO;
+    this.institutionService = institutionService;
     this.userDAO = userDAO;
   }
 
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
-    Boolean isAdmin = checkIsAdmin(user);
+    boolean isAdmin = checkIsAdmin(user);
     //If user is not an admin, use user's institutionId rather than the value provided in the payload
     if (!isAdmin && !libraryCard.getInstitutionId().equals(user.getInstitutionId())) {
       throw new BadRequestException("Card payload not valid");
     }
     checkIfCardExists(libraryCard);
-    checkForValidInstitution(libraryCard.getInstitutionId());
-    LibraryCard processedCard = processUserOnNewLC(libraryCard);
+    processUserOnNewLC(libraryCard);
+    checkForValidInstitution(libraryCard.getInstitutionId(), libraryCard.getUserEmail());
     Date createDate = new Date();
     Integer id = libraryCardDAO.insertLibraryCard(
-        processedCard.getUserId(),
-        processedCard.getInstitutionId(),
-        processedCard.getEraCommonsId(),
-        processedCard.getUserName(),
-        processedCard.getUserEmail(),
-        processedCard.getCreateUserId(),
-        createDate
-    );
+        libraryCard.getUserId(),
+        libraryCard.getInstitutionId(),
+        libraryCard.getEraCommonsId(),
+        libraryCard.getUserName(),
+        libraryCard.getUserEmail(),
+        libraryCard.getCreateUserId(),
+        createDate);
     return libraryCardDAO.findLibraryCardById(id);
   }
 
@@ -60,7 +61,7 @@ public class LibraryCardService {
     throwIfNull(updateCard);
     checkUserId(userId);
     checkForValidUser(libraryCard.getUserId());
-    checkForValidInstitution(libraryCard.getInstitutionId());
+    checkForValidInstitution(libraryCard.getInstitutionId(), libraryCard.getUserEmail());
 
     Date updateDate = new Date();
     libraryCardDAO.updateLibraryCardById(
@@ -154,12 +155,18 @@ public class LibraryCardService {
     return createdLc;
   }
 
-  private void checkForValidInstitution(Integer institutionId) {
+  private void checkForValidInstitution(Integer institutionId, String userEmail) {
     checkInstitutionId(institutionId);
     Institution institution = institutionDAO.findInstitutionById(institutionId);
 
     if (Objects.isNull(institution)) {
       throw new IllegalArgumentException("Invalid Institution Id");
+    }
+
+    var userInstitution = institutionService.findInstitutionForEmail(userEmail);
+    if (userInstitution == null || !userInstitution.getId().equals(institutionId)) {
+      throw new BadRequestException(
+          "User email %s does not match institution %s".formatted(userEmail, institution.getName()));
     }
   }
 
@@ -219,37 +226,38 @@ public class LibraryCardService {
     }
   }
 
-  //Helper method to process user data on create LC payload
-  //Needed since CREATE has a unique situation where admins can create LCs without an active user (save with userEmail instead)
-  private LibraryCard processUserOnNewLC(LibraryCard card) {
-    if (Objects.isNull(card.getUserId())) {
-      if (Objects.isNull(card.getUserEmail())) {
+  // Helper method to process user data on create LC payload.
+  // Needed since CREATE has a unique situation where admins can create LCs without an active
+  // user (save with userEmail instead).
+  private void processUserOnNewLC(LibraryCard card) {
+    if (card.getUserId() == null) {
+      // No user ID is provided, email must exist in card request.
+      if (card.getUserEmail() == null) {
         throw new BadRequestException();
-      } else {
-        //If a user is found, update the card to have the correct userId associated
-        User user = userDAO.findUserByEmail(card.getUserEmail());
-        if (!Objects.isNull(user)) {
-          Integer userId = user.getUserId();
-          card.setUserId(userId);
-        }
+      }
+      // If a user is found, update the card to have the correct userId associated.
+      User user = userDAO.findUserByEmail(card.getUserEmail());
+      if (user != null) {
+        card.setUserId(user.getUserId());
       }
     } else {
-      //check if userId exists
+      // check if userId exists
       User user = userDAO.findUserById(card.getUserId());
-      if (Objects.isNull(user)) {
-        throw new NotFoundException();
+      if (user == null) {
+        throw new BadRequestException();
       }
-      if (Objects.nonNull(user.getEmail()) && !(user.getEmail()
-          .equalsIgnoreCase(card.getUserEmail()))) {
-        //throw error here, user is trying to associate incorrect userId with email
+      if (card.getUserEmail() == null) {
+        // if no email is provided in the card request, use the one from the user.
+        card.setUserEmail(user.getEmail());
+      } else if (!(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
+        // Emails do not match, throw an error.
         throw new ConsentConflictException();
       }
       card.setUserName(user.getDisplayName());
     }
-    return card;
   }
 
-  private Boolean checkIsAdmin(User user) {
+  private boolean checkIsAdmin(User user) {
     return user.getRoles()
         .stream()
         .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
