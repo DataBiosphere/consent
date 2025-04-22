@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -33,13 +35,17 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,6 +84,11 @@ class DataAccessRequestServiceTest {
   private UseRestrictionConverter useRestrictionConverter;
 
   private DataAccessRequestService service;
+
+  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
+  private static final String PI_EMAIL = "pi@example.broadinstitute.org";
+  private static final String SO_EMAIL = "so@example.broadinstitute.org";
+  private static final String IT_EMAIL = "it@example.broadinstitute.org";
 
   private void initService() {
     DAOContainer container = new DAOContainer();
@@ -146,6 +157,98 @@ class DataAccessRequestServiceTest {
     assertThrows(NIHComplianceRuleException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
+  }
+
+  private User createRequestingUser() {
+    User requestingUser = new User(1, "requestor@test.com", "Requestor", new Date(), roles);
+    requestingUser.setInstitutionId(1);
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    requestingUser.setInstitution(institution);
+    return requestingUser;
+  }
+
+  private static Collaborator cerateCollaborator() {
+    Collaborator validCollaborator = new Collaborator();
+    validCollaborator.setEmail("collaborator@test.com");
+    return validCollaborator;
+  }
+
+  private static DataAccessRequest createDataAccessRequest(List<Collaborator> internalCollaborators) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setInternalCollaborators(internalCollaborators);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(data);
+    return dar;
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNone() {
+    User requestingUser = createRequestingUser();
+    DataAccessRequest dar = createDataAccessRequest(List.of());
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsValid() {
+    User requestingUser = createRequestingUser();
+    Collaborator validCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(List.of(libraryCard));
+    DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
+    when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsDoesNotExist() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
+
+    initService();
+    NotFoundException exception = assertThrows(NotFoundException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser));
+    assertEquals(exception.getMessage(), "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
+  }
+  @Test
+  void testValidateInternalCollaboratorsDifferentInstitution() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(2);
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " is not part of the same institution, Test Institution");
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNoLibraryCard() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = cerateCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(Collections.emptyList());
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
   }
 
   @Test
@@ -227,6 +330,9 @@ class DataAccessRequestServiceTest {
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
     data.setAddiction(false);
     data.setAnvilUse(true);
@@ -349,6 +455,80 @@ class DataAccessRequestServiceTest {
 
     assertThrows(NotAcceptableException.class, () -> {
       service.deleteByReferenceId(user, referenceId);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicates() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    try {
+      service.validateNoKeyPersonnelDuplicates(data);
+    } catch (IllegalArgumentException e) {
+      fail("Should not have thrown exception");
+    }
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadPIEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("invalid");
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadITDirectorEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail("invalid");
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail("invalid");
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesItDirector() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(PI_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(PI_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
     });
   }
 
