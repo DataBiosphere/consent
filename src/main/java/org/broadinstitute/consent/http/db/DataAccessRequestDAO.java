@@ -268,6 +268,37 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("data") @Json DataAccessRequestData data);
 
   /**
+   * Create new Progress Report.
+   *
+   * @param parentId       String Parent ID
+   * @param collectionId   Integer DarCollection
+   * @param referenceId    String
+   * @param userId         Integer User
+   * @param createDate     Date Creation Date
+   * @param sortDate       Date Sorting Date
+   * @param submissionDate Date Submission Date
+   * @param updateDate     Date Update Date
+   * @param data           DataAccessRequestData DAR Properties
+   */
+  @RegisterArgumentFactory(JsonArgumentFactory.class)
+  @SqlUpdate(
+      "INSERT INTO data_access_request "
+          + "(parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data) "
+          + "VALUES (:parentId, :collectionId, :referenceId, :userId, :createDate, :sortDate, " +
+          ":submissionDate, :updateDate, to_jsonb(:data))")
+  void insertProgressReport(
+      @Bind("parentId") Integer parentId,
+      @Bind("collectionId") Integer collectionId,
+      @Bind("referenceId") String referenceId,
+      @Bind("userId") Integer userId,
+      @Bind("createDate") Date createDate,
+      @Bind("sortDate") Date sortDate,
+      @Bind("submissionDate") Date submissionDate,
+      @Bind("updateDate") Date updateDate,
+      @Bind("data") @Json DataAccessRequestData data);
+
+
+  /**
    * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest
    *
    * @param referenceId String

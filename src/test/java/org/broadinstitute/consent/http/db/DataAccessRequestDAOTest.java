@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,13 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -762,6 +761,21 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, returnedDAR.size());
   }
 
+  @Test
+  void createProgressReport() {
+    DarCollection darCollection = createDarCollection();
+    DataAccessRequest dar = new ArrayList<>(darCollection.getDars().values()).get(0);
+    DataAccessRequest progressReport = createProgressReport(dar.getUserId(), darCollection.getDarCollectionId(), darCollection.getDarCode(),
+        dar.getId());
+
+    assertNotNull(progressReport);
+    assertEquals(dar.getId().toString(), progressReport.getParentId());
+    assertEquals(dar.getCollectionId(), progressReport.getCollectionId());
+    assertEquals(dar.getUserId(), progressReport.getUserId());
+    assertNotNull(progressReport.getData());
+    assertNotEquals(dar.getReferenceId(), progressReport.getReferenceId());
+  }
+
   /**
    * Replace parent implementation of `createDataset()`
    *
@@ -793,6 +807,36 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    */
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
       String darCode) {
+    DataAccessRequestData data = createDataAccessRequestData(
+        darCode);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private DataAccessRequest createProgressReport(Integer userId, Integer collectionId,
+      String darCode, Integer parentId) {
+    DataAccessRequestData data = createDataAccessRequestData(
+        darCode);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertProgressReport(
+        parentId,
+        collectionId,
+        referenceId,
+        userId,
+        now, now, now, now,
+        data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private static DataAccessRequestData createDataAccessRequestData(String darCode) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
     data.setDarCode(darCode);
@@ -803,15 +847,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     data.setDatasets(List.of(entry));
     data.setHmb(true);
     data.setMethods(false);
-    String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
-    dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        now, now, now, now,
-        data);
-    return dataAccessRequestDAO.findByReferenceId(referenceId);
+    return data;
   }
 
   private DarCollection createDarCollection() {
