@@ -37,7 +37,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-          (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id 
           WHERE dar.submission_date is not null
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)""")
@@ -117,10 +117,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, 
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is null
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
               ORDER BY dar.update_date DESC
           """)
   List<DataAccessRequest> findAllDraftDataAccessRequests();
@@ -134,11 +134,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is null
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              AND dar.user_id = :userId
+                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                AND dar.user_id = :userId
               ORDER BY dar.sort_date DESC
           """)
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
@@ -156,8 +156,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is not null
-              AND dar.user_id = :userId
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                AND dar.user_id = :userId
+                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
               ORDER BY dar.sort_date DESC
           """)
   List<DataAccessRequest> findAllDarsByUserId(@Bind("userId") Integer userId);
@@ -172,10 +172,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.reference_id = :referenceId
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
           """)
   DataAccessRequest findByReferenceId(@Bind("referenceId") String referenceId);
 
@@ -189,10 +189,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-          (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
           WHERE dar.reference_id IN (<referenceIds>)
-          AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+            AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
   List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
@@ -211,7 +211,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           UPDATE data_access_request
           SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate,
-          submission_date = :submissionDate, update_date = :updateDate
+            submission_date = :submissionDate, update_date = :updateDate
           WHERE reference_id = :referenceId
       """)
   void updateDataByReferenceId(
@@ -240,7 +240,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           UPDATE data_access_request dar
-          SET data=jsonb_set((regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb, '{status}', '\"Canceled\"')
+          SET data=jsonb_set((regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb, '{status}', '"Canceled"')
           WHERE reference_id IN (<referenceIds>)
       """)
   void cancelByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
@@ -270,9 +270,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-          (reference_id, user_id, create_date, sort_date, update_date, data)
+            (reference_id, user_id, create_date, sort_date, update_date, data)
           VALUES (:referenceId, :userId, :createDate, :sortDate,
-          :updateDate, to_jsonb(:data))
+            :updateDate, to_jsonb(:data))
       """)
   void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
@@ -298,9 +298,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-          (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
+            (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
           VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate,
-          :submissionDate, :updateDate, to_jsonb(:data))
+            :submissionDate, :updateDate, to_jsonb(:data))
       """)
   void insertDataAccessRequest(
       @Bind("collectionId") Integer collectionId,
@@ -316,7 +316,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           UPDATE data_access_request
-          SET  submission_date = now(), collection_id = :collectionId
+            SET  submission_date = now(), collection_id = :collectionId
           WHERE reference_id = :referenceId
        """)
   void updateDraftToSubmittedForCollection(@Bind("collectionId") Integer collectionId,
@@ -328,14 +328,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           SELECT (data #>> '{}')::jsonb AS data
           FROM data_access_request
           WHERE (LOWER(data->>'status') != 'archived'
-          OR data->>'status' IS NULL)
+            OR data->>'status' IS NULL)
       """)
   List<DataAccessRequestData> findAllDataAccessRequestDatas();
 
   @SqlUpdate(
       """
          UPDATE data_access_request
-          SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '\"Archived\"', true)
+          SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '"Archived"', true)
           WHERE reference_id IN (<referenceIds>)
       """)
   void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
