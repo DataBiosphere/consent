@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,12 @@ public class DarCollectionSummary {
 
   @JsonProperty
   private Timestamp submissionDate;
+
+  @JsonProperty
+  private boolean expired;
+
+  @JsonProperty
+  private Timestamp expiresAt;
 
   @JsonProperty
   private String researcherName;
@@ -134,6 +141,18 @@ public class DarCollectionSummary {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    if (submissionDate != null) {
+      this.expiresAt = Timestamp.from(Instant.ofEpochMilli(submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS));
+      this.expired = this.expiresAt.before(Timestamp.from(Instant.now()));
+    }
+  }
+
+  public boolean isExpired() {
+    return expired;
+  }
+
+  public Timestamp getExpiresAt() {
+    return expiresAt;
   }
 
   public String getResearcherName() {

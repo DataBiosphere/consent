@@ -116,7 +116,6 @@ public class DataAccessRequestService implements ConsentLogger {
         user.getUserId(),
         now,
         now,
-        null,
         now,
         dar.getData()
     );
@@ -199,7 +198,7 @@ public class DataAccessRequestService implements ConsentLogger {
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     if (Objects.nonNull(existingDar)) {
       referenceId = dataAccessRequest.getReferenceId();
-      dataAccessRequestDAO.updateDraftForCollection(collectionId,
+      dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId,
           referenceId);
       dataAccessRequestDAO.updateDataByReferenceId(
           referenceId,

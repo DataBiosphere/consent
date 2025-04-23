@@ -18,11 +18,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
+
+  public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.DAYS.toMillis(365);
 
   @JsonProperty
   public Integer id;
@@ -40,7 +43,13 @@ public class DataAccessRequest {
   public DataAccessRequestData data;
 
   @JsonProperty
-  public Boolean draft;
+  public Boolean draft = true;
+
+  @JsonProperty
+  public Boolean expired = false;
+
+  @JsonProperty
+  public Timestamp expiresAt;
 
   @JsonProperty
   public Integer userId;
@@ -60,12 +69,10 @@ public class DataAccessRequest {
 
   @JsonProperty
   public Timestamp updateDate;
-
-  @JsonProperty
-  private Map<Integer, Election> elections;
-
   @JsonProperty
   public List<Integer> datasetIds;
+  @JsonProperty
+  private Map<Integer, Election> elections;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -123,8 +130,12 @@ public class DataAccessRequest {
     return draft;
   }
 
-  public void setDraft(Boolean draft) {
-    this.draft = draft;
+  public boolean getExpired() {
+    return expired;
+  }
+
+  public Timestamp getExpiresAt() {
+    return expiresAt;
   }
 
   public Integer getUserId() {
@@ -157,6 +168,12 @@ public class DataAccessRequest {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    draft = submissionDate == null;
+    expired = submissionDate != null
+        && submissionDate.before(
+        new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
+    expiresAt = (submissionDate != null) ? new Timestamp(
+        submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
   }
 
   public Timestamp getUpdateDate() {
@@ -167,12 +184,12 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setElections(Map<Integer, Election> elections) {
-    this.elections = elections;
-  }
-
   public Map<Integer, Election> getElections() {
     return elections;
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
+    this.elections = elections;
   }
 
   public void addElection(Election election) {
@@ -195,6 +212,10 @@ public class DataAccessRequest {
     return datasetIds;
   }
 
+  public void setDatasetIds(List<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
+  }
+
   public void addDatasetId(Integer id) {
     if (Objects.isNull(datasetIds)) {
       datasetIds = new ArrayList<>();
@@ -214,10 +235,6 @@ public class DataAccessRequest {
           .distinct()
           .collect(Collectors.toList());
     }
-  }
-
-  public void setDatasetIds(List<Integer> datasetIds) {
-    this.datasetIds = datasetIds;
   }
 
   /**
@@ -302,6 +319,8 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getDraft())) {
       copy.put("draft", dar.getDraft());
     }
+    copy.put("expired", dar.getExpired());
+    copy.put("expiredAt", dar.getExpiresAt());
     if (Objects.nonNull(dar.getId())) {
       copy.put("id", dar.getId());
     }

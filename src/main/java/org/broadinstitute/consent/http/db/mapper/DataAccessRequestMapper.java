@@ -23,7 +23,6 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       }
     }
     dar.setParentId(resultSet.getString("parent_id"));
-    dar.setDraft(resultSet.getBoolean("draft"));
     dar.setUserId(resultSet.getInt("user_id"));
     dar.setCreateDate(resultSet.getTimestamp("create_date"));
     dar.setSortDate(resultSet.getTimestamp("sort_date"));

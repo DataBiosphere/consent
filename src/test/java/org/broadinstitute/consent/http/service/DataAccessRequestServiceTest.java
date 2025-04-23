@@ -304,7 +304,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
+        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     initService();
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
