@@ -510,9 +510,18 @@ public class VoteService implements ConsentLogger {
     throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
   }
 
-  public void logDARApprovalOrRejection(User user, List<Vote> updatedVotes,
+  /**
+   * Log the approval or rejection of Data Access Request (DAR) by the DAC. This method
+   * looks at any datasets that have FINAL votes and logs the appropriate event for each dataset.
+   *
+   * @param user The User
+   * @param votes List of Votes
+   * @param request The ContainerRequest
+   */
+  public void logDARApprovalOrRejection(User user, List<Vote> votes,
       ContainerRequest request) {
-    List<Integer> approvedElectionIds = updatedVotes.stream()
+    // Log approvals
+    List<Integer> approvedElectionIds = votes.stream()
         .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
         .filter(Vote::getVote)
         .map(Vote::getElectionId)
@@ -523,7 +532,8 @@ public class VoteService implements ConsentLogger {
     ComplianceLogger.getInstance().logDARApproval(user, approvedDatasets, request,
         HttpStatusCodes.STATUS_CODE_OK);
 
-    List<Integer> rejectedElectionIds = updatedVotes.stream()
+    // Log rejections
+    List<Integer> rejectedElectionIds = votes.stream()
         .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
         .filter(not(Vote::getVote))
         .map(Vote::getElectionId)
