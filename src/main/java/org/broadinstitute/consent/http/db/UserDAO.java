@@ -129,12 +129,6 @@ public interface UserDAO extends Transactional<UserDAO> {
       @Bind("institutionId") Integer institutionId,
       @Bind("createDate") Date createDate);
 
-  // Only used by tests; all users except Admin have an institution ID set on creation.
-  @SqlUpdate("UPDATE users SET display_name=:displayName, institution_id=:institutionId WHERE user_id=:id")
-  void updateUser(@Bind("displayName") String displayName,
-      @Bind("id") Integer id,
-      @Bind("institutionId") Integer institutionId);
-
   @SqlUpdate("delete from users where user_id = :id")
   void deleteUserById(@Bind("id") Integer id);
 
