@@ -328,10 +328,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
-      "INSERT INTO data_access_request "
-          + "(parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data) "
-          + "VALUES (:parentId, :collectionId, :referenceId, :userId, :createDate, :sortDate, " +
-          ":submissionDate, :updateDate, to_jsonb(:data))")
+      """
+          INSERT INTO data_access_request
+            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
+          VALUES (:parentId, :collectionId, :referenceId, :userId, :createDate, :sortDate,
+            :submissionDate, :updateDate, to_jsonb(:data))
+      """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,
       @Bind("collectionId") Integer collectionId,
