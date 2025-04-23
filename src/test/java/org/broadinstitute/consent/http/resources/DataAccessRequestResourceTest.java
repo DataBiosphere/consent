@@ -167,10 +167,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
             dataAccessRequestService, emailService, gcsService, userService, datasetService,
             matchService);
 
-    Response response = resource.createDataAccessRequest(authUser, info, "");
-    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
-    org.broadinstitute.consent.http.models.Error error = (org.broadinstitute.consent.http.models.Error) response.getEntity();
-    assertEquals(SubmittedDARCannotBeEditedException.MESSAGE, error.message());
+    try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
+      org.broadinstitute.consent.http.models.Error error = (org.broadinstitute.consent.http.models.Error) response.getEntity();
+      assertEquals(SubmittedDARCannotBeEditedException.MESSAGE, error.message());
+    }
   }
 
   @Test
