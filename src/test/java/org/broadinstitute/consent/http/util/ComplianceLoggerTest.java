@@ -61,6 +61,8 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     when(request.getHeaderString("oidc_claim_user_id")).thenReturn("testUserId");
     when(request.getHeaderString(HttpHeaderNames.USER_AGENT.toString())).thenReturn(
         "testUserAgent");
+    when(request.getHeaderString("X-Forwarded-For")).thenReturn("1.2.3.4");
+    when(request.getHeaderString("X-Forwarded-Server")).thenReturn("4.3.2.1");
   }
 
   private void assertMessageContainsValueFields(ILoggingEvent event) {
