@@ -98,4 +98,9 @@ public class ComplianceLogger implements ConsentLogger {
     logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_SUBMISSION);
   }
 
+  public void logDARCancellation(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode) {
+    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_CANCELLATION);
+  }
+
 }
