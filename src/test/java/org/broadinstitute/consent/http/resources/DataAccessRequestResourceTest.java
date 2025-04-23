@@ -726,7 +726,6 @@ class DataAccessRequestResourceTest {
     dar.setCreateDate(now);
     dar.setUpdateDate(now);
     dar.setSortDate(now);
-    dar.setDraft(true);
     return dar;
   }
 

@@ -592,7 +592,7 @@ public class DataAccessRequestResource extends Resource {
       FormDataContentDisposition fileDetail) throws IOException {
     // When we move updateDarWithDocumentContents to the service tier, we should incorporate the
     // code below into that method
-    if (dar.getDraft() != true) {
+    if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
     // This should be moved to service tier logic and the transactions should be coordinated

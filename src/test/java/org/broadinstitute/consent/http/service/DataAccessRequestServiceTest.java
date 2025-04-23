@@ -163,7 +163,6 @@ class DataAccessRequestServiceTest {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    dar.setDraft(false);
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of(new LibraryCard()));
@@ -181,7 +180,6 @@ class DataAccessRequestServiceTest {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    dar.setDraft(false);
     initService();
     assertThrows(SubmittedDARCannotBeEditedException.class, () ->
         service.updateByReferenceId(user, dar)
@@ -393,7 +391,6 @@ class DataAccessRequestServiceTest {
     data.setMethods(false);
     data.setOther(false);
     dar.setData(data);
-    dar.setDraft(true);
     dar.setSubmissionDate(null);
     return dar;
   }
