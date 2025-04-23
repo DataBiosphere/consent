@@ -261,8 +261,7 @@ public class VoteService implements ConsentLogger {
         .distinct()
         .collect(Collectors.toList());
 
-    List<Election> finalElections =
-        finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
+    List<Election> finalElections = electionDAO.findElectionsByIds(finalElectionIds);
 
     List<String> finalElectionReferenceIds = finalElections.stream()
         .map(Election::getReferenceId)
