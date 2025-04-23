@@ -258,7 +258,7 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-    if (dar.getDraft() != true) {
+    if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
     try {
