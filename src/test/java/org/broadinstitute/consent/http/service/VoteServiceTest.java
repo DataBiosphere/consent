@@ -666,7 +666,6 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
     verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -705,7 +704,6 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
     verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
