@@ -339,7 +339,7 @@ class VoteDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-    User user4 = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User user4 = createUser();
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user4.getUserId(),
         new Date());

@@ -526,6 +526,7 @@ public class ConsentModule extends AbstractModule {
     return new LibraryCardService(
         providesLibraryCardDAO(),
         providesInstitutionDAO(),
+        providesInstitutionService(),
         providesUserDAO());
   }
 

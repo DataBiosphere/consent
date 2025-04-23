@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetEntry;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -166,17 +167,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    * @return Created User
    */
   protected User createUser() {
-    int i1 = randomInt(5, 10);
-    int i2 = randomInt(5, 10);
-    int i3 = randomInt(3, 5);
-    String email = randomAlphabetic(i1) +
-        "@" +
-        randomAlphabetic(i2) +
-        "." +
-        randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
-    userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
-    return userDAO.findUserById(userId);
+    return createUserWithRole(UserRoles.RESEARCHER.getRoleId());
   }
 
   /**
@@ -186,24 +177,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    * @return Last DataAccessRequest of a DarCollection
    */
   protected DataAccessRequest createDataAccessRequestV3() {
-    int i1 = randomInt(5, 10);
-    String email = randomAlphabetic(i1);
-    String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, null, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    User user = userDAO.findUserById(userId);
+    User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
@@ -241,27 +215,29 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+  protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
     User user = createUserWithRole(roleId);
     dacDAO.addDacMember(roleId, user.getUserId(), dacId);
     return user;
   }
 
-  User createUserWithRole(Integer roleId) {
+  protected User createUserWithRole(Integer roleId) {
+    return createUserWithRole(roleId, null);
+  }
+
+  protected User createUserWithRole(Integer roleId, Integer institutionId) {
     int i1 = randomInt(5, 10);
     int i2 = randomInt(5, 10);
     int i3 = randomInt(3, 5);
     String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
+    Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
     userRoleDAO.insertSingleUserRole(roleId, userId);
     return userDAO.findUserById(userId);
   }
 
-  User createUserWithInstitution() {
-    int i1 = randomInt(5, 10);
-    String email = randomAlphabetic(i1);
-    String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, null, new Date());
+  protected User createUserWithInstitution() {
+    User admin = createUserWithRole(UserRoles.ADMIN.getRoleId());
+    Integer adminId = admin.getUserId();
     Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
@@ -271,10 +247,13 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
         randomAlphabetic(10),
         randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
-        userId,
+        adminId,
         new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
+    User user = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), institutionId);
+    return userDAO.findUserById(user.getUserId());
+  }
+
+  protected Institution getUserInstitution(User user) {
+    return institutionDAO.findInstitutionById(user.getInstitutionId());
   }
 }
