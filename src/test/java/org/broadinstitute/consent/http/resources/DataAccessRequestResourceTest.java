@@ -141,7 +141,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
+    try (var response = resource.createDataAccessRequest(request, authUser, info, "")) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
   }

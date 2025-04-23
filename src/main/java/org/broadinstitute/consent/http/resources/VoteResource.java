@@ -59,7 +59,7 @@ public class VoteResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response updateVotes(@Auth AuthUser authUser, @Context Request request, String json) {
+  public Response updateVotes(@Context Request request, @Auth AuthUser authUser, String json) {
     Vote.VoteUpdate voteUpdate;
     try {
       voteUpdate = gson.fromJson(json, Vote.VoteUpdate.class);

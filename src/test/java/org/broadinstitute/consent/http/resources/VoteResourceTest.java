@@ -60,7 +60,7 @@ class VoteResourceTest {
   @Test
   void testUpdateVotes_invalidJson() {
     initResource();
-    try (var response = resource.updateVotes(authUser, request,"{\"vote\": true, \"ID\":12345}")) {
+    try (var response = resource.updateVotes(request, authUser,"{\"vote\": true, \"ID\":12345}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -72,7 +72,7 @@ class VoteResourceTest {
     voteUpdate.setVote(true);
     voteUpdate.setRationale("example");
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -82,7 +82,7 @@ class VoteResourceTest {
   void testUpdateVotes_noIds() {
     initResource();
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", new ArrayList<>());
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -95,7 +95,7 @@ class VoteResourceTest {
     initResource();
 
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1));
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -109,7 +109,7 @@ class VoteResourceTest {
     voteUpdate.setRationale("example");
     voteUpdate.setVoteIds(List.of(1, 2, 3));
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -124,7 +124,7 @@ class VoteResourceTest {
     initResource();
 
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -138,7 +138,7 @@ class VoteResourceTest {
     initResource();
 
     Vote.VoteUpdate voteUpdate = new Vote.VoteUpdate(true, "example", List.of(1, 2, 3));
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -161,7 +161,7 @@ class VoteResourceTest {
         .thenReturn(List.of(vote));
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
@@ -185,7 +185,7 @@ class VoteResourceTest {
 
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
@@ -208,7 +208,7 @@ class VoteResourceTest {
         .thenReturn(List.of(vote));
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
@@ -240,7 +240,7 @@ class VoteResourceTest {
 
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
@@ -265,7 +265,7 @@ class VoteResourceTest {
         .thenReturn(List.of(vote, voteTwo));
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
@@ -296,7 +296,7 @@ class VoteResourceTest {
         .thenReturn(List.of(election));
     initResource();
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
@@ -314,7 +314,7 @@ class VoteResourceTest {
     voteUpdate.setVote(false);
     voteUpdate.setVoteIds(List.of(1, 2, 3));
 
-    try (var response = resource.updateVotes(authUser, request,
+    try (var response = resource.updateVotes(request, authUser,
         gson.toJson(voteUpdate, Vote.VoteUpdate.class))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
