@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
@@ -163,26 +164,10 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The created DAR.
    */
   public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
-    if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(
-        dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
-      throw new IllegalArgumentException("User and DataAccessRequest are required");
-    }
-
-    if (user.getLibraryCards().isEmpty()) {
-      throw new NIHComplianceRuleException();
-    }
-
-    validateInternalCollaborators(dataAccessRequest, user);
+    validateDar(user, dataAccessRequest);
 
     Date now = new Date();
-    long nowTime = now.getTime();
     DataAccessRequestData darData = dataAccessRequest.getData();
-    if (Objects.isNull(darData.getCreateDate())) {
-      darData.setCreateDate(nowTime);
-    }
-    darData.setSortDate(nowTime);
-
-    validateNoKeyPersonnelDuplicates(darData);
 
     DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(
         dataAccessRequest.getReferenceId());
@@ -204,7 +189,7 @@ public class DataAccessRequestService implements ConsentLogger {
       dataAccessRequestDAO.updateDataByReferenceId(
           referenceId,
           user.getUserId(),
-          new Date(darData.getSortDate()),
+          now,
           now,
           now,
           darData);
@@ -214,14 +199,74 @@ public class DataAccessRequestService implements ConsentLogger {
           collectionId,
           referenceId,
           user.getUserId(),
-          new Date(darData.getCreateDate()),
-          new Date(darData.getSortDate()),
+          now,
+          now,
           now,
           now,
           darData);
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);
+  }
+
+  /**
+   * Create a progress report for the given DataAccessRequest.
+   * The parent DAR is just passed in for validation purposes.
+   *
+   * @param user              The User
+   * @param progressReport    The DataAccessRequest
+   * @param parentDar         The parent DataAccessRequest
+   * @return The created progress report.
+   */
+  public DataAccessRequest createProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    validateProgressReport(user, progressReport, parentDar);
+
+    Date now = new Date();
+    String referenceId = progressReport.getReferenceId();
+    List<Integer> datasetIds = progressReport.getDatasetIds();
+    dataAccessRequestDAO.insertProgressReport(
+          Integer.valueOf(progressReport.getParentId()),
+          progressReport.getCollectionId(),
+          referenceId,
+          user.getUserId(),
+          now,
+          now,
+          now,
+          now,
+          progressReport.getData());
+    syncDataAccessRequestDatasets(datasetIds, referenceId);
+    return findByReferenceId(referenceId);
+  }
+
+  public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    validateDar(user, progressReport);
+    if (parentDar.getDraft()) {
+      throw new BadRequestException(
+          "Cannot create a progress report for a draft Data Access Request");
+    }
+    if (!user.getUserId().equals(parentDar.getUserId())) {
+      throw new ForbiddenException("User not authorized to update this Data Access Request");
+    }
+    if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty() ) {
+      throw new BadRequestException("At least one dataset is required");
+    }
+    if (!parentDar.getDatasetIds().containsAll(progressReport.getDatasetIds())) {
+      throw new BadRequestException("Progress report can only be created for datasets in the parent DAR");
+    }
+  }
+
+  public void validateDar(User user, DataAccessRequest dar) {
+    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
+        dar.getReferenceId()) || Objects.isNull(dar.getData())) {
+      throw new IllegalArgumentException("User and DataAccessRequest are required");
+    }
+
+    if (user.getLibraryCards().isEmpty()) {
+      throw new NIHComplianceRuleException();
+    }
+
+    validateInternalCollaborators(dar, user);
+    validateNoKeyPersonnelDuplicates(dar.getData());
   }
 
   @VisibleForTesting
