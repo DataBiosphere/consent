@@ -63,67 +63,51 @@ class ComplianceLoggerTest extends AbstractTestHelper {
         "testUserAgent");
   }
 
-  @Test
-  void testLogDARSApproval() {
-    // Log Event
-    ComplianceLogger.getInstance()
-        .logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
-
-    // Verify log event
-    assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+  private void assertMessageContainsValueFields(ILoggingEvent event) {
     assertThat(event.getFormattedMessage(), containsString(user.getDisplayName()));
     assertThat(event.getFormattedMessage(), containsString(user.getEmail()));
     assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
     assertThat(event.getFormattedMessage(), containsString(institution.getName()));
     assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+  }
+
+  @Test
+  void testLogDARSApproval() {
+    ComplianceLogger.getInstance()
+        .logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    assertMessageContainsValueFields(event);
     assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_APPROVAL.toString()));
   }
 
   @Test
   void testLogDARRejection() {
-    // Log Event
     ComplianceLogger.getInstance()
         .logDARRejection(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
-
-    // Verify log event
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
-    assertThat(event.getFormattedMessage(), containsString(user.getDisplayName()));
-    assertThat(event.getFormattedMessage(), containsString(user.getEmail()));
-    assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
-    assertThat(event.getFormattedMessage(), containsString(institution.getName()));
-    assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+    assertMessageContainsValueFields(event);
     assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_REJECTION.toString()));
   }
 
   @Test
   void testLogDARSubmission() {
-    // Log Event
     ComplianceLogger.getInstance()
         .logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
-
-    // Verify log event
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
-    assertThat(event.getFormattedMessage(), containsString(user.getDisplayName()));
-    assertThat(event.getFormattedMessage(), containsString(user.getEmail()));
-    assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
-    assertThat(event.getFormattedMessage(), containsString(institution.getName()));
-    assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+    assertMessageContainsValueFields(event);
     assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
   }
 
   private static class TestAppender extends ListAppender<ILoggingEvent> {
-
     public void reset() {
       this.list.clear();
     }
-
     public int getSize() {
       return this.list.size();
     }
-
     public List<ILoggingEvent> getLoggedEvents() {
       return Collections.unmodifiableList(this.list);
     }
