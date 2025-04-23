@@ -253,6 +253,14 @@ public class DataAccessRequestService implements ConsentLogger {
     if (!parentDar.getDatasetIds().containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException("Progress report can only be created for datasets in the parent DAR");
     }
+    if (progressReport.getData().getProgressReportSummary() == null ||
+        progressReport.getData().getProgressReportSummary().isEmpty()) {
+      throw new BadRequestException("Progress report summary is required");
+    }
+    if (progressReport.getData().getIntellectualPropertySummary() == null ||
+        progressReport.getData().getIntellectualPropertySummary().isEmpty()) {
+      throw new BadRequestException("Intellectual Property Summary is required");
+    }
   }
 
   public void validateDar(User user, DataAccessRequest dar) {

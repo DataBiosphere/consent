@@ -52,7 +52,6 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.jetbrains.annotations.NotNull;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -606,7 +605,6 @@ public class DataAccessRequestResource extends Resource {
     return newDar;
   }
 
-  @NotNull
   private static DataAccessRequestData populateDARData(String json) {
     DataAccessRequestData data;
     try {

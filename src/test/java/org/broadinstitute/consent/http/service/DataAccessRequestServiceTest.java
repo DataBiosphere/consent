@@ -34,8 +34,6 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -165,7 +163,7 @@ class DataAccessRequestServiceTest {
   @Test
   void createProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     progressReport.setParentId(parentDar.getId().toString());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setDraft(false);
@@ -229,7 +227,7 @@ class DataAccessRequestServiceTest {
   void validateProgressReportParentDarIsDraft() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDraft(true);
     initService();
@@ -242,7 +240,7 @@ class DataAccessRequestServiceTest {
   void validateProgressReportDifferentUser() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDraft(false);
     parentDar.setUserId(2); // Different user ID
@@ -256,8 +254,38 @@ class DataAccessRequestServiceTest {
   void validateProgressReportNoDatasetIds() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(Collections.emptyList());
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setDraft(false);
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportNoSummary() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.getData().setProgressReportSummary(null);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setDraft(false);
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportNoIPSummary() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.getData().setIntellectualPropertySummary(null);
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDraft(false);
     parentDar.setUserId(user.getUserId());
@@ -271,7 +299,7 @@ class DataAccessRequestServiceTest {
   void validateProgressReportInvalidDatasetIds() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDraft(false);
@@ -287,7 +315,7 @@ class DataAccessRequestServiceTest {
   void validateProgressReport() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDraft(false);
@@ -499,6 +527,12 @@ class DataAccessRequestServiceTest {
     });
   }
 
+  private DataAccessRequest generateProgressReport() {
+    DataAccessRequest progressReport = generateDataAccessRequest();
+    progressReport.getData().setProgressReportSummary("Progress Report Summary");
+    progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
+    return progressReport;
+  }
 
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
