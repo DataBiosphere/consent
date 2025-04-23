@@ -108,8 +108,8 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v2")
   public Response createDataAccessRequest(
-      @Auth AuthUser authUser,
       @Context Request request,
+      @Auth AuthUser authUser,
       @Context UriInfo info,
       String dar) {
     try {
