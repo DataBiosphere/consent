@@ -613,7 +613,7 @@ public class DarCollectionService implements ConsentLogger {
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(collection.getDarCollectionId());
   }
 
   /**
@@ -647,7 +647,7 @@ public class DarCollectionService implements ConsentLogger {
     // Cancel filtered DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(collection.getDarCollectionId());
   }
 
   /**
