@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
+import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -165,7 +168,8 @@ public class UserService implements ConsentLogger {
       if (user.getInstitutionId() == null) {
         Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
         if (institution == null) {
-          throw new BadRequestException("No institution found for user: %s".formatted(user.getEmail()));
+          throw new BadRequestException(
+              "No institution found for user: %s".formatted(user.getEmail()));
         }
         userServiceDAO.insertRoleAndInstitutionTxn(role, institution.getId(), userId);
       } else {
@@ -192,7 +196,8 @@ public class UserService implements ConsentLogger {
     if (institution != null) {
       user.setInstitutionId(institution.getId());
     }
-    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
+    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(),
+        user.getInstitutionId(), new Date());
     insertUserRoles(user.getRoles(), userId);
     addExistingLibraryCards(user);
     return userDAO.findUserById(userId);
@@ -460,6 +465,33 @@ public class UserService implements ConsentLogger {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
+  }
+
+  public void hasValidActiveERACredentials(Integer userId) {
+    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(userId);
+    List<UserProperty> userProperties = findAllUserProperties(userId);
+    boolean hasEraCommonsId = cards.stream().anyMatch(c -> c.getEraCommonsId() != null);
+    if (!hasEraCommonsId) {
+      throw new BadRequestException("User does not have an Era Commons ID");
+    }
+    List<UserProperty> eraStatusProps = userProperties.stream().filter(
+            userProperty -> userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
+        .toList();
+    List<UserProperty> eraExpirationProps = userProperties.stream().filter(
+            userProperty -> userProperty.getPropertyKey()
+                .equalsIgnoreCase(ERA_EXPIRATION_DATE.getValue()))
+        .toList();
+    if (eraStatusProps.size() == 1 && eraExpirationProps.size() == 1) {
+      if (!eraStatusProps.get(0).getPropertyValue().equalsIgnoreCase("true")) {
+        throw new BadRequestException("User does not have an Era Commons ID that is authorized.");
+      }
+      if (Long.parseLong(eraExpirationProps.get(0).getPropertyValue()) < System.currentTimeMillis()) {
+        throw new BadRequestException("User has an expired Era Commons ID.");
+      }
+    } else {
+      throw new BadRequestException(
+          "Invalid ERA configuration for this user.  Only one ERA Commons ID is allowed.");
+    }
   }
 
   public static class SimplifiedUser {
