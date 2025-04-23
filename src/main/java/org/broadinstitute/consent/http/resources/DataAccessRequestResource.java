@@ -107,8 +107,11 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
   @Path("/v2")
-  public Response createDataAccessRequest(final @Auth AuthUser authUser,
-      final @Context Request request, final @Context UriInfo info, String dar) {
+  public Response createDataAccessRequest(
+      @Auth AuthUser authUser,
+      @Context Request request,
+      @Context UriInfo info,
+      String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
 
