@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
+import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,10 +24,12 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -38,6 +43,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -312,11 +318,136 @@ class UserServiceTest {
   }
 
   @Test
+  void testHasValidERACommonsCredentials() {
+    User u = generateUser();
+    LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setEraCommonsId(u.getEmail());
+    u.addLibraryCard(lc);
+    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+    //standard practice is that these expire in 30 days.
+    Timestamp eraExpirationTime = new Timestamp(
+        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+    List<UserProperty> userProperties = new ArrayList<>();
+    userProperties.add(eraStatus);
+    userProperties.add(eraExpirationDate);
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
+  void testValidateERACommonsCredentialsMissingLibraryCards() {
+    User u = generateUser();
+    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+    //standard practice is that these expire in 30 days.
+    Timestamp eraExpirationTime = new Timestamp(
+        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+    List<UserProperty> userProperties = new ArrayList<>();
+    userProperties.add(eraStatus);
+    userProperties.add(eraExpirationDate);
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertThrows(BadRequestException.class,
+        () -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
+  void testValidateERACommonsCredentialsMissingERACommonsId() {
+    User u = generateUser();
+    LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setEraCommonsId(null);
+    u.addLibraryCard(lc);
+    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+    //standard practice is that these expire in 30 days.
+    Timestamp eraExpirationTime = new Timestamp(
+        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+    List<UserProperty> userProperties = new ArrayList<>();
+    userProperties.add(eraStatus);
+    userProperties.add(eraExpirationDate);
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertThrows(BadRequestException.class,
+        () -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
+  void testValidateRACommonsCredentialsMissingERAStatusShouldFail() {
+    User u = generateUser();
+    LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setEraCommonsId(u.getEmail());
+    u.addLibraryCard(lc);
+    //standard practice is that these expire in 30 days.
+    Timestamp eraExpirationTime = new Timestamp(
+        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+    List<UserProperty> userProperties = new ArrayList<>();
+    userProperties.add(eraExpirationDate);
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertThrows(BadRequestException.class,
+        () -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
+  void testValidateERACommonsCredentialsMissingERAStatusAndExpirationShouldFail() {
+    User u = generateUser();
+    LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setEraCommonsId(u.getEmail());
+    u.addLibraryCard(lc);
+    List<UserProperty> userProperties = new ArrayList<>();
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertThrows(BadRequestException.class,
+        () -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
+  void testValidateERACommonsCredentialsWithExpiredERAExpirationDateShouldFail() {
+    User u = generateUser();
+    LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setEraCommonsId(u.getEmail());
+    u.addLibraryCard(lc);
+    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+    // set expiration date to 30 days ago!
+    Timestamp eraExpirationTime = new Timestamp(
+        System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30));
+    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+    List<UserProperty> userProperties = new ArrayList<>();
+    userProperties.add(eraStatus);
+    userProperties.add(eraExpirationDate);
+    u.setProperties(userProperties);
+    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
+    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+        UserFields.getValues())).thenReturn(u.getProperties());
+    assertThrows(BadRequestException.class,
+        () -> service.hasValidActiveERACredentials(u.getUserId()));
+  }
+
+  @Test
   void testCreateUserNoRoles() {
     User u = generateUser();
     assertTrue(CollectionUtils.isEmpty(u.getRoles()));
     int userId = 123;
-    when(userDAO.insertUser(eq(u.getEmail()), eq(u.getDisplayName()), eq(u.getInstitutionId()), any())).thenReturn(userId);
+    when(userDAO.insertUser(eq(u.getEmail()), eq(u.getDisplayName()), eq(u.getInstitutionId()),
+        any())).thenReturn(userId);
     service.createUser(u);
     verify(userRoleDAO).insertUserRoles(List.of(UserRoles.Researcher()), userId);
   }
@@ -743,8 +874,11 @@ class UserServiceTest {
     Institution institution = new Institution();
 
     // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser)
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException()).thenReturn(null);
-    when(userDAO.insertUser(eq(authUser.getEmail()), eq(authUser.getName()), eq(institution.getId()), any())).thenReturn(user.getUserId());
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException())
+        .thenReturn(null);
+    when(
+        userDAO.insertUser(eq(authUser.getEmail()), eq(authUser.getName()), eq(institution.getId()),
+            any())).thenReturn(user.getUserId());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     when(samDAO.postRegistrationInfo(authUser)).thenReturn(status);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
@@ -787,14 +921,16 @@ class UserServiceTest {
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institution);
     doThrow(new TransactionException("txn error")).when(userServiceDAO)
         .insertRoleAndInstitutionTxn(role, institution.getId(), testUser.getUserId());
-    assertThrows(TransactionException.class, () -> service.insertRoleAndInstitutionForUser(role, testUser));
+    assertThrows(TransactionException.class,
+        () -> service.insertRoleAndInstitutionForUser(role, testUser));
   }
 
   @Test
   void insertUserRoleAndInstitution_FailingInstitution() {
     User testUser = generateUserWithoutInstitution();
     UserRole role = UserRoles.Researcher();
-    assertThrows(BadRequestException.class, () -> service.insertRoleAndInstitutionForUser(role, testUser));
+    assertThrows(BadRequestException.class,
+        () -> service.insertRoleAndInstitutionForUser(role, testUser));
   }
 
   @Test

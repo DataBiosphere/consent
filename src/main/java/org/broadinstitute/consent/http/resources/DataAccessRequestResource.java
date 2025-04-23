@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -633,6 +634,11 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest dar,
       InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
+    // When we move updateDarWithDocumentContents to the service tier, we should incorporate the
+    // code below into that method
+    if (!dar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
     uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
     return dataAccessRequestService.updateByReferenceId(user, dar);
   }
@@ -648,6 +654,7 @@ public class DataAccessRequestResource extends Resource {
    */
   public void uploadDocumentContents(DarDocumentType type, DataAccessRequest dar, InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
+    // This should be moved to service tier logic and the transactions should be coordinated
     validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
     UUID id = UUID.randomUUID();
