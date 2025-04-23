@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -36,6 +37,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -144,6 +146,31 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
+  }
+
+  @Test
+  void testCreateDataAccessRequestWithSubmittedDAR() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCards(List.of(new LibraryCard()));
+    when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setCollectionId(1);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setReferenceId(dar.getReferenceId());
+    dar.setData(data);
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    doThrow(new SubmittedDARCannotBeEditedException()).when(dataAccessRequestService)
+        .createDataAccessRequest(any(), any());
+    resource =
+        new DataAccessRequestResource(daaService,
+            dataAccessRequestService, emailService, gcsService, userService, datasetService,
+            matchService);
+
+    Response response = resource.createDataAccessRequest(authUser, info, "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
+    org.broadinstitute.consent.http.models.Error error = (org.broadinstitute.consent.http.models.Error) response.getEntity();
+    assertEquals(SubmittedDARCannotBeEditedException.MESSAGE, error.message());
   }
 
   @Test

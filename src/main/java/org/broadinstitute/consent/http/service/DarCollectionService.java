@@ -387,8 +387,6 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
-    this.dataAccessRequestDAO.updateDraftByCollectionId(sourceCollection.getDarCollectionId(),
-        true);
     sourceCollection.getDars().values().forEach((d) -> {
       Date now = new Date();
       DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(),
