@@ -590,12 +590,12 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest dar,
       InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
-    //when we move updateDarWithDocumentContents to the service tier, we should incorporate the code
-    //below into that method
+    // When we move updateDarWithDocumentContents to the service tier, we should incorporate the
+    // code below into that method
     if (dar.getDraft() != true) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    //this should be moved to service tier logic and the transactions should be coordinated.
+    // This should be moved to service tier logic and the transactions should be coordinated
     validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
     UUID id = UUID.randomUUID();

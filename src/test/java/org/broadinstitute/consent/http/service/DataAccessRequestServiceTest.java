@@ -58,7 +58,7 @@ class DataAccessRequestServiceTest {
   private static final String PI_EMAIL = "pi@example.broadinstitute.org";
   private static final String SO_EMAIL = "so@example.broadinstitute.org";
   private static final String IT_EMAIL = "it@example.broadinstitute.org";
-  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
+  private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
   @Mock
@@ -87,7 +87,7 @@ class DataAccessRequestServiceTest {
   private UseRestrictionConverter useRestrictionConverter;
   private DataAccessRequestService service;
 
-  private static Collaborator cerateCollaborator() {
+  private static Collaborator createCollaborator() {
     Collaborator validCollaborator = new Collaborator();
     validCollaborator.setEmail("collaborator@test.com");
     return validCollaborator;
@@ -183,9 +183,9 @@ class DataAccessRequestServiceTest {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     dar.setDraft(false);
     initService();
-    assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
-      service.updateByReferenceId(user, dar);
-    });
+    assertThrows(SubmittedDARCannotBeEditedException.class, () ->
+        service.updateByReferenceId(user, dar)
+    );
   }
 
   @Test
@@ -224,7 +224,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateInternalCollaboratorsValid() {
     User requestingUser = createRequestingUser();
-    Collaborator validCollaborator = cerateCollaborator();
+    Collaborator validCollaborator = createCollaborator();
     User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
@@ -241,7 +241,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateInternalCollaboratorsDoesNotExist() {
     User requestingUser = createRequestingUser();
-    Collaborator invalidCollaborator = cerateCollaborator();
+    Collaborator invalidCollaborator = createCollaborator();
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
 
@@ -255,7 +255,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateInternalCollaboratorsDifferentInstitution() {
     User requestingUser = createRequestingUser();
-    Collaborator invalidCollaborator = cerateCollaborator();
+    Collaborator invalidCollaborator = createCollaborator();
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(2);
@@ -273,7 +273,7 @@ class DataAccessRequestServiceTest {
   @Test
   void testValidateInternalCollaboratorsNoLibraryCard() {
     User requestingUser = createRequestingUser();
-    Collaborator invalidCollaborator = cerateCollaborator();
+    Collaborator invalidCollaborator = createCollaborator();
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
