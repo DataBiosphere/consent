@@ -19,14 +19,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
 
-  public static final long EXPIRATION_DURATION_MILLIS = 365L * 24 * 60 * 60
-      * 1000; // 365 days/year 24 hours/day 60 minutes/hour 60 seconds/minute 1000 ms/second
+  public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.DAYS.toMillis(365);
 
   @JsonProperty
   public Integer id;
