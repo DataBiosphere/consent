@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -650,7 +652,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Dataset dataset1 = createDARDAOTestDataset();
     User user1 = createUserWithInstitution();
     var submissionDate = new Timestamp(
-        new Date().getTime() - 1000 * 60 * 60 * 24 * submissionDaysAgo);
+        new Date().getTime() - TimeUnit.DAYS.toMillis(submissionDaysAgo));
     DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1, submissionDate);
 
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
@@ -806,14 +808,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   @Test
   void testFindDARsByDateRange() throws InterruptedException {
     DarCollection darCollection = createDarCollection();
-    darCollection.getDars().keySet().forEach((referenceId) -> {
+    darCollection.getDars().keySet().forEach((referenceId) ->
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
-          referenceId);
-    });
-    Timestamp oneYearAgo = Timestamp.from(
-        Instant.ofEpochMilli(new Date().getTime() - DataAccessRequest.EXPIRATION_DURATION_MILLIS));
-    Timestamp oneMinuteInTheFuture = Timestamp.from(
-        Instant.ofEpochMilli(new Date().getTime() + (60 * 1000)));
+          referenceId));
+    Timestamp oneYearAgo = Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS));
+    Timestamp oneMinuteInTheFuture = Timestamp.from(Instant.now().plus(1, ChronoUnit.MINUTES));
     List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(oneYearAgo,
         oneMinuteInTheFuture);
     assertFalse(dars.isEmpty());
@@ -827,13 +826,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
           referenceId);
     });
-    Timestamp oneHourAgo = Timestamp.from(
-        Instant.ofEpochMilli(new Date().getTime() - (60 * 60 * 1000)));
-    Timestamp halfAnHourAgo = Timestamp.from(
-        Instant.ofEpochMilli(new Date().getTime() - (30 * 60 * 1000)));
+    Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
+    Instant halfAnHourAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
     // query far enough into the past so slight clock variations do not matter for this test
     List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(
-        oneHourAgo, halfAnHourAgo);
+        Timestamp.from(oneHourAgo), Timestamp.from(halfAnHourAgo));
     assertTrue(dars.isEmpty());
   }
 
