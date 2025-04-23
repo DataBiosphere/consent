@@ -131,7 +131,8 @@ class DarCollectionServiceTest {
     dataset.setDatasetId(datasetIds.get(0));
 
     // mocking out findDatasetsByIdList to only return one of the datasets
-    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(
+        List.of(dataset));
     when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
 
     collections = service.addDatasetsToCollections(collections, List.of(dataset.getDatasetId()));
@@ -584,7 +585,6 @@ class DarCollectionServiceTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
     data.setCreateDate(draft.getCreateDate().getTime());
-    draft.setDraft(true);
     draft.setData(data);
     List<DarCollectionSummary> mockSummaries = new ArrayList<>();
     mockSummaries.add(summaryOne);

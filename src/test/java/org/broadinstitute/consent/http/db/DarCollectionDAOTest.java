@@ -577,7 +577,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
         now,
         now,
         now,
-        now,
         data
     );
     return dataAccessRequestDAO.findByReferenceId(referenceId);

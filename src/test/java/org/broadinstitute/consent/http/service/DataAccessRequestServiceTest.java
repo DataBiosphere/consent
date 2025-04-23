@@ -342,7 +342,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
+        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     initService();
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
@@ -362,9 +362,6 @@ class DataAccessRequestServiceTest {
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName",
-        null, new Date());
-    dar.setUserId(userId);
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);

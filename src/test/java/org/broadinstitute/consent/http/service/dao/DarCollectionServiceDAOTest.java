@@ -41,7 +41,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   private static DarCollectionServiceDAO serviceDAO;
 
   @BeforeAll
-  public static void initService() {
+  static void initService() {
     serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
   }
 
@@ -457,9 +457,10 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
     dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
-        now, now, now, data);
-    dataAccessRequestDAO.updateDraftForCollection(collectionId, dar.getReferenceId());
-    dataAccessRequestDAO.updateDraftByReferenceId(dar.getReferenceId(), false);
+        now, now, data);
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
+    dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
+        new Date(), new Date(), data);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
@@ -475,25 +476,4 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
-
-  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }
