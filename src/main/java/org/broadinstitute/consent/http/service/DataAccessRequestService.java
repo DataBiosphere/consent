@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -186,6 +187,9 @@ public class DataAccessRequestService implements ConsentLogger {
 
     DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(
         dataAccessRequest.getReferenceId());
+    if (existingDar != null && !existingDar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
     Integer collectionId;
     // Only create a new DarCollection if we haven't done so already
     if (Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())) {
@@ -231,11 +235,13 @@ public class DataAccessRequestService implements ConsentLogger {
     for (Collaborator collaborator : internalCollaborators) {
       User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
       if (collabUser == null) {
-        throw new NotFoundException("Unable to find User with the provided email: " + collaborator.getEmail());
+        throw new NotFoundException(
+            "Unable to find User with the provided email: " + collaborator.getEmail());
       }
       if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
         throw new BadRequestException(
-            "Collaborator " + collaborator.getEmail() + " is not part of the same institution, " + requestingUser.getInstitution().getName());
+            "Collaborator " + collaborator.getEmail() + " is not part of the same institution, "
+                + requestingUser.getInstitution().getName());
       }
       List<LibraryCard> libraryCards = collabUser.getLibraryCards();
       if (libraryCards.isEmpty()) {
@@ -253,6 +259,9 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
+    if (dar.getDraft() != true) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
     try {
       return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
     } catch (SQLException e) {

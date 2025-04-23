@@ -17,6 +17,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -32,12 +33,10 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
-import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -56,6 +55,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestServiceTest {
 
+  private static final String PI_EMAIL = "pi@example.broadinstitute.org";
+  private static final String SO_EMAIL = "so@example.broadinstitute.org";
+  private static final String IT_EMAIL = "it@example.broadinstitute.org";
+  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
   @Mock
@@ -82,13 +85,22 @@ class DataAccessRequestServiceTest {
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
   private UseRestrictionConverter useRestrictionConverter;
-
   private DataAccessRequestService service;
 
-  private final List<UserRole> roles = Collections.singletonList(UserRoles.Researcher());
-  private static final String PI_EMAIL = "pi@example.broadinstitute.org";
-  private static final String SO_EMAIL = "so@example.broadinstitute.org";
-  private static final String IT_EMAIL = "it@example.broadinstitute.org";
+  private static Collaborator cerateCollaborator() {
+    Collaborator validCollaborator = new Collaborator();
+    validCollaborator.setEmail("collaborator@test.com");
+    return validCollaborator;
+  }
+
+  private static DataAccessRequest createDataAccessRequest(
+      List<Collaborator> internalCollaborators) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setInternalCollaborators(internalCollaborators);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(data);
+    return dar;
+  }
 
   private void initService() {
     DAOContainer container = new DAOContainer();
@@ -144,6 +156,39 @@ class DataAccessRequestServiceTest {
   }
 
   @Test
+  void testCreateDataAccessRequest_CreateWithSubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setCreateDate(new Timestamp(1000));
+    dar.setSortDate(new Timestamp(1000));
+    dar.setReferenceId("id");
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setDraft(false);
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCards(List.of(new LibraryCard()));
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    initService();
+    assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
+      service.createDataAccessRequest(user, dar);
+    });
+  }
+
+  @Test
+  void testUpdateByReferenceIdThrowsOnDraft() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(RandomUtils.nextInt(0, 100));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setDraft(false);
+    initService();
+    assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
+      service.updateByReferenceId(user, dar);
+    });
+  }
+
+  @Test
   void testCreateDataAccessRequest_FailsIfNoLibraryCard() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
@@ -168,20 +213,6 @@ class DataAccessRequestServiceTest {
     return requestingUser;
   }
 
-  private static Collaborator cerateCollaborator() {
-    Collaborator validCollaborator = new Collaborator();
-    validCollaborator.setEmail("collaborator@test.com");
-    return validCollaborator;
-  }
-
-  private static DataAccessRequest createDataAccessRequest(List<Collaborator> internalCollaborators) {
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setInternalCollaborators(internalCollaborators);
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setData(data);
-    return dar;
-  }
-
   @Test
   void testValidateInternalCollaboratorsNone() {
     User requestingUser = createRequestingUser();
@@ -194,7 +225,8 @@ class DataAccessRequestServiceTest {
   void testValidateInternalCollaboratorsValid() {
     User requestingUser = createRequestingUser();
     Collaborator validCollaborator = cerateCollaborator();
-    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setInstitutionId(requestingUser.getInstitutionId());
@@ -216,13 +248,16 @@ class DataAccessRequestServiceTest {
     initService();
     NotFoundException exception = assertThrows(NotFoundException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser));
-    assertEquals(exception.getMessage(), "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
+    assertEquals(exception.getMessage(),
+        "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
   }
+
   @Test
   void testValidateInternalCollaboratorsDifferentInstitution() {
     User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = cerateCollaborator();
-    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
     collaboratorUser.setInstitutionId(2);
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
@@ -231,14 +266,16 @@ class DataAccessRequestServiceTest {
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser)
     );
-    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " is not part of the same institution, Test Institution");
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail()
+        + " is not part of the same institution, Test Institution");
   }
 
   @Test
   void testValidateInternalCollaboratorsNoLibraryCard() {
     User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = cerateCollaborator();
-    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(), roles);
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     collaboratorUser.setLibraryCards(Collections.emptyList());
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
@@ -248,7 +285,8 @@ class DataAccessRequestServiceTest {
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser)
     );
-    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
+    assertEquals(exception.getMessage(),
+        "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
   }
 
   @Test
@@ -358,6 +396,8 @@ class DataAccessRequestServiceTest {
     data.setMethods(false);
     data.setOther(false);
     dar.setData(data);
+    dar.setDraft(true);
+    dar.setSubmissionDate(null);
     return dar;
   }
 
