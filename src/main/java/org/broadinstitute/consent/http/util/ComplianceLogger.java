@@ -59,7 +59,7 @@ public class ComplianceLogger implements ConsentLogger {
     String userAgent = request.getHeaderString(HttpHeaderNames.USER_AGENT.toString()) == null ? "-"
         : request.getHeaderString(HttpHeaderNames.USER_AGENT.toString());
     String userIdProvider = user.getEraCommonsId() == null ? "-" : "RAS";
-    String url = request.getRequestUri() == null ? "-"
+    String urlString = request.getRequestUri() == null ? "-"
         : request.getRequestUri().toString();
     String responseContentType = MediaType.APPLICATION_JSON;
     String institutionName = user.getInstitution() == null ? "-" : user.getInstitution().getName();
@@ -70,7 +70,7 @@ public class ComplianceLogger implements ConsentLogger {
               user.getDisplayName(),
               userId,
               userIdProvider,
-              url,
+              urlString,
               userAgent,
               responseStatusCode,
               responseContentType,
