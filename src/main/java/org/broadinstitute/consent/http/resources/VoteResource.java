@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
